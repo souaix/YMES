@@ -1,3 +1,23 @@
+# .NET build output
 **/bin/
 **/obj/
 **/.data-protection-keys/
+
+# Frontend build output and installed packages
+web/node_modules/
+web/dist/
+.incoming-github-main-2026-11-10/
+
+# Local settings and credentials
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+local-secrets/
+.tools/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

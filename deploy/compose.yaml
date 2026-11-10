@@ -1,0 +1,65 @@
+services:
+  ymes-api:
+    build:
+      context: ../src
+      dockerfile: YMes.Api/Dockerfile
+    image: ymes-api:current
+    container_name: ymes-api
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://127.0.0.1:18088
+      YMES_ENVIRONMENT: production
+      YMES_PATH_BASE: /YMES/API
+      YMES_ALLOWED_ORIGINS: https://152.42.195.128;https://yakuyama.com
+      YMES_DATA_PROTECTION_PATH: /data/dpkeys
+      AllowedHosts: 152.42.195.128;yakuyama.com;127.0.0.1;localhost
+      ConnectionStrings__YMes: ${YMES_CONNECTION_STRING:?YMES_CONNECTION_STRING is required}
+    volumes:
+      - ymes-dpkeys:/data/dpkeys
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:18088/YMES/API/health/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  ymes-web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    image: ymes-web:current
+    container_name: ymes-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18089:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  ymes-master-web:
+    build:
+      context: ../src
+      dockerfile: YMes.Web/Dockerfile
+    image: ymes-master-web:current
+    container_name: ymes-master-web
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://127.0.0.1:18090
+      YMES_PATH_BASE: /YMES
+      YMES_WEB_DATA_PROTECTION_PATH: /data/dpkeys
+      ApiBaseUrl: http://127.0.0.1:18088/YMES/API/
+    volumes:
+      - ymes-web-dpkeys:/data/dpkeys
+
+volumes:
+  ymes-dpkeys:
+    name: ymes-dpkeys
+  ymes-web-dpkeys:
+    name: ymes-web-dpkeys

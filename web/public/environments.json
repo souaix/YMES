@@ -1,0 +1,14 @@
+{
+  "production": {
+    "label": "正式區",
+    "apiBaseUrl": "/YMES/API"
+  },
+  "test": {
+    "label": "測試區",
+    "apiBaseUrl": ""
+  },
+  "development": {
+    "label": "開發區",
+    "apiBaseUrl": "http://localhost:5080"
+  }
+}

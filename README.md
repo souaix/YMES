@@ -1,34 +1,38 @@
-# MES Web + API（主檔原型）
+# YMES MES
 
-此原型將 UI 與 API 分成不同 ASP.NET Core 專案、不同服務網址，方便之後部署到不同 Server。
+商用 MES 的共用架構基底與第一階段主檔入口。登入與選單採 Vue 3 + TypeScript + Vite；主檔頁採 ASP.NET Core MVC，後端 API 與 PostgreSQL 分離。
 
-```text
-MES.Web (http://localhost:5202)
-  └─ MVC UI，左側主選單、右側功能頁
-       └─ HTTP/JSON → MES.Api (http://localhost:5201)
-            ├─ Equipment API
-            └─ Operation / Material / Process / Product APIs
-```
+## 專案內容
 
-三個專案目前都以 `.NET 9` (`net9.0`) 為目標。啟動需安裝 .NET 9 SDK/runtime：
+- web/：登入入口，正式／測試／開發環境選擇，正式區預設；支援首次登入改密碼。
+- src/YMes.Api/：登入 API 與主檔 API。登入帳號連 PostgreSQL；主檔 API 透過 repository 介面切換資料來源，目前只有開發用 Fake 實作。
+- src/YMes.Web/：GitHub 主檔原型的 MVC 功能頁，提供設備、作業站、物料、流程、產品主檔；只透過 API 取資料。
+- src/YMes.Contracts/：Web 與 API 共用的主檔資料契約。
+- database/migrations/：YMES 登入帳號與稽核資料表。
+- reference/gmail-md-2026-11-07/：使用者提供的主檔資料字典與初始 DDL 參考。
+- ARCHITECTURE_BASE.md、SECURITY_BASELINE.md、DEPLOYMENT_PROFILES.md、RELIABILITY_AND_RECOVERY.md：共用架構、安全與部署原則。
+- docs/DEVELOPMENT_STYLE.md：兩台電腦共用的開發分工、API 路徑與 KD UI 風格規範。
+- docs/AUTHENTICATION.md：登入帳號表、密碼政策與部署設定說明。
 
-1. 在一個終端機執行 `dotnet run --project MES.Api`。
-2. 在另一個終端機執行 `dotnet run --project MES.Web`。
-3. 開啟 `http://localhost:5202`。
+## 本機啟動
 
-API 預設網址可在 `MES.Web/appsettings.json` 的 `ApiBaseUrl` 修改；部署時可使用環境設定覆寫，不需把 UI 與 API 放在同一台 Server。兩個服務在正式環境要設定各自可被部署平台存取的綁定位址。
+使用 .NET 9 SDK、Node.js 22 與 PostgreSQL。前端依賴安裝後，在 web/ 執行 npm run dev。API 在 src/YMes.Api/ 執行 dotnet run，Web 主檔頁在 src/YMes.Web/ 執行 dotnet run。設定 ConnectionStrings__YMes 後，登入 API 才能連到資料庫；資料庫連線密碼只能由環境變數或 Secret Manager 注入。開發用 Fake repository 只替代主檔資料來源，登入仍使用資料庫帳號；本機畫面預覽可另外明確啟用 `YMES_LOCAL_DEMO_AUTH=true`，僅供 Development 使用。
 
-## 主檔功能
+公司電腦可以只跑 UI，透過 Vite 代理連到可達的 YMES API，不需設定資料庫或 SSH。複製 `web/.env.example` 為 `web/.env.local` 並設定 `VITE_API_PROXY_TARGET` 為 API 主機來源；啟動主檔 Web 時另以 `ApiBaseUrl` 指向 `https://<YMES主機>/YMES/API/`。本機 `.env.local` 不提交到 GitHub。共用 API 必須已提供該功能的端點；目前正式環境的主檔 API 在 PostgreSQL repository 完成前預設停用。
 
-- 設備：搜尋/狀態篩選、明細、建立、編輯、核准、刪除/停用與 Chamber 檢視；表單涵蓋設備識別、組織、容量/工時、Auto/EA、QC 與訊息佇列。
-- 作業站（Operation Definition）：基本作業、製程段、標準工時、品質旗標及狀態操作。
-- 物料：物料識別、規格/單位、安全庫存、批號與效期/開封時限設定。
-- 流程：流程版本、核准/目前版本切換及節點/連線 JSON 編輯器；核准前檢查 START/END、節點引用及連線。
-- 產品：產品版本、產品流程指派與 BOM 項目；核准前要求至少一條預設流程。
-- 以上採舊 MES IssueState：`0=UNFROZEN`、`1=PENDING`、`2=ACTIVE`、`-1=UNUSED`。示範核准由 0 直接轉 2，尚未接正式 Issue Workflow。
-- API 使用 `DataStamp` 做並行更新檢查，衝突回 HTTP 409；主檔新增/編輯/停用與引用完整性由 API 執行。
+正式 Web 位址為 `/YMES`，API 基底路徑為 `/YMES/API`；正式區預設選中。測試區 API 尚未部署時保持空白，避免把測試登入送到正式資料庫。開發區使用本機 API `http://localhost:5080`。
 
-## 資料來源
+## 第一階段主選單
 
-API 使用記憶體內的示範資料，重啟後會還原，不會連接或修改舊 MES 資料庫。正式化時應將兩個 repository 換成持久化 repository/資料庫，並補上登入授權、正式 Issue Workflow、各欄位代碼查詢、設備 Property/Parameter、完整 Chamber CRUD、流程圖可視化編輯及產品 BOM/流程指派的更多舊 MES 規則。開發環境使用專案目錄中的 Data Protection 金鑰；若 UI 部署多個 instance，正式環境需設定共用且持久的金鑰儲存位置。
+設備、作業站、物料、流程與產品畫面由獨立的 ASP.NET Core Web 服務提供，反向代理路徑仍在 /YMES/ 下；主檔 API 位於 /YMES/API/api/。開發環境預設使用記憶體 Fake repository，API 重啟後會重設；正式環境預設停用主檔 API，直到 PostgreSQL repository 完成。Fake 不是另一個資料庫，也不會寫入 YMES 主檔表。來源版本、資料表和公司端連線方式記錄在 docs/GITHUB_INTEGRATION.md。
 
+- 登入後使用同一套固定側欄與主內容區，版面隨螢幕寬度自適應；首頁主內容先留白。
+- 登入頁提供 Demo 登入捷徑，使用 `ymes` 示範帳號。
+- 選單以可展開樹狀結構呈現，最多三層；選單項目預設收合。
+- 設備管理 → 設備主檔 → `"YMES".tbleqpequipmentbasis`
+- 作業站管理 → 作業站主檔 → `"YMES".tblopbasis`（主鍵 `opno`）
+- 選單先不處理帳號角色權限；主檔 UI 已整合 GitHub 原型，正式 PostgreSQL repository 仍待接入。
+
+## 安全狀態
+
+登入帳號以 `"YMES".tblusruserbasis` 的 userno、username、password 為唯一來源；密碼欄位已擴充為 varchar(255)，供 ASP.NET Core Identity IdentityV3 格式的 salted、versioned PBKDF2-HMAC-SHA512 雜湊使用。`ym_auth_login_state` 只保存登入鎖定與最近登入時間，不建立另一套角色或帳號。角色/權限值域未在來源字典中定義，API 不自行指定角色。詳見 docs/AUTHENTICATION.md。
