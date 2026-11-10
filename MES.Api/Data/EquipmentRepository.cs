@@ -32,12 +32,7 @@ public sealed class EquipmentRepository
                 .Where(x => !x.ChamberFlag)
                 .Where(x => issueState is null || x.IssueState == issueState.Value)
                 .Where(x => string.IsNullOrWhiteSpace(equipmentType) || x.EquipmentType.Equals(equipmentType, StringComparison.OrdinalIgnoreCase))
-                .Where(x => string.IsNullOrWhiteSpace(keyword) ||
-                    x.EquipmentNo.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                    x.EquipmentName.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                    x.EquipmentType.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                    x.VendorNo.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                    x.EngineerGroupNo.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                .Where(x => string.IsNullOrWhiteSpace(keyword) || x.EquipmentNo.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(x => x.EquipmentNo, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
@@ -259,6 +254,7 @@ public sealed class EquipmentRepository
         Capacity = request.Capacity,
         LoadPort = request.LoadPort,
         AutoFlag = request.AutoFlag,
+        DefaultServer = request.DefaultServer,
         EAController = request.EAController.Trim(),
         EqpRecipe = request.EqpRecipe,
         QCListNo = request.QCListNo.Trim(),
@@ -294,6 +290,7 @@ public sealed class EquipmentRepository
             Capacity = capacity,
             LoadPort = loadPort,
             AutoFlag = issueState == 2 ? 1 : 0,
+            DefaultServer = false,
             EAController = issueState == 2 ? "EAP" : "N/A",
             EqpRecipe = issueState == 2 ? 1 : 0,
             QCListNo = issueState == 2 ? "QC-EQP-01" : "",

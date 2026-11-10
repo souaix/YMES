@@ -15,6 +15,7 @@ public sealed record EquipmentDto
     public decimal Capacity { get; init; }
     public int LoadPort { get; init; }
     public int AutoFlag { get; init; }
+    public bool DefaultServer { get; init; }
     public string EAController { get; init; } = "N/A";
     public int EqpRecipe { get; init; }
     public string QCListNo { get; init; } = "";

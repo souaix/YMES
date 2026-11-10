@@ -35,8 +35,9 @@ public sealed class EquipmentWriteRequest
     public string Description { get; set; } = "";
 
     public decimal Capacity { get; set; } = -1;
-    [Range(0, 999)] public int LoadPort { get; set; }
+    [Range(-1, 999)] public int LoadPort { get; set; }
     [Range(0, 1)] public int AutoFlag { get; set; }
+    public bool DefaultServer { get; set; }
 
     [StringLength(80)]
     public string EAController { get; set; } = "N/A";

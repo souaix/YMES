@@ -1,7 +1,69 @@
 @model MaterialWriteRequest
-@{ var edit = Model.DataStamp > 0; ViewData["Title"] = edit ? "編輯物料" : "新增物料"; ViewData["ActiveMaster"] = "Materials"; var action = edit ? "EditMaterial" : "NewMaterial"; }
-<div class="page-heading form-heading"><div><a class="back-link" asp-action="Materials">← 返回物料清單</a><div class="eyebrow">MATERIAL MANAGEMENT</div><h1>@(edit ? "編輯物料資料" : "新增物料")</h1><p>新建資料以 UNFROZEN 狀態建立，核准後供產品 BOM 使用。</p></div></div>
-<form asp-action="@action" asp-route-id="@Model.MaterialNo" method="post" class="equipment-form">@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="validation-summary"></div><input asp-for="DataStamp" type="hidden"/>
-<section class="form-card"><div class="form-card-heading"><span class="form-step">01</span><div><h2>物料識別與單位</h2><p>料號、分類、規格與庫存單位</p></div><span class="required-note"><i>*</i> 必填</span></div><div class="form-grid"><label class="field"><span>物料編號 <i>*</i></span><input asp-for="MaterialNo" readonly="@edit" placeholder="例如 MAT-ETCH-GAS"/><span asp-validation-for="MaterialNo" class="field-error"></span></label><label class="field"><span>物料類型 <i>*</i></span><input asp-for="MaterialType" placeholder="MATERIAL / CHEMICAL / PACKING"/><span asp-validation-for="MaterialType" class="field-error"></span></label><label class="field field-wide"><span>物料名稱 <i>*</i></span><input asp-for="MaterialName"/><span asp-validation-for="MaterialName" class="field-error"></span></label><label class="field field-wide"><span>規格</span><input asp-for="MaterialSpec"/></label><label class="field"><span>單位類型</span><input asp-for="UnitType" placeholder="PCS"/></label><label class="field"><span>庫存單位 <i>*</i></span><input asp-for="UnitNo"/><span asp-validation-for="UnitNo" class="field-error"></span></label><label class="field"><span>放置方式 <i>*</i></span><input asp-for="PutInPlace" placeholder="OP / WAREHOUSE"/><span asp-validation-for="PutInPlace" class="field-error"></span></label><label class="field"><span>ERP 編號</span><input asp-for="ErpNo"/></label><label class="field field-wide"><span>說明</span><textarea asp-for="Description" rows="3"></textarea></label></div></section>
-<section class="form-card"><div class="form-card-heading"><span class="form-step">02</span><div><h2>庫存與效期管控</h2><p>定義補料警示、批號及開封後時限</p></div></div><div class="form-grid"><label class="field"><span>安全庫存</span><input asp-for="SafeQty" type="number" min="0" step="0.001"/></label><label class="field"><span>計數方式代碼</span><input asp-for="CountWay" type="number" min="0" max="9"/></label><label class="field"><span>批號檢查（0/1）</span><input asp-for="CheckLotNo" type="number" min="0" max="1"/></label><label class="field"><span>開封時限（小時）</span><input asp-for="OpenLimitTime" type="number" min="0" step="0.1"/></label><label class="check-field"><input asp-for="KeyMaterials"/><span>關鍵物料</span></label><label class="check-field"><input asp-for="OpenLimitTimeFlag"/><span>啟用開封時限</span></label><label class="check-field"><input asp-for="ResetOpenDate"/><span>重新開封時重設日期</span></label><label class="check-field"><input asp-for="ExpireDateFlag"/><span>啟用有效期限</span></label></div></section>
-<div class="form-actions"><a class="button button-outline" asp-action="Materials">取消</a><button class="button button-primary" type="submit">儲存物料</button></div></form>
+@{
+    var isEdit = Model.DataStamp > 0;
+    var isCopy = ViewData["IsCopy"] is true;
+    var mode = isEdit ? "EDIT" : isCopy ? "COPY" : "ADD";
+    var materialTypes = ViewData["MaterialTypes"] as string[] ?? Array.Empty<string>();
+    var putInPlaces = ViewData["PutInPlaces"] as string[] ?? Array.Empty<string>();
+    var unitTypes = ViewData["UnitTypes"] as string[] ?? Array.Empty<string>();
+    var unitNos = ViewData["UnitNos"] as string[] ?? Array.Empty<string>();
+    ViewData["Title"] = "物料基本資料";
+    ViewData["ActiveMaster"] = "Materials";
+    var action = isEdit ? "EditMaterial" : "NewMaterial";
+}
+<div class="page-heading form-heading">
+    <div>
+        <a class="back-link" asp-action="Materials">← 返回物料主檔</a>
+        <h1>物料基本資料定義 (@mode) (ML103)</h1>
+    </div>
+</div>
+<form asp-action="@action" asp-route-id="@Model.MaterialNo" method="post" class="equipment-form winform-definition material-definition">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+    <input asp-for="DataStamp" type="hidden" />
+    <datalist id="materialTypes">@foreach (var value in materialTypes) { <option value="@value"></option> }</datalist>
+    <datalist id="putInPlaces">@foreach (var value in putInPlaces) { <option value="@value"></option> }</datalist>
+    <datalist id="unitTypes">@foreach (var value in unitTypes) { <option value="@value"></option> }</datalist>
+    <datalist id="unitNos">@foreach (var value in unitNos) { <option value="@value"></option> }</datalist>
+    <section class="form-card">
+        <div class="form-card-heading"><h2>物料主檔資料</h2></div>
+        <div class="material-form-rows">
+            <label class="field"><span>物料編號</span><input asp-for="MaterialNo" class="equipment-yellow" readonly="@isEdit" /><span asp-validation-for="MaterialNo" class="field-error"></span></label>
+            <label class="field"><span>物料名稱</span><input asp-for="MaterialName" class="equipment-yellow" /><span asp-validation-for="MaterialName" class="field-error"></span></label>
+            <label class="field"><span>物料規格</span><input asp-for="MaterialSpec" /><span asp-validation-for="MaterialSpec" class="field-error"></span></label>
+            <label class="field"><span>物料類別</span><div class="winform-inline-field"><input asp-for="MaterialType" class="equipment-yellow" list="materialTypes" /><button class="lookup-button" type="button" data-focus-field="MaterialType" aria-label="選擇物料類別">...</button></div><span asp-validation-for="MaterialType" class="field-error"></span></label>
+            <label class="field"><span>投料點</span><input asp-for="PutInPlace" class="equipment-yellow" list="putInPlaces" /><span asp-validation-for="PutInPlace" class="field-error"></span></label>
+            <div class="material-pair-row">
+                <label class="field"><span>計量方法</span><input asp-for="CountWay" type="number" min="0" max="9" /></label>
+                <label class="field"><span>是否檢查批號</span><select asp-for="CheckLotNo"><option value="1">是</option><option value="0">否</option></select></label>
+            </div>
+            <div class="material-pair-row">
+                <label class="field"><span>單位類別</span><div class="winform-inline-field"><input asp-for="UnitType" list="unitTypes" /><button class="lookup-button" type="button" data-focus-field="UnitType" aria-label="選擇單位類別">...</button></div></label>
+                <label class="field"><span>單位編號</span><div class="winform-inline-field"><input asp-for="UnitNo" class="equipment-yellow" list="unitNos" /><button class="lookup-button" type="button" data-focus-field="UnitNo" aria-label="選擇單位編號">...</button></div><span asp-validation-for="UnitNo" class="field-error"></span></label>
+            </div>
+            <div class="material-pair-row">
+                <label class="field"><span>安全存量</span><input asp-for="SafeQty" type="number" min="0" step="0.001" /></label>
+                <label class="check-field"><input asp-for="ExpireDateFlag" /><span>保存期限管理</span></label>
+            </div>
+            <div class="material-options">
+                <label class="check-field"><input asp-for="OpenLimitTimeFlag" /><span>開封後有效時間管理</span></label>
+                <label class="field material-time"><span>時限</span><span class="winform-quantity"><input asp-for="OpenLimitTime" type="number" min="0" step="0.1" /><span class="winform-unit">小時</span></span></label>
+                <label class="check-field"><input asp-for="ResetOpenDate" /><span>下料後重啟開封計時日</span></label>
+            </div>
+            <div class="material-key-materials">
+                <span>是否關鍵物料</span>
+                <label><input type="radio" name="KeyMaterials" value="true" checked="@(Model.KeyMaterials)" />是</label>
+                <label><input type="radio" name="KeyMaterials" value="false" checked="@(!Model.KeyMaterials)" />否</label>
+            </div>
+            <label class="field material-description"><span>說明</span><textarea asp-for="Description" rows="4"></textarea><span asp-validation-for="Description" class="field-error"></span></label>
+            <input asp-for="ErpNo" type="hidden" />
+        </div>
+    </section>
+    <div class="winform-audit">
+        <label><span>建立人</span><input value="—" readonly /></label>
+        <label><span>建立日期</span><input value="@ViewData["CreatedAt"]" readonly /></label>
+        <label><span>修改人</span><input value="—" readonly /></label>
+        <label><span>修改日期</span><input value="@ViewData["RevisedAt"]" readonly /></label>
+    </div>
+    <div class="form-actions"><button class="button button-primary" type="submit">確定</button><a class="button button-outline" asp-action="Materials">關閉</a><button class="button" type="button" disabled>套用</button></div>
+</form>

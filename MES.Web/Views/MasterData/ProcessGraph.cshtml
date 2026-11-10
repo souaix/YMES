@@ -1,7 +1,23 @@
 @model ProcessGraphPageModel
-@{ ViewData["Title"] = "流程節點"; ViewData["ActiveMaster"] = "Processes"; }
-<div class="page-heading form-heading"><div><a class="back-link" asp-action="Processes" asp-route-no="@Model.Process.ProcessNo" asp-route-version="@Model.Process.ProcessVersion">← 返回流程明細</a><div class="eyebrow">PROCESS GRAPH EDITOR</div><h1>@Model.Process.ProcessNo / @Model.Process.ProcessVersion 節點設定</h1><p>以 JSON 編輯節點與連線；必須包含唯一 START、END，且每個 OP 節點須引用有效作業編號。</p></div></div>
-<form asp-action="EditGraph" asp-route-no="@Model.Process.ProcessNo" asp-route-version="@Model.Process.ProcessVersion" method="post" class="equipment-form">@Html.AntiForgeryToken()<div asp-validation-summary="ModelOnly" class="validation-summary"></div><input type="hidden" name="dataStamp" value="@Model.Graph.DataStamp"/>
-<section class="form-card"><div class="form-card-heading"><span class="form-step">01</span><div><h2>流程節點 Nodes</h2><p>NodeId 唯一；Sequence 決定顯示順序；OP 節點需填 OperationNo</p></div></div><label class="field"><textarea class="json-editor" name="nodesJson" rows="18" spellcheck="false">@Model.NodesJson</textarea></label><div class="json-hint">格式範例：[{ "nodeId":"start", "nodeNo":"START", "nodeType":"START", "sequence":0, "operationNo":"", "description":"開始" }]</div></section>
-<section class="form-card"><div class="form-card-heading"><span class="form-step">02</span><div><h2>流程連線 Edges</h2><p>FromNodeId 與 ToNodeId 必須對應存在的 NodeId</p></div></div><label class="field"><textarea class="json-editor" name="edgesJson" rows="10" spellcheck="false">@Model.EdgesJson</textarea></label><div class="json-hint">格式範例：[{ "fromNodeId":"start", "toNodeId":"op10", "action":"pass" }]</div></section>
-<div class="form-actions"><a class="button button-outline" asp-action="Processes" asp-route-no="@Model.Process.ProcessNo" asp-route-version="@Model.Process.ProcessVersion">取消</a><button class="button button-primary">儲存流程圖</button></div></form>
+@{ ViewData["Title"] = $"流程節點：{Model.Process.ProcessNo} / {Model.Process.ProcessVersion}"; ViewData["ActiveMaster"] = "Processes"; }
+<div class="page-heading form-heading"><div><a class="back-link" asp-action="Processes" asp-route-no="@Model.Process.ProcessNo" asp-route-version="@Model.Process.ProcessVersion">← 返回流程主檔</a><h1>流程節點設定　@Model.Process.ProcessNo / @Model.Process.ProcessVersion</h1></div></div>
+<form asp-action="EditGraph" asp-route-no="@Model.Process.ProcessNo" asp-route-version="@Model.Process.ProcessVersion" method="post" class="equipment-form process-graph-form" data-process-graph>
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+    <input type="hidden" name="dataStamp" value="@Model.Graph.DataStamp" />
+    <input type="hidden" name="nodesJson" value="@Model.NodesJson" data-nodes-json />
+    <input type="hidden" name="edgesJson" value="@Model.EdgesJson" data-edges-json />
+    <section class="form-card">
+        <div class="form-card-heading"><h2>流程節點</h2></div>
+        <div class="graph-flow-preview" data-flow-preview aria-label="流程順序預覽"></div>
+        <div class="graph-toolbar"><button type="button" class="winform-button" data-add-node>新增節點</button></div>
+        <div class="table-scroll"><table class="equipment-table"><thead><tr><th>順序</th><th>節點編號</th><th>節點類型</th><th>作業站編號</th><th>說明</th><th>操作</th></tr></thead><tbody data-node-rows></tbody></table></div>
+    </section>
+    <section class="form-card">
+        <div class="form-card-heading"><h2>節點連線</h2></div>
+        <div class="graph-toolbar"><button type="button" class="winform-button" data-add-edge>新增連線</button></div>
+        <div class="table-scroll"><table class="equipment-table"><thead><tr><th>起點節點</th><th>終點節點</th><th>轉換條件</th><th>操作</th></tr></thead><tbody data-edge-rows></tbody></table></div>
+        <p class="json-hint">起點與終點必須選取現有節點；OP 節點必須指定已核准的作業站。</p>
+    </section>
+    <div class="form-actions"><a class="button button-outline" asp-action="Processes" asp-route-no="@Model.Process.ProcessNo" asp-route-version="@Model.Process.ProcessVersion">關閉</a><button class="button button-primary" type="submit">確定</button><button class="button" type="button" disabled>套用</button></div>
+</form>

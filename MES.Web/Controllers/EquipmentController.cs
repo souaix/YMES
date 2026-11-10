@@ -13,7 +13,8 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
         try
         {
             var all = await api.ListAsync(cancellationToken: cancellationToken);
-            var items = await api.ListAsync(keyword, issueState, cancellationToken);
+            var state = issueState ?? 0;
+            var items = await api.ListAsync(keyword, state, "EquipmentNo", cancellationToken);
             var selected = items.FirstOrDefault(x => string.Equals(x.EquipmentNo, selectedEquipmentNo, StringComparison.OrdinalIgnoreCase))
                 ?? items.FirstOrDefault();
             IReadOnlyList<EquipmentDto> chambers = selected is null ? [] : await api.ChambersAsync(selected.EquipmentNo, cancellationToken);
@@ -24,7 +25,7 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
                 Chambers = chambers,
                 Selected = selected,
                 Keyword = keyword,
-                IssueState = issueState
+                IssueState = state
             });
         }
         catch (HttpRequestException)
@@ -34,20 +35,25 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
     }
 
     [HttpGet]
-    public IActionResult New() => View("Form", new EquipmentWriteRequest
+    public async Task<IActionResult> New(CancellationToken cancellationToken)
+    {
+        await LoadEquipmentLookups(cancellationToken);
+        return View("Form", new EquipmentWriteRequest
     {
         Capacity = -1,
-        LoadPort = 0,
+        LoadPort = -1,
         VendorNo = "N/A",
         EAController = "N/A",
         CountEqpUnitQty = 1,
         CountEquipmentUnitQty = 1
     });
+    }
+
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> New(EquipmentWriteRequest request, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return View("Form", request);
+        if (!ModelState.IsValid) { await LoadEquipmentLookups(cancellationToken); return View("Form", request); }
         try
         {
             await api.CreateAsync(request, cancellationToken);
@@ -57,6 +63,7 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
         catch (HttpRequestException ex)
         {
             ModelState.AddModelError(string.Empty, ReadApiError(ex, "設備建立失敗；請確認編號是否重複。"));
+            await LoadEquipmentLookups(cancellationToken);
             return View("Form", request);
         }
     }
@@ -67,13 +74,29 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
         var item = await api.GetAsync(id, cancellationToken);
         if (item is null) return NotFound();
         if (item.IssueState != 0) return Conflict("只有 UNFROZEN 設備可以編輯。");
+        await LoadEquipmentLookups(cancellationToken);
+        ViewData["CreatedAt"] = item.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss");
+        ViewData["RevisedAt"] = item.RevisedAt?.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss") ?? "";
         return View("Form", ToRequest(item));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Copy(string id, CancellationToken cancellationToken)
+    {
+        var item = await api.GetAsync(id, cancellationToken);
+        if (item is null) return NotFound();
+        await LoadEquipmentLookups(cancellationToken);
+        var request = ToRequest(item);
+        request.EquipmentNo = "";
+        request.DataStamp = 0;
+        ViewData["IsCopy"] = true;
+        return View("Form", request);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string id, EquipmentWriteRequest request, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return View("Form", request);
+        if (!ModelState.IsValid) { await LoadEquipmentLookups(cancellationToken); return View("Form", request); }
         try
         {
             await api.UpdateAsync(id, request, cancellationToken);
@@ -83,6 +106,7 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
         catch (HttpRequestException ex)
         {
             ModelState.AddModelError(string.Empty, ReadApiError(ex, "設備更新失敗；資料可能已被其他人更新。"));
+            await LoadEquipmentLookups(cancellationToken);
             return View("Form", request);
         }
     }
@@ -188,6 +212,20 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
         return RedirectToAction(nameof(Index), new { selectedEquipmentNo = parentEquipmentNo });
     }
 
+    private async Task LoadEquipmentLookups(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var items = await api.ListAsync(cancellationToken: cancellationToken);
+            ViewData["EquipmentTypes"] = items.Select(x => x.EquipmentType).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray();
+            ViewData["EquipmentClasses"] = items.Select(x => x.EquipmentClass).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray();
+            ViewData["EngineerGroups"] = items.Select(x => x.EngineerGroupNo).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray();
+            ViewData["Vendors"] = items.Select(x => x.VendorNo).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray();
+            ViewData["QcLists"] = items.Select(x => x.QCListNo).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToArray();
+        }
+        catch (HttpRequestException) { }
+    }
+
     private static EquipmentWriteRequest ToRequest(EquipmentDto item) => new()
     {
         EquipmentNo = item.EquipmentNo,
@@ -203,6 +241,7 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
         Capacity = item.Capacity,
         LoadPort = item.LoadPort,
         AutoFlag = item.AutoFlag,
+        DefaultServer = item.DefaultServer,
         EAController = item.EAController,
         EqpRecipe = item.EqpRecipe,
         QCListNo = item.QCListNo,

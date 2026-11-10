@@ -1,65 +1,75 @@
 @model EquipmentWriteRequest
 @{
     var isEdit = Model.DataStamp > 0;
-    ViewData["Title"] = isEdit ? "編輯設備" : "新增設備";
+    var isCopy = ViewData["IsCopy"] as bool? == true;
+    ViewData["Title"] = "設備基本資料";
+    ViewData["ActiveMaster"] = "Equipment";
     var action = isEdit ? "Edit" : "New";
+    var types = ViewData["EquipmentTypes"] as string[] ?? Array.Empty<string>();
+    var classes = ViewData["EquipmentClasses"] as string[] ?? Array.Empty<string>();
+    var groups = ViewData["EngineerGroups"] as string[] ?? Array.Empty<string>();
+    var vendors = ViewData["Vendors"] as string[] ?? Array.Empty<string>();
+    var qcLists = ViewData["QcLists"] as string[] ?? Array.Empty<string>();
 }
-
 <div class="page-heading form-heading">
     <div>
-        <a class="back-link" asp-action="Index">← 返回設備清單</a>
-        <div class="eyebrow">EQUIPMENT BASIS</div>
-        <h1>@(isEdit ? "編輯設備資料" : "新增設備")</h1>
-        <p>@(isEdit ? $"更新 {Model.EquipmentNo} 的基本設定。" : "建立設備主檔；新資料會以 UNFROZEN 狀態建立。")</p>
+        <a class="back-link" asp-action="Index">← 返回設備主檔</a>
+        <h1>設備基本資料定義 (@(isEdit ? "EDIT" : isCopy ? "COPY" : "ADD")) (EP104) 6.0.0.0</h1>
     </div>
 </div>
-
-<form asp-action="@action" asp-route-id="@Model.EquipmentNo" method="post" class="equipment-form">
+<form asp-action="@action" asp-route-id="@Model.EquipmentNo" method="post" class="equipment-form equipment-definition">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
     <input asp-for="DataStamp" type="hidden" />
+    <input asp-for="CountEquipmentUnitQty" type="hidden" />
     <section class="form-card">
-        <div class="form-card-heading"><span class="form-step">01</span><div><h2>基本資料</h2><p>識別設備並指定類型、工程群組與供應商</p></div><span class="required-note"><i>*</i> 必填欄位</span></div>
-        <div class="form-grid">
-            <label class="field"><span>設備編號 <i>*</i></span><input asp-for="EquipmentNo" placeholder="例如 EQ-ETCH-01" readonly="@isEdit" /><span asp-validation-for="EquipmentNo" class="field-error"></span></label>
-            <label class="field"><span>設備類型 <i>*</i></span><input asp-for="EquipmentType" placeholder="例如 ETCH" /><span asp-validation-for="EquipmentType" class="field-error"></span></label>
-            <label class="field field-wide"><span>設備名稱 <i>*</i></span><input asp-for="EquipmentName" placeholder="輸入設備顯示名稱" /><span asp-validation-for="EquipmentName" class="field-error"></span></label>
-            <label class="field"><span>工程群組 <i>*</i></span><input asp-for="EngineerGroupNo" placeholder="例如 ENG-ETCH" /><span asp-validation-for="EngineerGroupNo" class="field-error"></span></label>
-            <label class="field"><span>供應商編號 <i>*</i></span><input asp-for="VendorNo" /><span asp-validation-for="VendorNo" class="field-error"></span></label>
-            <label class="field"><span>設備分類</span><input asp-for="EquipmentClass" placeholder="例如 Production" /></label>
-            <label class="field"><span>設備分類編號</span><input asp-for="EquipmentClassNo" placeholder="選填" /></label>
-            <label class="field"><span>型號</span><input asp-for="ModelNo" placeholder="輸入設備型號" /></label>
-            <label class="field"><span>資產編號</span><input asp-for="AssetNo" placeholder="輸入資產編號" /></label>
-            <label class="field field-wide"><span>說明</span><textarea asp-for="Description" rows="3" placeholder="設備用途或備註"></textarea></label>
+        <div class="form-card-heading"><h2>設備主檔資料</h2></div>
+        <div class="winform-columns">
+            <div class="form-column">
+                <label class="field"><span>設備編號</span><div class="winform-inline-field"><input asp-for="EquipmentNo" class="equipment-yellow" readonly="@isEdit" /><a class="lookup-button" asp-action="New" title="新增設備">新增(A)</a></div><span asp-validation-for="EquipmentNo" class="field-error"></span></label>
+                <label class="field"><span>設備名稱</span><input asp-for="EquipmentName" class="equipment-yellow" /><span asp-validation-for="EquipmentName" class="field-error"></span></label>
+                <label class="field"><span>設備分類</span><input asp-for="EquipmentClass" class="equipment-yellow" list="equipmentClasses" /><datalist id="equipmentClasses">@foreach (var value in classes) { <option value="@value"></option> }</datalist></label>
+                <label class="field"><span>設備型號</span><input asp-for="ModelNo" /></label>
+                <label class="field"><span>批量限制</span><span class="winform-quantity"><input asp-for="Capacity" class="equipment-yellow" type="number" step="0.001" /><span class="winform-unit">(-1代表不限制)</span></span></label>
+                <label class="field"><span>預設產能</span><span class="winform-quantity"><input asp-for="MaxTime" type="number" min="0" max="24" step="0.01" /><span class="winform-unit">小時</span></span></label>
+                <label class="field"><span>固定機時</span><span class="winform-quantity"><input asp-for="FixEqpTime" type="number" min="0" step="0.01" /><span class="winform-unit">分鐘</span></span></label>
+                <label class="field"><span>點檢表編號</span><span class="winform-inline-field"><input asp-for="QCListNo" list="equipmentQcLists" /><button class="lookup-button" type="button" data-focus-field="QCListNo">...</button></span><datalist id="equipmentQcLists">@foreach (var value in qcLists) { <option value="@value"></option> }</datalist></label>
+                <label class="field"><span>說明</span><textarea asp-for="Description" rows="7"></textarea></label>
+            </div>
+            <div class="form-column">
+                <label class="field"><span>設備類別資料</span><span class="winform-inline-field"><input asp-for="EquipmentType" class="equipment-yellow" list="equipmentTypes" /><button class="lookup-button" type="button" data-focus-field="EquipmentType">...</button></span><datalist id="equipmentTypes">@foreach (var value in types) { <option value="@value"></option> }</datalist><span asp-validation-for="EquipmentType" class="field-error"></span></label>
+                <label class="field"><span>管理群組</span><span class="winform-inline-field"><input asp-for="EngineerGroupNo" class="equipment-yellow" list="engineerGroups" /><button class="lookup-button" type="button" data-focus-field="EngineerGroupNo">...</button></span><datalist id="engineerGroups">@foreach (var value in groups) { <option value="@value"></option> }</datalist><span asp-validation-for="EngineerGroupNo" class="field-error"></span></label>
+                <label class="field"><span>供應商編號</span><span class="winform-inline-field"><input asp-for="VendorNo" class="equipment-yellow" list="equipmentVendors" /><button class="lookup-button" type="button" data-focus-field="VendorNo">...</button></span><datalist id="equipmentVendors">@foreach (var value in vendors) { <option value="@value"></option> }</datalist><span asp-validation-for="VendorNo" class="field-error"></span></label>
+                <label class="field"><span>財產編號</span><input asp-for="AssetNo" /></label>
+                <label class="field"><span>批數限制</span><span class="winform-quantity"><input asp-for="LoadPort" class="equipment-yellow" type="number" min="-1" step="1" /><span class="winform-unit">(-1代表不限制)</span></span></label>
+                <label class="field"><span>機時單位批量</span><input asp-for="CountEqpUnitQty" type="number" min="0" step="1" /></label>
+                <label class="field"><span>變動機時</span><span class="winform-quantity"><input asp-for="VarEqpTime" type="number" min="0" step="0.01" /><span class="winform-unit">分鐘</span></span></label>
+                <div class="field"><span>自動設備</span><div class="winform-radio"><label><input type="radio" name="AutoFlag" value="1" checked="@(Model.AutoFlag == 1)" />是</label><label><input type="radio" name="AutoFlag" value="0" checked="@(Model.AutoFlag == 0)" />否</label></div></div>
+                <fieldset class="winform-group">
+                    <legend>訊息佇列設定</legend>
+                    <label class="check-field"><input asp-for="DefaultServer" /><span>預設伺服器</span></label>
+                    <label class="field"><span>佇列伺服器</span><span class="winform-inline-field"><input asp-for="QueueServer" /><button class="lookup-button" type="button" data-focus-field="QueueServer">...</button></span></label>
+                    <label class="field"><span>請求訊息佇列</span><input asp-for="RequestMsgQueue" /></label>
+                    <label class="field"><span>回應訊息佇列</span><input asp-for="ResponseMsgQueue" /></label>
+                </fieldset>
+                <details class="form-advanced">
+                    <summary>其他設備整合欄位</summary>
+                    <div class="form-grid">
+                        <label class="field"><span>財產分類編號</span><input asp-for="EquipmentClassNo" /></label>
+                        <label class="field"><span>EA Controller</span><input asp-for="EAController" /></label>
+                        <label class="field"><span>設備 Recipe</span><select asp-for="EqpRecipe"><option value="0">否</option><option value="1">是</option></select></label>
+                        <label class="field"><span>MES 請求佇列</span><input asp-for="RequestMsgQueueMes" /></label>
+                        <label class="field"><span>EAP 回應佇列</span><input asp-for="ResponseMsgQueueEap" /></label>
+                    </div>
+                </details>
+            </div>
         </div>
     </section>
-
-    <section class="form-card">
-        <div class="form-card-heading"><span class="form-step">02</span><div><h2>能力與時間</h2><p>設定設備容量、Load Port 與設備工時</p></div></div>
-        <div class="form-grid">
-            <label class="field"><span>Capacity <i>*</i></span><input asp-for="Capacity" type="number" step="1" /><span asp-validation-for="Capacity" class="field-error"></span></label>
-            <label class="field"><span>Load Port <i>*</i></span><input asp-for="LoadPort" type="number" min="0" /><span asp-validation-for="LoadPort" class="field-error"></span></label>
-            <label class="field"><span>固定設備時間（分鐘）</span><input asp-for="FixEqpTime" type="number" min="0" step="0.05" /></label>
-            <label class="field"><span>變動設備時間（分鐘）</span><input asp-for="VarEqpTime" type="number" min="0" step="0.05" /></label>
-            <label class="field"><span>最大時間（小時）</span><input asp-for="MaxTime" type="number" min="0" max="24" step="0.05" /></label>
-            <label class="field"><span>設備單位數</span><input asp-for="CountEquipmentUnitQty" type="number" min="0" /></label>
-        </div>
-    </section>
-
-    <section class="form-card">
-        <div class="form-card-heading"><span class="form-step">03</span><div><h2>設備整合與品質</h2><p>設定自動化控制、Recipe、QC 與訊息佇列</p></div></div>
-        <div class="form-grid">
-            <label class="field"><span>Auto Flag</span><select asp-for="AutoFlag"><option value="0">否 / 手動</option><option value="1">是 / 自動</option></select></label>
-            <label class="field"><span>EA Controller</span><input asp-for="EAController" /></label>
-            <label class="field"><span>EQP Recipe</span><select asp-for="EqpRecipe"><option value="0">否</option><option value="1">是</option></select></label>
-            <label class="field"><span>QC List No</span><input asp-for="QCListNo" placeholder="選填" /></label>
-            <label class="field"><span>Queue Server</span><input asp-for="QueueServer" placeholder="選填" /></label>
-            <label class="field"><span>Request Message Queue</span><input asp-for="RequestMsgQueue" placeholder="選填" /></label>
-            <label class="field"><span>Response Message Queue</span><input asp-for="ResponseMsgQueue" placeholder="選填" /></label>
-            <label class="field"><span>Request Queue (MES)</span><input asp-for="RequestMsgQueueMes" placeholder="選填" /></label>
-            <label class="field"><span>Response Queue (EAP)</span><input asp-for="ResponseMsgQueueEap" placeholder="選填" /></label>
-        </div>
-    </section>
-
-    <div class="form-actions"><a class="button button-outline" asp-action="Index">取消</a><button class="button button-primary" type="submit">@(isEdit ? "儲存變更" : "建立設備")</button></div>
+    <div class="winform-audit">
+        <label><span>建立人</span><input value="—" readonly /></label>
+        <label><span>建立日期</span><input value="@ViewData["CreatedAt"]" readonly /></label>
+        <label><span>修改人</span><input value="—" readonly /></label>
+        <label><span>修改日期</span><input value="@ViewData["RevisedAt"]" readonly /></label>
+    </div>
+    <div class="form-actions"><button class="button button-primary" type="submit">確定</button><a class="button button-outline" asp-action="Index">關閉</a><button class="button" type="button" disabled>套用</button></div>
 </form>

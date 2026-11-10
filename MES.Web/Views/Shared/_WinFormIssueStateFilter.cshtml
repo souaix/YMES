@@ -1,9 +1,8 @@
 @model int?
 <fieldset class="winform-state-filter">
-    <legend>Issue State</legend>
-    <label><input type="radio" name="issueState" value="" checked="@(Model is null)" /> 全部</label>
-    <label><input type="radio" name="issueState" value="0" checked="@(Model == 0)" /> UNFROZEN</label>
-    <label><input type="radio" name="issueState" value="1" checked="@(Model == 1)" /> PENDING</label>
-    <label><input type="radio" name="issueState" value="2" checked="@(Model == 2)" /> ACTIVE</label>
-    <label><input type="radio" name="issueState" value="-1" checked="@(Model == -1)" /> UNUSED</label>
+    <legend>@ViewData["Title"]</legend>
+    <label><input type="radio" name="issueState" value="0" checked="@(Model == 0)" />未簽核</label>
+    <label><input type="radio" name="issueState" value="1" checked="@(Model == 1)" />簽核中</label>
+    <label><input type="radio" name="issueState" value="2" checked="@(Model == 2)" />已簽核</label>
+    <label><input type="radio" name="issueState" value="-1" checked="@(Model == -1)" />不使用</label>
 </fieldset>

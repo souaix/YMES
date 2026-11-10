@@ -5,11 +5,12 @@ namespace MES.Web.Services;
 
 public sealed class EquipmentApiClient(HttpClient httpClient)
 {
-    public async Task<IReadOnlyList<EquipmentDto>> ListAsync(string? keyword = null, int? issueState = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<EquipmentDto>> ListAsync(string? keyword = null, int? issueState = null, string? searchField = null, CancellationToken cancellationToken = default)
     {
         var query = new List<string>();
         if (!string.IsNullOrWhiteSpace(keyword)) query.Add($"keyword={Uri.EscapeDataString(keyword)}");
         if (issueState.HasValue) query.Add($"issueState={issueState.Value}");
+        if (!string.IsNullOrWhiteSpace(searchField)) query.Add($"searchField={Uri.EscapeDataString(searchField)}");
         var suffix = query.Count == 0 ? "" : $"?{string.Join("&", query)}";
         return await httpClient.GetFromJsonAsync<List<EquipmentDto>>($"api/equipment{suffix}", cancellationToken) ?? [];
     }

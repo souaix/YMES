@@ -45,7 +45,7 @@ public sealed class MasterDataRepository
 
     public IReadOnlyList<OperationDto> ListOperations(string? keyword, int? issueState) => Read(() => _operations.Values
         .Where(x => issueState is null || x.IssueState == issueState)
-        .Where(x => ContainsAny(keyword, x.OperationNo, x.OperationName, x.OperationType, x.ProductionSegmentNo))
+        .Where(x => ContainsAny(keyword, x.OperationNo))
         .OrderBy(x => x.OperationNo, StringComparer.OrdinalIgnoreCase).ToArray());
 
     public OperationDto GetOperation(string no) => Read(() => _operations.TryGetValue(Key(no), out var x) ? x : throw NotFound("作業", no));
@@ -100,7 +100,7 @@ public sealed class MasterDataRepository
     public IReadOnlyList<MaterialDto> ListMaterials(string? keyword, int? issueState, string? materialType) => Read(() => _materials.Values
         .Where(x => issueState is null || x.IssueState == issueState)
         .Where(x => string.IsNullOrWhiteSpace(materialType) || x.MaterialType.Equals(materialType, StringComparison.OrdinalIgnoreCase))
-        .Where(x => ContainsAny(keyword, x.MaterialNo, x.MaterialName, x.MaterialType, x.MaterialSpec))
+        .Where(x => ContainsAny(keyword, x.MaterialNo))
         .OrderBy(x => x.MaterialNo, StringComparer.OrdinalIgnoreCase).ToArray());
 
     public MaterialDto GetMaterial(string no) => Read(() => _materials.TryGetValue(Key(no), out var x) ? x : throw NotFound("物料", no));
@@ -153,7 +153,7 @@ public sealed class MasterDataRepository
 
     public IReadOnlyList<ProcessDto> ListProcesses(string? keyword, int? issueState) => Read(() => _processes.Values
         .Where(x => issueState is null || x.IssueState == issueState)
-        .Where(x => ContainsAny(keyword, x.ProcessNo, x.ProcessVersion, x.ProcessType, x.ProductionSegmentNo))
+        .Where(x => ContainsAny(keyword, x.ProcessNo))
         .OrderBy(x => x.ProcessNo, StringComparer.OrdinalIgnoreCase).ThenBy(x => x.ProcessVersion, StringComparer.OrdinalIgnoreCase).ToArray());
 
     public ProcessDto GetProcess(string no, string version) => Read(() => GetProcessUnsafe(no, version));
@@ -261,7 +261,7 @@ public sealed class MasterDataRepository
 
     public IReadOnlyList<ProductDto> ListProducts(string? keyword, int? issueState) => Read(() => _products.Values
         .Where(x => issueState is null || x.IssueState == issueState)
-        .Where(x => ContainsAny(keyword, x.ProductNo, x.ProductVersion, x.ProductName, x.ProductType))
+        .Where(x => ContainsAny(keyword, x.ProductNo))
         .OrderBy(x => x.ProductNo, StringComparer.OrdinalIgnoreCase).ThenBy(x => x.ProductVersion, StringComparer.OrdinalIgnoreCase).ToArray());
 
     public ProductDto GetProduct(string no, string version) => Read(() => GetProductUnsafe(no, version));
