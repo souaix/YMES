@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Silva MES</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" asp-controller="Equipment" asp-action="Index">
+                <span class="brand-mark">S</span>
+                <span><strong>SILVA</strong><small>MANUFACTURING SYSTEM</small></span>
+            </a>
+            <div class="nav-caption">工作區</div>
+            <a class="nav-item" href="#"><span class="nav-icon">▦</span>總覽</a>
+            <div class="nav-caption nav-caption-spaced">主檔管理</div>
+            <a class="nav-item @(ViewData["ActiveMaster"] is null ? "active" : "")" asp-controller="Equipment" asp-action="Index"><span class="nav-icon">◈</span>設備主檔</a>
+            <a class="nav-item @(Equals(ViewData["ActiveMaster"], "Operations") ? "active" : "")" asp-controller="MasterData" asp-action="Operations"><span class="nav-icon">⌖</span>作業站主檔</a>
+            <a class="nav-item @(Equals(ViewData["ActiveMaster"], "Materials") ? "active" : "")" asp-controller="MasterData" asp-action="Materials"><span class="nav-icon">▤</span>物料主檔</a>
+            <a class="nav-item @(Equals(ViewData["ActiveMaster"], "Processes") ? "active" : "")" asp-controller="MasterData" asp-action="Processes"><span class="nav-icon">⤳</span>流程主檔</a>
+            <a class="nav-item @(Equals(ViewData["ActiveMaster"], "Products") ? "active" : "")" asp-controller="MasterData" asp-action="Products"><span class="nav-icon">◇</span>產品主檔</a>
+            <div class="sidebar-bottom">
+                <div class="connection-dot"></div>
+                <div><strong>API 連線</strong><small>MES master data service</small></div>
+                <span class="online-label">LOCAL</span>
+            </div>
+        </aside>
+
+        <main class="main-shell">
+            <header class="topbar">
+                <div class="breadcrumbs"><span>主檔管理</span><span class="crumb-sep">/</span><strong>@ViewData["Title"]</strong></div>
+                <div class="topbar-right"><span class="environment-tag">DEMO</span><span class="avatar">S</span><span class="user-name">Silva</span></div>
+            </header>
+            <div class="page-content">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

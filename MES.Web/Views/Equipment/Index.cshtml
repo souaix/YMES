@@ -1,0 +1,160 @@
+@model EquipmentIndexViewModel
+@{
+    ViewData["Title"] = "設備主檔";
+    var activeCount = Model.AllEquipment.Count(x => x.IssueState == 2);
+    var draftCount = Model.AllEquipment.Count(x => x.IssueState == 0);
+    var pendingCount = Model.AllEquipment.Count(x => x.IssueState == 1);
+    var unusedCount = Model.AllEquipment.Count(x => x.IssueState == -1);
+    string StateName(int state) => state switch { 0 => "UNFROZEN", 1 => "PENDING", 2 => "ACTIVE", -1 => "UNUSED", _ => "UNKNOWN" };
+    string StateClass(int state) => state switch { 0 => "draft", 1 => "pending", 2 => "active", -1 => "unused", _ => "" };
+}
+
+<div class="page-heading">
+    <div>
+        <div class="eyebrow">EQUIPMENT MANAGEMENT</div>
+        <h1>設備主檔</h1>
+        <p>管理設備基本資料、設備狀態與所屬 Chamber。</p>
+    </div>
+    <a class="button button-primary" asp-action="New"><span class="button-plus">＋</span>新增設備</a>
+</div>
+
+@if (TempData["Notice"] is string notice)
+{
+    <div class="alert success">@notice</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert error">@error</div>
+}
+
+<section class="stats-grid">
+    <a class="stat-card @(Model.IssueState == null ? "stat-selected" : "")" asp-action="Index">
+        <span class="stat-label">全部設備</span><strong>@Model.AllEquipment.Count</strong><small>Equipment records</small><span class="stat-icon blue">◈</span>
+    </a>
+    <a class="stat-card @(Model.IssueState == 2 ? "stat-selected" : "")" asp-action="Index" asp-route-issueState="2">
+        <span class="stat-label">啟用中</span><strong>@activeCount</strong><small>ACTIVE</small><span class="stat-icon green">✓</span>
+    </a>
+    <a class="stat-card @(Model.IssueState == 0 ? "stat-selected" : "")" asp-action="Index" asp-route-issueState="0">
+        <span class="stat-label">未凍結</span><strong>@draftCount</strong><small>UNFROZEN</small><span class="stat-icon amber">◷</span>
+    </a>
+    <div class="stat-card stat-quiet"><span class="stat-label">待審 / 已停用</span><strong>@pendingCount <i>/</i> @unusedCount</strong><small>PENDING / UNUSED</small><span class="stat-icon gray">⋯</span></div>
+</section>
+
+<section class="equipment-workspace">
+    <div class="list-panel">
+        <div class="panel-heading">
+            <div><h2>設備清單</h2><span class="panel-subtitle">共 @Model.Equipment.Count 筆符合條件</span></div>
+            <span class="table-count">@Model.Equipment.Count ITEMS</span>
+        </div>
+        <form class="filter-bar" method="get" asp-action="Index">
+            <label class="search-box"><span>⌕</span><input type="search" name="keyword" value="@Model.Keyword" placeholder="搜尋編號、名稱、類型、供應商" /></label>
+            <select name="issueState" aria-label="狀態">
+                <option value="">全部狀態</option>
+                <option value="2" selected="@(Model.IssueState == 2)">ACTIVE</option>
+                <option value="0" selected="@(Model.IssueState == 0)">UNFROZEN</option>
+                <option value="1" selected="@(Model.IssueState == 1)">PENDING</option>
+                <option value="-1" selected="@(Model.IssueState == -1)">UNUSED</option>
+            </select>
+            <button class="button button-filter" type="submit">查詢</button>
+        </form>
+
+        <div class="table-scroll">
+            <table class="equipment-table">
+                <thead><tr><th>設備編號 / 名稱</th><th>類型</th><th>工程群組</th><th>供應商</th><th>Capacity</th><th>狀態</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.Equipment)
+                {
+                    var rowSelected = Model.Selected?.EquipmentNo == item.EquipmentNo;
+                    <tr class="@(rowSelected ? "selected-row" : "")" onclick="window.location='@Url.Action("Index", new { keyword = Model.Keyword, issueState = Model.IssueState, selectedEquipmentNo = item.EquipmentNo })'">
+                        <td><span class="equipment-code">@item.EquipmentNo</span><span class="equipment-name">@item.EquipmentName</span></td>
+                        <td><span class="type-chip">@item.EquipmentType</span></td>
+                        <td class="muted-cell">@item.EngineerGroupNo</td>
+                        <td class="muted-cell">@item.VendorNo</td>
+                        <td class="numeric-cell">@item.Capacity</td>
+                        <td><span class="status-pill @StateClass(item.IssueState)"><i></i>@StateName(item.IssueState)</span></td>
+                    </tr>
+                }
+                @if (Model.Equipment.Count == 0)
+                {
+                    <tr><td colspan="6" class="empty-state">沒有符合條件的設備資料</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="list-footer"><span>狀態以舊 MES IssueState 對應</span><span>資料由獨立 Equipment API 提供</span></div>
+    </div>
+
+    <aside class="detail-panel">
+        @if (Model.Selected is { } selected)
+        {
+            <div class="detail-header">
+                <div class="detail-symbol">◈</div>
+                <div class="detail-title"><span class="eyebrow">EQUIPMENT DETAIL</span><h2>@selected.EquipmentNo</h2><p>@selected.EquipmentName</p></div>
+                <span class="status-pill @StateClass(selected.IssueState)"><i></i>@StateName(selected.IssueState)</span>
+            </div>
+            <div class="detail-actions">
+                @if (selected.IssueState == 0)
+                {
+                    <a class="button button-outline" asp-action="Edit" asp-route-id="@selected.EquipmentNo">編輯資料</a>
+                    <form asp-action="Approve" method="post" class="inline-form"><input type="hidden" name="equipmentNo" value="@selected.EquipmentNo" /><button class="button button-primary" type="submit">核准</button></form>
+                }
+                @if (selected.IssueState is 0 or 2 or -1)
+                {
+                    <form asp-action="Delete" method="post" class="inline-form" onsubmit="return confirm('確定刪除或停用 @selected.EquipmentNo？');">
+                        <input type="hidden" name="equipmentNo" value="@selected.EquipmentNo" />
+                        <button class="button button-ghost-danger" type="submit">@(selected.IssueState == 2 ? "停用" : "刪除")</button>
+                    </form>
+                }
+            </div>
+
+            <div class="detail-section">
+                <div class="section-heading"><h3>基本資料</h3><span>01</span></div>
+                <dl class="detail-grid">
+                    <div><dt>設備類型</dt><dd>@selected.EquipmentType</dd></div>
+                    <div><dt>設備分類</dt><dd>@(string.IsNullOrWhiteSpace(selected.EquipmentClass) ? "—" : selected.EquipmentClass)</dd></div>
+                    <div><dt>工程群組</dt><dd>@selected.EngineerGroupNo</dd></div>
+                    <div><dt>供應商</dt><dd>@selected.VendorNo</dd></div>
+                    <div><dt>型號</dt><dd>@(string.IsNullOrWhiteSpace(selected.ModelNo) ? "—" : selected.ModelNo)</dd></div>
+                    <div><dt>資產編號</dt><dd>@(string.IsNullOrWhiteSpace(selected.AssetNo) ? "—" : selected.AssetNo)</dd></div>
+                    <div><dt>Capacity</dt><dd>@selected.Capacity</dd></div>
+                    <div><dt>Load Port</dt><dd>@selected.LoadPort</dd></div>
+                    <div><dt>Auto Flag</dt><dd>@(selected.AutoFlag == 1 ? "自動設備" : "非自動")</dd></div>
+                    <div><dt>EA Controller</dt><dd>@selected.EAController</dd></div>
+                </dl>
+            </div>
+
+            <div class="detail-section section-separated">
+                <div class="section-heading"><h3>時間與品質設定</h3><span>02</span></div>
+                <dl class="detail-grid">
+                    <div><dt>最大時間</dt><dd>@(selected.MaxTime?.ToString() ?? "—") 小時</dd></div>
+                    <div><dt>固定設備時間</dt><dd>@(selected.FixEqpTime?.ToString() ?? "—") 分鐘</dd></div>
+                    <div><dt>變動設備時間</dt><dd>@(selected.VarEqpTime?.ToString() ?? "—") 分鐘</dd></div>
+                    <div><dt>QC List</dt><dd>@(string.IsNullOrWhiteSpace(selected.QCListNo) ? "—" : selected.QCListNo)</dd></div>
+                </dl>
+            </div>
+
+            <div class="detail-section chamber-section">
+                <div class="section-heading"><h3>所屬 Chamber</h3><span>@Model.Chambers.Count</span>@if (selected.IssueState is 0 or 2) { <a class="small-action" asp-action="NewChamber" asp-route-parentEquipmentNo="@selected.EquipmentNo">＋ 新增</a> }</div>
+                @if (Model.Chambers.Count == 0)
+                {
+                    <div class="chamber-empty">此設備目前沒有 Chamber 子設備</div>
+                }
+                else
+                {
+                    @foreach (var chamber in Model.Chambers)
+                    {
+                        <div class="chamber-row"><span class="chamber-icon">▣</span><span class="chamber-info"><strong>@chamber.EquipmentNo</strong><small>@chamber.EquipmentName</small></span><span class="status-pill @StateClass(chamber.IssueState)"><i></i>@StateName(chamber.IssueState)</span><span class="chamber-actions">
+                            @if (chamber.IssueState == 0) { <a asp-action="EditChamber" asp-route-parentEquipmentNo="@selected.EquipmentNo" asp-route-chamberNo="@chamber.EquipmentNo">編輯</a><form asp-action="ApproveChamber" method="post"><input type="hidden" name="parentEquipmentNo" value="@selected.EquipmentNo"/><input type="hidden" name="chamberNo" value="@chamber.EquipmentNo"/><input type="hidden" name="stamp" value="@chamber.DataStamp"/><button>核准</button></form> }
+                            @if (chamber.IssueState is 0 or 2 or -1) { <form asp-action="DeleteChamber" method="post" onsubmit="return confirm('確定刪除或停用 @chamber.EquipmentNo？')"><input type="hidden" name="parentEquipmentNo" value="@selected.EquipmentNo"/><input type="hidden" name="chamberNo" value="@chamber.EquipmentNo"/><input type="hidden" name="state" value="@chamber.IssueState"/><input type="hidden" name="stamp" value="@chamber.DataStamp"/><button>@(chamber.IssueState == 2 ? "停用" : "刪除")</button></form> }
+                        </span></div>
+                    }
+                }
+            </div>
+            <div class="detail-meta">建立於 @selected.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd") <span>·</span> DataStamp @selected.DataStamp</div>
+        }
+        else
+        {
+            <div class="no-selection"><div class="detail-symbol">◈</div><h2>選擇一筆設備</h2><p>從清單選取設備以檢視基本資料、狀態與 Chamber。</p></div>
+        }
+    </aside>
+</section>
