@@ -9,7 +9,7 @@
     string StateClass(int state) => state switch { 0 => "draft", 1 => "pending", 2 => "active", -1 => "unused", _ => "" };
 }
 
-<div class="page-heading">
+<div class="page-heading winform-page-heading">
     <div>
         <div class="eyebrow">EQUIPMENT MANAGEMENT</div>
         <h1>設備主檔</h1>
@@ -27,59 +27,36 @@
     <div class="alert error">@error</div>
 }
 
-<section class="stats-grid">
-    <a class="stat-card @(Model.IssueState == null ? "stat-selected" : "")" asp-action="Index">
-        <span class="stat-label">全部設備</span><strong>@Model.AllEquipment.Count</strong><small>Equipment records</small><span class="stat-icon blue">◈</span>
-    </a>
-    <a class="stat-card @(Model.IssueState == 2 ? "stat-selected" : "")" asp-action="Index" asp-route-issueState="2">
-        <span class="stat-label">啟用中</span><strong>@activeCount</strong><small>ACTIVE</small><span class="stat-icon green">✓</span>
-    </a>
-    <a class="stat-card @(Model.IssueState == 0 ? "stat-selected" : "")" asp-action="Index" asp-route-issueState="0">
-        <span class="stat-label">未凍結</span><strong>@draftCount</strong><small>UNFROZEN</small><span class="stat-icon amber">◷</span>
-    </a>
-    <div class="stat-card stat-quiet"><span class="stat-label">待審 / 已停用</span><strong>@pendingCount <i>/</i> @unusedCount</strong><small>PENDING / UNUSED</small><span class="stat-icon gray">⋯</span></div>
-</section>
-
-<section class="equipment-workspace">
+<section class="equipment-workspace winform-workspace">
     <div class="list-panel">
         <div class="panel-heading">
             <div><h2>設備清單</h2><span class="panel-subtitle">共 @Model.Equipment.Count 筆符合條件</span></div>
             <span class="table-count">@Model.Equipment.Count ITEMS</span>
         </div>
-        <form class="filter-bar" method="get" asp-action="Index">
+        <form class="filter-bar winform-query" method="get" asp-action="Index">
             <label class="search-box"><span>⌕</span><input type="search" name="keyword" value="@Model.Keyword" placeholder="搜尋編號、名稱、類型、供應商" /></label>
-            <select name="issueState" aria-label="狀態">
-                <option value="">全部狀態</option>
-                <option value="2" selected="@(Model.IssueState == 2)">ACTIVE</option>
-                <option value="0" selected="@(Model.IssueState == 0)">UNFROZEN</option>
-                <option value="1" selected="@(Model.IssueState == 1)">PENDING</option>
-                <option value="-1" selected="@(Model.IssueState == -1)">UNUSED</option>
-            </select>
-            <button class="button button-filter" type="submit">查詢</button>
+            @await Html.PartialAsync("_WinFormIssueStateFilter", Model.IssueState)
+            <button class="button button-filter" type="submit">查詢</button><a class="winform-button" asp-action="Index">清除</a>
         </form>
 
-        <div class="table-scroll">
-            <table class="equipment-table">
-                <thead><tr><th>設備編號 / 名稱</th><th>類型</th><th>工程群組</th><th>供應商</th><th>Capacity</th><th>狀態</th></tr></thead>
-                <tbody>
-                @foreach (var item in Model.Equipment)
-                {
-                    var rowSelected = Model.Selected?.EquipmentNo == item.EquipmentNo;
-                    <tr class="@(rowSelected ? "selected-row" : "")" onclick="window.location='@Url.Action("Index", new { keyword = Model.Keyword, issueState = Model.IssueState, selectedEquipmentNo = item.EquipmentNo })'">
-                        <td><span class="equipment-code">@item.EquipmentNo</span><span class="equipment-name">@item.EquipmentName</span></td>
-                        <td><span class="type-chip">@item.EquipmentType</span></td>
-                        <td class="muted-cell">@item.EngineerGroupNo</td>
-                        <td class="muted-cell">@item.VendorNo</td>
-                        <td class="numeric-cell">@item.Capacity</td>
-                        <td><span class="status-pill @StateClass(item.IssueState)"><i></i>@StateName(item.IssueState)</span></td>
-                    </tr>
-                }
-                @if (Model.Equipment.Count == 0)
-                {
-                    <tr><td colspan="6" class="empty-state">沒有符合條件的設備資料</td></tr>
-                }
-                </tbody>
-            </table>
+        <div class="winform-function-bar" role="toolbar" aria-label="設備主檔功能"><span class="winform-function-title">FUNCTION</span>
+<a class="winform-button winform-button-primary" asp-action="New">新增設備 (A)</a>
+@if (Model.Selected is { } actionItem)
+{
+    @if (actionItem.IssueState == 0) { <a class="winform-button" asp-action="Edit" asp-route-id="@actionItem.EquipmentNo">修改 (E)</a><form asp-action="Approve" method="post" class="winform-command-form"><input type="hidden" name="equipmentNo" value="@actionItem.EquipmentNo" /><button class="winform-button">核准</button></form> }
+    @if (actionItem.IssueState is 0 or 2 or -1) { <form asp-action="Delete" method="post" class="winform-command-form" onsubmit="return confirm('確定刪除或停用 @actionItem.EquipmentNo？');"><input type="hidden" name="equipmentNo" value="@actionItem.EquipmentNo" /><button class="winform-button winform-button-danger">@(actionItem.IssueState == 2 ? "停用" : "刪除")</button></form> }
+    @if (actionItem.IssueState is 0 or 2) { <a class="winform-button" asp-action="NewChamber" asp-route-parentEquipmentNo="@actionItem.EquipmentNo">新增 Chamber</a> }
+}
+<span class="winform-toolbar-separator"></span><span class="winform-selection">符合 @Model.Equipment.Count 筆；選取 @(Model.Selected?.EquipmentNo ?? "—")</span></div>
+<div class="table-scroll">
+            <table class="equipment-table"><thead><tr><th>設備編號</th><th>設備名稱</th><th>類型</th><th>設備分類</th><th>工程群組</th><th>供應商</th><th>型號</th><th>資產編號</th><th>Capacity</th><th>Load Port</th><th>AutoFlag</th><th>EA Controller</th><th>Recipe</th><th>Max Time</th><th>Fix Time</th><th>Var Time</th><th>Unit Qty</th><th>QC List</th><th>Queue Server</th><th>Request Queue</th><th>Response Queue</th><th>狀態</th></tr></thead><tbody>
+@foreach (var item in Model.Equipment)
+{
+    var rowSelected = Model.Selected?.EquipmentNo == item.EquipmentNo;
+    <tr class="@(rowSelected ? "selected-row" : "")" onclick="window.location='@Url.Action("Index", new { keyword = Model.Keyword, issueState = Model.IssueState, selectedEquipmentNo = item.EquipmentNo })'"><td class="equipment-code">@item.EquipmentNo</td><td>@item.EquipmentName</td><td>@item.EquipmentType</td><td>@item.EquipmentClass</td><td>@item.EngineerGroupNo</td><td>@item.VendorNo</td><td>@item.ModelNo</td><td>@item.AssetNo</td><td>@item.Capacity</td><td>@item.LoadPort</td><td>@item.AutoFlag</td><td>@item.EAController</td><td>@item.EqpRecipe</td><td>@(item.MaxTime?.ToString() ?? "—")</td><td>@(item.FixEqpTime?.ToString() ?? "—")</td><td>@(item.VarEqpTime?.ToString() ?? "—")</td><td>@item.CountEquipmentUnitQty</td><td>@item.QCListNo</td><td>@item.QueueServer</td><td>@item.RequestMsgQueue</td><td>@item.ResponseMsgQueue</td><td><span class="status-pill @StateClass(item.IssueState)"><i></i>@StateName(item.IssueState)</span></td></tr>
+}
+@if (Model.Equipment.Count == 0) { <tr><td colspan="22" class="empty-state">沒有符合條件的設備資料</td></tr> }
+</tbody></table>
         </div>
         <div class="list-footer"><span>狀態以舊 MES IssueState 對應</span><span>資料由獨立 Equipment API 提供</span></div>
     </div>
