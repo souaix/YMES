@@ -10,8 +10,16 @@
 - 選單中尚未遷移的 FunctionNo 會明確標示，避免使用者誤以為功能已可操作。
 - 主檔頁仍由 Vue 呼叫獨立 API；Web 不連資料庫。
 
+## MES 資料庫 CREATE SQL
+
+- 已附實際 MES Oracle `MESTEST` 資料字典轉出的 PostgreSQL 建表 SQL：[`database/reference/mestest_first_phase_create_tables.sql`](database/reference/mestest_first_phase_create_tables.sql)。
+- 這份 SQL 包含前面盤點的 75 張第一階段主檔相關表，目標 schema 為 `YMES`，不包含任何 MES 業務資料。
+- 它不是整套 MES 的完整 schema；`tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunction` 等選單/功能目錄表，以及其餘第一層模組資料表，仍須從目前 MES Oracle 資料字典取得 DDL，再補入後續 SQL/migration。
+- 家用電腦先檢查這份 DDL 與目標資料庫既有物件的衝突，再執行或拆成正式 migration；不要把它當成已套用的 migration。
+
 ## 優先一：選單、功能目錄與權限 API
 
+- [ ] 從目前 MES Oracle 取得選單、功能、翻譯與權限相關表的正式欄位/PK/型別及 PostgreSQL `CREATE TABLE` 轉換，優先包含 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunction`；這些表不在 75 張既有 SQL 內。
 - [ ] 從舊系統取得正式選單資料及排序，來源至少包含 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunction`；保留 `MenuType`、`ParentMenuNo`、`ModuleNo`、`MenuNo`、`FunctionNo` 與停用/隱藏狀態。
 - [ ] 以舊系統語系資料解析 Module、Menu、Function 的顯示名稱。WinForms 的三層結構為 Module → `MenuType=1` 分類 → `MenuType=0` 功能項。
 - [ ] 在 YMES PostgreSQL 建立對應 migration/schema 與可重複匯入的選單 seed/import；來源是舊系統資料，不要手工猜第一層名稱或用程式資料夾名稱代替正式選單。
@@ -21,7 +29,7 @@
 
 ## 優先二：五個主檔的正式資料庫與 API
 
-目前 `src/YMes.Api` 的主檔 repository 是記憶體 Fake provider；重啟會重設資料，Production 預設停用主檔 API。請以舊 WinForms、WebService、核心類別和資料字典為依據，逐項新增 PostgreSQL migration/schema、Npgsql repository、DTO/API 與交易規則。
+目前 `src/YMes.Api` 的主檔 repository 是記憶體 Fake provider；重啟會重設資料，Production 預設停用主檔 API。先以附上的 75 表 SQL 作為第一階段起點，再依舊 WinForms、WebService、核心類別和目前 MES Oracle 資料字典補足正式 PostgreSQL migration/schema、Npgsql repository、DTO/API 與交易規則。
 
 - [ ] 設備：`tbleqpequipmentbasis`、Chamber 關係、設備群/工程群組、設備屬性、參數、QC List；支援清單 CRUD、核准/停用、複製、匯入。
 - [ ] 作業站：`tblopbasis`、群組、屬性、參數、QC、Error/Abnormal、Resource/Area、Business Rule、SubOP；支援核准、複製與匯入。
