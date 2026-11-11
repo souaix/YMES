@@ -13,7 +13,7 @@
 - src/YMes.Web/ 保留遷移前的 MVC 原型，不納入目前 UI 部署；src/YMes.Api/ 提供登入 API 與主檔 API。
 - 使用者登入後由 API cookie 驗證；Vue 以同源 credential 呼叫 API，不直接連資料庫。
 - 公開 Web 路徑維持 /YMES/；API 維持 /YMES/API/。YMES UI 路徑由 Vue 靜態服務提供 SPA fallback；`/YMES/API/*` 轉送到獨立 API 服務。
-- 菜單分成兩層，分類預設收合：設備、作業站、物料、流程、產品。
+- 選單依舊系統 Module → Menu Group → Function 呈現三層，分類預設收合；完整 Module/Function 清單由 API 提供，不能只保留設備、作業站、物料、流程、產品五個主檔入口。
 - 家用電腦負責 API、資料庫、migration 與遠端部署；公司電腦負責 UI、表單及按鈕流程，透過共用 API 開發，不直接連資料庫或 SSH。
 - 兩台電腦都以本 repo 為程式來源，UI 與 API 共用 `src/YMes.Contracts/` 契約；專案目標為 .NET 9。
 - KD 色票、自適應版面、精簡登入和主選單規則統一記錄於 [DEVELOPMENT_STYLE.md](DEVELOPMENT_STYLE.md)。

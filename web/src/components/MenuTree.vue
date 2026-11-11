@@ -3,6 +3,10 @@ interface MenuNode {
   id: string
   label: string
   shortLabel: string
+  moduleNo?: string
+  menuNo?: string
+  functionNo?: string
+  tableName?: string
   children?: MenuNode[]
 }
 

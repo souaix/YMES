@@ -683,3 +683,18 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+.framework-menu-note {
+  margin: 12px 20px 0;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fffdf5;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.framework-menu-note.error {
+  border-color: #d7a19a;
+  background: #fff6f4;
+  color: #812f25;
+}

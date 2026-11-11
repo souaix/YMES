@@ -22,16 +22,15 @@
 
 正式 Web 位址為 `/YMES`，API 基底路徑為 `/YMES/API`；正式區預設選中。測試區 API 尚未部署時保持空白，避免把測試登入送到正式資料庫。開發區使用本機 API `http://localhost:5080`。
 
-## 第一階段主選單
+## 主選單與功能範圍
 
 所有主檔清單、資料表單及關聯設定畫面由 Vue 3 提供；瀏覽器只呼叫獨立 API，正式 API 路徑為 /YMES/API/api/。開發環境預設使用記憶體 Fake repository，API 重啟後會重設；正式環境預設停用主檔 API，直到 PostgreSQL repository 完成。Fake 不是另一個資料庫，也不會寫入 YMES 主檔表。來源版本、資料表和公司端連線方式記錄在 docs/GITHUB_INTEGRATION.md。
 
 - 登入後使用同一套固定側欄與主內容區，版面隨螢幕寬度自適應；首頁主內容先留白。
 - 登入頁提供 Demo 登入捷徑，使用 `ymes` 示範帳號。
-- 選單以可展開樹狀結構呈現，最多三層；選單項目預設收合。
-- 設備管理 → 設備主檔 → `"YMES".tbleqpequipmentbasis`
-- 作業站管理 → 作業站主檔 → `"YMES".tblopbasis`（主鍵 `opno`）
-- 選單先不處理帳號角色權限；主檔 UI 已整合 GitHub 原型，正式 PostgreSQL repository 仍待接入。
+- 選單以舊系統 Module → Menu Group → Function 三層呈現，預設收合；所有第一層 Module 與底下功能都要由 API 提供，不以五個主檔入口代表整套 MES。
+- 目前已建立的 Vue 頁面包含設備、作業站、物料、流程與產品主檔；其餘功能逐項依舊系統 FunctionNo 遷移，完成狀態須如實呈現。
+- 選單資料與主檔資料都由獨立 API 提供；Production 不使用 Fake repository。
 
 ## 安全狀態
 

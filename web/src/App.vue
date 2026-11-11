@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import MenuTree from './components/MenuTree.vue'
 import EquipmentMaster from './components/EquipmentMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
+import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
 const appBasePath = import.meta.env.BASE_URL.replace(/\/+$/, '')
@@ -34,8 +35,31 @@ interface MenuNode {
   id: string
   label: string
   shortLabel: string
+  moduleNo?: string
+  menuNo?: string
+  functionNo?: string
   tableName?: string
   children?: MenuNode[]
+}
+
+interface MenuTreeApiResponse {
+  modules: {
+    moduleNo: string
+    moduleName: string
+    moduleOrder: number
+    menuGroups: {
+      menuNo: string
+      menuName: string
+      menuOrder: number
+      items: {
+        menuNo: string
+        menuName: string
+        functionNo?: string | null
+        functionName?: string | null
+        functionOrder: number
+      }[]
+    }[]
+  }[]
 }
 
 const environmentKeys: EnvironmentKey[] = ['production', 'test', 'development']
@@ -45,38 +69,42 @@ const environmentLabels: Record<EnvironmentKey, string> = {
   development: '開發區',
 }
 
-const menuTree: MenuNode[] = [
+const fallbackMenuTree: MenuNode[] = [
   {
-    id: 'equipment-management',
-    label: '設備管理',
+    id: 'equipment-data',
+    label: '設備資料',
     shortLabel: '設',
-    children: [{ id: 'equipment-master', label: '設備主檔', tableName: 'tbleqpequipmentbasis', shortLabel: '主' }],
+    children: [{ id: 'equipment-settings', label: '設備設定', shortLabel: '設', children: [{ id: 'equipment-master', label: '設備基本資料', tableName: 'tbleqpequipmentbasis', shortLabel: '主', functionNo: 'EQP BASIS', moduleNo: 'EQP' }] }],
   },
   {
-    id: 'operation-management',
-    label: '作業站管理',
+    id: 'operation-data',
+    label: '作業站資料',
     shortLabel: '站',
-    children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主' }],
+    children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }] }],
   },
   {
-    id: 'material-management',
-    label: '物料管理',
+    id: 'material-data',
+    label: '物料資料',
     shortLabel: '料',
-    children: [{ id: 'material-master', label: '物料主檔', tableName: 'tblmtlmaterialbasis', shortLabel: '主' }],
+    children: [{ id: 'material-settings', label: '物料設定', shortLabel: '設', children: [{ id: 'material-master', label: '物料基本資料', tableName: 'tblmtlmaterialbasis', shortLabel: '主', functionNo: 'MTL BASIS', moduleNo: 'MTL' }] }],
   },
   {
-    id: 'process-management',
-    label: '流程管理',
+    id: 'process-data',
+    label: '流程資料',
     shortLabel: '流',
-    children: [{ id: 'process-master', label: '流程主檔', tableName: 'tblprsprocessbasis', shortLabel: '主' }],
+    children: [{ id: 'process-settings', label: '流程設定', shortLabel: '設', children: [{ id: 'process-master', label: '流程主檔', tableName: 'tblprsprocessbasis', shortLabel: '主', functionNo: 'PRS BASIS', moduleNo: 'PRS' }] }],
   },
   {
-    id: 'product-management',
-    label: '產品管理',
+    id: 'product-data',
+    label: '產品資料',
     shortLabel: '品',
-    children: [{ id: 'product-master', label: '產品主檔', tableName: 'tblprdproductbasis', shortLabel: '主' }],
+    children: [{ id: 'product-settings', label: '產品設定', shortLabel: '設', children: [{ id: 'product-master', label: '產品主檔', tableName: 'tblprdproductbasis', shortLabel: '主', functionNo: 'PRD BASIS', moduleNo: 'PRD' }] }],
   },
 ]
+
+const menuTree = ref<MenuNode[]>(fallbackMenuTree)
+const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
+const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
   'equipment-master': equipmentRoute,
@@ -84,6 +112,14 @@ const menuRoutes: Record<string, string> = {
   'material-master': `${appBasePath}/MasterData/Materials`,
   'process-master': `${appBasePath}/MasterData/Processes`,
   'product-master': `${appBasePath}/MasterData/Products`,
+}
+
+const functionRoutes: Record<string, string> = {
+  'EQP BASIS': equipmentRoute,
+  'OP BASIS': `${appBasePath}/MasterData/Operations`,
+  'MTL BASIS': `${appBasePath}/MasterData/Materials`,
+  'PRS BASIS': `${appBasePath}/MasterData/Processes`,
+  'PRD BASIS': `${appBasePath}/MasterData/Products`,
 }
 
 const runtimeConfig = ref<RuntimeConfig>({
@@ -121,12 +157,97 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
   return key === 'operation-master' || key === 'material-master' || key === 'process-master' || key === 'product-master' ? key : null
 })
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
-const currentMasterTitle = computed(() => menuTree.flatMap((group) => group.children ?? []).find((item) => item.id === activeMasterKey.value)?.label ?? '主選單')
+const currentMenuNode = computed(() => findMenuNodeByRoute(menuTree.value, currentPath.value))
+const activeFunctionNode = computed(() => currentMenuNode.value && !activeMasterKey.value ? currentMenuNode.value : null)
+const currentMasterTitle = computed(() => currentMenuNode.value?.label ?? '主選單')
 const localDemoApi = import.meta.env.DEV && import.meta.env.VITE_LOCAL_DEMO_API === 'true'
+
+function findMenuNode(items: MenuNode[], id: string): MenuNode | null {
+  for (const item of items) {
+    if (item.id === id) return item
+    const child = item.children ? findMenuNode(item.children, id) : null
+    if (child) return child
+  }
+  return null
+}
+
+function shortLabel(label: string): string {
+  return Array.from(label.trim())[0] || '功'
+}
+
+function mapMenuTree(payload: MenuTreeApiResponse): MenuNode[] {
+  if (!payload || !Array.isArray(payload.modules)) throw new Error('主選單 API 回應格式不正確。')
+  return payload.modules.map((module) => ({
+    id: `module:${module.moduleNo}`,
+    label: module.moduleName,
+    shortLabel: shortLabel(module.moduleName),
+    moduleNo: module.moduleNo,
+    children: (module.menuGroups ?? []).map((group) => ({
+      id: `menu:${module.moduleNo}:${group.menuNo}`,
+      label: group.menuName,
+      shortLabel: shortLabel(group.menuName),
+      moduleNo: module.moduleNo,
+      menuNo: group.menuNo,
+      children: (group.items ?? []).map((entry) => ({
+        id: `function:${module.moduleNo}:${entry.functionNo || entry.menuNo}`,
+        label: entry.functionName?.trim() || entry.menuName,
+        shortLabel: shortLabel(entry.functionName?.trim() || entry.menuName),
+        moduleNo: module.moduleNo,
+        menuNo: entry.menuNo,
+        functionNo: entry.functionNo || undefined,
+      })),
+    })),
+  }))
+}
+
+function routeForMenuNode(item: MenuNode): string {
+  const functionNo = item.functionNo?.trim().toUpperCase()
+  return menuRoutes[item.id] ?? (functionNo ? functionRoutes[functionNo] : undefined) ??
+    `${appBasePath}/Function/${encodeURIComponent(item.moduleNo || 'module')}/${encodeURIComponent(item.functionNo || item.menuNo || item.id)}`
+}
+
+function findMenuNodeByRoute(items: MenuNode[], route: string): MenuNode | null {
+  for (const item of items) {
+    if (!item.children?.length && routeForMenuNode(item) === route) return item
+    const child = item.children ? findMenuNodeByRoute(item.children, route) : null
+    if (child) return child
+  }
+  return null
+}
+
+async function loadMenuTree(): Promise<void> {
+  menuSource.value = 'loading'
+  menuError.value = ''
+  let url: string | null
+  try {
+    url = apiUrl('/api/navigation/menu-tree')
+  } catch (error) {
+    url = null
+    menuError.value = error instanceof Error ? error.message : '主選單環境設定錯誤。'
+  }
+  if (!url) {
+    menuTree.value = import.meta.env.DEV ? fallbackMenuTree : []
+    menuSource.value = import.meta.env.DEV ? 'fallback' : 'error'
+    if (!menuError.value) menuError.value = '尚未設定主選單 API 位址。'
+    syncRouteState()
+    return
+  }
+  try {
+    const response = await fetch(url, { credentials: 'include', cache: 'no-store' })
+    if (!response.ok) throw new Error(`主選單 API 回應錯誤 (${response.status})。`)
+    menuTree.value = mapMenuTree(await response.json() as MenuTreeApiResponse)
+    menuSource.value = 'api'
+  } catch (error) {
+    menuError.value = error instanceof Error ? error.message : '主選單載入失敗。'
+    menuTree.value = import.meta.env.DEV ? fallbackMenuTree : []
+    menuSource.value = import.meta.env.DEV ? 'fallback' : 'error'
+  }
+  syncRouteState()
+}
 
 function syncRouteState(): void {
   currentPath.value = window.location.pathname
-  selectedMenuKey.value = activeMasterKey.value
+  selectedMenuKey.value = findMenuNodeByRoute(menuTree.value, currentPath.value)?.id ?? null
 }
 
 function toggleMenuNode(id: string): void {
@@ -137,8 +258,9 @@ function toggleMenuNode(id: string): void {
 
 function selectMenuNode(id: string): void {
   selectedMenuKey.value = id
-  const route = menuRoutes[id]
-  if (!route) return
+  const item = findMenuNode(menuTree.value, id)
+  if (!item || item.children?.length) return
+  const route = routeForMenuNode(item)
   window.history.pushState({}, '', route)
   syncRouteState()
 }
@@ -200,6 +322,7 @@ onMounted(async () => {
       if (!user.mustChangePassword) {
         currentUser.value = user
         screen.value = 'signed-in'
+        await loadMenuTree()
       }
     }
   } catch {
@@ -290,6 +413,7 @@ async function submitLogin(): Promise<void> {
     } else {
       screen.value = 'signed-in'
       password.value = ''
+      void loadMenuTree()
     }
   } catch {
     errorMessage.value = selectedEnvironmentLabel.value + '登入服務目前無法連線。'
@@ -356,6 +480,7 @@ async function submitPasswordChange(): Promise<void> {
     if (currentUser.value) currentUser.value.mustChangePassword = false
     screen.value = 'signed-in'
     successMessage.value = '密碼已更新。'
+    void loadMenuTree()
   } catch {
     errorMessage.value = selectedEnvironmentLabel.value + '登入服務目前無法連線。'
   } finally {
@@ -385,6 +510,9 @@ async function signOut(): Promise<void> {
   errorMessage.value = ''
   successMessage.value = ''
   selectedMenuKey.value = null
+  menuTree.value = fallbackMenuTree
+  menuSource.value = 'fallback'
+  menuError.value = ''
   screen.value = 'login'
 }
 </script>
@@ -570,6 +698,12 @@ async function signOut(): Promise<void> {
             <button type="button" @click="signOut">登出</button>
           </div>
         </header>
+        <div v-if="menuSource === 'fallback'" class="framework-menu-note" role="status">
+          目前顯示五個主檔的簡化選單；完整 WinForms 選單待主選單 API 提供。
+        </div>
+        <div v-else-if="menuSource === 'error'" class="framework-menu-note error" role="alert">
+          主選單載入失敗：{{ menuError }}
+        </div>
         <EquipmentMaster
           v-if="isEquipmentPage"
           class="framework-content"
@@ -580,6 +714,14 @@ async function signOut(): Promise<void> {
           class="framework-content"
           :master-key="activeMasterDataKey"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+        />
+        <FunctionPending
+          v-else-if="activeFunctionNode"
+          class="framework-content"
+          :module-no="activeFunctionNode.moduleNo || ''"
+          :module-name="menuTree.find((item) => item.moduleNo === activeFunctionNode?.moduleNo)?.label || ''"
+          :function-no="activeFunctionNode.functionNo || activeFunctionNode.menuNo || ''"
+          :function-name="activeFunctionNode.label"
         />
       </section>
 

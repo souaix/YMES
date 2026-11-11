@@ -40,8 +40,43 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 - 登入頁保持精簡，只放作業環境、帳號、密碼、Demo 登入和登入按鈕；錯誤訊息貼近欄位或表單顯示。不要另加大型頁首、宣傳文字、狀態看板或非必要說明區塊。
 - 作業環境選項為正式區、測試區、開發區，預設正式區。Demo 登入只供明確啟用的 Development 預覽。
 - 登入後使用 KD Logo 與固定側欄/主內容區。主內容首頁先留白，不自行增加儀表板或統計卡片。
-- 選單預設全部收合。選單最多三層，現階段以兩層為主；只有確實需要分類時才使用第三層。
-- 目前主選單先包含設備管理、作業站管理、物料管理、流程管理與產品管理；角色/權限選單暫不加入。
+- 選單預設全部收合，依舊系統 Module → Menu Group → Function 的三層結構呈現；不得把第三層主檔功能誤列為第一層。
+- 主選單項目由 API 提供，Vue 不自行猜測舊系統的 Module、MenuNo、FunctionNo 或翻譯名稱。API 尚未提供完整選單時，Development 可以清楚標示並使用五個已開發主檔的簡化導覽；Production 不以簡化導覽假裝完整。
+- 已有 Web 畫面的功能導向既有 Vue 頁面；尚未遷移的 FunctionNo 仍能從選單識別，頁面需清楚標示尚未遷移，不得顯示假資料或假成功訊息。
+
+### 主選單 API 契約
+
+Vue 使用登入 Cookie 呼叫 `GET /YMES/API/api/navigation/menu-tree`。回應保留舊系統識別碼及排序：
+
+```json
+{
+  "modules": [
+    {
+      "moduleNo": "EQP",
+      "moduleName": "設備資料",
+      "moduleOrder": 10,
+      "menuGroups": [
+        {
+          "menuNo": "EQP_SETTING",
+          "menuName": "設備設定",
+          "menuOrder": 10,
+          "items": [
+            {
+              "menuNo": "EQP_BASIS_MENU",
+              "menuName": "設備基本資料",
+              "functionNo": "EQP BASIS",
+              "functionName": "設備基本資料",
+              "functionOrder": 10
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+API 應從舊系統 `tblSYSModule`、`tblSYSMenuItem` 及功能、語系、權限來源整理資料，依登入者權限回傳可用項目。前端只負責階層呈現和導向，不連資料庫。
 
 ## 自適應與主檔頁
 
@@ -58,7 +93,7 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 1. 兩台電腦都在同一個 `souaix/YMES` repo，使用相同的 API 契約與 .NET 9 目標。
 2. Vue Web 呼叫 `/YMES/API`；UI 專案不設定資料庫連線。
 3. Production 不啟用 Fake repository 或 Demo 登入。
-4. 新增樣式遵循 KD 色票、收合式兩層選單與自適應版面。
+4. 新增樣式遵循 KD 色票、收合式三層選單與自適應版面。
 5. 修改部署路徑時，同步檢查 `deploy/compose.yaml` 和 `deploy/nginx-ymes.locations.conf`。
 
 相關文件：[GitHub 原型整合](GITHUB_INTEGRATION.md)、[共用系統架構](../ARCHITECTURE_BASE.md)、[部署設定](../DEPLOYMENT_PROFILES.md)。
