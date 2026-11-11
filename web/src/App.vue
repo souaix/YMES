@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import MenuTree from './components/MenuTree.vue'
 import EquipmentMaster from './components/EquipmentMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
@@ -161,6 +161,12 @@ const currentMenuNode = computed(() => findMenuNodeByRoute(menuTree.value, curre
 const activeFunctionNode = computed(() => currentMenuNode.value && !activeMasterKey.value ? currentMenuNode.value : null)
 const currentMasterTitle = computed(() => currentMenuNode.value?.label ?? '主選單')
 const localDemoApi = import.meta.env.DEV && import.meta.env.VITE_LOCAL_DEMO_API === 'true'
+
+watchEffect(() => {
+  document.title = screen.value === 'signed-in'
+    ? `${currentMasterTitle.value}｜YMES`
+    : '登入｜YMES 製造執行系統'
+})
 
 function findMenuNode(items: MenuNode[], id: string): MenuNode | null {
   for (const item of items) {
