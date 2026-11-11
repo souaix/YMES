@@ -47,7 +47,6 @@
                 <div class="field"><span>自動設備</span><div class="winform-radio"><label><input type="radio" name="AutoFlag" value="1" checked="@(Model.AutoFlag == 1)" />是</label><label><input type="radio" name="AutoFlag" value="0" checked="@(Model.AutoFlag == 0)" />否</label></div></div>
                 <fieldset class="winform-group">
                     <legend>訊息佇列設定</legend>
-                    <label class="check-field"><input asp-for="DefaultServer" /><span>預設伺服器</span></label>
                     <label class="field"><span>佇列伺服器</span><span class="winform-inline-field"><input asp-for="QueueServer" /><button class="lookup-button" type="button" data-focus-field="QueueServer">...</button></span></label>
                     <label class="field"><span>請求訊息佇列</span><input asp-for="RequestMsgQueue" /></label>
                     <label class="field"><span>回應訊息佇列</span><input asp-for="ResponseMsgQueue" /></label>

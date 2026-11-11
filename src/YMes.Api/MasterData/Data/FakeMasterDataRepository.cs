@@ -481,7 +481,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
     private ProcessDto GetProcessUnsafe(string no, string version) => _processes.TryGetValue((Key(no), Key(version)), out var x) ? x : throw NotFound("流程", $"{no}/{version}");
     private ProductDto GetProductUnsafe(string no, string version) => _products.TryGetValue((Key(no), Key(version)), out var x) ? x : throw NotFound("產品", $"{no}/{version}");
 
-    private static OperationDto MapOperation(OperationWriteRequest x, int state, int stamp, DateTime created) => new()
+    private static OperationDto MapOperation(OperationWriteRequest x, int state, long stamp, DateTime? created) => new()
     {
         OperationNo = Key(x.OperationNo), OperationName = x.OperationName.Trim(), OperationType = Key(x.OperationType), OperationClass = x.OperationClass,
         ShortName = x.ShortName.Trim(), OperationOrder = x.OperationOrder, ProductionSegmentNo = Key(x.ProductionSegmentNo), Description = x.Description.Trim(),
@@ -552,18 +552,18 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         if (no.Equals("LOTCREATE", StringComparison.OrdinalIgnoreCase)) throw BadRequest("LOTCREATE 是保留作業編號。");
     }
 
-    private static void CheckStamp(int current, int expected)
+    private static void CheckStamp(long current, long expected)
     {
         if (current != expected) throw Conflict("資料已被其他人更新，請重新載入後再儲存。");
     }
 
-    private static void CheckEditable(int state, int currentStamp, int expectedStamp)
+    private static void CheckEditable(int state, long currentStamp, long expectedStamp)
     {
         if (state != 0) throw Conflict("只有 UNFROZEN 主檔可以編輯。");
         CheckStamp(currentStamp, expectedStamp);
     }
 
-    private static void CheckRemoval(int currentState, int requestedState, int currentStamp, int expectedStamp)
+    private static void CheckRemoval(int currentState, int requestedState, long currentStamp, long expectedStamp)
     {
         if (currentState != requestedState) throw Conflict("主檔狀態已變更，請重新載入後再操作。");
         if (currentState == 1) throw Conflict("PENDING 主檔不可刪除。");

@@ -75,7 +75,7 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
         if (item is null) return NotFound();
         if (item.IssueState != 0) return Conflict("只有 UNFROZEN 設備可以編輯。");
         await LoadEquipmentLookups(cancellationToken);
-        ViewData["CreatedAt"] = item.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss");
+        ViewData["CreatedAt"] = item.CreatedAt?.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss") ?? "";
         ViewData["RevisedAt"] = item.RevisedAt?.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss") ?? "";
         return View("Form", ToRequest(item));
     }
@@ -241,7 +241,6 @@ public sealed class EquipmentController(EquipmentApiClient api, MasterDataApiCli
         Capacity = item.Capacity,
         LoadPort = item.LoadPort,
         AutoFlag = item.AutoFlag,
-        DefaultServer = item.DefaultServer,
         EAController = item.EAController,
         EqpRecipe = item.EqpRecipe,
         QCListNo = item.QCListNo,

@@ -1,0 +1,7 @@
+BEGIN;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
+    "YMES".tblopbasis
+TO ymes_app;
+
+COMMIT;

@@ -177,27 +177,35 @@ function shortLabel(label: string): string {
 
 function mapMenuTree(payload: MenuTreeApiResponse): MenuNode[] {
   if (!payload || !Array.isArray(payload.modules)) throw new Error('主選單 API 回應格式不正確。')
-  return payload.modules.map((module) => ({
-    id: `module:${module.moduleNo}`,
-    label: module.moduleName,
-    shortLabel: shortLabel(module.moduleName),
-    moduleNo: module.moduleNo,
-    children: (module.menuGroups ?? []).map((group) => ({
-      id: `menu:${module.moduleNo}:${group.menuNo}`,
-      label: group.menuName,
-      shortLabel: shortLabel(group.menuName),
+  return payload.modules.map((module) => {
+    const mapItem = (entry: MenuTreeApiResponse['modules'][number]['menuGroups'][number]['items'][number]): MenuNode => ({
+      id: `function:${module.moduleNo}:${entry.functionNo || entry.menuNo}`,
+      label: entry.functionName?.trim() || entry.menuName,
+      shortLabel: shortLabel(entry.functionName?.trim() || entry.menuName),
       moduleNo: module.moduleNo,
-      menuNo: group.menuNo,
-      children: (group.items ?? []).map((entry) => ({
-        id: `function:${module.moduleNo}:${entry.functionNo || entry.menuNo}`,
-        label: entry.functionName?.trim() || entry.menuName,
-        shortLabel: shortLabel(entry.functionName?.trim() || entry.menuName),
+      menuNo: entry.menuNo,
+      functionNo: entry.functionNo || undefined,
+    })
+    const children = (module.menuGroups ?? []).flatMap((group) => {
+      const items = (group.items ?? []).map(mapItem)
+      if (group.menuName.trim() === module.moduleName.trim()) return items
+      return [{
+        id: `menu:${module.moduleNo}:${group.menuNo}`,
+        label: group.menuName,
+        shortLabel: shortLabel(group.menuName),
         moduleNo: module.moduleNo,
-        menuNo: entry.menuNo,
-        functionNo: entry.functionNo || undefined,
-      })),
-    })),
-  }))
+        menuNo: group.menuNo,
+        children: items,
+      }]
+    })
+    return {
+      id: `module:${module.moduleNo}`,
+      label: module.moduleName,
+      shortLabel: shortLabel(module.moduleName),
+      moduleNo: module.moduleNo,
+      children,
+    }
+  })
 }
 
 function routeForMenuNode(item: MenuNode): string {

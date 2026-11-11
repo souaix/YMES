@@ -51,7 +51,7 @@ public sealed class MasterDataController(MasterDataApiClient api) : Controller
         if (item is null) return NotFound();
         if (item.IssueState != 0) return Conflict("只有 UNFROZEN 作業可以編輯。");
         await LoadOperationLookups(ct);
-        ViewData["CreatedAt"] = item.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss");
+        ViewData["CreatedAt"] = item.CreatedAt?.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss") ?? "";
         ViewData["RevisedAt"] = "";
         return View("OperationForm", ToRequest(item));
     }

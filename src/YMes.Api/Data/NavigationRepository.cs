@@ -61,7 +61,7 @@ public sealed class NavigationRepository(NpgsqlDataSource dataSource)
             .GroupBy(row => new { row.ModuleNo, row.ModuleOrder })
             .Select(module => new NavigationModuleDto(
                 module.Key.ModuleNo,
-                module.Key.ModuleNo,
+                DisplayModuleName(module.Key.ModuleNo),
                 module.Key.ModuleOrder,
                 module.GroupBy(row => new { row.CategoryMenuNo, row.CategoryName, row.CategoryOrder })
                     .Select(category => new NavigationMenuGroupDto(
@@ -79,6 +79,13 @@ public sealed class NavigationRepository(NpgsqlDataSource dataSource)
 
         return new NavigationMenuTreeResponse(modules);
     }
+
+    private static string DisplayModuleName(string moduleNo) => moduleNo.ToUpperInvariant() switch
+    {
+        "EQP" => "設備管理",
+        "OP" => "作業站管理",
+        _ => moduleNo
+    };
 
     private sealed record MenuRow(
         string ModuleNo,

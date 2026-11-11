@@ -48,4 +48,4 @@ public sealed class EquipmentApiClient(HttpClient httpClient)
     }
 }
 
-public sealed record EquipmentCommandRequest(int DataStamp);
+public sealed record EquipmentCommandRequest(long DataStamp);
