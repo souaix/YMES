@@ -1,7 +1,7 @@
 -- PostgreSQL CREATE TABLE starter generated from the existing MES Oracle MESTEST data-dictionary extraction.
--- Scope: the 75 first-phase master-data tables in D:\iMES\CSiMES\主檔資料字典.md; no business rows are copied.
+-- Scope: 75 first-phase master-data tables plus 3 MES system menu/function tables; no business rows are copied.
 -- Target schema is YMES to align with the YMES API database. Review against the home-PC target before applying.
--- This file is a starter DDL, not the complete MES schema; menu/function metadata and remaining domains are not included.
+-- This remains a starter DDL, not the complete MES schema; other domains and permission/translation tables are not included.
 
 CREATE SCHEMA IF NOT EXISTS "YMES";
 SET search_path TO "YMES", public;
@@ -2623,5 +2623,65 @@ COMMENT ON COLUMN tblinvengineergroupbasis.createdate IS '建立時間（推測�
 COMMENT ON COLUMN tblinvengineergroupbasis.reviser IS '使用者／人員（推測，請依業務確認）';
 COMMENT ON COLUMN tblinvengineergroupbasis.revisedate IS '修改時間（推測，請依業務確認）';
 COMMENT ON COLUMN tblinvengineergroupbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
+
+-- MES system menu and function catalog
+-- Converted from Oracle MESTEST DBMS_METADATA.GET_DDL; column names, defaults, nullability, and primary keys are retained.
+CREATE TABLE IF NOT EXISTS tblsysmodule (
+    moduleno varchar(10) NOT NULL,
+    moduleorder numeric(6,1) NOT NULL,
+    datastamp numeric(11,0) DEFAULT 0,
+    creator varchar(10),
+    createdate timestamp without time zone,
+    reviser varchar(10),
+    revisedate timestamp without time zone,
+    CONSTRAINT pk_tblsysmodule PRIMARY KEY (moduleno)
+);
+COMMENT ON TABLE tblsysmodule IS 'MES system module catalog; Oracle source: MESTEST.TBLSYSMODULE';
+
+CREATE TABLE IF NOT EXISTS tblsysmenuitem (
+    moduleno varchar(50) NOT NULL,
+    menuno varchar(50) NOT NULL,
+    menuname varchar(50) NOT NULL,
+    menutype numeric(1,0) NOT NULL,
+    menuorder numeric(4,0) NOT NULL,
+    parentmenuno varchar(50) NOT NULL,
+    activemodule varchar(50) NOT NULL,
+    CONSTRAINT pk_tblsysmenuitem PRIMARY KEY (moduleno, menuno)
+);
+COMMENT ON TABLE tblsysmenuitem IS 'MES system menu catalog; Oracle source: MESTEST.TBLSYSMENUITEM';
+
+CREATE TABLE IF NOT EXISTS tblsysfunction (
+    functionno varchar(50) NOT NULL,
+    functionname varchar(50) NOT NULL,
+    functionorder numeric(6,1) NOT NULL,
+    moduleno varchar(10) NOT NULL,
+    formname varchar(50),
+    weburl varchar(100),
+    creator varchar(10),
+    createdate timestamp without time zone,
+    privoption numeric(1,0) DEFAULT 0,
+    issueoption numeric(1,0) DEFAULT 0,
+    issuetable varchar(50),
+    executionfile varchar(50),
+    functionkey varchar(10),
+    executionmode numeric(1,0) DEFAULT 0 NOT NULL,
+    activemodule varchar(50),
+    systemversion varchar(10),
+    semi_wafer numeric(1,0),
+    ic_cp_pkg numeric(1,0),
+    ic_ft_pkg numeric(1,0),
+    discrete_pkg numeric(1,0),
+    led_pkg numeric(1,0),
+    asm numeric(1,0),
+    ic_ingot numeric(1,0),
+    epi_wafer numeric(1,0) DEFAULT 0,
+    accstatechangeinterface numeric(1,0) DEFAULT 0,
+    ic_smt numeric(1,0),
+    datastamp numeric(11,0) DEFAULT 0,
+    reviser varchar(10),
+    revisedate timestamp without time zone,
+    CONSTRAINT pk_tblsysfunction PRIMARY KEY (functionno)
+);
+COMMENT ON TABLE tblsysfunction IS 'MES system function catalog; Oracle source: MESTEST.TBLSYSFUNCTION';
 
 SET search_path TO public;

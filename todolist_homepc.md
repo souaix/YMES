@@ -13,13 +13,13 @@
 ## MES 資料庫 CREATE SQL
 
 - 已附實際 MES Oracle `MESTEST` 資料字典轉出的 PostgreSQL 建表 SQL：[`database/reference/mestest_first_phase_create_tables.sql`](database/reference/mestest_first_phase_create_tables.sql)。
-- 這份 SQL 包含前面盤點的 75 張第一階段主檔相關表，目標 schema 為 `YMES`，不包含任何 MES 業務資料。
-- 它不是整套 MES 的完整 schema；`tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunction` 等選單/功能目錄表，以及其餘第一層模組資料表，仍須從目前 MES Oracle 資料字典取得 DDL，再補入後續 SQL/migration。
+- 這份 SQL 包含 75 張第一階段主檔相關表，以及 TBLSYSMODULE、TBLSYSMENUITEM、TBLSYSFUNCTION 三張系統選單/功能目錄表；目標 schema 為 YMES，不包含任何 MES 業務資料。
+- 三張系統選單/功能目錄表已依目前 MES Oracle MESTEST 資料字典補入 SQL；目前只有結構，尚未匯入正式選單資料。整套 MES 其他第一層模組資料表仍需分批盤點。
 - 家用電腦先檢查這份 DDL 與目標資料庫既有物件的衝突，再執行或拆成正式 migration；不要把它當成已套用的 migration。
 
 ## 優先一：選單、功能目錄與權限 API
 
-- [ ] 從目前 MES Oracle 取得選單、功能、翻譯與權限相關表的正式欄位/PK/型別及 PostgreSQL `CREATE TABLE` 轉換，優先包含 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunction`；這些表不在 75 張既有 SQL 內。
+- [x] 已依目前 MES Oracle MESTEST 原生 DDL 完成三張系統表的 PostgreSQL 結構轉換，保留欄位名稱、預設值、NULL 設定與主鍵。
 - [ ] 從舊系統取得正式選單資料及排序，來源至少包含 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunction`；保留 `MenuType`、`ParentMenuNo`、`ModuleNo`、`MenuNo`、`FunctionNo` 與停用/隱藏狀態。
 - [ ] 以舊系統語系資料解析 Module、Menu、Function 的顯示名稱。WinForms 的三層結構為 Module → `MenuType=1` 分類 → `MenuType=0` 功能項。
 - [ ] 在 YMES PostgreSQL 建立對應 migration/schema 與可重複匯入的選單 seed/import；來源是舊系統資料，不要手工猜第一層名稱或用程式資料夾名稱代替正式選單。
