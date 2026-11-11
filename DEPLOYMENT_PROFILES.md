@@ -10,13 +10,13 @@ Web 靜態資產與 API 分別建置和部署。PostgreSQL 可由 Compose 部署
 
 - Nginx 或核准的反向代理提供 Web 靜態資產和 TLS 入口。
 - ASP.NET Core API 以 Linux Container 執行；Docker Compose 管理服務、網路、健康檢查和設定。
-- YMES API 與主檔 Web 目標為 .NET 9；以各自 Dockerfile 的 .NET 9 SDK/runtime 映像建置與執行，不安裝或替換主機共用的 .NET runtime，避免影響同機其他專案。
+- YMES API 目標為 .NET 9；以 API Dockerfile 的 .NET 9 SDK/runtime 映像建置與執行。Vue Web 是獨立的靜態資產服務，不安裝或替換主機共用的 .NET runtime，避免影響同機其他專案。
 - PostgreSQL 可作為獨立 Compose 服務或使用外部資料庫；資料目錄必須使用持久化儲存。
 - 機密由部署環境注入，不嵌入映像、不提交版本庫、不輸出到 log。
 - 資料庫端口不公開至不必要網路，服務帳號和網路權限採最小權限。
 - 單一 Compose 主機仍是故障單點；高可用需求要另設備援主機/資料庫及演練流程。
 
-YMES Vue Web、ASP.NET Core 主檔 Web 與 API 使用不同容器，部署在同一台主機。既有反向代理以 `/YMES/` 提供 Web，並以 `/YMES/API/` 轉送 API；小寫 `/ymes` 路徑回應 404，避免未匹配路徑落到同機其他網站。API 容器只監聽主機 loopback 的專用連接埠，兩個 Web 容器也只透過 loopback 提供服務。主檔 API 使用 repository 介面；Production 預設停用主檔端點，直到 PostgreSQL provider 完成，Fake provider 只用於 Development。部署時將 YMES 路由以獨立 Nginx include 加入既有 HTTPS server，保留其他專案的路由，並在重新載入前執行 `nginx -t`、保留設定備份。API 使用獨立服務名稱、資料保護金鑰持久卷及機密設定，不替換主機共用的系統 runtime。
+YMES Vue Web 與 ASP.NET Core API 使用不同容器，部署在同一台主機。反向代理將 `/YMES/` 下的 UI 路徑送到 Vue 靜態服務並提供 SPA fallback，以 `/YMES/API/` 轉送 API；主檔表單和關聯設定都由 Vue 呼叫 API，不再轉送 MVC。小寫 `/ymes` 路徑回應 404，避免未匹配路徑落到同機其他網站。API 與 Web 容器只透過主機 loopback 的專用連接埠提供服務。主檔 API 使用 repository 介面；Production 預設停用主檔端點，直到 PostgreSQL provider 完成，Fake provider 只用於 Development。部署時將 YMES 路由以獨立 Nginx include 加入既有 HTTPS server，保留其他專案的路由，並在重新載入前執行 `nginx -t`、保留設定備份。API 使用獨立服務名稱、資料保護金鑰持久卷及機密設定，不替換主機共用的系統 runtime。
 
 ## 3. Windows Server + IIS
 

@@ -41,25 +41,6 @@ services:
       retries: 3
       start_period: 10s
 
-  ymes-master-web:
-    build:
-      context: ../src
-      dockerfile: YMes.Web/Dockerfile
-    image: ymes-master-web:current
-    container_name: ymes-master-web
-    restart: unless-stopped
-    network_mode: host
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://127.0.0.1:18090
-      YMES_PATH_BASE: /YMES
-      YMES_WEB_DATA_PROTECTION_PATH: /data/dpkeys
-      ApiBaseUrl: http://127.0.0.1:18088/YMES/API/
-    volumes:
-      - ymes-web-dpkeys:/data/dpkeys
-
 volumes:
   ymes-dpkeys:
     name: ymes-dpkeys
-  ymes-web-dpkeys:
-    name: ymes-web-dpkeys

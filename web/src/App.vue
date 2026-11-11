@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import MenuTree from './components/MenuTree.vue'
+import EquipmentMaster from './components/EquipmentMaster.vue'
+import MasterDataMaster from './components/MasterDataMaster.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
+const appHomeRoute = import.meta.env.BASE_URL
+const appBasePath = import.meta.env.BASE_URL.replace(/\/+$/, '')
+const equipmentRoute = `${appBasePath}/Equipment`
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
+type MasterDataKey = 'operation-master' | 'material-master' | 'process-master' | 'product-master'
 
 interface EnvironmentConfig {
   label: string
@@ -73,11 +79,11 @@ const menuTree: MenuNode[] = [
 ]
 
 const menuRoutes: Record<string, string> = {
-  'equipment-master': '/YMES/Equipment/Index',
-  'operation-master': '/YMES/MasterData/Operations',
-  'material-master': '/YMES/MasterData/Materials',
-  'process-master': '/YMES/MasterData/Processes',
-  'product-master': '/YMES/MasterData/Products',
+  'equipment-master': equipmentRoute,
+  'operation-master': `${appBasePath}/MasterData/Operations`,
+  'material-master': `${appBasePath}/MasterData/Materials`,
+  'process-master': `${appBasePath}/MasterData/Processes`,
+  'product-master': `${appBasePath}/MasterData/Products`,
 }
 
 const runtimeConfig = ref<RuntimeConfig>({
@@ -102,7 +108,26 @@ const configLoaded = ref(false)
 const selectedMenuKey = ref<string | null>(null)
 const expandedMenuKeys = ref<string[]>([])
 const sidebarOpen = ref(true)
+const currentPath = ref(window.location.pathname)
+const activeMasterKey = computed(() => {
+  const path = currentPath.value.replace(/\/+$/, '')
+  return (Object.entries(menuRoutes).find(([, route]) => {
+    const base = route.replace(/\/+$/, '')
+    return path === base || path.startsWith(base + '/')
+  })?.[0] ?? null)
+})
+const activeMasterDataKey = computed<MasterDataKey | null>(() => {
+  const key = activeMasterKey.value
+  return key === 'operation-master' || key === 'material-master' || key === 'process-master' || key === 'product-master' ? key : null
+})
+const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
+const currentMasterTitle = computed(() => menuTree.flatMap((group) => group.children ?? []).find((item) => item.id === activeMasterKey.value)?.label ?? '主選單')
 const localDemoApi = import.meta.env.DEV && import.meta.env.VITE_LOCAL_DEMO_API === 'true'
+
+function syncRouteState(): void {
+  currentPath.value = window.location.pathname
+  selectedMenuKey.value = activeMasterKey.value
+}
 
 function toggleMenuNode(id: string): void {
   expandedMenuKeys.value = expandedMenuKeys.value.includes(id)
@@ -113,7 +138,14 @@ function toggleMenuNode(id: string): void {
 function selectMenuNode(id: string): void {
   selectedMenuKey.value = id
   const route = menuRoutes[id]
-  if (route) window.location.assign(route)
+  if (!route) return
+  window.history.pushState({}, '', route)
+  syncRouteState()
+}
+
+function navigateHome(): void {
+  window.history.pushState({}, '', appHomeRoute)
+  syncRouteState()
 }
 
 const selectedEnvironmentConfig = computed(
@@ -127,6 +159,8 @@ const selectedEnvironmentLabel = computed(
 const passwordLength = computed(() => Array.from(nextPassword.value).length)
 
 onMounted(async () => {
+  syncRouteState()
+  window.addEventListener('popstate', syncRouteState)
   try {
     const response = await fetch(`${import.meta.env.BASE_URL}environments.json`, { cache: 'no-store' })
     if (response.ok) {
@@ -172,6 +206,8 @@ onMounted(async () => {
     // Stay on the login screen when there is no reachable session.
   }
 })
+
+onBeforeUnmount(() => window.removeEventListener('popstate', syncRouteState))
 
 function apiUrl(path: string): string | null {
   const baseUrl = selectedEnvironmentConfig.value.apiBaseUrl.trim()
@@ -505,7 +541,7 @@ async function signOut(): Promise<void> {
             type="button"
             class="framework-menu-item"
             :class="{ active: selectedMenuKey === null }"
-            @click="selectedMenuKey = null"
+            @click="navigateHome"
           >
             <span class="menu-full-label">主選單</span><span class="menu-short-label">首</span>
           </button>
@@ -528,12 +564,23 @@ async function signOut(): Promise<void> {
 
       <section class="framework-main">
         <header class="framework-header">
-          <h1>主選單</h1>
+          <h1>{{ currentMasterTitle }}</h1>
           <div class="framework-header-user">
             <span>{{ currentUser?.displayName || currentUser?.userNo }}</span>
             <button type="button" @click="signOut">登出</button>
           </div>
         </header>
+        <EquipmentMaster
+          v-if="isEquipmentPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+        />
+        <MasterDataMaster
+          v-else-if="activeMasterDataKey"
+          class="framework-content"
+          :master-key="activeMasterDataKey"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+        />
       </section>
 
     </main>

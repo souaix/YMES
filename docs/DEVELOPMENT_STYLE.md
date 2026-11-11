@@ -7,18 +7,18 @@
 | 工作環境 | 主要工作 | 不直接處理 |
 | --- | --- | --- |
 | 家用電腦 | API、資料庫、schema/migration、整合與遠端部署 | — |
-| 公司電腦 | Vue/MVC UI、選單、表單、按鈕互動與呼叫 API | 資料庫連線、SSH、遠端上版 |
+| 公司電腦 | Vue UI、選單、表單、按鈕互動與呼叫 API | 資料庫連線、SSH、遠端上版 |
 
 - GitHub `souaix/YMES` 是兩台電腦共用的程式來源。開始修改前先同步最新程式，完成後提交回同一個 repo。
 - 公司電腦的 UI 透過 API 讀寫資料，不連資料庫。離線 UI 開發可用明確的 Development 假資料；假資料不能冒充正式資料，也不能在 Production 開啟。
 - 資料庫連線字串、`.env.local`、私鑰與其他憑證不得提交到 GitHub。資料庫結構與 migration 由家用電腦維護，並透過 API 提供給 UI。
 - Web 與 API 是分開建置、設定及執行的服務，可以部署在同一台 Server。Web 路徑固定為 `/YMES`，API 路徑固定為 `/YMES/API`；路徑大小寫固定，不自行改名或增加反向代理前綴。
-- 目前專案目標版本為 .NET 9。Vue 3、TypeScript、Vite 用於登入與主選單；GitHub 原型的主檔功能保留 ASP.NET Core MVC 頁面。Web/MVC 一律經由 API 存取資料，不直接連資料庫。
+- 目前專案目標版本為 .NET 9。Vue 3、TypeScript、Vite 用於登入、主選單及所有主檔清單、表單和關聯設定；前端一律經由獨立 API 存取資料，不直接連資料庫。清單列選取應在 Vue 狀態內更新，不以整頁導覽選取資料。
 - Web 與 API 共用資料契約放在 `src/YMes.Contracts/`。修改契約時，需同步確認 API 與 Web 使用相同版本。
 
 ## KD 視覺基準
 
-KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以下共用色票；CSS token 集中維護於 Vue `web/src/style.css` 和 MVC 共用樣式，不另造一組互相衝突的品牌色。
+KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以下共用色票；CSS token 集中維護於 Vue `web/src/style.css`，不另造一組互相衝突的品牌色。
 
 | 用途 | 色彩 | CSS token / 說明 |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 
 - 只維護一套自適應 Web，不另做獨立手機版網站、手機路由或手機專用功能。桌面、平板與手機共用相同 API 與功能，版面依可用寬度調整。
 - 窄螢幕下側欄可以收合，表格可水平捲動或切換成較易讀的欄位排列；不得因固定寬度造成主要操作被裁切。
-- 主檔頁的資料欄位、表單結構、查詢條件與按鈕行為以 GitHub `main` 原型為基準；Vue 外殼、登入與選單依本文件的 KD 樣式。
+- 主檔頁的資料欄位、表單結構、查詢條件與按鈕行為以 GitHub `main` 原型為基準；Vue 外殼、登入、選單及設備清單依本文件的 KD 樣式。
 - 每個資料頁要清楚呈現載入中、無資料、驗證錯誤、API 錯誤及完成結果；只顯示使用者當下需要做決策或操作的內容。
 - 設備、作業站、物料、流程與產品資料都由 `/YMES/API` 提供。尚未有正式 API/repository 支援的功能，應如實顯示未提供或 API 錯誤，不回退成看似正式的假資料。
 
@@ -56,7 +56,7 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 每次新增功能或調整畫面前後，確認：
 
 1. 兩台電腦都在同一個 `souaix/YMES` repo，使用相同的 API 契約與 .NET 9 目標。
-2. Web/MVC 呼叫 `/YMES/API`；瀏覽器與 Web 專案不設定資料庫連線。
+2. Vue Web 呼叫 `/YMES/API`；UI 專案不設定資料庫連線。
 3. Production 不啟用 Fake repository 或 Demo 登入。
 4. 新增樣式遵循 KD 色票、收合式兩層選單與自適應版面。
 5. 修改部署路徑時，同步檢查 `deploy/compose.yaml` 和 `deploy/nginx-ymes.locations.conf`。

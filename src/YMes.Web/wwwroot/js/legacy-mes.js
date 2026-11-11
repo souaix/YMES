@@ -24,7 +24,7 @@
     }));
     document.querySelectorAll("[data-close-window]").forEach(link => link.addEventListener("click", event => {
         event.preventDefault();
-        if (history.length > 1) history.back(); else window.location.href = "/YMES/Equipment/Index";
+        if (history.length > 1) history.back(); else window.location.href = "/YMES/Equipment";
     }));
     document.querySelectorAll("[data-export-csv]").forEach(button => {
         button.addEventListener("click", () => {

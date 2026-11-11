@@ -46,6 +46,6 @@ flowchart LR
 
 ## 5. 例外
 
-目前 YMES 主檔 UI 暫時保留 GitHub 原型的 ASP.NET Core MVC 頁面，並與 Vue 登入／選單同在 /YMES Web 路徑；兩者都只透過 /YMES/API 取資料。此為 UI 原型整合例外，待主要主檔資料庫 repository 完成後再評估是否統一前端技術。
+YMES 登入、主選單及所有主檔清單、表單與關聯編輯器均使用 Vue 3；Web 只透過 /YMES/API 呼叫 ASP.NET Core API。MVC 專案是遷移前原型，不納入目前 Web 部署；Web 與 API 分別建置和部署在 /YMES 路徑下。
 
 例外記錄差異、理由、風險、補償控制、核准人及檢視日期。共用基底提供安全且可維護的預設，不以形式流程阻止正常開發。

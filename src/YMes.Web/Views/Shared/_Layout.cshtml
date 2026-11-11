@@ -19,10 +19,10 @@
             <img src="~/kd-logo.png" alt="KD 科定企業" />
         </a>
         <nav class="master-menu" aria-label="主檔功能">
-            <a class="menu-home" asp-controller="Home" asp-action="Index">主選單</a>
+            <a class="menu-home" href="@Url.Content("~/")">主選單</a>
             <details class="menu-group">
                 <summary>設備管理</summary>
-                <a class="menu-link @(activeMaster == "Equipment" ? "active" : "")" asp-controller="Equipment" asp-action="Index" aria-current="@(activeMaster == "Equipment" ? "page" : null)">設備主檔</a>
+                <a class="menu-link @(activeMaster == "Equipment" ? "active" : "")" href="@Url.Content("~/Equipment")" aria-current="@(activeMaster == "Equipment" ? "page" : null)">設備主檔</a>
             </details>
             <details class="menu-group">
                 <summary>作業站管理</summary>

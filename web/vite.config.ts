@@ -22,10 +22,6 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           ...(stripApiPathBase ? { rewrite: (path: string) => path.replace(/^\/YMES\/API/, '') } : {}),
         },
-        '^/YMES/(Equipment|MasterData|Home|css|js)(/|$)': {
-          target: 'http://127.0.0.1:5081',
-          changeOrigin: true,
-        },
       },
     },
   }
