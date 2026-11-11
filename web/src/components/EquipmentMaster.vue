@@ -450,9 +450,9 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
             <div class="equipment-form-column">
               <label><span>設備編號</span><input v-model="equipmentForm.equipmentNo" required :readonly="equipmentFormMode === 'edit'" /></label>
               <label><span>設備名稱</span><input v-model="equipmentForm.equipmentName" required /></label>
-              <label><span>設備分類</span><select v-model="equipmentForm.equipmentClass"><option>一般設備</option><option>生產設備</option><option>測試設備</option><option>其他設備</option></select></label>
+              <label><span>設備分類</span><select class="equipment-kd-field" v-model="equipmentForm.equipmentClass"><option>一般設備</option><option>生產設備</option><option>測試設備</option><option>其他設備</option></select></label>
               <label><span>設備型號</span><input v-model="equipmentForm.modelNo" /></label>
-              <label><span>批量限制</span><input v-model.number="equipmentForm.capacity" type="number" min="-1" /><small>(-1 代表不限制)</small></label>
+              <label><span>批量限制</span><input class="equipment-kd-field" v-model.number="equipmentForm.capacity" type="number" min="-1" /><small>(-1 代表不限制)</small></label>
               <label><span>預設產能</span><span class="equipment-number-unit"><input v-model.number="equipmentForm.maxTime" type="number" min="0" step="0.01" /><small>小時</small></span></label>
               <label><span>固定機時</span><span class="equipment-number-unit"><input v-model.number="equipmentForm.fixEqpTime" type="number" min="0" step="0.01" /><small>分鐘</small></span></label>
               <label><span>點檢表編號</span><input v-model="equipmentForm.qcListNo" /></label>
@@ -463,7 +463,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
               <label><span>管理群組</span><input v-model="equipmentForm.engineerGroupNo" required /></label>
               <label><span>供應商編號</span><input v-model="equipmentForm.vendorNo" required /></label>
               <label><span>財產編號</span><input v-model="equipmentForm.assetNo" /></label>
-              <label><span>批數限制</span><input v-model.number="equipmentForm.loadPort" type="number" min="-1" /><small>(-1 代表不限制)</small></label>
+              <label><span>批數限制</span><input class="equipment-kd-field" v-model.number="equipmentForm.loadPort" type="number" min="-1" /><small>(-1 代表不限制)</small></label>
               <label><span>機時單位批量</span><input v-model.number="equipmentForm.countEqpUnitQty" type="number" min="0" /></label>
               <label><span>變動機時</span><span class="equipment-number-unit"><input v-model.number="equipmentForm.varEqpTime" type="number" min="0" step="0.01" /><small>分鐘</small></span></label>
               <div class="equipment-auto-field"><span>自動設備</span><span class="equipment-radio-set"><label><input v-model.number="equipmentForm.autoFlag" type="radio" :value="1" />是</label><label><input v-model.number="equipmentForm.autoFlag" type="radio" :value="0" />否</label></span></div>
@@ -502,7 +502,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
 .equipment-form-column{display:grid;align-content:start;gap:9px}
 .equipment-form-column>label,.equipment-chamber-form>label{display:grid;grid-template-columns:minmax(115px,30%) minmax(0,1fr) auto;align-items:center;gap:7px}
 .equipment-form-column input,.equipment-form-column select,.equipment-form-column textarea,.equipment-chamber-form input,.equipment-chamber-form textarea{width:100%;min-width:0;min-height:32px;padding:4px 7px;border:1px solid #888;border-radius:0;background:#fff;font:inherit}
-.equipment-form-column input:not([readonly]),.equipment-form-column select{border-color:#b3a765}
+.equipment-form-column input:not([readonly]),.equipment-form-column select{border-color:#b3a765}.equipment-form-column input[required],.equipment-form-column input.equipment-kd-field,.equipment-form-column select.equipment-kd-field,.equipment-chamber-form input[required]{background:#fff1aa}
 .equipment-form-column input[readonly],.equipment-chamber-form input[readonly]{background:#eee}
 .equipment-number-unit{display:flex;align-items:center;gap:8px}.equipment-number-unit input{max-width:150px}.equipment-form-column small{white-space:nowrap;color:#666}
 .equipment-auto-field{display:grid;grid-template-columns:minmax(115px,30%) minmax(0,1fr);align-items:center;gap:7px}.equipment-radio-set{display:flex;gap:16px}.equipment-radio-set label{display:flex;align-items:center;gap:4px}.equipment-radio-set input,.equipment-check input{width:auto}
@@ -510,7 +510,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
 .equipment-message-settings>label:not(.equipment-check){display:grid;grid-template-columns:minmax(110px,32%) minmax(0,1fr);align-items:center;gap:7px}
 .equipment-message-settings input,.equipment-message-settings select{height:30px;border:1px solid #888;background:#fff;padding:4px;font:inherit}
 .equipment-message-settings .equipment-check{display:flex;align-items:center;gap:7px;margin-left:32%}
-.equipment-form-audit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:9px;border:2px solid #ed4b9c;color:#777}
+.equipment-form-audit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:9px;border:1px solid #c7c7c7;color:#777}
 .equipment-win-form>footer,.equipment-chamber-form>footer{display:flex;justify-content:flex-end;gap:9px;padding-top:2px}
 .equipment-win-form>footer button,.equipment-chamber-form>footer button{min-width:100px;height:38px;border:1px solid #ccc;background:#fafafa;font:inherit}
 .equipment-win-form>footer .equipment-form-confirm,.equipment-chamber-form>footer .equipment-form-confirm{border-color:#f0a126;background:#ffa62b;color:white}
@@ -526,21 +526,21 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
 .equipment-keyword{width:min(210px,24vw);padding:4px 7px}
 .equipment-like{font-size:12px}
 .equipment-query-button{min-width:82px;height:29px;padding:4px 16px;border:1px solid #aaa;border-radius:3px;background:linear-gradient(#fff,#eee);color:#333;font:inherit}
-.equipment-list-panel{display:grid;grid-template-columns:minmax(0,1fr) 116px;grid-template-rows:auto minmax(260px,1fr) auto;min-width:0;max-height:62vh;overflow:hidden;padding:5px;border:1px solid #e8178a;background:#fff}
+.equipment-list-panel{display:grid;grid-template-columns:minmax(0,1fr) 116px;grid-template-rows:auto minmax(260px,1fr) auto;min-width:0;max-height:62vh;overflow:hidden;padding:5px;border:1px solid #c7c7c7;background:#fff}
 .equipment-panel-heading{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-height:26px;padding:2px 4px 5px}
-.equipment-panel-heading h2{margin:0;color:#e8178a;font-size:13px;font-weight:500}
+.equipment-panel-heading h2{margin:0;color:#333;font-size:13px;font-weight:500}
 .equipment-panel-heading span{color:#777;font-size:11px}
 .equipment-table-scroll,.equipment-chamber-scroll{min-width:0;overflow:auto;border:1px solid #c7c7c7}
 .equipment-table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
-.equipment-table th{position:sticky;top:0;z-index:1;height:31px;padding:5px 8px;border:1px solid #bbb;background:#e8178a;color:#fff;font-weight:500;text-align:left}
-.equipment-table th:first-child{background:#45a1f4}
+.equipment-table th{position:sticky;top:0;z-index:1;height:31px;padding:5px 8px;border:1px solid #c7b852;background:#e7c600;color:#26251f;font-weight:500;text-align:left}
+.equipment-table th:first-child{background:#e7c600;color:#26251f}
 .equipment-table td{height:33px;padding:5px 9px;border:1px solid #d0d0d0;line-height:1.25;text-align:left}
 .equipment-table tbody tr{cursor:pointer}
 .equipment-table tbody tr:hover{background:#f3f8fd}
 .equipment-table tbody tr.selected-row{background:#e7f3ff;box-shadow:inset 3px 0 #278bdc}
 .equipment-table tbody tr:focus-visible{outline:2px solid #278bdc;outline-offset:-2px}
 .equipment-code{color:#273b50;font:12px 'Segoe UI',sans-serif}
-.equipment-actions{display:flex;grid-column:2;grid-row:2;flex-direction:column;gap:5px;min-width:0;max-height:60vh;margin:0;padding:4px 0 4px 8px;overflow-y:auto;border-left:2px solid #e8178a;background:#fff}
+.equipment-actions{display:flex;grid-column:2;grid-row:2;flex-direction:column;gap:5px;min-width:0;max-height:60vh;margin:0;padding:4px 0 4px 8px;overflow-y:auto;border-left:1px solid #c7c7c7;background:#fff}
 .equipment-action{display:flex;min-height:34px;align-items:center;justify-content:center;padding:4px 6px;border:1px solid #c4c4c4;border-radius:3px;background:linear-gradient(#fff,#f5f5f5);color:#333;font:inherit;text-align:center;text-decoration:none;cursor:pointer}
 .equipment-action:hover:not(:disabled){background:#f2f2f2}
 .equipment-action.primary{border-color:#f2a532;background:#ffb33b;color:#fff;font-weight:600}
@@ -560,7 +560,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
 .equipment-detail-header p{margin:3px 0 0;color:#777;font-size:11px}
 .equipment-small-action,.equipment-chamber-actions a,.equipment-chamber-actions button{padding:4px 9px;border:1px solid #c4c4c4;border-radius:3px;background:linear-gradient(#fff,#f5f5f5);color:#333;font:inherit;text-decoration:none;white-space:nowrap}
 .equipment-detail-note{padding:10px;color:#777}
-.equipment-chamber-table th:first-child{background:#e8178a}
+.equipment-chamber-table th:first-child{background:#e7c600;color:#26251f}
 .equipment-chamber-actions{display:flex;gap:5px}
 .equipment-chamber-actions button{cursor:pointer}
 @media(max-width:900px){.equipment-query{flex-wrap:wrap}.equipment-list-panel{grid-template-columns:minmax(0,1fr) 96px}.equipment-actions{padding-left:5px}.equipment-table{min-width:1050px}}
