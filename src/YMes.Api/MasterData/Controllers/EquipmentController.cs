@@ -1,6 +1,7 @@
 using MES.Api.Data;
 using MES.Contracts;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace MES.Api.Controllers;
 
@@ -19,23 +20,23 @@ public sealed class EquipmentController(IEquipmentRepository repository) : Contr
     public ActionResult<IReadOnlyList<EquipmentDto>> Chambers(string equipmentNo) => Execute(() => repository.Chambers(equipmentNo));
 
     [HttpPost("{equipmentNo}/chambers")]
-    public ActionResult<EquipmentDto> CreateChamber(string equipmentNo, [FromBody] ChamberWriteRequest request) => Create(() => repository.CreateChamber(equipmentNo, request), x => $"/api/equipment/{Uri.EscapeDataString(equipmentNo)}/chambers/{Uri.EscapeDataString(x.EquipmentNo)}");
+    public ActionResult<EquipmentDto> CreateChamber(string equipmentNo, [FromBody] ChamberWriteRequest request) => Create(() => repository.CreateChamber(equipmentNo, request, ActorUserNo), x => $"/api/equipment/{Uri.EscapeDataString(equipmentNo)}/chambers/{Uri.EscapeDataString(x.EquipmentNo)}");
 
     [HttpPut("{equipmentNo}/chambers/{chamberNo}")]
-    public ActionResult<EquipmentDto> UpdateChamber(string equipmentNo, string chamberNo, [FromBody] ChamberWriteRequest request) => Execute(() => repository.UpdateChamber(equipmentNo, chamberNo, request), "Chamber 無法更新");
+    public ActionResult<EquipmentDto> UpdateChamber(string equipmentNo, string chamberNo, [FromBody] ChamberWriteRequest request) => Execute(() => repository.UpdateChamber(equipmentNo, chamberNo, request, ActorUserNo), "Chamber 無法更新");
 
     [HttpPost("{equipmentNo}/chambers/{chamberNo}/approve")]
-    public ActionResult<EquipmentDto> ApproveChamber(string equipmentNo, string chamberNo, [FromBody] EquipmentCommandRequest request) => Execute(() => repository.ApproveChamber(equipmentNo, chamberNo, request.DataStamp), "Chamber 無法核准");
+    public ActionResult<EquipmentDto> ApproveChamber(string equipmentNo, string chamberNo, [FromBody] EquipmentCommandRequest request) => Execute(() => repository.ApproveChamber(equipmentNo, chamberNo, request.DataStamp, ActorUserNo), "Chamber 無法核准");
 
     [HttpDelete("{equipmentNo}/chambers/{chamberNo}")]
-    public ActionResult<EquipmentDto> DeleteChamber(string equipmentNo, string chamberNo, [FromQuery] int issueState, [FromQuery] int dataStamp) => Execute(() => repository.DeleteChamber(equipmentNo, chamberNo, issueState, dataStamp), "Chamber 無法刪除或停用");
+    public ActionResult<EquipmentDto> DeleteChamber(string equipmentNo, string chamberNo, [FromQuery] int issueState, [FromQuery] long dataStamp) => Execute(() => repository.DeleteChamber(equipmentNo, chamberNo, issueState, dataStamp, ActorUserNo), "Chamber 無法刪除或停用");
 
     [HttpPost]
     public ActionResult<EquipmentDto> Create([FromBody] EquipmentWriteRequest request)
     {
         try
         {
-            var item = repository.Create(request);
+            var item = repository.Create(request, ActorUserNo);
             return CreatedAtAction(nameof(Get), new { equipmentNo = item.EquipmentNo }, item);
         }
         catch (EquipmentRuleException ex)
@@ -49,16 +50,18 @@ public sealed class EquipmentController(IEquipmentRepository repository) : Contr
     {
         if (!string.Equals(equipmentNo, request.EquipmentNo, StringComparison.OrdinalIgnoreCase))
             return BadRequest(new ProblemDetails { Title = "設備編號不一致", Detail = "網址與資料內容的 EquipmentNo 必須相同。", Status = 400 });
-        return Execute(() => repository.Update(equipmentNo, request), "設備資料無法更新");
+        return Execute(() => repository.Update(equipmentNo, request, ActorUserNo), "設備資料無法更新");
     }
 
     [HttpPost("{equipmentNo}/approve")]
     public ActionResult<EquipmentDto> Approve(string equipmentNo, [FromBody] EquipmentCommandRequest request) =>
-        Execute(() => repository.Approve(equipmentNo, request.DataStamp), "設備無法核准");
+        Execute(() => repository.Approve(equipmentNo, request.DataStamp, ActorUserNo), "設備無法核准");
 
     [HttpDelete("{equipmentNo}")]
-    public ActionResult<EquipmentDto> Delete(string equipmentNo, [FromQuery] int issueState, [FromQuery] int dataStamp) =>
-        Execute(() => repository.DeleteOrRetire(equipmentNo, issueState, dataStamp), "設備無法刪除或停用");
+    public ActionResult<EquipmentDto> Delete(string equipmentNo, [FromQuery] int issueState, [FromQuery] long dataStamp) =>
+        Execute(() => repository.DeleteOrRetire(equipmentNo, issueState, dataStamp, ActorUserNo), "設備無法刪除或停用");
+
+    private string ActorUserNo => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.Identity?.Name ?? "ymes";
 
     private ActionResult<T> Execute<T>(Func<T> action, string title = "設備資料讀取失敗")
     {
@@ -86,4 +89,4 @@ public sealed class EquipmentController(IEquipmentRepository repository) : Contr
     }
 }
 
-public sealed record EquipmentCommandRequest(int DataStamp);
+public sealed record EquipmentCommandRequest(long DataStamp);

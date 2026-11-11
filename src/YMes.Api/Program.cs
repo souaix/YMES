@@ -65,14 +65,18 @@ if (useFakeMasterData && string.Equals(ymesEnvironment, "production", StringComp
 {
     throw new InvalidOperationException("The in-memory master-data provider is only allowed outside production.");
 }
-if (masterDataProvider is not ("fake" or "disabled"))
+if (masterDataProvider is not ("fake" or "postgres" or "disabled"))
 {
-    throw new InvalidOperationException("YMES_MASTER_DATA_PROVIDER must be 'fake' or 'disabled' until the PostgreSQL repository is connected.");
+    throw new InvalidOperationException("YMES_MASTER_DATA_PROVIDER must be 'fake', 'postgres' or 'disabled'.");
 }
 if (useFakeMasterData)
 {
     builder.Services.AddSingleton<IEquipmentRepository, FakeEquipmentRepository>();
     builder.Services.AddSingleton<IMasterDataRepository, FakeMasterDataRepository>();
+}
+else if (masterDataProvider == "postgres")
+{
+    builder.Services.AddSingleton<IEquipmentRepository, PostgresEquipmentRepository>();
 }
 builder.Services.Configure<PasswordHasherOptions>(options =>
 {
@@ -215,6 +219,10 @@ else
 if (useFakeMasterData)
 {
     app.MapControllers().RequireAuthorization();
+}
+else if (masterDataProvider == "postgres")
+{
+    app.MapPostgresEquipmentEndpoints();
 }
 
 app.Run();

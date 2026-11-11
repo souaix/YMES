@@ -15,7 +15,6 @@ public sealed record EquipmentDto
     public decimal Capacity { get; init; }
     public int LoadPort { get; init; }
     public int AutoFlag { get; init; }
-    public bool DefaultServer { get; init; }
     public string EAController { get; init; } = "N/A";
     public int EqpRecipe { get; init; }
     public string QCListNo { get; init; } = "";
@@ -32,7 +31,7 @@ public sealed record EquipmentDto
     public bool ChamberFlag { get; init; }
     public string? BelongEquipmentNo { get; init; }
     public int IssueState { get; init; }
-    public int DataStamp { get; init; }
-    public DateTime CreatedAt { get; init; }
+    public long DataStamp { get; init; }
+    public DateTime? CreatedAt { get; init; }
     public DateTime? RevisedAt { get; init; }
 }

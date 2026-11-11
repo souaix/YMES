@@ -35,6 +35,9 @@
 
 目前 `src/YMes.Api` 的主檔 repository 是記憶體 Fake provider；重啟會重設資料，Production 預設停用主檔 API。先以附上的 75 表 SQL 作為第一階段起點，再依舊 WinForms、WebService、核心類別和目前 MES Oracle 資料字典補足正式 PostgreSQL migration/schema、Npgsql repository、DTO/API 與交易規則。
 
+- 設備主檔已新增 PostgreSQL repository 與設備/Chamber CRUD、核准、停用和 DataStamp 衝突控制；欄位依正式 DDL 對齊，移除 DDL 中不存在的「預設伺服器」輸入。Production provider 可指定 `postgres`，其他四類主檔仍未接 PostgreSQL。
+- [x] `0006_equipment_data_access.sql` 已套用，僅授予 `ymes_app` 對設備表的 CRUD 權限。遠端設備表目前沒有業務資料。
+
 - [ ] 設備：`tbleqpequipmentbasis`、Chamber 關係、設備群/工程群組、設備屬性、參數、QC List；支援清單 CRUD、核准/停用、複製、匯入。
 - [ ] 作業站：`tblopbasis`、群組、屬性、參數、QC、Error/Abnormal、Resource/Area、Business Rule、SubOP；支援核准、複製與匯入。
 - [ ] 物料：`tblmtlmaterialbasis`、Vendor Map、Property、QC Item、Gum Type；建立物料時從類別複製預設屬性/QC 的動作需同交易。

@@ -15,7 +15,6 @@ interface Equipment {
   capacity: number
   loadPort: number
   autoFlag: number
-  defaultServer: boolean
   eaController: string
   eqpRecipe: number
   qcListNo: string
@@ -33,7 +32,7 @@ interface Equipment {
   belongEquipmentNo: string | null
   issueState: number
   dataStamp: number
-  createdAt: string
+  createdAt: string | null
   revisedAt: string | null
 }
 type EquipmentWrite = Omit<Equipment, 'chamberFlag' | 'belongEquipmentNo' | 'issueState' | 'createdAt' | 'revisedAt'>
@@ -105,7 +104,7 @@ function updateFilterAddress(): void {
 function newEquipmentValues(): EquipmentWrite {
   return {
     equipmentNo: '', equipmentType: '', equipmentName: '', engineerGroupNo: '', vendorNo: '', modelNo: '', assetNo: '',
-    equipmentClass: '一般設備', equipmentClassNo: '', description: '', capacity: -1, loadPort: -1, autoFlag: 0, defaultServer: false,
+    equipmentClass: '一般設備', equipmentClassNo: '', description: '', capacity: -1, loadPort: -1, autoFlag: 0,
     eaController: 'N/A', eqpRecipe: 0, qcListNo: '', maxTime: null, fixEqpTime: 0, varEqpTime: 0,
     countEqpUnitQty: 1, countEquipmentUnitQty: 1, queueServer: '', requestMsgQueue: '', responseMsgQueue: '',
     requestMsgQueueMes: '', responseMsgQueueEap: '', dataStamp: 0,
@@ -467,7 +466,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
               <label><span>機時單位批量</span><input v-model.number="equipmentForm.countEqpUnitQty" type="number" min="0" /></label>
               <label><span>變動機時</span><span class="equipment-number-unit"><input v-model.number="equipmentForm.varEqpTime" type="number" min="0" step="0.01" /><small>分鐘</small></span></label>
               <div class="equipment-auto-field"><span>自動設備</span><span class="equipment-radio-set"><label><input v-model.number="equipmentForm.autoFlag" type="radio" :value="1" />是</label><label><input v-model.number="equipmentForm.autoFlag" type="radio" :value="0" />否</label></span></div>
-              <fieldset class="equipment-message-settings"><legend>訊息佇列設定</legend><label class="equipment-check"><input v-model="equipmentForm.defaultServer" type="checkbox" />預設伺服器</label><label><span>佇列伺服器</span><input v-model="equipmentForm.queueServer" /></label><label><span>請求訊息佇列</span><input v-model="equipmentForm.requestMsgQueue" /></label><label><span>回應訊息佇列</span><input v-model="equipmentForm.responseMsgQueue" /></label><label><span>MES 請求佇列</span><input v-model="equipmentForm.requestMsgQueueMes" /></label><label><span>EAP 回應佇列</span><input v-model="equipmentForm.responseMsgQueueEap" /></label><label><span>財產分類編號</span><input v-model="equipmentForm.equipmentClassNo" /></label><label><span>EAP Controller</span><input v-model="equipmentForm.eaController" /></label><label><span>Recipe 管理</span><select v-model.number="equipmentForm.eqpRecipe"><option :value="1">是</option><option :value="0">否</option></select></label></fieldset>
+              <fieldset class="equipment-message-settings"><legend>訊息佇列設定</legend><label><span>佇列伺服器</span><input v-model="equipmentForm.queueServer" /></label><label><span>請求訊息佇列</span><input v-model="equipmentForm.requestMsgQueue" /></label><label><span>回應訊息佇列</span><input v-model="equipmentForm.responseMsgQueue" /></label><label><span>MES 請求佇列</span><input v-model="equipmentForm.requestMsgQueueMes" /></label><label><span>EAP 回應佇列</span><input v-model="equipmentForm.responseMsgQueueEap" /></label><label><span>財產分類編號</span><input v-model="equipmentForm.equipmentClassNo" /></label><label><span>EAP Controller</span><input v-model="equipmentForm.eaController" /></label><label><span>Recipe 管理</span><select v-model.number="equipmentForm.eqpRecipe"><option :value="1">是</option><option :value="0">否</option></select></label></fieldset>
             </div>
           </div>
         </fieldset>

@@ -12,6 +12,7 @@ services:
       ASPNETCORE_URLS: http://127.0.0.1:18088
       YMES_ENVIRONMENT: production
       YMES_PATH_BASE: /YMES/API
+      YMES_MASTER_DATA_PROVIDER: postgres
       YMES_ALLOWED_ORIGINS: https://152.42.195.128;https://yakuyama.com
       YMES_DATA_PROTECTION_PATH: /data/dpkeys
       AllowedHosts: 152.42.195.128;yakuyama.com;127.0.0.1;localhost

@@ -62,7 +62,7 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
         }
     }
 
-    public EquipmentDto CreateChamber(string parentEquipmentNo, ChamberWriteRequest request)
+    public EquipmentDto CreateChamber(string parentEquipmentNo, ChamberWriteRequest request, string actorUserNo)
     {
         lock (_gate)
         {
@@ -92,7 +92,7 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
         }
     }
 
-    public EquipmentDto UpdateChamber(string parentEquipmentNo, string chamberNo, ChamberWriteRequest request)
+    public EquipmentDto UpdateChamber(string parentEquipmentNo, string chamberNo, ChamberWriteRequest request, string actorUserNo)
     {
         lock (_gate)
         {
@@ -110,7 +110,7 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
         }
     }
 
-    public EquipmentDto ApproveChamber(string parentEquipmentNo, string chamberNo, int dataStamp)
+    public EquipmentDto ApproveChamber(string parentEquipmentNo, string chamberNo, long dataStamp, string actorUserNo)
     {
         lock (_gate)
         {
@@ -124,7 +124,7 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
         }
     }
 
-    public EquipmentDto DeleteChamber(string parentEquipmentNo, string chamberNo, int issueState, int dataStamp)
+    public EquipmentDto DeleteChamber(string parentEquipmentNo, string chamberNo, int issueState, long dataStamp, string actorUserNo)
     {
         lock (_gate)
         {
@@ -144,7 +144,7 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
         }
     }
 
-    public EquipmentDto Create(EquipmentWriteRequest request)
+    public EquipmentDto Create(EquipmentWriteRequest request, string actorUserNo)
     {
         lock (_gate)
         {
@@ -159,7 +159,7 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
         }
     }
 
-    public EquipmentDto Update(string equipmentNo, EquipmentWriteRequest request)
+    public EquipmentDto Update(string equipmentNo, EquipmentWriteRequest request, string actorUserNo)
     {
         lock (_gate)
         {
@@ -174,7 +174,7 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
         }
     }
 
-    public EquipmentDto Approve(string equipmentNo, int dataStamp)
+    public EquipmentDto Approve(string equipmentNo, long dataStamp, string actorUserNo)
     {
         lock (_gate)
         {
@@ -189,7 +189,7 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
         }
     }
 
-    public EquipmentDto DeleteOrRetire(string equipmentNo, int issueState, int dataStamp)
+    public EquipmentDto DeleteOrRetire(string equipmentNo, int issueState, long dataStamp, string actorUserNo)
     {
         lock (_gate)
         {
@@ -233,13 +233,13 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
             throw new EquipmentRuleException(404, $"設備 {chamber.EquipmentNo} 不屬於父設備 {parentEquipmentNo} 的 Chamber。");
     }
 
-    private static void CheckStamp(EquipmentDto item, int dataStamp)
+    private static void CheckStamp(EquipmentDto item, long dataStamp)
     {
         if (item.DataStamp != dataStamp)
             throw new EquipmentRuleException(409, "資料已由其他人更新，請重新載入後再儲存。");
     }
 
-    private static EquipmentDto Map(EquipmentWriteRequest request, int issueState, int dataStamp, DateTime createdAt, DateTime? revisedAt) => new()
+    private static EquipmentDto Map(EquipmentWriteRequest request, int issueState, long dataStamp, DateTime? createdAt, DateTime? revisedAt) => new()
     {
         EquipmentNo = request.EquipmentNo.Trim(),
         EquipmentType = request.EquipmentType.Trim(),
@@ -254,7 +254,6 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
         Capacity = request.Capacity,
         LoadPort = request.LoadPort,
         AutoFlag = request.AutoFlag,
-        DefaultServer = request.DefaultServer,
         EAController = request.EAController.Trim(),
         EqpRecipe = request.EqpRecipe,
         QCListNo = request.QCListNo.Trim(),
@@ -290,7 +289,6 @@ public sealed class FakeEquipmentRepository : IEquipmentRepository
             Capacity = capacity,
             LoadPort = loadPort,
             AutoFlag = issueState == 2 ? 1 : 0,
-            DefaultServer = false,
             EAController = issueState == 2 ? "EAP" : "N/A",
             EqpRecipe = issueState == 2 ? 1 : 0,
             QCListNo = issueState == 2 ? "QC-EQP-01" : "",
