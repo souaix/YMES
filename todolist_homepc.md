@@ -22,11 +22,11 @@
 ## 優先一：選單、功能目錄與權限 API
 
 - [x] 已依目前 MES Oracle MESTEST 原生 DDL 完成三張系統表的 PostgreSQL 結構轉換，保留欄位名稱、預設值、NULL 設定與主鍵。
-- [x] 建立五個既有主檔 module 和功能項，分別對應 EQP/OP/MTL/PRS/PRD；前兩項由 `0008_initial_navigation_seed.sql` 建立，後三項由 `0009_expand_initial_navigation.sql` 增補。
+- [x] 建立五個既有主檔 module 和功能項，分別對應 EQP/OP/MTL/PRS/PRD；前兩項由 `0008_initial_navigation_seed.sql` 建立，後三項由 `0009_expand_initial_navigation.sql` 增補並已套用遠端。
 - [ ] 從舊系統匯出其他正式選單資料及排序，補入 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunction`；目前五項是既有主檔頁清單，不代表舊 MES 完整選單。
 - [ ] 用 Oracle 實際資料確認 `MenuType=0` 的 `MenuNo` 與 `FunctionNo` 關聯；目前 DDL 沒有明確外鍵。停用/隱藏欄位及相關來源表也需依實際資料字典補齊。
 - [x] `tblSYSModule` 沒有 `ModuleName` 欄位；API 將 EQP/OP/MTL/PRS/PRD 顯示為設備管理、作業站管理、物料管理、流程管理、產品管理。
-- [x] 新增可重複執行的 `0008_initial_navigation_seed.sql` 與 `0009_expand_initial_navigation.sql`；正式選單包含五個既有主檔頁。
+- [x] 新增可重複執行的 `0008_initial_navigation_seed.sql` 與 `0009_expand_initial_navigation.sql`；正式選單包含五個既有主檔頁，0009 已套用 YMES 遠端資料庫。
 - [x] 實作登入 Cookie 保護的 `GET /api/navigation/menu-tree`，讀取三張 YMES 系統表並回傳 `modules → menuGroups → items` 結構；目前依使用者指示先不套用角色/使用者權限篩選。
 - [x] 新增並套用 `0005_navigation_read_access.sql`，僅授予 `ymes_app` 對三張選單表的 `SELECT` 權限。
 - [x] API 以 MenuNo 對應 FunctionNo；五個既有主檔選單項均以 MenuNo 對應 FunctionNo。
@@ -75,7 +75,8 @@
 
 - [x] `https://yakuyama.com/YMES/` 登入正常；正式區主選單預設折疊。
 - [x] 從選單進入設備主檔及作業站主檔，兩頁查詢 API 均回應正常；目前資料表為空，顯示 0 筆。
-- [ ] 部署 0009 後確認正式選單也顯示物料、流程、產品三個主檔頁；這三類的 Production PostgreSQL API 尚未實作。
+- [x] 部署 0009 並重建 YMES API 後，瀏覽器確認五個主檔模組均出現在正式選單；預設折疊，展開後各有對應主檔項目。
+- [x] YMES API readiness 回應 200；物料、流程、產品三類的 Production PostgreSQL API 尚未實作，進入頁面後目前不能查詢或寫入。
 - [x] 設備與作業站新增表單空白送出都會擋下必填欄位。
 - [ ] 正式區沒有業務資料可供修改、核准或刪除；本次未寫入測試資料，因此上述寫入流程尚未做資料庫端到端驗收。
 - [x] API readiness、Web route 和遠端容器 health check 均回應正常；Nginx 已由過期的 18090 MVC 路由改為 Vue Web 18089。
