@@ -84,6 +84,9 @@ public sealed class NavigationRepository(NpgsqlDataSource dataSource)
     {
         "EQP" => "設備管理",
         "OP" => "作業站管理",
+        "MTL" => "物料管理",
+        "PRS" => "流程管理",
+        "PRD" => "產品管理",
         _ => moduleNo
     };
 
