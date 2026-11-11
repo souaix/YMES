@@ -52,6 +52,7 @@ if (!localDemoAuth)
     var dataSource = NpgsqlDataSource.Create(connectionString!);
     builder.Services.AddSingleton(dataSource);
     builder.Services.AddSingleton<AuthRepository>();
+    builder.Services.AddSingleton<NavigationRepository>();
 }
 builder.Services.AddControllers();
 
@@ -176,7 +177,8 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Referrer-Policy"] = "no-referrer";
-    if (context.Request.Path.StartsWithSegments("/auth"))
+    if (context.Request.Path.StartsWithSegments("/auth") ||
+        context.Request.Path.StartsWithSegments("/api/navigation"))
     {
         context.Response.Headers["Cache-Control"] = "no-store";
     }
@@ -207,6 +209,7 @@ else
     });
 
     app.MapAuthEndpoints();
+    app.MapNavigationEndpoints();
 }
 
 if (useFakeMasterData)
