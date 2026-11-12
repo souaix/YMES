@@ -224,7 +224,6 @@ if (useFakeMasterData)
 }
 else if (masterDataProvider == "postgres")
 {
-    app.MapPostgresEquipmentEndpoints();
     app.MapControllers().RequireAuthorization();
 }
 
