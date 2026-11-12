@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import MenuTree from './components/MenuTree.vue'
+import MenuIcon from './components/MenuIcon.vue'
 import EquipmentMaster from './components/EquipmentMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
@@ -74,30 +75,35 @@ const fallbackMenuTree: MenuNode[] = [
     id: 'equipment-data',
     label: '設備資料',
     shortLabel: '設',
+    moduleNo: 'EQP',
     children: [{ id: 'equipment-settings', label: '設備設定', shortLabel: '設', children: [{ id: 'equipment-master', label: '設備基本資料', tableName: 'tbleqpequipmentbasis', shortLabel: '主', functionNo: 'EQP BASIS', moduleNo: 'EQP' }] }],
   },
   {
     id: 'operation-data',
     label: '作業站資料',
     shortLabel: '站',
+    moduleNo: 'OP',
     children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }] }],
   },
   {
     id: 'material-data',
     label: '物料資料',
     shortLabel: '料',
+    moduleNo: 'MTL',
     children: [{ id: 'material-settings', label: '物料設定', shortLabel: '設', children: [{ id: 'material-master', label: '物料基本資料', tableName: 'tblmtlmaterialbasis', shortLabel: '主', functionNo: 'MTL BASIS', moduleNo: 'MTL' }] }],
   },
   {
     id: 'process-data',
     label: '流程資料',
     shortLabel: '流',
+    moduleNo: 'PRS',
     children: [{ id: 'process-settings', label: '流程設定', shortLabel: '設', children: [{ id: 'process-master', label: '流程主檔', tableName: 'tblprsprocessbasis', shortLabel: '主', functionNo: 'PRS BASIS', moduleNo: 'PRS' }] }],
   },
   {
     id: 'product-data',
     label: '產品資料',
     shortLabel: '品',
+    moduleNo: 'PRD',
     children: [{ id: 'product-settings', label: '產品設定', shortLabel: '設', children: [{ id: 'product-master', label: '產品主檔', tableName: 'tblprdproductbasis', shortLabel: '主', functionNo: 'PRD BASIS', moduleNo: 'PRD' }] }],
   },
 ]
@@ -685,7 +691,8 @@ async function signOut(): Promise<void> {
             :class="{ active: selectedMenuKey === null }"
             @click="navigateHome"
           >
-            <span class="menu-full-label">主選單</span><span class="menu-short-label">首</span>
+            <MenuIcon kind="home" />
+            <span class="menu-full-label">主選單</span>
           </button>
           <MenuTree
             :items="menuTree"
@@ -700,7 +707,7 @@ async function signOut(): Promise<void> {
             <span class="framework-avatar">{{ (currentUser?.displayName || currentUser?.userNo || 'Y').slice(0, 1) }}</span>
             <span class="framework-user-name">{{ currentUser?.displayName || currentUser?.userNo }}</span>
           </div>
-          <button type="button" class="framework-logout" @click="signOut"><span class="menu-full-label">登出</span><span class="menu-short-label">退</span></button>
+          <button type="button" class="framework-logout" @click="signOut"><MenuIcon kind="logout" /><span class="menu-full-label">登出</span></button>
         </div>
       </aside>
 

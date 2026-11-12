@@ -388,6 +388,13 @@ button {
   display: none;
 }
 
+.menu-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
 .framework-menu-item.active,
 .framework-menu-item:hover,
 .menu-tree-button.active,
@@ -533,10 +540,6 @@ button {
   display: none;
 }
 
-.framework-sidebar.collapsed .menu-tree-button .menu-short-label {
-  display: inline;
-}
-
 .framework-sidebar.collapsed .framework-menu-item,
 .framework-sidebar.collapsed .menu-tree-button,
 .framework-sidebar.collapsed .framework-logout {
@@ -547,6 +550,12 @@ button {
 
 .framework-sidebar.collapsed .menu-tree-chevron {
   display: none;
+}
+
+.framework-sidebar.collapsed .menu-icon {
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
 }
 
 .framework-sidebar.collapsed .framework-profile {

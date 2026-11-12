@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MenuIcon from './MenuIcon.vue'
+
 interface MenuNode {
   id: string
   label: string
@@ -10,7 +12,7 @@ interface MenuNode {
   children?: MenuNode[]
 }
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   items: MenuNode[]
   expandedIds: string[]
   selectedId: string | null
@@ -23,6 +25,11 @@ const emit = defineEmits<{
   toggle: [id: string]
   select: [id: string]
 }>()
+
+function iconKind(item: MenuNode): string {
+  if (props.depth === 1 || !item.children?.length) return item.moduleNo?.toUpperCase() ?? 'folder'
+  return 'folder'
+}
 </script>
 
 <template>
@@ -37,8 +44,8 @@ const emit = defineEmits<{
         :aria-expanded="item.children?.length ? expandedIds.includes(item.id) : undefined"
         @click="item.children?.length ? emit('toggle', item.id) : emit('select', item.id)"
       >
+        <MenuIcon :kind="iconKind(item)" />
         <span class="menu-full-label">{{ item.label }}</span>
-        <span class="menu-short-label">{{ item.shortLabel }}</span>
         <span v-if="item.children?.length" class="menu-tree-chevron" aria-hidden="true">
           {{ expandedIds.includes(item.id) ? '⌄' : '›' }}
         </span>

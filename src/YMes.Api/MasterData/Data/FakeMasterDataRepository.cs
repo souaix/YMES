@@ -50,7 +50,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
 
     public OperationDto GetOperation(string no) => Read(() => _operations.TryGetValue(Key(no), out var x) ? x : throw NotFound("作業", no));
 
-    public OperationDto CreateOperation(OperationWriteRequest request) => Write(() =>
+    public OperationDto CreateOperation(OperationWriteRequest request, string actorUserNo) => Write(() =>
     {
         var no = Key(request.OperationNo);
         ValidateOperationNo(no);
@@ -60,7 +60,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public OperationDto UpdateOperation(string no, OperationWriteRequest request) => Write(() =>
+    public OperationDto UpdateOperation(string no, OperationWriteRequest request, string actorUserNo) => Write(() =>
     {
         var current = GetOperationUnsafe(no);
         CheckEditable(current.IssueState, current.DataStamp, request.DataStamp);
@@ -71,7 +71,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public OperationDto ApproveOperation(string no, int dataStamp) => Write(() =>
+    public OperationDto ApproveOperation(string no, int dataStamp, string actorUserNo) => Write(() =>
     {
         var current = GetOperationUnsafe(no);
         CheckStamp(current.DataStamp, dataStamp);
@@ -81,7 +81,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public void DeleteOperation(string no, int issueState, int dataStamp) => Write(() =>
+    public void DeleteOperation(string no, int issueState, int dataStamp, string actorUserNo) => Write(() =>
     {
         var item = GetOperationUnsafe(no);
         CheckRemoval(item.IssueState, issueState, item.DataStamp, dataStamp);
@@ -105,7 +105,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
 
     public MaterialDto GetMaterial(string no) => Read(() => _materials.TryGetValue(Key(no), out var x) ? x : throw NotFound("物料", no));
 
-    public MaterialDto CreateMaterial(MaterialWriteRequest request) => Write(() =>
+    public MaterialDto CreateMaterial(MaterialWriteRequest request, string actorUserNo) => Write(() =>
     {
         var no = Key(request.MaterialNo);
         if (_materials.ContainsKey(no)) throw Conflict($"物料編號 {no} 已存在。");
@@ -116,7 +116,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public MaterialDto UpdateMaterial(string no, MaterialWriteRequest request) => Write(() =>
+    public MaterialDto UpdateMaterial(string no, MaterialWriteRequest request, string actorUserNo) => Write(() =>
     {
         var current = GetMaterialUnsafe(no);
         CheckEditable(current.IssueState, current.DataStamp, request.DataStamp);
@@ -126,7 +126,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public MaterialDto ApproveMaterial(string no, int dataStamp) => Write(() =>
+    public MaterialDto ApproveMaterial(string no, int dataStamp, string actorUserNo) => Write(() =>
     {
         var current = GetMaterialUnsafe(no);
         CheckStamp(current.DataStamp, dataStamp);
@@ -136,7 +136,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public void DeleteMaterial(string no, int issueState, int dataStamp) => Write(() =>
+    public void DeleteMaterial(string no, int issueState, int dataStamp, string actorUserNo) => Write(() =>
     {
         var item = GetMaterialUnsafe(no);
         CheckRemoval(item.IssueState, issueState, item.DataStamp, dataStamp);
@@ -158,7 +158,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
 
     public ProcessDto GetProcess(string no, string version) => Read(() => GetProcessUnsafe(no, version));
 
-    public ProcessDto CreateProcess(ProcessWriteRequest request) => Write(() =>
+    public ProcessDto CreateProcess(ProcessWriteRequest request, string actorUserNo) => Write(() =>
     {
         var no = Key(request.ProcessNo);
         var version = Key(request.ProcessVersion);
@@ -170,7 +170,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public ProcessDto UpdateProcess(string no, string version, ProcessWriteRequest request) => Write(() =>
+    public ProcessDto UpdateProcess(string no, string version, ProcessWriteRequest request, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var current = GetProcessUnsafe(no, version);
@@ -182,7 +182,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public ProcessDto ApproveProcess(string no, string version, int dataStamp) => Write(() =>
+    public ProcessDto ApproveProcess(string no, string version, int dataStamp, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var current = GetProcessUnsafe(no, version);
@@ -201,7 +201,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return _graphs.TryGetValue(key, out var graph) ? graph with { DataStamp = process.DataStamp } : throw NotFound("流程圖", $"{no}/{version}");
     });
 
-    public ProcessGraphDto UpdateGraph(string no, string version, ProcessGraphDto request) => Write(() =>
+    public ProcessGraphDto UpdateGraph(string no, string version, ProcessGraphDto request, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var process = GetProcessUnsafe(no, version);
@@ -214,7 +214,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return saved;
     });
 
-    public ProcessDto CreateProcessVersion(string no, string version) => Write(() =>
+    public ProcessDto CreateProcessVersion(string no, string version, string actorUserNo) => Write(() =>
     {
         var oldKey = (Key(no), Key(version));
         var old = GetProcessUnsafe(no, version);
@@ -229,7 +229,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return newProcess;
     });
 
-    public ProcessDto SetCurrentProcess(string no, string version, int dataStamp) => Write(() =>
+    public ProcessDto SetCurrentProcess(string no, string version, int dataStamp, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var current = GetProcessUnsafe(no, version);
@@ -242,7 +242,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return updated;
     });
 
-    public void DeleteProcess(string no, string version, int issueState, int dataStamp) => Write(() =>
+    public void DeleteProcess(string no, string version, int issueState, int dataStamp, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var item = GetProcessUnsafe(no, version);
@@ -266,7 +266,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
 
     public ProductDto GetProduct(string no, string version) => Read(() => GetProductUnsafe(no, version));
 
-    public ProductDto CreateProduct(ProductWriteRequest request) => Write(() =>
+    public ProductDto CreateProduct(ProductWriteRequest request, string actorUserNo) => Write(() =>
     {
         var no = Key(request.ProductNo);
         var version = Key(request.ProductVersion);
@@ -277,7 +277,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public ProductDto UpdateProduct(string no, string version, ProductWriteRequest request) => Write(() =>
+    public ProductDto UpdateProduct(string no, string version, ProductWriteRequest request, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var current = GetProductUnsafe(no, version);
@@ -289,7 +289,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public ProductDto ApproveProduct(string no, string version, int dataStamp) => Write(() =>
+    public ProductDto ApproveProduct(string no, string version, int dataStamp, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var current = GetProductUnsafe(no, version);
@@ -302,7 +302,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public ProductDto SetCurrentProduct(string no, string version, int dataStamp) => Write(() =>
+    public ProductDto SetCurrentProduct(string no, string version, int dataStamp, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var current = GetProductUnsafe(no, version);
@@ -315,7 +315,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return updated;
     });
 
-    public ProductDto CreateProductVersion(string no, string version) => Write(() =>
+    public ProductDto CreateProductVersion(string no, string version, string actorUserNo) => Write(() =>
     {
         var current = GetProductUnsafe(no, version);
         if (!int.TryParse(current.ProductVersion, out var numeric)) throw BadRequest("產品版本格式不是數字。");
@@ -331,7 +331,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return next;
     });
 
-    public void DeleteProduct(string no, string version, int issueState, int dataStamp) => Write(() =>
+    public void DeleteProduct(string no, string version, int issueState, int dataStamp, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var item = GetProductUnsafe(no, version);
@@ -356,7 +356,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
             .OrderBy(x => x.SegmentOrder).ThenByDescending(x => x.DefaultProcess).ToArray();
     });
 
-    public ProductProcessDto AddProductProcess(string no, string version, ProductProcessWriteRequest request) => Write(() =>
+    public ProductProcessDto AddProductProcess(string no, string version, ProductProcessWriteRequest request, string actorUserNo) => Write(() =>
     {
         var product = GetProductUnsafe(no, version);
         if (product.IssueState != 0) throw Conflict("只有 UNFROZEN 產品可以修改流程指派。");
@@ -372,7 +372,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public ProductProcessDto UpdateProductProcess(string no, string version, string processNo, string selector, ProductProcessWriteRequest request) => Write(() =>
+    public ProductProcessDto UpdateProductProcess(string no, string version, string processNo, string selector, ProductProcessWriteRequest request, string actorUserNo) => Write(() =>
     {
         var product = GetProductUnsafe(no, version);
         if (product.IssueState != 0) throw Conflict("只有 UNFROZEN 產品可以修改流程指派。");
@@ -385,7 +385,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public void DeleteProductProcess(string no, string version, int moTypeNo, string segmentNo, string processNo, string selector) => Write(() =>
+    public void DeleteProductProcess(string no, string version, int moTypeNo, string segmentNo, string processNo, string selector, string actorUserNo) => Write(() =>
     {
         var product = GetProductUnsafe(no, version);
         if (product.IssueState != 0) throw Conflict("只有 UNFROZEN 產品可以刪除流程指派。");
@@ -400,7 +400,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return _bom.Where(x => x.ProductNo.Equals(no, StringComparison.OrdinalIgnoreCase) && x.ProductVersion.Equals(version, StringComparison.OrdinalIgnoreCase)).ToArray();
     });
 
-    public ProductBomDto AddBom(string no, string version, ProductBomWriteRequest request) => Write(() =>
+    public ProductBomDto AddBom(string no, string version, ProductBomWriteRequest request, string actorUserNo) => Write(() =>
     {
         var product = GetProductUnsafe(no, version);
         if (product.IssueState != 0) throw Conflict("只有 UNFROZEN 產品可以修改 BOM。");
@@ -418,7 +418,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return item;
     });
 
-    public void DeleteBom(string no, string version, string id) => Write(() =>
+    public void DeleteBom(string no, string version, string id, string actorUserNo) => Write(() =>
     {
         var product = GetProductUnsafe(no, version);
         if (product.IssueState != 0) throw Conflict("只有 UNFROZEN 產品可以刪除 BOM。");

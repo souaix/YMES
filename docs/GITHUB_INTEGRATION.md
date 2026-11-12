@@ -20,18 +20,15 @@
 
 ## 資料狀態
 
-一般登入使用 "YMES".tblusruserbasis 與既有登入狀態表。主檔控制器依 `IEquipmentRepository` 和 `IMasterDataRepository` 介面工作；目前只有 `FakeEquipmentRepository` 和 `FakeMasterDataRepository`，在記憶體保存示範資料，API 重啟後會重設。`YMES_MASTER_DATA_PROVIDER` 在 Development 預設為 `fake`，Production 預設為 `disabled`；Fake provider 不允許在 `YMES_ENVIRONMENT=production` 啟用。API 的 launch profile 明確開啟 `YMES_LOCAL_DEMO_AUTH`，讓本機預覽可用 `ymes`／`1234` 登入而不連資料庫；此模式只允許 ASP.NET Development 且不允許 production YMES 環境。
+一般登入使用 "YMES".tblusruserbasis 與既有登入狀態表。主檔控制器依 `IEquipmentRepository` 和 `IMasterDataRepository` 介面工作。Development 可使用記憶體 Fake provider；Production 使用 PostgreSQL provider，支援設備、作業站、物料、流程、產品主檔頁目前提供的查詢與寫入 API。API 的 launch profile 明確開啟 `YMES_LOCAL_DEMO_AUTH`，讓本機預覽可用 `ymes`／`1234` 登入而不連資料庫；此模式只允許 ASP.NET Development 且不允許 production YMES 環境。
 
 公司電腦不需要直接連資料庫，也不需要 SSH 或部署權限：本機 UI 將 `/YMES/API` 代理到可連線的共用 API。`VITE_API_PROXY_TARGET` 可在未提交的 `web/.env.local` 設定；部署後 Vue 的執行環境設定指向 API 根位址。帳號、API DTO 和按鈕呼叫流程維持相同，資料仍由 API 主機端處理。
 
 Fake repository 適合在獨立的 Development API 驗證表單與按鈕流程，不能代替公司端日常呼叫共用 API，也不會複製 PostgreSQL。若共用 API 尚未提供主檔端點，需在有權維護 API 的主機部署非正式 Fake provider，或完成 PostgreSQL repository；公司 UI 本身不能只靠 repository mock 連到尚未存在的端點。
 
-目前主檔新增、修改、核准及停用僅供 Fake provider 畫面／按鈕流程示範，尚未連線到下列 PostgreSQL 主檔：
+Production PostgreSQL provider 將舊 MES 主檔保留在原表，並以 YMES 自有關聯表支援來源 DDL 尚未提供的流程圖與產品關聯：
 
-- 設備："YMES".tbleqpequipmentbasis（Chamber 子資料也要依實際來源表確認）
-- 作業站："YMES".tblopbasis
-- 物料："YMES".tblmtlmaterialbasis
-- 流程："YMES".tblprsprocessbasis、"YMES".tblprsnodebasis 與連線資料格式
-- 產品："YMES".tblprdproductbasis，以及產品途程／BOM 關聯表
+- `ym_prsprocess_node`、`ym_prsprocess_edge` 保存 YMES 流程圖，避免猜測 `tblprsnodebasis.nodetype` 的舊代碼語意。
+- `ym_product_process`、`ym_product_bom` 保存產品頁的流程指派及 BOM；舊表定義未包含對應關聯。
 
-下一步接資料庫時，需實作上述 repository 介面的 Npgsql provider，並逐一確認欄位代碼、狀態轉換、DataStamp 與交易規則；Production 在切換到該 provider 前維持停用主檔 API，不會把示範資料寫入客戶資料庫。
+Migration `0010_postgres_master_data_api.sql` 建立上述延伸表並授予 `ymes_app` 所需權限；`0011_three_level_master_navigation.sql` 將現有五個模組的分類與功能名稱修正為三層。套用 migration 並部署本批程式碼後，需再檢查線上 API 與選單。擴充子表、批次匯入及舊 WinForms 的全部交易規則仍列為後續遷移範圍。

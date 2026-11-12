@@ -4,9 +4,10 @@
 
 ## 公司電腦目前交付
 
-- Vue 主選單已能呈現三層 Module → Menu Group → Function。
+- Vue 主選單以三層 Module → Menu Group → Function 呈現；正式資料 API 不得把設定分類與主檔功能壓成兩層。
 - UI 預計使用登入 Cookie 呼叫 `GET /YMES/API/api/navigation/menu-tree`。
-- 正式選單列出五個既有主檔頁：「設備管理」、「作業站管理」、「物料管理」、「流程管理」、「產品管理」；角色權限先不套用。
+- 正式選單目前列出五個已整合主檔模組：設備資料、作業站資料、物料資料、流程資料、產品資料；各自包含設定分類與主檔功能兩層，角色權限先不套用。
+- 每個選單項目都有對應圖示；側欄收合時僅顯示圖示。
 - 選單中尚未遷移的 FunctionNo 會明確標示，避免使用者誤以為功能已可操作。
 - 主檔頁仍由 Vue 呼叫獨立 API；Web 不連資料庫。
 
@@ -35,7 +36,7 @@
 
 ## 優先二：五個主檔的正式資料庫與 API
 
-主檔 API 依 provider 選擇來源；正式環境目前已將設備及作業站接至 PostgreSQL，其他三類仍未接上正式資料表。
+正式環境主檔 API 由 PostgreSQL provider 提供，Web 只透過 `/YMES/API` 呼叫。五個主檔 API 已覆蓋目前 Vue 頁面提供的 CRUD、核准/停用與產品流程/BOM 操作；舊系統擴充子表、批次匯入及完整 WinForms 業務規則仍需分批遷移。
 
 - [x] 設備主檔 PostgreSQL repository 已部署：設備/Chamber CRUD、核准、停用、DataStamp 衝突控制；欄位依正式 DDL 對齊，移除不存在的「預設伺服器」輸入。
 - [x] `0006_equipment_data_access.sql` 已套用，僅授予 `ymes_app` 對設備表的 CRUD 權限。遠端設備表目前沒有業務資料。
@@ -44,9 +45,12 @@
 
 - [ ] 設備：`tbleqpequipmentbasis`、Chamber 關係、設備群/工程群組、設備屬性、參數、QC List；支援清單 CRUD、核准/停用、複製、匯入。
 - [ ] 作業站延伸資料：群組、屬性、參數、QC、Error/Abnormal、Resource/Area、Business Rule、SubOP；支援匯入。
-- [ ] 物料：`tblmtlmaterialbasis`、Vendor Map、Property、QC Item、Gum Type；建立物料時從類別複製預設屬性/QC 的動作需同交易。
-- [ ] 流程：`tblprsprocessbasis`、Node、Node Relation/XML、APS；支援新版本複製、切換目前版本、流程圖驗證與匯入。
-- [ ] 產品：`tblprdproductbasis`、Product Process、BOM、產品 OP/屬性及相關引用；複製、建版本、核准、停用與 BOM 更新需遵守舊交易規則。
+- [x] 物料頁面 API：使用 `tblmtlmaterialbasis`，支援清單、明細、新增、修改、核准、停用/刪除與資料版本衝突控制；引用物料群組或產品 BOM 時禁止物理刪除。
+- [x] 流程頁面 API：使用 `tblprsprocessbasis`，支援清單、明細、新增、修改、核准、版本複製、目前版本切換、停用/刪除及流程圖讀寫/驗證。因來源 Node 型態代碼尚未釐清，流程圖儲存在 YMES 自有 `ym_prsprocess_node`、`ym_prsprocess_edge`。
+- [x] 產品頁面 API：使用 `tblprdproductbasis`，支援清單、明細、新增、修改、核准、版本複製、目前版本切換、停用/刪除、產品流程指派及 BOM 讀寫。來源 DDL 沒有這些 UI 關聯表，YMES 自有 `ym_product_process`、`ym_product_bom` 保存新增資料。
+- [ ] 遷移物料 Vendor Map、Property、QC Item、Gum Type 等擴充子表；建立物料時從類別複製預設屬性/QC 的舊系統交易仍待還原。
+- [ ] 遷移流程 APS 等擴充欄位/關聯及匯入功能，並與舊系統 Node 編碼及 XML 規則比對。
+- [ ] 遷移產品 OP、屬性及其他舊系統關聯；跨表商業規則仍需對照 WinForms/Service 實作。
 - [ ] 所有新增/修改/核准/刪除端點均驗證 IssueState、DataStamp、引用限制與舊系統業務規則；正式環境不得使用 Fake provider。
 - [ ] 把五份主檔及產品流程整合的舊表欄位、PK/UK、型態、索引與正式 DDL 對齊；目前精簡資料字典中的推測欄位不可直接當正式 schema。
 
@@ -60,7 +64,7 @@
 ## 優先四：整合與部署
 
 - [x] Web/API 分開執行於同一台 Server：Web `/YMES`、API `/YMES/API`。同步修正遠端 Nginx 過期設定，主檔頁不再送到舊 18090 MVC 容器，改由目前 Vue Web 18089 提供。
-- [ ] 以 PostgreSQL provider 取代 Production 的 Disabled/Fake 主檔來源；Development Fake 僅供本機預覽。
+- [x] Production 已使用 PostgreSQL provider；Development Fake 僅供本機預覽。
 - [ ] 完成資料 migration/匯入、備份還原、錯誤紀錄與部署設定；憑證、連線字串、`.env.local`、私鑰不得提交 Git。
 - [ ] 部署前確認 API 權限、Cookie、HTTPS、CORS/同源反向代理與正式環境設定。
 
@@ -75,8 +79,8 @@
 
 - [x] `https://yakuyama.com/YMES/` 登入正常；正式區主選單預設折疊。
 - [x] 從選單進入設備主檔及作業站主檔，兩頁查詢 API 均回應正常；目前資料表為空，顯示 0 筆。
-- [x] 部署 0009 並重建 YMES API 後，瀏覽器確認五個主檔模組均出現在正式選單；預設折疊，展開後各有對應主檔項目。
-- [x] YMES API readiness 回應 200；物料、流程、產品三類的 Production PostgreSQL API 尚未實作，進入頁面後目前不能查詢或寫入。
+- [ ] 部署 0010、0011 並重建 YMES API/Web 後，確認正式選單顯示三層，五個模組各有主檔功能，收合時僅顯示圖示。
+- [x] 五個主檔的 Production PostgreSQL API 已實作；目前遠端尚未部署 0010、0011 與此批程式碼。
 - [x] 設備與作業站新增表單空白送出都會擋下必填欄位。
 - [ ] 正式區沒有業務資料可供修改、核准或刪除；本次未寫入測試資料，因此上述寫入流程尚未做資料庫端到端驗收。
 - [x] API readiness、Web route 和遠端容器 health check 均回應正常；Nginx 已由過期的 18090 MVC 路由改為 Vue Web 18089。
