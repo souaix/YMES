@@ -5,7 +5,7 @@
 ## 公司電腦目前交付
 
 - Vue 主選單以三層 Module → Menu Group → Function 呈現；正式資料 API 不得把設定分類與主檔功能壓成兩層。
-- UI 預計使用登入 Cookie 呼叫 `GET /YMES/API/api/navigation/menu-tree`。
+- UI 使用登入 Cookie 呼叫 `GET /YMES/API/api/navigation/menu-tree`。
 - 正式選單目前列出五個已整合主檔模組：設備資料、作業站資料、物料資料、流程資料、產品資料；各自包含設定分類與主檔功能兩層，角色權限先不套用。
 - 每個選單項目都有對應圖示；側欄收合時僅顯示圖示。
 - 選單中尚未遷移的 FunctionNo 會明確標示，避免使用者誤以為功能已可操作。
@@ -26,7 +26,7 @@
 - [x] 建立五個既有主檔 module 和功能項，分別對應 EQP/OP/MTL/PRS/PRD；前兩項由 `0008_initial_navigation_seed.sql` 建立，後三項由 `0009_expand_initial_navigation.sql` 增補並已套用遠端。
 - [ ] 從舊系統匯出其他正式選單資料及排序，補入 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunction`；目前五項是既有主檔頁清單，不代表舊 MES 完整選單。
 - [ ] 用 Oracle 實際資料確認 `MenuType=0` 的 `MenuNo` 與 `FunctionNo` 關聯；目前 DDL 沒有明確外鍵。停用/隱藏欄位及相關來源表也需依實際資料字典補齊。
-- [x] `tblSYSModule` 沒有 `ModuleName` 欄位；API 將 EQP/OP/MTL/PRS/PRD 顯示為設備管理、作業站管理、物料管理、流程管理、產品管理。
+- [x] `tblSYSModule` 沒有 `ModuleName` 欄位；API 將 EQP/OP/MTL/PRS/PRD 顯示為設備資料、作業站資料、物料資料、流程資料、產品資料。
 - [x] 新增可重複執行的 `0008_initial_navigation_seed.sql` 與 `0009_expand_initial_navigation.sql`；正式選單包含五個既有主檔頁，0009 已套用 YMES 遠端資料庫。
 - [x] 實作登入 Cookie 保護的 `GET /api/navigation/menu-tree`，讀取三張 YMES 系統表並回傳 `modules → menuGroups → items` 結構；目前依使用者指示先不套用角色/使用者權限篩選。
 - [x] 新增並套用 `0005_navigation_read_access.sql`，僅授予 `ymes_app` 對三張選單表的 `SELECT` 權限。
@@ -79,8 +79,11 @@
 
 - [x] `https://yakuyama.com/YMES/` 登入正常；正式區主選單預設折疊。
 - [x] 從選單進入設備主檔及作業站主檔，兩頁查詢 API 均回應正常；目前資料表為空，顯示 0 筆。
-- [ ] 部署 0010、0011 並重建 YMES API/Web 後，確認正式選單顯示三層，五個模組各有主檔功能，收合時僅顯示圖示。
-- [x] 五個主檔的 Production PostgreSQL API 已實作；目前遠端尚未部署 0010、0011 與此批程式碼。
+- [x] 2026-11-12 已套用 migration 0010、0011，重建 YMES API/Web，正式選單資料回傳三層：模組 → 設定 → 主檔功能。
+- [x] 瀏覽器確認五個模組與對應主檔頁均能載入；設備、作業站、物料、流程、產品查詢 API 均回應正常，目前各表 0 筆。
+- [x] 側欄收合時只顯示選單圖示；側欄展開後仍是三層結構，模組預設收合。
+- [x] 首次線上檢查發現設備路由重複映射而回 500；移除重複映射後重建 API，設備頁重查正常。修正已推送至 GitHub `main`，commit `a080a3b`。
+- [x] 五個主檔 Production PostgreSQL API 已部署；流程圖與產品流程/BOM 關聯使用 YMES 自有延伸表。
 - [x] 設備與作業站新增表單空白送出都會擋下必填欄位。
 - [ ] 正式區沒有業務資料可供修改、核准或刪除；本次未寫入測試資料，因此上述寫入流程尚未做資料庫端到端驗收。
 - [x] API readiness、Web route 和遠端容器 health check 均回應正常；Nginx 已由過期的 18090 MVC 路由改為 Vue Web 18089。

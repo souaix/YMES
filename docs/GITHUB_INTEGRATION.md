@@ -24,11 +24,11 @@
 
 公司電腦不需要直接連資料庫，也不需要 SSH 或部署權限：本機 UI 將 `/YMES/API` 代理到可連線的共用 API。`VITE_API_PROXY_TARGET` 可在未提交的 `web/.env.local` 設定；部署後 Vue 的執行環境設定指向 API 根位址。帳號、API DTO 和按鈕呼叫流程維持相同，資料仍由 API 主機端處理。
 
-Fake repository 適合在獨立的 Development API 驗證表單與按鈕流程，不能代替公司端日常呼叫共用 API，也不會複製 PostgreSQL。若共用 API 尚未提供主檔端點，需在有權維護 API 的主機部署非正式 Fake provider，或完成 PostgreSQL repository；公司 UI 本身不能只靠 repository mock 連到尚未存在的端點。
+Fake repository 只用於獨立的 Development API 驗證表單與按鈕流程，不複製 PostgreSQL。公司 UI 日常呼叫共用 API；目前五個主檔頁的 PostgreSQL API 已實作並部署。
 
 Production PostgreSQL provider 將舊 MES 主檔保留在原表，並以 YMES 自有關聯表支援來源 DDL 尚未提供的流程圖與產品關聯：
 
 - `ym_prsprocess_node`、`ym_prsprocess_edge` 保存 YMES 流程圖，避免猜測 `tblprsnodebasis.nodetype` 的舊代碼語意。
 - `ym_product_process`、`ym_product_bom` 保存產品頁的流程指派及 BOM；舊表定義未包含對應關聯。
 
-Migration `0010_postgres_master_data_api.sql` 建立上述延伸表並授予 `ymes_app` 所需權限；`0011_three_level_master_navigation.sql` 將現有五個模組的分類與功能名稱修正為三層。套用 migration 並部署本批程式碼後，需再檢查線上 API 與選單。擴充子表、批次匯入及舊 WinForms 的全部交易規則仍列為後續遷移範圍。
+Migration `0010_postgres_master_data_api.sql` 建立上述延伸表並授予 `ymes_app` 所需權限；`0011_three_level_master_navigation.sql` 將現有五個模組的分類與功能名稱修正為三層。兩份 migration 已套用遠端，YMES Web/API 已部署；瀏覽器已確認三層選單、圖示、收合側欄及五個主檔清單 API。擴充子表、批次匯入及舊 WinForms 的全部交易規則仍列為後續遷移範圍。
