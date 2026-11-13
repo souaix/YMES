@@ -8,6 +8,8 @@
 | YMES PostgreSQL，schema YMES | YMES API 的正式資料庫 | 由 .NET API 透過 Npgsql 連線；資料庫/migration/API 由家用電腦維護 |
 | YMES Web | 顯示畫面並呼叫 API | 不保存、不讀取 Oracle 或 PostgreSQL 連線字串 |
 
+MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的復刻資料庫。兩者是不同資料庫、不同用途：公司端唯讀查 Oracle 的資料字典、原始 DDL 與舊系統規則；家用端透過 PPK SSH 管理 YMES PostgreSQL，將核實過的原生 MES schema 轉成 PostgreSQL 結構並重建 API 行為。`database/reference/*_create.sql` 是這種 PostgreSQL 建表交接，不得在原生 Oracle 執行。這些 CREATE SQL 只包含結構，不會複製 MES 業務資料；任何業務資料匯入都需另外規劃與授權。
+
 ## 已確認的 YMES API 設定名稱
 
 .NET API 從設定提供者取得連線字串，支援以下名稱：
@@ -40,6 +42,7 @@
 
 - 公司電腦只做 Vue UI、選單、表單及 API 呼叫；不要在 Web 專案加入資料庫驅動或連線字串。
 - 家用電腦負責 YMES PostgreSQL migration、API repository、DTO 及部署；先讀本文件與 todolist_homepc.md。
+- 家用電腦可經 SSH 使用資料庫管理權限維護 YMES PostgreSQL。API 的 `ymes_app` 是執行帳號，權限不足以執行 DDL 時，應由家用端使用 SSH 管理入口操作；不可因此把資料庫工作交給公司端。
 - DATABASE_URL、ConnectionStrings__YMes、SSH 私鑰、Oracle 帳密及其他憑證不得 commit、push、寫入 Markdown 或貼在聊天輸出。
 - DDL handoff 只包含 schema 結構；套用到 YMES 前由家用電腦檢查 migration 順序、現有表、權限與備份。
 

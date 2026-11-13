@@ -82,11 +82,26 @@ public sealed class NavigationRepository(NpgsqlDataSource dataSource)
 
     private static string DisplayModuleName(string moduleNo) => moduleNo.ToUpperInvariant() switch
     {
+        "ENT" => "客戶資料",
         "EQP" => "設備資料",
-        "OP" => "作業站資料",
+        "SMD" => "區域資料",
         "MTL" => "物料資料",
+        "QC" => "品質資料",
+        "OP" => "作業站資料",
         "PRS" => "流程資料",
         "PRD" => "產品資料",
+        "OE" => "工單管理",
+        "WIP" => "在製品管理",
+        "EMS" => "設備管理",
+        "SPC" => "品質管理",
+        "INV" => "庫存管理",
+        "PM" => "維修保養管理",
+        "RPT" => "報表管理",
+        "IEW" => "預警管理",
+        "USR" => "使用者管理",
+        "SYS" => "系統管理",
+        "ISU" => "簽核管理",
+        "AUT" => "自動執行",
         _ => moduleNo
     };
 

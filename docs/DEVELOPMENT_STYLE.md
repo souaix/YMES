@@ -2,6 +2,20 @@
 
 這份文件是家用電腦與公司電腦共用的開發方向。兩邊都以 GitHub `souaix/YMES` 為唯一程式來源；架構、API 契約與畫面規範有變更時，先更新這份文件，再同步程式碼。
 
+## 電腦身分與工作邊界
+
+- 每次接手先依使用者指出的電腦，以及 `todolist_homepc.md` 或 `todolist_officepc.md` 確認工作身分；工作資料夾、瀏覽器目前開啟頁面或某個工具能否啟動，都不會改變這台電腦的角色。
+- 家用電腦負責 YMES PostgreSQL 復刻資料庫、schema/migration、API 與遠端部署；家用端使用本機已授權的 PPK SSH 連線管理 YMES PostgreSQL。若 API 執行帳號只有應用程式權限，應由家用端經 SSH 使用資料庫管理權限處理 migration，不能因此改交公司電腦或把資料庫工作改成 UI 工作。
+- 公司電腦連 MES 原生 Oracle（MESTEST）作來源查詢，唯讀查資料字典、原始 DDL 與舊系統規則；不在 Oracle 寫入或建 YMES 表。公司端負責 Vue/WinForms UI、按鈕互動與呼叫 `/YMES/API`，不連 YMES PostgreSQL、不 SSH、不遠端部署。
+- PPK、資料庫管理憑證與連線字串只留在家用端受保護位置，不複製到公司電腦、文件或 Git。
+
+## 原生 MES 來源與 YMES 復刻資料庫
+
+- MES 原生資料庫是公司端可唯讀查詢的 Oracle MESTEST；YMES PostgreSQL 是家用端建置的復刻目標，用來重建 MES schema、API 與業務行為。兩者是來源與復刻目標，不是同一資料庫，也不互換連線責任。
+- `database/reference/*_create.sql` 是從 MES Oracle 原生 DDL/資料字典擷取後轉成 PostgreSQL 的建表 SQL，用來在 YMES PostgreSQL 建立復刻結構；不得拿去 Oracle 執行，也不可把未核實的欄位或表名自行補進去。
+- 來源 CREATE SQL 只建立結構，不代表已複製 MES 業務資料。MES 業務資料要匯入 YMES，須另有明確授權、欄位映射與匯入規劃；未授權時只搬系統目錄等必要中繼資料。
+- 家用端可用 SSH 對 YMES PostgreSQL 做核對、建表、migration 及資料維護；Vue/Web 仍只透過獨立 API 存取 YMES，不直接連 PostgreSQL 或 Oracle。
+
 ## 開發分工
 
 | 工作環境 | 主要工作 | 不直接處理 |
@@ -77,7 +91,7 @@ Vue 使用登入 Cookie 呼叫 `GET /YMES/API/api/navigation/menu-tree`。回應
 }
 ```
 
-API 應從舊系統 `tblSYSModule`、`tblSYSMenuItem` 及功能、語系、權限來源整理資料，依登入者權限回傳可用項目。前端只負責階層呈現和導向，不連資料庫。
+API 從 YMES 復刻資料庫的 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunction` 讀取來源目錄，保留舊識別碼與排序。依目前使用者指示，主選單 API 要求登入但暫不依角色或使用者權限篩選；原生 MES 的 privilege/issue flags 保留於資料庫，不在此次選單 migration 中修改。前端只負責階層呈現和導向，不連資料庫。
 
 ## 自適應與主檔頁
 
