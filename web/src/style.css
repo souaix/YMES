@@ -366,6 +366,23 @@ button {
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: auto;
+  scrollbar-color: #938d7d #f1efe8;
+  scrollbar-width: thin;
+}
+
+.framework-sidebar nav::-webkit-scrollbar {
+  width: 8px;
+}
+
+.framework-sidebar nav::-webkit-scrollbar-track {
+  border-radius: 8px;
+  background: #f1efe8;
+}
+
+.framework-sidebar nav::-webkit-scrollbar-thumb {
+  border: 2px solid #f1efe8;
+  border-radius: 8px;
+  background: #938d7d;
 }
 
 .framework-menu-item,
