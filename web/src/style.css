@@ -358,9 +358,14 @@ button {
 
 .framework-sidebar nav {
   display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
   align-content: start;
   gap: 5px;
   margin-top: 22px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: auto;
 }
 
 .framework-menu-item,
