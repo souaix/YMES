@@ -37,6 +37,10 @@
 - [ ] 如遇 WinForms 隱藏的複雜功能，先做可操作的簡化版並記錄未復刻規則，繼續下一頁；把需要使用者決策的精確差異集中列出。
 - [ ] 全部功能完成後核對三層選單、FunctionNo 路由、UI/API 契約、規格文件與資料庫交接；完成後 push GitHub。
 
+## Oracle 來源交付給家用電腦
+
+- [ ] **設備狀態設定：補齊刪除引用檢查來源 DDL 與 ValueList。** 在 Oracle MESTEST 唯讀查詢 `TBLEQPSTATECONTROL` 與程式使用的 `tblEMSEquipmentState`：先用資料字典確認實際 owner、物件名稱/型態（table/view/synonym）、欄位與 `EQUIPMENTSTATE` 的語意，再透過 `DBMS_METADATA.GET_DDL` 匯出結構，並列出 PK、索引、NOT NULL/default。家用端 SSH 查到 YMES 缺少這兩個來源物件；不可在 Oracle 建 YMES 表、不可匯出業務資料。另從 MES `ValueListProvider` 的正式設定查出 `TBLEQPSTATEBASIS.STATETYPE`、`UTILIZATIONTYPE` 的完整值與顯示文字。交付 Oracle 原始 DDL、對應空表 PostgreSQL CREATE SQL（只在來源確認且家用端需要時建立）、ValueList 值/文字及來源位置；更新 `docs/modules/EQP/設備設定/設備狀態設定.md`，完成後 commit/push 讓家用端實作安全的刪除引用檢查與 options API。不得從註解或 DEV 假資料推定選項。
+
 ## 結束規則
 
 - 不要把「已建立 Vue 元件」視為「已完整復刻」；需對照舊 Form 的欄位、按鈕、流程與 Service 規則。
