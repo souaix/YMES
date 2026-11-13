@@ -10,7 +10,7 @@
 | 公司電腦 | Vue UI、選單、表單、按鈕互動與呼叫 API | 資料庫連線、SSH、遠端上版 |
 
 - GitHub `souaix/YMES` 是兩台電腦共用的程式來源。開始修改前先同步最新程式，完成後提交回同一個 repo。
-- 公司電腦的 UI 透過 API 讀寫資料，不連資料庫。離線 UI 開發可用明確的 Development 假資料；假資料不能冒充正式資料，也不能在 Production 開啟。
+- 公司電腦先以明確標示的 Development 假資料完成所有畫面與本地互動邏輯，不連資料庫；同時把正式 API 契約和 Oracle 對照的 CREATE SQL 寫入交接文件，交由家用電腦完成 API/schema。Development 假資料不得冒充正式資料，Production 必須使用正式 API，且不得啟用假資料。
 - 資料庫連線字串、`.env.local`、私鑰與其他憑證不得提交到 GitHub。資料庫結構與 migration 由家用電腦維護，並透過 API 提供給 UI。
 - Web 與 API 是分開建置、設定及執行的服務，可以部署在同一台 Server。Web 路徑固定為 `/YMES`，API 路徑固定為 `/YMES/API`；路徑大小寫固定，不自行改名或增加反向代理前綴。
 - 目前專案目標版本為 .NET 9。Vue 3、TypeScript、Vite 用於登入、主選單及所有主檔清單、表單和關聯設定；前端一律經由獨立 API 存取資料，不直接連資料庫。清單列選取應在 Vue 狀態內更新，不以整頁導覽選取資料。
@@ -43,7 +43,7 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 - 選單預設全部收合，依舊系統 Module → Menu Group → Function 的三層結構呈現；不得把第三層主檔功能誤列為第一層。
 - 每一層選單項目都顯示語意相符的圖示；側欄收合時只顯示圖示，隱藏文字與展開箭頭。
 - 主選單項目由 API 提供，Vue 不自行猜測舊系統的 Module、MenuNo、FunctionNo 或翻譯名稱。API 尚未提供完整選單時，Development 可以清楚標示並使用五個已開發主檔的簡化導覽；Production 不以簡化導覽假裝完整。
-- 已有 Web 畫面的功能導向既有 Vue 頁面；尚未遷移的 FunctionNo 仍能從選單識別，頁面需清楚標示尚未遷移，不得顯示假資料或假成功訊息。
+- 已有 Web 畫面的功能導向既有 Vue 頁面；公司電腦遷移期間，尚無 API 的頁面可使用 Development 本地假資料完成畫面與互動，必須在頁面清楚標示「開發假資料」；Production 對未完成 API 的功能顯示未遷移狀態，不可回傳假成功。
 
 ### 主選單 API 契約
 

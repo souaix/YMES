@@ -848,38 +848,38 @@ COMMENT ON COLUMN tblsysyeardefinitionbasis.revisedate IS '修改時間（推測
 
 -- 設備主檔
 CREATE TABLE IF NOT EXISTS tbleqpequipmentbasis (
-    equipmentno varchar(50) NOT NULL,
-    equipmenttype varchar(50) NOT NULL,
-    capacity numeric(8,0),
-    vendorno varchar(50) NOT NULL,
+    equipmentno varchar(50) CONSTRAINT n_tbleqpequipmentbasis_01 NOT NULL,
+    equipmenttype varchar(50) CONSTRAINT n_tbleqpequipmentbasis_02 NOT NULL,
+    capacity numeric(8,0) DEFAULT -1,
+    vendorno varchar(50) CONSTRAINT n_tbleqpequipmentbasis_03 NOT NULL,
     modelno varchar(50),
     description varchar(255),
     creator varchar(10),
     createdate timestamp without time zone,
-    issuestate numeric(1,0) NOT NULL,
+    issuestate numeric(1,0) DEFAULT 0 CONSTRAINT n_tbleqpequipmentbasis_04 NOT NULL,
     engineergroupno varchar(20),
     assetno varchar(50),
     equipmentclass varchar(50),
-    loadport numeric(2,0),
+    loadport numeric(2,0) DEFAULT 0,
     autoflag numeric(1,0),
     eacontroller varchar(200),
     eqprecipe numeric(1,0),
     qclistno varchar(50),
     maxtime numeric(6,2),
-    fixeqptime numeric(6,2),
-    vareqptime numeric(6,2),
-    countopunitqty numeric(6,0),
-    counteqpunitqty numeric(6,0),
+    fixeqptime numeric(6,2) DEFAULT 0,
+    vareqptime numeric(6,2) DEFAULT 0,
+    countopunitqty numeric(6,0) DEFAULT 1,
+    counteqpunitqty numeric(6,0) DEFAULT 1,
     counter numeric(5,0),
     equipmentname varchar(255),
     erpno varchar(50),
     queueserver varchar(50),
     requestmsgqueue varchar(100),
     responsemsgqueue varchar(100),
-    chamberflag numeric(1,0),
+    chamberflag numeric(1,0) DEFAULT 0,
     belongequipmentno varchar(50),
     equipmentclassno numeric(3,0),
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
     requestmsgqueue_mes varchar(100),
@@ -887,44 +887,7 @@ CREATE TABLE IF NOT EXISTS tbleqpequipmentbasis (
     xx_keeperno varchar(50),
     CONSTRAINT pk_tbleqpequipmentbasis PRIMARY KEY (equipmentno)
 );
-COMMENT ON TABLE tbleqpequipmentbasis IS 'MES master data; Oracle source: MESTEST.TBLEQPEQUIPMENTBASIS';
-COMMENT ON COLUMN tbleqpequipmentbasis.equipmentno IS '設備（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.equipmenttype IS '設備（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.capacity IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.vendorno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.modelno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.engineergroupno IS '群組（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.assetno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.equipmentclass IS '設備（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.loadport IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.autoflag IS '旗標（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.eacontroller IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.eqprecipe IS '設備（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.qclistno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.maxtime IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.fixeqptime IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.vareqptime IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.countopunitqty IS '數量／計數（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.counteqpunitqty IS '數量／計數（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.counter IS '數量／計數（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.equipmentname IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.erpno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.queueserver IS '版本（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.requestmsgqueue IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.responsemsgqueue IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.chamberflag IS '旗標（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.belongequipmentno IS '設備（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.equipmentclassno IS '設備（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.requestmsgqueue_mes IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.responsemsgqueue_eap IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpequipmentbasis.xx_keeperno IS '識別碼／代碼（推測，請依業務確認）';
+COMMENT ON TABLE tbleqpequipmentbasis IS 'Structure converted from user-supplied Oracle MESTEST.TBLEQPEQUIPMENTBASIS DDL.';
 
 CREATE TABLE IF NOT EXISTS tbleqpgroupbasis (
     equipmentgroup varchar(50) NOT NULL,
@@ -938,14 +901,14 @@ CREATE TABLE IF NOT EXISTS tbleqpgroupbasis (
     CONSTRAINT pk_tbleqpgroupbasis PRIMARY KEY (equipmentgroup)
 );
 COMMENT ON TABLE tbleqpgroupbasis IS 'MES master data; Oracle source: MESTEST.TBLEQPGROUPBASIS';
-COMMENT ON COLUMN tbleqpgroupbasis.equipmentgroup IS '設備（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpgroupbasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpgroupbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpgroupbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpgroupbasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpgroupbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpgroupbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpgroupbasis.revisedate IS '修改時間（推測，請依業務確認）';
+COMMENT ON COLUMN tbleqpgroupbasis.equipmentgroup IS '設備群組編號；Oracle source: MESTEST.TBLEQPGROUPBASIS.EQUIPMENTGROUP';
+COMMENT ON COLUMN tbleqpgroupbasis.description IS '群組說明；Oracle source: MESTEST.TBLEQPGROUPBASIS.DESCRIPTION';
+COMMENT ON COLUMN tbleqpgroupbasis.creator IS '建立人員；Oracle source: MESTEST.TBLEQPGROUPBASIS.CREATOR';
+COMMENT ON COLUMN tbleqpgroupbasis.createdate IS '建立日期時間；Oracle source: MESTEST.TBLEQPGROUPBASIS.CREATEDATE';
+COMMENT ON COLUMN tbleqpgroupbasis.issuestate IS '簽核狀態；Oracle source: MESTEST.TBLEQPGROUPBASIS.ISSUESTATE';
+COMMENT ON COLUMN tbleqpgroupbasis.datastamp IS '併發版本；Oracle source: MESTEST.TBLEQPGROUPBASIS.DATASTAMP';
+COMMENT ON COLUMN tbleqpgroupbasis.reviser IS '修改人員；Oracle source: MESTEST.TBLEQPGROUPBASIS.REVISER';
+COMMENT ON COLUMN tbleqpgroupbasis.revisedate IS '修改日期時間；Oracle source: MESTEST.TBLEQPGROUPBASIS.REVISEDATE';
 
 CREATE TABLE IF NOT EXISTS tbleqpgroupdetail (
     equipmentgroup varchar(50) NOT NULL,
@@ -953,8 +916,8 @@ CREATE TABLE IF NOT EXISTS tbleqpgroupdetail (
     CONSTRAINT pk_tbleqpgroupdetail PRIMARY KEY (equipmentgroup, equipmentno)
 );
 COMMENT ON TABLE tbleqpgroupdetail IS 'MES master data; Oracle source: MESTEST.TBLEQPGROUPDETAIL';
-COMMENT ON COLUMN tbleqpgroupdetail.equipmentgroup IS '設備（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpgroupdetail.equipmentno IS '設備（推測，請依業務確認）';
+COMMENT ON COLUMN tbleqpgroupdetail.equipmentgroup IS '設備群組編號；Oracle source: MESTEST.TBLEQPGROUPDETAIL.EQUIPMENTGROUP';
+COMMENT ON COLUMN tbleqpgroupdetail.equipmentno IS '設備編號；Oracle source: MESTEST.TBLEQPGROUPDETAIL.EQUIPMENTNO';
 
 CREATE TABLE IF NOT EXISTS tbleqpengineergroupbasis (
     engineergroupno varchar(20) NOT NULL,
@@ -962,7 +925,7 @@ CREATE TABLE IF NOT EXISTS tbleqpengineergroupbasis (
     description varchar(255),
     creator varchar(10),
     createdate timestamp without time zone,
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
     CONSTRAINT pk_tbleqpengineergroupbasis PRIMARY KEY (engineergroupno)
@@ -979,24 +942,24 @@ COMMENT ON COLUMN tbleqpengineergroupbasis.revisedate IS '修改時間（推測�
 
 CREATE TABLE IF NOT EXISTS tbleqpstatebasis (
     equipmentstate numeric(2,0) NOT NULL,
-    statetype numeric(2,0) NOT NULL,
+    statetype numeric(2,0) DEFAULT 1 NOT NULL,
     statename varchar(50) NOT NULL,
     statecolor numeric(11,0) NOT NULL,
     description varchar(255),
     engineergroupno varchar(20),
-    utilizationtype numeric(1,0) NOT NULL,
+    utilizationtype numeric(1,0) DEFAULT 1 NOT NULL,
     statecolor_hex varchar(15),
     CONSTRAINT pk_tbleqpstatebasis PRIMARY KEY (equipmentstate)
 );
 COMMENT ON TABLE tbleqpstatebasis IS 'MES master data; Oracle source: MESTEST.TBLEQPSTATEBASIS';
-COMMENT ON COLUMN tbleqpstatebasis.equipmentstate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpstatebasis.statetype IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpstatebasis.statename IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpstatebasis.statecolor IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpstatebasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpstatebasis.engineergroupno IS '群組（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpstatebasis.utilizationtype IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpstatebasis.statecolor_hex IS '狀態（推測，請依業務確認）';
+COMMENT ON COLUMN tbleqpstatebasis.equipmentstate IS '設備狀態編號（NUMBER(2,0)）';
+COMMENT ON COLUMN tbleqpstatebasis.statetype IS '狀態類型 ValueList 索引（WinForms 標示 System/User Define）';
+COMMENT ON COLUMN tbleqpstatebasis.statename IS '設備狀態名稱';
+COMMENT ON COLUMN tbleqpstatebasis.statecolor IS '.NET Color.ToArgb() 有號整數';
+COMMENT ON COLUMN tbleqpstatebasis.description IS '狀態說明';
+COMMENT ON COLUMN tbleqpstatebasis.engineergroupno IS '設備工程群組編號（來源欄位；此表單未編輯）';
+COMMENT ON COLUMN tbleqpstatebasis.utilizationtype IS '稼動類型（0=Off、1=On）';
+COMMENT ON COLUMN tbleqpstatebasis.statecolor_hex IS 'RGB 十六進位色碼，不含 #；WinForms 確定時寫入';
 
 CREATE TABLE IF NOT EXISTS tbleqpcarrierbasis (
     carrierno varchar(50) NOT NULL,
@@ -1274,25 +1237,17 @@ COMMENT ON COLUMN tbleqprecipedetail.reviser IS '使用者／人員（推測，�
 COMMENT ON COLUMN tbleqprecipedetail.revisedate IS '修改時間（推測，請依業務確認）';
 
 CREATE TABLE IF NOT EXISTS tbleqpparameterbasis (
-    equipmentno varchar(50) NOT NULL,
-    seqno numeric(2,0) NOT NULL,
-    parameterno varchar(20) NOT NULL,
-    spectype numeric(1,0) NOT NULL,
+    equipmentno varchar(50) CONSTRAINT n_tbleqpparameterbasis_01 NOT NULL,
+    seqno numeric(2,0) CONSTRAINT n_tbleqpparameterbasis_02 NOT NULL,
+    parameterno varchar(20) CONSTRAINT n_tbleqpparameterbasis_03 NOT NULL,
+    spectype numeric(1,0) CONSTRAINT n_tbleqpparameterbasis_04 NOT NULL,
     parametervalue numeric(12,6),
-    reviser varchar(10) NOT NULL,
-    revisedate timestamp without time zone NOT NULL,
+    reviser varchar(10) CONSTRAINT n_tbleqpparameterbasis_05 NOT NULL,
+    revisedate timestamp without time zone CONSTRAINT n_tbleqpparameterbasis_06 NOT NULL,
     eqpparamdate timestamp without time zone,
     CONSTRAINT pk_tbleqpparameterbasis PRIMARY KEY (equipmentno, parameterno)
 );
-COMMENT ON TABLE tbleqpparameterbasis IS 'MES master data; Oracle source: MESTEST.TBLEQPPARAMETERBASIS';
-COMMENT ON COLUMN tbleqpparameterbasis.equipmentno IS '設備（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpparameterbasis.seqno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpparameterbasis.parameterno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpparameterbasis.spectype IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpparameterbasis.parametervalue IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpparameterbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpparameterbasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpparameterbasis.eqpparamdate IS '日期／時間（推測，請依業務確認）';
+COMMENT ON TABLE tbleqpparameterbasis IS 'Structure converted from user-supplied Oracle MESTEST.TBLEQPPARAMETERBASIS DDL.';
 
 CREATE TABLE IF NOT EXISTS tbleqpqclistbasis (
     qclistno varchar(100) NOT NULL,
@@ -1302,24 +1257,24 @@ CREATE TABLE IF NOT EXISTS tbleqpqclistbasis (
     description varchar(255),
     creator varchar(10),
     createdate timestamp without time zone,
-    aftereventqc numeric(1,0) NOT NULL,
-    datastamp numeric(11,0),
+    aftereventqc numeric(1,0) DEFAULT 0 NOT NULL,
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
     CONSTRAINT pk_tbleqpqclistbasis PRIMARY KEY (qclistno)
 );
 COMMENT ON TABLE tbleqpqclistbasis IS 'MES master data; Oracle source: MESTEST.TBLEQPQCLISTBASIS';
-COMMENT ON COLUMN tbleqpqclistbasis.qclistno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.qclistname IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.qctype IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.unvalidaction IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.aftereventqc IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistbasis.revisedate IS '修改時間（推測，請依業務確認）';
+COMMENT ON COLUMN tbleqpqclistbasis.qclistno IS '設備點檢表編號';
+COMMENT ON COLUMN tbleqpqclistbasis.qclistname IS '設備點檢表名稱';
+COMMENT ON COLUMN tbleqpqclistbasis.qctype IS '點檢時機／類型 ValueList 值';
+COMMENT ON COLUMN tbleqpqclistbasis.unvalidaction IS '點檢不合格時套用的設備狀態；-1 代表不動作';
+COMMENT ON COLUMN tbleqpqclistbasis.description IS '點檢表說明';
+COMMENT ON COLUMN tbleqpqclistbasis.creator IS '建立者使用者編號';
+COMMENT ON COLUMN tbleqpqclistbasis.createdate IS '建立時間';
+COMMENT ON COLUMN tbleqpqclistbasis.aftereventqc IS '事件後點檢旗標；UI 僅 QCType=0 時可設定';
+COMMENT ON COLUMN tbleqpqclistbasis.datastamp IS '樂觀並行版本';
+COMMENT ON COLUMN tbleqpqclistbasis.reviser IS '最後修改者使用者編號';
+COMMENT ON COLUMN tbleqpqclistbasis.revisedate IS '最後修改時間';
 
 CREATE TABLE IF NOT EXISTS tbleqpqclistdetail (
     qclistno varchar(100) NOT NULL,
@@ -1329,22 +1284,22 @@ CREATE TABLE IF NOT EXISTS tbleqpqclistdetail (
     stdvalue varchar(12),
     maxivalue varchar(12),
     minivalue varchar(12),
-    inputdatacount numeric(2,0) NOT NULL,
+    inputdatacount numeric(2,0) DEFAULT 1 NOT NULL,
     inspectionmethod varchar(100),
     inspectionstandards varchar(100),
     CONSTRAINT pk_tbleqpqclistdetail PRIMARY KEY (qclistno, qcorder)
 );
 COMMENT ON TABLE tbleqpqclistdetail IS 'MES master data; Oracle source: MESTEST.TBLEQPQCLISTDETAIL';
-COMMENT ON COLUMN tbleqpqclistdetail.qclistno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistdetail.qcorder IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistdetail.qcitem IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistdetail.qctype IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistdetail.stdvalue IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistdetail.maxivalue IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistdetail.minivalue IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistdetail.inputdatacount IS '數量／計數（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistdetail.inspectionmethod IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpqclistdetail.inspectionstandards IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
+COMMENT ON COLUMN tbleqpqclistdetail.qclistno IS '所屬點檢表編號';
+COMMENT ON COLUMN tbleqpqclistdetail.qcorder IS '顯示與執行順序';
+COMMENT ON COLUMN tbleqpqclistdetail.qcitem IS '點檢項目內容';
+COMMENT ON COLUMN tbleqpqclistdetail.qctype IS '項目型態（0 標準值、1 範圍、2 訊息、3 輸入資料）';
+COMMENT ON COLUMN tbleqpqclistdetail.stdvalue IS 'QCType=0 時的標準值';
+COMMENT ON COLUMN tbleqpqclistdetail.maxivalue IS '範圍上限；* 代表無上限';
+COMMENT ON COLUMN tbleqpqclistdetail.minivalue IS '範圍下限；* 代表無下限';
+COMMENT ON COLUMN tbleqpqclistdetail.inputdatacount IS '輸入／取樣數量；WinForms 控制項範圍 1 到 10';
+COMMENT ON COLUMN tbleqpqclistdetail.inspectionmethod IS '點檢方法';
+COMMENT ON COLUMN tbleqpqclistdetail.inspectionstandards IS '點檢判定標準';
 
 CREATE TABLE IF NOT EXISTS tbleqpmaskgroupbasis (
     maskgroup varchar(50) NOT NULL,
@@ -1401,20 +1356,20 @@ COMMENT ON COLUMN tbleqplocatordetail.carrierno IS '識別碼／代碼（推測�
 CREATE TABLE IF NOT EXISTS tblmtlmaterialbasis (
     materialno varchar(50) NOT NULL,
     materialtype varchar(50) NOT NULL,
-    issuestate numeric(1,0) NOT NULL,
+    issuestate numeric(1,0) NOT NULL DEFAULT 0,
     description varchar(255),
     creator varchar(10),
     createdate timestamp without time zone,
     materialname varchar(300),
     materialspec varchar(300),
-    putinplace numeric(1,0),
-    countway numeric(1,0),
-    checklotno numeric(1,0),
+    putinplace numeric(1,0) DEFAULT 0,
+    countway numeric(1,0) DEFAULT 0,
+    checklotno numeric(1,0) DEFAULT 0,
     unittype varchar(30) NOT NULL,
-    safeqty numeric(16,8),
+    safeqty numeric(16,8) DEFAULT 0,
     unitno varchar(30) NOT NULL,
     ex_mtlbasis1 varchar(20),
-    keymaterials numeric(1,0),
+    keymaterials numeric(1,0) DEFAULT 0,
     openlimittimeflag numeric(1,0),
     openlimittime numeric(6,2),
     resetopendate numeric(1,0),
@@ -1456,7 +1411,7 @@ CREATE TABLE IF NOT EXISTS tblmtlmaterialbasis (
     user_defined34 numeric(23,8),
     graphno varchar(255),
     qccategory varchar(50),
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
     sap_plnnr varchar(8),
@@ -1512,117 +1467,6 @@ CREATE TABLE IF NOT EXISTS tblmtlmaterialbasis (
     CONSTRAINT pk_tblmtlmaterialbasis PRIMARY KEY (materialno)
 );
 COMMENT ON TABLE tblmtlmaterialbasis IS 'MES master data; Oracle source: MESTEST.TBLMTLMATERIALBASIS';
-COMMENT ON COLUMN tblmtlmaterialbasis.materialno IS '物料（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.materialtype IS '物料（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.materialname IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.materialspec IS '物料（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.putinplace IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.countway IS '數量／計數（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.checklotno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.unittype IS '單位（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.safeqty IS '數量／計數（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.unitno IS '單位（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.ex_mtlbasis1 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.keymaterials IS '物料（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.openlimittimeflag IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.openlimittime IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.resetopendate IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.expiredateflag IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.erpno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined01 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined02 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined03 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined04 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined05 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined06 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined07 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined08 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined09 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined10 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined11 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined12 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined13 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined14 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined15 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined16 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined17 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined18 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined19 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined20 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined21 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined22 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined23 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined24 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined25 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined26 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined27 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined28 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined29 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined30 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined31 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined32 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined33 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.user_defined34 IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.graphno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.qccategory IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_plnnr IS '途程群組';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_numerator IS '轉換為基礎計量單位的分子_Numerator for Conversion to Base Units of Measure';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_werks IS '工廠_Plant';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_dsn_office IS '產品應用_Product Application';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_prod_hier IS '產品階層_Product Hierarchy';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_zz1_zbonded_plt IS '保稅_Bonded';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_old_mat_no IS '舊物料號碼_Old Material Number';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_matl_type IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_matl_desc_m IS '物料說明_Material descrition';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_matl_desc_e IS '物料說明_Material descrition';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_base_uom IS '基礎計量單位_Base Unit of Measure';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_shelf_life IS '總有效期限_Total shelf life';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_zzkunnr IS '客戶代號_Customer Number';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_mfr_no IS '製造商號碼_Manufacturer number';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_matl_grp_2 IS '物料群組 2_Material group 2';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_denominatr IS '基本計量單位轉換的分母_Denominator for conversion to base units of measure';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_extmatlgrp IS 'GP_GP';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_stor_conds IS '儲存條件_Storage conditions';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_matl_group IS '物料群組_Material Group';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_pur_status IS '跨廠物料狀態_Cross-Plant Material Status';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_pur_status_c IS '工廠特定物料狀態_Plant-Sp.Matl Status';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_item_cat IS '一般項目種類群組_General item category group';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_page_no IS '圖號版次_Drawing Version';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_zztype IS 'Type_Type';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_zzqdoc IS '材料承認規格書_Material Approval Specification';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_zzdesign IS '客戶系列性型號(Design id)_Customer serial model (Design id)';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_class_m IS '料特性_Material Characteristics';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_class_b IS '批特性_Batch Characteristics';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_profit_ctr IS '利潤中心_Profit Center';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_alt_unit IS '庫存記錄單位的替代計量單位_Alternative Unit of Measure for Stockkeeping Unit';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_replentime IS '整體補貨前置時間〈工作日〉_Tot. repl. lead time <working day>';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_proc_type IS '採購類型_Procurement Type';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_spproctype IS '特殊採購類型_Special Procurement Type';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_comp_scrap IS '零件廢品 (%)_Component Scrap (%)';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_assy_scrap IS '裝配廢品%_last updated date';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_name1 IS '名稱 1_Name 1';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_sapimportdatetime IS '建立日期_Creation Date';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_document IS '圖號_Drawing No';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_minlotsize IS '最小批量_Minimum Lot Size';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_round_val IS '採購單數量的捨入值_Rounding Value for Purchase Order Quantity';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_plnd_delry IS '計劃交貨時間〈天〉_Planned Delivery Time in Days';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_mrp_ctrler IS 'MRP 控制員_MRP Controller';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_sapupdatedatetime IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_frameqty IS '數量／計數（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_framesize IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_grossdie IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_thickness IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_technology IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.sap_resolution IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialbasis.framsize IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-
 CREATE TABLE IF NOT EXISTS tblmtlmaterialgroupbasis (
     groupno varchar(50) NOT NULL,
     materialtype varchar(50),

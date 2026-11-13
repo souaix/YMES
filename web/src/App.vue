@@ -3,12 +3,24 @@ import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import MenuTree from './components/MenuTree.vue'
 import MenuIcon from './components/MenuIcon.vue'
 import EquipmentMaster from './components/EquipmentMaster.vue'
+import EquipmentGroupMaster from './components/EquipmentGroupMaster.vue'
+import EquipmentStateMaster from './components/EquipmentStateMaster.vue'
+import EquipmentQCListMaster from './components/EquipmentQCListMaster.vue'
+import EquipmentVendorMaster from './components/EquipmentVendorMaster.vue'
+import EquipmentEngineerGroupMaster from './components/EquipmentEngineerGroupMaster.vue'
+import EquipmentTypeMaster from './components/EquipmentTypeMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
 const appBasePath = import.meta.env.BASE_URL.replace(/\/+$/, '')
+const equipmentTypeRoute = appBasePath + '/Equipment/Types'
+const equipmentGroupRoute = appBasePath + '/Equipment/Groups'
+const equipmentStateRoute = appBasePath + '/Equipment/States'
+const equipmentInspectionRoute = appBasePath + '/Equipment/Inspection'
 const equipmentRoute = `${appBasePath}/Equipment`
+const equipmentVendorRoute = `${appBasePath}/Equipment/Vendors`
+const equipmentEngineerGroupRoute = `${appBasePath}/Equipment/EngineerGroups`
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -76,7 +88,15 @@ const fallbackMenuTree: MenuNode[] = [
     label: '設備資料',
     shortLabel: '設',
     moduleNo: 'EQP',
-    children: [{ id: 'equipment-settings', label: '設備設定', shortLabel: '設', children: [{ id: 'equipment-master', label: '設備基本資料', tableName: 'tbleqpequipmentbasis', shortLabel: '主', functionNo: 'EQP BASIS', moduleNo: 'EQP' }] }],
+    children: [{ id: 'equipment-settings', label: '設備設定', shortLabel: '設', children: [
+      { id: 'equipment-vendor-master', label: '設備供應商基本資料', shortLabel: '供', moduleNo: 'EQP' },
+      { id: 'equipment-engineer-group', label: '設備工程群組資料', shortLabel: '群', moduleNo: 'EQP' },
+      { id: 'equipment-category', label: '設備類別資料', shortLabel: '類', moduleNo: 'EQP' },
+      { id: 'equipment-master', label: '設備基本資料', tableName: 'tbleqpequipmentbasis', shortLabel: '主', functionNo: 'EQP BASIS', moduleNo: 'EQP' },
+      { id: 'equipment-group', label: '設備群組資料', shortLabel: '群', moduleNo: 'EQP' },
+      { id: 'equipment-state', label: '設備狀態設定', shortLabel: '狀', moduleNo: 'EQP' },
+      { id: 'equipment-inspection', label: '設備點檢表設定', shortLabel: '檢', moduleNo: 'EQP' },
+    ] }],
   },
   {
     id: 'operation-data',
@@ -114,6 +134,12 @@ const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
   'equipment-master': equipmentRoute,
+  'equipment-vendor-master': equipmentVendorRoute,
+  'equipment-engineer-group': equipmentEngineerGroupRoute,
+  'equipment-group': equipmentGroupRoute,
+  'equipment-state': equipmentStateRoute,
+  'equipment-inspection': equipmentInspectionRoute,
+  'equipment-category': equipmentTypeRoute,
   'operation-master': `${appBasePath}/MasterData/Operations`,
   'material-master': `${appBasePath}/MasterData/Materials`,
   'process-master': `${appBasePath}/MasterData/Processes`,
@@ -135,6 +161,7 @@ const runtimeConfig = ref<RuntimeConfig>({
 })
 
 const selectedEnvironment = ref<EnvironmentKey>('production')
+const isDevelopmentPreview = computed(() => import.meta.env.DEV && selectedEnvironment.value === 'development')
 const screen = ref<Screen>('login')
 const username = ref('')
 const password = ref('')
@@ -153,19 +180,28 @@ const sidebarOpen = ref(true)
 const currentPath = ref(window.location.pathname)
 const activeMasterKey = computed(() => {
   const path = currentPath.value.replace(/\/+$/, '')
-  return (Object.entries(menuRoutes).find(([, route]) => {
-    const base = route.replace(/\/+$/, '')
-    return path === base || path.startsWith(base + '/')
-  })?.[0] ?? null)
+  const match = Object.entries(menuRoutes)
+    .filter(([, route]) => {
+      const base = route.replace(/\/+$/, '')
+      return path === base || path.startsWith(base + '/')
+    })
+    .sort((a, b) => b[1].length - a[1].length)[0]
+  return match?.[0] ?? null
 })
 const activeMasterDataKey = computed<MasterDataKey | null>(() => {
   const key = activeMasterKey.value
   return key === 'operation-master' || key === 'material-master' || key === 'process-master' || key === 'product-master' ? key : null
 })
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
+const isEquipmentVendorPage = computed(() => activeMasterKey.value === 'equipment-vendor-master')
+const isEquipmentEngineerGroupPage = computed(() => activeMasterKey.value === 'equipment-engineer-group')
+const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment-group')
+const isEquipmentStatePage = computed(() => activeMasterKey.value === 'equipment-state')
+const isEquipmentInspectionPage = computed(() => activeMasterKey.value === 'equipment-inspection')
+const isEquipmentTypePage = computed(() => activeMasterKey.value === 'equipment-category')
 const currentMenuNode = computed(() => findMenuNodeByRoute(menuTree.value, currentPath.value))
 const activeFunctionNode = computed(() => currentMenuNode.value && !activeMasterKey.value ? currentMenuNode.value : null)
-const currentMasterTitle = computed(() => currentMenuNode.value?.label ?? '主選單')
+const currentMasterTitle = computed(() => currentMenuNode.value?.label ?? (activeMasterKey.value === 'equipment-vendor-master' ? '設備供應商基本資料' : activeMasterKey.value === 'equipment-engineer-group' ? '設備工程群組資料' : activeMasterKey.value === 'equipment-group' ? '設備群組資料' : activeMasterKey.value === 'equipment-state' ? '設備狀態設定' : activeMasterKey.value === 'equipment-inspection' ? '設備點檢表設定' : '主選單'))
 const localDemoApi = import.meta.env.DEV && import.meta.env.VITE_LOCAL_DEMO_API === 'true'
 
 watchEffect(() => {
@@ -220,9 +256,38 @@ function mapMenuTree(payload: MenuTreeApiResponse): MenuNode[] {
   })
 }
 
+function addDevelopmentEquipmentFunctions(items: MenuNode[]): MenuNode[] {
+  const result = items.map((item) => ({ ...item, children: item.children?.map((child) => ({ ...child, children: child.children ? [...child.children] : undefined })) }))
+  const fallbackEquipment = fallbackMenuTree.find((item) => item.moduleNo === 'EQP')
+  const fallbackSettings = fallbackEquipment?.children?.find((item) => item.label === '設備設定')
+  if (!fallbackEquipment || !fallbackSettings) return result
+  let equipment = result.find((item) => item.moduleNo?.toUpperCase() === 'EQP')
+  if (!equipment) {
+    result.push(fallbackEquipment)
+    return result
+  }
+  const containsLabel = (nodes: MenuNode[] | undefined, label: string): boolean =>
+    Boolean(nodes?.some((node) => node.label.trim() === label || containsLabel(node.children, label)))
+  let settings = equipment.children?.find((item) => item.label.trim() === '設備設定')
+  if (!settings) {
+    settings = { id: 'development:EQP:settings', label: '設備設定', shortLabel: '設', moduleNo: 'EQP', children: [] }
+    equipment.children = [...(equipment.children ?? []), settings]
+  }
+  settings.children = [...(settings.children ?? [])]
+  for (const feature of fallbackSettings.children ?? []) {
+    if (!containsLabel(equipment.children, feature.label)) settings.children.push({ ...feature })
+  }
+  return result
+}
+
 function routeForMenuNode(item: MenuNode): string {
   const functionNo = item.functionNo?.trim().toUpperCase()
-  return menuRoutes[item.id] ?? (functionNo ? functionRoutes[functionNo] : undefined) ??
+  const knownRoute = item.moduleNo?.toUpperCase() === 'EQP' && item.label.trim() === '設備供應商基本資料'
+    ? equipmentVendorRoute
+    : item.moduleNo?.toUpperCase() === 'EQP' && item.label.trim() === '設備工程群組資料'
+      ? equipmentEngineerGroupRoute
+      : undefined
+  return menuRoutes[item.id] ?? knownRoute ?? (functionNo ? functionRoutes[functionNo] : undefined) ??
     `${appBasePath}/Function/${encodeURIComponent(item.moduleNo || 'module')}/${encodeURIComponent(item.functionNo || item.menuNo || item.id)}`
 }
 
@@ -255,7 +320,8 @@ async function loadMenuTree(): Promise<void> {
   try {
     const response = await fetch(url, { credentials: 'include', cache: 'no-store' })
     if (!response.ok) throw new Error(`主選單 API 回應錯誤 (${response.status})。`)
-    menuTree.value = mapMenuTree(await response.json() as MenuTreeApiResponse)
+    const apiMenuTree = mapMenuTree(await response.json() as MenuTreeApiResponse)
+    menuTree.value = import.meta.env.DEV ? addDevelopmentEquipmentFunctions(apiMenuTree) : apiMenuTree
     menuSource.value = 'api'
   } catch (error) {
     menuError.value = error instanceof Error ? error.message : '主選單載入失敗。'
@@ -720,7 +786,7 @@ async function signOut(): Promise<void> {
           </div>
         </header>
         <div v-if="menuSource === 'fallback'" class="framework-menu-note" role="status">
-          目前顯示五個主檔的簡化選單；完整 WinForms 選單待主選單 API 提供。
+          目前顯示簡化選單；尚未遷移的功能會標示待處理。
         </div>
         <div v-else-if="menuSource === 'error'" class="framework-menu-note error" role="alert">
           主選單載入失敗：{{ menuError }}
@@ -729,12 +795,50 @@ async function signOut(): Promise<void> {
           v-if="isEquipmentPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+        />
+        <EquipmentVendorMaster
+          v-else-if="isEquipmentVendorPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+        />
+        <EquipmentEngineerGroupMaster
+          v-else-if="isEquipmentEngineerGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+        />
+        <EquipmentGroupMaster
+          v-else-if="isEquipmentGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+        />
+        <EquipmentStateMaster
+          v-else-if="isEquipmentStatePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+        />
+        <EquipmentQCListMaster
+          v-else-if="isEquipmentInspectionPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+        />
+        <EquipmentTypeMaster
+          v-else-if="isEquipmentTypePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
         />
         <MasterDataMaster
           v-else-if="activeMasterDataKey"
           class="framework-content"
           :master-key="activeMasterDataKey"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :development-preview="isDevelopmentPreview"
         />
         <FunctionPending
           v-else-if="activeFunctionNode"

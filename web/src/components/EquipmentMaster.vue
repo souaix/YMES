@@ -1,5 +1,16 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import EquipmentPropertyMaster from './EquipmentPropertyMaster.vue'
+import EquipmentParameterMaster from './EquipmentParameterMaster.vue'
+import EquipmentQCRelationMaster from './EquipmentQCRelationMaster.vue'
+import EquipmentDataImport from './EquipmentDataImport.vue'
+
+interface EquipmentClassOption { value: string; code: string; label: string }
+const equipmentClassOptions: EquipmentClassOption[] = [
+  { value: '0', code: 'GENERAL', label: '一般設備' }, { value: '1', code: 'VIRTUAL', label: '虛擬設備' },
+  { value: '3', code: 'TESTER', label: '測試設備' }, { value: '4', code: 'HANDLER', label: '搬送設備' },
+  { value: '5', code: 'PROBER', label: '探針設備' }, { value: '6', code: 'MOCVD', label: 'MOCVD' },
+]
 
 interface Equipment {
   equipmentNo: string
@@ -32,12 +43,24 @@ interface Equipment {
   belongEquipmentNo: string | null
   issueState: number
   dataStamp: number
+  creator?: string | null
   createdAt: string | null
+  reviser?: string | null
   revisedAt: string | null
 }
-type EquipmentWrite = Omit<Equipment, 'chamberFlag' | 'belongEquipmentNo' | 'issueState' | 'createdAt' | 'revisedAt'>
+type EquipmentWrite = Omit<Equipment, 'chamberFlag' | 'belongEquipmentNo' | 'issueState' | 'createdAt' | 'revisedAt' | 'creator' | 'reviser'>
 
-const props = defineProps<{ apiBaseUrl: string }>()
+const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>()
+const mock = import.meta.env.DEV
+const mockKeys = { equipment: 'ymes-dev-mock:equipment:v1', chambers: 'ymes-dev-mock:equipment-chambers:v1' }
+const seedEquipment: Equipment[] = [
+  { equipmentNo: 'DEV-1AP-01', equipmentType: 'DEV-EQP-LATHE', equipmentName: '開發用超純水防靜電裝置', engineerGroupNo: 'DEV-EG-01', vendorNo: 'DEV-VENDOR-01', modelNo: 'DEV-MODEL-A', assetNo: 'DEV-ASSET-001', equipmentClass: 'GENERAL', equipmentClassNo: '0', description: 'DEV 假資料：設備基本資料範例', capacity: -1, loadPort: -1, autoFlag: 0, eaController: 'N/A', eqpRecipe: 0, qcListNo: 'DEV-EQP-QC-01', maxTime: 2.5, fixEqpTime: 0, varEqpTime: 0, countEqpUnitQty: 1, countEquipmentUnitQty: 1, queueServer: '', requestMsgQueue: '', responseMsgQueue: '', requestMsgQueueMes: '', responseMsgQueueEap: '', chamberFlag: false, belongEquipmentNo: null, issueState: 0, dataStamp: 0, creator: 'DEV001', createdAt: '2026-11-01T08:00:00+08:00', reviser: 'DEV002', revisedAt: '2026-11-05T09:30:00+08:00' },
+  { equipmentNo: 'DEV-1AP-02', equipmentType: 'DEV-EQP-ROBOT', equipmentName: '開發用自動搬送設備', engineerGroupNo: 'DEV-EG-02', vendorNo: 'DEV-VENDOR-02', modelNo: 'DEV-MODEL-B', assetNo: 'DEV-ASSET-002', equipmentClass: 'HANDLER', equipmentClassNo: '4', description: 'DEV 假資料：自動設備範例', capacity: 8, loadPort: 2, autoFlag: 1, eaController: 'DEV-EAP-01', eqpRecipe: 2, qcListNo: 'DEV-EQP-QC-02', maxTime: 1, fixEqpTime: 2, varEqpTime: 0.5, countEqpUnitQty: 1, countEquipmentUnitQty: 1, queueServer: 'DEV-MQ-01', requestMsgQueue: 'DEV-EQP-REQ', responseMsgQueue: 'DEV-EQP-RES', requestMsgQueueMes: 'DEV-MES-REQ', responseMsgQueueEap: 'DEV-EAP-RES', chamberFlag: false, belongEquipmentNo: null, issueState: 2, dataStamp: 1, creator: 'DEV001', createdAt: '2026-10-15T09:00:00+08:00', reviser: 'DEV002', revisedAt: '2026-10-16T11:20:00+08:00' },
+]
+const seedChambers: Equipment[] = [
+  { equipmentNo: 'DEV-1AP-01-C01', equipmentType: 'DEV-EQP-CHAMBER', equipmentName: '開發用腔體一', engineerGroupNo: 'DEV-EG-01', vendorNo: 'DEV-VENDOR-01', modelNo: '', assetNo: '', equipmentClass: 'CHAMBER', equipmentClassNo: '2', description: 'DEV 假資料 Chamber', capacity: -1, loadPort: -1, autoFlag: 0, eaController: 'N/A', eqpRecipe: 0, qcListNo: '', maxTime: null, fixEqpTime: 0, varEqpTime: 0, countEqpUnitQty: 1, countEquipmentUnitQty: 1, queueServer: '', requestMsgQueue: '', responseMsgQueue: '', requestMsgQueueMes: '', responseMsgQueueEap: '', chamberFlag: true, belongEquipmentNo: 'DEV-1AP-01', issueState: 0, dataStamp: 0, creator: 'DEV001', createdAt: '2026-11-01T08:00:00+08:00', reviser: null, revisedAt: null },
+  { equipmentNo: 'DEV-1AP-01-C02', equipmentType: 'DEV-EQP-CHAMBER', equipmentName: '開發用腔體二', engineerGroupNo: 'DEV-EG-01', vendorNo: 'DEV-VENDOR-01', modelNo: '', assetNo: '', equipmentClass: 'CHAMBER', equipmentClassNo: '2', description: 'DEV 假資料 Chamber', capacity: -1, loadPort: -1, autoFlag: 0, eaController: 'N/A', eqpRecipe: 0, qcListNo: '', maxTime: null, fixEqpTime: 0, varEqpTime: 0, countEqpUnitQty: 1, countEquipmentUnitQty: 1, queueServer: '', requestMsgQueue: '', responseMsgQueue: '', requestMsgQueueMes: '', responseMsgQueueEap: '', chamberFlag: true, belongEquipmentNo: 'DEV-1AP-01', issueState: 2, dataStamp: 1, creator: 'DEV001', createdAt: '2026-10-01T08:00:00+08:00', reviser: 'DEV002', revisedAt: '2026-10-03T08:00:00+08:00' },
+]
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const equipment = ref<Equipment[]>([])
 const chambers = ref<Equipment[]>([])
@@ -52,15 +75,81 @@ const successMessage = ref('')
 const chamberError = ref('')
 const equipmentFormMode = ref<'new' | 'edit' | 'copy' | null>(null)
 const equipmentForm = ref<EquipmentWrite>({} as EquipmentWrite)
+const propertyWindowOpen = ref(false)
+const parameterWindowOpen = ref(false)
+const qcRelationWindowOpen = ref(false)
+const importWindowOpen = ref(false)
+const selected = computed(() => equipment.value.find((item) => item.equipmentNo === selectedEquipmentNo.value) ?? null)
+const equipmentDirty = ref(false)
+const equipmentAudit = ref<{ creator: string; createdAt: string | null; reviser: string; revisedAt: string | null }>({ creator: '', createdAt: null, reviser: '', revisedAt: null })
+const defaultQueueServer = ref(false)
+const chamberIssueState = ref(0)
 const chamberFormMode = ref<'new' | 'edit' | null>(null)
 const chamberForm = ref({ equipmentNo: '', belongEquipmentNo: '', equipmentName: '', description: '', dataStamp: 0 })
 let initialSelectedEquipmentNo = ''
 let chamberRequestId = 0
 
-const selected = computed(() =>
-  equipment.value.find((item) => item.equipmentNo === selectedEquipmentNo.value) ?? null,
-)
+const visibleChambers = computed(() => chambers.value.filter((item) => item.issueState === chamberIssueState.value))
+function readMock<T>(key: string, seed: T): T {
+  try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) as T : structuredClone(seed) }
+  catch { return structuredClone(seed) }
+}
+function writeMock<T>(key: string, value: T): void { localStorage.setItem(key, JSON.stringify(value)) }
+function filteredMockEquipment(): Equipment[] {
+  const search = keyword.value.trim().toLocaleLowerCase()
+  return readMock<Equipment[]>(mockKeys.equipment, seedEquipment).filter((item) => !item.chamberFlag && item.issueState === issueState.value && (!search || item.equipmentNo.toLocaleLowerCase().includes(search)))
+}
 
+function toEquipmentWrite(item: Equipment, equipmentNo = item.equipmentNo, dataStamp = item.dataStamp): EquipmentWrite {
+  return {
+    equipmentNo, equipmentType: item.equipmentType, equipmentName: item.equipmentName,
+    engineerGroupNo: item.engineerGroupNo, vendorNo: item.vendorNo, modelNo: item.modelNo,
+    assetNo: item.assetNo, equipmentClass: item.equipmentClass, equipmentClassNo: item.equipmentClassNo,
+    description: item.description, capacity: item.capacity, loadPort: item.loadPort, autoFlag: item.autoFlag,
+    eaController: item.eaController, eqpRecipe: item.eqpRecipe, qcListNo: item.qcListNo,
+    maxTime: item.maxTime, fixEqpTime: item.fixEqpTime, varEqpTime: item.varEqpTime,
+    countEqpUnitQty: item.countEqpUnitQty, countEquipmentUnitQty: item.countEquipmentUnitQty,
+    queueServer: item.queueServer, requestMsgQueue: item.requestMsgQueue, responseMsgQueue: item.responseMsgQueue,
+    requestMsgQueueMes: item.requestMsgQueueMes, responseMsgQueueEap: item.responseMsgQueueEap, dataStamp,
+  }
+}
+function markEquipmentDirty(): void { equipmentDirty.value = true }
+function clearQueueFields(): void {
+  equipmentForm.value.queueServer = ''
+  equipmentForm.value.requestMsgQueue = ''
+  equipmentForm.value.responseMsgQueue = ''
+  equipmentForm.value.requestMsgQueueMes = ''
+  equipmentForm.value.responseMsgQueueEap = ''
+}
+function changeAutoFlag(): void {
+  markEquipmentDirty()
+  defaultQueueServer.value = equipmentForm.value.autoFlag === 1
+  if (defaultQueueServer.value) clearQueueFields()
+}
+function changeDefaultQueueServer(): void {
+  markEquipmentDirty()
+  if (defaultQueueServer.value) clearQueueFields()
+}
+function closeEquipmentForm(): void { equipmentFormMode.value = null; equipmentDirty.value = false }
+function auditDate(value: string | null): string {
+  if (!value) return '—'
+  const date = new Date(value)
+  return Number.isNaN(date.valueOf()) ? value : date.toLocaleString('zh-TW')
+}
+function validateEquipmentForm(): string {
+  if (!equipmentForm.value.equipmentNo.trim()) return '設備編號為必填。'
+  if (!equipmentForm.value.equipmentType.trim()) return '設備類別資料為必填。'
+  if (!equipmentForm.value.equipmentName.trim()) return '設備名稱為必填。'
+  if (!equipmentForm.value.engineerGroupNo.trim()) return '管理群組為必填。'
+  if (!equipmentForm.value.vendorNo.trim()) return '供應商編號為必填。'
+  if (!Number.isInteger(equipmentForm.value.capacity) || equipmentForm.value.capacity < -1) return '批量限制必須為大於或等於 -1 的整數。'
+  if (!Number.isInteger(equipmentForm.value.loadPort) || equipmentForm.value.loadPort < -1) return '批數限制必須為大於或等於 -1 的整數。'
+  if (equipmentForm.value.maxTime !== null && (equipmentForm.value.maxTime < 0 || equipmentForm.value.maxTime > 24)) return '預設產能需介於 0 到 24 小時。'
+  if ((equipmentForm.value.fixEqpTime ?? 0) < 0 || (equipmentForm.value.varEqpTime ?? 0) < 0) return '固定機時與變動機時不可小於 0。'
+  if (equipmentForm.value.countEqpUnitQty < 0) return '機時單位批量不可小於 0。'
+  if (equipmentForm.value.autoFlag === 1 && !defaultQueueServer.value && !equipmentForm.value.queueServer.trim()) return '未使用預設伺服器時，佇列伺服器為必填。'
+  return ''
+}
 function makeApiUrl(path: string): string {
   const configuredBase = props.apiBaseUrl.trim()
   if (!configuredBase) throw new Error('目前環境尚未設定 API 位址。')
@@ -104,20 +193,80 @@ function updateFilterAddress(): void {
 function newEquipmentValues(): EquipmentWrite {
   return {
     equipmentNo: '', equipmentType: '', equipmentName: '', engineerGroupNo: '', vendorNo: '', modelNo: '', assetNo: '',
-    equipmentClass: '一般設備', equipmentClassNo: '', description: '', capacity: -1, loadPort: -1, autoFlag: 0,
+    equipmentClass: 'GENERAL', equipmentClassNo: '0', description: '', capacity: -1, loadPort: -1, autoFlag: 0,
     eaController: 'N/A', eqpRecipe: 0, qcListNo: '', maxTime: null, fixEqpTime: 0, varEqpTime: 0,
     countEqpUnitQty: 1, countEquipmentUnitQty: 1, queueServer: '', requestMsgQueue: '', responseMsgQueue: '',
     requestMsgQueueMes: '', responseMsgQueueEap: '', dataStamp: 0,
   }
 }
 
+function saveEquipmentMock(mode: 'new' | 'edit' | 'copy'): Equipment {
+  const rows = readMock<Equipment[]>(mockKeys.equipment, seedEquipment)
+  const number = equipmentForm.value.equipmentNo.trim().toUpperCase()
+  const index = rows.findIndex((item) => item.equipmentNo === number)
+  if (mode !== 'edit' && index >= 0) throw new Error(`設備編號 ${number} 已存在。`)
+  if (mode === 'edit' && index < 0) throw new Error(`找不到設備 ${number}。`)
+  const now = new Date().toISOString()
+  const previous = index >= 0 ? rows[index] : null
+  const saved: Equipment = {
+    ...equipmentForm.value, equipmentNo: number, description: equipmentForm.value.description || '',
+    chamberFlag: false, belongEquipmentNo: null, issueState: 0,
+    dataStamp: (previous?.dataStamp ?? -1) + 1,
+    creator: previous?.creator || props.currentUserNo || 'DEV001',
+    createdAt: previous?.createdAt || now,
+    reviser: previous ? (props.currentUserNo || 'DEV001') : null,
+    revisedAt: previous ? now : null,
+  }
+  if (index >= 0) rows[index] = saved
+  else rows.push(saved)
+  writeMock(mockKeys.equipment, rows)
+  return saved
+}
+
 function openEquipmentForm(mode: 'new' | 'edit' | 'copy'): void {
   const item = selected.value
   equipmentFormMode.value = mode
-  if (mode === 'new' || !item) equipmentForm.value = newEquipmentValues()
-  else {
-    equipmentForm.value = { ...item, equipmentNo: mode === 'copy' ? '' : item.equipmentNo, dataStamp: mode === 'copy' ? 0 : item.dataStamp }
+  if (mode === 'new' || !item) {
+    equipmentForm.value = newEquipmentValues()
+    const now = new Date().toISOString()
+    equipmentAudit.value = { creator: props.currentUserNo || (props.developmentPreview ? 'DEV001' : ''), createdAt: now, reviser: '', revisedAt: null }
+    defaultQueueServer.value = false
+  } else {
+    equipmentForm.value = toEquipmentWrite(item, mode === 'copy' ? '' : item.equipmentNo, mode === 'copy' ? 0 : item.dataStamp)
+    const now = new Date().toISOString()
+    equipmentAudit.value = mode === 'edit'
+      ? { creator: item.creator || '', createdAt: item.createdAt, reviser: props.currentUserNo || '', revisedAt: now }
+      : { creator: props.currentUserNo || (props.developmentPreview ? 'DEV001' : ''), createdAt: now, reviser: '', revisedAt: null }
+    defaultQueueServer.value = item.autoFlag === 1 && !item.queueServer
   }
+  equipmentDirty.value = false
+  errorMessage.value = ''
+}
+
+function openProperties(): void {
+  if (!selected.value) return
+  propertyWindowOpen.value = true
+}
+function openParameters(): void {
+  if (!selected.value) return
+  parameterWindowOpen.value = true
+}
+function openQcRelations(): void {
+  if (!selected.value) return
+  qcRelationWindowOpen.value = true
+}
+function openEquipmentImport(): void {
+  if (mock) {
+    if (!localStorage.getItem(mockKeys.equipment)) writeMock(mockKeys.equipment, seedEquipment)
+    if (!localStorage.getItem(mockKeys.chambers)) writeMock(mockKeys.chambers, seedChambers)
+  }
+  importWindowOpen.value = true
+}
+
+function syncEquipmentClass(): void {
+  const option = equipmentClassOptions.find((item) => item.value === equipmentForm.value.equipmentClassNo)
+  if (option) equipmentForm.value.equipmentClass = option.code
+  markEquipmentDirty()
 }
 
 function openChamberForm(mode: 'new' | 'edit', chamber?: Equipment): void {
@@ -129,17 +278,29 @@ function openChamberForm(mode: 'new' | 'edit', chamber?: Equipment): void {
     : { equipmentNo: chamber?.equipmentNo ?? '', belongEquipmentNo: parent.equipmentNo, equipmentName: chamber?.equipmentName ?? '', description: chamber?.description ?? '', dataStamp: chamber?.dataStamp ?? 0 }
 }
 
-async function saveEquipment(): Promise<void> {
-  const isEdit = equipmentFormMode.value === 'edit'
+async function saveEquipment(keepOpen = false): Promise<void> {
+  const saveMode = equipmentFormMode.value
+  if (!saveMode || busy.value) return
+  const validation = validateEquipmentForm()
+  if (validation) { errorMessage.value = validation; return }
+  const isEdit = saveMode === 'edit'
+  if (defaultQueueServer.value) clearQueueFields()
   busy.value = true; errorMessage.value = ''
   try {
-    const item = await requestJson<Equipment>(isEdit ? `api/equipment/${encodeURIComponent(String(equipmentForm.value.equipmentNo))}` : 'api/equipment', {
-      method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(equipmentForm.value),
-    })
-    equipmentFormMode.value = null
-    successMessage.value = `設備 ${item.equipmentNo} 已${isEdit ? '更新' : '建立'}。`
+    const item = mock
+      ? saveEquipmentMock(saveMode)
+      : await requestJson<Equipment>(isEdit ? `api/equipment/${encodeURIComponent(String(equipmentForm.value.equipmentNo))}` : 'api/equipment', {
+        method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(equipmentForm.value),
+      })
     selectedEquipmentNo.value = item.equipmentNo
+    if (keepOpen) {
+      equipmentFormMode.value = 'edit'
+      equipmentForm.value = toEquipmentWrite(item)
+      equipmentAudit.value = { creator: item.creator || equipmentAudit.value.creator, createdAt: item.createdAt || equipmentAudit.value.createdAt, reviser: item.reviser || props.currentUserNo || '', revisedAt: item.revisedAt || new Date().toISOString() }
+      equipmentDirty.value = false
+    } else closeEquipmentForm()
     await loadEquipment()
+    successMessage.value = `設備 ${item.equipmentNo} 已${isEdit ? '更新' : saveMode === 'copy' ? '複製' : '建立'}。`
   } catch (error) { errorMessage.value = error instanceof Error ? error.message : '設備資料儲存失敗。' }
   finally { busy.value = false }
 }
@@ -150,9 +311,23 @@ async function saveChamber(): Promise<void> {
   const isEdit = chamberFormMode.value === 'edit'
   busy.value = true; chamberError.value = ''
   try {
-    const root = `api/equipment/${encodeURIComponent(parent.equipmentNo)}/chambers`
-    const endpoint = isEdit ? `${root}/${encodeURIComponent(chamberForm.value.equipmentNo)}` : root
-    await requestJson<Equipment>(endpoint, { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(chamberForm.value) })
+    if (mock) {
+      const all = readMock<Equipment[]>(mockKeys.chambers, seedChambers)
+      const no = chamberForm.value.equipmentNo.trim().toUpperCase()
+      const index = all.findIndex((item) => item.equipmentNo === no)
+      if (isEdit && index < 0) throw new Error(`找不到 Chamber ${no}。`)
+      if (!isEdit && index >= 0) throw new Error(`Chamber 編號 ${no} 已存在。`)
+      const old = index >= 0 ? all[index] : null
+      const now = new Date().toISOString()
+      const row: Equipment = { ...seedChambers[0], ...chamberForm.value, equipmentNo: no, belongEquipmentNo: parent.equipmentNo, chamberFlag: true, issueState: 0, dataStamp: (old?.dataStamp ?? -1) + 1, creator: old?.creator || props.currentUserNo || 'DEV001', createdAt: old?.createdAt || now, reviser: old ? props.currentUserNo || 'DEV001' : null, revisedAt: old ? now : null }
+      if (index >= 0) all[index] = row
+      else all.push(row)
+      writeMock(mockKeys.chambers, all)
+    } else {
+      const root = `api/equipment/${encodeURIComponent(parent.equipmentNo)}/chambers`
+      const endpoint = isEdit ? `${root}/${encodeURIComponent(chamberForm.value.equipmentNo)}` : root
+      await requestJson<Equipment>(endpoint, { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(chamberForm.value) })
+    }
     chamberFormMode.value = null
     successMessage.value = `Chamber ${chamberForm.value.equipmentNo} 已${isEdit ? '更新' : '建立'}。`
     await loadChambers(parent.equipmentNo)
@@ -168,7 +343,9 @@ async function loadChambers(equipmentNo: string): Promise<void> {
 
   chamberLoading.value = true
   try {
-    const result = await requestJson<Equipment[]>(`api/equipment/${encodeURIComponent(equipmentNo)}/chambers`)
+    const result = mock
+      ? readMock<Equipment[]>(mockKeys.chambers, seedChambers).filter((item) => item.belongEquipmentNo === equipmentNo)
+      : await requestJson<Equipment[]>(`api/equipment/${encodeURIComponent(equipmentNo)}/chambers`)
     if (requestId === chamberRequestId) chambers.value = result
   } catch (error) {
     if (requestId === chamberRequestId) {
@@ -184,6 +361,18 @@ async function loadEquipment(): Promise<void> {
   errorMessage.value = ''
   successMessage.value = ''
   try {
+    if (mock) {
+      const rows = filteredMockEquipment()
+      equipment.value = rows
+      const previous = selectedEquipmentNo.value
+      const requested = initialSelectedEquipmentNo
+      const next = rows.find((item) => item.equipmentNo === previous) ?? rows.find((item) => item.equipmentNo === requested) ?? rows[0]
+      selectedEquipmentNo.value = next?.equipmentNo ?? ''
+      initialSelectedEquipmentNo = ''
+      await loadChambers(selectedEquipmentNo.value)
+      updateFilterAddress()
+      return
+    }
     const query = new URLSearchParams({ issueState: String(issueState.value) })
     if (keyword.value.trim()) query.set('keyword', keyword.value.trim())
     const rows = await requestJson<Equipment[]>(`api/equipment?${query.toString()}`)
@@ -219,10 +408,14 @@ async function approveSelected(): Promise<void> {
   busy.value = true
   errorMessage.value = ''
   try {
-    await requestJson<Equipment>(`api/equipment/${encodeURIComponent(item.equipmentNo)}/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dataStamp: item.dataStamp }),
+    if (mock) {
+      const rows = readMock<Equipment[]>(mockKeys.equipment, seedEquipment)
+      const index = rows.findIndex((row) => row.equipmentNo === item.equipmentNo)
+      if (index < 0) throw new Error('找不到要核准的設備。')
+      rows[index] = { ...rows[index], issueState: 2, dataStamp: rows[index].dataStamp + 1, reviser: props.currentUserNo || 'DEV001', revisedAt: new Date().toISOString() }
+      writeMock(mockKeys.equipment, rows)
+    } else await requestJson<Equipment>(`api/equipment/${encodeURIComponent(item.equipmentNo)}/approve`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dataStamp: item.dataStamp }),
     })
     successMessage.value = `設備 ${item.equipmentNo} 已核准。`
     selectedEquipmentNo.value = ''
@@ -243,10 +436,17 @@ async function deleteSelected(): Promise<void> {
   busy.value = true
   errorMessage.value = ''
   try {
-    const query = new URLSearchParams({ issueState: String(item.issueState), dataStamp: String(item.dataStamp) })
-    await requestJson<Equipment>(`api/equipment/${encodeURIComponent(item.equipmentNo)}?${query.toString()}`, {
-      method: 'DELETE',
-    })
+    if (mock) {
+      const rows = readMock<Equipment[]>(mockKeys.equipment, seedEquipment)
+      const index = rows.findIndex((row) => row.equipmentNo === item.equipmentNo)
+      if (index < 0) throw new Error('找不到要處理的設備。')
+      if (item.issueState === 2) rows[index] = { ...rows[index], issueState: -1, dataStamp: rows[index].dataStamp + 1, reviser: props.currentUserNo || 'DEV001', revisedAt: new Date().toISOString() }
+      else rows.splice(index, 1)
+      writeMock(mockKeys.equipment, rows)
+    } else {
+      const query = new URLSearchParams({ issueState: String(item.issueState), dataStamp: String(item.dataStamp) })
+      await requestJson<Equipment>(`api/equipment/${encodeURIComponent(item.equipmentNo)}?${query.toString()}`, { method: 'DELETE' })
+    }
     successMessage.value = `設備 ${item.equipmentNo} 已${action}。`
     selectedEquipmentNo.value = ''
     await loadEquipment()
@@ -263,10 +463,14 @@ async function approveChamber(chamber: Equipment): Promise<void> {
   busy.value = true
   chamberError.value = ''
   try {
-    await requestJson<Equipment>(`api/equipment/${encodeURIComponent(parent.equipmentNo)}/chambers/${encodeURIComponent(chamber.equipmentNo)}/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dataStamp: chamber.dataStamp }),
+    if (mock) {
+      const rows = readMock<Equipment[]>(mockKeys.chambers, seedChambers)
+      const index = rows.findIndex((row) => row.equipmentNo === chamber.equipmentNo)
+      if (index < 0) throw new Error('找不到要核准的 Chamber。')
+      rows[index] = { ...rows[index], issueState: 2, dataStamp: rows[index].dataStamp + 1, reviser: props.currentUserNo || 'DEV001', revisedAt: new Date().toISOString() }
+      writeMock(mockKeys.chambers, rows)
+    } else await requestJson<Equipment>(`api/equipment/${encodeURIComponent(parent.equipmentNo)}/chambers/${encodeURIComponent(chamber.equipmentNo)}/approve`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dataStamp: chamber.dataStamp }),
     })
     successMessage.value = `Chamber ${chamber.equipmentNo} 已核准。`
     await loadChambers(parent.equipmentNo)
@@ -286,10 +490,17 @@ async function deleteChamber(chamber: Equipment): Promise<void> {
   busy.value = true
   chamberError.value = ''
   try {
-    const query = new URLSearchParams({ issueState: String(chamber.issueState), dataStamp: String(chamber.dataStamp) })
-    await requestJson<Equipment>(`api/equipment/${encodeURIComponent(parent.equipmentNo)}/chambers/${encodeURIComponent(chamber.equipmentNo)}?${query.toString()}`, {
-      method: 'DELETE',
-    })
+    if (mock) {
+      const rows = readMock<Equipment[]>(mockKeys.chambers, seedChambers)
+      const index = rows.findIndex((row) => row.equipmentNo === chamber.equipmentNo)
+      if (index < 0) throw new Error('找不到要處理的 Chamber。')
+      if (chamber.issueState === 2) rows[index] = { ...rows[index], issueState: -1, dataStamp: rows[index].dataStamp + 1, reviser: props.currentUserNo || 'DEV001', revisedAt: new Date().toISOString() }
+      else rows.splice(index, 1)
+      writeMock(mockKeys.chambers, rows)
+    } else {
+      const query = new URLSearchParams({ issueState: String(chamber.issueState), dataStamp: String(chamber.dataStamp) })
+      await requestJson<Equipment>(`api/equipment/${encodeURIComponent(parent.equipmentNo)}/chambers/${encodeURIComponent(chamber.equipmentNo)}?${query.toString()}`, { method: 'DELETE' })
+    }
     successMessage.value = `Chamber ${chamber.equipmentNo} 已${action}。`
     await loadChambers(parent.equipmentNo)
   } catch (error) {
@@ -350,6 +561,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
 
 <template>
   <div class="equipment-master-page">
+    <div v-if="mock" class="equipment-dev-note">Development 假資料｜操作結果僅保存在此瀏覽器，不會呼叫 API 或寫入資料庫。</div>
     <form class="equipment-query" @submit.prevent="loadEquipment">
       <fieldset class="equipment-state-filter">
         <legend>設備</legend>
@@ -400,12 +612,12 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
         <button v-if="selected && [0, 2, -1].includes(selected.issueState)" class="equipment-action danger" type="button" :disabled="busy" @click="deleteSelected">{{ selected.issueState === 2 ? '停用(D)' : '刪除(D)' }}</button>
         <button v-if="selected" class="equipment-action" type="button" @click="openEquipmentForm('copy')">複製(C)</button>
         <button v-if="selected && selected.issueState === 0" class="equipment-action" type="button" :disabled="busy" @click="approveSelected">核准</button>
-        <button class="equipment-action" type="button" disabled title="設備屬性 API 尚未提供">屬性</button>
-        <button class="equipment-action" type="button" disabled title="設備參數 API 尚未提供">參數</button>
-        <button class="equipment-action" type="button" disabled title="點檢表設定 API 尚未提供">點檢表</button>
+        <button class="equipment-action" type="button" :disabled="!selected" @click="openProperties">屬性</button>
+        <button class="equipment-action" type="button" :disabled="!selected" @click="openParameters">參數</button>
+        <button class="equipment-action" type="button" :disabled="!selected" @click="openQcRelations">點檢表</button>
         <button class="equipment-action" type="button" @click="downloadCsv">Download</button>
         <button class="equipment-action" type="button" @click="printPage">Print</button>
-        <button class="equipment-action" type="button" disabled title="設備匯入 API 尚未提供">設備匯入</button>
+        <button class="equipment-action" type="button" @click="openEquipmentImport">設備匯入</button>
         <button class="equipment-action" type="button" @click="navigateHome">關閉</button>
       </aside>
       <footer class="equipment-list-footer">資料總筆數 <strong>{{ equipment.length }}</strong></footer>
@@ -418,14 +630,15 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
           <div><h2>{{ selected.equipmentNo }}　{{ selected.equipmentName }}</h2><p>Chamber 子設備</p></div>
           <button v-if="[0, 2].includes(selected.issueState)" class="equipment-small-action" type="button" @click="openChamberForm('new')">新增 Chamber</button>
         </div>
+        <fieldset class="equipment-state-filter equipment-chamber-filter"><legend>Chamber 狀態</legend><label><input v-model.number="chamberIssueState" type="radio" name="chamberIssueState" :value="0" />UNFROZEN</label><label><input v-model.number="chamberIssueState" type="radio" name="chamberIssueState" :value="1" />PENDING</label><label><input v-model.number="chamberIssueState" type="radio" name="chamberIssueState" :value="2" />ACTIVE</label><label><input v-model.number="chamberIssueState" type="radio" name="chamberIssueState" :value="-1" />UNUSED</label></fieldset>
         <div v-if="chamberError" class="equipment-message error" role="alert">{{ chamberError }}</div>
         <div v-else-if="chamberLoading" class="equipment-detail-note">Chamber 資料載入中…</div>
-        <div v-else-if="chambers.length === 0" class="equipment-detail-note">此設備目前沒有 Chamber 子設備。</div>
+        <div v-else-if="visibleChambers.length === 0" class="equipment-detail-note">此狀態沒有 Chamber 子設備。</div>
         <div v-else class="equipment-chamber-scroll">
           <table class="equipment-table equipment-chamber-table">
             <thead><tr><th>Chamber 編號</th><th>名稱</th><th>狀態</th><th>操作</th></tr></thead>
             <tbody>
-              <tr v-for="chamber in chambers" :key="chamber.equipmentNo">
+              <tr v-for="chamber in visibleChambers" :key="chamber.equipmentNo">
                 <td>{{ chamber.equipmentNo }}</td><td>{{ chamber.equipmentName }}</td><td>{{ stateName(chamber.issueState) }}</td>
                 <td class="equipment-chamber-actions">
                   <template v-if="chamber.issueState === 0">
@@ -441,18 +654,19 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
       </div>
     </details>
 
-    <div v-if="equipmentFormMode" class="equipment-form-overlay" @click.self="equipmentFormMode = null">
-      <form class="equipment-win-form" @submit.prevent="saveEquipment">
-        <header><strong>設備基本資料定義 ({{ equipmentFormMode === 'edit' ? 'EDIT' : equipmentFormMode === 'copy' ? 'COPY' : 'ADD' }}) (EP104)</strong><button type="button" aria-label="關閉" @click="equipmentFormMode = null">×</button></header>
+    <div v-if="equipmentFormMode" class="equipment-form-overlay" @click.self="closeEquipmentForm">
+      <form class="equipment-win-form" @submit.prevent="saveEquipment(false)" @input="markEquipmentDirty" @change="markEquipmentDirty">
+        <header><strong>設備基本資料定義 ({{ equipmentFormMode === 'edit' ? 'EDIT' : equipmentFormMode === 'copy' ? 'COPY' : 'ADD' }}) (EP104)</strong><button type="button" aria-label="關閉" @click="closeEquipmentForm">×</button></header>
+        <p v-if="errorMessage" class="equipment-message error" role="alert">{{ errorMessage }}</p>
         <fieldset><legend>設備主檔資料</legend>
           <div class="equipment-form-columns">
             <div class="equipment-form-column">
               <label><span>設備編號</span><input v-model="equipmentForm.equipmentNo" required :readonly="equipmentFormMode === 'edit'" /></label>
               <label><span>設備名稱</span><input v-model="equipmentForm.equipmentName" required /></label>
-              <label><span>設備分類</span><select class="equipment-kd-field" v-model="equipmentForm.equipmentClass"><option>一般設備</option><option>生產設備</option><option>測試設備</option><option>其他設備</option></select></label>
+              <label><span>設備分類</span><select class="equipment-kd-field" v-model="equipmentForm.equipmentClassNo" @change="syncEquipmentClass"><option v-for="option in equipmentClassOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
               <label><span>設備型號</span><input v-model="equipmentForm.modelNo" /></label>
-              <label><span>批量限制</span><input class="equipment-kd-field" v-model.number="equipmentForm.capacity" type="number" min="-1" /><small>(-1 代表不限制)</small></label>
-              <label><span>預設產能</span><span class="equipment-number-unit"><input v-model.number="equipmentForm.maxTime" type="number" min="0" step="0.01" /><small>小時</small></span></label>
+              <label><span>批量限制</span><input class="equipment-kd-field" v-model.number="equipmentForm.capacity" type="number" min="-1" step="1" /><small>(-1 代表不限制)</small></label>
+              <label><span>預設產能</span><span class="equipment-number-unit"><input v-model.number="equipmentForm.maxTime" type="number" min="0" max="24" step="0.01" /><small>小時</small></span></label>
               <label><span>固定機時</span><span class="equipment-number-unit"><input v-model.number="equipmentForm.fixEqpTime" type="number" min="0" step="0.01" /><small>分鐘</small></span></label>
               <label><span>點檢表編號</span><input v-model="equipmentForm.qcListNo" /></label>
               <label class="equipment-long-field"><span>說明</span><textarea v-model="equipmentForm.description" rows="5" /></label>
@@ -462,16 +676,16 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
               <label><span>管理群組</span><input v-model="equipmentForm.engineerGroupNo" required /></label>
               <label><span>供應商編號</span><input v-model="equipmentForm.vendorNo" required /></label>
               <label><span>財產編號</span><input v-model="equipmentForm.assetNo" /></label>
-              <label><span>批數限制</span><input class="equipment-kd-field" v-model.number="equipmentForm.loadPort" type="number" min="-1" /><small>(-1 代表不限制)</small></label>
+              <label><span>批數限制</span><input class="equipment-kd-field" v-model.number="equipmentForm.loadPort" type="number" min="-1" step="1" /><small>(-1 代表不限制)</small></label>
               <label><span>機時單位批量</span><input v-model.number="equipmentForm.countEqpUnitQty" type="number" min="0" /></label>
               <label><span>變動機時</span><span class="equipment-number-unit"><input v-model.number="equipmentForm.varEqpTime" type="number" min="0" step="0.01" /><small>分鐘</small></span></label>
-              <div class="equipment-auto-field"><span>自動設備</span><span class="equipment-radio-set"><label><input v-model.number="equipmentForm.autoFlag" type="radio" :value="1" />是</label><label><input v-model.number="equipmentForm.autoFlag" type="radio" :value="0" />否</label></span></div>
-              <fieldset class="equipment-message-settings"><legend>訊息佇列設定</legend><label><span>佇列伺服器</span><input v-model="equipmentForm.queueServer" /></label><label><span>請求訊息佇列</span><input v-model="equipmentForm.requestMsgQueue" /></label><label><span>回應訊息佇列</span><input v-model="equipmentForm.responseMsgQueue" /></label><label><span>MES 請求佇列</span><input v-model="equipmentForm.requestMsgQueueMes" /></label><label><span>EAP 回應佇列</span><input v-model="equipmentForm.responseMsgQueueEap" /></label><label><span>財產分類編號</span><input v-model="equipmentForm.equipmentClassNo" /></label><label><span>EAP Controller</span><input v-model="equipmentForm.eaController" /></label><label><span>Recipe 管理</span><select v-model.number="equipmentForm.eqpRecipe"><option :value="1">是</option><option :value="0">否</option></select></label></fieldset>
+              <div class="equipment-auto-field"><span>自動設備</span><span class="equipment-radio-set"><label><input v-model.number="equipmentForm.autoFlag" type="radio" :value="1" @change="changeAutoFlag" />是</label><label><input v-model.number="equipmentForm.autoFlag" type="radio" :value="0" @change="changeAutoFlag" />否</label></span></div>
+              <fieldset v-if="equipmentForm.autoFlag === 1" class="equipment-message-settings"><legend>訊息佇列設定</legend><label class="equipment-check"><input v-model="defaultQueueServer" type="checkbox" @change="changeDefaultQueueServer" /><span>預設伺服器</span></label><label><span>佇列伺服器</span><input v-model="equipmentForm.queueServer" :disabled="defaultQueueServer" :required="!defaultQueueServer" /></label><label><span>請求訊息佇列</span><input v-model="equipmentForm.requestMsgQueue" :disabled="defaultQueueServer" /></label><label><span>回應訊息佇列</span><input v-model="equipmentForm.responseMsgQueue" :disabled="defaultQueueServer" /></label><label><span>MES 請求佇列</span><input v-model="equipmentForm.requestMsgQueueMes" :disabled="defaultQueueServer" /></label><label><span>EAP 回應佇列</span><input v-model="equipmentForm.responseMsgQueueEap" :disabled="defaultQueueServer" /></label><label><span>EAP Controller</span><input v-model="equipmentForm.eaController" /></label><label><span>Recipe 管理</span><select v-model.number="equipmentForm.eqpRecipe"><option :value="0">UnLimited</option><option :value="1">Single Recipe</option><option :value="2">Multi Recipe</option><option :value="3">Batch Recipe</option></select></label></fieldset>
             </div>
           </div>
         </fieldset>
-        <div class="equipment-form-audit"><span>建立人　—</span><span>建立日期　{{ selected?.createdAt ?? '—' }}</span><span>修改人　—</span><span>修改日期　{{ selected?.revisedAt ?? '—' }}</span></div>
-        <footer><button class="equipment-form-confirm" type="submit" :disabled="busy">確定</button><button type="button" @click="equipmentFormMode = null">關閉</button><button type="button" disabled>套用</button></footer>
+        <div class="equipment-form-audit"><span>建立人　{{ equipmentAudit.creator || '—' }}</span><span>建立日期　{{ auditDate(equipmentAudit.createdAt) }}</span><span>修改人　{{ equipmentAudit.reviser || '—' }}</span><span>修改日期　{{ auditDate(equipmentAudit.revisedAt) }}</span></div>
+        <footer><button class="equipment-form-confirm" type="submit" :disabled="busy">確定</button><button type="button" @click="closeEquipmentForm">關閉</button><button type="button" :disabled="busy || !equipmentDirty" @click="saveEquipment(true)">套用</button></footer>
       </form>
     </div>
 
@@ -485,10 +699,46 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
         <footer><button class="equipment-form-confirm" type="submit" :disabled="busy">確定</button><button type="button" @click="chamberFormMode = null">關閉</button></footer>
       </form>
     </div>
+
+    <EquipmentPropertyMaster
+      v-if="propertyWindowOpen && selected"
+      :equipment-no="selected.equipmentNo"
+      :api-base-url="props.apiBaseUrl"
+      :current-user-no="props.currentUserNo"
+      @close="propertyWindowOpen = false"
+      @updated="void loadEquipment()"
+    />
+    <EquipmentParameterMaster
+      v-if="parameterWindowOpen && selected"
+      :equipment-no="selected.equipmentNo"
+      :api-base-url="props.apiBaseUrl"
+      :current-user-no="props.currentUserNo"
+      @close="parameterWindowOpen = false"
+      @updated="void loadEquipment()"
+    />
+    <EquipmentQCRelationMaster
+      v-if="qcRelationWindowOpen && selected"
+      :equipment-no="selected.equipmentNo"
+      :equipment-type="selected.equipmentType"
+      :equipment-name="selected.equipmentName"
+      :api-base-url="props.apiBaseUrl"
+      :current-user-no="props.currentUserNo"
+      @close="qcRelationWindowOpen = false"
+      @updated="void loadEquipment()"
+    />
+    <EquipmentDataImport
+      v-if="importWindowOpen"
+      :api-base-url="props.apiBaseUrl"
+      :current-user-no="props.currentUserNo"
+      @close="importWindowOpen = false"
+      @updated="void loadEquipment()"
+    />
   </div>
 </template>
 
 <style scoped>
+.equipment-dev-note{margin:0 0 6px;padding:7px 10px;border:1px solid #d8c577;background:#fff6c8;color:#66551b}
+.equipment-chamber-filter{margin:0 0 6px;padding:5px 8px;border:1px solid #ccc}
 .equipment-master-page{min-width:0;padding:10px 14px 24px;background:#fff;color:#30363b;font-family:'Segoe UI','Microsoft JhengHei',sans-serif;font-size:12px}
 .equipment-action,.equipment-small-action{font-family:inherit;cursor:pointer}
 .equipment-form-overlay{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:14px;background:#0005}
@@ -536,7 +786,7 @@ onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
 .equipment-table td{height:33px;padding:5px 9px;border:1px solid #d0d0d0;line-height:1.25;text-align:left}
 .equipment-table tbody tr{cursor:pointer}
 .equipment-table tbody tr:hover{background:#f3f8fd}
-.equipment-table tbody tr.selected-row{background:#e7f3ff;box-shadow:inset 3px 0 #278bdc}
+.equipment-table tbody tr.selected-row{background:#ffe69a;box-shadow:inset 3px 0 #f0a126}
 .equipment-table tbody tr:focus-visible{outline:2px solid #278bdc;outline-offset:-2px}
 .equipment-code{color:#273b50;font:12px 'Segoe UI',sans-serif}
 .equipment-actions{display:flex;grid-column:2;grid-row:2;flex-direction:column;gap:5px;min-width:0;max-height:60vh;margin:0;padding:4px 0 4px 8px;overflow-y:auto;border-left:1px solid #c7c7c7;background:#fff}
