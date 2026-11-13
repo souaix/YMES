@@ -73,8 +73,8 @@ function formatDate(value: string | null): string {
 function nextVendorNo(): string {
   const used = new Set(vendors.value.map(row => row.vendorNo.toUpperCase()))
   let sequence = 1
-  while (used.has('DEV-V' + String(sequence).padStart(3, '0'))) sequence++
-  return 'DEV-V' + String(sequence).padStart(3, '0')
+  while (used.has('ES' + String(sequence).padStart(4, '0'))) sequence++
+  return 'ES' + String(sequence).padStart(4, '0')
 }
 function selectVendor(row: Vendor): void { selectedVendorNo.value = row.vendorNo; selectedContactorName.value = ''; void loadContactors(row.vendorNo) }
 function applyFilter(): void {
@@ -161,7 +161,13 @@ async function saveVendor(): Promise<void> {
       const path = mode === 'edit' ? 'api/equipment/vendors/' + encodeURIComponent(vendorForm.value.vendorNo) : 'api/equipment/vendors'
       result = await requestJson<Vendor>(path, { method: mode === 'edit' ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(vendorForm.value) })
     }
-    vendorMode.value = null; keyword.value = ''; vendors.value = usesDevelopmentMock ? readMockRows(vendorMockKey, seedVendors) : vendors.value
+    vendorMode.value = null; keyword.value = ''
+    if (usesDevelopmentMock) vendors.value = readMockRows(vendorMockKey, seedVendors)
+    else {
+      const index = vendors.value.findIndex(row => row.vendorNo.toLowerCase() === result.vendorNo.toLowerCase())
+      if (index >= 0) vendors.value[index] = result
+      else vendors.value = [...vendors.value, result].sort((left, right) => left.vendorNo.localeCompare(right.vendorNo))
+    }
     selectedVendorNo.value = result.vendorNo; issueState.value = result.issueState; await loadContactors(result.vendorNo); successMessage.value = '供應商資料已儲存。'
   } catch (error) { errorMessage.value = error instanceof Error ? error.message : '供應商資料儲存失敗。' }
   finally { busy.value = false }

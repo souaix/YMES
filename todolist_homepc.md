@@ -8,8 +8,8 @@
 
 公司端已整理一批可直接接手的來源結構與目錄資料。開始前先 pull 這份清單所在的最新 `main`，並閱讀 `todolist_officepc.md`、`docs/DATABASE_CONNECTION.md`、`docs/MES_MENU_FUNCTION_INVENTORY.md`、OP/MTL 規格及下列 SQL。家用端只負責 DB/API/migration；公司端後續接回 Vue/WinForms 畫面。
 
-1. **先核對 YMES 遠端 schema**：不可直接對整份參考 SQL 執行；`IF NOT EXISTS` 不會校正既有表。核對 20 個 Module、601 個 MenuItem、553 個 Function 三張系統表與現有 0008/0009 seed、路由及權限後，把 `database/reference/mestest_navigation_catalog_seed.sql` 整合成可回滾/可重跑的 migration。來源 seed 是系統目錄中繼資料，不含業務紀錄，也不會刪除 YMES 額外列。完整第一層繁中名稱已對照 `Customer/Production/MESClient/mesresource.zh-cht.resources`，見 inventory。
-2. **完成物料 API/schema**：逐欄核對 `database/reference/mestest_mtl_master_create.sql` 的 8 張表及現有 YMES 結構。`tblmtlmaterialbasis` 另有 7 個既有 YMES 欄位，先保留；公司 bootstrap 已按 MESTEST 補 7 個 DEFAULT。依 `docs/modules/MTL/物料主檔.md` 實作 Property、QC Item、Vendor Map、GumHour、Import、主檔核准/刪除交易及正式 ValueList。
+1. **系統目錄 migration 0012 已完成**：以 SSH 比對來源 schema，部署可回滾/可重跑 migration，載入 20 Module、601 MES MenuItem、553 Function 並保留 5 筆 YMES 自訂列。模組繁中名稱已核實、API/Web 已部署，瀏覽器已確認三層選單；逐筆自動比較來源與 API 回傳仍待補。
+2. **物料 API/schema 主體已完成**：已逐欄核對 8 張表並套用 0013 migration，保留 `tblmtlmaterialbasis` 的 7 個 YMES 欄位、補回 7 個 DEFAULT，建立缺少的 6 張表。Property、QC Item、Vendor Map、GumHour、CSV Import 及主檔交易 API/Vue Production 已部署；app-browser 找到並修正控制器 DI、`tblsysunitbasis`/`tblsyselementbasis` 唯讀授權及投料點 JSON 型別問題，瀏覽器已驗證主檔新增、屬性、QC、GumHour 讀寫。0014 授予必要唯讀權限。公司 Oracle 端仍需核實正式 ValueList、供應商名稱 Join、GumHour 參數來源；CSV 提交端到端與 Excel `.xls/.xlsx` 匯入/範本仍待完成。
 3. **完成作業站延伸 API/schema**：比對 `database/reference/mestest_operation_and_system_create.sql` 內 18 張 OP 表；此批 18 張 OP 表及 3 張系統表的原始 Oracle DDL 在 `mestest_operation_and_system_source_ddl.sql`。YMES 目前作業站僅主檔 CRUD/核准/停用已部署；按 `docs/modules/OP/作業站主檔.md` 實作子表引用、資源、商業規則、參數、QC、Error、SubOP、Import 及交易。
 4. **繼續設備功能 API**：公司端已交付設備供應商、工程群組、類別、群組、狀態、點檢表等規格與來源 CREATE SQL；先核對現有 YMES 表，再按功能規格完成缺少的 lookup、CRUD、成員與匯入契約。
 5. **完成全部第一層模組**：按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 的 ModuleOrder 逐個 FunctionNo/FormName/ExecutionFile，補齊 PostgreSQL 結構、API DTO/驗證/交易及部署。任何來源表缺少 DDL 時，讓公司端透過 PowerShell 直接查 MESTEST 並列出確切表名；不可猜 schema。
@@ -20,7 +20,7 @@
 
 - Vue 主選單以三層 Module → Menu Group → Function 呈現；正式資料 API 不得把設定分類與主檔功能壓成兩層。
 - UI 使用登入 Cookie 呼叫 `GET /YMES/API/api/navigation/menu-tree`。
-- 2026-11-14 已套用 0012 migration，YMES 正式目錄已匯入 MES 來源的 20 個 Module、601 筆 MenuItem、553 筆 Function；API 全量模組名稱更新已完成本機建置，尚待部署後用 app-browser 驗證。完整來源目錄見 docs/MES_MENU_FUNCTION_INVENTORY.md。
+- 2026-11-14 已套用 0012 migration，YMES 正式目錄匯入 MES 來源 20 個 Module、601 筆 MenuItem、553 筆 Function，保留 5 筆 YMES 既有分類列；全量模組中文名稱 API/Web 已部署，app-browser 已確認三層選單可載入。完整來源目錄見 docs/MES_MENU_FUNCTION_INVENTORY.md。
 - 每個選單項目都有對應圖示；側欄收合時僅顯示圖示。
 - 選單中尚未遷移的 FunctionNo 會明確標示，避免使用者誤以為功能已可操作。
 - Vue 開發用設備設定選單已依 WinForm 補列七個項目；設備設定的 Oracle MenuNo/FunctionNo 已可由完整來源目錄核對，尚待逐功能整合至正式 API。供應商及工程群組 Vue 頁使用 Development 假資料，功能規格入口：docs/MODULE_REPLICATION_SPEC_INDEX.md。
@@ -46,6 +46,7 @@
 - [x] 2026-11-14 以 SSH 核對 YMES 遠端實際為 5 Module/10 MenuItem/5 Function；三張表欄位與來源 DDL 相符。migration 前建立並驗證備份 `/opt/ymes/backups/ymes_before_0012_full_navigation_20261114.dump`。
 - [x] 0012 migration 可重跑；在交易中鎖定三張目錄表、快照將被覆寫的來源列、記錄由 migration 新增的來源鍵，保留來源外 YMES 列。`0012_full_navigation_catalog_rollback.sql` 可還原 migration 前列並移除 migration 新增列。
 - [x] 2026-11-14 以 PostgreSQL 管理者 SSH 套用 0012；目前 `tblsysmodule=20`、`tblsysmenuitem=606`（MES 來源 601 + 保留的 YMES 既有 5）、`tblsysfunction=553`；來源 MenuType=0/1 分別為 519/82，另有 5 筆保留的 YMES 分類列。
+- [x] 2026-11-14 以 SSH 核對物料 8 張來源表：現有主表及群組明細相符，缺少其餘 6 張。先備份 `/opt/ymes/backups/ymes_before_0013_mtl_20261114.dump`，再套用 `0013_material_master_schema.sql`。驗證 8 張來源表齊全；主表 7 個預設值均為 0，原 7 個 YMES 擴充欄位保留。
 - [x] 公司端已從 Customer/Production/MESClient/mesresource.zh-cht.resources 核實全部 20 個 ModuleNo + Module 繁中顯示名稱；完整對照見 docs/MES_MENU_FUNCTION_INVENTORY.md。TBLSYSMODULE 本身沒有 ModuleName 欄位。
 - [ ] 依來源 FunctionNo 對照完整 FormName/ExecutionFile；逐個遷移後才把對應功能導向 Vue/API，未遷移項目保留「尚未遷移」提示。
 - [x] 核對 519 個來源 MenuType=0 項目與同 ModuleNo 的 FunctionNo：518 筆相符、1 筆無對應 Function（`PRD / PD_BatchModifyArea`，來源名稱 `XX_PRDBatchModifyArea_THEIL`）。API 保留此來源識別，UI 以尚未遷移狀態呈現；5 筆 YMES 舊分類沒有來源子項，不會出現在 menu-tree。
@@ -55,8 +56,8 @@
 - [x] 實作登入 Cookie 保護的 `GET /api/navigation/menu-tree`，讀取三張 YMES 系統表並回傳 `modules → menuGroups → items` 結構；目前依使用者指示先不套用角色/使用者權限篩選。
 - [x] 新增並套用 `0005_navigation_read_access.sql`，僅授予 `ymes_app` 對三張選單表的 `SELECT` 權限。
 - [x] API 以 MenuNo 對應 FunctionNo；五個既有主檔選單項均以 MenuNo 對應 FunctionNo。
-- [ ] 部署後以 menu-tree API 核對各 ModuleNo、MenuNo、FunctionNo、順序與原 MES 一致；ModuleName 顯示使用已核實的完整翻譯表。
-- [ ] 確認已完成的五個功能能由 FunctionNo 導向 Vue：`EQP BASIS`、`OP BASIS`、`MTL BASIS`、`PRS BASIS`、`PRD BASIS`；其他功能回傳識別資料，讓 UI 顯示尚未遷移狀態。
+- [ ] 以 menu-tree API 逐筆核對各 ModuleNo、MenuNo、FunctionNo、順序與原 MES 完全一致；瀏覽器已確認 20 個模組與三層樹可載入，API 目錄筆數待自動比對。ModuleName 顯示使用已核實的完整翻譯表。
+- [x] 2026-11-14 以 app-browser 逐一開啟五個既有 Vue 路由並確認頁面/API 無錯誤：`EQP BASIS`、`OP BASIS`、`MTL BASIS`、`PRS BASIS`、`PRD BASIS`；其他功能依舊顯示尚未遷移。
 
 ## 優先二：五個主檔的正式資料庫與 API
 
@@ -67,7 +68,7 @@
 - [x] 作業站 CRUD、核准、停用 API 已部署，對應遠端實際存在的 `YMES.tblopbasis`；使用者先前提到 `tblopno`，但遠端 YMES schema 及提供的 CREATE SQL 都沒有此表。SPC 數量門檻欄位不在 `tblopbasis`，已從作業站頁移除，未新增資料庫欄位。
 - [x] `0007_operation_data_access.sql` 已授予 `ymes_app` 作業站表 CRUD 權限；遠端作業站表目前沒有業務資料。
 
-- [ ] 設備供應商 API/schema：依上述 SQL 建立兩張表及 migration；參照 docs/modules/EQP/設備設定/設備供應商基本資料.md 與 docs/DATABASE_CONNECTION.md；提供 GET /api/equipment/vendors、GET /api/equipment/vendors/{vendorNo}/contactors、供應商 POST/PUT/DELETE/approve、聯絡人 POST/PUT/DELETE。DTO 欄位依 Oracle DDL；刪除與核准採 DataStamp 衝突控制，供應商核准只允許 IssueState=0，刪除遵循 WinForm 只允許 0/-1/2，聯絡人不額外限制供應商狀態。
+- [x] 設備供應商 API/schema：2026-11-14 依 MESTEST DDL 套用 `0015_equipment_vendor_schema.sql`，migration 前備份 `/opt/ymes/backups/ymes_before_0015_equipment_vendor_20261114.dump`；供應商與聯絡人 CRUD、核准、DataStamp、狀態及引用限制 API 已部署。app-browser 驗證新增/修改供應商與聯絡人、重複編號拒絕及 `ES0001` 預設編號；修正新增後清單未更新，並清除測試資料。
 - [ ] 設備：`tbleqpequipmentbasis`、Chamber 關係、設備群/工程群組、設備屬性、參數、QC List；支援清單 CRUD、核准/停用、複製、匯入。
 - [ ] 設備工程群組：完成 tbleqpengineergroupbasis API CRUD、DataStamp 衝突檢查、複製與成員清單 API；規格：docs/modules/EQP/設備設定/設備工程群組資料.md。
 - [ ] 核實 YMES 是否已有 tblusrusergroup。它不在目前 75 表 bootstrap/migrations；若不存在，先由公司電腦以 MES Oracle MESTEST 唯讀資料字典取得精確原始 DDL，轉為 PostgreSQL CREATE SQL，再加入 migration。不得依欄位使用痕跡猜表結構。
@@ -76,7 +77,8 @@
 - [x] 物料頁面 API：使用 `tblmtlmaterialbasis`，支援清單、明細、新增、修改、核准、停用/刪除與資料版本衝突控制；引用物料群組或產品 BOM 時禁止物理刪除。
 - [x] 流程頁面 API：使用 `tblprsprocessbasis`，支援清單、明細、新增、修改、核准、版本複製、目前版本切換、停用/刪除及流程圖讀寫/驗證。因來源 Node 型態代碼尚未釐清，流程圖儲存在 YMES 自有 `ym_prsprocess_node`、`ym_prsprocess_edge`。
 - [x] 產品頁面 API：使用 `tblprdproductbasis`，支援清單、明細、新增、修改、核准、版本複製、目前版本切換、停用/刪除、產品流程指派及 BOM 讀寫。來源 DDL 沒有這些 UI 關聯表，YMES 自有 `ym_product_process`、`ym_product_bom` 保存新增資料。
-- [ ] 物料主檔來源規格及 SQL 已交付：`docs/modules/MTL/物料主檔.md`、`database/reference/mestest_mtl_master_source_ddl.sql`、`database/reference/mestest_mtl_master_create.sql`。比對 YMES 現有 8 張表的欄位、NULL、DEFAULT、PK/索引後，再實作 Vendor Map、Property、QC Item、Gum Type API 與新增時範本複製交易。
+- [x] 物料表結構已比對及套用；Production API 已部署屬性、QC Item、Vendor Map、GumHour、CSV 匯入、核准檢查、QC 類別範本複製與子資料交易清理。2026-11-14 app-browser 驗證物料清單/新增、屬性新增與讀回、QC Item 儲存、GumHour 儲存；QA 物料及子資料已清除。
+- [ ] 待公司 Oracle 端交付正式 `CountWay`/`CheckLotNo` ValueList、供應商名稱 Join、GumHour 參數來源；Production CSV 匯入逐列瀏覽器測試、`.xls/.xlsx` 解析及下載 Excel 範本仍未完成。
 - [ ] 遷移流程 APS 等擴充欄位/關聯及匯入功能，並與舊系統 Node 編碼及 XML 規則比對。
 - [ ] 遷移產品 OP、屬性及其他舊系統關聯；跨表商業規則仍需對照 WinForms/Service 實作。
 - [ ] 所有新增/修改/核准/刪除端點均驗證 IssueState、DataStamp、引用限制與舊系統業務規則；正式環境不得使用 Fake provider。

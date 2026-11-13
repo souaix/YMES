@@ -84,11 +84,12 @@ const fieldValue = (field: Field) => {
 }
 const hasFieldOptions = (field: Field) => Boolean(field.options?.length)
   || (props.masterKey === 'operation-master' && props.developmentPreview && ['materialOption', 'multiOperatorMode'].includes(field.key))
-  || (props.masterKey === 'material-master' && props.developmentPreview && ['putInPlace', 'countWay', 'checkLotNo'].includes(field.key))
+  || (props.masterKey === 'material-master' && field.key === 'putInPlace')
+  || (props.masterKey === 'material-master' && props.developmentPreview && ['countWay', 'checkLotNo'].includes(field.key))
 const optionsForField = (field: Field) => {
   if (field.options?.length) return field.options
-  if (props.masterKey === 'material-master' && props.developmentPreview && field.key === 'putInPlace') return [
-    { label: 'EQP（DEV）', value: 0 }, { label: 'OP（DEV）', value: 1 }, { label: 'WIP INV（DEV）', value: 2 }, { label: 'MO（DEV）', value: 3 },
+  if (props.masterKey === 'material-master' && field.key === 'putInPlace') return [
+    { label: 'EQP', value: 0 }, { label: 'OP', value: 1 }, { label: 'WIP INV', value: 2 }, { label: 'MO', value: 3 },
   ]
   if (props.masterKey === 'material-master' && props.developmentPreview && field.key === 'countWay') return [
     { label: 'Standard（DEV 代碼，ValueList 待核實）', value: 0 }, { label: 'Real（DEV 代碼，ValueList 待核實）', value: 1 },
@@ -118,6 +119,7 @@ const vendorRows = ref<Row[]>([])
 const selectedVendor = ref<Row | null>(null)
 const materialLookupField = ref<string | null>(null)
 const isMaterialPreview = computed(() => props.masterKey === 'material-master' && Boolean(props.developmentPreview))
+const materialOptions = ref<{ materialTypes: Array<{value:string;label:string}>; units: Array<{value:string;label:string;unitType:string}>; unitTypes: Array<{value:string;label:string}> }>({ materialTypes: [], units: [], unitTypes: [] })
 const materialFeatureKeys = new Set<MaterialFeature>(['property', 'qc-item', 'import', 'gum-hour'])
 const devMaterialStorageKey = 'ymes:dev:master-data:materials:v1'
 
@@ -161,25 +163,35 @@ function readDevVendorRows(materialNo: string): Row[] {
 }
 
 function loadVendorRows(): void {
-  vendorRows.value = isMaterialPreview.value && selected.value
-    ? readDevVendorRows(String(selected.value.materialNo ?? ''))
-    : []
   selectedVendor.value = null
+  if (!selected.value) { vendorRows.value = []; return }
+  if (isMaterialPreview.value) { vendorRows.value = readDevVendorRows(String(selected.value.materialNo ?? '')); return }
+  void api<Row[]>(`materials/${encodeURIComponent(String(selected.value.materialNo ?? ''))}/vendors`)
+    .then((items) => { vendorRows.value = items })
+    .catch((reason) => { vendorRows.value = []; error.value = reason instanceof Error ? reason.message : '供應商對應載入失敗。' })
 }
 
 function openMaterialFeature(feature: MaterialFeature, mode: 'add' | 'edit' = 'add', vendor: Row | null = null): void {
-  if (!isMaterialPreview.value || (!selected.value && feature !== 'import')) return
+  if (!selected.value && feature !== 'import') return
   materialFeature.value = { feature, mode, vendor }
 }
 
-function deleteMaterialVendor(): void {
+async function deleteMaterialVendor(): Promise<void> {
   const materialNo = String(selected.value?.materialNo ?? '')
   const vendorNo = String(selectedVendor.value?.vendorNo ?? '')
   if (!materialNo || !vendorNo || !window.confirm(`確定刪除供應商對應 ${vendorNo}？`)) return
-  const next = readDevVendorRows(materialNo).filter((row) => String(row.vendorNo) !== vendorNo)
-  window.localStorage.setItem(devVendorStorageKey(materialNo), JSON.stringify(next))
-  loadVendorRows()
-  notice.value = '物料供應商對應已從本機 DEV 假資料移除。'
+  try {
+    if (isMaterialPreview.value) {
+      const next = readDevVendorRows(materialNo).filter((row) => String(row.vendorNo) !== vendorNo)
+      window.localStorage.setItem(devVendorStorageKey(materialNo), JSON.stringify(next))
+      notice.value = '物料供應商對應已從本機 DEV 假資料移除。'
+    } else {
+      const query = new URLSearchParams({ dataStamp: String(selectedVendor.value?.dataStamp ?? 0) })
+      await api(`materials/${encodeURIComponent(materialNo)}/vendors/${encodeURIComponent(vendorNo)}?${query}`, { method: 'DELETE' })
+      notice.value = '物料供應商對應已刪除。'
+    }
+    loadVendorRows()
+  } catch (reason) { error.value = reason instanceof Error ? reason.message : '供應商對應刪除失敗。' }
 }
 
 function handleMaterialFeatureSaved(): void {
@@ -188,11 +200,14 @@ function handleMaterialFeatureSaved(): void {
     keyword.value = ''
   }
   if (materialFeature.value?.feature === 'vendor-map') loadVendorRows()
-  notice.value = '物料子功能 DEV 假資料已更新並儲存在此瀏覽器。'
+  notice.value = isMaterialPreview.value ? '物料子功能 DEV 假資料已更新並儲存在此瀏覽器。' : '物料子資料已儲存。'
   void loadRows()
 }
 
 const materialLookupOptions = computed(() => {
+  if (!isMaterialPreview.value && materialLookupField.value === 'materialType') return materialOptions.value.materialTypes
+  if (!isMaterialPreview.value && materialLookupField.value === 'unitType') return materialOptions.value.unitTypes
+  if (!isMaterialPreview.value && materialLookupField.value === 'unitNo') return materialOptions.value.units
   if (materialLookupField.value === 'materialType') return [
     { value: 'GUM', label: 'GUM 固晶膠類別（DEV）' }, { value: 'CHEM', label: 'CHEM 化學物料（DEV）' }, { value: 'PACK', label: 'PACK 包裝物料（DEV）' },
   ]
@@ -252,9 +267,9 @@ function actionDisabled(key: string): boolean {
     return key !== 'import' && !row
   }
   if (materialFeatureKeys.has(key as MaterialFeature)) {
-    if (props.masterKey !== 'material-master' || !props.developmentPreview) return true
+    if (props.masterKey !== 'material-master') return true
     if (key !== 'import' && !row) return true
-    if (key === 'gum-hour' && String(row?.materialType ?? '').toUpperCase() !== 'GUM') return true
+    if (key === 'gum-hour' && props.developmentPreview && String(row?.materialType ?? '').toUpperCase() !== 'GUM') return true
   } else if (operationFeatureKeys.has(key as OperationFeature)) return true
   if (['edit', 'copy', 'approve', 'delete', 'new-version', 'set-current'].includes(key) && !row) return true
   if (key === 'edit' || key === 'approve') return row?.issueState !== 0
@@ -288,12 +303,18 @@ function runToolbarAction(key: string): void {
 }
 
 function openMaterialLookup(fieldKey: string): void {
-  if (!isMaterialPreview.value) return
+  if (!isMaterialPreview.value && !materialOptions.value.materialTypes.length && !materialOptions.value.units.length && !materialOptions.value.unitTypes.length) return
   materialLookupField.value = fieldKey
 }
 
 function chooseMaterialLookup(value: string): void {
-  if (materialLookupField.value) form.value[materialLookupField.value] = value
+  if (materialLookupField.value) {
+    form.value[materialLookupField.value] = value
+    if (!isMaterialPreview.value && materialLookupField.value === 'unitNo') {
+      const unit = materialOptions.value.units.find((row) => row.value === value)
+      if (unit) form.value.unitType = unit.unitType
+    }
+  }
   materialLookupField.value = null
 }
 const orderedGraphNodes = computed(() => [...graph.value.nodes].sort((left, right) => Number(left.sequence ?? 0) - Number(right.sequence ?? 0)))
@@ -338,6 +359,12 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   return await response.json() as T
 }
 
+async function loadMaterialOptions(): Promise<void> {
+  if (props.masterKey !== 'material-master' || isMaterialPreview.value) return
+  try { materialOptions.value = await api<typeof materialOptions.value>('materials/lookups/options') }
+  catch (reason) { error.value = reason instanceof Error ? reason.message : '物料選項載入失敗。' }
+}
+
 function rowPath(row: Row): string {
   const key = config.value.keyFields.map((field) => encodeURIComponent(String(row[field] ?? '')))
   if (props.masterKey === 'product-master') return `products/${key[0]}/versions/${key[1]}`
@@ -370,6 +397,7 @@ async function loadRows(): Promise<void> {
     const wanted = url.searchParams.get('selected') || initialSelection
     selected.value = rows.value.find((row) => selectedRouteKey(row) === wanted) ?? rows.value[0] ?? null
     initialSelection = ''
+    if (props.masterKey === 'material-master') loadVendorRows()
     if (!hasAddressForm) writeAddress()
     await loadRelated()
     restoreFormFromAddress()
@@ -439,6 +467,12 @@ function defaults(): Row {
 function openForm(mode: 'new' | 'edit' | 'copy', row: Row | null = null): void {
   formMode.value = mode
   form.value = mode === 'new' ? defaults() : { ...row }
+  if (props.masterKey === 'material-master' && mode !== 'new') {
+    const putInPlace = String(form.value.putInPlace ?? '').toUpperCase()
+    const putInPlaceCodes: Record<string, number> = { EQP: 0, OP: 1, 'WIP INV': 2, MO: 3 }
+    if (putInPlace in putInPlaceCodes) form.value.putInPlace = putInPlaceCodes[putInPlace]
+    else if (/^[0-3]$/.test(putInPlace)) form.value.putInPlace = Number(putInPlace)
+  }
   if (mode === 'copy') {
     form.value.dataStamp = 0
     if (props.masterKey === 'operation-master') form.value.operationNo = ''
@@ -553,7 +587,10 @@ async function save(): Promise<void> {
       loadVendorRows()
       return
     }
-    const body = JSON.stringify(form.value)
+    const payload = props.masterKey === 'material-master'
+      ? { ...form.value, putInPlace: String(form.value.putInPlace ?? '') }
+      : form.value
+    const body = JSON.stringify(payload)
     const method = isEdit ? 'PUT' : 'POST'
     const path = isEdit ? rowPath(form.value) : config.value.endpoint
     const saved = await api<Row>(path, { method, headers: { 'Content-Type': 'application/json' }, body })
@@ -610,6 +647,11 @@ async function command(action: 'approve' | 'delete' | 'new-version' | 'set-curre
       return
     }
     const suffix = action === 'approve' ? '/approve' : action === 'new-version' ? '/new-version' : action === 'set-current' ? '/set-current' : ''
+    if (props.masterKey === 'material-master' && action === 'approve') {
+      const properties = await api<Row[]>(`materials/${encodeURIComponent(String(item.materialNo))}/properties`)
+      const warnings = properties.filter((property) => Number(property.controlled) === 2 && !String(property.value ?? '').trim())
+      if (warnings.length && !window.confirm(`以下提示屬性尚未填值，仍要核准嗎？ ${warnings.map((property) => String(property.propertyNo ?? '')).join(', ')}`)) return
+    }
     if (action === 'delete') {
       const query = new URLSearchParams({ issueState: String(item.issueState), dataStamp: String(item.dataStamp) })
       await api(`${rowPath(item)}?${query}`, { method: 'DELETE' })
@@ -714,11 +756,12 @@ onMounted(() => {
   issueState.value = Number(url.searchParams.get('issueState') ?? 0)
   keyword.value = url.searchParams.get('keyword') ?? ''
   initialSelection = url.searchParams.get('selected') ?? ''
+  void loadMaterialOptions()
   void loadRows()
   window.addEventListener('popstate', handlePopState)
 })
 onBeforeUnmount(() => window.removeEventListener('popstate', handlePopState))
-watch(() => props.masterKey, () => { selected.value = null; void loadRows() })
+watch(() => props.masterKey, () => { selected.value = null; void loadMaterialOptions(); void loadRows() })
 </script>
 
 <template>
@@ -774,14 +817,14 @@ watch(() => props.masterKey, () => { selected.value = null; void loadRows() })
       <aside class="md-actions" :aria-label="config.title + '功能'">
         <button v-for="action in toolbarActions" :key="action.key" class="md-button" :class="{ primary: action.key === 'add', danger: action.key === 'delete' }" type="button"
                 :disabled="actionDisabled(action.key)"
-                :title="actionDisabled(action.key) && !supportedToolbarActions.has(action.key) ? '此功能的 API 尚未提供' : actionDisabled(action.key) && masterKey==='operation-master' && operationFeatureKeys.has(action.key as OperationFeature) ? (developmentPreview ? '請先選取作業站' : '正式 API 尚未提供') : actionDisabled(action.key) && masterKey==='material-master' && materialFeatureKeys.has(action.key as MaterialFeature) ? (developmentPreview ? (action.key==='gum-hour' ? '僅固晶膠物料可設定 GumHour' : action.key==='import' ? '' : '請先選取物料') : '正式 API 尚未提供') : ''"
+                :title="actionDisabled(action.key) && !supportedToolbarActions.has(action.key) ? '此功能的 API 尚未提供' : actionDisabled(action.key) && masterKey==='operation-master' && operationFeatureKeys.has(action.key as OperationFeature) ? (developmentPreview ? '請先選取作業站' : '正式 API 尚未提供') : actionDisabled(action.key) && masterKey==='material-master' && materialFeatureKeys.has(action.key as MaterialFeature) ? (developmentPreview && action.key==='gum-hour' ? '僅固晶膠物料可設定 GumHour' : action.key==='import' ? '' : '請先選取物料') : ''"
                 @click="runToolbarAction(action.key)">{{ action.label }}</button>
       </aside>
 
       <section v-if="masterKey === 'material-master'" class="md-vendor-panel">
         <header class="md-panel-heading"><h2>供應商資料</h2><span>{{ selected ? selected.materialNo : '請先選取物料' }}</span></header>
-        <div class="md-vendor-actions"><button class="md-button" type="button" :disabled="!isMaterialPreview || !selected" :title="isMaterialPreview ? '' : '物料供應商 API 尚未提供'" @click="openMaterialFeature('vendor-map')">新增</button><button class="md-button" type="button" :disabled="!isMaterialPreview || !selectedVendor" :title="isMaterialPreview ? '' : '物料供應商 API 尚未提供'" @click="openMaterialFeature('vendor-map','edit',selectedVendor)">修改</button><button class="md-button" type="button" :disabled="!isMaterialPreview || !selectedVendor" :title="isMaterialPreview ? '' : '物料供應商 API 尚未提供'" @click="deleteMaterialVendor">刪除</button><button class="md-button" type="button" @click="closeMasterPage">關閉</button></div>
-        <div class="md-grid-scroll"><table><thead><tr><th>供應商編號</th><th>供應商名稱</th><th>說明</th></tr></thead><tbody><tr v-for="vendor in vendorRows" :key="String(vendor.vendorNo)" :class="{selected:selectedVendor?.vendorNo===vendor.vendorNo}" @click="selectedVendor=vendor"><td>{{ vendor.vendorNo }}</td><td>{{ vendor.vendorName }}</td><td>{{ vendor.description }}</td></tr><tr v-if="vendorRows.length===0"><td colspan="3" class="empty">{{ isMaterialPreview ? '此物料尚無供應商對應。' : '物料供應商資料 API 尚未提供。' }}</td></tr></tbody></table></div>
+        <div class="md-vendor-actions"><button class="md-button" type="button" :disabled="!selected" @click="openMaterialFeature('vendor-map')">新增</button><button class="md-button" type="button" :disabled="!selectedVendor" @click="openMaterialFeature('vendor-map','edit',selectedVendor)">修改</button><button class="md-button" type="button" :disabled="!selectedVendor" @click="deleteMaterialVendor">刪除</button><button class="md-button" type="button" @click="closeMasterPage">關閉</button></div>
+        <div class="md-grid-scroll"><table><thead><tr><th>供應商編號</th><th>供應商名稱</th><th>說明</th></tr></thead><tbody><tr v-for="vendor in vendorRows" :key="String(vendor.vendorNo)" :class="{selected:selectedVendor?.vendorNo===vendor.vendorNo}" @click="selectedVendor=vendor"><td>{{ vendor.vendorNo }}</td><td>{{ vendor.vendorName || '—' }}</td><td>{{ vendor.description }}</td></tr><tr v-if="vendorRows.length===0"><td colspan="3" class="empty">此物料尚無供應商對應。</td></tr></tbody></table></div>
       </section>
 
       <section v-if="masterKey === 'product-master'" class="md-product-relations">
@@ -852,12 +895,12 @@ watch(() => props.masterKey, () => { selected.value = null; void loadRows() })
     </div>
 
     <OperationFeatureDialog v-if="operationFeature && masterKey==='operation-master'" :feature="operationFeature" :operation-no="String(selected?.operationNo ?? '')" :operation-name="String(selected?.operationName ?? '')" @close="operationFeature=null" @saved="notice='作業站子功能的 DEV 假資料已更新。'" />
-    <MaterialFeatureDialog v-if="materialFeature && masterKey==='material-master'" :feature="materialFeature.feature" :material="selected" :mode="materialFeature.mode" :vendor="materialFeature.vendor" @close="materialFeature=null" @saved="handleMaterialFeatureSaved" />
+    <MaterialFeatureDialog v-if="materialFeature && masterKey==='material-master'" :feature="materialFeature.feature" :material="selected" :mode="materialFeature.mode" :vendor="materialFeature.vendor" :api-base-url="apiBaseUrl" :development-preview="isMaterialPreview" @close="materialFeature=null" @saved="handleMaterialFeatureSaved" />
 
     <div v-if="materialLookupField && masterKey==='material-master'" class="md-modal-backdrop" @click.self="materialLookupField=null">
       <section class="md-form-dialog md-lookup-dialog" role="dialog" aria-modal="true" aria-labelledby="material-lookup-title">
-        <header><div><small>開發區假資料選項</small><h2 id="material-lookup-title">{{ materialLookupTitle(materialLookupField) }}</h2></div><button type="button" aria-label="關閉" @click="materialLookupField=null">×</button></header>
-        <div class="md-form-scroll"><div class="md-lookup-list"><button v-for="option in materialLookupOptions" :key="option.value" type="button" class="md-button" @click="chooseMaterialLookup(option.value)">{{ option.label }}</button></div><p class="md-field-note">這些選項僅供開發畫面操作；正式 ValueList 與查詢 API 尚未對接。</p></div>
+        <header><div><small>{{ isMaterialPreview ? '開發區假資料選項' : '正式資料庫選項' }}</small><h2 id="material-lookup-title">{{ materialLookupTitle(materialLookupField) }}</h2></div><button type="button" aria-label="關閉" @click="materialLookupField=null">×</button></header>
+        <div class="md-form-scroll"><div class="md-lookup-list"><button v-for="option in materialLookupOptions" :key="option.value" type="button" class="md-button" @click="chooseMaterialLookup(option.value)">{{ option.label }}</button></div><p v-if="!materialLookupOptions.length" class="md-field-note">目前資料庫沒有可選項目。</p><p v-else-if="isMaterialPreview" class="md-field-note">這些選項只供 Development 操作。</p></div>
         <footer><button class="md-button" type="button" @click="materialLookupField=null">關閉</button></footer>
       </section>
     </div>
@@ -874,7 +917,7 @@ watch(() => props.masterKey, () => { selected.value = null; void loadRows() })
               <select v-else-if="field.type==='select'" :aria-labelledby="'md-label-' + field.key" :value="fieldValue(field)" :required="field.required" :disabled="!hasFieldOptions(field)" @change="updateFormField(field,$event)"><option v-if="!hasFieldOptions(field)" :value="fieldValue(field)">{{ fieldValue(field) || '系統選項 API 尚未提供' }}</option><option v-for="option in optionsForField(field)" :key="String(option.value)" :value="option.value">{{ option.label }}</option></select>
               <div v-else-if="field.type==='quantity'" class="md-quantity-field"><div class="md-radio-options"><label><input type="radio" name="lotStdQtyMode" :checked="!lotStdQtyEnabled" @change="setLotStdQtyEnabled(false)" />Not Set</label><label><input type="radio" name="lotStdQtyMode" :checked="lotStdQtyEnabled" @change="setLotStdQtyEnabled(true)" />Std Qty</label></div><input :value="fieldValue(field)" type="number" :step="field.step" :min="field.min" :disabled="!lotStdQtyEnabled" @input="updateFormField(field,$event)" /></div>
               <textarea v-else-if="field.type==='textarea'" :aria-labelledby="'md-label-' + field.key" :value="fieldValue(field)" rows="3" :required="field.required" @input="updateFormField(field,$event)" />
-              <div v-else class="md-field-control"><input :aria-labelledby="'md-label-' + field.key" :value="fieldValue(field)" :type="field.type || 'text'" :step="field.step" :min="field.min" :max="field.max" :required="field.required" :readonly="(field.readonly && !(isMaterialPreview && ['materialType','unitType','unitNo'].includes(field.key))) || (formMode==='edit' && config.keyFields.includes(field.key))" @input="updateFormField(field,$event)" @blur="normalizeKeyField(field.key)" /><button v-if="field.lookup" type="button" :disabled="!isMaterialPreview" :title="isMaterialPreview ? '選擇開發區假資料' : '查詢 API 尚未提供'" @click="openMaterialLookup(field.key)">…</button><small v-if="field.lookup">{{ isMaterialPreview ? 'DEV 選項' : '查詢 API 尚未提供' }}</small></div>
+              <div v-else class="md-field-control"><input :aria-labelledby="'md-label-' + field.key" :value="fieldValue(field)" :type="field.type || 'text'" :step="field.step" :min="field.min" :max="field.max" :required="field.required" :readonly="(field.readonly && !(masterKey==='material-master' && ['materialType','unitType','unitNo'].includes(field.key))) || (formMode==='edit' && config.keyFields.includes(field.key))" @input="updateFormField(field,$event)" @blur="normalizeKeyField(field.key)" /><button v-if="field.lookup" type="button" :disabled="isMaterialPreview ? false : !(field.key==='materialType' ? materialOptions.materialTypes.length : field.key==='unitType' ? materialOptions.unitTypes.length : materialOptions.units.length)" :title="isMaterialPreview ? '選擇開發區假資料' : '選擇資料庫選項'" @click="openMaterialLookup(field.key)">…</button><small v-if="field.lookup">{{ isMaterialPreview ? 'DEV 選項' : '資料庫選項，可直接輸入' }}</small></div>
               <small v-if="field.type==='select' && !hasFieldOptions(field)" class="md-field-note">ValueList API 尚未提供</small>
             </div>
           </div></fieldset>

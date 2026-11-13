@@ -290,7 +290,7 @@ async function openProperties():Promise<void>{
   catch(e){properties.value=[];error.value=e instanceof Error?e.message:'設備屬性載入失敗。'}
 }
 function openProperty(mode:Exclude<ChildMode,null>):void{
-  const r=selectedProperty.value;if((mode==='edit'||mode==='copy')&&!r)return;if(mode==='edit'&&r.issueState!==0){error.value='只有未審核的設備屬性可以修改。';return}propertyMode.value=mode
+  const r=selectedProperty.value;if((mode==='edit'||mode==='copy')&&!r)return;if(mode==='edit'&&(!r||r.issueState!==0)){error.value='只有未審核的設備屬性可以修改。';return}propertyMode.value=mode
   propertyForm.value=r&&mode!=='new'?{propertyNo:mode==='copy'?'':r.propertyNo,defaultValue:r.defaultValue,propertySequence:r.propertySequence,description:r.description}:{propertyNo:'',defaultValue:'',propertySequence:properties.value.length+1,description:''}
 }
 async function saveProperty():Promise<void>{

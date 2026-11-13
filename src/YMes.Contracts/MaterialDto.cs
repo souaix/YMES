@@ -28,20 +28,20 @@ public sealed record MaterialDto
 
 public sealed class MaterialWriteRequest
 {
-    [Required, StringLength(40)] public string MaterialNo { get; set; } = "";
-    [Required, StringLength(40)] public string MaterialType { get; set; } = "";
-    [Required, StringLength(200)] public string MaterialName { get; set; } = "";
-    [StringLength(200)] public string MaterialSpec { get; set; } = "";
-    [StringLength(1000)] public string Description { get; set; } = "";
+    [Required, StringLength(50)] public string MaterialNo { get; set; } = "";
+    [Required, StringLength(50)] public string MaterialType { get; set; } = "";
+    [Required, StringLength(300)] public string MaterialName { get; set; } = "";
+    [StringLength(300)] public string MaterialSpec { get; set; } = "";
+    [StringLength(255)] public string Description { get; set; } = "";
     [Required, StringLength(40)] public string PutInPlace { get; set; } = "";
-    [Range(0, 9)] public int CountWay { get; set; }
-    [Range(0, 1)] public int CheckLotNo { get; set; }
-    [StringLength(40)] public string UnitType { get; set; } = "";
-    [Required, StringLength(40)] public string UnitNo { get; set; } = "";
-    [Range(0, 999999999)] public decimal SafeQty { get; set; }
+    [Range(-9, 9)] public int CountWay { get; set; }
+    [Range(-9, 9)] public int CheckLotNo { get; set; }
+    [StringLength(30)] public string UnitType { get; set; } = "";
+    [Required, StringLength(30)] public string UnitNo { get; set; } = "";
+    [Range(typeof(decimal), "0", "99999999.99999999")] public decimal SafeQty { get; set; }
     public bool KeyMaterials { get; set; }
     public bool OpenLimitTimeFlag { get; set; }
-    [Range(0, 100000)] public decimal? OpenLimitTime { get; set; }
+    [Range(typeof(decimal), "0", "9999.99")] public decimal? OpenLimitTime { get; set; }
     public bool ResetOpenDate { get; set; }
     public bool ExpireDateFlag { get; set; }
     [StringLength(40)] public string ErpNo { get; set; } = "";

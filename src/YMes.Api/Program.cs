@@ -77,8 +77,11 @@ if (useFakeMasterData)
 else if (masterDataProvider == "postgres")
 {
     builder.Services.AddSingleton<IEquipmentRepository, PostgresEquipmentRepository>();
+    builder.Services.AddSingleton<PostgresEquipmentVendorRepository>();
     builder.Services.AddSingleton<IOperationRepository, PostgresOperationRepository>();
-    builder.Services.AddSingleton<IMasterDataRepository, PostgresMasterDataRepository>();
+    builder.Services.AddSingleton<PostgresMasterDataRepository>();
+    builder.Services.AddSingleton<IMasterDataRepository>(serviceProvider =>
+        serviceProvider.GetRequiredService<PostgresMasterDataRepository>());
 }
 builder.Services.Configure<PasswordHasherOptions>(options =>
 {

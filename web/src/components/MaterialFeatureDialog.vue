@@ -10,6 +10,8 @@ const props = defineProps<{
   material: Material | null
   mode?: 'add' | 'edit'
   vendor?: Row | null
+  apiBaseUrl: string
+  developmentPreview: boolean
 }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
 const materialNo = computed(() => String(props.material?.materialNo ?? ''))
@@ -18,6 +20,7 @@ const titleByFeature: Record<Feature, string> = {
   'gum-hour': '物料 GumHour 設定', 'vendor-map': '物料供應商對應',
 }
 const title = computed(() => titleByFeature[props.feature])
+const developmentPreview = computed(() => props.developmentPreview)
 const lookupTitle = (field: string) => ({ materialType: '物料類別', unitType: '單位類別', unitNo: '單位編號' }[field] ?? '系統選項')
 const controlledLabel = (value: string | number | boolean | null) => ({ 0: '一般', 1: '必填', 2: '提示' } as Record<number, string>)[Number(value)] ?? '一般'
 const notice = ref('')
@@ -48,14 +51,15 @@ const qcTab = ref(0)
 const selectedAvailableQC = ref<string[]>([])
 const selectedAssignedQC = ref<string[]>([])
 const assignedQC = ref<Row[]>([])
-const availableQC: Row[] = [
+const availableQCRows = ref<Row[]>([])
+const developmentQC: Row[] = [
   { qcItemNo: 'DEV-ATTR-001', qcItemName: '物料外觀（DEV）', qcItemType: 0 },
   { qcItemNo: 'DEV-ATTR-002', qcItemName: '包裝檢查（DEV）', qcItemType: 0 },
   { qcItemNo: 'DEV-VAR-001', qcItemName: '物料尺寸（DEV）', qcItemType: 1 },
   { qcItemNo: 'DEV-VAR-002', qcItemName: '黏度（DEV）', qcItemType: 1 },
   { qcItemNo: 'DEV-GROUP-001', qcItemName: '進料檢驗組（DEV）', qcItemType: 2 },
 ]
-const availableForTab = computed(() => availableQC.filter((row) => Number(row.qcItemType) === qcTab.value
+const availableForTab = computed(() => availableQCRows.value.filter((row) => Number(row.qcItemType) === qcTab.value
   && !assignedQC.value.some((assigned) => assigned.qcItemNo === row.qcItemNo)))
 const assignedForTab = computed(() => assignedQC.value.filter((row) => Number(row.qcItemType) === qcTab.value))
 
@@ -71,17 +75,50 @@ const importFileName = ref('')
 const importNotice = ref('')
 
 const gumDraft = ref({ accMin: 0, accMax: 0, refrozenFlag: false, frozenMin: 0, reForzenTimes: 0, reacclimateFlag: false, reAccMin: 0, reAccMax: 0 })
+const gumDataStamp = ref(0)
 
-function initialize(): void {
+async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const base = props.apiBaseUrl.trim()
+  if (!base) throw new Error('目前環境尚未設定 API 位址。')
+  const resolved = new URL(base, window.location.origin)
+  const url = new URL(`api/${path.replace(/^\/+/, '')}`, resolved.toString().replace(/\/+$/, '') + '/')
+  const response = await fetch(url, { credentials: 'include', ...init })
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { detail?: string; title?: string } | null
+    throw new Error(body?.detail || body?.title || `API 回應錯誤 (${response.status})`)
+  }
+  if (response.status === 204) return undefined as T
+  return await response.json() as T
+}
+
+async function initialize(): Promise<void> {
   notice.value = ''; error.value = ''; importNotice.value = ''
   propertyEditorOpen.value = false
+  if (!developmentPreview.value && materialNo.value) {
+    try {
+      if (props.feature === 'property') propertyRows.value = await api<Row[]>(`materials/${encodeURIComponent(materialNo.value)}/properties`)
+      if (props.feature === 'qc-item') {
+        const data = await api<{available:Row[];assigned:Row[]}>(`materials/${encodeURIComponent(materialNo.value)}/qc-items`)
+        availableQCRows.value = data.available; assignedQC.value = data.assigned
+      }
+      if (props.feature === 'vendor-map') vendorDraft.value = props.vendor
+        ? { vendorNo: String(props.vendor.vendorNo ?? ''), description: String(props.vendor.description ?? '') }
+        : { vendorNo: '', description: '' }
+      if (props.feature === 'gum-hour') {
+        const data = await api<Row>(`materials/${encodeURIComponent(materialNo.value)}/gum-hour`)
+        gumDataStamp.value = Number(data.dataStamp ?? 0)
+        gumDraft.value = { accMin:Number(data.accMin ?? 0), accMax:Number(data.accMax ?? 0), refrozenFlag:Boolean(data.refrozenFlag), frozenMin:Number(data.frozenMin ?? 0), reForzenTimes:Number(data.reForzenTimes ?? 0), reacclimateFlag:Boolean(data.reacclimateFlag), reAccMin:Number(data.reAccMin ?? 0), reAccMax:Number(data.reAccMax ?? 0) }
+      }
+    } catch (reason) { error.value = reason instanceof Error ? reason.message : '物料子資料載入失敗。' }
+    return
+  }
   if (props.feature === 'property' && materialNo.value) {
     propertyRows.value = readArray(scopedKey('properties'), [
       { propertyNo: 'KEEP_TEMP', value: '25', sequence: 10, controlled: 0, issueState: 0 },
       { propertyNo: 'SHELF_LIFE_HR', value: '', sequence: 20, controlled: 0, issueState: 0 },
     ])
   }
-  if (props.feature === 'qc-item' && materialNo.value) assignedQC.value = readArray(scopedKey('qc-items'))
+  if (props.feature === 'qc-item' && materialNo.value) { availableQCRows.value = developmentQC; assignedQC.value = readArray(scopedKey('qc-items')) }
   if (props.feature === 'vendor-map' && materialNo.value) {
     const current = props.vendor
     vendorDraft.value = current
@@ -95,7 +132,7 @@ function initialize(): void {
     }
   }
 }
-watch(() => [props.feature, materialNo.value, props.mode, props.vendor], initialize, { immediate: true })
+watch(() => [props.feature, materialNo.value, props.mode, props.vendor], () => { void initialize() }, { immediate: true })
 
 function openPropertyEditor(mode: 'add' | 'edit' | 'copy'): void {
   error.value = ''
@@ -106,33 +143,60 @@ function openPropertyEditor(mode: 'add' | 'edit' | 'copy'): void {
     : { ...source, propertyNo: mode === 'copy' ? '' : String(source.propertyNo ?? ''), issueState: 0 }
   propertyEditorOpen.value = true
 }
-function saveProperty(): void {
+async function saveProperty(): Promise<void> {
   const propertyNo = String(propertyDraft.value.propertyNo ?? '').trim().toUpperCase()
   if (!propertyNo) { error.value = '屬性編號為必填欄位。'; return }
   const duplicate = propertyRows.value.some((row) => String(row.propertyNo).toUpperCase() === propertyNo
     && (propertyMode.value !== 'edit' || row.propertyNo !== selectedProperty.value?.propertyNo))
   if (duplicate) { error.value = `屬性 ${propertyNo} 已存在。`; return }
   const nextRow = { ...propertyDraft.value, propertyNo, issueState: 0 }
-  propertyRows.value = propertyMode.value === 'edit'
-    ? propertyRows.value.map((row) => row.propertyNo === selectedProperty.value?.propertyNo ? nextRow : row)
-    : [...propertyRows.value, nextRow]
-  saveArray(scopedKey('properties'), propertyRows.value)
-  selectedProperty.value = nextRow
+  if (developmentPreview.value) {
+    propertyRows.value = propertyMode.value === 'edit'
+      ? propertyRows.value.map((row) => row.propertyNo === selectedProperty.value?.propertyNo ? nextRow : row)
+      : [...propertyRows.value, nextRow]
+    saveArray(scopedKey('properties'), propertyRows.value)
+    selectedProperty.value = nextRow
+  } else {
+    try {
+      const saved = await api<Row>(`materials/${encodeURIComponent(materialNo.value)}/properties`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ propertyNo, value: propertyDraft.value.value ?? '', sequence: Number(propertyDraft.value.sequence ?? 0), dataStamp: Number(selectedProperty.value?.dataStamp ?? 0) }) })
+      propertyRows.value = await api<Row[]>(`materials/${encodeURIComponent(materialNo.value)}/properties`)
+      selectedProperty.value = propertyRows.value.find((row) => row.propertyNo === saved.propertyNo) ?? saved
+    } catch (reason) { error.value = reason instanceof Error ? reason.message : '屬性儲存失敗。'; return }
+  }
   propertyEditorOpen.value = false
-  notice.value = '屬性 DEV 假資料已儲存。'
+  notice.value = developmentPreview.value
+    ? '屬性 DEV 假資料已儲存。'
+    : propertyMode.value === 'edit' ? '屬性已更新。' : '屬性已儲存。'
 }
-function deleteProperty(): void {
+async function deleteProperty(): Promise<void> {
   if (!selectedProperty.value || !window.confirm(`確定刪除屬性 ${String(selectedProperty.value.propertyNo)}？`)) return
-  propertyRows.value = propertyRows.value.filter((row) => row.propertyNo !== selectedProperty.value?.propertyNo)
-  saveArray(scopedKey('properties'), propertyRows.value)
+  if (developmentPreview.value) {
+    propertyRows.value = propertyRows.value.filter((row) => row.propertyNo !== selectedProperty.value?.propertyNo)
+    saveArray(scopedKey('properties'), propertyRows.value)
+  } else {
+    try {
+      const query = new URLSearchParams({ dataStamp: String(selectedProperty.value.dataStamp ?? 0) })
+      await api(`materials/${encodeURIComponent(materialNo.value)}/properties/${encodeURIComponent(String(selectedProperty.value.propertyNo))}?${query}`, { method:'DELETE' })
+      propertyRows.value = await api<Row[]>(`materials/${encodeURIComponent(materialNo.value)}/properties`)
+    } catch (reason) { error.value = reason instanceof Error ? reason.message : '屬性刪除失敗。'; return }
+  }
   selectedProperty.value = null
 }
-function approveProperty(): void {
+async function approveProperty(): Promise<void> {
   if (!selectedProperty.value || Number(selectedProperty.value.issueState ?? 0) !== 0) return
-  propertyRows.value = propertyRows.value.map((row) => row.propertyNo === selectedProperty.value?.propertyNo ? { ...row, issueState: 2 } : row)
-  saveArray(scopedKey('properties'), propertyRows.value)
-  selectedProperty.value = propertyRows.value.find((row) => row.propertyNo === selectedProperty.value?.propertyNo) ?? null
-  notice.value = '屬性 DEV 假資料已核准。'
+  if (developmentPreview.value) {
+    propertyRows.value = propertyRows.value.map((row) => row.propertyNo === selectedProperty.value?.propertyNo ? { ...row, issueState: 2 } : row)
+    saveArray(scopedKey('properties'), propertyRows.value)
+    selectedProperty.value = propertyRows.value.find((row) => row.propertyNo === selectedProperty.value?.propertyNo) ?? null
+    notice.value = '屬性 DEV 假資料已核准。'
+  } else {
+    try {
+      await api(`materials/${encodeURIComponent(materialNo.value)}/properties/${encodeURIComponent(String(selectedProperty.value.propertyNo))}/approve`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({dataStamp:selectedProperty.value.dataStamp}) })
+      propertyRows.value = await api<Row[]>(`materials/${encodeURIComponent(materialNo.value)}/properties`)
+      selectedProperty.value = propertyRows.value.find((row) => row.propertyNo === selectedProperty.value?.propertyNo) ?? null
+      notice.value = '屬性已核准。'
+    } catch (reason) { error.value = reason instanceof Error ? reason.message : '屬性核准失敗。' }
+  }
 }
 
 function addQCItems(): void {
@@ -144,23 +208,38 @@ function removeQCItems(): void {
   assignedQC.value = assignedQC.value.filter((row) => !selectedAssignedQC.value.includes(String(row.qcItemNo)))
   selectedAssignedQC.value = []
 }
-function saveQCItems(): void {
-  saveArray(scopedKey('qc-items'), assignedQC.value)
-  notice.value = 'QC Item DEV 假資料已儲存。'
+async function saveQCItems(): Promise<void> {
+  if (developmentPreview.value) {
+    saveArray(scopedKey('qc-items'), assignedQC.value)
+    notice.value = 'QC Item DEV 假資料已儲存。'
+  } else {
+    try {
+      await api(`materials/${encodeURIComponent(materialNo.value)}/qc-items`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items: assignedQC.value.map((row) => ({ qcItemNo: row.qcItemNo, qcItemType: row.qcItemType })) }) })
+      notice.value = 'QC Item 已儲存。'
+    } catch (reason) { error.value = reason instanceof Error ? reason.message : 'QC Item 儲存失敗。'; return }
+  }
   emit('saved')
 }
 
-function saveVendor(): void {
+async function saveVendor(): Promise<void> {
   const vendorNo = vendorDraft.value.vendorNo.trim().toUpperCase()
   if (!materialNo.value || !vendorNo) { error.value = '物料編號與供應商編號為必填欄位。'; return }
-  const key = `ymes:dev:material-vendors:${encodeURIComponent(materialNo.value)}:v1`
-  const rows = readArray(key)
   const oldVendorNo = String(props.vendor?.vendorNo ?? '')
   if (props.mode === 'edit' && oldVendorNo !== vendorNo) { error.value = '供應商編號是對應鍵，修改時不可變更。'; return }
-  if (props.mode !== 'edit' && rows.some((row) => String(row.vendorNo).toUpperCase() === vendorNo)) { error.value = `供應商 ${vendorNo} 已對應此物料。`; return }
-  const vendorName = vendorCatalog.find((vendor) => vendor.vendorNo === vendorNo)?.vendorName ?? `${vendorNo}（DEV）`
-  const value: Row = { materialNo: materialNo.value, vendorNo, vendorName, description: vendorDraft.value.description.trim() }
-  saveArray(key, props.mode === 'edit' ? rows.map((row) => String(row.vendorNo) === oldVendorNo ? value : row) : [...rows, value])
+  if (developmentPreview.value) {
+    const key = `ymes:dev:material-vendors:${encodeURIComponent(materialNo.value)}:v1`
+    const rows = readArray(key)
+    if (props.mode !== 'edit' && rows.some((row) => String(row.vendorNo).toUpperCase() === vendorNo)) { error.value = `供應商 ${vendorNo} 已對應此物料。`; return }
+    const vendorName = vendorCatalog.find((vendor) => vendor.vendorNo === vendorNo)?.vendorName ?? `${vendorNo}（DEV）`
+    const value: Row = { materialNo: materialNo.value, vendorNo, vendorName, description: vendorDraft.value.description.trim() }
+    saveArray(key, props.mode === 'edit' ? rows.map((row) => String(row.vendorNo) === oldVendorNo ? value : row) : [...rows, value])
+  } else {
+    try {
+      const path = `materials/${encodeURIComponent(materialNo.value)}/vendors${props.mode === 'edit' ? `/${encodeURIComponent(vendorNo)}` : ''}`
+      const method = props.mode === 'edit' ? 'PUT' : 'POST'
+      await api(path, { method, headers:{'Content-Type':'application/json'}, body:JSON.stringify({vendorNo,description:vendorDraft.value.description.trim(),dataStamp:Number(props.vendor?.dataStamp ?? 0)}) })
+    } catch (reason) { error.value = reason instanceof Error ? reason.message : '供應商對應儲存失敗。'; return }
+  }
   emit('saved'); emit('close')
 }
 
@@ -199,19 +278,35 @@ async function previewImport(event: Event): Promise<void> {
     const nameIndex = findColumn(['materialname', '物料名稱'])
     const typeIndex = findColumn(['materialtype', '物料類別'])
     const unitIndex = findColumn(['unitno', '單位編號'])
-    if (noIndex < 0 || nameIndex < 0) throw new Error('CSV 標題必須包含 MaterialNo 與 MaterialName。')
+    if (noIndex < 0 || nameIndex < 0 || typeIndex < 0 || unitIndex < 0) throw new Error('CSV 標題必須包含 MaterialNo、MaterialName、MaterialType 與 UnitNo。')
     importRows.value = matrix.slice(1).map((row) => {
       const materialNo = String(row[noIndex] ?? '').trim().toUpperCase()
       const materialName = String(row[nameIndex] ?? '').trim()
-      const valid = Boolean(materialNo && materialName)
-      return { materialNo, materialName, materialType: String(row[typeIndex] ?? 'CHEM').trim() || 'CHEM', unitNo: String(row[unitIndex] ?? 'EA').trim() || 'EA', valid, message: valid ? '待匯入' : '物料編號與名稱必填' }
+      const materialType = typeIndex < 0 ? '' : String(row[typeIndex] ?? '').trim()
+      const unitNo = unitIndex < 0 ? '' : String(row[unitIndex] ?? '').trim()
+      const valid = Boolean(materialNo && materialName && materialType && unitNo)
+      return { materialNo, materialName, materialType, unitNo, valid, message: valid ? '待匯入' : '物料編號、名稱、類別與單位必填' }
     })
     importNotice.value = `解析 ${importRows.value.length} 筆；這是本機預覽。`
   } catch (reason) { error.value = reason instanceof Error ? reason.message : 'CSV 讀取失敗。' }
 }
-function commitImport(): void {
+async function commitImport(): Promise<void> {
   const validRows = importRows.value.filter((row) => row.valid)
   if (!validRows.length) { error.value = '沒有可匯入的有效資料。'; return }
+  if (!developmentPreview.value) {
+    try {
+      const results = await api<Array<{row:number;materialNo:string;success:boolean;message:string}>>('materials/import', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(validRows.map((row) => ({ materialNo:row.materialNo, materialName:row.materialName, materialType:row.materialType, unitNo:row.unitNo, putInPlace:'0', countWay:0, checkLotNo:0 }))) })
+      importRows.value = importRows.value.map((row) => {
+        const result = results.find((item) => item.materialNo.toUpperCase() === row.materialNo.toUpperCase())
+        return result ? { ...row, valid:!result.success, message:result.message } : row
+      })
+      const success = results.filter((row) => row.success).length
+      const failed = results.length - success
+      importNotice.value = `匯入成功 ${success} 筆，失敗 ${failed} 筆。`
+      if (failed) return
+      emit('saved'); emit('close'); return
+    } catch (reason) { error.value = reason instanceof Error ? reason.message : '物料匯入失敗。'; return }
+  }
   const storageKey = 'ymes:dev:master-data:materials:v1'
   const current = readArray(storageKey)
   const existing = new Set(current.map((row) => String(row.materialNo ?? '').toUpperCase()))
@@ -240,11 +335,19 @@ function validateGum(): boolean {
   if (gumDraft.value.reacclimateFlag && (gumDraft.value.reAccMin !== 0 || gumDraft.value.reAccMax !== 0) && gumDraft.value.reAccMin >= gumDraft.value.reAccMax) { error.value = 'REACCMIN 必須小於 REACCMAX。'; return false }
   return true
 }
-function saveGum(): void {
+async function saveGum(): Promise<void> {
   error.value = ''
   if (!validateGum()) return
-  window.localStorage.setItem(scopedKey('gum-hour'), JSON.stringify(gumDraft.value))
-  notice.value = 'GumHour DEV 假資料已儲存。'
+  if (developmentPreview.value) {
+    window.localStorage.setItem(scopedKey('gum-hour'), JSON.stringify(gumDraft.value))
+    notice.value = 'GumHour DEV 假資料已儲存。'
+  } else {
+    try {
+      const saved = await api<Row>(`materials/${encodeURIComponent(materialNo.value)}/gum-hour`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ...gumDraft.value, dataStamp:gumDataStamp.value }) })
+      gumDataStamp.value = Number(saved.dataStamp ?? gumDataStamp.value + 1)
+      notice.value = 'GumHour 已儲存。'
+    } catch (reason) { error.value = reason instanceof Error ? reason.message : 'GumHour 儲存失敗。'; return }
+  }
   emit('saved'); emit('close')
 }
 </script>
@@ -252,32 +355,32 @@ function saveGum(): void {
 <template>
   <div class="mfd-backdrop" @click.self="emit('close')">
     <section class="mfd-dialog" role="dialog" aria-modal="true" :aria-labelledby="'mfd-title'">
-      <header class="mfd-header"><div><small>{{ materialNo || '物料資料' }} · 開發區本機假資料</small><h2 id="mfd-title">{{ title }}</h2></div><button type="button" aria-label="關閉" @click="emit('close')">×</button></header>
+      <header class="mfd-header"><div><small>{{ materialNo || '物料資料' }} · {{ developmentPreview ? '開發區本機假資料' : '正式資料庫' }}</small><h2 id="mfd-title">{{ title }}</h2></div><button type="button" aria-label="關閉" @click="emit('close')">×</button></header>
       <p v-if="error" class="mfd-message error" role="alert">{{ error }}</p><p v-if="notice" class="mfd-message" role="status">{{ notice }}</p>
       <div class="mfd-body">
         <template v-if="feature==='property'">
           <div class="mfd-toolbar"><button type="button" class="mfd-button primary" @click="openPropertyEditor('add')">新增</button><button type="button" class="mfd-button" :disabled="!selectedProperty" @click="openPropertyEditor('edit')">修改</button><button type="button" class="mfd-button" :disabled="!selectedProperty" @click="openPropertyEditor('copy')">複製</button><button type="button" class="mfd-button" :disabled="!selectedProperty" @click="deleteProperty">刪除</button><button type="button" class="mfd-button" :disabled="!selectedProperty || Number(selectedProperty.issueState)!==0" @click="approveProperty">核准</button></div>
-          <div class="mfd-grid"><table><thead><tr><th>屬性編號</th><th>屬性值</th><th>順序</th><th>控制方式（DEV）</th><th>狀態</th></tr></thead><tbody><tr v-for="row in propertyRows" :key="String(row.propertyNo)" :class="{selected:selectedProperty?.propertyNo===row.propertyNo}" @click="selectedProperty=row"><td>{{ row.propertyNo }}</td><td>{{ row.value || '—' }}</td><td>{{ row.sequence }}</td><td>{{ controlledLabel(row.controlled) }}</td><td>{{ Number(row.issueState)===2?'已核准':'未簽核' }}</td></tr><tr v-if="!propertyRows.length"><td colspan="5" class="empty">尚無物料屬性</td></tr></tbody></table></div>
-          <p class="mfd-hint">WinForms 的屬性來源包含物料類別已核准屬性與屬性控制檢查；目前以本機 DEV 清單模擬。</p>
-          <form v-if="propertyEditorOpen" class="mfd-editor" @submit.prevent="saveProperty"><label>屬性編號<input v-model="propertyDraft.propertyNo" required :readonly="propertyMode==='edit'" /></label><label>屬性值<input v-model="propertyDraft.value" /></label><label>順序<input v-model.number="propertyDraft.sequence" type="number" min="0" /></label><label>控制方式<select v-model.number="propertyDraft.controlled"><option :value="0">一般</option><option :value="1">必填</option><option :value="2">核准前提示</option></select></label><button class="mfd-button primary" type="submit">儲存屬性</button><button class="mfd-button" type="button" @click="propertyEditorOpen=false">取消</button></form>
+          <div class="mfd-grid"><table><thead><tr><th>屬性編號</th><th>屬性值</th><th>順序</th><th>控制方式</th><th>狀態</th></tr></thead><tbody><tr v-for="row in propertyRows" :key="String(row.propertyNo)" :class="{selected:selectedProperty?.propertyNo===row.propertyNo}" @click="selectedProperty=row"><td>{{ row.propertyNo }}</td><td>{{ row.value || '—' }}</td><td>{{ row.sequence }}</td><td>{{ controlledLabel(row.controlled) }}</td><td>{{ Number(row.issueState)===2?'已核准':'未簽核' }}</td></tr><tr v-if="!propertyRows.length"><td colspan="5" class="empty">尚無物料屬性</td></tr></tbody></table></div>
+          <p class="mfd-hint">控制方式取自系統屬性定義；新物料會複製已核准的類別屬性。</p>
+          <form v-if="propertyEditorOpen" class="mfd-editor" @submit.prevent="saveProperty"><label>屬性編號<input v-model="propertyDraft.propertyNo" required :readonly="propertyMode==='edit'" /></label><label>屬性值<input v-model="propertyDraft.value" /></label><label>順序<input v-model.number="propertyDraft.sequence" type="number" min="0" max="99" /></label><label v-if="developmentPreview">控制方式<select v-model.number="propertyDraft.controlled"><option :value="0">一般</option><option :value="1">必填</option><option :value="2">核准前提示</option></select></label><button class="mfd-button primary" type="submit">儲存屬性</button><button class="mfd-button" type="button" @click="propertyEditorOpen=false">取消</button></form>
         </template>
 
         <template v-else-if="feature==='qc-item'">
           <nav class="mfd-tabs"><button v-for="tab in [{value:0,label:'Attributes'},{value:1,label:'Variables'},{value:2,label:'Group'}]" :key="tab.value" type="button" :class="{active:qcTab===tab.value}" @click="qcTab=tab.value;selectedAvailableQC=[];selectedAssignedQC=[]">{{ tab.label }}</button></nav>
-          <div class="mfd-transfer"><fieldset><legend>可選項目（DEV）</legend><select v-model="selectedAvailableQC" multiple><option v-for="row in availableForTab" :key="String(row.qcItemNo)" :value="String(row.qcItemNo)">{{ row.qcItemNo }} · {{ row.qcItemName }}</option></select></fieldset><div class="mfd-transfer-actions"><button class="mfd-button" type="button" :disabled="!selectedAvailableQC.length" @click="addQCItems">加入 →</button><button class="mfd-button" type="button" :disabled="!selectedAssignedQC.length" @click="removeQCItems">← 移除</button></div><fieldset><legend>已選 QC Item</legend><select v-model="selectedAssignedQC" multiple><option v-for="row in assignedForTab" :key="String(row.qcItemNo)" :value="String(row.qcItemNo)">{{ row.qcItemNo }} · {{ row.qcItemName }}</option></select></fieldset></div>
-          <p class="mfd-hint">類型代碼依 WinForms：0 Attributes、1 Variables、2 Group。右側清單是本機示範目錄。</p>
+          <div class="mfd-transfer"><fieldset><legend>可選項目{{ developmentPreview ? '（DEV）' : '' }}</legend><select v-model="selectedAvailableQC" multiple><option v-for="row in availableForTab" :key="String(row.qcItemNo)" :value="String(row.qcItemNo)">{{ row.qcItemNo }}{{ row.qcItemName ? ` · ${row.qcItemName}` : '' }}</option></select></fieldset><div class="mfd-transfer-actions"><button class="mfd-button" type="button" :disabled="!selectedAvailableQC.length" @click="addQCItems">加入 →</button><button class="mfd-button" type="button" :disabled="!selectedAssignedQC.length" @click="removeQCItems">← 移除</button></div><fieldset><legend>已選 QC Item</legend><select v-model="selectedAssignedQC" multiple><option v-for="row in assignedForTab" :key="String(row.qcItemNo)" :value="String(row.qcItemNo)">{{ row.qcItemNo }}{{ row.qcItemName ? ` · ${row.qcItemName}` : '' }}</option></select></fieldset></div>
+          <p class="mfd-hint">類型代碼依 WinForms：0 Attributes、1 Variables、2 Group；可選項目來自物料類別 QC 範本。</p>
         </template>
 
         <template v-else-if="feature==='vendor-map'">
-          <fieldset class="mfd-section"><legend>供應商資料</legend><label>物料編號<input :value="materialNo" readonly /></label><label>供應商編號<select v-model="vendorDraft.vendorNo" required :disabled="mode==='edit'"><option value="">選擇供應商</option><option v-for="vendor in vendorCatalog" :key="vendor.vendorNo" :value="vendor.vendorNo">{{ vendor.vendorNo }} · {{ vendor.vendorName }}</option></select></label><label class="wide">說明<textarea v-model="vendorDraft.description" rows="3" /></label></fieldset>
-          <p class="mfd-hint">供應商目錄與對應資料均為本機 DEV 假資料；WinForms 欄位為 MaterialNo、VendorNo、Description。</p>
+          <fieldset class="mfd-section"><legend>供應商資料</legend><label>物料編號<input :value="materialNo" readonly /></label><label>供應商編號<template v-if="developmentPreview"><select v-model="vendorDraft.vendorNo" required :disabled="mode==='edit'"><option value="">選擇供應商</option><option v-for="vendor in vendorCatalog" :key="vendor.vendorNo" :value="vendor.vendorNo">{{ vendor.vendorNo }} · {{ vendor.vendorName }}</option></select></template><input v-else v-model="vendorDraft.vendorNo" required maxlength="20" :readonly="mode==='edit'" /></label><label class="wide">說明<textarea v-model="vendorDraft.description" rows="3" /></label></fieldset>
+          <p class="mfd-hint">維護物料編號、供應商編號與說明；正式資料以資料庫交易保存。</p>
         </template>
 
         <template v-else-if="feature==='import'">
           <div class="mfd-import"><label>選擇檔案<input type="file" accept=".csv,.xls,.xlsx" @change="previewImport" /></label><span>{{ importFileName || 'WinForms 使用 Excel 範本；DEV 簡化版可預覽 CSV' }}</span></div>
           <p v-if="importNotice" class="mfd-hint">{{ importNotice }}</p>
           <div class="mfd-grid"><table><thead><tr><th>物料編號</th><th>物料名稱</th><th>類別</th><th>單位編號</th><th>檢查結果</th></tr></thead><tbody><tr v-for="(row,index) in importRows" :key="index"><td>{{ row.materialNo }}</td><td>{{ row.materialName }}</td><td>{{ row.materialType }}</td><td>{{ row.unitNo }}</td><td>{{ row.message }}</td></tr><tr v-if="!importRows.length"><td colspan="5" class="empty">選擇 CSV 後顯示匯入預覽</td></tr></tbody></table></div>
-          <p class="mfd-hint">CSV 欄位需有 MaterialNo、MaterialName，可選 MaterialType、UnitNo。WinForms 的 .xls/.xlsx、範本下載與後台逐筆驗證尚未重現。</p>
+          <p class="mfd-hint">CSV 標題需包含 MaterialNo、MaterialName；MaterialType、UnitNo 可提供來源欄位。正式匯入逐筆回報資料庫寫入結果。</p>
         </template>
 
         <template v-else>
@@ -287,7 +390,7 @@ function saveGum(): void {
             <label class="check"><input v-model="gumDraft.refrozenFlag" type="checkbox" />REFROZENFLAG</label><label>FROZENMIN（Hour）<input v-model.number="gumDraft.frozenMin" type="number" min="0" step="0.01" :disabled="!gumDraft.refrozenFlag" /></label><label>ReForzenTimes<input v-model.number="gumDraft.reForzenTimes" type="number" min="0" step="1" :disabled="!gumDraft.refrozenFlag" /></label>
             <label class="check"><input v-model="gumDraft.reacclimateFlag" type="checkbox" />REACCLIMATEFLAG</label><label>REACCMIN（Hour）<input v-model.number="gumDraft.reAccMin" type="number" min="0" step="0.01" :disabled="!gumDraft.reacclimateFlag" /></label><label>REACCMAX（Hour）<input v-model.number="gumDraft.reAccMax" type="number" min="0" step="0.01" :disabled="!gumDraft.reacclimateFlag" /></label>
           </div></fieldset>
-          <p class="mfd-hint">欄位與 ACC / 再冷凍 / 再回溫區間檢查依 frmMaterialGumType；儲存只更新本機 DEV 假資料。</p>
+          <p class="mfd-hint">欄位與 ACC / 再冷凍 / 再回溫區間檢查依 frmMaterialGumType；儲存至物料時效設定表。</p>
         </template>
       </div>
       <footer>

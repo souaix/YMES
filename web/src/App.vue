@@ -257,9 +257,9 @@ function mapMenuTree(payload: MenuTreeApiResponse): MenuNode[] {
 }
 
 function addDevelopmentEquipmentFunctions(items: MenuNode[]): MenuNode[] {
-  const result = items.map((item) => ({ ...item, children: item.children?.map((child) => ({ ...child, children: child.children ? [...child.children] : undefined })) }))
-  const fallbackEquipment = fallbackMenuTree.find((item) => item.moduleNo === 'EQP')
-  const fallbackSettings = fallbackEquipment?.children?.find((item) => item.label === '設備設定')
+  const result: MenuNode[] = items.map((item): MenuNode => ({ ...item, children: item.children?.map((child): MenuNode => ({ ...child, children: child.children ? [...child.children] : undefined })) }))
+  const fallbackEquipment: MenuNode | undefined = fallbackMenuTree.find((item) => item.moduleNo === 'EQP')
+  const fallbackSettings: MenuNode | undefined = fallbackEquipment?.children?.find((item) => item.label === '設備設定')
   if (!fallbackEquipment || !fallbackSettings) return result
   let equipment = result.find((item) => item.moduleNo?.toUpperCase() === 'EQP')
   if (!equipment) {

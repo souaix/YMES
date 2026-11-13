@@ -66,7 +66,9 @@ public sealed partial class PostgresMasterDataRepository
         ValidateMaterial(request);
         ValidateActor(actorUserNo);
         EnsureMaterialCodeAvailable(request.MaterialNo);
-        using var command = _dataSource.CreateCommand("""
+        using var connection = _dataSource.OpenConnection();
+        using var transaction = connection.BeginTransaction();
+        using (var command = new NpgsqlCommand("""
             INSERT INTO "YMES".tblmtlmaterialbasis
                 (materialno, materialtype, issuestate, description, creator, createdate,
                  materialname, materialspec, putinplace, countway, checklotno, unittype,
@@ -76,10 +78,32 @@ public sealed partial class PostgresMasterDataRepository
                 (@no, @type, 0, @description, @actor, now(), @name, @spec, @putInPlace,
                  @countWay, @checkLotNo, @unitType, @safeQty, @unitNo, @keyMaterials,
                  @openLimitFlag, @openLimitTime, @resetOpenDate, @expireDateFlag, @erpNo, 1);
-            """);
-        AddMaterialParameters(command, request);
-        AddVarchar(command, "actor", actorUserNo.Trim());
-        ExecuteInsert(command, $"物料編號 {NormalizeCode(request.MaterialNo)} 已存在。");
+            """, connection, transaction))
+        {
+            AddMaterialParameters(command, request);
+            AddVarchar(command, "actor", actorUserNo.Trim());
+            try { command.ExecuteNonQuery(); }
+            catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+            { throw Conflict($"物料編號 {NormalizeCode(request.MaterialNo)} 已存在。"); }
+        }
+        using (var properties = new NpgsqlCommand("""
+            INSERT INTO "YMES".tblmtlmaterialproperty
+                (material,propertyno,defaultvalue,propertysequence,issuestate,description,datastamp,creator,createdate)
+            SELECT @no,p.propertyno,p.defaultvalue,p.propertysequence,0,p.description,1,@actor,now()
+            FROM "YMES".tblmtlmaterialproperty p
+            JOIN "YMES".tblmtlmaterialtype t ON lower(t.materialtype)=lower(@type) AND t.issuestate=2
+            WHERE lower(p.material)=lower(@type) AND p.issuestate=2
+            ON CONFLICT (material,propertyno) DO NOTHING;
+            """, connection, transaction))
+        { AddVarchar(properties,"no",request.MaterialNo.Trim()); AddVarchar(properties,"type",request.MaterialType.Trim()); AddVarchar(properties,"actor",actorUserNo.Trim()); properties.ExecuteNonQuery(); }
+        using (var qc = new NpgsqlCommand("""
+            INSERT INTO "YMES".tblmtlqcitem(mtlno,qcitemno,qcitemtype,reviser,revisedate)
+            SELECT @no,qcitemno,qcitemtype,@actor,now()
+            FROM "YMES".tblmtltypeqcitem WHERE lower(materialtype)=lower(@type)
+            ON CONFLICT (mtlno,qcitemno) DO NOTHING;
+            """, connection, transaction))
+        { AddVarchar(qc,"no",request.MaterialNo.Trim()); AddVarchar(qc,"type",request.MaterialType.Trim()); AddVarchar(qc,"actor",actorUserNo.Trim()); qc.ExecuteNonQuery(); }
+        transaction.Commit();
         return GetMaterial(request.MaterialNo);
     }
 
@@ -127,6 +151,18 @@ public sealed partial class PostgresMasterDataRepository
     public MaterialDto ApproveMaterial(string no, int dataStamp, string actorUserNo)
     {
         ValidateActor(actorUserNo);
+        using (var required = _dataSource.CreateCommand("""
+            SELECT e.elementno FROM "YMES".tblmtlmaterialproperty p
+            JOIN "YMES".tblsyselementbasis e ON lower(e.elementno)=lower(p.propertyno)
+            WHERE lower(p.material)=lower(@no) AND COALESCE(e.controlled,0)=1
+              AND COALESCE(NULLIF(btrim(p.defaultvalue),''),'')=''
+            ORDER BY e.elementno LIMIT 1;
+            """))
+        {
+            AddVarchar(required,"no",no.Trim());
+            var missing = required.ExecuteScalar();
+            if (missing is string property) throw Conflict($"必填屬性 {property} 尚未設定，物料不能核准。");
+        }
         using var command = _dataSource.CreateCommand("""
             UPDATE "YMES".tblmtlmaterialbasis
             SET issuestate = 2,
@@ -170,15 +206,19 @@ public sealed partial class PostgresMasterDataRepository
             using (var dependent = new NpgsqlCommand("""
                 SELECT EXISTS (
                     SELECT 1 FROM "YMES".ym_product_bom
-                    WHERE component_type = 'MATERIAL' AND lower(component_no) = lower(@no))
-                    OR EXISTS (
-                    SELECT 1 FROM "YMES".tblmtlmaterialgroupdetail
-                    WHERE lower(materialno) = lower(@no));
+                    WHERE component_type = 'MATERIAL' AND lower(component_no) = lower(@no));
                 """, connection, transaction))
             {
                 AddVarchar(dependent, "no", current.MaterialNo);
-                if ((bool)(dependent.ExecuteScalar() ?? false)) throw Conflict("物料仍被物料群組或產品 BOM 使用，不能物理刪除。");
+                if ((bool)(dependent.ExecuteScalar() ?? false)) throw Conflict("物料仍被產品 BOM 使用，不能物理刪除。");
             }
+            foreach (var childTable in new[] { "tblmtlmaterialproperty", "tblmtlmaterialvendormap", "tblmtlqcitem", "tblmtlmaterialgroupdetail" })
+            {
+                using var removeChild = new NpgsqlCommand($"DELETE FROM \"YMES\".{childTable} WHERE lower({(childTable == "tblmtlmaterialproperty" ? "material" : childTable == "tblmtlqcitem" ? "mtlno" : "materialno")})=lower(@no);", connection, transaction);
+                AddVarchar(removeChild, "no", current.MaterialNo); removeChild.ExecuteNonQuery();
+            }
+            using (var removeGum = new NpgsqlCommand("DELETE FROM \"YMES\".tblmtltypeacclimation WHERE lower(materialno)=lower(@no);", connection, transaction))
+            { AddVarchar(removeGum, "no", current.MaterialNo); removeGum.ExecuteNonQuery(); }
             using var delete = new NpgsqlCommand("""
                 DELETE FROM "YMES".tblmtlmaterialbasis
                 WHERE lower(materialno) = lower(@no)
@@ -209,7 +249,8 @@ public sealed partial class PostgresMasterDataRepository
     {
         using var command = _dataSource.CreateCommand("""
             SELECT EXISTS (SELECT 1 FROM "YMES".tblopbasis WHERE lower(opno) = lower(@no))
-                OR EXISTS (SELECT 1 FROM "YMES".tblprdproductbasis WHERE lower(productno) = lower(@no));
+                OR EXISTS (SELECT 1 FROM "YMES".tblprdproductbasis WHERE lower(productno) = lower(@no))
+                OR EXISTS (SELECT 1 FROM "YMES".tblmtlmaterialtype WHERE lower(materialtype) = lower(@no));
             """);
         AddVarchar(command, "no", materialNo.Trim());
         if ((bool)(command.ExecuteScalar() ?? false)) throw Conflict("物料編號不可與作業或產品編號重複。");
@@ -217,10 +258,10 @@ public sealed partial class PostgresMasterDataRepository
 
     private static void AddMaterialParameters(NpgsqlCommand command, MaterialWriteRequest request)
     {
-        AddVarchar(command, "no", RequiredCode(request.MaterialNo, "物料編號", 40));
-        AddVarchar(command, "type", RequiredCode(request.MaterialType, "物料類別", 40));
-        AddVarchar(command, "name", Required(request.MaterialName, "物料名稱", 200));
-        AddVarchar(command, "spec", Optional(request.MaterialSpec, 200, "物料規格"));
+        AddVarchar(command, "no", RequiredCode(request.MaterialNo, "物料編號", 50));
+        AddVarchar(command, "type", RequiredCode(request.MaterialType, "物料類別", 50));
+        AddVarchar(command, "name", Required(request.MaterialName, "物料名稱", 300));
+        AddVarchar(command, "spec", Optional(request.MaterialSpec, 300, "物料規格"));
         AddVarchar(command, "description", Optional(request.Description, 255, "說明"));
         AddNumeric(command, "putInPlace", ParsePutInPlace(request.PutInPlace));
         AddNumeric(command, "countWay", request.CountWay);
@@ -238,19 +279,21 @@ public sealed partial class PostgresMasterDataRepository
 
     private static void ValidateMaterial(MaterialWriteRequest request)
     {
-        _ = RequiredCode(request.MaterialNo, "物料編號", 40);
-        _ = RequiredCode(request.MaterialType, "物料類別", 40);
-        _ = Required(request.MaterialName, "物料名稱", 200);
-        _ = Optional(request.MaterialSpec, 200, "物料規格");
+        _ = RequiredCode(request.MaterialNo, "物料編號", 50);
+        _ = RequiredCode(request.MaterialType, "物料類別", 50);
+        _ = Required(request.MaterialName, "物料名稱", 300);
+        _ = Optional(request.MaterialSpec, 300, "物料規格");
         _ = Optional(request.Description, 255, "說明");
         _ = ParsePutInPlace(request.PutInPlace);
         _ = RequiredCode(request.UnitType, "單位類別", 30);
         _ = RequiredCode(request.UnitNo, "單位編號", 30);
         _ = Optional(request.ErpNo, 50, "ERP 編號");
-        if (request.CountWay is < 0 or > 9 || request.CheckLotNo is < 0 or > 1)
-            throw BadRequest("計量方法必須介於 0 到 9，批號檢查只能為 0 或 1。");
+        if (request.CountWay is < -9 or > 9 || request.CheckLotNo is < -9 or > 9)
+            throw BadRequest("計量方法與批號檢查代碼須符合 numeric(1,0) 欄位範圍；正式 ValueList 待來源核實。");
         if (request.SafeQty is < 0 or > 99999999.99999999m || decimal.Round(request.SafeQty, 8) != request.SafeQty)
             throw BadRequest("安全存量須介於 0 到 99,999,999.99999999，最多八位小數。");
+        if (request.OpenLimitTimeFlag && request.OpenLimitTime is null)
+            throw BadRequest("啟用開封時限管理時，必須輸入開封時限。");
         if (request.OpenLimitTime is < 0 or > 9999.99m || (request.OpenLimitTime.HasValue && decimal.Round(request.OpenLimitTime.Value, 2) != request.OpenLimitTime.Value))
             throw BadRequest("開封時限須介於 0 到 9,999.99，最多兩位小數。");
     }
@@ -259,14 +302,21 @@ public sealed partial class PostgresMasterDataRepository
     {
         var text = (value ?? "").Trim();
         if (text.Equals("OP", StringComparison.OrdinalIgnoreCase)) return 1;
-        if (int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var code) && code is >= 0 and <= 9) return code;
-        throw BadRequest("投入點需為 OP 或原始資料表支援的 0 到 9 數值代碼。");
+        if (int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var code) && code is >= 0 and <= 3) return code;
+        throw BadRequest("投料點僅支援 EQP=0、OP=1、WIP INV=2、MO=3。");
     }
 
     private static string PutInPlaceLabel(object value)
     {
         var code = ToInt32(value);
-        return code == 1 ? "OP" : code.ToString(CultureInfo.InvariantCulture);
+        return code switch
+        {
+            0 => "EQP",
+            1 => "OP",
+            2 => "WIP INV",
+            3 => "MO",
+            _ => code.ToString(CultureInfo.InvariantCulture),
+        };
     }
 
     private static MaterialDto MapMaterial(NpgsqlDataReader reader) => new()
