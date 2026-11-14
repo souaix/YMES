@@ -91,36 +91,36 @@ public sealed class PostgresEquipmentStateRepository(NpgsqlDataSource dataSource
 
         try
         {
-        using (var available = new NpgsqlCommand("""
-            SELECT to_regclass('"YMES".tblemsequipmentstate') IS NOT NULL,
-                   to_regclass('"YMES".tbleqpstatecontrol') IS NOT NULL,
-                   to_regclass('"YMES".tbleqpqclistbasis') IS NOT NULL;
-            """, connection, transaction))
-        using (var reader = available.ExecuteReader())
-        {
-            _ = reader.Read();
-            if (!reader.GetBoolean(0) || !reader.GetBoolean(1) || !reader.GetBoolean(2))
-                throw new EquipmentRuleException(503, "設備狀態引用檢查所需的 MES 來源表尚未完整建立；目前已停用刪除，避免遺漏引用資料。");
-        }
+            using (var available = new NpgsqlCommand("""
+                SELECT to_regclass('"YMES".tblemsequipmentstate') IS NOT NULL,
+                       to_regclass('"YMES".tbleqpstatecontrol') IS NOT NULL,
+                       to_regclass('"YMES".tbleqpqclistbasis') IS NOT NULL;
+                """, connection, transaction))
+            using (var reader = available.ExecuteReader())
+            {
+                _ = reader.Read();
+                if (!reader.GetBoolean(0) || !reader.GetBoolean(1) || !reader.GetBoolean(2))
+                    throw new EquipmentRuleException(503, "設備狀態引用檢查所需的 MES 來源表尚未完整建立；目前已停用刪除，避免遺漏引用資料。");
+            }
 
-        using (var references = new NpgsqlCommand("""
-            SELECT EXISTS(SELECT 1 FROM "YMES".tblemsequipmentstate WHERE equipmentstate=@equipmentState)
-                OR EXISTS(SELECT 1 FROM "YMES".tbleqpstatecontrol WHERE equipmentstate=@equipmentState)
-                OR EXISTS(SELECT 1 FROM "YMES".tbleqpqclistbasis WHERE unvalidaction=@equipmentState);
-            """, connection, transaction))
-        {
-            AddNumeric(references, "equipmentState", equipmentState);
-            if ((bool)(references.ExecuteScalar() ?? false))
-                throw new EquipmentRuleException(409, "設備狀態已被設備現況、設備狀態控制或設備點檢表引用，不能刪除。");
-        }
+            using (var references = new NpgsqlCommand("""
+                SELECT EXISTS(SELECT 1 FROM "YMES".tblemsequipmentstate WHERE equipmentstate=@equipmentState)
+                    OR EXISTS(SELECT 1 FROM "YMES".tbleqpstatecontrol WHERE equipmentstate=@equipmentState)
+                    OR EXISTS(SELECT 1 FROM "YMES".tbleqpqclistbasis WHERE unvalidaction=@equipmentState);
+                """, connection, transaction))
+            {
+                AddNumeric(references, "equipmentState", equipmentState);
+                if ((bool)(references.ExecuteScalar() ?? false))
+                    throw new EquipmentRuleException(409, "設備狀態已被設備現況、設備狀態控制或設備點檢表引用，不能刪除。");
+            }
 
-        using (var delete = new NpgsqlCommand("DELETE FROM \"YMES\".tbleqpstatebasis WHERE equipmentstate=@equipmentState;", connection, transaction))
-        {
-            AddNumeric(delete, "equipmentState", equipmentState);
-            if (delete.ExecuteNonQuery() == 0) throw NotFound(equipmentState);
-        }
+            using (var delete = new NpgsqlCommand("DELETE FROM \"YMES\".tbleqpstatebasis WHERE equipmentstate=@equipmentState;", connection, transaction))
+            {
+                AddNumeric(delete, "equipmentState", equipmentState);
+                if (delete.ExecuteNonQuery() == 0) throw NotFound(equipmentState);
+            }
 
-        transaction.Commit();
+            transaction.Commit();
         }
         catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.SerializationFailure)
         {
