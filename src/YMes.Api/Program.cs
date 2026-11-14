@@ -78,6 +78,7 @@ else if (masterDataProvider == "postgres")
 {
     builder.Services.AddSingleton<IEquipmentRepository, PostgresEquipmentRepository>();
     builder.Services.AddSingleton<PostgresEquipmentVendorRepository>();
+    builder.Services.AddSingleton<PostgresEquipmentStateRepository>();
     builder.Services.AddSingleton<IOperationRepository, PostgresOperationRepository>();
     builder.Services.AddSingleton<PostgresMasterDataRepository>();
     builder.Services.AddSingleton<IMasterDataRepository>(serviceProvider =>

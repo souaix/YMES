@@ -11,7 +11,7 @@
 1. **系統目錄 migration 0012 已完成**：以 SSH 比對來源 schema，部署可回滾/可重跑 migration，載入 20 Module、601 MES MenuItem、553 Function 並保留 5 筆 YMES 自訂列。模組繁中名稱已核實、API/Web 已部署，瀏覽器已確認三層選單；逐筆自動比較來源與 API 回傳仍待補。
 2. **物料 API/schema 主體已完成**：已逐欄核對 8 張表並套用 0013 migration，保留 `tblmtlmaterialbasis` 的 7 個 YMES 欄位、補回 7 個 DEFAULT，建立缺少的 6 張表。Property、QC Item、Vendor Map、GumHour、CSV Import 及主檔交易 API/Vue Production 已部署；app-browser 找到並修正控制器 DI、`tblsysunitbasis`/`tblsyselementbasis` 唯讀授權及投料點 JSON 型別問題，瀏覽器已驗證主檔新增、屬性、QC、GumHour 讀寫。0014 授予必要唯讀權限。公司 Oracle 端仍需核實正式 ValueList、供應商名稱 Join、GumHour 參數來源；CSV 提交端到端與 Excel `.xls/.xlsx` 匯入/範本仍待完成。
 3. **完成作業站延伸 API/schema**：比對 `database/reference/mestest_operation_and_system_create.sql` 內 18 張 OP 表；此批 18 張 OP 表及 3 張系統表的原始 Oracle DDL 在 `mestest_operation_and_system_source_ddl.sql`。YMES 目前作業站僅主檔 CRUD/核准/停用已部署；按 `docs/modules/OP/作業站主檔.md` 實作子表引用、資源、商業規則、參數、QC、Error、SubOP、Import 及交易。
-4. **繼續設備功能 API**：公司端已交付設備供應商、工程群組、類別、群組、狀態、點檢表等規格與來源 CREATE SQL；先核對現有 YMES 表，再按功能規格完成缺少的 lookup、CRUD、成員與匯入契約。
+4. **繼續設備功能 API**：設備供應商已完成；設備狀態 GET/options/POST/PUT/DELETE API 與 0016 migration 已部署，完整 StateType ValueList 和兩張來源引用表 DDL 仍待公司端交付。其他工程群組、類別、群組、點檢表功能依規格續做。
 5. **完成全部第一層模組**：按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 的 ModuleOrder 逐個 FunctionNo/FormName/ExecutionFile，補齊 PostgreSQL 結構、API DTO/驗證/交易及部署。任何來源表缺少 DDL 時，讓公司端透過 PowerShell 直接查 MESTEST 並列出確切表名；不可猜 schema。
 
 每完成一項，更新本檔 checkbox、對應 module spec 與 migration/API 狀態，再 commit/push；不要把連線密碼、Token、SSH 私鑰或 Oracle 連線字串放入文件或 Git。
@@ -71,7 +71,8 @@
 - [x] 設備供應商 API/schema：2026-11-14 依 MESTEST DDL 套用 `0015_equipment_vendor_schema.sql`，migration 前備份 `/opt/ymes/backups/ymes_before_0015_equipment_vendor_20261114.dump`；供應商與聯絡人 CRUD、核准、DataStamp、狀態及引用限制 API 已部署。app-browser 驗證新增/修改供應商與聯絡人、重複編號拒絕及 `ES0001` 預設編號；修正新增後清單未更新，並清除測試資料。
 - [ ] 設備：`tbleqpequipmentbasis`、Chamber 關係、設備群/工程群組、設備屬性、參數、QC List；支援清單 CRUD、核准/停用、複製、匯入。
 - [ ] 設備工程群組：完成 tbleqpengineergroupbasis API CRUD、DataStamp 衝突檢查、複製與成員清單 API；規格：docs/modules/EQP/設備設定/設備工程群組資料.md。
-- 設備狀態設定：SSH 已確認 `tbleqpstatebasis`、`tbleqpqclistbasis`、`tblsyselementbasis` 存在；`tblEMSEquipmentState`、`tbleqpstatecontrol` 缺少。已由來源 inventory 確認 MenuNo/FunctionNo=`EQP STATE`、FunctionKey=`EP106`；Production API 暫不實作刪除檢查，等待公司端交付缺少兩表的 Oracle 原始 DDL 與完整 STATETYPE ValueList，避免漏掉狀態引用。
+- [x] 設備狀態設定：Production API 與 `0016_equipment_state_api.sql` 已部署；核對 8 欄 YMES schema、恢復來源 DEFAULT，授予 app role 對主檔 CRUD；migration 前備份並驗證 `/opt/ymes/backups/ymes_before_0016_equipment_state_20261114_admin.dump`。API GET/options/POST/PUT 已完成；DELETE 在 MES 兩張引用表未補齊時回 503 fail-closed。Vue `EP106` 路由已接至設備狀態頁。Build 成功；尚待 app-browser 逐項操作確認。
+- [ ] 設備狀態設定：公司端提供 `tblEMSEquipmentState`、`tbleqpstatecontrol` 完整 Oracle DDL/欄位/PK/索引與 `EQUIPMENTSTATE` 語意，並交付完整 STATETYPE/UTILIZATIONTYPE ValueList；收到後建立來源相容 migration 並啟用精確刪除檢查。
 - [ ] 核實 YMES 是否已有 tblusrusergroup。它不在目前 75 表 bootstrap/migrations；若不存在，先由公司電腦以 MES Oracle MESTEST 唯讀資料字典取得精確原始 DDL，轉為 PostgreSQL CREATE SQL，再加入 migration。不得依欄位使用痕跡猜表結構。
 - [ ] 成員 GET 回傳可配置使用者及 selected；PUT 以交易方式取代指定 EngineerGroupNo 的 GroupType=2 集合，只寫入 AgentOf='NA' 的直接成員；刪除群組時與刪除成員關聯同交易。
 - [ ] 作業站延伸資料：群組、屬性、參數、QC、Error/Abnormal、Resource/Area、Business Rule、SubOP；支援匯入。

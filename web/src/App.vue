@@ -148,6 +148,7 @@ const menuRoutes: Record<string, string> = {
 
 const functionRoutes: Record<string, string> = {
   'EQP BASIS': equipmentRoute,
+  EP106: equipmentStateRoute,
   'OP BASIS': `${appBasePath}/MasterData/Operations`,
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
   'PRS BASIS': `${appBasePath}/MasterData/Processes`,
