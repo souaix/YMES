@@ -162,7 +162,7 @@ function closeForm(): void {
   error.value = ''
 }
 function validateForm(requireUtilization: boolean): string {
-  const rawCode = form.value.equipmentState.trim()
+  const rawCode = String(form.value.equipmentState ?? '').trim()
   if (!rawCode) return '設備狀態編號為必填。'
   if (!/^\d+$/.test(rawCode)) return '設備狀態編號必須是整數。'
   const code = Number(rawCode)
