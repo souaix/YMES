@@ -44,3 +44,27 @@ public sealed class SmdComputerAreaCopyRequest
     [Required, StringLength(20)] public string FromFactoryNo { get; set; } = "";
     [Required, StringLength(20)] public string ToComputerNo { get; set; } = "";
 }
+
+public sealed record SmdPdLineBasisDto
+{
+    public required string PdLineNo { get; init; }
+    public required string PdLineName { get; init; }
+    public required int PdLineStatus { get; init; }
+    public required int IssueState { get; init; }
+    public string? Description { get; init; }
+    public string? Creator { get; init; }
+    public DateTime? CreateDate { get; init; }
+    public string? Reviser { get; init; }
+    public DateTime? ReviseDate { get; init; }
+    public long? DataStamp { get; init; }
+}
+
+public sealed record SmdPdLineBasisOptionsDto(IReadOnlyList<ValueOptionDto> PdLineStatuses);
+
+public sealed class SmdPdLineBasisWriteRequest
+{
+    [Required, StringLength(50)] public string PdLineNo { get; set; } = "";
+    [Required, StringLength(50)] public string PdLineName { get; set; } = "";
+    [Required] public int? PdLineStatus { get; set; }
+    [StringLength(255)] public string? Description { get; set; }
+}
