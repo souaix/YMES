@@ -9,7 +9,7 @@
 公司端已整理一批可直接接手的來源結構與目錄資料。開始前先 pull 這份清單所在的最新 `main`，並閱讀 `todolist_officepc.md`、`docs/DATABASE_CONNECTION.md`、`docs/MES_MENU_FUNCTION_INVENTORY.md`、OP/MTL 規格及下列 SQL。家用端只負責 DB/API/migration；公司端後續接回 Vue/WinForms 畫面。
 
 1. **系統目錄 migration 0012 已完成**：以 SSH 比對來源 schema，部署可回滾/可重跑 migration，載入 20 Module、601 MES MenuItem、553 Function 並保留 5 筆 YMES 自訂列。模組繁中名稱已核實、API/Web 已部署，瀏覽器已確認三層選單；逐筆自動比較來源與 API 回傳仍待補。
-2. **物料 API/schema 主體已完成**：已逐欄核對 8 張表並套用 0013 migration，保留 `tblmtlmaterialbasis` 的 7 個 YMES 欄位、補回 7 個 DEFAULT，建立缺少的 6 張表。Property、QC Item、Vendor Map、GumHour、CSV Import 及主檔交易 API/Vue Production 已部署；app-browser 找到並修正控制器 DI、`tblsysunitbasis`/`tblsyselementbasis` 唯讀授權及投料點 JSON 型別問題，瀏覽器已驗證主檔新增、屬性、QC、GumHour 讀寫。0014 授予必要唯讀權限。公司 Oracle 端仍需核實正式 ValueList、供應商名稱 Join、GumHour 參數來源；CSV 提交端到端與 Excel `.xls/.xlsx` 匯入/範本仍待完成。
+2. **物料 API/schema 主體已完成**：已逐欄核對 8 張表並套用 0013 migration，保留 `tblmtlmaterialbasis` 的 7 個 YMES 欄位、補回 7 個 DEFAULT，建立缺少的 6 張表。Property、QC Item、Vendor Map、GumHour、JSON Import 及主檔交易 API/Vue Production 已部署；app-browser 找到並修正控制器 DI、`tblsysunitbasis`/`tblsyselementbasis` 唯讀授權及投料點 JSON 型別問題，瀏覽器已驗證主檔新增、屬性、QC、GumHour 讀寫。0014 授予必要唯讀權限。公司 Oracle 端仍需核實正式 ValueList、供應商名稱 Join、GumHour 參數來源；CSV/JSON 提交端到端、正式 Excel 範本、`.xls` 預覽及 WinForms 群組寫入規則仍待完成。
 3. **完成作業站延伸 API/schema**：比對 `database/reference/mestest_operation_and_system_create.sql` 內 18 張 OP 表；此批 18 張 OP 表及 3 張系統表的原始 Oracle DDL 在 `mestest_operation_and_system_source_ddl.sql`。YMES 目前作業站僅主檔 CRUD/核准/停用已部署；按 `docs/modules/OP/作業站主檔.md` 實作子表引用、資源、商業規則、參數、QC、Error、SubOP、Import 及交易。
 4. **繼續設備功能 API**：設備供應商已完成；設備狀態 GET/options/POST/PUT/DELETE API 與 0016 migration 已部署。公司端已交付兩張來源引用表 DDL、空表 CREATE SQL 與完整繁中 ValueList；家用端需新增 migration、啟用引用檢查並更新 options 標籤。其他工程群組、類別、群組、點檢表功能依規格續做。
 5. **完成全部第一層模組**：按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 的 ModuleOrder 逐個 FunctionNo/FormName/ExecutionFile，補齊 PostgreSQL 結構、API DTO/驗證/交易及部署。任何來源表缺少 DDL 時，讓公司端透過 PowerShell 直接查 MESTEST 並列出確切表名；不可猜 schema。
@@ -81,7 +81,13 @@
 - [x] 流程頁面 API：使用 `tblprsprocessbasis`，支援清單、明細、新增、修改、核准、版本複製、目前版本切換、停用/刪除及流程圖讀寫/驗證。因來源 Node 型態代碼尚未釐清，流程圖儲存在 YMES 自有 `ym_prsprocess_node`、`ym_prsprocess_edge`。
 - [x] 產品頁面 API：使用 `tblprdproductbasis`，支援清單、明細、新增、修改、核准、版本複製、目前版本切換、停用/刪除、產品流程指派及 BOM 讀寫。來源 DDL 沒有這些 UI 關聯表，YMES 自有 `ym_product_process`、`ym_product_bom` 保存新增資料。
 - [x] 物料表結構已比對及套用；Production API 已部署屬性、QC Item、Vendor Map、GumHour、CSV 匯入、核准檢查、QC 類別範本複製與子資料交易清理。2026-11-14 app-browser 驗證物料清單/新增、屬性新增與讀回、QC Item 儲存、GumHour 儲存；QA 物料及子資料已清除。
-- [ ] 待公司 Oracle 端交付正式 `CountWay`/`CheckLotNo` ValueList、供應商名稱 Join、GumHour 參數來源；Production CSV 匯入逐列瀏覽器測試、`.xls/.xlsx` 解析及下載 Excel 範本仍未完成。
+- [ ] 待公司 Oracle 端交付正式 `CountWay`/`CheckLotNo` ValueList、供應商名稱 Join、GumHour 參數來源；Production 匯入逐列瀏覽器測試、正式 Excel 範本、`.xls` 解析及 WinForms 群組寫入語意仍未完成。
+- [ ] **物料 Excel 匯入 API 接手**：先讀 `docs/modules/MTL/物料資料匯入.md`。公司 Vue 已讀 CSV/`.xlsx` 第一工作表、依 9 欄順序解析並按物料編號/名稱分組；Production 範本與 legacy `.xls` 仍需 API。
+- [ ] 提供 `GET /api/materials/import/template`，回傳正式模板位元組、檔名與原始副檔名；先查 YMES 是否有舊模板附件，若沒有再用相同欄序產生標準 `.xlsx`。
+- [ ] 提供 `POST /api/materials/import/preview` multipart `file`，用伺服器 NPOI/相容套件解析 `.xls` 第一工作表，回傳正規化 `rows`（MaterialType、MaterialNo、MaterialName、PutInPlace、CountWay、CheckLotNo、UnitType、UnitNo、ERPUnitNo）；限制檔案大小/列數，並回覆欄位錯誤。
+- [ ] 核對外部 `DataImporter.MaterialDataImport.MaterialDataChecker` 的多列/重複 MaterialNo 語意與交易邊界。現有 `POST /api/materials/import` 每筆呼叫 CreateMaterial，不能直接視為 WinForms 每個 `(MaterialNo, MaterialName)` 群組呼叫一次 checker 的等價行為；按規格調整群組 payload 或回傳逐列結果。
+- [ ] 核實 `ERPUnitNo` 在舊 checker 的驗證/儲存用途；目前 `MaterialImportRowRequest` 未接收此欄位，不能默默丟棄。若正式匯入需要存資料，先從公司端取得欄位 DDL 再補 CREATE SQL/migration；若只用於驗證，記錄其去向。
+- [ ] Production 匯入 API 目前同步、無法取消；若要求完整保留 WinForms 背景進度/取消，提供工作狀態/取消 API 並確保取消代表尚未執行列不再寫入。若先簡化，Production UI 應顯示伺服器處理中，不顯示可取消按鈕。
 - [ ] 遷移流程 APS 等擴充欄位/關聯及匯入功能，並與舊系統 Node 編碼及 XML 規則比對。
 - [ ] 遷移產品 OP、屬性及其他舊系統關聯；跨表商業規則仍需對照 WinForms/Service 實作。
 - [ ] 所有新增/修改/核准/刪除端點均驗證 IssueState、DataStamp、引用限制與舊系統業務規則；正式環境不得使用 Fake provider。

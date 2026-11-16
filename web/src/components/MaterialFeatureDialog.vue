@@ -1,9 +1,32 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { createMaterialImportTemplate, materialImportColumns, parseMaterialCsv, parseMaterialXlsx } from './materialImportWorkbook'
 
 type Feature = 'property' | 'qc-item' | 'import' | 'gum-hour' | 'vendor-map'
 type Material = Record<string, string | number | boolean | null>
 type Row = Record<string, string | number | boolean | null>
+interface MaterialImportSourceRow {
+  rowNo: number
+  materialType: string
+  materialNo: string
+  materialName: string
+  putInPlace: string
+  countWay: string
+  checkLotNo: string
+  unitType: string
+  unitTypeDefaulted: boolean
+  unitNo: string
+  erpUnitNo: string
+}
+interface MaterialImportGroup {
+  key: string
+  materialNo: string
+  materialName: string
+  rows: MaterialImportSourceRow[]
+  valid: boolean
+  status: '待匯入' | '成功' | '失敗' | '已取消'
+  message: string
+}
 
 const props = defineProps<{
   feature: Feature
@@ -70,9 +93,16 @@ const vendorCatalog = [
 ]
 const vendorDraft = ref({ vendorNo: '', description: '' })
 
-const importRows = ref<Array<{ materialNo: string; materialName: string; materialType: string; unitNo: string; valid: boolean; message: string }>>([])
+const importRows = ref<MaterialImportGroup[]>([])
 const importFileName = ref('')
 const importNotice = ref('')
+const selectedImportFile = ref<File | null>(null)
+const importInput = ref<HTMLInputElement | null>(null)
+const importBusy = ref(false)
+const importProgress = ref(0)
+const importProgressMax = ref(0)
+const importCancelRequested = ref(false)
+const importProgressLabel = computed(() => `${importProgress.value}/${importProgressMax.value}`)
 
 const gumDraft = ref({ accMin: 0, accMax: 0, refrozenFlag: false, frozenMin: 0, reForzenTimes: 0, reacclimateFlag: false, reAccMin: 0, reAccMax: 0 })
 const gumDataStamp = ref(0)
@@ -89,6 +119,13 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
   if (response.status === 204) return undefined as T
   return await response.json() as T
+}
+
+function apiUrl(path: string): string {
+  const base = props.apiBaseUrl.trim()
+  if (!base) throw new Error('目前環境尚未設定 API 位址。')
+  const resolved = new URL(base, window.location.origin)
+  return new URL(`api/${path.replace(/^\/+/, '')}`, resolved.toString().replace(/\/+$/, '') + '/').toString()
 }
 
 async function initialize(): Promise<void> {
@@ -243,83 +280,243 @@ async function saveVendor(): Promise<void> {
   emit('saved'); emit('close')
 }
 
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = []
-  let row: string[] = [], cell = '', quoted = false
-  const source = text.replace(/^\uFEFF/, '')
-  for (let i = 0; i < source.length; i++) {
-    const char = source[i]
-    if (char === '"' && quoted && source[i + 1] === '"') { cell += '"'; i++ }
-    else if (char === '"') quoted = !quoted
-    else if (char === ',' && !quoted) { row.push(cell.trim()); cell = '' }
-    else if ((char === '\n' || char === '\r') && !quoted) {
-      if (char === '\r' && source[i + 1] === '\n') i++
-      row.push(cell.trim()); if (row.some(Boolean)) rows.push(row); row = []; cell = ''
-    } else cell += char
-  }
-  row.push(cell.trim()); if (row.some(Boolean)) rows.push(row)
-  return rows
+const importColumnAliases: Record<string, string[]> = {
+  materialType: ['materialtype', '物料類別'], materialNo: ['materialno', '物料編號'],
+  materialName: ['materialname', '物料名稱'], putInPlace: ['putinplace', '投料點'],
+  countWay: ['countway', '計量方法'], checkLotNo: ['checklotno', '批號檢查'],
+  unitType: ['unittype', '單位類別'], unitNo: ['unitno', '單位編號'], erpUnitNo: ['erpunitno', 'erp單位編號'],
 }
+function groupImportRows(sourceRows: MaterialImportSourceRow[]): MaterialImportGroup[] {
+  const groups = new Map<string, MaterialImportGroup>()
+  for (const source of sourceRows) {
+    const missing = [
+      ['materialType', '物料類別'], ['materialNo', '物料編號'], ['materialName', '物料名稱'],
+      ['putInPlace', '投料點'], ['countWay', '計量方法'], ['checkLotNo', '批號檢查'],
+      ['unitType', '單位類別'], ['unitNo', '單位編號'],
+    ].filter(([key]) => !(key === 'unitType' && source.unitTypeDefaulted) && !source[key as keyof MaterialImportSourceRow]).map(([, label]) => label)
+    const rowMessage = missing.length ? `第 ${source.rowNo} 列缺少：${missing.join('、')}` : '待匯入'
+    const key = source.materialNo || source.materialName
+      ? `${source.materialNo.toUpperCase()}\u0000${source.materialName}`
+      : `empty-row-${source.rowNo}`
+    let group = groups.get(key)
+    if (!group) {
+      group = { key, materialNo: source.materialNo, materialName: source.materialName, rows: [], valid: true, status: '待匯入', message: '待匯入' }
+      groups.set(key, group)
+    }
+    group.rows.push(source)
+    if (missing.length) {
+      group.valid = false
+      group.message = group.message === '待匯入' ? rowMessage : `${group.message}；${rowMessage}`
+    }
+  }
+  return [...groups.values()]
+}
+
+function sourceRowsFromMatrix(matrix: string[][], allowSimpleCsv: boolean): MaterialImportSourceRow[] {
+  if (matrix.length < 2) throw new Error('Excel 至少要有標題列與一筆資料。')
+  const normalizedHeaders = matrix[0].map((value) => value.replace(/[\s_-]/g, '').toLowerCase())
+  const aliasesFor = (key: keyof typeof importColumnAliases) => importColumnAliases[key].map((value) => value.replace(/[\s_-]/g, '').toLowerCase())
+  const namedIndexes = Object.fromEntries(Object.keys(importColumnAliases).map((key) => [
+    key,
+    normalizedHeaders.findIndex((value) => aliasesFor(key as keyof typeof importColumnAliases).includes(value)),
+  ])) as Record<keyof typeof importColumnAliases, number>
+  const hasNamedHeader = namedIndexes.materialNo >= 0 && namedIndexes.materialName >= 0
+    && namedIndexes.materialType >= 0 && namedIndexes.unitNo >= 0
+  const fixedOrder = Object.fromEntries(Object.keys(importColumnAliases).map((key, index) => [key, index])) as Record<keyof typeof importColumnAliases, number>
+  const indexes = hasNamedHeader ? namedIndexes : fixedOrder
+  const legacyCsvDefaults: Partial<Record<keyof typeof importColumnAliases, string>> = allowSimpleCsv
+    ? { putInPlace: '0', countWay: '0', checkLotNo: '0', erpUnitNo: '' }
+    : {}
+  const output: MaterialImportSourceRow[] = []
+  for (let matrixIndex = 1; matrixIndex < matrix.length; matrixIndex++) {
+    const values = matrix[matrixIndex]
+    if (!values.some((value) => value.trim())) continue
+    const read = (key: keyof typeof importColumnAliases): string => {
+      const column = indexes[key]
+      if (column < 0) return legacyCsvDefaults[key] ?? ''
+      return String(values[column] ?? '').trim()
+    }
+    output.push({
+      rowNo: matrixIndex + 1,
+      materialType: read('materialType'), materialNo: read('materialNo'), materialName: read('materialName'),
+      putInPlace: read('putInPlace'), countWay: read('countWay'), checkLotNo: read('checkLotNo'),
+      unitType: read('unitType'), unitTypeDefaulted: allowSimpleCsv && hasNamedHeader && indexes.unitType < 0,
+      unitNo: read('unitNo'), erpUnitNo: read('erpUnitNo'),
+    })
+  }
+  if (!output.length) throw new Error('Excel 沒有可匯入的資料列。')
+  return output
+}
+
+function setImportGroups(sourceRows: MaterialImportSourceRow[]): void {
+  importRows.value = groupImportRows(sourceRows)
+  importProgress.value = 0
+  importProgressMax.value = 0
+}
+
+function chooseImportFile(): void {
+  importInput.value?.click()
+}
+
 async function previewImport(event: Event): Promise<void> {
-  error.value = ''; importNotice.value = ''; importRows.value = []
-  const file = (event.target as HTMLInputElement).files?.[0]
+  error.value = ''; importNotice.value = ''; importRows.value = []; selectedImportFile.value = null
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
   if (!file) return
   importFileName.value = file.name
-  if (!file.name.toLowerCase().endsWith('.csv')) {
-    importNotice.value = 'WinForms 支援 Excel 範本；目前簡化版只讀 CSV，請另存為 CSV 後預覽。'
-    return
-  }
   try {
-    const matrix = parseCsv(await file.text())
-    if (matrix.length < 2) throw new Error('CSV 至少要有標題列與一筆資料。')
-    const headers = matrix[0].map((value) => value.replace(/[\s_]/g, '').toLowerCase())
-    const findColumn = (names: string[]) => headers.findIndex((header) => names.includes(header))
-    const noIndex = findColumn(['materialno', '物料編號'])
-    const nameIndex = findColumn(['materialname', '物料名稱'])
-    const typeIndex = findColumn(['materialtype', '物料類別'])
-    const unitIndex = findColumn(['unitno', '單位編號'])
-    if (noIndex < 0 || nameIndex < 0 || typeIndex < 0 || unitIndex < 0) throw new Error('CSV 標題必須包含 MaterialNo、MaterialName、MaterialType 與 UnitNo。')
-    importRows.value = matrix.slice(1).map((row) => {
-      const materialNo = String(row[noIndex] ?? '').trim().toUpperCase()
-      const materialName = String(row[nameIndex] ?? '').trim()
-      const materialType = typeIndex < 0 ? '' : String(row[typeIndex] ?? '').trim()
-      const unitNo = unitIndex < 0 ? '' : String(row[unitIndex] ?? '').trim()
-      const valid = Boolean(materialNo && materialName && materialType && unitNo)
-      return { materialNo, materialName, materialType, unitNo, valid, message: valid ? '待匯入' : '物料編號、名稱、類別與單位必填' }
-    })
-    importNotice.value = `解析 ${importRows.value.length} 筆；這是本機預覽。`
-  } catch (reason) { error.value = reason instanceof Error ? reason.message : 'CSV 讀取失敗。' }
-}
-async function commitImport(): Promise<void> {
-  const validRows = importRows.value.filter((row) => row.valid)
-  if (!validRows.length) { error.value = '沒有可匯入的有效資料。'; return }
-  if (!developmentPreview.value) {
-    try {
-      const results = await api<Array<{row:number;materialNo:string;success:boolean;message:string}>>('materials/import', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(validRows.map((row) => ({ materialNo:row.materialNo, materialName:row.materialName, materialType:row.materialType, unitNo:row.unitNo, putInPlace:'0', countWay:0, checkLotNo:0 }))) })
-      importRows.value = importRows.value.map((row) => {
-        const result = results.find((item) => item.materialNo.toUpperCase() === row.materialNo.toUpperCase())
-        return result ? { ...row, valid:!result.success, message:result.message } : row
-      })
-      const success = results.filter((row) => row.success).length
-      const failed = results.length - success
-      importNotice.value = `匯入成功 ${success} 筆，失敗 ${failed} 筆。`
-      if (failed) return
-      emit('saved'); emit('close'); return
-    } catch (reason) { error.value = reason instanceof Error ? reason.message : '物料匯入失敗。'; return }
+    selectedImportFile.value = file
+    const extension = file.name.split('.').pop()?.toLowerCase()
+    if (extension === 'csv') setImportGroups(sourceRowsFromMatrix(parseMaterialCsv(await file.text()), true))
+    else if (extension === 'xlsx') setImportGroups(sourceRowsFromMatrix(await parseMaterialXlsx(file), false))
+    else if (extension === 'xls' && !developmentPreview.value) {
+      const form = new FormData()
+      form.append('file', file)
+      const preview = await api<{ rows: Omit<MaterialImportSourceRow, 'rowNo' | 'unitTypeDefaulted'>[] }>('materials/import/preview', { method: 'POST', body: form })
+      setImportGroups(preview.rows.map((row, index) => ({
+        rowNo: index + 2, materialType: String(row.materialType ?? ''), materialNo: String(row.materialNo ?? ''),
+        materialName: String(row.materialName ?? ''), putInPlace: String(row.putInPlace ?? ''),
+        countWay: String(row.countWay ?? ''), checkLotNo: String(row.checkLotNo ?? ''),
+        unitType: String(row.unitType ?? ''), unitTypeDefaulted: false,
+        unitNo: String(row.unitNo ?? ''), erpUnitNo: String(row.erpUnitNo ?? ''),
+      })))
+    } else throw new Error('開發假資料可直接預覽 CSV 或 XLSX；舊版 XLS 需正式 API 解析。')
+    const validCount = importRows.value.filter((row) => row.valid).length
+    importNotice.value = `${importRows.value.length} 組物料（${validCount} 組資料完整）；清單依物料編號與名稱合併。${developmentPreview.value ? ' DEV 本機假資料預覽。' : ''}`
+  } catch (reason) {
+    selectedImportFile.value = null
+    importFileName.value = ''
+    error.value = reason instanceof Error ? reason.message : '檔案讀取失敗。'
   }
+}
+
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url; link.download = filename; link.click()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+async function downloadImportTemplate(): Promise<void> {
+  error.value = ''
+  try {
+    if (developmentPreview.value) {
+      downloadBlob(createMaterialImportTemplate(), 'MaterialTemplate.xlsx')
+      importNotice.value = '已下載開發用 Excel 範本；欄位順序依 WinForms 匯入程式。'
+      return
+    }
+    const response = await fetch(apiUrl('materials/import/template'), { credentials: 'include' })
+    if (!response.ok) {
+      const body = await response.json().catch(() => null) as { detail?: string; title?: string } | null
+      throw new Error(body?.detail || body?.title || `API 回應錯誤 (${response.status})`)
+    }
+    const disposition = response.headers.get('content-disposition') ?? ''
+    const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+    const plainName = disposition.match(/filename="?([^";]+)"?/i)?.[1]
+    const filename = encodedName ? decodeURIComponent(encodedName) : plainName || 'MaterialTemplate.xlsx'
+    downloadBlob(await response.blob(), filename)
+  } catch (reason) { error.value = reason instanceof Error ? reason.message : '範本下載失敗。' }
+}
+
+async function commitImport(): Promise<void> {
+  error.value = ''
+  const pendingGroups = importRows.value.filter((row) => row.valid && row.status !== '成功')
+  if (!selectedImportFile.value || !pendingGroups.length) { error.value = '請先選取含有效資料的匯入檔案。'; return }
+  if (!window.confirm(`將匯入 ${pendingGroups.length} 組物料資料。請先關閉正在使用的 Excel 檔案，是否繼續？`)) return
+  importBusy.value = true
+  importCancelRequested.value = false
+  importProgress.value = 0
+  importProgressMax.value = pendingGroups.length
+  try {
+    if (!developmentPreview.value) {
+      const repeatedGroup = pendingGroups.find((group) => group.rows.length > 1)
+      if (repeatedGroup) throw new Error(`物料 ${repeatedGroup.materialNo} 有多列資料；正式 API 尚未確認 WinForms 群組寫入規則，為避免部分寫入已停止。`)
+      const submitted = pendingGroups.flatMap((group) => group.rows.map((row) => ({
+        groupKey: group.key,
+        body: {
+          materialNo: row.materialNo, materialName: row.materialName, materialType: row.materialType,
+          unitNo: row.unitNo, unitType: row.unitType, erpUnitNo: row.erpUnitNo,
+          putInPlace: row.putInPlace, countWay: Number(row.countWay), checkLotNo: Number(row.checkLotNo),
+        },
+      })))
+      if (submitted.some((item) => item.body.erpUnitNo.trim())) throw new Error('目前正式 API 尚未支援 ERPUnitNo，為避免欄位遺失，請等 API 契約更新後再匯入。')
+      const invalidNumeric = submitted.find((item) => !Number.isFinite(item.body.countWay) || !Number.isFinite(item.body.checkLotNo))
+      if (invalidNumeric) throw new Error('計量方法與批號檢查必須是系統代碼數值。')
+      const results = await api<Array<{ row: number; materialNo: string; success: boolean; message: string }>>('materials/import', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(submitted.map((item) => item.body)),
+      })
+      const byGroup = new Map<string, Array<{ success: boolean; message: string }>>()
+      submitted.forEach((item, index) => {
+        const result = results.find((candidate) => candidate.row === index + 1)
+        const groupResults = byGroup.get(item.groupKey) ?? []
+        groupResults.push(result ? { success: result.success, message: result.message } : { success: false, message: 'API 未回傳此列結果。' })
+        byGroup.set(item.groupKey, groupResults)
+      })
+      for (const group of pendingGroups) {
+        const groupResults = byGroup.get(group.key) ?? []
+        const failed = groupResults.filter((result) => !result.success)
+        group.status = failed.length ? '失敗' : '成功'
+        group.message = failed.length ? [...new Set(failed.map((result) => result.message))].join('；') : '匯入成功。'
+      }
+      importProgress.value = pendingGroups.length
+      const success = pendingGroups.filter((group) => group.status === '成功').length
+      importNotice.value = `匯入完成：成功 ${success} 組，失敗 ${pendingGroups.length - success} 組。`
+      if (success) emit('saved')
+      return
+    }
+
   const storageKey = 'ymes:dev:master-data:materials:v1'
-  const current = readArray(storageKey)
-  const existing = new Set(current.map((row) => String(row.materialNo ?? '').toUpperCase()))
-  const additions = validRows.filter((row) => !existing.has(row.materialNo)).map((row): Row => ({
-    materialNo: row.materialNo, materialName: row.materialName, materialType: row.materialType,
-    materialSpec: '', description: `CSV 匯入（DEV）`, putInPlace: 0, countWay: 0, checkLotNo: 0,
-    unitType: '數量', unitNo: row.unitNo, safeQty: 0, keyMaterials: false,
-    openLimitTimeFlag: false, openLimitTime: 0, resetOpenDate: false, expireDateFlag: false,
-    erpNo: '', issueState: 0, dataStamp: 0,
-  }))
-  saveArray(storageKey, [...current, ...additions])
-  importNotice.value = `匯入 ${additions.length} 筆；略過 ${validRows.length - additions.length} 筆重複編號。`
-  emit('saved'); emit('close')
+    let current = readArray(storageKey)
+    const existing = new Set(current.map((row) => String(row.materialNo ?? '').toUpperCase()))
+    for (let index = 0; index < pendingGroups.length; index++) {
+      const group = pendingGroups[index]
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 120))
+      if (importCancelRequested.value) {
+        for (const remaining of pendingGroups.slice(index)) { remaining.status = '已取消'; remaining.message = '使用者取消匯入。' }
+        break
+      }
+      if (group.rows.length > 1) {
+        group.status = '失敗'
+        group.message = 'DEV 尚未模擬同一物料多列的 checker 規則。'
+      } else if (existing.has(group.materialNo.toUpperCase())) {
+        group.status = '失敗'
+        group.message = '物料編號已存在。'
+      } else {
+        const source = group.rows[0]
+        const numberOrZero = (value: string) => Number.isFinite(Number(value)) ? Number(value) : 0
+        const material: Row = {
+          materialNo: source.materialNo, materialName: source.materialName, materialType: source.materialType,
+          materialSpec: '', description: 'Excel 匯入（DEV）', putInPlace: numberOrZero(source.putInPlace),
+          countWay: numberOrZero(source.countWay), checkLotNo: numberOrZero(source.checkLotNo),
+          unitType: source.unitType || '數量', unitNo: source.unitNo, erpUnitNo: source.erpUnitNo, safeQty: 0, keyMaterials: false,
+          openLimitTimeFlag: false, openLimitTime: 0, resetOpenDate: false, expireDateFlag: false,
+          erpNo: '', issueState: 0, dataStamp: 0,
+        }
+        current = [...current, material]
+        saveArray(storageKey, current)
+        existing.add(group.materialNo.toUpperCase())
+        group.status = '成功'
+        group.message = 'DEV 假資料已匯入。'
+      }
+      importProgress.value = index + 1
+    }
+    if (pendingGroups.every((group) => group.status !== '待匯入')) {
+      const success = pendingGroups.filter((group) => group.status === '成功').length
+      const cancelled = pendingGroups.filter((group) => group.status === '已取消').length
+      const failed = pendingGroups.filter((group) => group.status === '失敗').length
+      importNotice.value = `DEV 匯入完成：成功 ${success} 組，失敗 ${failed} 組，取消 ${cancelled} 組。`
+      if (success) emit('saved')
+    }
+  } catch (reason) {
+    error.value = reason instanceof Error ? reason.message : '物料匯入失敗。'
+  } finally {
+    importBusy.value = false
+  }
+}
+
+function cancelImport(): void {
+  if (developmentPreview.value) importCancelRequested.value = true
 }
 
 function validateGum(): boolean {
@@ -353,9 +550,9 @@ async function saveGum(): Promise<void> {
 </script>
 
 <template>
-  <div class="mfd-backdrop" @click.self="emit('close')">
-    <section class="mfd-dialog" role="dialog" aria-modal="true" :aria-labelledby="'mfd-title'">
-      <header class="mfd-header"><div><small>{{ materialNo || '物料資料' }} · {{ developmentPreview ? '開發區本機假資料' : '正式資料庫' }}</small><h2 id="mfd-title">{{ title }}</h2></div><button type="button" aria-label="關閉" @click="emit('close')">×</button></header>
+  <div class="mfd-backdrop" @click.self="!importBusy && emit('close')">
+    <section class="mfd-dialog" :class="{ 'mfd-import-dialog': feature==='import' }" role="dialog" aria-modal="true" :aria-labelledby="'mfd-title'">
+      <header class="mfd-header"><div><small>{{ materialNo || '物料資料' }} · {{ developmentPreview ? '開發區本機假資料' : '正式資料庫' }}</small><h2 id="mfd-title">{{ title }}</h2></div><button type="button" aria-label="關閉" :disabled="importBusy" @click="emit('close')">×</button></header>
       <p v-if="error" class="mfd-message error" role="alert">{{ error }}</p><p v-if="notice" class="mfd-message" role="status">{{ notice }}</p>
       <div class="mfd-body">
         <template v-if="feature==='property'">
@@ -377,10 +574,13 @@ async function saveGum(): Promise<void> {
         </template>
 
         <template v-else-if="feature==='import'">
-          <div class="mfd-import"><label>選擇檔案<input type="file" accept=".csv,.xls,.xlsx" @change="previewImport" /></label><span>{{ importFileName || 'WinForms 使用 Excel 範本；DEV 簡化版可預覽 CSV' }}</span></div>
+          <input ref="importInput" class="mfd-hidden-file" type="file" accept=".csv,.xls,.xlsx" :disabled="importBusy" @change="previewImport" />
+          <div class="mfd-import-path"><label for="mfd-import-path">檔案路徑</label><input id="mfd-import-path" :value="importFileName" readonly placeholder="請選擇 Excel 匯入檔案" /><button class="mfd-button" type="button" :disabled="importBusy" @click="chooseImportFile">瀏覽...</button></div>
+          <div v-if="importBusy" class="mfd-import-progress"><progress :max="Math.max(importProgressMax,1)" :value="importProgress" /><span>{{ importProgressLabel }}</span><button v-if="developmentPreview" class="mfd-button" type="button" @click="cancelImport">取消</button><span v-else class="mfd-hint">伺服器處理中</span></div>
           <p v-if="importNotice" class="mfd-hint">{{ importNotice }}</p>
-          <div class="mfd-grid"><table><thead><tr><th>物料編號</th><th>物料名稱</th><th>類別</th><th>單位編號</th><th>檢查結果</th></tr></thead><tbody><tr v-for="(row,index) in importRows" :key="index"><td>{{ row.materialNo }}</td><td>{{ row.materialName }}</td><td>{{ row.materialType }}</td><td>{{ row.unitNo }}</td><td>{{ row.message }}</td></tr><tr v-if="!importRows.length"><td colspan="5" class="empty">選擇 CSV 後顯示匯入預覽</td></tr></tbody></table></div>
-          <p class="mfd-hint">CSV 標題需包含 MaterialNo、MaterialName；MaterialType、UnitNo 可提供來源欄位。正式匯入逐筆回報資料庫寫入結果。</p>
+          <div class="mfd-import-main"><div class="mfd-grid mfd-import-grid"><table><thead><tr><th>物料編號</th><th>物料名稱</th><th>訊息</th></tr></thead><tbody><tr v-for="row in importRows" :key="row.key"><td>{{ row.materialNo }}</td><td>{{ row.materialName }}</td><td>{{ row.message }}</td></tr><tr v-if="!importRows.length"><td colspan="3" class="empty">選取檔案後顯示物料匯入結果。</td></tr></tbody></table></div>
+            <aside class="mfd-import-actions"><button class="mfd-button" type="button" :disabled="importBusy" @click="downloadImportTemplate">範本下載</button><button class="mfd-button primary" type="button" :disabled="importBusy" @click="commitImport">匯入</button></aside></div>
+          <p class="mfd-hint">第一個工作表依 WinForms 9 欄格式讀取；Excel 欄位順序：{{ materialImportColumns.join('、') }}。</p>
         </template>
 
         <template v-else>
@@ -396,9 +596,8 @@ async function saveGum(): Promise<void> {
       <footer>
         <button v-if="feature==='qc-item'" class="mfd-button primary" type="button" @click="saveQCItems">確定</button>
         <button v-else-if="feature==='vendor-map'" class="mfd-button primary" type="button" @click="saveVendor">確定</button>
-        <button v-else-if="feature==='import'" class="mfd-button primary" type="button" :disabled="!importRows.some((row)=>row.valid)" @click="commitImport">匯入</button>
         <button v-else-if="feature==='gum-hour'" class="mfd-button primary" type="button" @click="saveGum">確定</button>
-        <button class="mfd-button" type="button" @click="emit('close')">關閉</button>
+        <button class="mfd-button" type="button" :disabled="importBusy" @click="emit('close')">關閉</button>
       </footer>
     </section>
   </div>
@@ -416,5 +615,6 @@ async function saveGum(): Promise<void> {
 .mfd-transfer{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}.mfd-transfer fieldset,.mfd-section{min-width:0;margin:0;padding:10px;border:1px solid #c9c4b7}.mfd-transfer legend,.mfd-section legend{padding:0 5px;color:#5d594e}.mfd-transfer select{width:100%;height:230px;border:1px solid #aaa58f;background:#fff}.mfd-transfer-actions{display:grid;gap:7px}
 .mfd-section{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}.mfd-section>label,.mfd-form-grid>label,.mfd-editor>label{display:grid;gap:5px}.mfd-section .wide{grid-column:1/-1}.mfd-dialog input:not([type=checkbox]),.mfd-dialog select,.mfd-dialog textarea{width:100%;min-height:29px;padding:5px 7px;border:1px solid #aaa58f;background:#fff;color:inherit;font:inherit}.mfd-dialog input:focus,.mfd-dialog select:focus,.mfd-dialog textarea:focus{outline:2px solid rgb(181 154 0 / 22%);border-color:#a58d00}.mfd-dialog input[readonly]{background:#f3f2ee}
 .mfd-editor{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:9px;align-items:end;margin-top:12px;padding:10px;border:1px solid #d5d1c6;background:#faf9f5}.mfd-editor button{align-self:end}.mfd-import{display:flex;align-items:center;gap:14px;margin-bottom:10px}.mfd-import label{display:grid;gap:6px;min-width:260px}.mfd-import span{color:#716d61}.mfd-form-grid{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:12px}.mfd-form-grid .check{display:flex;align-items:center;gap:7px}.mfd-form-grid input[type=checkbox]{accent-color:#a58d00}.mfd-form-grid input:disabled{background:#f3f2ee}.mfd-lookup-list{display:grid;gap:6px}.mfd-lookup-dialog{width:min(520px,94vw)}
-@media(max-width:700px){.mfd-transfer{grid-template-columns:1fr}.mfd-transfer select{height:120px}.mfd-transfer-actions{grid-template-columns:1fr 1fr}.mfd-section,.mfd-form-grid,.mfd-editor{grid-template-columns:1fr}.mfd-import{align-items:flex-start;flex-direction:column}}
+.mfd-import-dialog{width:min(820px,96vw)}.mfd-hidden-file{display:none!important}.mfd-import-path{display:grid;grid-template-columns:70px minmax(0,1fr) 84px;gap:8px;align-items:center;margin-bottom:10px}.mfd-import-path>label{color:#4c4940}.mfd-import-path input{min-width:0}.mfd-import-progress{display:flex;align-items:center;gap:9px;margin:4px 0 10px}.mfd-import-progress progress{flex:1;height:18px;accent-color:#f2a51d}.mfd-import-progress>span{min-width:44px;text-align:center}.mfd-import-main{display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:10px;min-height:320px}.mfd-import-grid{max-height:54vh;min-height:320px}.mfd-import-actions{display:flex;flex-direction:column;gap:8px;align-items:stretch;padding-top:2px}.mfd-import-actions .mfd-button{min-height:35px}.mfd-import-dialog footer{min-height:48px}.mfd-import-dialog .mfd-hint{margin-top:7px}
+@media(max-width:700px){.mfd-transfer{grid-template-columns:1fr}.mfd-transfer select{height:120px}.mfd-transfer-actions{grid-template-columns:1fr 1fr}.mfd-section,.mfd-form-grid,.mfd-editor{grid-template-columns:1fr}.mfd-import-path{grid-template-columns:1fr}.mfd-import-main{grid-template-columns:1fr}.mfd-import-actions{display:grid;grid-template-columns:1fr 1fr}.mfd-import-grid{min-height:220px}}
 </style>
