@@ -37,6 +37,18 @@
 6. WinForms AddFlow 支援多選/群組、Node Define、完整線型巢狀推導；公司端第一版簡化成可拖曳/數值調整節點與背景圖，尚未聲稱完整 AddFlow 等價。需按來源 Service 完成 API 邏輯並記錄無法逐一等價的部分。`ymes_app` 只授予所需 SELECT/INSERT/UPDATE/DELETE。
 7. 建 migration 前逐欄比對 PostgreSQL schema；缺表才新增。完成後部署 API、更新 migration/API 文件，再通知公司端 pull 接正式 API 驗收。公司端 DEV 還未執行 build/test/browser。
 
+## SMD SD105 區域庫房基本設定（公司端 2026-11-16 已交接）
+
+先讀 `docs/modules/SMD/區域庫房基本設定.md` 及上方 SD104 handoff。公司端已有 `/YMES/SMD/AreaInventories` Vue DEV 頁，FunctionNo=`AREA INV MAP`；沒有 IssueState/核准。
+
+- Oracle `TBLSMDAREAINVENTORY` 已由公司端 SD104 直連查 DDL，來源 logical DDL/PG 空表 CREATE 已包含在 `database/reference/mestest_smd_area_basis_source_ddl.sql`、`mestest_smd_area_basis_create.sql`。不要重複建表；先比對 YMES schema/migrations，缺表才新增。
+- Table PK 是 `(AreaNo,InventoryNo)`，不是 `(BaseAreaNo,AreaNo,InventoryNo)`；BaseAreaNo 是額外範圍條件。沒有 Oracle FK/其他 index。DefaultINV DEFAULT 0 NOT NULL；DataStamp DEFAULT 0 nullable。完整欄位見來源 SQL。
+- 延伸 SMD API：`GET /api/smd/area-inventories?baseAreaNo=`、`POST /api/smd/area-inventories`、`PUT /{areaNo}/{inventoryNo}?dataStamp=`、`DELETE /{areaNo}/{inventoryNo}?baseAreaNo=&dataStamp=`。Base Area 選項沿用 `GET /api/smd/area-basis/options`；Area/Inventory picker 使用 `GET /api/smd/areas/{baseAreaNo}/layout` 中 ObjectType 0/1 nodes。
+- Create 必填 BaseAreaNo/AreaNo/InventoryNo；DefaultINV 僅 0/1；伺服器產生 Creator/CreateDate/DataStamp。Edit 不改 key，只改 DefaultINV，更新 Reviser/ReviseDate 並做 DataStamp CAS（支援 NULL）；Delete 交易內比較 DataStamp 後移除。
+- Default=Yes 每一 Area 只能一筆。舊 Add 檢查 BaseAreaNo+AreaNo；舊 Edit 的 `GetAreaInventory` 未帶 BaseAreaNo，可能跨 BaseArea 影響相同 AreaNo。規格已記錄來源差異；實作時保留觀察行為，或在 API change log 明確列出核准的修正。
+- wsSMD Add/Edit 呼叫傳 Creator/CreateDate/DataStamp/Reviser/ReviseDate，但本 checkout 的 clsSMDBasis 方法簽章沒有這些命名參數。新 API 需明確由伺服器產生稽核/CAS，不要假設舊 Core SQL 已寫入這些欄位。所有 API 檢查登入與 SMD 權限，`ymes_app` 只授最小 CRUD。
+- DDL 已從 2026-11-16 直接 metadata query 交付，不必重查 Oracle。schema/API/部署完成後通知公司端 pull 驗收。
+
 ## 公司電腦目前交付
 
 - Vue 主選單以三層 Module → Menu Group → Function 呈現；正式資料 API 不得把設定分類與主檔功能壓成兩層。

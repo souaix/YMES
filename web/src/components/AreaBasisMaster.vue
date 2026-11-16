@@ -35,8 +35,8 @@ const classModes: { key: AreaClassMode; label: string; areaClass: number; areaTy
   { key: 'other', label: '其他區域', areaClass: 0, areaType: 2, areaCompose: 0 },
 ]
 const seedRows: AreaRow[] = [
-  { areaNo: 'DEV-BASE', areaName: '開發用基底區域', areaType: 2, areaClass: 1, baseAreaNo: '', factoryNo: 'DEV-FAB', departmentNo: 'DEV-DEPT', description: 'Development 預覽用基底區域', creator: 'DEV001', createDate: '2026-11-10T08:00:00+08:00', issueState: 0, areaCompose: 0, reviser: null, reviseDate: null, dataStamp: 1 },
-  { areaNo: 'DEV-OP-01', areaName: '開發用作業區', areaType: 0, areaClass: 0, baseAreaNo: 'DEV-BASE', factoryNo: 'DEV-FAB', departmentNo: 'DEV-DEPT', description: '虛擬作業區', creator: 'DEV001', createDate: '2026-11-11T08:00:00+08:00', issueState: 2, areaCompose: 0, reviser: 'DEV002', reviseDate: '2026-11-12T09:00:00+08:00', dataStamp: 2 },
+  { areaNo: 'DEV-BASE', areaName: '開發用基底區域', areaType: 2, areaClass: 1, baseAreaNo: '', factoryNo: 'DEV-FAB', departmentNo: 'DEV-DEPT', description: 'Development 預覽用基底區域', creator: 'DEV001', createDate: '2026-11-10T08:00:00+08:00', issueState: 2, areaCompose: 0, reviser: 'DEV002', reviseDate: '2026-11-10T09:00:00+08:00', dataStamp: 1 },
+  { areaNo: 'DEV-OP-01', areaName: '開發用作業區', areaType: 0, areaClass: 0, baseAreaNo: 'DEV-BASE', factoryNo: 'DEV-FAB', departmentNo: 'DEV-DEPT', description: '虛擬作業區', creator: 'DEV001', createDate: '2026-11-11T08:00:00+08:00', issueState: 0, areaCompose: 0, reviser: null, reviseDate: null, dataStamp: 2 },
   { areaNo: 'DEV-LINE', areaName: '開發用生產線', areaType: 1, areaClass: 0, baseAreaNo: 'DEV-BASE', factoryNo: 'DEV-FAB', departmentNo: 'DEV-DEPT', description: '虛擬連續生產線', creator: 'DEV001', createDate: '2026-11-12T08:00:00+08:00', issueState: 1, areaCompose: 1, reviser: 'DEV002', reviseDate: '2026-11-13T09:00:00+08:00', dataStamp: 1 },
   { areaNo: 'DEV-OTHER', areaName: '開發用其他區域', areaType: 2, areaClass: 0, baseAreaNo: 'DEV-BASE', factoryNo: 'DEV-FAB', departmentNo: 'DEV-DEPT', description: '', creator: 'DEV001', createDate: '2026-11-13T08:00:00+08:00', issueState: -1, areaCompose: 0, reviser: null, reviseDate: null, dataStamp: 3 },
 ]
@@ -269,7 +269,8 @@ async function saveForm(closeAfterSave: boolean): Promise<void> {
       rows.value = [...rows.value, saved].sort((a, b) => a.areaNo.localeCompare(b.areaNo))
     }
     activeNo.value = saved.areaNo; selectedNos.value = [saved.areaNo]; successMessage.value = '區域資料已儲存。'
-    if (formMode.value === 'edit') {
+    const wasEditing = formMode.value === 'edit'
+    if (wasEditing) {
       formDataStamp.value = saved.dataStamp ?? (formDataStamp.value ?? 0) + 1
       audit.value.reviser = saved.reviser ?? (props.currentUserNo || 'DEV001')
       audit.value.reviseDate = formatDate(saved.reviseDate ?? now)
@@ -278,6 +279,7 @@ async function saveForm(closeAfterSave: boolean): Promise<void> {
       audit.value.createDate = formatDate(saved.createDate ?? now)
     }
     if (closeAfterSave) formMode.value = null
+    else if (!wasEditing) { formMode.value = 'edit'; formDataStamp.value = saved.dataStamp ?? 0 }
   } catch (error) { formError.value = error instanceof Error ? error.message : '區域資料儲存失敗。' }
   finally { busy.value = false }
 }
@@ -297,8 +299,8 @@ async function approveSelected(): Promise<void> {
         const nextState = { ...current, issueState: 2, reviser: props.currentUserNo || 'DEV001', reviseDate: new Date().toISOString(), dataStamp: (current.dataStamp ?? 0) + 1 }
         saveRows(local.map(item => item.areaNo === row.areaNo ? nextState : item)); rows.value = local.map(item => item.areaNo === row.areaNo ? nextState : item)
       } else {
-        await requestJson<AreaRow>(`${areaPath(row.areaNo)}/approve?dataStamp=${encodeURIComponent(String(row.dataStamp ?? 0))}`, { method: 'POST' })
-        rows.value = rows.value.map(item => item.areaNo === row.areaNo ? { ...item, issueState: 2, dataStamp: (item.dataStamp ?? 0) + 1 } : item)
+        const approved = await requestJson<AreaRow>(`${areaPath(row.areaNo)}/approve?dataStamp=${encodeURIComponent(String(row.dataStamp ?? 0))}`, { method: 'POST' })
+        rows.value = rows.value.map(item => item.areaNo === row.areaNo ? approved : item)
       }
       completed += 1
     }

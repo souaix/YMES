@@ -34,8 +34,17 @@
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 從既有受保護連線直查 `TBLSMDAREABASIS`、`TBLSMDAREAINVENTORY`、`TBLSMDAREAMAP` DDL、欄位、PK、索引與 FK；建立 source DDL 和 PG 空表 CREATE SQL。關聯配置兩表使用設備群組來源 DDL/CREATE SQL。
 - [x] 建立 SMD fallback 三層目錄（8 個 WinForms Function）；SD104 接上 DEV Vue 頁，其他 7 個仍由 FunctionPending 說明。
 - [x] 新增 `docs/modules/SMD/區域基本資料.md`，並更新規格索引、資料庫連線紀錄及家用端待辦。
+- [x] 修正 SD104 DEV 預設列，使未簽核子區可選已簽核 Base Area；套用新增後轉入 Edit 狀態；核准頁採用 API 回傳實際 IssueState；配置保存不限制 IssueState，符合 WinForms 對應程式。
 - [ ] 本段尚未執行 build/test/瀏覽器驗收；家用端 API/schema 完成後需 pull、逐欄對接並檢查正式行為。
-- [ ] 下一項依 SMD 選單次序復刻 SD105「區域庫房基本設定」；Oracle 表缺 DDL 時先用 PowerShell 5.1 + ODP.NET 直連查，並提供家用端空表 SQL/API 規格。
+
+## 2026-11-16 SMD SD105 區域庫房基本設定公司端交接
+
+- [x] 對照 `frmAreaInventory`、`frmAreaInventoryDef`、wsSMD 與 clsSMDBasis；記錄 Base Area 選擇、兩種 AreaRelation picker、Default 唯一規則、CRUD/Apply/Copy/Delete 與來源參數不一致處。
+- [x] Oracle `TBLSMDAREAINVENTORY` DDL/欄位/PK/index 已由 SD104 PowerShell 5.1 + ODP.NET 直連查得，且已附 `mestest_smd_area_basis_source_ddl.sql`、`mestest_smd_area_basis_create.sql`；本功能沿用既有表，沒有重複查詢或另造 SQL。
+- [x] 新增 Vue DEV 頁 `/YMES/SMD/AreaInventories`、Area/Inventory 查找彈窗、Default/重複驗證、Apply、稽核、localStorage 假資料及 `AREA INV MAP` 路由。
+- [x] 新增 `docs/modules/SMD/區域庫房基本設定.md`，更新 SMD 功能索引、資料庫查詢紀錄與家用端 API/schema handoff。
+- [ ] 尚未執行 build、test 或瀏覽器驗收；家用 API 完成後再 pull 對接。
+- [ ] 下一項依選單次序處理 SD106「過帳電腦之區域」。先讀 WinForms Form/Service/Core，再確定需查的 Oracle table DDL。
 
 ## 家用電腦完成後，公司端先做
 
