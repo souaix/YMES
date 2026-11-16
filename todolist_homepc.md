@@ -6,6 +6,21 @@
 
 ## 家用電腦現在接手
 
+### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/EQP/設備AutoLoader格式檔設定.md`、`docs/DATABASE_CONNECTION.md` 及本節；WinForms Form/Designer/Service/Core 已查，Oracle DDL 由公司端既有受保護 PowerShell 5.1 + ODP.NET 連線唯讀取得，Vue DEV 頁與三層選單已完成。
+- [ ] 先以家用端管理連線比對 YMES PostgreSQL 的 4 張表、索引、現有 migration 及擴充欄位。缺表/欄位才做 forward migration；reference CREATE 檔是空表定義，不能盲目套用或重建資料。
+- [ ] Oracle 來源表為 `TBLEQPALSCRIPT`、`TBLEQPALSCRIPT_TESTRECIPE`、`TBLEQPALSCRIPT_UNNUMERICFIELD`、`TBLEQPALSCRIPT_COORDINFO`。主表沒有 PK constraint，唯一索引 `(EquipmentNo,FileNameFormat)`；三個子表的複合 PK 如規格；四表沒有 FK。CLOB 轉 PostgreSQL text；`DataStamp` nullable DEFAULT 0。
+- [ ] 若 YMES 缺少來源表，依 `database/reference/mestest_eqp_autoloader_create.sql` 建 migration；來源 Oracle DDL `database/reference/mestest_eqp_autoloader_source_ddl.sql` 僅供比對。不要在 MES Oracle 執行 CREATE。
+- [ ] 實作 `GET /api/eqp/auto-loader-scripts?equipmentNo=&equipmentType=`。條件可空，equipmentNo/type 採 WinForms exact match；回主畫面所需設備欄位、格式腳本、稽核/DataStamp 及三類子明細。
+- [ ] 實作設備 lookup `GET /api/eqp/auto-loader-scripts/options/equipment?prefix=&equipmentType=&fileNameFormat=`。lookup 沿用設備主檔、依登入者權限過濾；有 fileNameFormat 時回 `hasMatchingFormat` 供預設套用排除已存在設備。
+- [ ] 從 WinForms `frmEquipmentAutoLoaderSetupDef`、測試配方 lookup Forms 與 `wsEQP` 追出 TestRecipe/Parameter 候選真正來源，再提供 `/options/test-recipes` 或沿用現有 YMES API。不要把 Vue DEV 選項當正式 ValueList。
+- [ ] 實作 POST/PUT/DELETE `/api/eqp/auto-loader-scripts`，所有 main/detail 在同交易寫入；更新/刪除採 DataStamp CAS（舊 NULL 需 `IS NULL` 比較，修改後 `COALESCE(DataStamp,0)+1`），POST/PUT request 不接受 audit/DataStamp，伺服器建立 audit。
+- [ ] 主列更新時區分 detail array 未提交與明確空陣列；刪除要在交易中先刪三張 detail，再刪 main。舊 Oracle 沒有 FK，不能依賴 cascade。
+- [ ] `POST /api/eqp/auto-loader-scripts/{equipmentNo}/{fileNameFormat}/default?dataStamp=` body 接受多個目標設備，排除已有相同檔名格式的目標、不覆寫，主列/三種明細完整複製，Creator/CreateDate 重設；來源 DataStamp CAS。回 `{ createdEquipmentNos, existingEquipmentNos, invalidEquipmentNos }`，UI 顯示新增/略過筆數。
+- [ ] API 必須承接 `ChkAutoLoaderSetup` 與 `ChkAutoLoaderSetup_Raw` 等價邏輯：Header 欄位、座標/IC Ingot 例外、動態參數/核准 Test Recipe、公式與 RawData 對照、NonNumeric DataType；不能信任前端生成的簡化 FormatScript。
+- [ ] 實作功能授權、輸入長度/唯一鍵/設備參照驗證及 409 CAS 回應；部署 API/schema/migration 後通知公司端 pull 做 Production 對接。公司端頁未執行 build/test/瀏覽器驗收。
+
 ### MTL MLB01 來料 AutoLoader 格式檔設定（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/MTL/來料AutoLoader格式檔設定.md`、`docs/DATABASE_CONNECTION.md` 與本節；公司端已直接查 Oracle DDL、建立 Vue DEV 頁與 API handoff。

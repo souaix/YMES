@@ -236,3 +236,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 主鍵為 `MTLFOLDERPATH`；只有 PK unique index，無外鍵/額外索引。`FORMATScript`、`RAWDATAFORMATSCRIPT` 是 CLOB；`DATASTAMP NUMBER(11,0) DEFAULT 0` 可 NULL；`STORERAWDATA`、`SENDMAIL` 為 NOT NULL DEFAULT 0。
 - Oracle 來源 DDL 與 PostgreSQL 空表參考分別在 `database/reference/mestest_mtl_autoloader_source_ddl.sql`、`database/reference/mestest_mtl_autoloader_create.sql`。僅查資料字典結構，未讀 MES 業務列，未在 Oracle 執行 DDL。
 - 連線秘密仍只在本機受保護設定中；IP、帳號、密碼、SID 未輸出或寫入文件/Git。家用端建立 migration 前須比對 YMES PostgreSQL live schema 與既有 migrations。
+
+### 更新 2026-11-17：EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader
+
+- 公司端以 PowerShell 5.1 + Oracle.ManagedDataAccess 從本機既有受保護連線唯讀取得四張表 DDL/資料字典：`TBLEQPALSCRIPT`、`TBLEQPALSCRIPT_TESTRECIPE`、`TBLEQPALSCRIPT_UNNUMERICFIELD`、`TBLEQPALSCRIPT_COORDINFO`。沒有讀取 MES 業務列，也沒有在 Oracle 執行 DDL。
+- Oracle source DDL 與 YMES 空表參考為 `database/reference/mestest_eqp_autoloader_source_ddl.sql`、`database/reference/mestest_eqp_autoloader_create.sql`。主表沒有 PK constraint，存在唯一索引 `(EquipmentNo,FileNameFormat)`；三個子表各有來源複合 PK unique index。四表間沒有 FK。
+- `FormatScript`、`RawDataFormatScript` 為 CLOB；`DataStamp NUMBER(11,0) DEFAULT 0` nullable。子表與主表需由 API transaction 一致維護。DDL/schema 與功能規格見 `docs/modules/EQP/設備AutoLoader格式檔設定.md`。
+- IP、帳號、密碼、SID 沒有輸出或寫入 Git；家用端只需核對 YMES PostgreSQL 結構並決定 forward migration，不要連 Oracle 建表。

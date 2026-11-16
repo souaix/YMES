@@ -42,6 +42,7 @@ import MaterialQCItemMaster from './components/MaterialQCItemMaster.vue'
 import MaterialGroupMaster from './components/MaterialGroupMaster.vue'
 import MaterialLabelMapMaster from './components/MaterialLabelMapMaster.vue'
 import MaterialVendorAutoLoaderSetupMaster from './components/MaterialVendorAutoLoaderSetupMaster.vue'
+import EquipmentAutoLoaderSetupMaster from './components/EquipmentAutoLoaderSetupMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -86,6 +87,7 @@ const materialQCItemRoute = appBasePath + '/MTL/MaterialQCItems'
 const materialGroupRoute = appBasePath + '/MTL/MaterialGroups'
 const materialLabelMapRoute = appBasePath + '/MTL/MaterialLabelMaps'
 const materialVendorAutoLoaderRoute = appBasePath + '/MTL/MaterialVendorAutoLoaderSetup'
+const equipmentAutoLoaderRoute = appBasePath + '/EQP/EquipmentAutoLoaderSetup'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -181,6 +183,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'equipment-group', label: '設備群組資料', shortLabel: '群', moduleNo: 'EQP' },
       { id: 'equipment-state', label: '設備狀態設定', shortLabel: '狀', moduleNo: 'EQP' },
       { id: 'equipment-inspection', label: '設備點檢表設定', shortLabel: '檢', moduleNo: 'EQP' },
+    ] }, { id: 'equipment-industry-package', label: '行業包', shortLabel: '行', moduleNo: 'EQP', children: [
+      { id: 'function:EQP:B_EQP AUTOLOADER SETUP', label: '設備AutoLoader格式檔設定', shortLabel: '自', functionNo: 'B_EQP AUTOLOADER SETUP', moduleNo: 'EQP', tableName: 'tbleqpalscript' },
     ] }, { id: 'equipment-carrier-menu', label: '載具', shortLabel: '載', moduleNo: 'EQP', children: [{ id: 'equipment-carrier-categories', label: '載具分類資料', shortLabel: '分', functionNo: 'CARRIER CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-carrier-types', label: '載具類別資料', shortLabel: '類', functionNo: 'CARRIER TYPE', moduleNo: 'EQP' }, { id: 'equipment-carrier-basis', label: '載具基本資料', shortLabel: '主', functionNo: 'CARRIER BASIS', moduleNo: 'EQP' }] }, { id: 'equipment-accessory-menu', label: '配件', shortLabel: '配', moduleNo: 'EQP', children: [{ id: 'equipment-accessory-categories', label: '配件分類資料', shortLabel: '分', functionNo: 'ACC CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-accessory-types', label: '配件類別資料', shortLabel: '類', functionNo: 'ACC TYPE', moduleNo: 'EQP' }, { id: 'equipment-accessory-basis', label: '配件基本資料', shortLabel: '主', functionNo: 'ACC BASIS', moduleNo: 'EQP' }, { id: 'equipment-accessory-category-states', label: '配件分類狀態定義設定', shortLabel: '狀', functionNo: 'ACC CATEGORY STATE', moduleNo: 'EQP' }, { id: 'equipment-accessory-state-basis', label: '配件狀態設定', shortLabel: '狀', functionNo: 'EQP ACC STATE', moduleNo: 'EQP' }] },
     { id: 'equipment-recipe-menu', label: '參數', shortLabel: '參', moduleNo: 'EQP', children: [{ id: 'equipment-recipe-basis', label: '設備參數資料', shortLabel: '參', functionNo: 'RECIPE BASIS', moduleNo: 'EQP' }] }],
   },
@@ -260,6 +264,7 @@ const menuRoutes: Record<string, string> = {
   'function:MTL:MTL GROUP': materialGroupRoute,
   'function:MTL:MTL LABEL MAP BASIS': materialLabelMapRoute,
   'function:MTL:B_MTL AUTOLOADER SETUP': materialVendorAutoLoaderRoute,
+  'function:EQP:B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
   'equipment-master': equipmentRoute,
   'equipment-vendor-master': equipmentVendorRoute,
   'equipment-engineer-group': equipmentEngineerGroupRoute,
@@ -336,6 +341,7 @@ const functionRoutes: Record<string, string> = {
   'MTL GROUP': materialGroupRoute,
   'MTL LABEL MAP BASIS': materialLabelMapRoute,
   'B_MTL AUTOLOADER SETUP': materialVendorAutoLoaderRoute,
+  'B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
   'PRS BASIS': `${appBasePath}/MasterData/Processes`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
 }
@@ -386,6 +392,7 @@ const isMaterialQCItemPage = computed(() => activeMasterKey.value === 'function:
 const isMaterialGroupPage = computed(() => activeMasterKey.value === 'function:MTL:MTL GROUP')
 const isMaterialLabelMapPage = computed(() => activeMasterKey.value === 'function:MTL:MTL LABEL MAP BASIS')
 const isMaterialVendorAutoLoaderPage = computed(() => activeMasterKey.value === 'function:MTL:B_MTL AUTOLOADER SETUP')
+const isEquipmentAutoLoaderPage = computed(() => activeMasterKey.value === 'function:EQP:B_EQP AUTOLOADER SETUP')
 const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER BASIS')
 const isCustomerContactorPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER CONTACTOR')
 const isCustomerShipAddressPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER SHIP ADDRESS')
@@ -1282,6 +1289,14 @@ async function signOut(): Promise<void> {
         />
         <MaterialLabelMapMaster
           v-else-if="isMaterialLabelMapPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <EquipmentAutoLoaderSetupMaster
+          v-else-if="isEquipmentAutoLoaderPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

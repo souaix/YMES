@@ -14,6 +14,14 @@
 
 ## 目前停留點（2026-11-17）
 
+### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）
+
+- [x] 已確認舊 WinForms source tree 有完整原始碼：`Industry_Base/MESWin_Industry_Base/EQP/EP_B_EQPAutoLoaderSetup/`，並對照主畫面/編輯器/Default、相關子表單、`wsEQP`、`clsEQP` 及 `wsSYS` AutoLoader 檢查。先前 TODO 寫「找不到 Form」是錯誤，本次已修正認知。
+- [x] 使用既有 Oracle 受保護設定，PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得 4 張表的 source DDL、欄位、NULL/default、PK/index/FK；未讀 MES 業務資料，也未在 Oracle 執行 DDL。
+- [x] 加入 Vue DEV 頁 `web/src/components/EquipmentAutoLoaderSetupMaster.vue`，涵蓋三層選單、查詢/選取、完整可見欄位、格式腳本、CRUD/Copy/Default、5 個設定頁籤及 KD 黃色欄位。
+- [x] 加入功能規格、Oracle source DDL、PostgreSQL 空表 CREATE 參考、規格索引與家用端 API/schema handoff。詳細差異與簡化項目見 `docs/modules/EQP/設備AutoLoader格式檔設定.md`。
+- [ ] 未執行 build/test/瀏覽器驗收。家用端先完成 schema/API/migration 並部署後，公司端 pull 最新 main，逐欄對接 Production，再補完整 TestFile parser、公式/ValueList 與設備查找 UI。
+
 ### 2026-11-17 MTL ML101 物料供應商基本資料
 
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護連線唯讀查得 `TBLMTLMATERIALVENDOR`、`TBLMTLMATERIALVENDORCONTACTOR` 完整欄位、NULL/default、主鍵、索引及 FK；沒有讀取 MES 業務資料或在 Oracle 執行 DDL。
@@ -255,7 +263,7 @@
 - [x] 新增 Vue DEV 頁 `web/src/components/CustomerBasisMaster.vue`、FunctionNo `CUSTOMER BASIS` 路由 `/YMES/Customer/Basis` 及 fallback 三層選單；Production 經 API，Development 使用標明的 localStorage 假資料。
 - [x] 新增 `docs/modules/ENT/客戶基本資料.md`、Oracle source logical DDL、PostgreSQL 空表 CREATE SQL、規格索引、DB 連線查詢紀錄及家用端 migration/API/簽核/匯入待辦。
 - [ ] 未執行 build/test 或瀏覽器人工驗收；待後續依要求驗證。
-- [ ] 下一個公司端功能從 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續依序核對 Form/Designer/Service。設備 AutoLoader Function `B_EQP AUTOLOADER SETUP` 的指定 Form 檔在目前 WinForms source tree 找不到；後續先記錄其 binary-only 來源限制，再做其餘有原始碼的功能。
+- [ ] 依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續下一個未遷移 Function；EQP AutoLoader 原始碼已確認並完成 DEV 頁，避免再標成 binary-only。
 
 ## EP302 載具類別資料公司端進度（2026-11-16）
 
@@ -449,4 +457,4 @@
 - [x] 更新 `todolist_homepc.md` 的 schema/API/parser handoff、`docs/DATABASE_CONNECTION.md` 及功能規格索引。
 - [ ] DEV 測試檢查、build 與瀏覽器驗收未執行；使用者未要求測試。
 - [ ] 家用端完成 YMES live schema 比對、migration/API 後，公司端 pull 並核對 Production 契約。
-- [ ] 後續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續；目前尚未發現 Vue 頁的下一項為 EQP `B_EQP AUTOLOADER SETUP`，先對照設備 AutoLoader WinForms Form/Service/Core 與表 DDL。
+- [x] 2026-11-17 已完成 EQP `B_EQP AUTOLOADER SETUP` WinForms Form/Service/Core/DDL 對照、Vue DEV 頁及家用端 API/schema handoff；後續項目改從功能目錄中下一個尚未完成的 Function 選取。
