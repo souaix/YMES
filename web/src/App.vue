@@ -19,6 +19,7 @@ import AccessoryStateBasisMaster from './components/AccessoryStateBasisMaster.vu
 import AccessoryCategoryMaster from './components/AccessoryCategoryMaster.vue'
 import AccessoryCategoryStateMaster from './components/AccessoryCategoryStateMaster.vue'
 import CustomerBasisMaster from './components/CustomerBasisMaster.vue'
+import CustomerContactorMaster from './components/CustomerContactorMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
@@ -42,6 +43,7 @@ const equipmentCarrierTypeRoute = `${appBasePath}/Equipment/CarrierTypes`
 const equipmentCarrierBasisRoute = appBasePath + '/Equipment/CarrierBasis'
 const equipmentRecipeBasisRoute = appBasePath + '/Equipment/Recipes'
 const customerBasisRoute = appBasePath + '/Customer/Basis'
+const customerContactorRoute = appBasePath + '/Customer/Contactors'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -176,6 +178,7 @@ const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
   'function:ENT:CUSTOMER BASIS': customerBasisRoute,
+  'function:ENT:CUSTOMER CONTACTOR': customerContactorRoute,
   'equipment-master': equipmentRoute,
   'equipment-vendor-master': equipmentVendorRoute,
   'equipment-engineer-group': equipmentEngineerGroupRoute,
@@ -209,6 +212,7 @@ const menuRoutes: Record<string, string> = {
 
 const functionRoutes: Record<string, string> = {
   'CUSTOMER BASIS': customerBasisRoute,
+  'CUSTOMER CONTACTOR': customerContactorRoute,
   'EQP BASIS': equipmentRoute,
   'CARRIER CATEGORY': equipmentCarrierCategoryRoute,
   'CARRIER TYPE': equipmentCarrierTypeRoute,
@@ -266,6 +270,7 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
 })
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER BASIS')
+const isCustomerContactorPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER CONTACTOR')
 const isEquipmentVendorPage = computed(() => activeMasterKey.value === 'equipment-vendor-master')
 const isEquipmentEngineerGroupPage = computed(() => activeMasterKey.value === 'equipment-engineer-group')
 const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment-group')
@@ -891,6 +896,13 @@ async function signOut(): Promise<void> {
         />
         <CustomerBasisMaster
           v-else-if="isCustomerBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+        />
+        <CustomerContactorMaster
+          v-else-if="isCustomerContactorPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

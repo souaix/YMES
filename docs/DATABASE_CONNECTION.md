@@ -124,3 +124,4 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有受保護連線唯讀查得 `TBLENTCUSTOMERBASIS`、`TBLENTCUSTOMERCONTACTOR`、`TBLENTCUSTOMERSHIPADDR` 的 DBMS_METADATA DDL、欄位 NULL/default、PK、索引與 FK 字典。
 - 三表僅 PK unique index，沒有外鍵或其他索引。舊 CustomerBasis 刪除程序仍會明確刪除兩個子表；這是 service 行為，不是 Oracle FK cascade。
 - Oracle 原始邏輯 DDL 與 PostgreSQL 空表 CREATE SQL 分別存於 `database/reference/mestest_customer_basis_source_ddl.sql`、`database/reference/mestest_customer_basis_create.sql`。本次只查結構，沒有查詢或匯出客戶業務資料，也沒有在 Oracle 執行 CREATE SQL。
+- ET102 客戶連絡人資料直接沿用同一批已查 DDL 中的 `TBLENTCUSTOMERCONTACTOR`；不需要再次查詢或另建 Create SQL。其欄位、畫面限制差異與巢狀 API 契約記錄在 `docs/modules/ENT/客戶連絡人資料.md`。

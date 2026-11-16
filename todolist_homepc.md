@@ -399,3 +399,22 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 5. 實作 POST `/{customerNo}/approve?dataStamp=`，只接受 IssueState=0；沿用 YMES 簽核服務與 IssueNo `CUSTOMER BASIS`。未設定 Job/Detail 可直接到 2；有簽核 Detail 時轉 1、簽核通過到 2、退回到 0。關聯簽核與稽核更新需交易一致。
 6. 實作 multipart POST `/api/ent/customer-basis/import/preview`、POST `/import/commit` 及 GET `/import/template`。讀 Excel 第一工作表前三欄 CustomerNo/CustomerName/CustomerSName，逐列必填，預覽回傳依 CustomerNo 分組的結果列與短期 preview token；token 綁定登入者並於 commit 重新驗證。Commit 使用舊 DataImporter CustomerDataChecker 的等價檢查並回傳逐組 Message/進度。範本需沿用 FunctionNo `ENT BASIS` 的匯入範本格式；DEV CSV 不是正式範本。
 7. 設定 `ymes_app` 最小表權限；完成 schema/API、交易、簽核與匯入規格後更新 migration/API 文件和本待辦，部署並通知公司端 pull。公司端 Vue 頁在家用 API 完成後再對接 Production。
+
+## ENT ET102 客戶連絡人資料（公司端 2026-11-16 已交接）
+
+先讀 `docs/modules/ENT/客戶連絡人資料.md`、ET101 規格與 `todolist_officepc.md` ET102 區塊。公司端已核對 WinForms 並完成 Development Vue 假資料頁。
+
+### Schema
+
+- Oracle DDL 與 PostgreSQL 空表 CREATE SQL 已隨 ET101 交付：`database/reference/mestest_customer_basis_source_ddl.sql`、`database/reference/mestest_customer_basis_create.sql`。`TBLENTCUSTOMERCONTACTOR` 欄位為 `CUSTOMERNO varchar(50) NOT NULL`、`CONTACTORNAME varchar(50) NOT NULL`、`TELNO varchar(25)`、`FAXNO varchar(25)`、`EMAIL varchar(50)`、`TITLE varchar(25)`、`DEPTNAME varchar(25)`、`CREATOR varchar(10)`、`CREATEDATE timestamp`、`DESCRIPTION varchar(255)`、`DATASTAMP numeric(11,0) DEFAULT 0` nullable、`REVISER varchar(10)`、`REVISEDATE timestamp`。
+- 複合 PK 順序 `(CUSTOMERNO, CONTACTORNAME)`；無 Oracle FK 或額外索引。不要再建立重複 reference Create SQL。
+- 核對 YMES migration 是否已建此表；若沒有，沿用上述 PostgreSQL 定義新增 forward migration。保留現存 YMES 擴充欄位/索引，別用 `IF NOT EXISTS` 代替 schema 比對。`ymes_app` 只授予需要的表權限。
+
+### API 待辦
+
+1. 以現有 ENT API controller/repository 的結構新增巢狀端點：`GET /api/ent/customer-basis/{customerNo}/contactors`；按 `ContactorName` 排序。客戶選擇器使用 ET101 的 `GET /api/ent/customer-basis`，需能搜尋全部 IssueState。
+2. 新增 `POST /api/ent/customer-basis/{customerNo}/contactors`、`PUT /api/ent/customer-basis/{customerNo}/contactors/{contactorName}`、`DELETE /api/ent/customer-basis/{customerNo}/contactors/{contactorName}?dataStamp=`。Body 對應 `contactorName/telNo/faxNo/email/title/deptName/description/dataStamp`；Update 的 composite key 由 route 指定，ContactorName 不可更名。
+3. 寫入時驗證 CustomerNo 存在（來源表沒有 FK）、必填 ContactorName 與唯一複合鍵；長度嚴格依 Oracle DDL，特別是 WinForms Title MaxLength=50、實際資料庫僅 25，回傳 400 欄位錯誤、不截斷。
+4. Creator/CreateDate、Reviser/ReviseDate 從登入身分與伺服器時間產生；新資料 DataStamp 設 0，更新/刪除以 DataStamp 條件保護並在更新時遞增。刪除依舊 WinForms 支援多筆逐筆處理；API 單筆刪除回傳 404/409 供 Vue 中止、重載清單。
+5. 原始 `wsENT.EditCustomerContactor` 呼叫帶有命名參數 DataStamp/Reviser/ReviseDate，但目前檢視的 `kcENT.clsCustomerBasis.EditCustomerContactor` 宣告未含此參數；請依現代 API 明確實作伺服器稽核/併發邏輯，不照搬此來源不一致處。
+6. 更新 API 文件/migration 記錄、部署，通知公司端 pull 並在 Production 環境以正式 API 對接。公司端目前的 `/YMES/Customer/Contactors` 頁 Production 模式不使用假資料。
