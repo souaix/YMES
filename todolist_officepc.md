@@ -22,7 +22,16 @@
 - [x] 新增 Vue 雙 Grid DEV 頁 web/src/components/Qc8DReasonBasisMaster.vue，建立 QC → 基本資料 → 8D 原因基本資料 fallback 選單及 /YMES/QC/8DReasonBasis；包含四狀態、查詢、主/明細 CRUD/Copy/Approve、KD 黃色輸入欄及 localStorage 假資料。
 - [x] 新增 docs/modules/QC/8D原因基本資料.md，記錄 Oracle 欄位、WinForms/Form/Service/Core 邏輯、Issue Job 簽核、刪除孤兒明細行為及 API/schema handoff；更新規格索引、資料庫連線紀錄及兩台電腦 TODO。
 - [ ] 未執行 build/test/瀏覽器驗收。ReasonType 代碼與繁中資源已直接查證；DEV approval 只模擬無簽核 Job 的直接核准分支，Production 必須實作 Issue/Job。
-- [ ] 下一項依 MES_MENU_FUNCTION_INVENTORY.md 接續 QC 模組下一個功能 FINAL GROUP（QC406）；繼續對照 WinForms Form/Service/Core 與 Oracle 表結構，再建 DEV UI/spec/家用 API handoff。
+- [x] 原先排定的下一項為 QC406；確認目錄後已完成，實際下一項改為 QC407「最後處理群組（FINAL GROUP）」。
+
+### QC406 第一處理群組（公司端 2026-11-17）
+
+- [x] 修正 QC 選單功能識別：FunctionNo `FIRST GROUP` / FunctionKey `QC406`；`FINAL GROUP` 才是 QC407。
+- [x] 對照 `frmFirstGroup`、`frmFirstGroupDef`、`wsQC`、`clsHoldBasis`、`clsBasis_UPD`，整理狀態篩選、複合鍵、查找來源、多 OP 批次新增/複製、`OPNo='*'`、刪除、DataStamp 與 `FIRST GROUP` Issue Job 簽核。
+- [x] 用 PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀查得 `TBLQCFIRSTGROUP` DDL、欄位 nullable/default、複合 PK、unique index 與 FK；並查核三張已存在查找表的 key/必要欄位。未讀業務資料，未執行 Oracle DDL，未輸出憑證。
+- [x] 建立來源 DDL、PostgreSQL 空表 CREATE、Vue DEV 畫面 `/YMES/QC/FirstGroup`、規格文件及家用端 API/schema handoff；更新 DB 連線紀錄與索引。
+- [ ] 未執行 build/test/瀏覽器驗收；DEV 核准僅模擬無簽核流程直接轉 Active。
+- [ ] 下一個功能依 MES_MENU_FUNCTION_INVENTORY.md 為 QC407「最後處理群組（FINAL GROUP）」。
 
 ### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）
 

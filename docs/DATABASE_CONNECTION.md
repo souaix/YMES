@@ -251,3 +251,12 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 本次只讀取資料字典/DDL，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。
 - 同以 Oracle 唯讀查詢 MESTEST.TBLSYSVALUELIST 的 TBLQCREASONBASIS_8D.REASONTYPE 選項，並核對 Customer/Production/MESClient/mesresource.zh-cht.resources：1 Men、人員；2 Machine_8D、設備；3 Material、物料；4 Method、方法；5 Environment、環境。此為系統字典與語系資源，不是業務資料。
 - YMES 家用端先比對 live schema/migrations，缺少時才建立 forward migration；WinForms、簽核流程、API DTO/端點及子類別刪除留下無 FK 明細的行為見 docs/modules/QC/8D原因基本資料.md。
+
+### 更新 2026-11-17：QC406 第一處理群組來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有本機受保護 Oracle 連線直接唯讀查詢 MESTEST.TBLQCFIRSTGROUP 的 DBMS_METADATA.GET_DDL 與 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES。
+- 來源 DDL / PostgreSQL 空表 CREATE 參考：database/reference/mestest_qc_first_group_source_ddl.sql、mestest_qc_first_group_create.sql。主表 PK 為 `(MCLASSNO, OPNO)`，只有 PK unique index，沒有 FK；DataStamp nullable DEFAULT 0，IssueState NOT NULL DEFAULT 0。
+- 查找表 `TBLQCMCLASSBASIS` 與 `TBLQCHOLDDISPGROUPBASIS` 的來源 DDL / PostgreSQL CREATE 參考為 database/reference/mestest_qc_first_group_lookups_source_ddl.sql、mestest_qc_first_group_lookups_create.sql。作業站 `TBLOPBASIS` 已有 `mestest_operation_and_system_source_ddl.sql` / `mestest_operation_and_system_create.sql`。
+- 查找來源為 TBLQCMCLASSBASIS、TBLOPBASIS、TBLQCHOLDDISPGROUPBASIS；Form 僅載入 IssueState=2。三表 key 與必要欄位已由 Oracle 資料字典直連核對，本功能不新增查找表。
+- 本次只讀取 DDL/資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。
+- WinForms 多作業站新增/複製、`OPNo='*'` 通用設定、Issue Job `FIRST GROUP`、狀態刪除規則與 API 契約見 docs/modules/QC/第一處理群組.md。

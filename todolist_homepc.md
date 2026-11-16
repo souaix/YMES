@@ -6,6 +6,19 @@
 
 ## 家用電腦現在接手
 
+### QC406 第一處理群組（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/第一處理群組.md`、`docs/DATABASE_CONNECTION.md` 和本節。公司端已對照 WinForms/Form/Service/Core，完成 Vue DEV 畫面及 QC → 異常設定 → 第一處理群組路由。
+- [ ] 先比對 YMES PostgreSQL live schema、constraints、indexes 與 migrations。來源 CREATE 參考 `database/reference/mestest_qc_first_group_create.sql`；缺表/欄位才建 forward migration，不要盲目執行或刪除 YMES 擴充欄位。
+- [ ] Oracle 原始 DDL：`database/reference/mestest_qc_first_group_source_ddl.sql`。表 `tblqcfirstgroup` 的 PK 為 `(mclassno, opno)`，只有 PK unique index、沒有 FK；DataStamp nullable DEFAULT 0，IssueState NOT NULL DEFAULT 0。保留 `OPNo='*'` 作為通用作業站 key。
+- [ ] 實作 `GET /api/qc/first-groups?searchFieldName=&searchFieldValue=`，回全部狀態欄位與 audit/DataStamp，搜尋欄位白名單限 MClassNo、OPNo；UI 按四狀態本機篩選。
+- [ ] 查找器沿用 YMES 已有 endpoint；若不存在，提供只回已核准資料的 options API：主分類 `TBLQCMCLASSBASIS` (MClassNo)、作業站 `TBLOPBASIS` (OPNo/OPName)、異常處理群組 `TBLQCHOLDDISPGROUPBASIS` (GroupNo/GroupName/Description)，均對應 WinForms `IssueState=2`。先比對 live schema；主分類/異常群組缺表時參考 `mestest_qc_first_group_lookups_create.sql`，作業站缺表時參考現有 `mestest_operation_and_system_create.sql`。不要覆蓋既有 YMES 擴充欄位。
+- [ ] 實作 `POST /api/qc/first-groups` body `{mClassNo, operationNos, groupNo, description}`；一次對每個已選 OP 建列，驗證主分類/群組已核准、普通 OP 已核准、`*` 僅作為特殊通用 key 放行，檢查長度/必填/複合鍵唯一；API 設 Creator/CreateDate/IssueState=0/DataStamp 初值，多列寫入交易。
+- [ ] 實作複合鍵 `PUT /api/qc/first-groups/{mClassNo}/{opNo}?dataStamp=`，只改 GroupNo/Description；依舊 Service 僅接受狀態 0/2。更新 Reviser/ReviseDate 並遞增 DataStamp，nullable DataStamp 用 `dataStamp=0&dataStampIsNull=true` 以 `IS NULL` CAS。
+- [ ] 實作複合鍵 DELETE：狀態 0/-1 實體刪除，2 改 -1，1 拒絕；以 DataStamp CAS。UI 多選仍逐筆，第一筆失敗停止並回報部分成功。
+- [ ] 實作核准 endpoint，Issue Job Map key 為 `FIRST GROUP`；無 Job/Detail 時直接轉 2，有流程時建立 Issue、轉 1、附件處理/通知第一簽核群組，Issue 核准轉 2、退回轉 0。所有狀態變更需以複合鍵 + DataStamp CAS。
+- [ ] 所有 API 驗證登入與 FunctionKey `QC406` 權限，SQL 參數化；不新增 Oracle FK/cascade。部署 schema/API 後更新規格、push，通知公司端 pull Production API。公司端未執行 build/test/瀏覽器驗收。
+
 ### QC111 8D 原因基本資料（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 docs/modules/QC/8D原因基本資料.md、docs/DATABASE_CONNECTION.md 和本節。公司端已對照 frmReasonBasis_8D、兩個 Def Form、wsQC/clsQCBasis，完成 Vue DEV 雙 Grid 及 QC → 基本資料 → 8D 原因基本資料路由。
