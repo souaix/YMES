@@ -83,6 +83,18 @@
 - 舊 ws/Core 有不同版本的 DataStamp/audit 方法簽章；實作以規格明確定義的 CAS/登入稽核為準，不沿用舊簽章差異。
 - schema/API/Issue 流程完成並部署後，更新本待辦及 API 文件，通知公司端 pull 對接 Production。
 
+## SMD SD103 儲位基本資料（公司端 2026-11-16 已交接）
+
+先讀 docs/modules/SMD/儲位基本資料.md。公司端完成 /YMES/SMD/Locators Vue DEV 頁與 FunctionNo=LOCATOR BASIS。Oracle 原始 DDL 和 PostgreSQL 空表 CREATE SQL 為 database/reference/mestest_smd_locator_basis_source_ddl.sql、mestest_smd_locator_basis_create.sql；first-phase bootstrap 已校正。
+
+- Oracle table 為 TBLINVLOCATORBASIS，複合 PK (InventoryNo, LocatorNo)，無 FK/額外索引。欄位、NULL/default 以 CREATE SQL 為準；IssueState DEFAULT 0 NOT NULL，Capacity NUMBER(12,4) DEFAULT 0 nullable，DataStamp NUMBER(11,0) DEFAULT 0 nullable。
+- 先查目前 YMES schema/migration 狀態。舊 first-phase SQL 已在家用端執行時，新增 forward migration 修正 IssueState、Capacity、DataStamp 預設值；不刪資料、不重建表、不加 Oracle 沒有的外鍵。
+- API：GET /api/smd/locator-basis?inventoryNo= 以 InventoryNo 完全相等比對，回傳四狀態並按複合鍵排序；GET /api/smd/locator-basis/options 回 { approvedInventories: [{ inventoryNo }] }，由既有 TBLINVInventoryBasis 篩 IssueState=2、distinct InventoryNo。POST /api/smd/locator-basis；PUT /api/smd/locator-basis/item?inventoryNo=&locatorNo=&issueState=0&dataStamp=；DELETE 同路徑並帶實際狀態/DataStamp；POST /api/smd/locator-basis/item/approve?inventoryNo=&locatorNo=&issueState=0&dataStamp=。
+- POST 設 Creator/CreateDate、IssueState=0。PUT UI 只允許狀態 0，鍵不可改；空白 LocatorName/Capacity/Description 在舊 WinForms 代表不送欄位，故 Edit 不清除舊值。Capacity 必須 >=0，最大 NUMBER(12,4) 範圍。
+- DELETE 狀態 0/-1 實體刪除、狀態 2 轉 -1 並更新 Reviser/ReviseDate/DataStamp、狀態 1 回衝突。Approve IssueNo=INV LOCATOR；無 Job/Detail 時直達 2，有流程時先 1，後續核准 2/退回 0。多筆 UI 逐筆請求，第一個失敗即停止。
+- 所有 API 驗證登入及 SMD 權限；DataStamp nullable 必須 CAS，以 COALESCE(datastamp,0)+1 遞增。若家用端已擴充 YMES 欄位，保留擴充內容。
+- 公司端 Production 頁只呼叫 API；家用端 schema/API 完成並部署後通知公司端 pull 對接。沒有把 DEV mock 當成正式流程。
+
 ## 公司電腦目前交付
 
 - Vue 主選單以三層 Module → Menu Group → Function 呈現；正式資料 API 不得把設定分類與主檔功能壓成兩層。

@@ -2284,28 +2284,16 @@ CREATE TABLE IF NOT EXISTS tblinvlocatorbasis (
     description varchar(255),
     creator varchar(10) NOT NULL,
     createdate timestamp without time zone NOT NULL,
-    issuestate numeric(1,0) NOT NULL,
-    capacity numeric(12,4),
+    issuestate numeric(1,0) DEFAULT 0 NOT NULL,
+    capacity numeric(12,4) DEFAULT 0,
     locatorname varchar(50),
     erpno varchar(50),
     reviser varchar(10),
     revisedate timestamp without time zone,
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     CONSTRAINT pk_tblinvlocatorbasis PRIMARY KEY (inventoryno, locatorno)
 );
 COMMENT ON TABLE tblinvlocatorbasis IS 'MES master data; Oracle source: MESTEST.TBLINVLOCATORBASIS';
-COMMENT ON COLUMN tblinvlocatorbasis.inventoryno IS '庫存（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.locatorno IS '儲位（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.capacity IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.locatorname IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.erpno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblinvlocatorbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
 
 CREATE TABLE IF NOT EXISTS tblinvstockerbasis (
     stockerno varchar(20) NOT NULL,

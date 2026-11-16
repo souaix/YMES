@@ -185,3 +185,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 查得 11 欄、OSITEMNO 單欄 PK；DataStamp nullable DEFAULT 0。Oracle 字典僅有 PK unique index，無 FK、無額外索引。source logical DDL 與 PostgreSQL 空表 CREATE SQL 為 `database/reference/mestest_entositem_source_ddl.sql`、`mestest_entositem_create.sql`。
 - 查詢 helper 從 `%TEMP%\ymes-ep302-readonly-ddl.ps1` 讀取受保護連線值，僅將表名改為 TBLENTOSITEM；連線資訊未輸出到文件或提交。本次只查結構，不讀取 MES 業務列，也沒有在來源資料庫執行 DDL。
 - WinForms、Service/Core、流程查找、版本差異及 API 契約見 `docs/modules/ENT/外包項目設定.md`。
+
+### 更新 2026-11-16：SMD SD103 儲位基本資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護設定直接唯讀查 MESTEST.TBLINVLOCATORBASIS 的 DBMS_METADATA.GET_DDL、ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES、ALL_IND_COLUMNS。
+- 查得複合 PK (INVENTORYNO, LOCATORNO)，僅 PK unique index；沒有 Oracle FK 或其他索引。IssueState DEFAULT 0 NOT NULL、Capacity NUMBER(12,4) DEFAULT 0 nullable、DataStamp NUMBER(11,0) DEFAULT 0 nullable。
+- Oracle 原始 DDL 與 PostgreSQL 空表 CREATE SQL 為 database/reference/mestest_smd_locator_basis_source_ddl.sql、mestest_smd_locator_basis_create.sql。first-phase bootstrap 已同步校正預設值，移除尚未有 Oracle column comment 證據的猜測註解。
+- 只查資料字典，未讀業務資料、未在 Oracle 執行 DDL；IP、帳號、密碼、SID 僅由受保護設定讀取，未輸出或保存到 Git。庫存挑選沿用既有 TBLINVInventoryBasis，不涉及新增來源 DDL。

@@ -86,7 +86,7 @@
 - [x] 新增 `docs/modules/SMD/過帳電腦之區域.md`，更新 SMD 規格索引、Oracle 連線查詢紀錄與家用端 schema/API handoff。
 - [ ] 未執行 build、test 或瀏覽器驗收；Production API/migration 待家用端完成。
 - [x] SD101「工廠基本資料」已接上 Vue DEV 路由；既有 Oracle DDL/PG CREATE SQL 已確認可沿用，完成規格及 API/schema handoff。
-- [ ] 下一個尚未完成的 SMD FunctionKey 是 SD103「儲位基本資料」；依序讀 WinForms Form/Designer/Service/Core，確認實際涉及的資料表，再用 PowerShell 直查缺少的 Oracle DDL。
+- [x] SD103「儲位基本資料」公司端 UI、WinForms 規格與 Oracle/PG CREATE SQL 已完成；詳本文下方 2026-11-16 SD103 進度。
 
 ## 2026-11-16 SMD SD101 工廠基本資料公司端進度
 
@@ -340,3 +340,13 @@
 - [ ] 家用端實作 ENTOSITEM GET/POST/PUT/DELETE、DataStamp CAS、伺服器 audit、ProcessClass=3 + IssueState=2 流程驗證及權限檢查；遵守 API/DB 分離，Vue Production 不可使用假資料。
 - [ ] 公司端尚未執行 build、測試或瀏覽器驗收；Production API 尚待家用端完成。
 - [ ] ENT 八個 Function 已有 ET101/102/103/104/105/106/201/202 規格與 DEV 頁；下一步依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續盤點下一個尚未完整復刻的 MES 功能，先核對 Form/Service/Core，再查 Oracle DDL。
+
+## 2026-11-16 SMD SD103 儲位基本資料公司端進度
+
+- [x] 從 GitHub main 快轉檢查最新版；本地與 origin/main 均為 3ab417d，沒有新提交。
+- [x] 直接讀 WinForms 主畫面、定義窗、wsINV、clsInventory 與更新版 clsBasis_UPD；記錄四狀態篩選、欄位/按鈕、InventoryNo 選取、複合鍵、Copy、批次 Delete/Approve、IssueNo 與 DataStamp 版本差異。
+- [x] 用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護連線唯讀查 MESTEST.TBLINVLOCATORBASIS DBMS_METADATA 與資料字典；確認複合 PK、沒有 FK/額外索引。新增原始 Oracle DDL 和 PostgreSQL 空表 CREATE SQL，校正 first-phase bootstrap 預設值並刪除未核實欄位註解。
+- [x] 新增 Vue DEV 頁 web/src/components/LocatorBasisMaster.vue，路由 /YMES/SMD/Locators、FunctionNo=LOCATOR BASIS；依 WinForms 具備查詢、狀態切換、選列、多選、Add/Edit/Copy/Delete/Approve、已核准庫存挑選器、KD 黃色欄位、稽核及 Apply/Confirm。
+- [x] 新增 docs/modules/SMD/儲位基本資料.md；更新資料庫連線查詢紀錄、功能索引、家用端 API/schema handoff。
+- [ ] 未執行 build、test 或瀏覽器驗收；家用端需比對已部署 YMES schema 並補 forward migration/API 和正式 Issue/Job 核准流程。
+- [ ] 下一個尚未完成的 SMD FunctionKey 是 SD107「生產線別基本資料」；依 Form/Service/Core 逐項完成，缺少 DDL 時用 PowerShell 直查 Oracle。
