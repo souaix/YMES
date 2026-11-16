@@ -18,6 +18,8 @@
 
 ## SMD SD104 區域基本資料（公司端 2026-11-16 已交接）
 
+- [x] 2026-11-16 家用端比對 YMES：`TBLSMDAREABASIS` 已存在但四項來源 DEFAULT 缺漏；`TBLSMDAREAINVENTORY`、`TBLSMDAREAMAP`、`TBLSMDAREARELATION`、`TBLSMDSMTAREAEQPMAP` 缺表。已透過 `0017_smd_computer_area_api.sql` 補回 DEFAULT 並建立四張空表；未匯入 MES 業務資料。SD104 Production CRUD/layout API 仍待完成。
+
 先讀 `docs/modules/SMD/區域基本資料.md`、`todolist_officepc.md` 的 SD104 區塊及以下 Oracle reference。公司端已有 `/YMES/SMD/Areas` Vue DEV 頁與 SMD 三層 fallback 選單；Production 不使用 localStorage 假資料。
 
 ### Schema / migration
@@ -39,6 +41,8 @@
 
 ## SMD SD105 區域庫房基本設定（公司端 2026-11-16 已交接）
 
+- [x] `TBLSMDAREAINVENTORY` 已由 `0017_smd_computer_area_api.sql` 建立空表，欄位長度/複合 PK 依來源 DDL；SD105 CRUD API 尚待完成。
+
 先讀 `docs/modules/SMD/區域庫房基本設定.md` 及上方 SD104 handoff。公司端已有 `/YMES/SMD/AreaInventories` Vue DEV 頁，FunctionNo=`AREA INV MAP`；沒有 IssueState/核准。
 
 - Oracle `TBLSMDAREAINVENTORY` 已由公司端 SD104 直連查 DDL，來源 logical DDL/PG 空表 CREATE 已包含在 `database/reference/mestest_smd_area_basis_source_ddl.sql`、`mestest_smd_area_basis_create.sql`。不要重複建表；先比對 YMES schema/migrations，缺表才新增。
@@ -50,6 +54,10 @@
 - DDL 已從 2026-11-16 直接 metadata query 交付，不必重查 Oracle。schema/API/部署完成後通知公司端 pull 驗收。
 
 ## SMD SD106 過帳電腦之區域（公司端 2026-11-16 已交接）
+
+- [x] 2026-11-16 遠端 schema 核對：兩張主明細表已存在且欄位、NULL、型態、PK 符合來源；僅 `DataStamp DEFAULT 0` 漏失。`0017_smd_computer_area_api.sql` 已補 DEFAULT、建立必要 SMD 空表，並授予 `ymes_app` 對 SD106 主明細 CRUD 與 Factory/Area lookup SELECT。備份為 `/opt/ymes/backups/ymes_before_0017_smd_20261116.dump`，mode 600，`pg_restore --list` 驗證可讀。
+- [x] SD106 API（查詢、Create、Edit CAS/整組替換明細、Delete、Copy、已簽核工廠與區域 options）已完成實作；.NET 9 build 成功。API 遠端部署及 app-browser 驗收待完成。
+- [ ] SMD API 目前僅要求登入；依使用者指示，角色／功能權限暫不實作。PostgreSQL `ymes_app` 的表級權限另按每個端點實際需要最小授權。
 
 先讀 `docs/modules/SMD/過帳電腦之區域.md`。公司端已完成 `/YMES/SMD/ComputerAreas` Vue DEV 頁；Production 僅呼叫 API。
 
