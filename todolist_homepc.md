@@ -6,6 +6,19 @@
 
 ## 家用電腦現在接手
 
+### MTL MLB01 來料 AutoLoader 格式檔設定（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/來料AutoLoader格式檔設定.md`、`docs/DATABASE_CONNECTION.md` 與本節；公司端已直接查 Oracle DDL、建立 Vue DEV 頁與 API handoff。
+- [ ] 先從家用端 SSH/管理連線比對 YMES PostgreSQL live schema、constraints、index 和 migration。新表來源是 `MESTEST.TBLMTLVENDORALSCRIPT`；若缺表，參考 `database/reference/mestest_mtl_autoloader_create.sql` 建 forward migration；不要直接執行 reference SQL 或覆蓋 YMES 擴充欄位。
+- [ ] Oracle 結構：PK `MTLFOLDERPATH varchar(400)`；`FORMATSCRIPT`/`RAWDATAFORMATSCRIPT` 是 CLOB；只有 PK index、無 FK。StoreRawData、SendMail NOT NULL DEFAULT 0；DataStamp nullable DEFAULT 0。來源 DDL：`database/reference/mestest_mtl_autoloader_source_ddl.sql`。
+- [ ] 實作 `GET /api/material-vendor-autoloader-scripts?mtlFolderPath=&vendorNo=`；兩條件皆精確相等、空白不套條件、依 Folder Path 排序，回傳全部欄位及稽核值。主畫面啟動不自動查詢。
+- [ ] 實作 POST/PUT/DELETE `/api/material-vendor-autoloader-scripts`：新增/修改稽核由伺服器設定；StoreRawData 固定為 0；新增/複製的 VendorNo 保持 NULL；Edit 不提供 VendorNo 修改；FormatScript/RawDataFormatScript 使用文字/CLOB 對應型別。
+- [ ] PUT/DELETE 加入主鍵及 DataStamp optimistic concurrency；支援舊 nullable `DataStamp`（NULL 與 0 不可混為必然相同），成功修改遞增版本。WinForms Service 傳 DataStamp，但目前檢視的 Core method signature/UPDATE SQL 未看到版本檢查，請核對家用端實際引用的 Industry_Base 版本；規格記有差異。
+- [ ] 實作受控 `GET /api/material-vendor-autoloader-scripts/directories` 只回傳伺服器允許目錄，不可讓瀏覽器任意瀏覽 MES Server 檔案系統。供應商選擇沿用 `GET /api/material-vendors`。
+- [ ] 實作 Test Item Setup `GET /api/test-recipes?recipeType=MTL_AUTOLOADER`，及 `POST /api/material-vendor-autoloader-scripts/validate`；validate 由 API 承接舊 `Industry_Base.wsSYS.ChkAutoLoaderSetup`。UI DEV 目前僅 CSV/TXT 預覽與簡化檢查；Excel/NPOI、完整欄位轉換/parser 要由 API/後續設定介面補齊。
+- [ ] 驗證登入者 `B_MTL AUTOLOADER SETUP` 權限、Folder Path 400、VendorNo 20、Description 255、separators 10、欄位序號、唯一鍵、DataStamp 衝突；逐筆 Delete 應在第一個失敗時停止。此功能無 IssueState/簽核、無 FK，不新增 audit table。
+- [ ] 比對並部署 schema/migration/API 後更新規格與本清單，再 push；通知公司端 pull Production API 契約。
+
 ### MTL ML104 物料群組資料（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/MTL/物料群組資料.md`、公司端 ML104 區塊及 `docs/DATABASE_CONNECTION.md`。WinForms Form/Service/Core、DEV UI 與兩張表來源已核對。

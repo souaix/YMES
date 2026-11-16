@@ -229,3 +229,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - TBLMTLLABELMAP 主鍵為 (MaterialType, MaterialNo, LabelSource, LabelType)，LabelSource=5 是物料來源；DataStamp nullable DEFAULT 0。TBLPRDLABELBASIS 主鍵為 LabelNo，兩表都只有 PK unique index，沒有 FK/額外索引。
 - Source DDL / PostgreSQL 空表參考見 `database/reference/mestest_mtl_label_map_source_ddl.sql`、`mestest_mtl_label_map_create.sql`、`mestest_prd_label_basis_lookup_create.sql`。本次只查資料字典結構，未讀業務列、未在 Oracle 執行 DDL。
 - IP、帳號、密碼、SID 仍由本機受保護設定提供，未輸出或寫入文件/Git；下次公司端查 DDL 沿用這個既有 PowerShell/ODP.NET 方式。
+
+### 更新 2026-11-17：MTL MLB01 來料 AutoLoader 格式檔設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，讀取本機既有受保護連線，唯讀取得 `MESTEST.TBLMTLVENDORALSCRIPT` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。
+- 主鍵為 `MTLFOLDERPATH`；只有 PK unique index，無外鍵/額外索引。`FORMATScript`、`RAWDATAFORMATSCRIPT` 是 CLOB；`DATASTAMP NUMBER(11,0) DEFAULT 0` 可 NULL；`STORERAWDATA`、`SENDMAIL` 為 NOT NULL DEFAULT 0。
+- Oracle 來源 DDL 與 PostgreSQL 空表參考分別在 `database/reference/mestest_mtl_autoloader_source_ddl.sql`、`database/reference/mestest_mtl_autoloader_create.sql`。僅查資料字典結構，未讀 MES 業務列，未在 Oracle 執行 DDL。
+- 連線秘密仍只在本機受保護設定中；IP、帳號、密碼、SID 未輸出或寫入文件/Git。家用端建立 migration 前須比對 YMES PostgreSQL live schema 與既有 migrations。

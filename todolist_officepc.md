@@ -438,3 +438,15 @@
 - [x] 新增 `web/src/components/MaterialLabelMapMaster.vue`，加入 FunctionNo `MTL LABEL MAP BASIS` 三層選單及 `/YMES/MTL/MaterialLabelMaps` route；DEV 頁包含初始空 Grid、三組查詢/lookup、多選刪除、Add/Edit/Copy、LabelSource/物料 lookup、稽核資訊及 KD 黃色輸入樣式。
 - [ ] 未執行 build、測試或瀏覽器驗收；Production schema/API 待家用端依 `todolist_homepc.md` 比對及完成。
 - [ ] 下一步依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 確認其餘未完成 FunctionNo，再讀 WinForms Form/Designer/Service/Core，查明缺少的 Oracle DDL 並續做 DEV UI。
+
+## 2026-11-17 MTL MLB01 來料 AutoLoader 格式檔設定公司端進度
+
+- [x] Pull GitHub main，從 `99c9fef` 開始；家用端先前已推送的 MTL ML107 內容已同步。
+- [x] 直接對照 `frmMaterialVendorAutoLoaderSetup`、`frmMaterialVendorAutoLoaderSetupDef`、相關 Dynamic Parameter/Test File 表單、`wsMTL_Base`、`clsMTLBasis_Industry_Base`；記錄初始不查詢、精確 Folder/Vendor 條件、Grid 可見欄、Add/Edit/Delete/Copy/Query/Close、格式生成、基本檢查、Apply/Confirm、CLOB 與 DataStamp 原始碼差異。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護設定直連 MESTEST 唯讀取得 `TBLMTLVENDORALSCRIPT` DBMS_METADATA DDL 與欄位/NULL/default/PK/index；無業務列查詢、無 Oracle 寫入，連線值未輸出。
+- [x] 新增 Oracle source DDL、PostgreSQL 空表參考、MLB01 功能規格、Vue DEV 頁與三層 `物料資料 → 行業包 → 來料AutoLoader格式檔設定` 選單，路徑 `/YMES/MTL/MaterialVendorAutoLoaderSetup`。
+- [x] Vue DEV 頁具有初始空 Grid、精確查詢、右側 WinForms 操作按鈕、多選逐筆刪除、唯讀 FormatScript 預覽、Add/Edit/Copy 定義窗、KD 淡黃輸入欄位、格式生成/檢查、CSV/TXT 預覽、動態測試參數、供應商/允許目錄/測試配方選擇器與 localStorage 假資料；Production 呼叫 API，不用假資料。
+- [x] 更新 `todolist_homepc.md` 的 schema/API/parser handoff、`docs/DATABASE_CONNECTION.md` 及功能規格索引。
+- [ ] DEV 測試檢查、build 與瀏覽器驗收未執行；使用者未要求測試。
+- [ ] 家用端完成 YMES live schema 比對、migration/API 後，公司端 pull 並核對 Production 契約。
+- [ ] 後續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續；目前尚未發現 Vue 頁的下一項為 EQP `B_EQP AUTOLOADER SETUP`，先對照設備 AutoLoader WinForms Form/Service/Core 與表 DDL。
