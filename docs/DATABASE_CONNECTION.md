@@ -198,3 +198,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 核實 PDLineStatus NUMBER(1,0) DEFAULT 1 NOT NULL；IssueState NUMBER(1,0) NOT NULL 無 DEFAULT；CreateDate DATE DEFAULT SYSDATE 可 NULL；DataStamp NUMBER(11,0) DEFAULT 0 可 NULL。PDLineNo 是唯一 PK index；無 FK 或其他索引。
 - Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 為 database/reference/mestest_smd_pdline_basis_source_ddl.sql、mestest_smd_pdline_basis_create.sql。first-phase bootstrap 已校正來源 defaults 並移除無來源依據的欄位猜測註解；家用端仍須比對實際 schema/migration，缺漏才新增 forward migration。
 - 只查結構，未讀業務資料或在 Oracle 執行 DDL；受保護連線資料未輸出或保存至 Git。
+
+### 2026-11-16：SMD SD108、SD109
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 及本機受保護連線，直接唯讀查詢 MESTEST.TBLSMDAREASHIFT、TBLSMDAREAOPERATOR、TBLSMDPDLINEPOSITIONBASIS 的 DBMS_METADATA 與資料字典。
+- 新增 Oracle 邏輯來源 DDL 與 PostgreSQL 空表 CREATE SQL：mestest_smd_area_shift_source_ddl.sql / mestest_smd_area_shift_create.sql；mestest_smd_pdline_position_basis_source_ddl.sql / mestest_smd_pdline_position_basis_create.sql。
+- 僅查表結構、欄位 null/default、PK/index/FK；未讀業務資料、未在 Oracle 執行 DDL。連線值未輸出或寫入 Git。

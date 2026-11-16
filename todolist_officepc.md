@@ -362,3 +362,13 @@
 - [ ] 後續 SMD 頁面：SD108 設備狀態監控_區域、SD109 工位基本資料；依序讀 WinForms Form/Designer/Service/Core，再查缺少的 Oracle DDL。
 - [ ] 請以 Oracle ValueListProvider 同一來源查 `TBLSYSVALUELIST` 中 `TABLENAME='TBLSMDPDLINEBASIS'`、`FIELDNAME='PDLINESTATUS'` 的正式值、排序與顯示文字，並交付繁中資源翻譯；不要以 Vue DEV 標籤或舊註解代替。
 - [ ] 供家用端實作 Production Approve：核實 Issue/Job/IssueDetail/IssueJobMap 等簽核資料表的 Oracle DDL、資料欄位與 Service 建立流程；目前 YMES 尚無 Issue/Job 表，不能用 DEV 的直接 0→2 模擬代替。
+
+## SMD SD108、SD109 公司端交接（2026-11-17）
+
+- [x] 開始前 pull GitHub main，遠端新版本為 09dfd65；包含家用端 SD106 過帳電腦區域 migration/API 及 SD104/SD105 schema handoff，已一併納入。
+- [x] 依 WinForms frmAreaShow、frmAreaShift、frmAreaShiftDef、frmSMDPDLinePositionBasis、frmSMDPDLinePositionBasisDef 與 clsSMDBasis 核對畫面、事件、班別登入狀態檢查及複合鍵。
+- [x] SD108 區域圖、縮放/網格、右鍵狀態/歷史、雙擊班別維護與班別人員增刪已做 Vue Development Preview；SD109 搜尋、複合鍵 CRUD/Copy、多選刪除、作業區與 eSOP 選擇、Apply/Confirm 已做 Vue Development Preview。
+- [x] Oracle DDL 由本機受保護連線以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得；新增兩組 source DDL 與 PostgreSQL 空表 CREATE，並修正 first-phase SQL 中 SD109 defaults/猜測性欄位註解。
+- [x] 完成 SMD SD108/SD109 規格、功能索引、DB 查詢紀錄與家用端 API/schema handoff。補明 nullable DataStamp 用 `dataStampIsNull=true` 做精確 NULL CAS，並修正 SD109 刪除請求漏傳版本值。
+- [ ] 尚未執行 build、測試或瀏覽器驗收；Production API/schema 需家用端按 todolist_homepc.md 完成。
+- [ ] 下一步依 MES_MENU_FUNCTION_INVENTORY 的 ModuleOrder/FunctionOrder 繼續找下一個尚未完整復刻的 Function（接續 MTL），先核對 WinForms Form/Designer/Service/Core，再查 Oracle DDL。

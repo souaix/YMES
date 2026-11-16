@@ -32,6 +32,8 @@ import ComputerAreaMaster from './components/ComputerAreaMaster.vue'
 import FactoryBasisMaster from './components/FactoryBasisMaster.vue'
 import LocatorBasisMaster from './components/LocatorBasisMaster.vue'
 import ProductionLineBasisMaster from './components/ProductionLineBasisMaster.vue'
+import PositionBasisMaster from './components/PositionBasisMaster.vue'
+import AreaShowMaster from './components/AreaShowMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
@@ -68,6 +70,8 @@ const computerAreaRoute = appBasePath + '/SMD/ComputerAreas'
 const factoryBasisRoute = appBasePath + '/SMD/Factories'
 const locatorBasisRoute = appBasePath + '/SMD/Locators'
 const pdLineBasisRoute = appBasePath + '/SMD/ProductionLines'
+const positionBasisRoute = appBasePath + '/SMD/Positions'
+const areaShowRoute = appBasePath + '/SMD/AreaShow'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -245,6 +249,8 @@ const menuRoutes: Record<string, string> = {
   'function:SMD:FACTORY BASIS': factoryBasisRoute,
   'function:SMD:LOCATOR BASIS': locatorBasisRoute,
   'function:SMD:SMD PDLINE BASIS': pdLineBasisRoute,
+  'function:SMD:POSITION BASIS': positionBasisRoute,
+  'function:SMD:PRODUCTION CONFIG': areaShowRoute,
   'function:EQP:RECIPE BASIS': equipmentRecipeBasisRoute,
   'equipment-accessory-categories': equipmentAccessoryCategoryRoute,
   'equipment-accessory-category-states': equipmentAccessoryCategoryStateRoute,
@@ -277,6 +283,8 @@ const functionRoutes: Record<string, string> = {
   'FACTORY BASIS': factoryBasisRoute,
   'LOCATOR BASIS': locatorBasisRoute,
   'SMD PDLINE BASIS': pdLineBasisRoute,
+  'POSITION BASIS': positionBasisRoute,
+  'PRODUCTION CONFIG': areaShowRoute,
   'EQP BASIS': equipmentRoute,
   'CARRIER CATEGORY': equipmentCarrierCategoryRoute,
   'CARRIER TYPE': equipmentCarrierTypeRoute,
@@ -347,6 +355,8 @@ const isComputerAreaPage = computed(() => activeMasterKey.value === 'function:SM
 const isFactoryBasisPage = computed(() => activeMasterKey.value === 'function:SMD:FACTORY BASIS')
 const isLocatorBasisPage = computed(() => activeMasterKey.value === 'function:SMD:LOCATOR BASIS')
 const isPdLineBasisPage = computed(() => activeMasterKey.value === 'function:SMD:SMD PDLINE BASIS')
+const isPositionBasisPage = computed(() => activeMasterKey.value === 'function:SMD:POSITION BASIS')
+const isAreaShowPage = computed(() => activeMasterKey.value === 'function:SMD:PRODUCTION CONFIG')
 const isEquipmentVendorPage = computed(() => activeMasterKey.value === 'equipment-vendor-master')
 const isEquipmentEngineerGroupPage = computed(() => activeMasterKey.value === 'equipment-engineer-group')
 const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment-group')
@@ -1069,6 +1079,22 @@ async function signOut(): Promise<void> {
         />
         <ProductionLineBasisMaster
           v-else-if="isPdLineBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PositionBasisMaster
+          v-else-if="isPositionBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <AreaShowMaster
+          v-else-if="isAreaShowPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

@@ -645,3 +645,21 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 5. POST /api/smd/pd-line-basis/{pdLineNo}/approve?issueState=0&dataStamp= 僅接受 0，IssueNo=SMD PDLINE BASIS。使用 YMES 共用 Issue/Job 簽核服務：無 Job/Detail 依設定直達 2；有流程時先 1，核准 2、退回 0，通知第一簽核群組。不可照搬 DEV 直接切成 2。
 6. 所有端點檢查登入與 SMD 功能權限、唯一鍵/欄位範圍及資料狀態。DataStamp nullable/default 0；NULL 原值需以 IS NULL CAS，更新遞增 COALESCE(datastamp,0)+1。批次 UI 逐筆呼叫，第一個錯誤停止並保留已成功筆數。
 7. API/schema/migration 完成並部署後，通知公司端 pull 最新 main 對接 Production；不要把假資料回退用於 Production。
+
+## SMD SD108 設備狀態監控_區域（公司端 UI handoff）
+
+- 公司端已新增 Development Vue 頁與規格：docs/modules/SMD/設備狀態監控_區域.md、web/src/components/AreaShowMaster.vue。Production 不使用 localStorage。
+- Oracle 表 DDL/PG 空表 SQL：database/reference/mestest_smd_area_shift_source_ddl.sql、mestest_smd_area_shift_create.sql，表為 TBLSMDAREASHIFT、TBLSMDAREAOPERATOR。先比對 YMES schema；只對缺漏新增 migration。
+- 實作班別/人員 API、DataStamp CAS、以 transaction 同步 Operator 明細、複製班別、刪除主從資料、同部門有效人員驗證及舊 ChkAreaShiftLoginState 規則（tblWIPAreaOperatorState 有登入即拒絕修改）。當來源 DataStamp 為 NULL，API 接收 `dataStamp=0&dataStampIsNull=true` 並以 `IS NULL` CAS；有值時則比較該值。
+- SD104 layout API 仍未完成；SD108 首頁依既有 GET /api/smd/areas/{areaNo}/layout 讀配置。另需 BaseArea lookup 與 shift-context/shift-options API。完整端點與 DTO 見 SD108 規格。
+- WIP 即時狀態與歷史由既有 WP_AreaOperatorState/WP_AreaOperatorLog 提供；補查 YMES WIP API 後沿用或實作 GET /api/wip/areas/{areaNo}/operator-state 與 /operator-log。不要將 DEV 假資料當正式狀態。
+
+## SMD SD109 工位基本資料（公司端 UI handoff）
+
+- 公司端已新增 Development Vue 頁與規格：docs/modules/SMD/工位基本資料.md、web/src/components/PositionBasisMaster.vue。Production 不使用 localStorage。
+- Oracle TBLSMDPDLINEPOSITIONBASIS 的來源 DDL/PG 空表 SQL 已加入 reference；先比對實際 YMES schema，缺漏/預設差異才新增 migration。
+- 實作複合鍵 (PDLineNo,PositionNo) GET/POST/PUT/DELETE、DataStamp CAS、audit，並驗證 PDLineNo 為已核准一般作業區（AreaClass=0、AreaType=0、IssueState=2）。DataStamp 為 NULL 時按 `dataStamp=0&dataStampIsNull=true` 以 `IS NULL` CAS；API 路徑/DTO 見 SD109 規格。
+- eSOP 選項由 Execute_eSOP 系統參數控制；瀏覽器不可直接呼叫 eSOP，請由 API 使用現有 ERP/EAI 設定代理 station.get。
+- first-phase CREATE SQL 已修正 CreateDate DEFAULT LOCALTIMESTAMP NOT NULL、DataStamp DEFAULT 0；家用端實際 schema 仍須用 migration 比對與修正，不要重跑 bootstrap。
+
+家用端完成後更新本檔與兩份模組規格，部署 API/schema，再通知公司端 pull 進行 Production 對接。

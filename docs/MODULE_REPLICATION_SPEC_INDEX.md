@@ -70,7 +70,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | ENT | 外包商基本資料 ET201 DEV 雙 Grid 頁面 | [外包商基本資料規格](modules/ENT/外包商基本資料.md)；兩張 Oracle 來源 DDL/PG 空表 CREATE SQL 已建立 | YMES schema 比對、雙表 CRUD/交易與 Issue/Job 核准 API 待家用端 |
 | ENT | 外包項目設定 ET202 DEV 單 Grid 頁面 | [外包項目設定規格](modules/ENT/外包項目設定.md)；Oracle 來源 DDL/PG 空表 CREATE SQL 已建立 | YMES schema 比對、CRUD/DataStamp 與已核准外包流程查找 API 待家用端 |
 | EQP | 設備設定七項 DEV 頁面 | 設備設定功能規格已分頁；多張設備表已查 DDL | 待逐功能完成 |
-| SMD | SD101 工廠、SD103 儲位、SD104 區域、SD105 區域庫房、SD106 過帳電腦之區域、SD107 生產線別 DEV 頁面；SMD 第一層三層選單列出 8 個功能 | [SD101](modules/SMD/工廠基本資料.md)、[SD103](modules/SMD/儲位基本資料.md)、[SD104](modules/SMD/區域基本資料.md)、[SD105](modules/SMD/區域庫房基本設定.md)、[SD106](modules/SMD/過帳電腦之區域.md)、[SD107](modules/SMD/生產線別基本資料.md)；相關 Oracle DDL/PG 空表 CREATE 已交付 | SD101、SD103–SD107 API/schema 待家用端；SD108–SD109 UI 待逐頁復刻 |
+| SMD | SD101 工廠、SD103 儲位、SD104 區域、SD105 區域庫房、SD106 過帳電腦之區域、SD107 生產線別、SD108 區域設備狀態監控、SD109 工位基本資料 DEV 頁面；SMD 第一層三層選單列出 8 個功能 | [SD101](modules/SMD/工廠基本資料.md)、[SD103](modules/SMD/儲位基本資料.md)、[SD104](modules/SMD/區域基本資料.md)、[SD105](modules/SMD/區域庫房基本設定.md)、[SD106](modules/SMD/過帳電腦之區域.md)、[SD107](modules/SMD/生產線別基本資料.md)、[SD108](modules/SMD/設備狀態監控_區域.md)、[SD109](modules/SMD/工位基本資料.md)；來源 Oracle DDL 與 PostgreSQL 空表 CREATE 已交付 | SD101、SD103–SD109 Production API/schema 待家用端 |
 | OP | 作業站主檔及簡化 DEV 子功能 | [作業站主檔規格](modules/OP/作業站主檔.md)；18 張作業站相關表來源 DDL/CREATE SQL 已交付 | 待補子功能 API |
 | MTL | 物料主檔及簡化 DEV 子功能 | [物料主檔規格](modules/MTL/物料主檔.md)、[物料資料匯入](modules/MTL/物料資料匯入.md)；8 張來源表 DDL/CREATE SQL 已交付 | 主檔/API 部分完成；功能仍待逐項復刻 |
 | PRS | 流程主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
