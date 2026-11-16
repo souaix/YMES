@@ -112,3 +112,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 載具主表 DataStamp 為 nullable 且 DEFAULT 0；IssueState DEFAULT 0 NOT NULL。WIPCarrierState 主鍵為 CarrierNo；FactoryBasis IssueState DEFAULT 0 NOT NULL，DataStamp DEFAULT 0 nullable。三表均只有 PK unique index，沒有 FK。
 - Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 已保存於 database/reference/mestest_carrier_basis_source_ddl.sql、mestest_carrier_basis_create.sql、mestest_carrier_basis_dependencies_source_ddl.sql、mestest_carrier_basis_dependencies_create.sql。同步修正 first-phase CREATE SQL 對這些欄位的預設值，移除未經來源確認的欄位推測註解。
 - 本次僅查結構及系統設定，不讀取 MES 業務資料，不在 Oracle 執行 DDL；IP、帳號、密碼與 SID 仍只留在本機受保護設定。
+
+### 更新 2026-11-16：EP401 設備參數資料
+
+- 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀查得 `MESTEST.TBLEQPRECIPEBASIS`、`TBLEQPRECIPEDETAIL` 的 DBMS_METADATA DDL、欄位、NOT NULL/default、PK、索引與 FK 字典；另查 TBLSYSVALUELIST 的 Type 系統選項。沒有查 MES 業務資料或在 Oracle 執行 DDL。
+- 兩張表各有一個 PK unique index 與一個額外 non-unique index，沒有 Oracle FK。Oracle 原始 DDL 與 PostgreSQL 空表 CREATE SQL 為 `database/reference/mestest_equipment_recipe_source_ddl.sql`、`mestest_equipment_recipe_create.sql`；first-phase bootstrap 已依正式 DDL 校正。
+- 查詢時明確啟動 `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`；Codex 終端預設 PowerShell 7/.NET 10 不相容於本機舊版 ODP.NET 使用的 BinaryFormatter。連線值仍由受保護附件提供，不在終端、Markdown 或 Git 記錄。

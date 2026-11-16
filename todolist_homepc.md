@@ -356,3 +356,24 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 7. 提供 GET /api/master-data/factories?issueState=2，從 ymes.tblsmdfactorybasis 回傳 FactoryNo/FactoryName/Description；檢查 ymes_app 唯讀權限。
 8. EP302 的 GET /api/equipment/carrier-types 增加可選 carrierCategory 篩選；EP303 Type picker 傳 issueState=2 和 carrierCategory。現有狀態列仍由 Vue 前端即時切換。
 9. 三張表比對/migration、options、CRUD/簽核完成後更新規格/API 文件、本待辦與資料庫紀錄，再部署並通知公司端 pull 對接。公司端尚未做瀏覽器人工驗收。
+
+## 設備參數資料 EP401（公司端 UI、規格與 Oracle DDL 已交付）
+
+先讀 `docs/modules/EQP/設備設定/設備參數資料.md`、`docs/DATABASE_CONNECTION.md` 與兩份 DDL。此功能使用 `TBLEQPRECIPEBASIS`、`TBLEQPRECIPEDETAIL`，Oracle DDL 由公司電腦 PowerShell 5.1 + ODP.NET 直連唯讀取得；未匯出 MES 業務資料。
+
+### Oracle/PG schema
+
+- Oracle 原始 DDL：`database/reference/mestest_equipment_recipe_source_ddl.sql`。
+- PostgreSQL 空表 CREATE SQL：`database/reference/mestest_equipment_recipe_create.sql`；`database/reference/mestest_first_phase_create_tables.sql` 已修正相關 bootstrap block。
+- 主檔 PK `(recipegroup,recipeversion)`、非唯一索引 `(recipegroup,curversion)`；明細 PK `(recipegroup,recipeversion,recipeno)`、非唯一索引 `(recipegroup,recipeno)`。來源無 FK，主檔刪除須 API 交易刪除明細再刪主檔。
+- DEFAULT/NULL、完整欄位與 Type 值說明見功能規格及 CREATE SQL。執行前逐欄比較 YMES 實際 schema/migrations；缺表才新增 forward migration，保留既有 YMES 額外欄位。
+
+### API/schema 待辦
+
+1. 實作 GET/POST/PUT/DELETE `/api/equipment/recipes`、簽核與 copy/version endpoint；欄位驗證、DataStamp compare-and-swap、稽核欄位由登入上下文/伺服器時間取得。
+2. 實作每個 `(RecipeGroup,RecipeVersion)` 的 Detail GET/POST/PUT/DELETE。RecipeNo 唯一；只有父主檔 IssueState=0 可維護明細；主檔刪除與明細刪除同交易。
+3. 核准 IssueNo=`RECIPE BASIS`：核對 YMES 簽核工作/明細，支援直接核准與 Pending/核准/退回。核准時同一 RecipeGroup 只能有一個 CurVersion=1；Pending 時保持舊版 current，核准 SQL 完成才切換。
+4. COPY/VERSION 沿用 wsEQP.CopyRecipe：只複製 RecipeNo、RecipeValue、Sequence、Description；Type、StdValue、Maximum、Minimum、Creator、CreateDate 不複製（NULL）。Version 使用來源選取版本+1，不以「最大版本+1」註解推測。
+5. Recipe No picker 使用既有 `TBLSYSELEMENTBASIS`，提供 `GET /api/system/elements?elementType=9` 回傳 ElementNo/Description/DefaultValue/ElementSequence；不要建立重複元素表。
+6. Type options 經 MESTEST TBLSYSVALUELIST 查證：-1 NONE、0 TYPEVALUE、1 RANGE；Production DTO/畫面使用明確標籤。
+7. 授予 `ymes_app` 最小必要權限，完成 migration/API/簽核/併發驗證後更新規格並部署，再通知公司端 pull 對接 Production。

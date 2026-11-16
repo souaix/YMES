@@ -1096,64 +1096,48 @@ COMMENT ON COLUMN tbleqpaccstatebasis.createdate IS 'Creation timestamp';
 COMMENT ON COLUMN tbleqpaccstatebasis.reviser IS 'Last reviser user number';
 COMMENT ON COLUMN tbleqpaccstatebasis.revisedate IS 'Last revision timestamp';
 CREATE TABLE IF NOT EXISTS tbleqprecipebasis (
-    recipegroup varchar(50) NOT NULL,
-    recipeversion numeric(2,0) NOT NULL,
+    recipegroup varchar(50) CONSTRAINT n_tbleqprecipebasis_01 NOT NULL,
+    recipeversion numeric(2,0) DEFAULT 0 CONSTRAINT n_tbleqprecipebasis_02 NOT NULL,
     description varchar(255),
     creator varchar(10),
     createdate timestamp without time zone,
-    issuestate numeric(1,0),
-    curversion numeric(1,0) NOT NULL,
-    datastamp numeric(11,0),
+    issuestate numeric(1,0) DEFAULT 0,
+    curversion numeric(1,0) DEFAULT 0 CONSTRAINT n_tbleqprecipebasis_03 NOT NULL,
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
     CONSTRAINT pk_tbleqprecipebasis PRIMARY KEY (recipegroup, recipeversion)
 );
+CREATE INDEX IF NOT EXISTS i_tbleqprecipebasis_01 ON tbleqprecipebasis (recipegroup, curversion);
 COMMENT ON TABLE tbleqprecipebasis IS 'MES master data; Oracle source: MESTEST.TBLEQPRECIPEBASIS';
-COMMENT ON COLUMN tbleqprecipebasis.recipegroup IS '群組（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipebasis.recipeversion IS '版本（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipebasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipebasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipebasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipebasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipebasis.curversion IS '版本（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipebasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipebasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipebasis.revisedate IS '修改時間（推測，請依業務確認）';
+COMMENT ON COLUMN tbleqprecipebasis.recipegroup IS 'Recipe group identifier';
+COMMENT ON COLUMN tbleqprecipebasis.recipeversion IS 'Recipe version';
+COMMENT ON COLUMN tbleqprecipebasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';
+COMMENT ON COLUMN tbleqprecipebasis.curversion IS 'Current approved version flag';
+COMMENT ON COLUMN tbleqprecipebasis.datastamp IS 'Optimistic concurrency stamp';
 
 CREATE TABLE IF NOT EXISTS tbleqprecipedetail (
-    recipegroup varchar(50) NOT NULL,
-    recipeversion numeric(2,0) NOT NULL,
-    recipeno varchar(20) NOT NULL,
-    recipevalue varchar(255) NOT NULL,
-    sequence numeric(2,0),
+    recipegroup varchar(50) CONSTRAINT n_bleqprecipedetail_01 NOT NULL,
+    recipeversion numeric(2,0) DEFAULT 0 CONSTRAINT n_bleqprecipedetail_02 NOT NULL,
+    recipeno varchar(20) CONSTRAINT n_bleqprecipedetail_03 NOT NULL,
+    recipevalue varchar(255) CONSTRAINT n_bleqprecipedetail_04 NOT NULL,
+    sequence numeric(2,0) DEFAULT 0,
     description varchar(255),
     type numeric(1,0),
     stdvalue numeric(8,4),
     maximum numeric(8,4),
     minimum numeric(8,4),
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     creator varchar(10),
     createdate timestamp without time zone,
     reviser varchar(10),
     revisedate timestamp without time zone,
     CONSTRAINT pk_tbleqprecipedetail PRIMARY KEY (recipegroup, recipeversion, recipeno)
 );
+CREATE INDEX IF NOT EXISTS i_tbleqprecipedetail_01 ON tbleqprecipedetail (recipegroup, recipeno);
 COMMENT ON TABLE tbleqprecipedetail IS 'MES master data; Oracle source: MESTEST.TBLEQPRECIPEDETAIL';
-COMMENT ON COLUMN tbleqprecipedetail.recipegroup IS '群組（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.recipeversion IS '版本（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.recipeno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.recipevalue IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.sequence IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.type IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.stdvalue IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.maximum IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.minimum IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqprecipedetail.revisedate IS '修改時間（推測，請依業務確認）';
+COMMENT ON COLUMN tbleqprecipedetail.type IS 'Recipe value type: -1 none, 0 value, 1 range';
+COMMENT ON COLUMN tbleqprecipedetail.datastamp IS 'Optimistic concurrency stamp';
 
 CREATE TABLE IF NOT EXISTS tbleqpparameterbasis (
     equipmentno varchar(50) CONSTRAINT n_tbleqpparameterbasis_01 NOT NULL,

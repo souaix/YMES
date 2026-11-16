@@ -6,6 +6,7 @@ import EquipmentMaster from './components/EquipmentMaster.vue'
 import EquipmentCarrierCategoryMaster from './components/EquipmentCarrierCategoryMaster.vue'
 import EquipmentCarrierTypeMaster from './components/EquipmentCarrierTypeMaster.vue'
 import EquipmentCarrierBasisMaster from './components/EquipmentCarrierBasisMaster.vue'
+import EquipmentRecipeBasisMaster from './components/EquipmentRecipeBasisMaster.vue'
 import EquipmentGroupMaster from './components/EquipmentGroupMaster.vue'
 import EquipmentStateMaster from './components/EquipmentStateMaster.vue'
 import EquipmentQCListMaster from './components/EquipmentQCListMaster.vue'
@@ -38,6 +39,7 @@ const equipmentCarrierCategoryRoute = `${appBasePath}/Equipment/CarrierCategorie
 const equipmentCarrierTypeRoute = `${appBasePath}/Equipment/CarrierTypes`
 
 const equipmentCarrierBasisRoute = appBasePath + '/Equipment/CarrierBasis'
+const equipmentRecipeBasisRoute = appBasePath + '/Equipment/Recipes'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -113,7 +115,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'equipment-group', label: '設備群組資料', shortLabel: '群', moduleNo: 'EQP' },
       { id: 'equipment-state', label: '設備狀態設定', shortLabel: '狀', moduleNo: 'EQP' },
       { id: 'equipment-inspection', label: '設備點檢表設定', shortLabel: '檢', moduleNo: 'EQP' },
-    ] }, { id: 'equipment-carrier-menu', label: '載具', shortLabel: '載', moduleNo: 'EQP', children: [{ id: 'equipment-carrier-categories', label: '載具分類資料', shortLabel: '分', functionNo: 'CARRIER CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-carrier-types', label: '載具類別資料', shortLabel: '類', functionNo: 'CARRIER TYPE', moduleNo: 'EQP' }, { id: 'equipment-carrier-basis', label: '載具基本資料', shortLabel: '主', functionNo: 'CARRIER BASIS', moduleNo: 'EQP' }] }, { id: 'equipment-accessory-menu', label: '配件', shortLabel: '配', moduleNo: 'EQP', children: [{ id: 'equipment-accessory-categories', label: '配件分類資料', shortLabel: '分', functionNo: 'ACC CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-accessory-types', label: '配件類別資料', shortLabel: '類', functionNo: 'ACC TYPE', moduleNo: 'EQP' }, { id: 'equipment-accessory-basis', label: '配件基本資料', shortLabel: '主', functionNo: 'ACC BASIS', moduleNo: 'EQP' }, { id: 'equipment-accessory-category-states', label: '配件分類狀態定義設定', shortLabel: '狀', functionNo: 'ACC CATEGORY STATE', moduleNo: 'EQP' }, { id: 'equipment-accessory-state-basis', label: '配件狀態設定', shortLabel: '狀', functionNo: 'EQP ACC STATE', moduleNo: 'EQP' }] }],
+    ] }, { id: 'equipment-carrier-menu', label: '載具', shortLabel: '載', moduleNo: 'EQP', children: [{ id: 'equipment-carrier-categories', label: '載具分類資料', shortLabel: '分', functionNo: 'CARRIER CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-carrier-types', label: '載具類別資料', shortLabel: '類', functionNo: 'CARRIER TYPE', moduleNo: 'EQP' }, { id: 'equipment-carrier-basis', label: '載具基本資料', shortLabel: '主', functionNo: 'CARRIER BASIS', moduleNo: 'EQP' }] }, { id: 'equipment-accessory-menu', label: '配件', shortLabel: '配', moduleNo: 'EQP', children: [{ id: 'equipment-accessory-categories', label: '配件分類資料', shortLabel: '分', functionNo: 'ACC CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-accessory-types', label: '配件類別資料', shortLabel: '類', functionNo: 'ACC TYPE', moduleNo: 'EQP' }, { id: 'equipment-accessory-basis', label: '配件基本資料', shortLabel: '主', functionNo: 'ACC BASIS', moduleNo: 'EQP' }, { id: 'equipment-accessory-category-states', label: '配件分類狀態定義設定', shortLabel: '狀', functionNo: 'ACC CATEGORY STATE', moduleNo: 'EQP' }, { id: 'equipment-accessory-state-basis', label: '配件狀態設定', shortLabel: '狀', functionNo: 'EQP ACC STATE', moduleNo: 'EQP' }] },
+    { id: 'equipment-recipe-menu', label: '參數', shortLabel: '參', moduleNo: 'EQP', children: [{ id: 'equipment-recipe-basis', label: '設備參數資料', shortLabel: '參', functionNo: 'RECIPE BASIS', moduleNo: 'EQP' }] }],
   },
   {
     id: 'operation-data',
@@ -163,6 +166,8 @@ const menuRoutes: Record<string, string> = {
   'function:EQP:CARRIER TYPE': equipmentCarrierTypeRoute,
   'equipment-carrier-basis': equipmentCarrierBasisRoute,
   'function:EQP:CARRIER BASIS': equipmentCarrierBasisRoute,
+  'equipment-recipe-basis': equipmentRecipeBasisRoute,
+  'function:EQP:RECIPE BASIS': equipmentRecipeBasisRoute,
   'equipment-accessory-categories': equipmentAccessoryCategoryRoute,
   'equipment-accessory-category-states': equipmentAccessoryCategoryStateRoute,
   'equipment-accessory-types': equipmentAccessoryTypeRoute,
@@ -184,6 +189,7 @@ const functionRoutes: Record<string, string> = {
   'CARRIER CATEGORY': equipmentCarrierCategoryRoute,
   'CARRIER TYPE': equipmentCarrierTypeRoute,
   'CARRIER BASIS': equipmentCarrierBasisRoute,
+  'RECIPE BASIS': equipmentRecipeBasisRoute,
   'EQP STATE': equipmentStateRoute,
   'ACC CATEGORY': equipmentAccessoryCategoryRoute,
   'ACC CATEGORY STATE': equipmentAccessoryCategoryStateRoute,
@@ -244,6 +250,7 @@ const isEquipmentTypePage = computed(() => activeMasterKey.value === 'equipment-
 const isCarrierCategoryPage = computed(() => activeMasterKey.value === 'equipment-carrier-categories' || activeMasterKey.value === 'function:EQP:CARRIER CATEGORY')
 const isCarrierTypePage = computed(() => activeMasterKey.value === 'equipment-carrier-types' || activeMasterKey.value === 'function:EQP:CARRIER TYPE')
 const isCarrierBasisPage = computed(() => activeMasterKey.value === 'equipment-carrier-basis' || activeMasterKey.value === 'function:EQP:CARRIER BASIS')
+const isRecipeBasisPage = computed(() => activeMasterKey.value === 'equipment-recipe-basis' || activeMasterKey.value === 'function:EQP:RECIPE BASIS')
 const isAccessoryCategoryPage = computed(() => activeMasterKey.value === 'equipment-accessory-categories' || activeMasterKey.value === 'function:EQP:ACC CATEGORY')
 const isAccessoryCategoryStatePage = computed(() => activeMasterKey.value === 'equipment-accessory-category-states' || activeMasterKey.value === 'function:EQP:ACC CATEGORY STATE')
 const isAccessoryTypePage = computed(() => activeMasterKey.value === 'equipment-accessory-types' || activeMasterKey.value === 'function:EQP:ACC TYPE')
@@ -873,6 +880,13 @@ async function signOut(): Promise<void> {
         />
         <EquipmentCarrierBasisMaster
           v-else-if="isCarrierBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+        />
+        <EquipmentRecipeBasisMaster
+          v-else-if="isRecipeBasisPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
