@@ -623,6 +623,10 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 7. 公司端 Development 使用 localStorage 假資料；Production 只呼叫 API。API/schema 完成、部署並提供可用環境後，通知公司端 pull 最新版對接驗收。
 ## SMD SD107 生產線別基本資料（公司端 DEV 已完成，家用端接手 API/schema）
 
+- [x] 2026-11-17 遠端 schema 核對與 migration：`TBLSMDPDLINEBASIS` 已存在，欄位型態、長度、NULL 與 PDLineNo PK 符合來源；只補 PDLineStatus、CreateDate、DataStamp 來源 DEFAULT 與本功能 CRUD 權限，未重建表。Migration 前備份 `/opt/ymes/backups/ymes_before_0018_smd_pdline_20261117.dump`，`pg_restore --list` 驗證通過。
+- [x] 完成並部署 GET/POST/PUT/DELETE `/api/smd/pd-line-basis`，全狀態查詢、名稱/說明驗證、伺服器 audit、CAS、狀態 2 停用及舊規則狀態 0/1/-1 實體刪除。
+- [ ] 正式 PDLineStatus ValueList 與共用 Issue/Job 核准結構尚未交付；目前 `/options` 與 `/approve` 分別回 503 fail closed。收到公司端核實項目前，不推定正式標籤、不以 0→2 假核准。
+
 先讀 docs/modules/SMD/生產線別基本資料.md。Vue 頁為 /YMES/SMD/ProductionLines，FunctionNo=SMD PDLINE BASIS；公司端以本機假資料完成操作，不代表 Production API 已存在。
 
 ### Schema / migration

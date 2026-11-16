@@ -1,0 +1,10 @@
+BEGIN;
+
+REVOKE SELECT, INSERT, UPDATE, DELETE ON TABLE "YMES".tblsmdpdlinebasis FROM ymes_app;
+
+ALTER TABLE "YMES".tblsmdpdlinebasis
+    ALTER COLUMN pdlinestatus DROP DEFAULT,
+    ALTER COLUMN createdate DROP DEFAULT,
+    ALTER COLUMN datastamp DROP DEFAULT;
+
+COMMIT;

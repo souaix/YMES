@@ -7,6 +7,8 @@ namespace MES.Api.Data;
 
 public sealed class PostgresSmdRepository(NpgsqlDataSource dataSource)
 {
+    private const string PdLineColumns = "pdlineno,pdlinename,pdlinestatus::int,issuestate::int,description,creator,createdate,reviser,revisedate,datastamp::bigint";
+
     public IReadOnlyList<SmdComputerAreaDto> ListComputerAreas(string? computerNo, string? factoryNo)
     {
         using var command = dataSource.CreateCommand("""
@@ -62,6 +64,200 @@ public sealed class PostgresSmdRepository(NpgsqlDataSource dataSource)
             rows.Add(new SmdAreaOptionDto(reader.GetString(0), reader.GetString(1), NullableString(reader, 2), reader.GetInt32(3), reader.GetInt32(4), reader.GetString(5)));
         return rows;
     }
+
+    public IReadOnlyList<SmdPdLineBasisDto> ListPdLineBasis(string? pdLineNo)
+    {
+        using var command = dataSource.CreateCommand($"""
+            SELECT {PdLineColumns}
+            FROM "YMES".tblsmdpdlinebasis
+            WHERE (@pdLineNo IS NULL OR pdlineno ILIKE '%' || @pdLineNo || '%')
+            ORDER BY pdlineno;
+            """);
+        AddVarchar(command, "pdLineNo", OptionalFilter(pdLineNo));
+        using var reader = command.ExecuteReader();
+        var rows = new List<SmdPdLineBasisDto>();
+        while (reader.Read()) rows.Add(MapPdLine(reader));
+        return rows;
+    }
+
+    public SmdPdLineBasisOptionsDto PdLineBasisOptions()
+    {
+        // The official TBLSYSVALUELIST labels have not yet been handed off by
+        // the Oracle source PC. Do not return guessed labels as Production data.
+        throw new EquipmentRuleException(503, "生產線狀態正式選項尚未由 MES 來源端交付，請完成 ValueList 核對後再使用此選項 API。");
+    }
+
+    public SmdPdLineBasisDto CreatePdLineBasis(SmdPdLineBasisWriteRequest request, string actor)
+    {
+        var values = ValidatePdLineBasis(request, actor);
+        using var connection = dataSource.OpenConnection();
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            using var insert = new NpgsqlCommand("""
+                INSERT INTO "YMES".tblsmdpdlinebasis
+                    (pdlineno,pdlinename,pdlinestatus,issuestate,description,creator,createdate,datastamp)
+                VALUES(@pdLineNo,@pdLineName,@pdLineStatus,0,@description,@actor,now(),0);
+                """, connection, transaction);
+            AddVarchar(insert, "pdLineNo", values.PdLineNo);
+            AddVarchar(insert, "pdLineName", values.PdLineName);
+            AddNumeric(insert, "pdLineStatus", (int?)values.PdLineStatus);
+            AddVarchar(insert, "description", values.Description);
+            AddVarchar(insert, "actor", actor.Trim());
+            insert.ExecuteNonQuery();
+            transaction.Commit();
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            throw new EquipmentRuleException(409, $"生產線別編號 {values.PdLineNo} 已存在。");
+        }
+        catch (PostgresException ex) when (IsConcurrencyFailure(ex))
+        {
+            throw new EquipmentRuleException(409, "生產線別資料已同時變更，請重新載入後再操作。");
+        }
+        return GetPdLineBasis(values.PdLineNo);
+    }
+
+    public SmdPdLineBasisDto UpdatePdLineBasis(string pdLineNo, int issueState, long dataStamp, SmdPdLineBasisWriteRequest request, string actor)
+    {
+        var no = Required(pdLineNo, "PDLineNo", 50).ToUpperInvariant();
+        if (!string.Equals(no, request.PdLineNo?.Trim(), StringComparison.OrdinalIgnoreCase))
+            throw new EquipmentRuleException(400, "網址與資料內容的 PDLineNo 必須相同。");
+        if (issueState != 0) throw new EquipmentRuleException(409, "只有未簽核的生產線別可以修改。");
+        var values = ValidatePdLineBasis(request, actor);
+        using var connection = dataSource.OpenConnection();
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        try
+        {
+            var current = GetPdLineBasis(connection, transaction, no, forUpdate: true);
+            if (current is null) throw PdLineNotFound(no);
+            EnsurePdLineVersion(current, issueState, dataStamp);
+            using var update = new NpgsqlCommand("""
+                UPDATE "YMES".tblsmdpdlinebasis
+                SET pdlinename=@pdLineName,pdlinestatus=@pdLineStatus,
+                    description=COALESCE(@description,description),
+                    reviser=@actor,revisedate=now(),datastamp=COALESCE(datastamp,0)+1
+                WHERE upper(pdlineno)=upper(@pdLineNo) AND issuestate=0 AND COALESCE(datastamp,0)=@dataStamp;
+                """, connection, transaction);
+            AddVarchar(update, "pdLineNo", no);
+            AddVarchar(update, "pdLineName", values.PdLineName);
+            AddNumeric(update, "pdLineStatus", (int?)values.PdLineStatus);
+            AddVarchar(update, "description", values.Description);
+            AddVarchar(update, "actor", actor.Trim());
+            AddNumeric(update, "dataStamp", dataStamp);
+            if (update.ExecuteNonQuery() == 0)
+                throw new EquipmentRuleException(409, "生產線別資料已被其他人修改，請重新載入後再儲存。");
+            transaction.Commit();
+        }
+        catch (PostgresException ex) when (IsConcurrencyFailure(ex))
+        {
+            throw new EquipmentRuleException(409, "生產線別資料已同時變更，請重新載入後再操作。");
+        }
+        return GetPdLineBasis(no);
+    }
+
+    public void DeletePdLineBasis(string pdLineNo, int issueState, long dataStamp, string actor)
+    {
+        var no = Required(pdLineNo, "PDLineNo", 50).ToUpperInvariant();
+        ValidateActor(actor);
+        using var connection = dataSource.OpenConnection();
+        using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
+        var current = GetPdLineBasis(connection, transaction, no, forUpdate: true);
+        if (current is null) throw PdLineNotFound(no);
+        EnsurePdLineVersion(current, issueState, dataStamp);
+        if (current.IssueState == 2)
+        {
+            using var retire = new NpgsqlCommand("""
+                UPDATE "YMES".tblsmdpdlinebasis
+                SET issuestate=-1,reviser=@actor,revisedate=now(),datastamp=COALESCE(datastamp,0)+1
+                WHERE upper(pdlineno)=upper(@pdLineNo) AND issuestate=2 AND COALESCE(datastamp,0)=@dataStamp;
+                """, connection, transaction);
+            AddVarchar(retire, "pdLineNo", no);
+            AddVarchar(retire, "actor", actor.Trim());
+            AddNumeric(retire, "dataStamp", dataStamp);
+            if (retire.ExecuteNonQuery() == 0)
+                throw new EquipmentRuleException(409, "生產線別資料已被其他人修改，請重新載入後再操作。");
+        }
+        else if (current.IssueState is 0 or 1 or -1)
+        {
+            using var delete = new NpgsqlCommand("DELETE FROM \"YMES\".tblsmdpdlinebasis WHERE upper(pdlineno)=upper(@pdLineNo) AND issuestate=@issueState AND COALESCE(datastamp,0)=@dataStamp;", connection, transaction);
+            AddVarchar(delete, "pdLineNo", no);
+            AddNumeric(delete, "issueState", (int?)current.IssueState);
+            AddNumeric(delete, "dataStamp", dataStamp);
+            if (delete.ExecuteNonQuery() == 0)
+                throw new EquipmentRuleException(409, "生產線別資料已被其他人修改，請重新載入後再操作。");
+        }
+        else throw new EquipmentRuleException(409, "目前簽核狀態不允許刪除。");
+        transaction.Commit();
+    }
+
+    public SmdPdLineBasisDto ApprovePdLineBasis(string pdLineNo, int issueState, long dataStamp, string actor)
+    {
+        _ = Required(pdLineNo, "PDLineNo", 50);
+        _ = actor;
+        if (issueState != 0) throw new EquipmentRuleException(409, "只有未簽核的生產線別可以核准。");
+        _ = dataStamp;
+        throw new EquipmentRuleException(503, "YMES 共用 Issue/Job 簽核表與流程尚未建立；目前停用 Production 核准，避免直接變更簽核狀態。");
+    }
+
+    private SmdPdLineBasisDto GetPdLineBasis(string pdLineNo)
+    {
+        using var command = dataSource.CreateCommand($"""
+            SELECT {PdLineColumns}
+            FROM "YMES".tblsmdpdlinebasis
+            WHERE upper(pdlineno)=upper(@pdLineNo)
+            LIMIT 1;
+            """);
+        AddVarchar(command, "pdLineNo", pdLineNo.Trim());
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? MapPdLine(reader) : throw PdLineNotFound(pdLineNo);
+    }
+
+    private static SmdPdLineBasisDto? GetPdLineBasis(NpgsqlConnection connection, NpgsqlTransaction transaction, string pdLineNo, bool forUpdate)
+    {
+        using var command = new NpgsqlCommand($"""
+            SELECT {PdLineColumns}
+            FROM "YMES".tblsmdpdlinebasis
+            WHERE upper(pdlineno)=upper(@pdLineNo)
+            LIMIT 1{(forUpdate ? " FOR UPDATE" : "")};
+            """, connection, transaction);
+        AddVarchar(command, "pdLineNo", pdLineNo.Trim());
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? MapPdLine(reader) : null;
+    }
+
+    private static SmdPdLineBasisDto MapPdLine(NpgsqlDataReader reader) => new()
+    {
+        PdLineNo = reader.GetString(0),
+        PdLineName = reader.GetString(1),
+        PdLineStatus = reader.GetInt32(2),
+        IssueState = reader.GetInt32(3),
+        Description = NullableString(reader, 4),
+        Creator = NullableString(reader, 5),
+        CreateDate = reader.IsDBNull(6) ? null : reader.GetDateTime(6),
+        Reviser = NullableString(reader, 7),
+        ReviseDate = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
+        DataStamp = reader.IsDBNull(9) ? null : reader.GetInt64(9),
+    };
+
+    private static (string PdLineNo, string PdLineName, int PdLineStatus, string? Description) ValidatePdLineBasis(SmdPdLineBasisWriteRequest request, string actor)
+    {
+        var no = Required(request.PdLineNo, "PDLineNo", 50).ToUpperInvariant();
+        var name = Required(request.PdLineName, "PDLineName", 50);
+        ValidateActor(actor);
+        if (request.PdLineStatus is not (0 or 1 or 2))
+            throw new EquipmentRuleException(400, "PDLineStatus 僅接受 0、1、2。");
+        var description = string.IsNullOrWhiteSpace(request.Description) ? null : Required(request.Description, "Description", 255);
+        return (no, name, request.PdLineStatus.Value, description);
+    }
+
+    private static void EnsurePdLineVersion(SmdPdLineBasisDto current, int issueState, long dataStamp)
+    {
+        if (current.IssueState != issueState || (current.DataStamp ?? 0) != dataStamp)
+            throw new EquipmentRuleException(409, "生產線別狀態或資料版本已變更，請重新載入後再操作。");
+    }
+
+    private static EquipmentRuleException PdLineNotFound(string pdLineNo) => new(404, $"找不到生產線別 {pdLineNo}。");
 
     public SmdComputerAreaDto CreateComputerArea(SmdComputerAreaWriteRequest request, string actor)
     {
