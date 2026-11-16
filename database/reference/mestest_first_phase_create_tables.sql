@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS tblsmdareabasis (
     backgroundimage bytea,
     reviser varchar(10),
     revisedate timestamp without time zone,
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     CONSTRAINT pk_tblsmdareabasis PRIMARY KEY (areano)
 );
 COMMENT ON TABLE tblsmdareabasis IS 'MES master data; Oracle source: MESTEST.TBLSMDAREABASIS';
@@ -66,17 +66,10 @@ CREATE TABLE IF NOT EXISTS tblsmdcomputerareabasis (
     createdate timestamp without time zone,
     reviser varchar(10),
     revisedate timestamp without time zone,
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     CONSTRAINT pk_tblsmdcomputerareabasis PRIMARY KEY (computerno, factoryno)
 );
 COMMENT ON TABLE tblsmdcomputerareabasis IS 'MES master data; Oracle source: MESTEST.TBLSMDCOMPUTERAREABASIS';
-COMMENT ON COLUMN tblsmdcomputerareabasis.computerno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdcomputerareabasis.factoryno IS '廠別（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdcomputerareabasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdcomputerareabasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdcomputerareabasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdcomputerareabasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdcomputerareabasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
 
 CREATE TABLE IF NOT EXISTS tblsmdcomputerareadetail (
     computerno varchar(20) NOT NULL,
@@ -85,9 +78,6 @@ CREATE TABLE IF NOT EXISTS tblsmdcomputerareadetail (
     CONSTRAINT pk_tblsmdcomputerareadetail PRIMARY KEY (computerno, factoryno, areano)
 );
 COMMENT ON TABLE tblsmdcomputerareadetail IS 'MES master data; Oracle source: MESTEST.TBLSMDCOMPUTERAREADETAIL';
-COMMENT ON COLUMN tblsmdcomputerareadetail.computerno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdcomputerareadetail.factoryno IS '廠別（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdcomputerareadetail.areano IS '區域（推測，請依業務確認）';
 
 CREATE TABLE IF NOT EXISTS tblsmdpdlinebasis (
     pdlineno varchar(50) NOT NULL,

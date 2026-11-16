@@ -44,7 +44,8 @@
 - [x] 新增 Vue DEV 頁 `/YMES/SMD/AreaInventories`、Area/Inventory 查找彈窗、Default/重複驗證、Apply、稽核、localStorage 假資料及 `AREA INV MAP` 路由。
 - [x] 新增 `docs/modules/SMD/區域庫房基本設定.md`，更新 SMD 功能索引、資料庫查詢紀錄與家用端 API/schema handoff。
 - [ ] 尚未執行 build、test 或瀏覽器驗收；家用 API 完成後再 pull 對接。
-- [ ] 下一項依選單次序處理 SD106「過帳電腦之區域」。先讀 WinForms Form/Service/Core，再確定需查的 Oracle table DDL。
+- [x] SD106「過帳電腦之區域」已完成 WinForms Form/Service/Core 對照、Oracle DDL 直查、DEV Vue 頁及 API/CREATE SQL handoff；進度見下方 SD106 區塊。
+- [ ] 下一個尚未完成的 SMD FunctionKey 是 SD101「工廠基本資料」；依序讀 WinForms Form/Designer/Service/Core，再查實際涉及的 Oracle DDL。
 
 ## 家用電腦完成後，公司端先做
 
@@ -74,6 +75,17 @@
 - [x] **設備狀態設定來源資料已交付（2026-11-16）**：以 PowerShell 5.1 唯讀查 MESTEST 的 `TBLEQPSTATECONTROL` / `TBLEMSEQUIPMENTSTATE` 物件、欄位、PK/唯一索引、NOT NULL/default 與 DDL；查 `TBLSYSVALUELIST` 的兩組選項，並核對 `mesresource.zh-cht.resources` 繁中翻譯。來源 DDL、PG 空表 CREATE SQL 與規格已更新；家用端仍待比對引用表 schema、migration/SELECT 權限及 DELETE 完整驗收，CRUD/options API 已部署。
 
 - [x] 設備類別配件目錄已交付（2026-11-16）：已核實 MESTEST.TBLEQPACCESSORYTYPE 原始 Oracle DDL、9 欄 nullable/default、PK 唯一索引與無 FK，並建立 PostgreSQL 空表 CREATE SQL。家用端仍需比對 YMES 目標表與完成 API options。
+
+## 2026-11-16 SMD SD106 過帳電腦之區域公司端進度
+
+- [x] 開始前從 GitHub `main` 執行 `git pull --ff-only origin main`，確認沒有新提交。
+- [x] 對照 `frmComputerArea`、`frmComputerAreaDef`、wsSMD 與 clsSMDBasis，記錄主 Grid/定義 Form、查詢欄位、按鈕、工廠與區域選擇、複合鍵、Copy 與批次 Delete 行為；指出 Copy 舊 Core 只按 ComputerNo 找來源，以及 ws/Core DataStamp 簽章不一致。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從受保護連線直查 `TBLSMDCOMPUTERAREABASIS`、`TBLSMDCOMPUTERAREADETAIL` DDL、欄位 NULL/default、PK/index/FK；只查結構，未讀業務資料，未在 Oracle 執行 DDL，憑證未輸出。
+- [x] 新增 Oracle logical source DDL 與 PostgreSQL 空表 CREATE SQL；校正 first-phase reference 中 ComputerArea DataStamp DEFAULT 及 SD104 AreaBasis DataStamp DEFAULT，移除 ComputerArea 欄位推測註解。
+- [x] 新增 Vue DEV 頁 `web/src/components/ComputerAreaMaster.vue`、`/YMES/SMD/ComputerAreas` 路徑及 FunctionNo=`COMPUTER AREA`；實作查詢、多選、Add/Edit/Copy/Delete、approved Factory/Area 選擇、稽核與 Apply/Confirm。
+- [x] 新增 `docs/modules/SMD/過帳電腦之區域.md`，更新 SMD 規格索引、Oracle 連線查詢紀錄與家用端 schema/API handoff。
+- [ ] 未執行 build、test 或瀏覽器驗收；Production API/migration 待家用端完成。
+- [ ] 下一步按 FunctionKey 順序開始 SD101「工廠基本資料」。
 
 ## 結束規則
 

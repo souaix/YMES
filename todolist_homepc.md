@@ -49,6 +49,26 @@
 - wsSMD Add/Edit 呼叫傳 Creator/CreateDate/DataStamp/Reviser/ReviseDate，但本 checkout 的 clsSMDBasis 方法簽章沒有這些命名參數。新 API 需明確由伺服器產生稽核/CAS，不要假設舊 Core SQL 已寫入這些欄位。所有 API 檢查登入與 SMD 權限，`ymes_app` 只授最小 CRUD。
 - DDL 已從 2026-11-16 直接 metadata query 交付，不必重查 Oracle。schema/API/部署完成後通知公司端 pull 驗收。
 
+## SMD SD106 過帳電腦之區域（公司端 2026-11-16 已交接）
+
+先讀 `docs/modules/SMD/過帳電腦之區域.md`。公司端已完成 `/YMES/SMD/ComputerAreas` Vue DEV 頁；Production 僅呼叫 API。
+
+### Schema / migration
+
+- Oracle source logical DDL：`database/reference/mestest_smd_computer_area_source_ddl.sql`；PostgreSQL 空表 CREATE SQL：`database/reference/mestest_smd_computer_area_create.sql`。來源是公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀查詢，不需再問 Oracle 連線資訊，也不要重查。
+- `TBLSMDCOMPUTERAREABASIS` 欄位：ComputerNo varchar(20) NOT NULL、FactoryNo varchar(20) NOT NULL、Creator varchar(10)、CreateDate timestamp、Reviser varchar(10)、ReviseDate timestamp、DataStamp numeric(11,0) DEFAULT 0 nullable；PK `(ComputerNo,FactoryNo)`。
+- `TBLSMDCOMPUTERAREADETAIL` 欄位 ComputerNo/FactoryNo/AreaNo varchar(20) 均 NOT NULL；PK `(ComputerNo,FactoryNo,AreaNo)`。兩表只有 PK unique index，沒有 Oracle FK/額外 index。不要新增來源不存在的 FK/index。
+- 先逐欄比對 YMES schema、migration 及現有 API；表可能已在 first-phase schema，缺表/欄位才新增 forward migration，保留 YMES 擴充欄位。first-phase reference 已按來源補 ComputerArea DataStamp DEFAULT 0；不要把空表 SQL 當作可直接上線 migration。
+
+### API / 業務規則
+
+1. SMD API：`GET /api/smd/computer-areas?computerNo=&factoryNo=` 回傳主檔及 `areas: string[]`；`POST /api/smd/computer-areas` 新增主檔與區域明細；`PUT /api/smd/computer-areas/{computerNo}/{factoryNo}?dataStamp=` 依 CAS 更新稽核並整組替換明細；`DELETE /{computerNo}/{factoryNo}` 同交易先刪明細再刪主檔；`POST /computer-areas/copy` body `{fromComputerNo,fromFactoryNo,toComputerNo}` 以複合鍵複製。
+2. 新增/修改至少選一個 Area。Factory 必須為 IssueState=2；Area 必須屬於該 Factory 且 IssueState=2、AreaClass=0。選項可沿用 `GET /api/smd/area-basis/options` 及 `GET /api/smd/areas?factoryNo=&issueState=2&areaClass=0`。其中 `factories` 選項需含 `factoryNo, description`（並保留 SD104 使用的 `factoryName`）；WinForms 查找視窗顯示 FactoryNo/Description。所有端點驗證登入與 SMD 權限及欄位長度。
+3. Add/Copy 由 API 設 Creator/CreateDate；Edit 設 Reviser/ReviseDate/DataStamp。DataStamp nullable/default 0，CAS 要處理 NULL 並以 `COALESCE(datastamp,0)+1` 遞增。主檔與全部明細新增/修改/刪除/複製都要 transaction。
+4. 舊 Core 的 CopyComputerArea 只按 FromComputerNo 查來源，未指定 FactoryNo；舊資料表是複合 PK。新 API 以 `(fromComputerNo,fromFactoryNo)` 明確鎖定來源，拒絕重複目標鍵。
+5. wsSMD Edit 傳入 DataStamp，但本 checkout 的 `clsSMDBasis.EditComputerArea` 簽章沒有此參數，舊 Core SQL 沒有 CAS。新 API 補足 CAS/audit，不照搬舊缺漏。UI Delete 多選逐筆請求，首錯停止並回報已完成筆數。
+6. DDL 與 API 規格已交付；家用端完成 schema/migration/API 並部署後通知公司端 pull，對接 Production 驗收。
+
 ## 公司電腦目前交付
 
 - Vue 主選單以三層 Module → Menu Group → Function 呈現；正式資料 API 不得把設定分類與主檔功能壓成兩層。

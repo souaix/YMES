@@ -58,6 +58,13 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 三張表只有 PK unique index，沒有外鍵或其他索引。`TBLSMDAREABASIS.BACKGROUNDIMAGE` 是 BLOB；`TBLSMDAREABASIS.DATASTAMP`、`TBLSMDAREAINVENTORY.DATASTAMP` DEFAULT 0 但 nullable。
 - 原始 logical Oracle DDL 與 PostgreSQL 空表 CREATE SQL 已保存於 `database/reference/mestest_smd_area_basis_source_ddl.sql`、`database/reference/mestest_smd_area_basis_create.sql`。`TBLSMDAREARELATION`、`TBLSMDSMTAREAEQPMAP` 的 DDL/CREATE 沿用設備群組來源檔。只查資料字典，沒有讀 MES 業務資料，也沒有在 Oracle 執行 DDL。
 - 主表 Form/Service 與配置交易/API 待辦見 `docs/modules/SMD/區域基本資料.md`。SD105「區域庫房基本設定」沿用此處已查的 `TBLSMDAREAINVENTORY` DDL/CREATE SQL，沒有重複查詢或新增 table SQL；規格見 `docs/modules/SMD/區域庫房基本設定.md`。連線值僅使用本機受保護設定，未輸出到文件或 Git。
+
+### 更新 2026-11-16：SMD SD106 過帳電腦之區域
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護連線唯讀取得 `MESTEST.TBLSMDCOMPUTERAREABASIS`、`TBLSMDCOMPUTERAREADETAIL` DBMS_METADATA DDL，並查欄位 NULL/default、PK、索引與 FK 字典。
+- 主檔 PK `(ComputerNo,FactoryNo)`；明細 PK `(ComputerNo,FactoryNo,AreaNo)`；兩表僅有 PK unique index，沒有 FK 或額外索引。DataStamp 是 NUMBER(11,0) DEFAULT 0 nullable。
+- Oracle logical source DDL 與 PostgreSQL 空表 CREATE SQL 位於 `database/reference/mestest_smd_computer_area_source_ddl.sql`、`mestest_smd_computer_area_create.sql`。只讀資料字典，沒有讀取 MES 業務資料或在 Oracle 執行 DDL；連線值沒有輸出或存檔。
+- WinForms、Service/Core、Vue 畫面與 API handoff 規格見 `docs/modules/SMD/過帳電腦之區域.md`。家用端先比對 YMES 現有 schema/migrations，再補缺項；不要把 DEV 假資料寫進正式 DB。
 ### 更新 2026-11-16：設備工程群組成員表
 
 - 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查得 `MESTEST.TBLUSRUSERGROUP` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES` 與 `ALL_IND_COLUMNS`。
