@@ -63,6 +63,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | --- | --- | --- | --- |
 | ENT | 客戶基本資料 ET101 DEV 頁面 | [客戶基本資料規格](modules/ENT/客戶基本資料.md)；3 張來源表 DDL/空表 CREATE SQL 已交付 | YMES schema/API/匯入尚待家用端 |
 | ENT | 客戶連絡人資料 ET102 DEV 頁面 | [客戶連絡人規格](modules/ENT/客戶連絡人資料.md)；沿用 ET101 已查的 `TBLENTCUSTOMERCONTACTOR` DDL/CREATE SQL | YMES API 待家用端；不新增重複資料表 |
+| ENT | 客戶出貨地址資料 ET106 DEV 頁面 | [客戶出貨地址規格](modules/ENT/客戶出貨地址資料.md)；出貨地址沿用 ET101 DDL，報關表已另查 DDL/CREATE SQL | 地址與報關 API、查找選項待家用端 |
 | EQP | 設備設定七項 DEV 頁面 | 設備設定功能規格已分頁；多張設備表已查 DDL | 待逐功能完成 |
 | OP | 作業站主檔及簡化 DEV 子功能 | [作業站主檔規格](modules/OP/作業站主檔.md)；18 張作業站相關表來源 DDL/CREATE SQL 已交付 | 待補子功能 API |
 | MTL | 物料主檔及簡化 DEV 子功能 | [物料主檔規格](modules/MTL/物料主檔.md)、[物料資料匯入](modules/MTL/物料資料匯入.md)；8 張來源表 DDL/CREATE SQL 已交付 | 主檔/API 部分完成；功能仍待逐項復刻 |

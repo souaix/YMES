@@ -418,3 +418,22 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 4. Creator/CreateDate、Reviser/ReviseDate 從登入身分與伺服器時間產生；新資料 DataStamp 設 0，更新/刪除以 DataStamp 條件保護並在更新時遞增。刪除依舊 WinForms 支援多筆逐筆處理；API 單筆刪除回傳 404/409 供 Vue 中止、重載清單。
 5. 原始 `wsENT.EditCustomerContactor` 呼叫帶有命名參數 DataStamp/Reviser/ReviseDate，但目前檢視的 `kcENT.clsCustomerBasis.EditCustomerContactor` 宣告未含此參數；請依現代 API 明確實作伺服器稽核/併發邏輯，不照搬此來源不一致處。
 6. 更新 API 文件/migration 記錄、部署，通知公司端 pull 並在 Production 環境以正式 API 對接。公司端目前的 `/YMES/Customer/Contactors` 頁 Production 模式不使用假資料。
+
+## ENT ET106 客戶出貨地址資料（公司端 2026-11-16 已交接）
+
+先讀 `docs/modules/ENT/客戶出貨地址資料.md`、ET101/ET102 規格、`database/reference/mestest_customer_basis_source_ddl.sql`、`database/reference/mestest_customer_basis_create.sql` 及 `todolist_officepc.md` ET106 區塊。公司端已完成 Development Vue 雙 Grid 畫面。ET101 客戶基本資料 API 尚未完成時，先合併 ET101/ET102/ET106 的 ENT controller/repository，避免重複路由與 schema 工作。
+
+### Schema / migration
+
+- `TBLENTCUSTOMERSHIPADDR` 已有 Oracle source DDL/PG CREATE SQL（跟 ET101 一起交付）；ET106 新查 `TBLENTCUSTOMERSHIPDECLARATION` 原始 DDL/PG CREATE SQL 已追加在同兩個 reference 檔。
+- Schema 比對後只新增缺少的表；報關表必須照來源無 PK、無 unique/index/FK 的結構建立，不可依表名猜 PK。欄位、NOT NULL、DEFAULT 與索引資料字典以 ET106 規格為準；`CREATEDATE DEFAULT SYSDATE`、`DATASTAMP DEFAULT 0` 都 nullable。
+- 出貨地址表 PK `(CUSTOMERNO, SHIPADDR)`；報關表八欄 NOT NULL。來源兩表都沒有 Oracle FK。保留 YMES 現存擴充欄/索引。
+
+### API / Service 待辦
+
+1. `GET /api/ent/customer-basis` 支援 ET106 客戶查找；Vue 僅使用 `IssueState=2`。所有 API 都需檢查登入者 ENT 權限。
+2. 地址端點：`GET/POST /api/ent/customer-basis/{customerNo}/ship-addresses`、`PUT /{customerNo}/ship-addresses/{oldShipAddr}`、`DELETE /{customerNo}/ship-addresses/{shipAddr}?flow=&shipCustomerName=&declarationFlag=&dataStamp=`。PUT 以舊 ShipAddr 定位，可在 Body 修改 ShipAddr；驗證 CustomerNo/ShipAddr NOT NULL、複合 PK 唯一及 Oracle 欄位長度。新/修改稽核由 server 產生，DataStamp compare-and-swap。
+3. 報關端點：`GET/POST /api/ent/customer-basis/{customerNo}/ship-declarations`；`PUT/DELETE /{customerNo}/ship-declarations?shipTo=&flow=&overseaFlag=&declarationFlag=&bondFlag=&handCarryFlag=&dataStamp=`。原始表沒有主鍵且允許重複；自然定位值為七欄 CustomerNo、ShipTo、Flow、OverseaFlag、DeclarationFlag、BondFlag、HandCarryFlag。沿用舊 Core 對完全相同鍵列的多列更新/刪除效果，API 不得虛構 1:1 主鍵。DataStamp 新 API 可作併發檢查，但須處理來源 NULL。
+4. 出貨地址刪除/修改在舊 `clsCustomerBasis` 未同步 cascade/update `TBLENTCUSTOMERSHIPDECLARATION`；兩表無 FK，故會有舊 ShipTo 孤兒值。先維持來源可觀察行為並在規格留下記錄，migration 不加 FK/cascade。
+5. 表單的 Taker/Forwarder/Broker Lookup 分別依 WinForms `wsENT.LoadTakerBasis`、`LoadForwarderBasis`、`LoadBrokerBasis`，都只顯示 IssueState=2。提供 `GET /api/ent/takers`、`/forwarders`、`/brokers` 或將 Vue 接到各自正式 ENT 主檔 API；不要把 DEV picker 假資料回傳 Production。
+6. API 驗證與日期/稽核欄位依規格實作，授予 `ymes_app` 最小 SELECT/INSERT/UPDATE/DELETE 權限，部署並通知公司端 pull 對接 Production。WinForms/Core 目前的 Edit 方法宣告不含 wsENT 傳入的 DataStamp/Reviser/ReviseDate 命名參數，依 Modern API 明確實作，不照搬來源版本差異。

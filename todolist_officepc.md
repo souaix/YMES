@@ -232,3 +232,13 @@
 - [x] 新增 `docs/modules/ENT/客戶連絡人資料.md`，更新規格索引、`docs/DATABASE_CONNECTION.md` 及本家用端 API 待辦；沿用 ET101 的既有 `database/reference/mestest_customer_basis_create.sql`。
 - [ ] 未執行 build、測試或瀏覽器驗收；Production API 尚待家用端建立。
 - [ ] 下一段依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 往後核對未遷移的 ENT/EQP 功能與其 WinForms 程式；缺少 DDL 時直接以 PowerShell 5.1 + ODP.NET 查詢 Oracle 結構。
+
+## ENT ET106 客戶出貨地址資料公司端進度（2026-11-16）
+
+- [x] 依序核對 `frmCustomerShipAddr`、`frmCustomerShipAddrDef`、`frmCustomerShipDeclarationDef`、ENT WebService/Core，確認主畫面雙 Grid、只選已核准客戶、按客戶載入全部報關列、出貨地址表單與報關子功能規則。
+- [x] 出貨地址表 `TBLENTCUSTOMERSHIPADDR` 沿用 ET101 已直連取得的 DDL；缺少的 `TBLENTCUSTOMERSHIPDECLARATION` 已使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護連線直接唯讀查得。
+- [x] 報關表原始 DDL 有 13 欄及 8 個 NOT NULL constraint；資料字典沒有 PK、unique/一般索引或 FK。已將 Oracle logical DDL 與不加 PK 的 PostgreSQL 空表 CREATE SQL 追加到客戶 DDL 檔案。
+- [x] 新增 Vue DEV 雙 Grid 頁 `web/src/components/CustomerShipAddressMaster.vue`、路徑 `/YMES/Customer/ShipAddresses`、FunctionNo `CUSTOMER SHIP ADDRESS`；含已核准客戶選擇、地址/報關 CRUD、報關預設值、Taker/Forwarder/Broker DEV 選擇器、稽核欄位與 KD 黃色表單。
+- [x] 建立 `docs/modules/ENT/客戶出貨地址資料.md`，更新規格索引、DB 連線記錄及家用端 migration/API 待辦。
+- [ ] 未執行 build、測試或瀏覽器驗收；Production API 尚待家用端完成。
+- [ ] 下一功能從 `docs/MES_MENU_FUNCTION_INVENTORY.md` 按客戶設定選單繼續，先核對報關行基本資料及其 WinForms/DDL/API 依賴，再往後處理貨運行、取貨公司等功能。

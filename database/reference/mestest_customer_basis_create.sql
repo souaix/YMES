@@ -92,8 +92,27 @@ CREATE TABLE IF NOT EXISTS ymes.tblentcustomershipaddr (
     CONSTRAINT pk_tblentcustomershipaddr PRIMARY KEY (customerno, shipaddr)
 );
 
+-- Source table has no PK/unique index/FK. The WinForms service identifies rows
+-- by CustomerNo + ShipTo + Flow + Overseas/Declaration/Bond/HandCarry flags.
+CREATE TABLE IF NOT EXISTS ymes.tblentcustomershipdeclaration (
+    customerno varchar(50) CONSTRAINT n_customershipdeclaration_01 NOT NULL,
+    shipto varchar(10) CONSTRAINT n_customershipdeclaration_02 NOT NULL,
+    flow varchar(10) CONSTRAINT n_customershipdeclaration_03 NOT NULL,
+    overseaflag varchar(1) CONSTRAINT n_customershipdeclaration_04 NOT NULL,
+    declarationflag varchar(1) CONSTRAINT n_customershipdeclaration_05 NOT NULL,
+    bondflag varchar(1) CONSTRAINT n_customershipdeclaration_06 NOT NULL,
+    handcarryflag varchar(1) CONSTRAINT n_customershipdeclaration_07 NOT NULL,
+    declarationway varchar(50) CONSTRAINT n_customershipdeclaration_08 NOT NULL,
+    creator varchar(10),
+    createdate timestamp without time zone DEFAULT LOCALTIMESTAMP,
+    datastamp numeric(11,0) DEFAULT 0,
+    reviser varchar(10),
+    revisedate timestamp without time zone
+);
+
 COMMENT ON TABLE ymes.tblentcustomerbasis IS 'MES Oracle source: MESTEST.TBLENTCUSTOMERBASIS';
 COMMENT ON COLUMN ymes.tblentcustomerbasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';
 COMMENT ON COLUMN ymes.tblentcustomerbasis.datastamp IS 'Optimistic concurrency stamp';
 COMMENT ON TABLE ymes.tblentcustomercontactor IS 'MES Oracle source: MESTEST.TBLENTCUSTOMERCONTACTOR';
 COMMENT ON TABLE ymes.tblentcustomershipaddr IS 'MES Oracle source: MESTEST.TBLENTCUSTOMERSHIPADDR';
+COMMENT ON TABLE ymes.tblentcustomershipdeclaration IS 'MES Oracle source: MESTEST.TBLENTCUSTOMERSHIPDECLARATION; source has no PK/index';

@@ -125,3 +125,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 三表僅 PK unique index，沒有外鍵或其他索引。舊 CustomerBasis 刪除程序仍會明確刪除兩個子表；這是 service 行為，不是 Oracle FK cascade。
 - Oracle 原始邏輯 DDL 與 PostgreSQL 空表 CREATE SQL 分別存於 `database/reference/mestest_customer_basis_source_ddl.sql`、`database/reference/mestest_customer_basis_create.sql`。本次只查結構，沒有查詢或匯出客戶業務資料，也沒有在 Oracle 執行 CREATE SQL。
 - ET102 客戶連絡人資料直接沿用同一批已查 DDL 中的 `TBLENTCUSTOMERCONTACTOR`；不需要再次查詢或另建 Create SQL。其欄位、畫面限制差異與巢狀 API 契約記錄在 `docs/modules/ENT/客戶連絡人資料.md`。
+
+### 更新 2026-11-16：ENT ET106 客戶出貨地址
+
+- 出貨地址表 `TBLENTCUSTOMERSHIPADDR` 已在 ET101 查詢；報關表 `TBLENTCUSTOMERSHIPDECLARATION` 本次由 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從受保護連線直接唯讀查詢 DBMS_METADATA/ALL_TAB_COLUMNS/ALL_CONSTRAINTS/ALL_INDEXES。欄位 DDL 可得，資料字典沒有 PK、unique index、一般 index 或 FK。
+- PostgreSQL 空表 CREATE SQL 已追加到 `database/reference/mestest_customer_basis_create.sql`，不加來源未定義的 PK/索引/FK。沒有讀業務列、沒有在來源 Oracle 執行 CREATE。
+- DDL 查詢程式仍用 `%TEMP%\ymes-ep302-readonly-ddl.ps1` 中的本機受保護連線資料；本次只替換 helper 的表名為 `TBLENTCUSTOMERSHIPDECLARATION`。憑證未輸出或寫入文件/Git。
+- 詳細的雙 Grid、表單限制、無主鍵自然鍵/API 規格見 `docs/modules/ENT/客戶出貨地址資料.md`。
