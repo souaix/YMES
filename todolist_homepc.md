@@ -6,6 +6,16 @@
 
 ## 家用電腦現在接手
 
+### MTL ML104 物料群組資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料群組資料.md`、公司端 ML104 區塊及 `docs/DATABASE_CONNECTION.md`。WinForms Form/Service/Core、DEV UI 與兩張表來源已核對。
+- [ ] 先比對 PostgreSQL live schema、欄位/constraints/indexes 與 migrations。`tblmtlmaterialgroupbasis`、`tblmtlmaterialgroupdetail` 已出現在既有物料 0013/first-phase reference；若 YMES schema 已有相符結構就沿用。缺主檔才用 `database/reference/mestest_mtl_material_group_create.sql`，缺明細才依 `database/reference/mestest_mtl_master_create.sql` 的 detail 定義建 forward migration；不得盲跑 `IF NOT EXISTS` 或覆蓋 YMES 擴充欄位。來源確認 `materialtype NOT NULL`、`datastamp DEFAULT 0` nullable；既有 schema 差異需用 forward migration 修正。
+- [ ] 實作 `GET /api/material-groups?groupNo=`、`POST /api/material-groups`、`PUT /api/material-groups/{groupNo}?dataStamp=...`、`DELETE /api/material-groups/{groupNo}?dataStamp=...`。清單不使用 IssueState；編輯只更新 Description；新增/修改稽核由伺服器設定；DataStamp nullable 必須支援 `dataStampIsNull=true` CAS。
+- [ ] 實作 `GET /api/material-groups/{groupNo}/materials` 與 `PUT /api/material-groups/{groupNo}/materials`，body `{materialNos:[...]}` 是整組取代，空陣列清空。以單一交易刪除舊明細、寫入新明細、事件記錄；刪主檔亦須同交易刪明細後刪 header。驗證新增成員存在、MaterialType 相符且 IssueState=2；既有歷史成員若後來不再核准，保持原狀時允許保存，移除後不可重新加入。
+- [ ] MaterialType picker 使用 `GET /api/material-types`（不帶 IssueState，對應 WinForms `LoadMaterialType` 全清單）；左側候選物料使用 `GET /api/materials?issueState=2&materialType=` 精確條件。檢查既有 endpoint 的篩選和資料權限。
+- [ ] 驗證登入者的 `MTL GROUP` 權限、GroupNo/MaterialType/Description 長度與必填、唯一鍵、DataStamp 衝突；此功能無核准 endpoint。沿用現有伺服器 event log，不建新表。
+- [ ] API/schema/migration 部署後更新規格及本清單並 push；通知公司端 pull 最新版接 Production API。公司端 `/YMES/MTL/MaterialGroups` 已完成 DEV 頁。
+
 ### MTL ML101 物料供應商基本資料（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/MTL/物料供應商基本資料.md`、`docs/DATABASE_CONNECTION.md` 新增段落及本檔公司端進度；WinForms Form/Service、API 契約、Issue 狀態與刪除交易均已記錄。

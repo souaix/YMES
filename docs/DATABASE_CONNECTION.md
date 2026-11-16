@@ -215,3 +215,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機既有受保護設定唯讀查詢 MESTEST.TBLQCITEMFORATTRIBUTES、TBLQCITEMFORVARIABLES、TBLQCITEMGROUPBASIS、TBLQCITEMBINDLOG 的 DBMS_METADATA DDL、欄位、PK 與 index；未查詢業務資料，未在 Oracle 執行 DDL。
 - 原始 Oracle DDL 與 PostgreSQL 空表 CREATE SQL 分別為 database/reference/mestest_mtl_qc_item_tables_source_ddl.sql、database/reference/mestest_mtl_qc_item_tables_create.sql。TBLMTLQCITEM 與 TBLOPQCITEM 沿用既有 MTL/OP reference。
 - 來源連線仍由本機受保護設定提供；IP、帳號、密碼不寫入 repo、終端或規格文件。家用端先核對 YMES schema/migrations，只新增缺漏結構。
+
+### 更新 2026-11-17：MTL ML104 物料群組資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機既有受保護連線直接唯讀呼叫 DBMS_METADATA.GET_DDL，查得 `MESTEST.TBLMTLMATERIALGROUPBASIS` DDL；另查 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES、ALL_IND_COLUMNS。僅查結構，未讀 MES 業務列、未在 Oracle 執行 DDL。
+- GROUPNO 與 MATERIALTYPE 的資料字典 column Nullable 顯示 Y，但各有 ENABLED CHECK constraint 強制非 NULL；DATASTAMP NUMBER(11,0) DEFAULT 0 可 NULL。唯一索引為 GroupNo PK index，無其他索引/FK。
+- Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 分別在 `database/reference/mestest_mtl_material_group_source_ddl.sql`、`database/reference/mestest_mtl_material_group_create.sql`；群組明細沿用 `mestest_mtl_master_source_ddl.sql`、`mestest_mtl_master_create.sql`。
+- 連線秘密仍只在本機受保護設定中；IP、帳號、密碼、SID 不寫入 repo 或待辦，也不需要重新向使用者索取。

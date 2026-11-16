@@ -417,4 +417,14 @@
 - [x] Vue 已接上 options API 的 CountWay/CheckLotNo 選項與 GumHour 顯示參數契約；Production API 目前回傳空 CountWay/CheckLotNo，且尚未回傳 MATERIALMULTITIMECTRL/GumMaterialType。另發現現有 Approve API 尚未執行條件式 GumHour 檢查，詳見 todolist_homepc.md。
 - [x] 更新 docs/modules/MTL/物料主檔.md 與規格索引；沿用已查 8 張物料表 Oracle DDL/PG CREATE，ML103 無新增資料表。
 - [ ] 未執行 build、test 或瀏覽器驗收。Production options API 待家用端補齊來源 ValueList/參數後 pull 回公司端再對照。
-- [ ] 下一項按 MTL FunctionOrder 繼續 ML104「物料群組資料」；先追 WinForms Form/Designer/Service/Core，只有新發現資料表才用 PowerShell 5.1 + ODP.NET 查 Oracle DDL。
+- [x] ML104 物料群組資料已完成公司端 DEV 頁與規格；Production API/schema 交家用端。下一項依 MES FunctionOrder 為 ML107「物料標籤對應設定」。
+
+## 2026-11-17 MTL ML104 物料群組資料公司端進度
+
+- [x] 對照 `frmMaterialGroup`、Designer、`frmMaterialGroupBasisDef`、`wsMTL`、`clsMTLBasis`：GroupNo 查詢、無 IssueState、主 Grid 欄位/排序、Add/Edit/Copy/Delete、DataStamp、Apply/Confirm 及下方雙清單替換式成員編輯已記錄。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護連線唯讀取得 `TBLMTLMATERIALGROUPBASIS` DBMS_METADATA DDL、欄位 Nullable/default、constraints、PK/index；確認兩個欄位以 CHECK constraint 強制 NOT NULL、DataStamp DEFAULT 0 nullable。未讀業務資料、未執行 Oracle DDL，連線秘密未輸出。
+- [x] 新增 `database/reference/mestest_mtl_material_group_source_ddl.sql` 及 PostgreSQL 空表參考 `mestest_mtl_material_group_create.sql`；校正 first-phase 物料群組主檔 DEFAULT/NULL 與欄位註解，明細沿用已查來源 SQL。
+- [x] 新增 `web/src/components/MaterialGroupMaster.vue`、三層選單 `MTL GROUP` 與 `/YMES/MTL/MaterialGroups` 路徑；DEV 假資料頁包含主 Grid、多選刪除、編輯/複製/套用、稽核欄、類別 lookup、同類已核准物料雙清單與整組儲存。
+- [x] 新增 `docs/modules/MTL/物料群組資料.md`，記錄 Form/Service/Core、Oracle DDL、API 交易與 Vue 規則；更新索引、Oracle 連線查詢紀錄及家用端 API/schema handoff。
+- [ ] 未執行 build、測試或瀏覽器驗收；Production API/schema 仍待家用端完成。
+- [ ] 下一項按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 盤點 ML107「物料標籤對應設定」Form/Service/Core 與使用資料表，僅在來源 reference 不足時以 PowerShell 5.1 + ODP.NET 直查 Oracle DDL。
