@@ -189,6 +189,19 @@
 - [ ] 確認既有 YMES 外鍵/點檢排程使用關係與 legacy delete 的影響；Oracle 原表 DDL 未宣告主從 FK，legacy Service 的 delete 會明確刪主檔和明細。
 - [ ] Production API 完成後以公司電腦 DEV UI 對接；同步更新規格與本待辦，不能提交密碼、Token、連線字串或私鑰。
 
+## 設備資料：載具分類資料 EP301（公司端 UI 與 Oracle DDL 已交付）
+
+先讀 `docs/modules/EQP/載具/載具分類資料.md`、`docs/DATABASE_CONNECTION.md` 及下列 PostgreSQL CREATE SQL。Oracle DDL 由公司電腦以 PowerShell 5.1 + ODP.NET 直接唯讀查得，不含 MES 業務資料。
+
+- [x] 公司端已對照 `frmCarrierCategory` / `frmCarrierCategoryDef`、`wsEQP`、`clsCarrierBasis`；Vue DEV UI、Function route 與逐筆 API 契約已交付。
+- [x] 公司端已查得 MESTEST.TBLEQPCARRIERCATEGORY 8 欄、PK、唯一索引、NOT NULL/default；Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 為 `database/reference/mestest_carrier_category_source_ddl.sql`、`database/reference/mestest_carrier_category_create.sql`。IssueState DEFAULT 0 NOT NULL；DataStamp DEFAULT 0 nullable；無 FK/額外索引。
+- [ ] 核對 YMES `ymes.tbleqpcarriercategory` 既有欄位/NULL/DEFAULT/PK/index 與 migration；缺表才依 `mestest_carrier_category_create.sql` 新增 migration，保留任何額外 YMES 欄位。
+- [ ] 實作 GET `/api/equipment/carrier-categories?issueState=&carrierCategory=`，狀態限 -1/0/1/2、CarrierCategory 部分符合、排序；回傳稽核欄位及 DataStamp。
+- [ ] 實作 POST 新增與 PUT 修改；CarrierCategory Trim/ToUpper、必填、最多 50，Description 最多 255；新增設定 IssueState=0/Creator/CreateDate/DataStamp=0；Edit 只允許 IssueState=0 並做 DataStamp 比對。
+- [ ] 實作 DELETE：IssueState 0/-1 實體刪除，2 改成 -1 並更新 Reviser/ReviseDate/DataStamp，1 拒絕。舊服務雖只對狀態更新檢查 DataStamp，新 API 建議刪除兩種分支都做並行檢查；API 每筆操作保持原子。
+- [ ] 實作 POST `/{carrierCategory}/approve`：只接受狀態 0 並檢查 DataStamp。舊 `wsEQP.ApproveCarrierCategory` 依 EQP Issue/Job 設定，無簽核工作可直接轉 2；有 Job 則建立簽核主檔並轉 1、簽核完成轉 2、退回轉 0，並通知第一簽核群組。Production 不可把 DEV 0→2 的簡化結果當成正式簽核成功。
+- [ ] 完成後以公司端 Vue 頁對接、核對 Delete 多筆部分成功、Edit/Approve/Delete 的狀態與並行衝突、API 回傳及稽核欄位，更新規格並部署。
+
 ## 設備基本資料 EP104（公司電腦規格交接）
 
 先讀 docs/modules/EQP/設備設定/設備基本資料.md 與 docs/modules/EQP/設備設定/設備參數設定.md。設備主表與參數表原始 DDL 已由使用者提供；單表 PostgreSQL CREATE SQL 已放在 database/reference/。

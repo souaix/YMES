@@ -167,5 +167,17 @@
 - [x] Development 假資料只有 DEV build 且選取 Development preview 時啟用；Production/Test 走 API。修正明細刪除重複宣告，環境/API 切換關閉編輯器並取消舊明細請求。
 - [x] 更新 `docs/modules/EQP/設備設定/設備點檢表設定.md`、規格索引及家用端 EP107 API TODO；既有兩表 PostgreSQL CREATE SQL 已存在，本輪沒有新增資料表或 DDL。
 - [ ] 家用端逐欄比對兩張 YMES 表、實作主從原子 CRUD/options API；完成後公司端 pull 對接並核對 DataStamp/稽核欄位。
-- [ ] 下一個公司端功能先處理 `CARRIER CATEGORY` / EP301「載具分類資料」，逐項查 WinForms Form/Designer/Service；新表缺 Oracle DDL 時再用 PowerShell + ODP.NET 直連查詢。
+- [x] 下一個功能已開始 `CARRIER CATEGORY` / EP301「載具分類資料」；進度見下方 EP301 區塊。
 - [ ] 未執行 build 或測試；不代表 Production API 已完成。
+
+
+## EP301 載具分類資料公司端進度（2026-11-16）
+
+- [x] EP107 推送後重新 pull，確認 GitHub `main` 已同步於 `f6cb3d9`；來源位於 `D:\iMES\CSiMES\STD\MESWin\EQP\EP_CarrierCategory`。
+- [x] 直接讀取 WinForms 主/Def Form、Designer、`wsEQP`、`clsCarrierBasis`；記錄狀態查詢、按鈕、批次作用列、核准工作流、Delete 0/-1 實刪/2 停用/1 拒絕、DataStamp、Audit 與表單尺寸。
+- [x] 以 Windows PowerShell 5.1 + ODP.NET 及本機受保護設定唯讀取得 MESTEST.TBLEQPCARRIERCATEGORY DDL、欄位、constraint 與 index；建立 Oracle source DDL 和 PostgreSQL 空表 CREATE SQL。8 欄，PK 唯一索引，無其他 index/FK。
+- [x] 新增 Vue DEV 頁、Development-only 假資料、三層載具分類選單與 EP301 route。Production API 呼叫契約及 Issue/Job 簽核複雜度已記錄，DEV 核准明確簡化為直接 0→2。
+- [x] 建立 `docs/modules/EQP/載具/載具分類資料.md`，更新 `docs/DATABASE_CONNECTION.md`、規格索引及 `todolist_homepc.md` API/schema 交接。
+- [ ] 家用端確認 YMES schema/migration、實作 Production CRUD/簽核 API；公司端 pull 後對接並核對部分成功、DataStamp 與狀態轉換。
+- [ ] 下一項續做 `CARRIER TYPE` / EP302「載具類別資料」，先檢查 `frmCarrierType`、Def/相關子表與 Service 原始碼，再決定需查的 Oracle DDL。
+- [ ] 未執行 build 或測試；Production API 未建置。
