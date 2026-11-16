@@ -38,6 +38,14 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 已再查這 21 張作業站/系統表的 Oracle index/constraint 字典：每表只有一個 PK unique index，沒有額外獨立索引；29 張作業站、系統、物料表各有一個 PK，沒有 FK (`R`) constraint。NOT NULL constraints 保留在來源 DDL與 PG CREATE SQL。
 - 物料主檔 8 張來源表的原始 Oracle DDL 與 PG 空表 SQL 分別為 `database/reference/mestest_mtl_master_source_ddl.sql`、`database/reference/mestest_mtl_master_create.sql`。兩份 CREATE SQL 均只含結構，不含 MES 業務資料；套用前由家用電腦比對實際 YMES schema。
 
+
+
+### 更新 2026-11-16：設備工程群組成員表
+
+- 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查得 `MESTEST.TBLUSRUSERGROUP` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES` 與 `ALL_IND_COLUMNS`。
+- 結構為 6 欄；PK `(USERNO, GROUPNO, GROUPTYPE, AGENTOF)`；`GROUPTYPE NUMBER(1,0) DEFAULT 0`；`AGENTOF` 雖沒有 inline NOT NULL 宣告，仍由 PK 強制 NOT NULL。唯一索引只有 PK index，沒有額外 index/FK。
+- 原始 Oracle DDL 與 PostgreSQL 空表 CREATE SQL 位於 `database/reference/mestest_equipment_engineer_group_member_source_ddl.sql`、`database/reference/mestest_equipment_engineer_group_member_create.sql`。目標 YMES schema 尚待家用電腦核對；此查詢只讀結構，未讀取業務資料。
+
 ## PostgreSQL / API 操作
 
 - 公司電腦只做 Vue UI、選單、表單及 API 呼叫；不要在 Web 專案加入資料庫驅動或連線字串。
