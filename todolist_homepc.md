@@ -141,7 +141,9 @@
 - [ ] Consume API：依規格驗證數量、容許量與週期關係，CRUD 以 (EquipmentType, ConsumeNo) 為鍵。
 - [ ] Property API：依舊按鈕把設備類別編號映射至共用表 tbleqpequipmentproperty.equipment；預設查 IssueState=0；更新/刪除檢查 DataStamp。回傳屬性定義名稱與舊 ValueList 一致。
 - [ ] 圖片庫 API：列舉、預覽（目前 Vue 契約為 { dataUrl }）、新增/更新 multipart pictureBody、刪除；確認被類別引用時拒絕刪除，限制 MIME/檔案大小並授權呼叫者。
-- [ ] 匯入 API：讀取 WinForms .xls/.xlsx、執行 EquipmentTypeDataChecker 等價檢查、逐筆回傳結果；不得只回傳 HTTP 成功但略過失敗資料。
+- [ ] 設備類別範本 API：GET /api/equipment/types/import/template 回傳正式 .xlsx 範本；POST /api/equipment/types/import/preview 解析舊 .xls 第一工作表並回傳 distinct EquipmentType/EquipmentClass 結果列。
+- [ ] 設備類別匯入工作 API：POST /api/equipment/types/import/jobs 接收 .xls/.xlsx multipart，沿用第一工作表固定 8 欄欄序、略過第 1 列標題、使用登入者 UserNo，依 EquipmentType 分組呼叫/重建 EquipmentTypeDataChecker；回傳 jobId/status/progress/results。
+- [ ] 實作 GET /api/equipment/types/import/jobs/{jobId} 供進度與每個 EquipmentType/EquipmentClass 的 Message 輪詢；POST /api/equipment/types/import/jobs/{jobId}/cancel 合作式取消，保留已完成的逐類別結果。需把部分成功、失敗原因與是否已寫入正式表說清楚，不可只回 HTTP 成功。
 - [ ] 以正式 PostgreSQL migration 管理實際要新增的 schema/索引/權限；授予 ymes_app 最小必要權限，所有多表修改使用交易。Production 禁用 Fake provider。
 - [ ] API 完成後由公司電腦連 Development 假資料 UI 做契約對接，再由家用電腦完成 API/資料庫驗證；同步回寫規格與本清單。不要提交連線字串、密碼、Token、私鑰。
 ## 設備設定：設備群組資料（公司電腦交接）

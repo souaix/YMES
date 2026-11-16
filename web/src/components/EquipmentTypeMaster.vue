@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { createXlsxTemplate, parseFirstWorksheetXlsx } from './materialImportWorkbook'
 
 type IssueState = -1 | 0 | 1 | 2
 type TypeMode = 'new' | 'edit' | 'copy' | null
@@ -13,7 +14,9 @@ interface EquipmentType {
 }
 interface Consume { equipmentType: string; consumeNo: string; quantity: number; toleranceQty: number; period: number; tolerancePeriod: number; creator: string; createDate: string }
 interface Property { equipment: string; propertyNo: string; elementName: string; defaultValue: string; propertySequence: number; description: string; issueState: number; creator: string; createDate: string; dataStamp: number }
-interface ImportRow { equipmentType: string; equipmentClass: string; capacity: number; engineerGroupNo: string; description: string; stdUnitEmpTime: number; stdUnitEqpTime: number; countEqpUnitQty: number }
+interface ImportRow { equipmentType: string; engineerGroupNo: string; capacity: number; equipmentClass: string; description: string; stdUnitEmpTime: number; stdUnitEqpTime: number; countEqpUnitQty: number }
+interface ImportResult { equipmentType: string; equipmentClass: string; result: string; message: string }
+interface ImportJob { jobId: string; status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'; progress: number; results: ImportResult[] }
 const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string }>()
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const mock = import.meta.env.DEV
@@ -86,8 +89,13 @@ const propertyMode = ref<ChildMode>(null)
 const propertyForm = ref({ propertyNo: '', defaultValue: '', propertySequence: 1, description: '' })
 const importFile = ref<File | null>(null)
 const importRows = ref<ImportRow[]>([])
-const importResults = ref<{ equipmentType: string; result: string; message: string }[]>([])
+const importResults = ref<ImportResult[]>([])
 const importMessage = ref('')
+const importProgress = ref(0)
+const importRunning = ref(false)
+let cancelImportRequested = false
+let cancelRequestSent = false
+let importJobId = ''
 const selectedConsume = computed(() => consumes.value.find((r) => r.consumeNo === consumeNo.value) ?? null)
 const selectedProperty = computed(() => properties.value.find((r) => r.propertyNo === propertyNo.value) ?? null)
 const filteredPictureNames = computed(() => pictureNames.value.filter((name) => name.toLowerCase().includes(pictureSearch.value.trim().toLowerCase())))
@@ -308,38 +316,150 @@ async function deleteProperty():Promise<void>{
   if(!current.value||!selectedProperty.value||!window.confirm('確定刪除屬性 '+propertyNo.value+'？'))return
   try{if(mock){const d=read<Record<string,Property[]>>(keys.properties,propertySeed);d[current.value.equipmentType]=(d[current.value.equipmentType]??[]).filter((x)=>x.propertyNo!==propertyNo.value);write(keys.properties,d)}else await request<void>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/properties/'+encodeURIComponent(propertyNo.value)+'?issueState='+selectedProperty.value.issueState+'&dataStamp='+selectedProperty.value.dataStamp,{method:'DELETE'});propertyNo.value='';await openProperties()}catch(e){error.value=e instanceof Error?e.message:'設備屬性刪除失敗。'}
 }
-function parseCsv(text:string):string[][]{
-  const result:string[][]=[];let row:string[]=[],cell='',quoted=false
-  for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++}else if(c==='"')quoted=!quoted;else if(c===','&&!quoted){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';if(row.some((x)=>x.trim()))result.push(row);row=[]}else cell+=c}
-  row.push(cell);if(row.some((x)=>x.trim()))result.push(row);return result
+const equipmentTypeImportColumns = ['EquipmentType', 'EngineerGroupNo', 'Capacity', 'EquipmentClass', 'Description', 'StdUnitEMPTime', 'StdunitEQPTime', 'CountEQPUnitQty']
+function parseEquipmentTypeImportMatrix(matrix: string[][]): ImportRow[] {
+  if (matrix.length < 2) throw new Error('Excel 第一個工作表沒有資料列。')
+  const rows = matrix.slice(1).map((line, index) => {
+    const rowNumber = index + 2
+    const readInteger = (column: number, name: string): number => {
+      const value = (line[column] ?? '').trim()
+      if (!value) return 0
+      const number = Number(value)
+      if (!Number.isInteger(number)) throw new Error(`第 ${rowNumber} 列 ${name} 必須是整數。`)
+      return number
+    }
+    const equipmentType = (line[0] ?? '').trim().toUpperCase()
+    const engineerGroupNo = (line[1] ?? '').trim()
+    if (!equipmentType) throw new Error(`第 ${rowNumber} 列 EquipmentType 為必填。`)
+    if (!engineerGroupNo) throw new Error(`第 ${rowNumber} 列 EngineerGroupNo 為必填。`)
+    return {
+      equipmentType,
+      engineerGroupNo,
+      capacity: readInteger(2, 'Capacity'),
+      equipmentClass: (line[3] ?? '').trim(),
+      description: (line[4] ?? '').trim(),
+      stdUnitEmpTime: readInteger(5, 'StdUnitEMPTime'),
+      stdUnitEqpTime: readInteger(6, 'StdunitEQPTime'),
+      countEqpUnitQty: readInteger(7, 'CountEQPUnitQty'),
+    }
+  })
+  if (rows.length === 0) throw new Error('Excel 第一個工作表沒有資料列。')
+  return rows
+}
+function uniqueImportResults(rows: ImportRow[]): ImportResult[] {
+  const unique = new Map<string, ImportResult>()
+  for (const row of rows) {
+    const key = `${row.equipmentType}\u0000${row.equipmentClass}`
+    if (!unique.has(key)) unique.set(key, { equipmentType: row.equipmentType, equipmentClass: row.equipmentClass, result: 'pending', message: '' })
+  }
+  return [...unique.values()]
+}
+function formatImportMessage(row: ImportResult): string {
+  if (row.result === 'pending') return row.message
+  return row.message ? `${row.result}; ${row.message}` : row.result
+}
+function openImportDialog(): void {
+  importFile.value = null
+  importRows.value = []
+  importResults.value = []
+  importMessage.value = ''
+  importProgress.value = 0
+  dialog.value = 'import'
 }
 async function importFileChanged(e:Event):Promise<void>{
-  const file=(e.target as HTMLInputElement).files?.[0]??null;importFile.value=file;importRows.value=[];importResults.value=[];importMessage.value='';if(!file)return
-  if(!/\.csv$/i.test(file.name)){importMessage.value=mock?'開發假資料預覽支援 CSV；正式 API 會解析 WinForms 使用的 XLS/XLSX。':'檔案已選取；按 Import 由 API 解析並回傳逐筆結果。';return}
-  try{const data=parseCsv(await file.text());if(data.length<2)throw new Error('檔案沒有資料列。');const h=data[0].map((x)=>x.replace(/^\uFEFF/,'').trim().toLowerCase()),col=(name:string)=>h.indexOf(name.toLowerCase()),ix=col('EquipmentType');if(ix<0)throw new Error('缺少 EquipmentType 欄位。')
-    importRows.value=data.slice(1).map((line)=>({equipmentType:(line[ix]??'').trim().toUpperCase(),equipmentClass:(line[col('EquipmentClass')]??'GENERAL').trim().toUpperCase(),capacity:Number(line[col('Capacity')]||-1),engineerGroupNo:(line[col('EngineerGroupNo')]??'').trim(),description:(line[col('Description')]??'').trim(),stdUnitEmpTime:Number(line[col('StdUnitEmpTime')]||0),stdUnitEqpTime:Number(line[col('StdUnitEQPTime')]||0),countEqpUnitQty:Number(line[col('CountEqpUnitQty')]||1)}));importMessage.value='CSV 已讀取，請確認預覽後匯入。'
-  }catch(e){importMessage.value=e instanceof Error?e.message:'CSV 讀取失敗。'}
+  const file=(e.target as HTMLInputElement).files?.[0]??null
+  importFile.value=file;importRows.value=[];importResults.value=[];importMessage.value='';importProgress.value=0
+  if(!file)return
+  const extension=file.name.toLowerCase().split('.').pop()
+  try{
+    if(extension==='xlsx'){
+      importRows.value=parseEquipmentTypeImportMatrix(await parseFirstWorksheetXlsx(file))
+      importResults.value=uniqueImportResults(importRows.value)
+    }else if(extension==='xls'&&!mock){
+      const formData=new FormData();formData.append('file',file)
+      const preview=await request<{results:ImportResult[]}>('api/equipment/types/import/preview',{method:'POST',body:formData})
+      importResults.value=(preview.results??[]).map((row)=>({...row,result:row.result||'pending'}))
+    }else if(extension==='xls'){
+      throw new Error('Development 假資料可預覽 .xlsx；舊版 .xls 由正式 API 解析。')
+    }else{
+      throw new Error('只接受 WinForms 範本格式 .xlsx 或 .xls。')
+    }
+    importMessage.value='檔案已載入，按 Import 開始逐類別檢查。'
+  }catch(e){importFile.value=null;importRows.value=[];importResults.value=[];importMessage.value=e instanceof Error?e.message:'Excel 讀取失敗。'}
 }
-function downloadTemplate():void{
-  const blob=new Blob(['\uFEFFEquipmentType,EquipmentClass,Capacity,EngineerGroupNo,Description,StdUnitEmpTime,StdUnitEQPTime,CountEqpUnitQty\r\nDEV-EQP-NEW,GENERAL,-1,DEV-EG-01,開發用範例,0,0,1\r\n'],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='EquipmentTypeTemplate.csv';a.click();URL.revokeObjectURL(url)
+async function downloadTemplate():Promise<void>{
+  try{
+    let blob:Blob
+    if(mock){
+      blob=createXlsxTemplate(equipmentTypeImportColumns,'EquipmentType',[['DEV-EQP-NEW','DEV-EG-01','-1','GENERAL','開發用範例','0','0','1']])
+    }else{
+      const response=await fetch(apiUrl('api/equipment/types/import/template'),{credentials:'include'})
+      if(response.status===401){window.location.assign(appBase+'/');throw new Error('登入狀態已逾期，請重新登入。')}
+      if(!response.ok)throw new Error('設備類別範本下載失敗 ('+response.status+')。')
+      blob=await response.blob()
+    }
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='EquipmentTypeTemplate.xlsx';a.click();URL.revokeObjectURL(url)
+  }catch(e){importMessage.value=e instanceof Error?e.message:'設備類別範本下載失敗。'}
+}
+function delay(milliseconds:number):Promise<void>{return new Promise((resolve)=>window.setTimeout(resolve,milliseconds))}
+async function cancelImport():Promise<void>{
+  if(!importRunning.value)return
+  cancelImportRequested=true
+  if(cancelRequestSent)return
+  if(!mock&&importJobId){
+    try{await request<void>('api/equipment/types/import/jobs/'+encodeURIComponent(importJobId)+'/cancel',{method:'POST'});cancelRequestSent=true}
+    catch(e){importMessage.value=e instanceof Error?e.message:'取消匯入工作失敗。';return}
+  }else if(mock)cancelRequestSent=true
+  importMessage.value='已要求取消；目前處理中的類別完成後停止。'
 }
 async function runImport():Promise<void>{
-  if(!importFile.value){importMessage.value='請先選取檔案。';return}
-  if(mock){
-    if(!/\.csv$/i.test(importFile.value.name)){importMessage.value='開發假資料模式只匯入 CSV；XLS/XLSX 待正式 API 解析。';return}
-    const data=read<EquipmentType[]>(keys.types,seed),seen=new Set(data.map((x)=>x.equipmentType.toUpperCase()))
-    importResults.value=importRows.value.map((x)=>{
-      if(!x.equipmentType)return{equipmentType:'(空白)',result:'失敗',message:'設備類別編號為必填。'}
-      if(!x.engineerGroupNo)return{equipmentType:x.equipmentType,result:'失敗',message:'工程群組編號為必填。'}
-      if(seen.has(x.equipmentType))return{equipmentType:x.equipmentType,result:'失敗',message:'設備類別編號已存在。'}
-      if(!Number.isInteger(x.capacity)||x.capacity< -1||!Number.isInteger(x.countEqpUnitQty)||x.countEqpUnitQty<1||x.stdUnitEmpTime<0||x.stdUnitEqpTime<0)return{equipmentType:x.equipmentType,result:'失敗',message:'欄位格式不正確。'}
-      seen.add(x.equipmentType);const c=classes.find((z)=>z.code===x.equipmentClass)??classes[0];data.push({equipmentType:x.equipmentType,equipmentClass:c.code,equipmentClassNo:c.value,equipmentClassShow:c.label,pictureName:null,equipmentPicture:null,engineerGroupNo:x.engineerGroupNo,capacity:x.capacity,description:x.description||null,stdUnitEmpTime:x.stdUnitEmpTime,stdUnitEqpTime:x.stdUnitEqpTime,countEqpUnitQty:x.countEqpUnitQty,issueState:0,creator:props.currentUserNo||'DEV001',createDate:new Date().toISOString(),reviser:null,reviseDate:null,dataStamp:0})
-      return{equipmentType:x.equipmentType,result:'成功',message:'開發假資料已匯入。'}
-    });write(keys.types,data);importMessage.value='已完成本機假資料匯入，檢核結果逐筆列出。';return
-  }
-  busy.value=true;try{const body=new FormData();body.append('file',importFile.value);const result=await request<{results:{equipmentType:string;result:string;message:string}[]}>('api/equipment/types/import',{method:'POST',body});importResults.value=result.results??[];importMessage.value='匯入檢核完成。';await load()}catch(e){importMessage.value=e instanceof Error?e.message:'匯入失敗。'}finally{busy.value=false}
+  if(!importFile.value||!importResults.value.length){importMessage.value='請先選取並載入有效的 Excel 範本。';return}
+  busy.value=true;importRunning.value=true;importProgress.value=0;cancelImportRequested=false;cancelRequestSent=false;importJobId=''
+  try{
+    if(mock){
+      const data=read<EquipmentType[]>(keys.types,seed)
+      const types=[...new Set(importResults.value.map((row)=>row.equipmentType))]
+      for(let index=0;index<types.length;index++){
+        if(cancelImportRequested)break
+        const type=types[index],groupRows=importRows.value.filter((row)=>row.equipmentType===type)
+        let result='success',message='Development 假資料已建立。'
+        if(groupRows.length!==1){result='fail';message='Development 簡化模式每個設備類別只處理一列；未寫入。'}
+        else if(data.some((row)=>row.equipmentType.toUpperCase()===type)){result='fail';message='設備類別編號已存在。'}
+        else{
+          const row=groupRows[0],category=classes.find((item)=>item.code.toUpperCase()===row.equipmentClass.toUpperCase())
+          if(!row.engineerGroupNo) {result='fail';message='工程群組編號為必填。'}
+          else if(!Number.isInteger(row.capacity)||row.capacity< -1||!Number.isInteger(row.countEqpUnitQty)||row.countEqpUnitQty<1||row.stdUnitEmpTime<0||row.stdUnitEqpTime<0){result='fail';message='欄位格式不正確。'}
+          else if(!category){result='fail';message='Development 選項中找不到此設備分類；未寫入。'}
+          else data.push({equipmentType:type,equipmentClass:category.code,equipmentClassNo:category.value,equipmentClassShow:category.label,pictureName:null,equipmentPicture:null,engineerGroupNo:row.engineerGroupNo,capacity:row.capacity,description:row.description||null,stdUnitEmpTime:row.stdUnitEmpTime,stdUnitEqpTime:row.stdUnitEqpTime,countEqpUnitQty:row.countEqpUnitQty,issueState:0,creator:props.currentUserNo||'DEV001',createDate:new Date().toISOString(),reviser:null,reviseDate:null,dataStamp:0})
+        }
+        importResults.value=importResults.value.map((row)=>row.equipmentType===type?{...row,result,message} : row)
+        write(keys.types,data)
+        importProgress.value=Math.round(((index+1)/types.length)*100)
+        await delay(180)
+      }
+      importMessage.value=cancelImportRequested?'匯入已取消；已完成的假資料結果保留。':'本機假資料檢查完成。'
+      await load()
+    }else{
+      const body=new FormData();body.append('file',importFile.value)
+      const job=await request<ImportJob>('api/equipment/types/import/jobs',{method:'POST',body})
+      importJobId=job.jobId;importProgress.value=job.progress??0;if(job.results?.length)importResults.value=job.results
+      if(cancelImportRequested&&(job.status==='queued'||job.status==='running'))await cancelImport()
+      let currentJob=job
+      while(currentJob.status==='queued'||currentJob.status==='running'){
+        await delay(500)
+        currentJob=await request<ImportJob>('api/equipment/types/import/jobs/'+encodeURIComponent(job.jobId))
+        importProgress.value=currentJob.progress
+        if(currentJob.results?.length)importResults.value=currentJob.results
+        if(cancelImportRequested&&currentJob.status==='running')await cancelImport()
+      }
+      if(currentJob.results?.length)importResults.value=currentJob.results
+      importMessage.value=currentJob.status==='completed'?'匯入處理完成。':currentJob.status==='cancelled'?'匯入已取消。':'匯入工作失敗。'
+      if(currentJob.status==='completed')await load()
+    }
+  }catch(e){importMessage.value=e instanceof Error?e.message:'匯入失敗。'}
+  finally{busy.value=false;importRunning.value=false;importJobId=''}
 }
-function closeDialog():void{if(dialog.value==='accessories'&&accessoryDirty.value&&!window.confirm('配件異動尚未確認，關閉會放棄變更。要繼續嗎？'))return;dialog.value=null;typeMode.value=null;consumeMode.value=null;propertyMode.value=null}
+function closeDialog():void{if(importRunning.value)return;if(dialog.value==='accessories'&&accessoryDirty.value&&!window.confirm('配件異動尚未確認，關閉會放棄變更。要繼續嗎？'))return;dialog.value=null;typeMode.value=null;consumeMode.value=null;propertyMode.value=null}
 onMounted(()=>{void load()})
 </script>
 
@@ -368,7 +488,7 @@ onMounted(()=>{void load()})
         <button class="eqtype-action primary" type="button" @click="openType('new')">新增(A)</button><button class="eqtype-action" type="button" :disabled="current?.issueState!==0" @click="openType('edit')">修改(E)</button><button class="eqtype-action" type="button" :disabled="!current" @click="openType('copy')">複製(C)</button>
         <button class="eqtype-action" type="button" :disabled="!checked.length&&current?.issueState!==0" @click="massAction('approve')">核准</button><button class="eqtype-action danger" type="button" :disabled="busy||(!checked.length&&!current)" @click="massAction('delete')">刪除(D)</button>
         <button class="eqtype-action" type="button" :disabled="!current" @click="openProperties">屬性</button><button class="eqtype-action" type="button" :disabled="!current" @click="openAccessories">ACC Type</button><button class="eqtype-action" type="button" :disabled="!current" @click="openConsumes">Consume</button>
-        <button class="eqtype-action" type="button" @click="dialog='import';importMessage='';importResults=[]">設備類別匯入</button><button class="eqtype-action" type="button" @click="goHome">關閉</button>
+        <button class="eqtype-action" type="button" @click="openImportDialog">設備類別匯入</button><button class="eqtype-action" type="button" @click="goHome">關閉</button>
       </aside>
       <footer class="eqtype-footer">資料總筆數 <strong>{{ visibleRows.length }}</strong></footer>
     </section>
@@ -438,12 +558,11 @@ onMounted(()=>{void load()})
 
     <div v-if="dialog==='import'" class="eqtype-overlay" @click.self="closeDialog"><section class="eqtype-form eqtype-import">
       <header><strong>設備類別資料匯入</strong><button type="button" aria-label="關閉" @click="closeDialog">×</button></header>
-      <div class="eqtype-import-file"><label for="eqtype-upload">File Path</label><input id="eqtype-upload" type="file" accept=".xlsx,.xls,.csv" @change="importFileChanged" /><button type="button" @click="downloadTemplate">Template Download</button><button type="button" @click="importFile=null;importRows=[];importResults=[];importMessage=''">清除</button></div>
-      <div class="eqtype-progress"><span :style="{width:busy?'65%':importResults.length?'100%':'0%'}"></span></div><p v-if="importMessage" class="eqtype-hint">{{ importMessage }}</p>
-      <div class="eqtype-child-grid eqtype-import-grid"><table class="eqtype-table"><thead><tr><th>設備類別編號</th><th>設備分類</th><th>工程群組</th><th>產能</th><th>結果</th><th>訊息</th></tr></thead><tbody>
-        <tr v-for="r in importRows" :key="r.equipmentType"><td>{{ r.equipmentType }}</td><td>{{ className(r.equipmentClass) }}</td><td>{{ r.engineerGroupNo }}</td><td>{{ r.capacity }}</td><td>待匯入</td><td>—</td></tr>
-        <tr v-for="(r,i) in importResults" :key="r.equipmentType+'-'+i"><td>{{ r.equipmentType }}</td><td colspan="3">匯入檢核</td><td>{{ r.result }}</td><td>{{ r.message }}</td></tr><tr v-if="!importRows.length&&!importResults.length"><td colspan="6" class="eqtype-empty">選取匯入檔案後會顯示逐筆結果。</td></tr>
-      </tbody></table></div><footer><button class="eqtype-confirm" type="button" :disabled="busy||!importFile" @click="runImport">Import</button><button type="button" :disabled="busy" @click="closeDialog">Close</button><button type="button" disabled>Cancel</button></footer>
+      <div class="eqtype-import-file"><label for="eqtype-upload">File Path</label><input id="eqtype-upload" type="file" accept=".xlsx,.xls" :disabled="importRunning" @change="importFileChanged" /><button type="button" :disabled="importRunning" @click="downloadTemplate">Template Download</button></div>
+      <div class="eqtype-progress" role="progressbar" :aria-valuenow="importProgress" aria-valuemin="0" aria-valuemax="100"><span :style="{width:importProgress+'%'}"></span></div><p v-if="importMessage" class="eqtype-hint" role="status">{{ importMessage }}</p>
+      <div class="eqtype-child-grid eqtype-import-grid"><table class="eqtype-table"><thead><tr><th>EquipmentType</th><th>EquipmentClass</th><th>Message</th></tr></thead><tbody>
+        <tr v-for="(r,i) in importResults" :key="r.equipmentType+'-'+r.equipmentClass+'-'+i"><td>{{ r.equipmentType }}</td><td>{{ r.equipmentClass }}</td><td>{{ formatImportMessage(r) }}</td></tr><tr v-if="!importResults.length"><td colspan="3" class="eqtype-empty">選取 Excel 檔案後顯示設備類別與處理結果。</td></tr>
+      </tbody></table></div><footer><button class="eqtype-confirm" type="button" :disabled="busy||!importFile||!importResults.length" @click="runImport">Import</button><button type="button" :disabled="!importRunning" @click="cancelImport">Cancel</button><button type="button" :disabled="importRunning" @click="closeDialog">Close</button></footer>
     </section></div>
   </section>
 </template>

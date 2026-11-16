@@ -77,7 +77,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | --- | --- | --- |
 | 設備供應商基本資料 | Form 與 Service 已對照；Oracle DDL 已查 | [規格](modules/EQP/設備設定/設備供應商基本資料.md)已建立；Vue 已建立，API 待家用電腦 |
 | 設備工程群組資料 | Form、Service 與 Oracle 主表 DDL 已追；使用者關聯表待核實 | 規格已建立；Vue Development 假資料頁已建立，API 待家用電腦 |
-| 設備類別資料 | WinForms/Service、5 張 Oracle 表 DDL 已對照；配件目錄表待查 | 規格已建立；Vue Development 假資料頁已建立；Production API/配件目錄 DDL 待家用電腦 |
+| 設備類別資料 | WinForms/Service、5 張 Oracle 表 DDL、FunctionNo/FunctionKey 已核實；配件目錄表待查 | Vue DEV 頁已有類別 CRUD/子視窗；匯入改依 WinForms 第一工作表固定欄序、結果列與取消流程；API/配件目錄 DDL 待家用電腦 |
 | 設備基本資料 | WinForms 主/編輯/Chamber Form、屬性、參數、QC 關聯、匯入 Form 與 Service 均已追 | [設備基本資料](modules/EQP/設備設定/設備基本資料.md)、[設備屬性](modules/EQP/設備設定/設備屬性設定.md)、[設備參數](modules/EQP/設備設定/設備參數設定.md)、[設備點檢表關聯](modules/EQP/設備設定/設備點檢表關聯.md)、[設備匯入](modules/EQP/設備設定/設備資料匯入.md)規格已建立；設備子功能 DEV Vue 已接線；設備主表與參數表原始 DDL 已由使用者提供並轉成單表 CREATE SQL；其他未匯出關聯表仍待查 |
 | 設備群組資料 | WinForms/Service 與兩表 Oracle DDL 已對照；SMD 區域映射依賴待查 | 規格已建立；Vue Development 假資料頁已建立；Production API/SMD DDL 待家用電腦 |
 | 設備狀態設定 | WinForms / Service、主表及兩張刪除引用表 Oracle DDL 已追；完整 ValueList/繁中翻譯已核實 | [規格](modules/EQP/設備設定/設備狀態設定.md)已建立；Vue 頁面已依 ValueList 本地化，Production API 已有，家用端待建立引用表 migration 並啟用精確刪除檢查 |

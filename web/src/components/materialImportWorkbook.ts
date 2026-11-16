@@ -73,7 +73,7 @@ function columnIndex(reference: string): number {
   return Math.max(0, value - 1)
 }
 
-export async function parseMaterialXlsx(file: File): Promise<string[][]> {
+export async function parseFirstWorksheetXlsx(file: File): Promise<string[][]> {
   const entries = await readZipEntries(await file.arrayBuffer())
   const workbookText = entries.get('xl/workbook.xml')
   const relationsText = entries.get('xl/_rels/workbook.xml.rels')
@@ -111,6 +111,8 @@ export async function parseMaterialXlsx(file: File): Promise<string[][]> {
     return values
   })
 }
+
+export const parseMaterialXlsx = parseFirstWorksheetXlsx
 
 export function parseMaterialCsv(source: string): string[][] {
   const rows: string[][] = []
@@ -201,8 +203,7 @@ function makeStoredZip(files: Array<{ name: string; content: string }>): Blob {
   return new Blob([joinBytes([...localParts, central, end])], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
 }
 
-export function createMaterialImportTemplate(): Blob {
-  const columnName = (index: number) => {
+function xlsxColumnName(index: number): string {
     let value = index + 1
     let result = ''
     while (value > 0) {
@@ -211,15 +212,25 @@ export function createMaterialImportTemplate(): Blob {
       value = Math.floor((value - 1) / 26)
     }
     return result
-  }
-  const cells = materialImportColumns.map((name, index) => `<c r="${columnName(index)}1" t="inlineStr"><is><t>${xmlEscape(name)}</t></is></c>`).join('')
+}
+
+export function createXlsxTemplate(columns: string[], sheetName = 'Template', sampleRows: string[][] = []): Blob {
+  const rows = [columns, ...sampleRows]
+  const sheetRows = rows.map((values, rowIndex) => {
+    const cells = values.map((value, columnIndex) => `<c r="${xlsxColumnName(columnIndex)}${rowIndex + 1}" t="inlineStr"><is><t>${xmlEscape(value)}</t></is></c>`).join('')
+    return `<row r="${rowIndex + 1}">${cells}</row>`
+  }).join('')
   return makeStoredZip([
     { name: '[Content_Types].xml', content: '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>' },
     { name: '_rels/.rels', content: '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
-    { name: 'xl/workbook.xml', content: '<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Material" sheetId="1" r:id="rId1"/></sheets></workbook>' },
+    { name: 'xl/workbook.xml', content: `<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${xmlEscape(sheetName.slice(0, 31))}" sheetId="1" r:id="rId1"/></sheets></workbook>` },
     { name: 'xl/_rels/workbook.xml.rels', content: '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>' },
-    { name: 'xl/worksheets/sheet1.xml', content: `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1">${cells}</row></sheetData></worksheet>` },
+    { name: 'xl/worksheets/sheet1.xml', content: `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>` },
   ])
+}
+
+export function createMaterialImportTemplate(): Blob {
+  return createXlsxTemplate(materialImportColumns, 'Material')
 }
 
 export function materialImportHeaderIndexes(header: string[]): number[] | null {
