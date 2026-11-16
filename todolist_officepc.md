@@ -14,6 +14,16 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC111 8D 原因基本資料（公司端 2026-11-17）
+
+- [x] 從 8D 原因基本資料 WinForms Form、兩個 Def Form、wsQC 與 clsQCBasis 整理雙 Grid、欄位、查詢、狀態、CRUD、複製、刪除、核准與 Issue/Job 流程。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 的既有受保護連線，直接唯讀查 MESTEST.TBLQCREASONBASIS_8D、TBLQCREASONSUBTYPE_8D 的 DBMS_METADATA DDL、欄位 NULL/default、PK、unique index 與 FK；確認僅 PK index、沒有 FK。未讀 MES 業務列、未在 Oracle 執行 DDL、未輸出憑證。
+- [x] 建立 Oracle source DDL 與 PostgreSQL 空表 CREATE 參考，檔案位於 database/reference/mestest_qc_8d_reason_source_ddl.sql、mestest_qc_8d_reason_create.sql。
+- [x] 新增 Vue 雙 Grid DEV 頁 web/src/components/Qc8DReasonBasisMaster.vue，建立 QC → 基本資料 → 8D 原因基本資料 fallback 選單及 /YMES/QC/8DReasonBasis；包含四狀態、查詢、主/明細 CRUD/Copy/Approve、KD 黃色輸入欄及 localStorage 假資料。
+- [x] 新增 docs/modules/QC/8D原因基本資料.md，記錄 Oracle 欄位、WinForms/Form/Service/Core 邏輯、Issue Job 簽核、刪除孤兒明細行為及 API/schema handoff；更新規格索引、資料庫連線紀錄及兩台電腦 TODO。
+- [ ] 未執行 build/test/瀏覽器驗收。ReasonType 代碼與繁中資源已直接查證；DEV approval 只模擬無簽核 Job 的直接核准分支，Production 必須實作 Issue/Job。
+- [ ] 下一項依 MES_MENU_FUNCTION_INVENTORY.md 接續 QC 模組下一個功能 FINAL GROUP（QC406）；繼續對照 WinForms Form/Service/Core 與 Oracle 表結構，再建 DEV UI/spec/家用 API handoff。
+
 ### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）
 
 - [x] 已確認舊 WinForms source tree 有完整原始碼：`Industry_Base/MESWin_Industry_Base/EQP/EP_B_EQPAutoLoaderSetup/`，並對照主畫面/編輯器/Default、相關子表單、`wsEQP`、`clsEQP` 及 `wsSYS` AutoLoader 檢查。先前 TODO 寫「找不到 Form」是錯誤，本次已修正認知。

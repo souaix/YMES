@@ -243,3 +243,11 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - Oracle source DDL 與 YMES 空表參考為 `database/reference/mestest_eqp_autoloader_source_ddl.sql`、`database/reference/mestest_eqp_autoloader_create.sql`。主表沒有 PK constraint，存在唯一索引 `(EquipmentNo,FileNameFormat)`；三個子表各有來源複合 PK unique index。四表間沒有 FK。
 - `FormatScript`、`RawDataFormatScript` 為 CLOB；`DataStamp NUMBER(11,0) DEFAULT 0` nullable。子表與主表需由 API transaction 一致維護。DDL/schema 與功能規格見 `docs/modules/EQP/設備AutoLoader格式檔設定.md`。
 - IP、帳號、密碼、SID 沒有輸出或寫入 Git；家用端只需核對 YMES PostgreSQL 結構並決定 forward migration，不要連 Oracle 建表。
+
+### 更新 2026-11-17：QC111 8D 原因基本資料來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有本機受保護 Oracle 連線直接唯讀查詢 MESTEST.TBLQCREASONBASIS_8D、TBLQCREASONSUBTYPE_8D 的 DBMS_METADATA.GET_DDL 及 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES。
+- 來源 DDL / PostgreSQL 空表 CREATE 參考：database/reference/mestest_qc_8d_reason_source_ddl.sql、database/reference/mestest_qc_8d_reason_create.sql。兩張表各只有 PK unique index，沒有外鍵或其他索引；DataStamp 是 nullable DEFAULT 0。Subtype ReasonType 是 NUMBER(1,0)，Reason 明細 ReasonType 是 VARCHAR2(50)。
+- 本次只讀取資料字典/DDL，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。
+- 同以 Oracle 唯讀查詢 MESTEST.TBLSYSVALUELIST 的 TBLQCREASONBASIS_8D.REASONTYPE 選項，並核對 Customer/Production/MESClient/mesresource.zh-cht.resources：1 Men、人員；2 Machine_8D、設備；3 Material、物料；4 Method、方法；5 Environment、環境。此為系統字典與語系資源，不是業務資料。
+- YMES 家用端先比對 live schema/migrations，缺少時才建立 forward migration；WinForms、簽核流程、API DTO/端點及子類別刪除留下無 FK 明細的行為見 docs/modules/QC/8D原因基本資料.md。

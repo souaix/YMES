@@ -14,6 +14,10 @@
 - EQP `B_EQP AUTOLOADER SETUP`（EPB01）設備 AutoLoader 格式檔設定：[`modules/EQP/設備AutoLoader格式檔設定.md`](modules/EQP/設備AutoLoader格式檔設定.md)。Oracle source DDL 與 YMES 空表 CREATE 參考：`database/reference/mestest_eqp_autoloader_source_ddl.sql`、`database/reference/mestest_eqp_autoloader_create.sql`。公司端 Vue DEV 頁掛載 `/YMES/EQP/EquipmentAutoLoaderSetup`；API、schema migration、選項與解析驗證待家用端交接。
 - Oracle 來源為 `TBLEQPALSCRIPT`、`TBLEQPALSCRIPT_TESTRECIPE`、`TBLEQPALSCRIPT_UNNUMERICFIELD`、`TBLEQPALSCRIPT_COORDINFO`；主表唯一索引是 `(EquipmentNo,FileNameFormat)`，來源無 FK。沒有在 Oracle 執行 DDL 或讀取 MES 業務列。
 
+## 2026-11-17 新增功能規格
+
+- QC111「8D 原因基本資料」：[功能規格](modules/QC/8D原因基本資料.md)。公司端已接 WinForms 雙 Grid DEV 頁 `/YMES/QC/8DReasonBasis`；[Oracle source DDL](../database/reference/mestest_qc_8d_reason_source_ddl.sql) 與 [PostgreSQL 空表 CREATE 參考](../database/reference/mestest_qc_8d_reason_create.sql) 已建立。兩張來源表只有 PK unique index，沒有 FK；家用端需比對 YMES schema 並補 API/Issue Job 核准流程。
+
 ## 已確認的第一層模組
 
 以下清單已由公司端 PowerShell 5.1 唯讀查詢 MESTEST.TBLSYSMODULE、TBLSYSMENUITEM、TBLSYSFUNCTION 取得。第一層名稱依 WinForms 的 ModuleNo + Module 翻譯鍵，從 Customer/Production/MESClient/mesresource.zh-cht.resources 核實。詳細功能編號、分類、FormName 及 ExecutionFile 見 [MES Oracle 選單與功能目錄](MES_MENU_FUNCTION_INVENTORY.md)。目錄資料也不等同使用者實際可見權限，WinForms 另以使用者權限篩選。

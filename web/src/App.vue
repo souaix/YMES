@@ -43,6 +43,7 @@ import MaterialGroupMaster from './components/MaterialGroupMaster.vue'
 import MaterialLabelMapMaster from './components/MaterialLabelMapMaster.vue'
 import MaterialVendorAutoLoaderSetupMaster from './components/MaterialVendorAutoLoaderSetupMaster.vue'
 import EquipmentAutoLoaderSetupMaster from './components/EquipmentAutoLoaderSetupMaster.vue'
+import Qc8DReasonBasisMaster from './components/Qc8DReasonBasisMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -229,6 +230,15 @@ const fallbackMenuTree: MenuNode[] = [
     ] }],
   },
   {
+    id: 'quality-data',
+    label: '品質資料',
+    shortLabel: '品',
+    moduleNo: 'QC',
+    children: [{ id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
+      { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
+    ] }],
+  },
+  {
     id: 'process-data',
     label: '流程資料',
     shortLabel: '流',
@@ -265,6 +275,7 @@ const menuRoutes: Record<string, string> = {
   'function:MTL:MTL LABEL MAP BASIS': materialLabelMapRoute,
   'function:MTL:B_MTL AUTOLOADER SETUP': materialVendorAutoLoaderRoute,
   'function:EQP:B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
+  'function:QC:8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'equipment-master': equipmentRoute,
   'equipment-vendor-master': equipmentVendorRoute,
   'equipment-engineer-group': equipmentEngineerGroupRoute,
@@ -319,6 +330,7 @@ const functionRoutes: Record<string, string> = {
   'FACTORY BASIS': factoryBasisRoute,
   'LOCATOR BASIS': locatorBasisRoute,
   'SMD PDLINE BASIS': pdLineBasisRoute,
+  '8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'POSITION BASIS': positionBasisRoute,
   'PRODUCTION CONFIG': areaShowRoute,
   'EQP BASIS': equipmentRoute,
@@ -393,6 +405,7 @@ const isMaterialGroupPage = computed(() => activeMasterKey.value === 'function:M
 const isMaterialLabelMapPage = computed(() => activeMasterKey.value === 'function:MTL:MTL LABEL MAP BASIS')
 const isMaterialVendorAutoLoaderPage = computed(() => activeMasterKey.value === 'function:MTL:B_MTL AUTOLOADER SETUP')
 const isEquipmentAutoLoaderPage = computed(() => activeMasterKey.value === 'function:EQP:B_EQP AUTOLOADER SETUP')
+const isQc8DReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:8D REASON BASIS')
 const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER BASIS')
 const isCustomerContactorPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER CONTACTOR')
 const isCustomerShipAddressPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER SHIP ADDRESS')
@@ -1313,6 +1326,14 @@ async function signOut(): Promise<void> {
         />
         <MaterialVendorMaster
           v-else-if="isMaterialVendorPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <Qc8DReasonBasisMaster
+          v-else-if="isQc8DReasonBasisPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

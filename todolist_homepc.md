@@ -6,6 +6,18 @@
 
 ## 家用電腦現在接手
 
+### QC111 8D 原因基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 docs/modules/QC/8D原因基本資料.md、docs/DATABASE_CONNECTION.md 和本節。公司端已對照 frmReasonBasis_8D、兩個 Def Form、wsQC/clsQCBasis，完成 Vue DEV 雙 Grid 及 QC → 基本資料 → 8D 原因基本資料路由。
+- [ ] 先以家用端管理連線比對 YMES live schema、constraints、indexes 及 migrations。來源 PostgreSQL 空表 CREATE 參考 database/reference/mestest_qc_8d_reason_create.sql；缺表/欄位才新增 forward migration，不要盲目執行或移除 YMES 擴充欄位。
+- [ ] Oracle 原始 DDL 在 database/reference/mestest_qc_8d_reason_source_ddl.sql。兩表為 tblqcreasonbasis_8d、tblqcreasonsubtype_8d；各只有單一 PK unique index、沒有 FK。Subtype 的 ReasonType 為 numeric(1,0)，detail 的 ReasonType 為 varchar(50)；DataStamp nullable DEFAULT 0。維持來源型別，不要把兩表欄位型別強制統一。
+- [ ] 實作 GET /api/qc/8d-reason-subtypes?search=，回傳 ReasonSubType 搜尋結果及四狀態資料；GET /api/qc/8d-reasons?reasonSubType= 必須按子類別精確查詢。ReasonType 值已由 Oracle TBLSYSVALUELIST 核實為 1 Men、2 Machine_8D、3 Material、4 Method、5 Environment；API/options 使用同代碼並從 YMES 字典提供繁中顯示名（人員、設備、物料、方法、環境）。
+- [ ] 實作 POST/PUT/DELETE 子類別 API：新增 IssueState=0、DataStamp=0 並由伺服器設定 audit；PUT 僅允許 IssueState=0；DELETE 狀態 0/-1 實體刪除、狀態 2 改 -1、狀態 1 拒絕。PUT/DELETE/核准都需以 nullable DataStamp 做 CAS，版本衝突回 409。
+- [ ] 實作 POST /api/qc/8d-reason-subtypes/{reasonSubType}/approve：查 Issue Job Map 的 ReasonSubType BASIS；沒有 Job 或 Job 無 Detail 時直接轉 2，有簽核明細則建立 Issue 流程並轉 1、通知第一簽核群組；Issue 核准轉 2、退回轉 0。回傳實際 IssueState/DataStamp；不可假設所有核准都立即 Active。
+- [ ] 實作原因明細 POST/PUT/DELETE。只允許父子類別 IssueState=0；ReasonType 從父列取得；ReasonNo/ReasonName 必填，ReasonLevel 0-9；更新需 DataStamp CAS 與伺服器 audit。來源沒有 FK，刪子類別不 cascade 明細；WinForms/Core 實際留下孤兒明細，保持可見相容性並在 API/日誌標示。
+- [ ] 驗證登入、QC111 權限、欄位長度、唯一鍵、ReasonType 有效選項、父列狀態與 DataStamp。主/明細批次刪除按舊 WinForms 逐筆執行，第一筆失敗停止並回報已完成筆數；不可宣稱整批交易回滾。
+- [ ] API/schema 部署後更新本節與規格狀態、push，通知公司端 pull 接 Production API。公司端尚未執行 build/test/瀏覽器驗收。
+
 ### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/EQP/設備AutoLoader格式檔設定.md`、`docs/DATABASE_CONNECTION.md` 及本節；WinForms Form/Designer/Service/Core 已查，Oracle DDL 由公司端既有受保護 PowerShell 5.1 + ODP.NET 連線唯讀取得，Vue DEV 頁與三層選單已完成。
