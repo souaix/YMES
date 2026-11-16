@@ -280,3 +280,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - `TBLQCHOLDDISPGROUPBASIS` Oracle DDL/欄位/PK/index 已由公司端直連唯讀查得並放在 QC406 共用 lookup source DDL；PostgreSQL 空表 CREATE 也已存在。只有 GroupNo PK index，無其他 index/FK。
 - `TBLUSRUSERGROUP` Oracle DDL/欄位/複合 PK/索引已於 2026-11-16 由同一受保護連線直接查得；來源與 PostgreSQL 空表 CREATE 參照放在設備工程群組成員 DDL 檔。其 AgentOf 在 Oracle 欄位屬 nullable，但因納入 PK，實際不得為 NULL。QC405 使用 GroupType=5/6。
 - 本次未讀業務資料，未執行 Oracle DDL，沒有輸出或保存連線秘密；沒有新 CREATE SQL 要執行。功能及 API handoff 見 `docs/modules/QC/異常處理群組.md`。
+
+### 更新 2026-11-17：QC403 異常原因基本資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 及本機既有受保護連線，唯讀取得 MESTEST.TBLQCHOLDITEMBASIS 的 DBMS_METADATA DDL、ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES/ALL_IND_COLUMNS。
+- Oracle source DDL / PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_hold_item_basis_source_ddl.sql`、`database/reference/mestest_qc_hold_item_basis_create.sql`。PK 為 HoldItemNo，只有 PK unique index，沒有 FK/其他 index；CreateERF nullable DEFAULT 1，HoldSystem NOT NULL DEFAULT 0，DataStamp nullable DEFAULT 0，IssueState NOT NULL DEFAULT 0。
+- WinForms `HoldSystem` ValueList 對照由 `STD/MEStc/DataImporter/HoldItemDataImporter.cs` enum 核實：0=MES、1=EAP_Exception、2=EDA_Exception。查找來源是已簽核 MClass/SClass/異常處理群組，及已簽核且目前版本 OCAP；未建立重複查找表。
+- 本次僅查 DDL/資料字典，沒有讀 MES 業務資料，沒有在 Oracle 執行 DDL；連線字串/憑證未輸出或寫入 Git。畫面、CRUD、匯入與 Issue Job 規則見 `docs/modules/QC/異常原因基本資料.md`。

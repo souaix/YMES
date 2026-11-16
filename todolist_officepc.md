@@ -57,7 +57,17 @@
 - [x] 新增 Vue DEV 頁 `web/src/components/QcHoldDispGroupMaster.vue`，建立 QC → 異常設定 → 異常處理群組與 `/YMES/QC/HoldDispGroup`；加入四狀態、群組 CRUD/Copy、組員多選移動、Type 5 主處理/Type 6 CC、套用式儲存及 localStorage DEV 假資料。
 - [x] 新增 `docs/modules/QC/異常處理群組.md`，記錄 Form/Service/Core、兩張表與 DDL 參照、精確 `HOLD DISP GROUP` Issue key 及 Production API/schema handoff；同步索引、DB 查詢紀錄與家用端 TODO。
 - [ ] 未執行 build、test 或瀏覽器驗收。DEV 核准只演示 0→2；Production 必須依 Issue/Job 處理。家用端比對 live schema/migrations 後實作 API；不可在 MES Oracle 執行 CREATE。
-- [ ] 下一個功能依目錄接續 QC403「異常原因基本資料（HOLDITEM BASIS）」。
+- [x] QC403「異常原因基本資料（HOLDITEM BASIS）」已完成公司端 DEV UI、WinForms 規格與 Oracle/PG CREATE 參照，詳見下節。
+
+### QC403 異常原因基本資料（公司端 2026-11-17）
+
+- [x] 對照主清單/Def/匯入 Form、HoldItemDataImporter、wsQC、clsHoldBasis；完成四狀態與三欄查詢、欄位/lookup、CRUD/Copy/Delete/Approve、DataStamp、HoldSystem、OCAP/通知群組及 Excel 匯入規則。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 既有受保護唯讀連線，查得 MESTEST.TBLQCHOLDITEMBASIS DBMS_METADATA DDL、欄位 NULL/default、PK/index/FK。只有 HoldItemNo PK unique index，沒有其他 index/FK；未讀業務列，未在 Oracle 執行 DDL，未輸出憑證。
+- [x] 新增 Oracle source DDL 與 PostgreSQL 空表 CREATE：`database/reference/mestest_qc_hold_item_basis_source_ddl.sql`、`mestest_qc_hold_item_basis_create.sql`。
+- [x] 新增 Vue DEV 頁 `web/src/components/QcHoldItemBasisMaster.vue`，路由 `/YMES/QC/HoldItemBasis`；含查詢、四狀態 Grid、CRUD/複製、欄位 picker、核准/刪除及 CSV 假資料匯入。
+- [x] 新增 `docs/modules/QC/異常原因基本資料.md`，更新規格索引、DB 連線查詢紀錄及 home/office TODO；正式 API、Issue Job 與 `.xls/.xlsx` 匯入由家用端接手。
+- [ ] 未執行 build、test 或瀏覽器驗收。DEV 核准僅模擬無 Job/Detail 的 0→2；已簽核/不使用欄位權限仍需家用端對接 IssueControl 規則。
+- [ ] 下一項依功能編號順序接續 QC401「主分類基本資料」。
 
 ### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）
 

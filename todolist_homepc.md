@@ -6,6 +6,18 @@
 
 ## 家用電腦現在接手
 
+### QC403 異常原因基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/異常原因基本資料.md`、`todolist_officepc.md` QC403 區段及 `docs/DATABASE_CONNECTION.md` 的 QC403 查詢紀錄。
+- [ ] Oracle source DDL：`database/reference/mestest_qc_hold_item_basis_source_ddl.sql`；PostgreSQL 空表 CREATE：`database/reference/mestest_qc_hold_item_basis_create.sql`。先比對 YMES live schema/migrations；只有 `tblqcholditembasis` 缺少才新增 forward migration，保留 YMES 擴充欄位。不可在 MES Oracle 執行 CREATE。
+- [ ] 主表 PK `holditemno`；僅 PK unique index，無 FK/額外索引。保留來源 nullable/default：`createerf` numeric(1,0) DEFAULT 1 NULL、`datastamp` numeric(11,0) DEFAULT 0 NULL；`holdsystem` numeric(1,0) DEFAULT 0 NOT NULL；IssueState numeric(1,0) DEFAULT 0 NOT NULL。Oracle DATE 對應 timestamp without time zone。
+- [ ] 實作 `GET /api/qc/hold-item-basis?searchFieldName=&searchFieldValue=`，回傳查詢條件內所有 IssueState 與 audit/DataStamp；搜尋欄 whitelist 僅 HoldItemNo/MClassNo/SClassNo；FunctionKey `QC403`。
+- [ ] 實作 `GET /api/qc/hold-item-basis/lookups`：已簽核 MClass、依 MClass 過濾的已簽核 SClass、已簽核 HoldDispGroup、IssueState=2 且 CURVERSION=1 的 OCAP、HoldSystem 0/1/2（MES/EAP_Exception/EDA_Exception）。優先重用已有 QC lookup service，禁止新增重複 lookup 表。
+- [ ] 實作 POST 建立與 PUT 修改。伺服器設定 Creator/CreateDate、IssueState=0、Reviser/ReviseDate/DataStamp；HoldItemNo PK。修改只允許 HoldItemName、CreateERF、HoldSystem、HoldDispGroup、OCAPNo/Version、Description；HoldItemNo/MClassNo/SClassNo 唯讀；待簽核禁止修改，Active/Unused 按舊 IssueControl 設定的欄位權限限制。以 HoldItemNo + IssueState + nullable DataStamp CAS。
+- [ ] 實作 DELETE：IssueState 0/-1 實體刪除；2 以 DataStamp CAS 改為 -1；1 拒絕。核准只允許 0，FunctionNo/Issue Job Map key 為 `HOLDITEM BASIS`；沒有 Job/Detail 時直接轉 2，有簽核流程時建立 Issue、轉 1、通知第一群組，保留共用退回/核准流程。
+- [ ] 實作 `POST /api/qc/hold-item-basis/import` 支援 `.xls/.xlsx` 第一工作表，欄序為 HOLDITEMNO、MCLASSNO、SCLASSNO、HOLDITEMNAME、CREATEERF、HoldSystem、OCAPNo、HOLDDISPGROUP、DESCRIPTION；逐列檢查分類已簽核、群組存在、OCAP 已簽核、主鍵不重複。每列獨立 transaction，回傳成功/失敗與 message；維持舊系統部分成功行為。DEV 頁目前只解析 CSV。
+- [ ] 所有 endpoints 要登入並檢查 QC403 功能權限；參數化 SQL、DTO 驗證、檔案大小/格式限制，不讀/寫 MES Oracle。更新 API 文件、migration 索引及本 TODO。
+
 ### QC405 異常處理群組（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/異常處理群組.md`；公司端已完成 `/YMES/QC/HoldDispGroup` Vue DEV 頁，包含群組主檔及主處理/CC 使用者三 Grid。

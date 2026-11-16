@@ -48,6 +48,7 @@ import QcFirstGroupMaster from './components/QcFirstGroupMaster.vue'
 import QcFinalGroupMaster from './components/QcFinalGroupMaster.vue'
 import QcHoldDescriptionMaster from './components/QcHoldDescriptionMaster.vue'
 import QcHoldDispGroupMaster from './components/QcHoldDispGroupMaster.vue'
+import QcHoldItemBasisMaster from './components/QcHoldItemBasisMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -241,6 +242,7 @@ const fallbackMenuTree: MenuNode[] = [
     children: [{ id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
     ] }, { id: 'quality-exception-settings', label: '異常設定', shortLabel: '異', children: [
+      { id: 'function:QC:HOLDITEM BASIS', label: '異常原因基本資料', shortLabel: '因', functionNo: 'HOLDITEM BASIS', moduleNo: 'QC', tableName: 'tblqcholditembasis' },
       { id: 'function:QC:HOLD DESCRIPTION', label: '異常說明', shortLabel: '說', functionNo: 'HOLD DESCRIPTION', moduleNo: 'QC', tableName: 'tblqcholddescription' },
       { id: 'function:QC:HOLD DISP GROUP', label: '異常處理群組', shortLabel: '群', functionNo: 'HOLD DISP GROUP', moduleNo: 'QC', tableName: 'tblqcholddispgroupbasis' },
       { id: 'function:QC:FIRST GROUP', label: '第一處理群組', shortLabel: '一', functionNo: 'FIRST GROUP', moduleNo: 'QC', tableName: 'tblqcfirstgroup' },
@@ -289,6 +291,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
+  'function:QC:HOLDITEM BASIS': appBasePath + '/QC/HoldItemBasis',
   'equipment-master': equipmentRoute,
   'equipment-vendor-master': equipmentVendorRoute,
   'equipment-engineer-group': equipmentEngineerGroupRoute,
@@ -348,6 +351,7 @@ const functionRoutes: Record<string, string> = {
   'FINAL GROUP': appBasePath + '/QC/FinalGroup',
   'HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
+  'HOLDITEM BASIS': appBasePath + '/QC/HoldItemBasis',
   'POSITION BASIS': positionBasisRoute,
   'PRODUCTION CONFIG': areaShowRoute,
   'EQP BASIS': equipmentRoute,
@@ -427,6 +431,7 @@ const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC
 const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
 const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DESCRIPTION')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
+const isQcHoldItemBasisPage = computed(() => activeMasterKey.value === 'function:QC:HOLDITEM BASIS')
 const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER BASIS')
 const isCustomerContactorPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER CONTACTOR')
 const isCustomerShipAddressPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER SHIP ADDRESS')
@@ -1379,6 +1384,14 @@ async function signOut(): Promise<void> {
         />
         <QcHoldDispGroupMaster
           v-else-if="isQcHoldDispGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcHoldItemBasisMaster
+          v-else-if="isQcHoldItemBasisPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
