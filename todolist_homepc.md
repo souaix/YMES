@@ -291,3 +291,15 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 8. 提供已核准配件類別及供應商 lookup；舊配件類別清單須取 IssueState=2，AccessoryCategory 由所選類別帶入。API 從 auth context 取操作者，不信任前端 Creator/Reviser。
 9. 匯入需支援舊 Excel 第一工作表七欄：AccessoryNo、AccessoryType、AccessoryCategory、VendorNo、ModelNo、AssetNo、Description。前四項必填；重查已存在編號、已核准類別/供應商及分類關係；每組 (AccessoryNo, AccessoryType) 唯一；插入版本 01/狀態 0。實作 multipart /import/preview 回傳 token+逐列結果及 /import/commit 重新驗證後交易寫入；提供 ACC BASIS 範本下載。
 10. 完成後更新 API 規格/migration 記錄及本待辦，通知公司端 pull 對接。Production 不得回退 localStorage 假資料。
+
+## EP205 配件狀態設定（公司端 2026-11-16 已交接）
+
+先讀 docs/modules/EQP/配件/配件狀態設定.md。公司端已照 WinForms frmEQPACCStateBasis / Def 建立 Vue Development 假資料頁，使用既有 Oracle 狀態主表，不新增重複 DDL。
+
+- Oracle DDL：database/reference/mestest_accessory_state_source_ddl.sql；PostgreSQL 空表 SQL：database/reference/mestest_accessory_state_create.sql。Oracle 欄位/PK/index 已透過 PowerShell + ODP.NET 唯讀查證。
+- 元件與路由：web/src/components/AccessoryStateBasisMaster.vue、/YMES/Equipment/AccessoryStates；FunctionNo EQP ACC STATE / EP205。
+- 先比較 YMES tbleqpaccstatebasis 實際 schema 與 migration；若表已存在則保留 YMES 欄位，只針對缺漏差異新增 migration，不重建、不將 Oracle 原始 SQL 套到來源資料庫。
+- 實作 GET/POST/PUT/DELETE /api/equipment/accessory-states，與 EP204 共用狀態 lookup DTO；回傳 signed ARGB stateColor，保留可為 NULL 的 DataStamp。
+- 新增/修改驗證 AccessoryState -99..99、StateType 0/1、User Define 不可用 0..10、StateName 必填、Description 最長 255；StateName 最長 50。稽核欄位取 auth context/伺服器時間；修改用 DataStamp 並行檢查。
+- DELETE 不 cascade；若 TBLEQPACCCATEGORYSTATEBASIS 引用該狀態，回 409，避免舊表無 FK 時留下孤兒狀態定義。舊 WinForms 直接刪除的差異記在 API 文件。
+- 確認 ymes_app 最小權限、API DTO/錯誤回應與 EP204 消費端一致；部署後更新規格/本待辦並通知公司端接 API。
