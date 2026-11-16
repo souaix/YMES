@@ -6,6 +6,14 @@
 
 ## 家用電腦現在接手
 
+### MTL ML101 物料供應商基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料供應商基本資料.md`、`docs/DATABASE_CONNECTION.md` 新增段落及本檔公司端進度；WinForms Form/Service、API 契約、Issue 狀態與刪除交易均已記錄。
+- [ ] 依 `database/reference/mestest_mtl_material_vendor_source_ddl.sql` 與 `mestest_mtl_material_vendor_create.sql`，透過家用端 PPK/SSH 先比對 YMES schema/migrations，再建立 forward migration；不得在 Oracle 執行 CREATE SQL，也不得移除 YMES 擴充欄位。
+- [ ] 實作 `/api/material-vendors` 及巢狀 `/contactors` API：搜尋/四狀態、CRUD、DataStamp CAS（NULL 版本用 `dataStampIsNull=true`）、批次逐筆刪除、已核准軟刪除、核准 Issue/Job 流程及 contactor 交易；登入及 MTL ML101 權限必須在 API 驗證。
+- [ ] 主檔實體刪除須同交易刪除 `TBLMTLMATERIALVENDORCONTACTOR`、`TBLMTLMATERIALVENDORMAP` 對應資料，再刪主檔；供應商名稱查詢需依 WinForms 舊碼使用 MTL vendor 表。核對並修正 `src/YMes.Api/MasterData/Data/PostgresMasterDataRepository.MaterialFeatures.cs` 目前把 material vendor map join 到 `tbleqpvendor` 的來源錯誤。
+- [ ] 對照規格確認 PostgreSQL 欄位長度、NULL/default、主鍵、API DTO 與 Vue 路徑 `/YMES/MTL/MaterialVendors`；完成後更新規格與 migration/API 部署狀態並 push，通知公司端 pull Production endpoint。
+
 公司端已整理一批可直接接手的來源結構與目錄資料。開始前先 pull 這份清單所在的最新 `main`，並閱讀 `todolist_officepc.md`、`docs/DATABASE_CONNECTION.md`、`docs/MES_MENU_FUNCTION_INVENTORY.md`、OP/MTL 規格及下列 SQL。家用端只負責 DB/API/migration；公司端後續接回 Vue/WinForms 畫面。
 
 1. **系統目錄 migration 0012 已完成**：以 SSH 比對來源 schema，部署可回滾/可重跑 migration，載入 20 Module、601 MES MenuItem、553 Function 並保留 5 筆 YMES 自訂列。模組繁中名稱已核實、API/Web 已部署，瀏覽器已確認三層選單；逐筆自動比較來源與 API 回傳仍待補。

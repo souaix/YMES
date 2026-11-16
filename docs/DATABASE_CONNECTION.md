@@ -204,3 +204,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 及本機受保護連線，直接唯讀查詢 MESTEST.TBLSMDAREASHIFT、TBLSMDAREAOPERATOR、TBLSMDPDLINEPOSITIONBASIS 的 DBMS_METADATA 與資料字典。
 - 新增 Oracle 邏輯來源 DDL 與 PostgreSQL 空表 CREATE SQL：mestest_smd_area_shift_source_ddl.sql / mestest_smd_area_shift_create.sql；mestest_smd_pdline_position_basis_source_ddl.sql / mestest_smd_pdline_position_basis_create.sql。
 - 僅查表結構、欄位 null/default、PK/index/FK；未讀業務資料、未在 Oracle 執行 DDL。連線值未輸出或寫入 Git。
+
+### 更新 2026-11-17：MTL ML101 物料供應商
+
+- 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，讀取本機受保護連線，唯讀呼叫 DBMS_METADATA.GET_DDL 查 MESTEST.TBLMTLMATERIALVENDOR、TBLMTLMATERIALVENDORCONTACTOR。
+- 再查 ALL_INDEXES 與 ALL_CONSTRAINTS：主檔 PK VendorNo；連絡人 PK (VendorNo, ContactorName)；兩表都只有 PK unique index，沒有 FK 或額外索引。
+- Oracle 邏輯 DDL與 PostgreSQL 空表 CREATE SQL：database/reference/mestest_mtl_material_vendor_source_ddl.sql、database/reference/mestest_mtl_material_vendor_create.sql。僅查結構，未讀業務資料、未在 Oracle 執行 DDL，連線值未輸出或提交。
