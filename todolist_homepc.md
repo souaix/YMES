@@ -202,6 +202,20 @@
 - [ ] 實作 POST `/{carrierCategory}/approve`：只接受狀態 0 並檢查 DataStamp。舊 `wsEQP.ApproveCarrierCategory` 依 EQP Issue/Job 設定，無簽核工作可直接轉 2；有 Job 則建立簽核主檔並轉 1、簽核完成轉 2、退回轉 0，並通知第一簽核群組。Production 不可把 DEV 0→2 的簡化結果當成正式簽核成功。
 - [ ] 完成後以公司端 Vue 頁對接、核對 Delete 多筆部分成功、Edit/Approve/Delete 的狀態與並行衝突、API 回傳及稽核欄位，更新規格並部署。
 
+## 設備資料：載具類別資料 EP302（公司端 UI 與 Oracle DDL 已交付）
+
+先讀 `docs/modules/EQP/載具/載具類別資料.md`、`docs/DATABASE_CONNECTION.md` 及下列 PostgreSQL CREATE SQL。Oracle DDL 由公司電腦以 PowerShell 5.1 + ODP.NET 直接唯讀查得，不含 MES 業務資料。
+
+- [x] 公司端已對照 `frmCarrierType` / `frmCarrierTypeDef`、`wsEQP`、`clsCarrierBasis`；Vue DEV UI、Function route 與逐筆 API 契約已交付。
+- [x] 公司端已查得 MESTEST.TBLEQPCARRIERTYPE 13 欄、PK、唯一索引、NOT NULL/default；Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 為 `database/reference/mestest_carrier_type_source_ddl.sql`、`database/reference/mestest_carrier_type_create.sql`。CarrierCategory 雖是邏輯關聯，原表沒有 FK 或額外索引。
+- [ ] 核對 YMES `ymes.tbleqpcarriertype` 現有欄位/NULL/DEFAULT/PK/index；缺表才依 CREATE SQL 建 migration，保留 YMES 額外欄位。
+- [ ] 實作 GET `/api/equipment/carrier-types?carrierType=`，CarrierType 部分符合、排序；回傳全部顯示欄位、IssueState、DataStamp 及稽核欄位。可提供可選 `issueState` 過濾，但 Vue 的 WinForms 狀態列會在前端即時切換。
+- [ ] 實作 GET `/api/equipment/carrier-categories?issueState=2` 作為 CarrierCategory 查找選項；只提供已核准分類。
+- [ ] 實作 POST 新增與 PUT 修改：CarrierType Trim/ToUpper、必填、最多 50；CarrierCategory 必須存在且 IssueState=2；UseLayer 必須 0/1；UseLayer=0 時 CarrierLayer/CarrierCapacity/StartPosition 寫 1，UseLayer=1 時三者須正整數且符合 NUMBER(3,0)；Description 最長 255。新增設定 IssueState=0/Creator/CreateDate/DataStamp=0；Edit 限 IssueState=0 並做 DataStamp 比對。
+- [ ] 實作 DELETE：IssueState 0/-1 實體刪除，2 改成 -1 並更新 Reviser/ReviseDate/DataStamp，1 拒絕。舊服務未對實體刪除做 DataStamp 條件；新 API 建議兩種分支都檢查並行衝突，且每筆操作原子。
+- [ ] 實作 POST `/{carrierType}/approve`：只接受狀態 0 並檢查 DataStamp。舊 `wsEQP.ApproveCarrierType` 依 `CARRIER TYPE` Issue/Job 設定直核轉 2，或建立 Issue 主檔並轉 1；簽核完成轉 2、退回轉 0、通知第一簽核群組。不可把 DEV 0→2 簡化結果當正式簽核成功。
+- [ ] 完成後以公司端 Vue 頁對接；核對 UseLayer 條件欄位、分類選項、批次 Delete/Approve 部分成功、DataStamp 與稽核欄位，更新規格並部署。
+
 ## 設備基本資料 EP104（公司電腦規格交接）
 
 先讀 docs/modules/EQP/設備設定/設備基本資料.md 與 docs/modules/EQP/設備設定/設備參數設定.md。設備主表與參數表原始 DDL 已由使用者提供；單表 PostgreSQL CREATE SQL 已放在 database/reference/。

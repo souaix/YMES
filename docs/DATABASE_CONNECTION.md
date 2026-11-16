@@ -99,3 +99,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 查得 8 欄：CarrierCategory VARCHAR2(50) NOT NULL；Description VARCHAR2(255)；Creator/Reviser VARCHAR2(10)；CreateDate/ReviseDate DATE；IssueState NUMBER(1,0) DEFAULT 0 NOT NULL；DataStamp NUMBER(11,0) DEFAULT 0 nullable。PK 為 CarrierCategory；唯一索引只有 PK index，沒有其他索引或 FK。
 - Oracle 原始 DDL/PK index 與 PostgreSQL 空表 CREATE SQL 分別為 `database/reference/mestest_carrier_category_source_ddl.sql`、`database/reference/mestest_carrier_category_create.sql`。只查結構，未讀取業務資料或執行 Oracle DDL；家用端套用前先核對 YMES schema。
 - PowerShell 執行時應明確呼叫 Windows PowerShell 5.1；目前互動終端預設 PowerShell 7，直接載入既有 Oracle.ManagedDataAccess.dll 會因 BinaryFormatter runtime 相容性而無法初始化。連線設定仍由本機受保護附件讀取，不輸出或記錄連線值。
+
+### 更新 2026-11-16：EP302 載具類別資料
+
+- 公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護設定直接唯讀查詢 MESTEST.TBLEQPCARRIERTYPE 的 DBMS_METADATA.GET_DDL，並核對 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES、ALL_IND_COLUMNS。
+- 查得 13 欄；PK 為 CARRIERTYPE，唯一索引只有 PK index，沒有其他索引或 FK。Oracle 原始 DDL/PG 空表 CREATE SQL 為 `database/reference/mestest_carrier_type_source_ddl.sql`、`database/reference/mestest_carrier_type_create.sql`。
+- 只查結構，未讀取 MES 業務資料或執行 Oracle DDL；連線資訊仍只由本機受保護設定讀取，不輸出、不保存到 Git。

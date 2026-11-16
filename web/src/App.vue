@@ -4,6 +4,7 @@ import MenuTree from './components/MenuTree.vue'
 import MenuIcon from './components/MenuIcon.vue'
 import EquipmentMaster from './components/EquipmentMaster.vue'
 import EquipmentCarrierCategoryMaster from './components/EquipmentCarrierCategoryMaster.vue'
+import EquipmentCarrierTypeMaster from './components/EquipmentCarrierTypeMaster.vue'
 import EquipmentGroupMaster from './components/EquipmentGroupMaster.vue'
 import EquipmentStateMaster from './components/EquipmentStateMaster.vue'
 import EquipmentQCListMaster from './components/EquipmentQCListMaster.vue'
@@ -33,6 +34,7 @@ const equipmentRoute = `${appBasePath}/Equipment`
 const equipmentVendorRoute = `${appBasePath}/Equipment/Vendors`
 const equipmentEngineerGroupRoute = `${appBasePath}/Equipment/EngineerGroups`
 const equipmentCarrierCategoryRoute = `${appBasePath}/Equipment/CarrierCategories`
+const equipmentCarrierTypeRoute = `${appBasePath}/Equipment/CarrierTypes`
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -154,6 +156,8 @@ const menuRoutes: Record<string, string> = {
   'equipment-category': equipmentTypeRoute,
   'equipment-carrier-categories': equipmentCarrierCategoryRoute,
   'function:EQP:CARRIER CATEGORY': equipmentCarrierCategoryRoute,
+  'equipment-carrier-types': equipmentCarrierTypeRoute,
+  'function:EQP:CARRIER TYPE': equipmentCarrierTypeRoute,
   'equipment-accessory-categories': equipmentAccessoryCategoryRoute,
   'equipment-accessory-category-states': equipmentAccessoryCategoryStateRoute,
   'equipment-accessory-types': equipmentAccessoryTypeRoute,
@@ -173,6 +177,7 @@ const menuRoutes: Record<string, string> = {
 const functionRoutes: Record<string, string> = {
   'EQP BASIS': equipmentRoute,
   'CARRIER CATEGORY': equipmentCarrierCategoryRoute,
+  'CARRIER TYPE': equipmentCarrierTypeRoute,
   'EQP STATE': equipmentStateRoute,
   'ACC CATEGORY': equipmentAccessoryCategoryRoute,
   'ACC CATEGORY STATE': equipmentAccessoryCategoryStateRoute,
@@ -231,6 +236,7 @@ const isEquipmentStatePage = computed(() => activeMasterKey.value === 'equipment
 const isEquipmentInspectionPage = computed(() => activeMasterKey.value === 'equipment-inspection')
 const isEquipmentTypePage = computed(() => activeMasterKey.value === 'equipment-category')
 const isCarrierCategoryPage = computed(() => activeMasterKey.value === 'equipment-carrier-categories' || activeMasterKey.value === 'function:EQP:CARRIER CATEGORY')
+const isCarrierTypePage = computed(() => activeMasterKey.value === 'equipment-carrier-types' || activeMasterKey.value === 'function:EQP:CARRIER TYPE')
 const isAccessoryCategoryPage = computed(() => activeMasterKey.value === 'equipment-accessory-categories' || activeMasterKey.value === 'function:EQP:ACC CATEGORY')
 const isAccessoryCategoryStatePage = computed(() => activeMasterKey.value === 'equipment-accessory-category-states' || activeMasterKey.value === 'function:EQP:ACC CATEGORY STATE')
 const isAccessoryTypePage = computed(() => activeMasterKey.value === 'equipment-accessory-types' || activeMasterKey.value === 'function:EQP:ACC TYPE')
@@ -846,6 +852,13 @@ async function signOut(): Promise<void> {
         />
         <EquipmentCarrierCategoryMaster
           v-else-if="isCarrierCategoryPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+        />
+        <EquipmentCarrierTypeMaster
+          v-else-if="isCarrierTypePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
