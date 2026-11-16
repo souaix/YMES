@@ -48,7 +48,16 @@
 - [x] 用既有受保護連線，PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀查得 `TBLQCHOLDDESCRIPTION` table/index DDL、欄位/null/default、PK/index/FK。確認 PK 為 HoldDescriptionID、MClassNo 有非唯一索引、沒有 FK；未讀業務列、未執行 Oracle DDL、未輸出憑證。
 - [x] 建立 Oracle source DDL、PostgreSQL 空表 CREATE、Vue DEV 頁 `/YMES/QC/HoldDescription`、QC → 異常設定 → 異常說明三層選單、功能規格及家用端 schema/API handoff。
 - [ ] 未執行 build/test/瀏覽器驗收；DEV 核准只模擬無 Job/Detail 時直接轉 Active。
-- [ ] 下一個功能依 `MES_MENU_FUNCTION_INVENTORY.md` 接續 QC405「異常處理群組（HOLD DISP GROUP）」。
+- [x] QC405「異常處理群組（HOLD DISP GROUP）」已完成，詳見下節。
+
+### QC405 異常處理群組（公司端 2026-11-17）
+
+- [x] 對照 `frmHoldDispGroupBasis_THEIL_BU1`（來源 Form 位於 QC_HoldDispGroupBasis 專案）、`frmHoldDispGroupBasisDef`、`wsQC`、`clsHoldBasis`、`clsBasis_UPD`；完成上方群組 Grid 與下方三 Grid 人員分配版面、四狀態/GroupNo 查詢、CRUD/Copy/Delete/Approve、主處理/CC 切換、代理成員同步及 DataStamp/Issue Job 規格。
+- [x] 直接沿用已由 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查得的兩張 Oracle DDL：`TBLQCHOLDDISPGROUPBASIS` 在 QC406 lookup source DDL，`TBLUSRUSERGROUP` 在設備工程群組成員 source DDL；其 PostgreSQL 空表 CREATE 參考已存在。沒有新表或新 CREATE SQL 要交付。
+- [x] 新增 Vue DEV 頁 `web/src/components/QcHoldDispGroupMaster.vue`，建立 QC → 異常設定 → 異常處理群組與 `/YMES/QC/HoldDispGroup`；加入四狀態、群組 CRUD/Copy、組員多選移動、Type 5 主處理/Type 6 CC、套用式儲存及 localStorage DEV 假資料。
+- [x] 新增 `docs/modules/QC/異常處理群組.md`，記錄 Form/Service/Core、兩張表與 DDL 參照、精確 `HOLD DISP GROUP` Issue key 及 Production API/schema handoff；同步索引、DB 查詢紀錄與家用端 TODO。
+- [ ] 未執行 build、test 或瀏覽器驗收。DEV 核准只演示 0→2；Production 必須依 Issue/Job 處理。家用端比對 live schema/migrations 後實作 API；不可在 MES Oracle 執行 CREATE。
+- [ ] 下一個功能依目錄接續 QC403「異常原因基本資料（HOLDITEM BASIS）」。
 
 ### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）
 

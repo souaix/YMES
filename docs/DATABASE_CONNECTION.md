@@ -274,3 +274,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 來源 DDL / PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_hold_description_source_ddl.sql`、`mestest_qc_hold_description_create.sql`。PK 是 `HoldDescriptionID`，另有 `MClassNo` 非唯一索引，沒有 FK；`HoldDescription` VARCHAR2(4000) NOT NULL；DataStamp nullable DEFAULT 0。
 - 主分類查找重用 `TBLQCMCLASSBASIS`，WinForms LoadMClassBasis 預設 IssueState=2；不新增 lookup table。Core 以 `Guid.NewGuid().ToString()` 產生 HoldDescriptionID。
 - 本次只讀 DDL/資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。Form、狀態、Issue Job `HOLD DESCRIPTION` 規則見 `docs/modules/QC/異常說明.md`。
+
+### 更新 2026-11-17：QC405 異常處理群組
+
+- `TBLQCHOLDDISPGROUPBASIS` Oracle DDL/欄位/PK/index 已由公司端直連唯讀查得並放在 QC406 共用 lookup source DDL；PostgreSQL 空表 CREATE 也已存在。只有 GroupNo PK index，無其他 index/FK。
+- `TBLUSRUSERGROUP` Oracle DDL/欄位/複合 PK/索引已於 2026-11-16 由同一受保護連線直接查得；來源與 PostgreSQL 空表 CREATE 參照放在設備工程群組成員 DDL 檔。其 AgentOf 在 Oracle 欄位屬 nullable，但因納入 PK，實際不得為 NULL。QC405 使用 GroupType=5/6。
+- 本次未讀業務資料，未執行 Oracle DDL，沒有輸出或保存連線秘密；沒有新 CREATE SQL 要執行。功能及 API handoff 見 `docs/modules/QC/異常處理群組.md`。

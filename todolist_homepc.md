@@ -6,6 +6,21 @@
 
 ## 家用電腦現在接手
 
+### QC405 異常處理群組（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/異常處理群組.md`；公司端已完成 `/YMES/QC/HoldDispGroup` Vue DEV 頁，包含群組主檔及主處理/CC 使用者三 Grid。
+- [ ] 先比對 YMES PostgreSQL live schema、constraints、indexes 與 migrations。Oracle source DDL/PG 空表 CREATE 已存在：`TBLQCHOLDDISPGROUPBASIS` 參照 `mestest_qc_first_group_lookups_source_ddl.sql` / `_create.sql`；`TBLUSRUSERGROUP` 參照 `mestest_equipment_engineer_group_member_source_ddl.sql` / `_create.sql`。兩表缺漏才新增 forward migration；本功能沒有新增表，不要在 Oracle 建表。
+- [ ] 實作 `GET /api/qc/hold-disposition-groups?searchFieldName=GroupNo&searchFieldValue=`：回傳四狀態群組及 audit/DataStamp，搜尋只允許 GroupNo。FunctionKey 權限為 QC405。
+- [ ] 實作 `GET /api/qc/hold-disposition-groups/options/users?issueState=2`，等價 WinForms `wsUSR.LoadUserSecurity(IssueState=2)`，只回已核准使用者的 DepartmentNo/UserNo/UserName。若 YMES 已有安全的使用者查找 API，優先重用。
+- [ ] 實作 `GET /api/qc/hold-disposition-groups/{groupNo}/members`，回 `{primary: string[], cc: string[]}`。直接 UI 成員對應 `TBLUSRUSERGROUP.GroupType=5/6 AND AgentOf='NA'`；顯示可沿用已核准使用者資料，缺失/停用的既存關聯仍需可見並可移除。
+- [ ] 實作 POST `/api/qc/hold-disposition-groups` body `{groupNo, groupName, description}`：GroupNo 必填/長度20/大寫、GroupName 必填/長度50、Description 長度255；伺服器寫 Creator/CreateDate、IssueState=0、DataStamp 初值。
+- [ ] 實作 PUT `/api/qc/hold-disposition-groups/{groupNo}?dataStamp=`，僅更新 GroupName/Description，只接受 IssueState 0/2；由伺服器更新 Reviser/ReviseDate/DataStamp，以 GroupNo + nullable DataStamp CAS。
+- [ ] 實作 POST `/api/qc/hold-disposition-groups/copy`，body `{sourceGroupNo, groupNo, groupName, description}`；transaction 同時新增主檔並複製舊 Core `ShowHoldDispGroupDetail(CCGroup=true)` 回傳的 5/6 類成員。舊 `Show...` 不限 AgentOf，但 `AddHoldDispGroupDetail` 將複製關聯寫成 AgentOf='NA'；保持這個相容行為，或在 API 規格清楚標註產品決策後的修正。
+- [ ] 實作 DELETE：IssueState 0/-1 實體刪除主檔與該 GroupNo 的 5/6 類成員；IssueState 2 改 -1 並保留成員；IssueState 1 拒絕。用主檔 DataStamp CAS 並在 transaction 中處理。
+- [ ] 實作 PUT `/api/qc/hold-disposition-groups/{groupNo}/members?dataStamp=`，body `{primaryUserNos, ccUserNos}`。單一 transaction 先以 GroupNo + DataStamp CAS 更新主檔 Reviser/ReviseDate/DataStamp，再刪除該群組所有 GroupType 5/6 關聯，重建選取的直接成員 (AgentOf='NA')；兩個清單不得重複同一 UserNo，空陣列表示清除。每個 GroupType 5 成員需沿用 USR `AddUserAgentToGroup(UserNo, GroupNo, 5)` 代理人同步副作用。
+- [ ] 實作 `POST /api/qc/hold-disposition-groups/{groupNo}/approve?issueState=0&dataStamp=`：Issue Job Map 精確 key `HOLD DISP GROUP`；沒有 Job/Detail 直接轉 2，有流程建立 Issue、狀態轉 1、通知第一簽核群組，核准轉 2、退回轉 0。
+- [ ] 所有端點驗證登入、QC405 功能權限、SQL 參數化及版本衝突；先比對 live schema，不重建已存在表。部署 API/schema 後更新 handoff、push 並通知公司端 pull。公司端未執行 build/test/瀏覽器驗收。
+
 ### QC404 異常說明（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/異常說明.md`、`docs/DATABASE_CONNECTION.md`；公司端已對照 `frmHoldDescription`、`frmHoldDescriptionDef`、`wsQC`、`clsHoldBasis`、`clsBasis_UPD`，完成 QC → 異常設定 → 異常說明 Vue DEV 頁與 `/YMES/QC/HoldDescription` 路由。
