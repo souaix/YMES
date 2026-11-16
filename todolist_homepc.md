@@ -56,7 +56,7 @@
 ## SMD SD106 過帳電腦之區域（公司端 2026-11-16 已交接）
 
 - [x] 2026-11-16 遠端 schema 核對：兩張主明細表已存在且欄位、NULL、型態、PK 符合來源；僅 `DataStamp DEFAULT 0` 漏失。`0017_smd_computer_area_api.sql` 已補 DEFAULT、建立必要 SMD 空表，並授予 `ymes_app` 對 SD106 主明細 CRUD 與 Factory/Area lookup SELECT。備份為 `/opt/ymes/backups/ymes_before_0017_smd_20261116.dump`，mode 600，`pg_restore --list` 驗證可讀。
-- [x] SD106 API（查詢、Create、Edit CAS/整組替換明細、Delete、Copy、已簽核工廠與區域 options）已完成實作；.NET 9 build 成功。API 遠端部署及 app-browser 驗收待完成。
+- [x] SD106 API（查詢、Create、Edit CAS/整組替換明細、Delete、Copy、已簽核工廠與區域 options）已部署至遠端獨立 API 容器；.NET 9 build 成功，`/health/ready` 回 200，未登入 API 路由回 401。登入後 app-browser 讀取與 Production UI 驗收待完成。
 - [ ] SMD API 目前僅要求登入；依使用者指示，角色／功能權限暫不實作。PostgreSQL `ymes_app` 的表級權限另按每個端點實際需要最小授權。
 
 先讀 `docs/modules/SMD/過帳電腦之區域.md`。公司端已完成 `/YMES/SMD/ComputerAreas` Vue DEV 頁；Production 僅呼叫 API。
