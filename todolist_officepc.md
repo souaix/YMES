@@ -132,5 +132,16 @@
 - [x] Development 假資料只在 Development preview 啟用；EP103 頁使用共用 api/equipment/engineer-groups 契約，其他環境走 API。
 - [x] 更新 docs/modules/EQP/設備設定/設備類別資料.md、規格索引及家用端 API 待辦；沒有新增資料表或 SQL。
 - [ ] 家用電腦比對五張設備類別表與配件目錄表 schema，完成 API/圖片/匯入/簽核流程後，拉回最新版本做 Production 契約核對。
-- [ ] 下一步核對 EP105「設備群組資料」WinForms Form/Designer/Service，逐欄補齊 UI 與規格；資料表缺 DDL 時用 PowerShell + ODP.NET 查 Oracle，再把空表 CREATE SQL 交家用端。
+- [x] EP105「設備群組資料」WinForms Form/Designer/Service 已核對並完成公司端 UI 規格補正；下一項續做 EP106「設備狀態設定」WinForms 與 Vue 差異。
+- [ ] 本次未執行 build 或測試；未更動 API、資料庫或部署。
+
+
+## EP105 設備群組資料公司端 UI 補正（2026-11-16）
+
+- [x] 直接對照 frmEquipmentGroup/Def、Designer、clsEQPBasis 與 wsEQP；保留主從清單、隱藏 Copy 按鈕、未核准群組才能編輯/加入/移除、設備只能加入一次及 Chamber 排除規則。
+- [x] 群組 Def 補上 WinForms 確定/關閉/套用、異動後才啟用 Apply、建立/修改稽核欄位、編號失焦轉大寫及儲存後更新 DataStamp/清單。
+- [x] Development 假資料改由所選 Development preview 控制；環境/API 位址切換會重新載入。Production 走 API。
+- [x] 更新 docs/modules/EQP/設備設定/設備群組資料.md、規格索引與 todolist_homepc.md。主從與 SMD 表 Oracle DDL/CREATE SQL 已先前查得，本次無新表/無需再查 DDL。
+- [ ] 家用端按 todolist_homepc.md EP105 區塊比對 schema、完成 CRUD/Approve/SMD API，部署後公司端再對接並驗證。
+- [ ] 下一項 EP106 設備狀態設定：先對照 WinForms Form/Designer/Service 與 Vue 元件，按差異補畫面/邏輯。
 - [ ] 本次未執行 build 或測試；未更動 API、資料庫或部署。

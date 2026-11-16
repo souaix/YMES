@@ -155,6 +155,7 @@
 
 - [ ] 確認 YMES 已有 tbleqpgroupbasis、tbleqpgroupdetail；缺表才執行單表 CREATE SQL。第一階段 bootstrap 也已含兩表，Oracle 核實後的欄位來源註解已校正。
 - [x] 公司端已查得 TBLSMDAREARELATION、TBLSMDSMTAREAEQPMAP 原始 DDL、欄位/NULL/PK/索引/FK，交付 `database/reference/mestest_equipment_group_smd_source_ddl.sql` 與 `mestest_equipment_group_smd_create.sql`。
+- [x] 公司端已完成 EP105 設備群組 Vue 頁 WinForms Apply/稽核 UI 與 Development preview 隔離；家用端仍只接手本節 schema/API/SMD migration，不需新增表規格。
 - [ ] 實作設備群組清單、CRUD、核准/刪除 API：IssueState 0 才可修改；核准只允許 0，依 IssueNo EQP GROUP BASIS 啟動簽核；刪除只接受 0/-1/2，傳 DataStamp。
 - [ ] 新增 API 實作 ChkObjectForSMDLayout(EquipmentGroup,4)：歷史 helper 會拒絕已存在於 `tblSMDAreaBasis.AreaNo`、`tblEQPEquipmentBasis.EquipmentNo` 或 `tblINVInventoryBasis.InventoryNo` 的同值編號。此 helper 本體在 `modKC.vb` 是註解版本；若家用端有目前部署的 active helper，先比對錯誤訊息與例外行為。
 - [ ] 實作群組明細與可加入設備端點。可加入清單限定 IssueState=2、ChamberFlag=0、尚未出現在任何 group detail；新增前由 API 再次以交易/鎖定檢查設備跨群組唯一性。

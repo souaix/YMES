@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 type IssueState = -1 | 0 | 1 | 2
 type GroupMode = 'new' | 'edit' | null
 interface EquipmentGroup {
   equipmentGroup: string
-  description: string
-  creator: string
-  createDate: string
+  description: string | null
+  creator: string | null
+  createDate: string | null
   reviser: string | null
   reviseDate: string | null
   issueState: IssueState
@@ -25,9 +25,9 @@ interface EquipmentOption {
   chamberFlag: number
 }
 
-const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string }>()
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const mock = import.meta.env.DEV
+const usesDevelopmentMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const keys = {
   groups: 'ymes-dev-mock:equipment-groups:v1',
   members: 'ymes-dev-mock:equipment-group-members:v1',
@@ -70,6 +70,8 @@ const error = ref('')
 const notice = ref('')
 const mode = ref<GroupMode>(null)
 const form = ref({ equipmentGroup: '', description: '' })
+const audit = ref({ creator: '', createDate: '', reviser: '', reviseDate: '' })
+const formDirty = ref(false)
 const addEquipmentOpen = ref(false)
 
 const current = computed(() => rows.value.find((x) => x.equipmentGroup === currentNo.value) ?? null)
@@ -123,7 +125,7 @@ async function loadDetails(): Promise<void> {
   const group = current.value
   if (!group) { details.value = []; return }
   try {
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       const memberMap = read<Record<string, string[]>>(keys.members, seedMembers)
       details.value = (memberMap[group.equipmentGroup] ?? []).map((equipmentNo) => ({ equipmentGroup: group.equipmentGroup, equipmentNo }))
     } else {
@@ -140,7 +142,7 @@ async function loadGroups(): Promise<void> {
   error.value = ''
   notice.value = ''
   try {
-    if (mock) rows.value = read<EquipmentGroup[]>(keys.groups, seedGroups)
+    if (usesDevelopmentMock.value) rows.value = read<EquipmentGroup[]>(keys.groups, seedGroups)
     else {
       const query = new URLSearchParams()
       if (keyword.value.trim()) query.set('equipmentGroup', keyword.value.trim())
@@ -197,6 +199,10 @@ function openGroup(modeValue: Exclude<GroupMode, null>): void {
     ? { equipmentGroup: row.equipmentGroup, description: row.description ?? '' }
     : { equipmentGroup: '', description: '' }
   error.value = ''
+  formDirty.value = false
+  audit.value = row && modeValue === 'edit'
+    ? { creator: row.creator ?? '', createDate: dateText(row.createDate), reviser: props.currentUserNo || '', reviseDate: new Date().toLocaleString('zh-TW') }
+    : { creator: props.currentUserNo || 'DEV001', createDate: new Date().toLocaleString('zh-TW'), reviser: '', reviseDate: '' }
 }
 function validateGroup(): string {
   if (!form.value.equipmentGroup.trim()) return '設備群組編號為必填。'
@@ -204,14 +210,15 @@ function validateGroup(): string {
   if (form.value.description.length > 255) return '說明不可超過 255 個字元。'
   return ''
 }
-async function saveGroup(): Promise<void> {
+async function saveGroup(closeAfterSave = true): Promise<void> {
   if (!mode.value || busy.value) return
   const problem = validateGroup()
   if (problem) { error.value = problem; return }
   busy.value = true
   error.value = ''
   const saveMode = mode.value
-  const equipmentGroup = form.value.equipmentGroup.trim()
+  const equipmentGroup = form.value.equipmentGroup.trim().toUpperCase()
+  form.value.equipmentGroup = equipmentGroup
   const source = current.value
   const body = {
     equipmentGroup,
@@ -219,7 +226,7 @@ async function saveGroup(): Promise<void> {
     ...(saveMode === 'edit' && source ? { issueState: source.issueState, dataStamp: source.dataStamp } : {}),
   }
   try {
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       const list = read<EquipmentGroup[]>(keys.groups, seedGroups)
       const index = list.findIndex((x) => x.equipmentGroup === equipmentGroup)
       if (saveMode === 'new' && index >= 0) throw new Error('設備群組編號已存在。')
@@ -241,10 +248,12 @@ async function saveGroup(): Promise<void> {
       })
     }
     const savedKey = equipmentGroup
-    mode.value = null
-    await loadGroups()
+    if (closeAfterSave) mode.value = null
+    formDirty.value = false
     currentNo.value = savedKey
-    await loadDetails()
+    await loadGroups()
+    const saved = rows.value.find((x) => x.equipmentGroup === savedKey)
+    if (saved) audit.value = { creator: saved.creator ?? '', createDate: dateText(saved.createDate), reviser: saved.reviser ?? '', reviseDate: dateText(saved.reviseDate) }
     notice.value = saveMode === 'edit' ? '設備群組已修改。' : '設備群組已新增。'
   } catch (e) { error.value = e instanceof Error ? e.message : '設備群組儲存失敗。' }
   finally { busy.value = false }
@@ -261,7 +270,7 @@ async function groupAction(action: 'delete' | 'approve'): Promise<void> {
   busy.value = true
   error.value = ''
   try {
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       const list = read<EquipmentGroup[]>(keys.groups, seedGroups)
       if (action === 'approve') {
         for (const target of valid) {
@@ -304,7 +313,7 @@ async function openAddEquipment(): Promise<void> {
   if (!current.value) return
   if (current.value.issueState !== 0) { error.value = '只有未審核的設備群組可以調整設備明細。'; return }
   try {
-    if (mock) availableRows.value = mockAvailable()
+    if (usesDevelopmentMock.value) availableRows.value = mockAvailable()
     else availableRows.value = await request<EquipmentOption[]>('api/equipment/groups/' + encodeURIComponent(current.value.equipmentGroup) + '/available-equipment')
     checkedAvailable.value = []
     availableKeyword.value = ''
@@ -316,7 +325,7 @@ async function addEquipment(): Promise<void> {
   busy.value = true
   error.value = ''
   try {
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       const map = read<Record<string, string[]>>(keys.members, seedMembers)
       const members = new Set(map[current.value.equipmentGroup] ?? [])
       for (const no of checkedAvailable.value) members.add(no)
@@ -345,7 +354,7 @@ async function deleteEquipment(): Promise<void> {
   busy.value = true
   error.value = ''
   try {
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       const map = read<Record<string, string[]>>(keys.members, seedMembers)
       map[current.value.equipmentGroup] = (map[current.value.equipmentGroup] ?? []).filter((x) => !selected.includes(x))
       write(keys.members, map)
@@ -362,11 +371,12 @@ async function deleteEquipment(): Promise<void> {
   finally { busy.value = false }
 }
 onMounted(() => { void loadGroups() })
+watch(() => [props.developmentPreview, props.apiBaseUrl], () => { void loadGroups() })
 </script>
 
 <template>
   <section class="eqgroup-page">
-    <div v-if="mock" class="eqgroup-dev-note">開發假資料模式｜資料只保存在本機瀏覽器；正式環境只呼叫 API。</div>
+    <div v-if="usesDevelopmentMock" class="eqgroup-dev-note">開發假資料模式｜資料只保存在本機瀏覽器；正式環境只呼叫 API。</div>
     <div v-if="error" class="eqgroup-message error" role="alert">{{ error }}<button type="button" @click="error = ''">×</button></div>
     <div v-if="notice" class="eqgroup-message success" role="status">{{ notice }}<button type="button" @click="notice = ''">×</button></div>
 
@@ -429,13 +439,14 @@ onMounted(() => { void loadGroups() })
     </div>
 
     <div v-if="mode" class="eqgroup-overlay" @click.self="mode=null">
-      <form class="eqgroup-form" @submit.prevent="saveGroup">
+      <form class="eqgroup-form" @input="formDirty=true" @change="formDirty=true" @submit.prevent="saveGroup(true)">
         <header><strong>設備群組資料定義（{{ mode==='edit'?'EDIT':'ADD' }}）</strong><button type="button" aria-label="關閉" @click="mode=null">×</button></header>
         <fieldset><legend>設備群組資料</legend>
-          <label><span>設備群組</span><input v-model.trim="form.equipmentGroup" maxlength="50" required :readonly="mode==='edit'" @blur="form.equipmentGroup = form.equipmentGroup.toUpperCase()" /></label>
+          <label><span>設備群組</span><input v-model.trim="form.equipmentGroup" maxlength="50" required :readonly="mode==='edit'" @blur="form.equipmentGroup = form.equipmentGroup.trim().toUpperCase()" /></label>
           <label class="long"><span>說明</span><textarea v-model="form.description" maxlength="255" rows="4" /></label>
         </fieldset>
-        <footer><button class="primary" type="submit" :disabled="busy">確定</button><button type="button" @click="mode=null">關閉</button><button type="button" disabled>套用</button></footer>
+        <div class="eqgroup-audit"><span>建立人　{{ audit.creator }}</span><span>建立日期　{{ audit.createDate }}</span><span>修改人　{{ audit.reviser }}</span><span>修改日期　{{ audit.reviseDate }}</span></div>
+        <footer><button class="primary" type="submit" :disabled="busy">確定</button><button type="button" @click="mode=null">關閉</button><button type="button" :disabled="busy||!formDirty" @click="saveGroup(false)">套用</button></footer>
       </form>
     </div>
 
@@ -474,8 +485,8 @@ onMounted(() => { void loadGroups() })
 .eqgroup-form{display:flex;width:min(620px,96vw);max-height:92vh;flex-direction:column;gap:11px;overflow:auto;padding:13px 16px;border:1px solid #aaa;background:#fff;box-shadow:0 8px 30px #0003}
 .eqgroup-form>header{display:flex;align-items:center;justify-content:space-between;font-size:15px}.eqgroup-form>header button{width:30px;height:28px;border:1px solid #ccc;background:#fafafa;font-size:19px;cursor:pointer}
 .eqgroup-form fieldset{min-width:0;margin:0;padding:12px;border:1px solid #aaa}.eqgroup-form legend{padding:0 5px}
-.eqgroup-form fieldset>label,.eqgroup-search{display:grid;grid-template-columns:135px minmax(0,1fr);align-items:center;gap:8px;margin:6px 0}.eqgroup-form input,.eqgroup-form textarea{width:100%;min-height:30px;padding:5px 7px;border:1px solid #a99e6b;border-radius:0;background:#fff1b2;font:inherit}.eqgroup-form input[readonly]{background:#eee}.eqgroup-form textarea{resize:vertical}.eqgroup-form .long{align-items:start}.eqgroup-form footer{display:flex;justify-content:flex-end;gap:8px}.eqgroup-form footer button{min-width:92px;height:36px;border:1px solid #ccc;background:#fafafa;font:inherit;cursor:pointer}
+.eqgroup-form fieldset>label,.eqgroup-search{display:grid;grid-template-columns:135px minmax(0,1fr);align-items:center;gap:8px;margin:6px 0}.eqgroup-form input,.eqgroup-form textarea{width:100%;min-height:30px;padding:5px 7px;border:1px solid #a99e6b;border-radius:0;background:#fff1b2;font:inherit}.eqgroup-form input[readonly]{background:#eee}.eqgroup-form textarea{resize:vertical}.eqgroup-form .long{align-items:start}.eqgroup-form footer{display:flex;justify-content:flex-end;gap:8px}.eqgroup-form footer button{min-width:92px;height:36px;border:1px solid #ccc;background:#fafafa;font:inherit;cursor:pointer}.eqgroup-audit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:9px;border:1px solid #d2cfc7;color:#777;font-size:12px}
 .eqgroup-picker{width:min(960px,97vw)}.eqgroup-search{max-width:600px;margin:0}.eqgroup-search input{background:#fff}.eqgroup-picker-grid{min-height:220px;max-height:55vh;overflow:auto;border:1px solid #c8c8c8}
 @media(max-width:900px){.eqgroup-workspace{grid-template-rows:minmax(220px,1fr) minmax(220px,1fr)}.eqgroup-panel-body{grid-template-columns:minmax(0,1fr) 82px}.eqgroup-actions button{font-size:11px}}
-@media(max-width:640px){.eqgroup-page{height:auto;min-height:calc(100vh - 100px)}.eqgroup-query{flex-wrap:wrap}.eqgroup-query fieldset{flex-wrap:wrap}.eqgroup-workspace{grid-template-rows:minmax(280px,50vh) minmax(220px,40vh)}.eqgroup-panel-body{grid-template-columns:minmax(0,1fr)}.eqgroup-actions{flex-direction:row;flex-wrap:wrap}.eqgroup-actions button{flex:1}.eqgroup-table{min-width:720px}}
+@media(max-width:640px){.eqgroup-page{height:auto;min-height:calc(100vh - 100px)}.eqgroup-query{flex-wrap:wrap}.eqgroup-query fieldset{flex-wrap:wrap}.eqgroup-workspace{grid-template-rows:minmax(280px,50vh) minmax(220px,40vh)}.eqgroup-panel-body{grid-template-columns:minmax(0,1fr)}.eqgroup-actions{flex-direction:row;flex-wrap:wrap}.eqgroup-actions button{flex:1} .eqgroup-table{min-width:720px}.eqgroup-audit{grid-template-columns:1fr 1fr}}
 </style>
