@@ -136,3 +136,26 @@ COMMENT ON TABLE ymes.tblentcustomershipaddr IS 'MES Oracle source: MESTEST.TBLE
 COMMENT ON TABLE ymes.tblentcustomershipdeclaration IS 'MES Oracle source: MESTEST.TBLENTCUSTOMERSHIPDECLARATION; source has no PK/index';
 COMMENT ON TABLE ymes.tblentbrokerbasis IS 'MES Oracle source: MESTEST.TBLENTBROKERBASIS';
 COMMENT ON COLUMN ymes.tblentbrokerbasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';
+
+-- Oracle source: MESTEST.TBLENTFORWARDERBASIS (ET104). BROKERNO is required;
+-- Oracle has no foreign key, so reference validation belongs in the ENT API.
+CREATE TABLE IF NOT EXISTS ymes.tblentforwarderbasis (
+    forwarderno varchar(50) CONSTRAINT n_tblentforwarderbasis_01 NOT NULL,
+    contactorname varchar(50),
+    telno varchar(25),
+    faxno varchar(25),
+    email varchar(255),
+    address varchar(500),
+    brokerno varchar(50) CONSTRAINT n_tblentforwarderbasis_02 NOT NULL,
+    bankno varchar(20),
+    issuestate numeric(1,0) DEFAULT 0,
+    creator varchar(10),
+    createdate timestamp without time zone DEFAULT LOCALTIMESTAMP,
+    acno varchar(50),
+    datastamp numeric(11,0) DEFAULT 0,
+    reviser varchar(10),
+    revisedate timestamp without time zone,
+    CONSTRAINT pk_tblentforwarderbasis PRIMARY KEY (forwarderno)
+);
+COMMENT ON TABLE ymes.tblentforwarderbasis IS 'MES Oracle source: MESTEST.TBLENTFORWARDERBASIS';
+COMMENT ON COLUMN ymes.tblentforwarderbasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';

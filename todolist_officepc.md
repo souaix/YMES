@@ -252,4 +252,16 @@
 - [x] 新增 `docs/modules/ENT/報關行基本資料.md`，記錄 WinForms 版面、欄位限制、狀態刪除規則、`BROKER BASIS` 簽核流程及 YMES API 契約；更新規格索引、DB 連線記錄及家用端待辦。
 - [ ] 家用端比對 YMES schema/migrations，依 DDL 只新增缺少的表；實作 Production CRUD、DataStamp、IssueState 軟刪除/硬刪除與既有簽核服務 API。
 - [ ] 本次未執行 build、測試或瀏覽器驗收；Production API 尚待家用端完成。
-- [ ] 下一個功能依 ENT FunctionOrder 接續 ET104「貨運行基本資料」，繼續直接讀 WinForms Form/Designer/Service；缺 DDL 時用 Windows PowerShell 5.1 直連 Oracle 查詢。
+- [x] 後續已依 ENT FunctionOrder 開始 ET104「貨運行基本資料」；詳細進度與待辦見下方 ET104 區塊。
+
+## ENT ET104 貨運行基本資料公司端進度（2026-11-16）
+
+- [x] 開始前從 GitHub `main` 執行 `git pull --ff-only origin main`，遠端已是 `8d87cd8`；前一段 ET104 DDL 草稿保留。
+- [x] 核對 `frmForwarderBasis`、`frmForwarderBasisDef` inline Designer、`wsENT.Load/Add/Edit/Del/ApproveForwarderBasis` 與 `kcBasis_Query`、`kcBasis_UPD`：狀態篩選、多選操作、欄位/唯讀、Broker 選擇、Apply/Confirm、狀態2舊服務缺陷都記入功能規格。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從既有受保護連線唯讀取得 `MESTEST.TBLENTFORWARDERBASIS` DDL、欄位 nullable/default、PK/index/FK；只查結構，未查業務列、未在 Oracle 執行 DDL，憑證未輸出。
+- [x] Oracle 原始 logical DDL 與 PostgreSQL `ymes.tblentforwarderbasis` 空表 CREATE SQL 已加入客戶主檔 reference；同步校正 first-phase reference 的 DEFAULT 與欄位註解。
+- [x] 新增 Vue DEV 頁 `web/src/components/ForwarderBasisMaster.vue`、`/YMES/Customer/Forwarders` 路徑、`FORWARDER BASIS` 對應；含狀態篩選、動態選列、多選、CRUD、停用/刪除、核准預覽、稽核及只顯示已簽核報關行的選擇器。
+- [x] 新增 `docs/modules/ENT/貨運行基本資料.md`，更新功能索引、DB 連線記錄、ET103 報關行 lookup query 規格與家用端 ET104 schema/API/簽核 TODO。
+- [ ] 家用端比對 YMES schema/migrations；只新增缺漏表或欄位，實作 ET104 Production CRUD、BrokerNo=已簽核報關行驗證、DataStamp、狀態刪除及 `FORWARDER BASIS` 簽核 API。
+- [ ] 未執行 build、測試或瀏覽器驗收。ET103 的 radio/checkbox KD 黃色 accent 與簽核完成後 audit/DataStamp 規格修正會跟 ET104 一起提交。
+- [ ] 下一項依 ENT FunctionOrder 接續 ET105「取貨公司基本資料」；先查 `STD/MESWin/ENT/ET_TakerBasis` 的 Form/Service，Oracle DDL 缺漏時仍以 PowerShell 5.1 + ODP.NET 直連取得。

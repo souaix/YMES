@@ -22,6 +22,7 @@ import CustomerBasisMaster from './components/CustomerBasisMaster.vue'
 import CustomerContactorMaster from './components/CustomerContactorMaster.vue'
 import CustomerShipAddressMaster from './components/CustomerShipAddressMaster.vue'
 import BrokerBasisMaster from './components/BrokerBasisMaster.vue'
+import ForwarderBasisMaster from './components/ForwarderBasisMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
@@ -48,6 +49,7 @@ const customerBasisRoute = appBasePath + '/Customer/Basis'
 const customerContactorRoute = appBasePath + '/Customer/Contactors'
 const customerShipAddressRoute = appBasePath + '/Customer/ShipAddresses'
 const brokerBasisRoute = appBasePath + '/Customer/Brokers'
+const forwarderBasisRoute = appBasePath + '/Customer/Forwarders'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -182,6 +184,7 @@ const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
   'function:ENT:BROKER BASIS': brokerBasisRoute,
+  'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:CUSTOMER BASIS': customerBasisRoute,
   'function:ENT:CUSTOMER CONTACTOR': customerContactorRoute,
   'function:ENT:CUSTOMER SHIP ADDRESS': customerShipAddressRoute,
@@ -218,6 +221,7 @@ const menuRoutes: Record<string, string> = {
 
 const functionRoutes: Record<string, string> = {
   'BROKER BASIS': brokerBasisRoute,
+  'FORWARDER BASIS': forwarderBasisRoute,
   'CUSTOMER BASIS': customerBasisRoute,
   'CUSTOMER CONTACTOR': customerContactorRoute,
   'CUSTOMER SHIP ADDRESS': customerShipAddressRoute,
@@ -281,6 +285,7 @@ const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:E
 const isCustomerContactorPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER CONTACTOR')
 const isCustomerShipAddressPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER SHIP ADDRESS')
 const isBrokerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:BROKER BASIS')
+const isForwarderBasisPage = computed(() => activeMasterKey.value === 'function:ENT:FORWARDER BASIS')
 const isEquipmentVendorPage = computed(() => activeMasterKey.value === 'equipment-vendor-master')
 const isEquipmentEngineerGroupPage = computed(() => activeMasterKey.value === 'equipment-engineer-group')
 const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment-group')
@@ -927,6 +932,13 @@ async function signOut(): Promise<void> {
         />
         <BrokerBasisMaster
           v-else-if="isBrokerBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+        />
+        <ForwarderBasisMaster
+          v-else-if="isForwarderBasisPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

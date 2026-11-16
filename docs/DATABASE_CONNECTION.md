@@ -139,3 +139,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 查得 BrokerNo 單欄 PK/唯一索引；無 FK/其他索引。Oracle DDL 的 IssueState、CreateDate、DataStamp DEFAULT 與 NULL 性質已逐欄記入 ET103 規格及來源 DDL。既有第一階段 PostgreSQL reference 的該表預設值也已修正。
 - PostgreSQL 空表 CREATE SQL 位於 `database/reference/mestest_customer_basis_create.sql`。連線憑證只使用本機受保護設定，未輸出、未寫入文件或 Git。
 - WinForms 查詢、狀態、刪除/停用與 IssueNo=`BROKER BASIS` 簽核邏輯見 `docs/modules/ENT/報關行基本資料.md`。
+
+### 更新 2026-11-16：ENT ET104 貨運行基本資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護連線直接唯讀查詢 `MESTEST.TBLENTFORWARDERBASIS` 的 DBMS_METADATA DDL、欄位 NULL/default、constraint、index 與 FK 字典；沒有查業務資料或在 Oracle 執行 DDL。
+- 表有 ForwarderNo 單欄 PK/唯一索引，無 FK/其他索引；PostgreSQL 空表 CREATE SQL 已加到 `database/reference/mestest_customer_basis_create.sql`，first-phase reference 也同步補 DEFAULT 與欄位註解。
+- DDL 直連方式、欄位與 ET104 邏輯見 `docs/modules/ENT/貨運行基本資料.md`。連線資訊仍僅由本機受保護設定提供，未輸出或寫入 Git。
