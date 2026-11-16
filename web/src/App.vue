@@ -862,6 +862,7 @@ async function signOut(): Promise<void> {
           v-else-if="isEquipmentStatePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :development-preview="isDevelopmentPreview"
         />
         <EquipmentQCListMaster
           v-else-if="isEquipmentInspectionPage"

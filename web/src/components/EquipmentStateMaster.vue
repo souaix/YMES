@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 type StateMode = 'new' | 'edit' | 'copy' | null
 interface EquipmentState {
@@ -27,9 +27,9 @@ interface StateForm {
   utilizationType: number | null
 }
 
-const props = defineProps<{ apiBaseUrl: string }>()
+const props = withDefaults(defineProps<{ apiBaseUrl: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const mock = import.meta.env.DEV
+const usesDevelopmentMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const storageKey = 'ymes-dev-mock:equipment-states:v1'
 const referenceStorageKey = 'ymes-dev-mock:equipment-state-references:v1'
 const fallbackStateTypes: ValueOption[] = [
@@ -57,6 +57,9 @@ const notice = ref('')
 const mode = ref<StateMode>(null)
 const formDirty = ref(false)
 const form = ref<StateForm>(blankForm())
+const equipmentStateInput = ref<HTMLInputElement | null>(null)
+const stateTypeInput = ref<HTMLSelectElement | null>(null)
+const colorInput = ref<HTMLInputElement | null>(null)
 
 const current = computed(() => rows.value.find((row) => row.equipmentState === currentNumber.value) ?? null)
 const currentModeTitle = computed(() => mode.value === 'edit' ? '修改設備狀態' : mode.value === 'copy' ? '複製設備狀態' : '新增設備狀態')
@@ -160,6 +163,14 @@ function openForm(nextMode: Exclude<StateMode, null>): void {
   error.value = ''
   notice.value = ''
   formDirty.value = false
+  void nextTick(() => {
+    const target = nextMode === 'edit' ? stateTypeInput.value : equipmentStateInput.value
+    target?.focus()
+    if (target === equipmentStateInput.value) equipmentStateInput.value?.select()
+  })
+}
+function openColorPicker(): void {
+  colorInput.value?.click()
 }
 function rgbHex(value: number): string {
   const red = ((value >>> 16) & 255).toString(16).padStart(2, '0')
@@ -210,7 +221,7 @@ async function saveForm(keepOpen: boolean): Promise<void> {
   busy.value = true
   error.value = ''
   try {
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       const latest = read<EquipmentState[]>(storageKey, seedRows)
       if (saveMode === 'edit') {
         const index = latest.findIndex((row) => row.equipmentState === currentNumber.value)
@@ -232,18 +243,15 @@ async function saveForm(keepOpen: boolean): Promise<void> {
       })
     }
     currentNumber.value = body.equipmentState
-    if (!mock) await loadRows()
+    if (!usesDevelopmentMock.value) await loadRows()
     notice.value = saveMode === 'edit' ? '設備狀態已修改。' : saveMode === 'copy' ? '設備狀態已複製。' : '設備狀態已新增。'
     if (keepOpen && saveMode === 'edit') formDirty.value = false
     if (keepOpen && saveMode !== 'edit') {
-      form.value.equipmentState = ''
-      form.value.stateType = stateTypeOptions.value[0]?.value ?? 0
-      form.value.stateName = ''
-      form.value.description = ''
-      form.value.color = '#808080'
-      form.value.utilizationType = null
       formDirty.value = false
       mode.value = saveMode
+      await nextTick()
+      equipmentStateInput.value?.focus()
+      equipmentStateInput.value?.select()
     } else if (!keepOpen) {
       mode.value = null
     }
@@ -254,45 +262,51 @@ async function saveForm(keepOpen: boolean): Promise<void> {
   }
 }
 async function deleteSelected(): Promise<void> {
-  if (busy.value || selectedNumbers.value.length === 0) {
-    if (!selectedNumbers.value.length) error.value = '請先勾選要刪除的設備狀態。'
-    return
-  }
-  const targets = rows.value.filter((row) => selectedNumbers.value.includes(row.equipmentState))
+  if (busy.value) return
+  const targetNumbers = new Set(selectedNumbers.value)
+  if (currentNumber.value !== null) targetNumbers.add(currentNumber.value)
+  const targets = rows.value.filter((row) => targetNumbers.has(row.equipmentState))
+  if (targets.length === 0) { error.value = '請先選取要刪除的設備狀態。'; return }
   if (!window.confirm('確定刪除選取的 ' + targets.length + ' 筆設備狀態？')) return
   busy.value = true
   error.value = ''
   notice.value = ''
   formDirty.value = false
+  let changed = false
+  let deleteError = ''
   try {
-    if (mock) {
-      const referenced = read<number[]>(referenceStorageKey, [83])
-      const blocked = targets.find((row) => referenced.includes(row.equipmentState))
-      if (blocked) throw new Error('設備狀態「' + blocked.stateName + '」已被設備現況、設備狀態控制或設備點檢表引用，不能刪除。')
-      const remove = new Set(targets.map((row) => row.equipmentState))
-      const remaining = read<EquipmentState[]>(storageKey, seedRows).filter((row) => !remove.has(row.equipmentState))
-      write(storageKey, remaining)
-      rows.value = remaining
+    if (usesDevelopmentMock.value) {
+      for (const row of targets) {
+        const referenced = read<number[]>(referenceStorageKey, [83])
+        if (referenced.includes(row.equipmentState)) throw new Error('設備狀態「' + row.stateName + '」已被設備現況、設備狀態控制或設備點檢表引用，不能刪除。')
+        const latest = read<EquipmentState[]>(storageKey, seedRows)
+        const remaining = latest.filter((item) => item.equipmentState !== row.equipmentState)
+        write(storageKey, remaining)
+        rows.value = remaining
+        changed = true
+      }
     } else {
       for (const row of targets) {
         await request<void>('api/equipment/states/' + encodeURIComponent(String(row.equipmentState)), { method: 'DELETE' })
+        changed = true
       }
-      await loadRows()
     }
     selectedNumbers.value = []
-    currentNumber.value = rows.value[0]?.equipmentState ?? null
+    currentNumber.value = null
     notice.value = '已刪除 ' + targets.length + ' 筆設備狀態。'
   } catch (e) {
-    error.value = e instanceof Error ? e.message : '設備狀態刪除失敗。'
+    deleteError = e instanceof Error ? e.message : '設備狀態刪除失敗。'
   } finally {
     busy.value = false
   }
+  if (changed && !usesDevelopmentMock.value) await loadRows()
+  if (deleteError) error.value = deleteError
 }
 async function loadRows(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       rows.value = read<EquipmentState[]>(storageKey, seedRows)
       stateTypeOptions.value = read<ValueOption[]>('ymes-dev-mock:equipment-state-type-options:v1', fallbackStateTypes)
       utilizationTypeOptions.value = read<ValueOption[]>('ymes-dev-mock:equipment-state-utilization-options:v1', fallbackUtilizationTypes)
@@ -307,7 +321,7 @@ async function loadRows(): Promise<void> {
     }
     rows.value = rows.value.slice().sort((a, b) => a.equipmentState - b.equipmentState)
     selectedNumbers.value = selectedNumbers.value.filter((value) => rows.value.some((row) => row.equipmentState === value))
-    if (!rows.value.some((row) => row.equipmentState === currentNumber.value)) currentNumber.value = rows.value[0]?.equipmentState ?? null
+    if (currentNumber.value !== null && !rows.value.some((row) => row.equipmentState === currentNumber.value)) currentNumber.value = null
   } catch (e) {
     rows.value = []
     currentNumber.value = null
@@ -318,11 +332,12 @@ async function loadRows(): Promise<void> {
 }
 
 onMounted(() => { void loadRows() })
+watch(() => [props.developmentPreview, props.apiBaseUrl], () => { void loadRows() })
 </script>
 
 <template>
   <section class="eqstate-page">
-    <div v-if="mock" class="eqstate-dev-note">開發模式：目前資料為 DEV 假資料，儲存在此瀏覽器；不會寫入 MES 或正式資料庫。</div>
+    <div v-if="usesDevelopmentMock" class="eqstate-dev-note">開發模式：目前資料為 DEV 假資料，儲存在此瀏覽器；不會寫入 MES 或正式資料庫。</div>
 
     <p v-if="error && !mode" class="eqstate-message eqstate-error" role="alert">{{ error }}</p>
     <p v-else-if="notice && !mode" class="eqstate-message eqstate-success" role="status">{{ notice }}</p>
@@ -351,7 +366,7 @@ onMounted(() => { void loadRows() })
           <tr
             v-for="row in rows"
             :key="row.equipmentState"
-            :class="{ 'eqstate-selected': currentNumber === row.equipmentState }"
+            :class="{ 'eqstate-selected': currentNumber === row.equipmentState, 'eqstate-marked': selectedNumbers.includes(row.equipmentState) }"
             @click="selectRow(row.equipmentState)"
             @dblclick="selectRow(row.equipmentState); openForm('edit')"
           >
@@ -360,7 +375,7 @@ onMounted(() => { void loadRows() })
                 type="checkbox"
                 :aria-label="'選取設備狀態 ' + row.equipmentState"
                 :checked="selectedNumbers.includes(row.equipmentState)"
-                @change="toggleSelected(row.equipmentState)"
+                @change="toggleSelected(row.equipmentState); selectRow(row.equipmentState)"
               >
             </td>
             <td class="eqstate-number">{{ row.equipmentState }}</td>
@@ -381,8 +396,8 @@ onMounted(() => { void loadRows() })
       <aside class="eqstate-actions">
         <button type="button" class="eqstate-primary" :disabled="busy" @click="openForm('new')">新增(A)</button>
         <button type="button" :disabled="busy || !current" @click="openForm('edit')">修改(E)</button>
+        <button type="button" :disabled="busy || (!current && selectedNumbers.length === 0)" @click="deleteSelected">刪除(D)</button>
         <button type="button" :disabled="busy || !current" @click="openForm('copy')">複製(C)</button>
-        <button type="button" :disabled="busy || selectedNumbers.length === 0" @click="deleteSelected">刪除(D)</button>
         <button type="button" class="eqstate-close-page" :disabled="busy" @click="closePage">關閉</button>
       </aside>
     </div>
@@ -393,30 +408,32 @@ onMounted(() => { void loadRows() })
           <strong>{{ currentModeTitle }}</strong>
           <button type="button" class="eqstate-close" :disabled="busy" aria-label="關閉" @click="closeForm">×</button>
         </header>
-        <div class="eqstate-dialog-body">
+        <fieldset class="eqstate-group">
+          <legend>設備狀態資料</legend>
+          <div class="eqstate-dialog-body">
           <label>
             <span>設備狀態編號 <b>*</b></span>
-            <input v-model="form.equipmentState" type="number" min="0" max="99" step="1" :readonly="mode === 'edit'" required @input="formDirty = true">
+            <input ref="equipmentStateInput" v-model="form.equipmentState" class="eqstate-code-input" type="text" inputmode="numeric" :readonly="mode === 'edit'" @input="formDirty = true">
           </label>
           <label>
             <span>狀態類型 <b>*</b></span>
-            <select v-model.number="form.stateType" required @change="formDirty = true">
+            <select ref="stateTypeInput" v-model.number="form.stateType" class="eqstate-type-input" @change="formDirty = true">
               <option v-for="option in stateTypeOptions" :key="option.value" :value="option.value">{{ stateTypeOptionLabel(option) }}</option>
             </select>
           </label>
           <label>
             <span>狀態名稱 <b>*</b></span>
-            <input v-model="form.stateName" type="text" maxlength="50" required @input="formDirty = true">
+            <input v-model="form.stateName" type="text" maxlength="50" @input="formDirty = true">
           </label>
-          <label>
+          <div class="eqstate-color-field">
             <span>狀態顏色</span>
             <span class="eqstate-color-control">
-              <input v-model="form.color" type="color" aria-label="選擇狀態顏色" @input="formDirty = true">
-              <code>{{ form.color.toUpperCase() }}</code>
               <span class="eqstate-color-preview" :style="{ backgroundColor: form.color }"></span>
+              <button type="button" class="eqstate-color-button" @click="openColorPicker">選擇顏色</button>
+              <input ref="colorInput" v-model="form.color" type="color" aria-label="選擇狀態顏色" @input="formDirty = true">
             </span>
-          </label>
-          <label>
+          </div>
+          <div class="eqstate-utilization">
             <span>稼動類型 <b>*</b></span>
             <span class="eqstate-radios">
               <label v-for="option in utilizationTypeOptions" :key="option.value">
@@ -424,18 +441,19 @@ onMounted(() => { void loadRows() })
                 {{ utilizationTypeOptionLabel(option) }}
               </label>
             </span>
-          </label>
+          </div>
           <label class="eqstate-description">
             <span>說明</span>
             <textarea v-model="form.description" maxlength="255" rows="4" @input="formDirty = true"></textarea>
           </label>
           <p class="eqstate-hint">使用者定義狀態編號不可使用 0–10；修改時狀態編號不可變更。</p>
-        </div>
+          </div>
+        </fieldset>
         <p v-if="error" class="eqstate-message eqstate-error" role="alert">{{ error }}</p>
         <footer class="eqstate-dialog-footer">
-          <button type="button" :disabled="busy || !formDirty" @click="saveForm(true)">套用</button>
           <button type="submit" class="eqstate-primary" :disabled="busy">確定</button>
-          <button type="button" :disabled="busy" @click="closeForm">取消</button>
+          <button type="button" :disabled="busy" @click="closeForm">關閉</button>
+          <button type="button" :disabled="busy || !formDirty" @click="saveForm(true)">套用</button>
         </footer>
       </form>
     </div>
@@ -463,6 +481,7 @@ onMounted(() => { void loadRows() })
 .eqstate-grid tbody tr{cursor:pointer}
 .eqstate-grid tbody tr:nth-child(even){background:#fafafa}
 .eqstate-grid tbody tr:hover{background:#fff6d6}
+.eqstate-grid tbody tr.eqstate-marked{background:#fff7dc}
 .eqstate-grid tbody tr.eqstate-selected{background:#fff0b7}
 .eqstate-grid .eqstate-check{width:29px;text-align:center}
 .eqstate-grid .eqstate-number{text-align:right;font-variant-numeric:tabular-nums}
@@ -471,25 +490,28 @@ onMounted(() => { void loadRows() })
 .eqstate-color-cell i,.eqstate-color-preview{display:inline-block;width:30px;height:17px;border:1px solid #777}
 .eqstate-empty{height:52px!important;color:#777;text-align:center}
 .eqstate-overlay{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.3)}
-.eqstate-dialog{width:min(520px,100%);max-height:calc(100vh - 36px);overflow:auto;border:1px solid #999;background:#fdfdfd;box-shadow:0 5px 20px rgba(0,0,0,.22)}
+.eqstate-dialog{display:flex;width:min(387px,100%);height:min(345px,calc(100vh - 36px));max-height:calc(100vh - 36px);flex-direction:column;overflow:auto;border:1px solid #999;background:#fdfdfd;box-shadow:0 5px 20px rgba(0,0,0,.22)}
 .eqstate-dialog-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #c9c9c9;background:#f4f1e8;font-size:15px}
 .eqstate-close{width:28px;height:26px;border:0;background:transparent;font-size:22px;cursor:pointer}
-.eqstate-dialog-body{display:grid;grid-template-columns:1fr 1fr;gap:11px 16px;padding:16px}
-.eqstate-dialog-body>label{display:flex;min-width:0;flex-direction:column;gap:5px}
-.eqstate-dialog-body>label>span:first-child{color:#555}
+.eqstate-group{display:flex;min-height:0;flex:1;flex-direction:column;margin:5px 10px 6px;padding:2px 6px 5px;border:1px solid #bdbdbd}
+.eqstate-group legend{padding:0 4px;color:#555}
+.eqstate-dialog-body{display:flex;min-height:0;flex:1;flex-direction:column;gap:4px;overflow:auto;padding:2px 1px}
+.eqstate-dialog-body>label,.eqstate-dialog-body>.eqstate-color-field,.eqstate-dialog-body>.eqstate-utilization{display:grid;min-width:0;grid-template-columns:96px minmax(0,1fr);align-items:center;gap:8px}
+.eqstate-dialog-body>label>span:first-child,.eqstate-dialog-body>.eqstate-color-field>span:first-child,.eqstate-dialog-body>.eqstate-utilization>span:first-child{color:#555;text-align:right}
 .eqstate-dialog-body b{color:#9c6714}
-.eqstate-dialog input[type="text"],.eqstate-dialog input[type="number"],.eqstate-dialog select,.eqstate-dialog textarea{width:100%;min-height:31px;padding:5px 7px;border:1px solid #999;border-radius:0;background:#fff0b3;color:#333;font:inherit}
+.eqstate-dialog input[type="text"],.eqstate-dialog input[type="number"],.eqstate-dialog select,.eqstate-dialog textarea{width:100%;min-height:24px;padding:3px 6px;border:1px solid #999;border-radius:0;background:#fff0b3;color:#333;font:inherit}
+.eqstate-dialog .eqstate-code-input{max-width:58px;text-align:right}.eqstate-dialog .eqstate-type-input{max-width:119px}.eqstate-dialog input[type="text"]{max-width:154px}
 .eqstate-dialog input[readonly]{background:#eee}
 .eqstate-dialog textarea{resize:vertical}
-.eqstate-color-control{display:flex;min-height:31px;align-items:center;gap:9px}
-.eqstate-color-control input{width:44px;height:31px;padding:2px;border:1px solid #aaa;background:#fff}
-.eqstate-color-control code{color:#555}
-.eqstate-color-preview{width:48px;height:22px}
-.eqstate-radios{display:flex;min-height:31px;align-items:center;gap:18px}
+.eqstate-color-control{position:relative;display:flex;min-height:24px;align-items:center;gap:4px}
+.eqstate-color-control input{position:absolute;width:1px;height:1px;padding:0;border:0;opacity:0;pointer-events:none}
+.eqstate-color-preview{width:74px;height:20px;border:0}
+.eqstate-color-button{min-height:23px;padding:1px 7px;border:1px solid #aaa;border-radius:2px;background:#fafafa;color:#333;font:inherit;cursor:pointer}
+.eqstate-radios{display:flex;min-height:24px;align-items:center;gap:18px}
 .eqstate-radios label{display:flex;align-items:center;gap:5px}
 .eqstate-radios input{accent-color:#ad7d18}
-.eqstate-dialog-body .eqstate-description{grid-column:1/-1}
-.eqstate-hint{grid-column:1/-1;margin:0;color:#766332;font-size:12px}
-.eqstate-dialog-footer{display:flex;justify-content:flex-end;gap:7px;padding:10px 14px;border-top:1px solid #d0d0d0}
-@media(max-width:680px){.eqstate-main{grid-template-columns:minmax(0,1fr) 76px}.eqstate-dialog-body{grid-template-columns:1fr}.eqstate-dialog-body .eqstate-description,.eqstate-hint{grid-column:auto}.eqstate-grid{min-width:770px}}
+.eqstate-dialog-body .eqstate-description{align-items:start}.eqstate-dialog-body .eqstate-description textarea{max-width:239px;min-height:61px;grid-column:2}
+.eqstate-hint{margin:0;color:#766332;font-size:12px}
+.eqstate-dialog-footer{display:flex;justify-content:flex-end;gap:6px;padding:7px 10px;border-top:1px solid #d0d0d0}.eqstate-dialog-footer button{min-height:32px}
+@media(max-width:680px){.eqstate-main{grid-template-columns:minmax(0,1fr) 76px}.eqstate-dialog{width:min(387px,100%)}.eqstate-grid{min-width:770px}}
 </style>

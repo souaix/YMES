@@ -166,16 +166,15 @@
 
 ## 設備設定：設備狀態設定（公司電腦交接）
 
-先閱讀 docs/modules/EQP/設備設定/設備狀態設定.md 與 database/reference/mestest_equipment_state_create.sql。CREATE SQL 依 MES Oracle MESTEST 原始 DDL 轉為 PostgreSQL，只建立 ymes.tbleqpstatebasis 空表，不含 MES 業務資料。
+先閱讀 `docs/modules/EQP/設備設定/設備狀態設定.md`。主表與 CRUD/options API 已由家用端部署；本次公司端只調整 Vue UI/互動，不新增 schema 或 API。
 
-- [ ] 確認 YMES ymes.tbleqpstatebasis 是否存在並逐欄比對；缺表才套用 database/reference/mestest_equipment_state_create.sql。第一階段 bootstrap 已補上 Oracle 確認過的 STATETYPE / UTILIZATIONTYPE DEFAULT 1 及欄位註解。
-- [ ] 核對狀態選項 ValueList 的實際值與顯示文字；WinForms 透過 ValueListProvider 讀取 TBLEQPSTATEBASIS.STATETYPE 和 UTILIZATIONTYPE，不能只以程式註解推定完整選項。
-- [ ] 實作 GET /api/equipment/states、GET /api/equipment/states/options、POST/PUT/DELETE /api/equipment/states/{equipmentState}；POST/PUT DTO 參照規格。PUT 在 stateColorHex 未提供時保留原值，對應 WinForms Apply 不更新 HEX。
-- [ ] 刪除 API 必須實作舊 ChkEQPStateExist 規則：檢查設備現況狀態、TBLEQPSTATECONTROL 與 tblEQPQCListBasis.UNVALIDACTION；任何一處引用即回 409 並說明不可刪除。不得只依賴 FK。
-- [ ] 確認 YMES 是否有 tblEMSEquipmentState、tbleqpstatecontrol、tbleqpqclistbasis 及欄位；若沒有，先確認 YMES 的實際對應表或 API 資料來源，不可直接從畫面推測新增替代欄位/表。只有經 MES Oracle 確認且 YMES 確實缺少、API 必需時，再交付精確 CREATE SQL/migration。
-- [ ] 保留 WinForms 業務限制：狀態代碼為整數且非負；User Define（ValueList 索引 1）不可使用 0–10；名稱必填；Confirm 要求選 On/Off；Apply 未選時依舊邏輯送 0；ARGB 使用有號整數；Confirm 才帶 StateColor_HEX。
-- [ ] 沒有 IssueState、DataStamp、核准流程；Delete 接受逐筆處理，並確認 API 錯誤能表達被引用狀態。
-- [ ] 依規格完成 API 後，在公司電腦用 DEV 假資料 UI 對接 Production 契約；同步更新規格與本清單，不提交連線字串、密碼、Token 或私鑰。
+- [x] 設備狀態主表 `ymes.tbleqpstatebasis` 已存在；migration `0016_equipment_state_api.sql` 恢復 Oracle 確認過的 DEFAULT，且 API GET/options/POST/PUT/DELETE 已部署。
+- [x] StateType 0/1、UtilizationType 0/1 與繁中標籤已由公司端唯讀核對 MESTEST ValueList/資源檔；API options 保留上述值。
+- [x] API DTO/Apply HEX 保留行為、ARBG signed integer、User Define 0–10 限制已記錄於規格；前端改為只在 Development preview 使用假資料。
+- [x] 兩張刪除引用表 Oracle 原始 DDL 與 PostgreSQL 空表 CREATE SQL 已交付：`database/reference/mestest_equipment_state_references_source_ddl.sql`、`database/reference/mestest_equipment_state_references_create.sql`。
+- [ ] 在 YMES 實際 schema/migrations 比對 `tbleqpstatecontrol`、`tblemsequipmentstate` 與 `tbleqpqclistbasis.unvalidaction`；對已存在資料表保留額外欄位，只有缺少且 API 必須時新增 forward migration。
+- [ ] 給 `ymes_app` 對引用來源最小 SELECT 權限；migration/權限完成後移除 DELETE fail-closed 503，精確檢查三個來源，引用回 409、無引用回 204。
+- [ ] 部署後驗證引用狀態阻擋及未引用刪除；將結果回寫規格與本待辦。不得提交連線字串、密碼、Token 或私鑰。
 ## 設備設定：設備點檢表設定（公司電腦交接）
 
 先閱讀 docs/modules/EQP/設備設定/設備點檢表設定.md 與 database/reference/mestest_equipment_qclist_create.sql。SQL 來自 MES Oracle MESTEST 原始 DDL，轉為 PostgreSQL 空表結構，不含 MES 點檢主檔/明細資料。
