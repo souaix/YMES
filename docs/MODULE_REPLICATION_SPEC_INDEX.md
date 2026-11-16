@@ -81,7 +81,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | 設備基本資料 | WinForms 主/編輯/Chamber Form、屬性、參數、QC 關聯、匯入 Form 與 Service 均已追 | [設備基本資料](modules/EQP/設備設定/設備基本資料.md)、[設備屬性](modules/EQP/設備設定/設備屬性設定.md)、[設備參數](modules/EQP/設備設定/設備參數設定.md)、[設備點檢表關聯](modules/EQP/設備設定/設備點檢表關聯.md)、[設備匯入](modules/EQP/設備設定/設備資料匯入.md)規格已建立；設備子功能 DEV Vue 已接線；設備主表與參數表原始 DDL 已由使用者提供並轉成單表 CREATE SQL；其他未匯出關聯表仍待查 |
 | 設備群組資料 | WinForms/Service 與兩表 Oracle DDL 已對照；SMD 區域映射依賴待查 | 規格已建立；Vue Development 假資料頁已建立；Production API/SMD DDL 待家用電腦 |
 | 設備狀態設定 | WinForms / Service、主表及兩張刪除引用表 Oracle DDL 已追；完整 ValueList/繁中翻譯已核實 | [規格](modules/EQP/設備設定/設備狀態設定.md)已建立；Vue 頁面已依 ValueList 本地化，Production API 已有，家用端待建立引用表 migration 並啟用精確刪除檢查 |
-| 設備點檢表設定 | WinForms 主從 Form / Service、主從 Oracle DDL 已追 | [規格](modules/EQP/設備設定/設備點檢表設定.md)已建立；Vue Development 假資料頁已建立，Production API 待家用電腦 |
+| 設備點檢表設定 | WinForms 主從 Form / Service、主從 Oracle DDL、FunctionNo/FunctionKey、QCType ValueList 已核實 | [規格](modules/EQP/設備設定/設備點檢表設定.md)已建立；Vue DEV 頁已修正正式 QCType 選項/預設，Production API 待家用電腦 |
 
 ## 全 MES 盤點狀態
 

@@ -25,7 +25,7 @@ const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const mock = import.meta.env.DEV
 const keys = { lists: 'ymes-dev-mock:equipment-qc-lists:v1', items: 'ymes-dev-mock:equipment-qc-list-items:v1' }
 const fallbackQcTypes: ValueOption[] = [
-  { value: 0, label: '開始生產時點檢' }, { value: 1, label: 'First' }, { value: 2, label: '手動點檢' },
+  { value: 0, label: '開始生產時點檢' }, { value: 2, label: '手動點檢' },
 ]
 const detailTypeOptions: DetailType[] = [0, 1, 2, 3]
 const typeLabels = ['標準值', '範圍', '顯示訊息', '輸入資料']
@@ -79,13 +79,18 @@ const currentItems = computed(() => itemRows.value.slice().sort((a, b) => a.qcOr
 const afterEventEnabled = computed(() => masterForm.value.qcType === 0)
 const masterTitle = computed(() => mode.value === 'edit' ? '修改設備點檢表' : mode.value === 'copy' ? '複製設備點檢表' : '新增設備點檢表')
 
-function emptyMaster(): QcListForm { return { qcListNo: '', qcListName: '', qcType: 1, unValidAction: -1, afterEventQc: false, description: '' } }
+function emptyMaster(): QcListForm { return { qcListNo: '', qcListName: '', qcType: 2, unValidAction: -1, afterEventQc: false, description: '' } }
 function emptyItem(): QcItemForm { return { qcItem: '', qcType: null, inputDataCount: 1, stdValue: '', miniValue: '', maxiValue: '', inspectionMethod: '', inspectionStandards: '' } }
 function read<T>(key: string, initial: T): T {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) as T : structuredClone(initial) }
   catch { return structuredClone(initial) }
 }
 function write<T>(key: string, value: T): void { localStorage.setItem(key, JSON.stringify(value)) }
+function normalizeDevQcTypes(lists: QcList[]): QcList[] {
+  const normalized = lists.map((row) => row.qcType === 1 ? { ...row, qcType: 2, afterEventQc: 0 } : row)
+  if (normalized.some((row, index) => row !== lists[index])) write(keys.lists, normalized)
+  return normalized
+}
 function typeLabel(value: number): string { return qcTypes.value.find((item) => item.value === value)?.label || String(value) }
 function itemTypeLabel(value: number): string { return typeLabels[value] || String(value) }
 function dateText(value?: string | null): string {
@@ -274,7 +279,7 @@ function validateMaster(): string {
   if (masterForm.value.qcListNo.trim().length > 100) return 'QC List No 不可超過 100 個字元。'
   if (!masterForm.value.qcListName.trim()) return 'QC List Name 為必填。'
   if (masterForm.value.qcListName.trim().length > 100) return 'QC List Name 不可超過 100 個字元。'
-  if (masterForm.value.qcType === null) return 'QC Type 為必填。'
+  if (masterForm.value.qcType === null || !qcTypes.value.some((option) => option.value === masterForm.value.qcType)) return '請選擇有效的 QC Type。'
   if (masterForm.value.unValidAction === null) return 'UnValid Action 為必填。'
   if (formItems.value.length === 0) return '至少需要一筆點檢項目。'
   const code = masterForm.value.qcListNo.trim()
@@ -285,7 +290,7 @@ function masterBody(): { qcListNo: string; qcListName: string; qcType: number; u
   return {
     qcListNo: masterForm.value.qcListNo.trim(),
     qcListName: masterForm.value.qcListName.trim(),
-    qcType: masterForm.value.qcType ?? 1,
+    qcType: masterForm.value.qcType ?? 2,
     unValidAction: masterForm.value.unValidAction ?? -1,
     afterEventQc: afterEventEnabled.value && masterForm.value.afterEventQc ? 1 : 0,
     description: masterForm.value.description.trim() || null,
@@ -383,8 +388,8 @@ async function loadLists(): Promise<void> {
   notice.value = ''
   try {
     if (mock) {
-      rows.value = read<QcList[]>(keys.lists, seedLists)
-      qcTypes.value = read<ValueOption[]>('ymes-dev-mock:equipment-qc-types:v1', fallbackQcTypes)
+      rows.value = normalizeDevQcTypes(read<QcList[]>(keys.lists, seedLists))
+      qcTypes.value = read<ValueOption[]>('ymes-dev-mock:equipment-qc-types:v1', fallbackQcTypes).filter((option) => option.value === 0 || option.value === 2)
       equipmentStates.value = read<EquipmentStateOption[]>('ymes-dev-mock:equipment-states:v1', seedStates)
     } else {
       const query = new URLSearchParams()
