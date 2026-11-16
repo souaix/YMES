@@ -16,6 +16,8 @@
 
 ## 2026-11-17 新增功能規格
 
+- QC401「主分類基本資料」：[功能規格](modules/QC/主分類基本資料.md)。公司端已完成 `/YMES/QC/MClassBasis` DEV 頁；重用 QC406 已查得的 `TBLQCMCLASSBASIS` Oracle source DDL 與 PostgreSQL 空表 CREATE，沒有新增重複 DDL。家用端比對 schema 後實作 QC401 CRUD、DataStamp、`MCLASS BASIS` Issue Job；匯入器範本仍待查。
+
 - QC403「異常原因基本資料」：[功能規格](modules/QC/異常原因基本資料.md)。公司端已完成 `/YMES/QC/HoldItemBasis` DEV 頁；Oracle source DDL 與 PostgreSQL 空表 CREATE 參考已建立。`TBLQCHOLDITEMBASIS` 以 HoldItemNo 為 PK，只有 PK unique index，無 FK/額外索引；家用端需比對 schema，實作 QC403 CRUD、HoldSystem/分類/群組/OCAP 查找、`HOLDITEM BASIS` Issue Job 與 Excel 匯入 API。
 
 - QC404「異常說明」：[功能規格](modules/QC/異常說明.md)。公司端已依 WinForms 建立 DEV 頁 `/YMES/QC/HoldDescription`；Oracle source DDL 與 PostgreSQL 空表 CREATE 參考已建立。來源主鍵是 HoldDescriptionID，另有 MClassNo 非唯一索引、沒有 FK；家用端需比對 YMES schema 並實作 `HOLD DESCRIPTION` Issue Job 核准流程。

@@ -6,6 +6,19 @@
 
 ## 家用電腦現在接手
 
+### QC401 主分類基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 docs/modules/QC/主分類基本資料.md、todolist_officepc.md 的 QC401 區段，以及 docs/DATABASE_CONNECTION.md 的 QC401 查詢紀錄。
+- [ ] 比對 YMES PostgreSQL live schema 與 migrations。TBLQCMCLASSBASIS Oracle source DDL / PostgreSQL CREATE 已存在於 database/reference/mestest_qc_first_group_lookups_source_ddl.sql 和 _create.sql；只在 YMES 缺表或欄位時補 forward migration，勿在 MES Oracle 建表或重建既有 YMES 擴充欄位。
+- [ ] schema 欄位需保留 MClassNo varchar(30) NOT NULL PK、Description varchar(255)、Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp without time zone、IssueState numeric(1,0) NOT NULL DEFAULT 0、DataStamp numeric(11,0) NULL DEFAULT 0。只有 PK unique index，沒有 FK/其他 index。
+- [ ] 實作 GET /api/qc/m-class-basis?searchFieldName=MClassNo&searchFieldValue=，回傳所有 IssueState 與 audit/DataStamp；只接受 MClassNo 搜尋，QC401 FunctionKey 權限及登入必須檢查。
+- [ ] 實作 POST 建立，body 為 mClassNo、description；驗證 MClassNo 必填/長度 30/唯一及 Description 長度 255；伺服器設定 Creator/CreateDate、IssueState=0，DataStamp 使用 default。
+- [ ] 實作 PUT /api/qc/m-class-basis/{mClassNo}?issueState=&dataStamp=，僅更新 Description；只允許 IssueState 0/2；MClassNo 唯讀，Reviser/ReviseDate 由伺服器更新。使用 nullable DataStamp CAS，衝突回 409。
+- [ ] 實作 DELETE：狀態 0/-1 實體刪除；狀態 2 以 CAS 改 IssueState=-1 並更新 Reviser/ReviseDate/DataStamp；狀態 1 拒絕。
+- [ ] 實作 POST /api/qc/m-class-basis/{mClassNo}/approve：限 IssueState=0，Issue Job Map key 為 MCLASS BASIS。找不到 Job 或 Job Detail 時直接轉 2；有流程時建立 Issue、轉 1、通知第一簽核群組；核准轉 2，退回回 0。更新共用 Issue Job/API 規格。
+- [ ] WinForms 只找到 ObjectFileHandler.Execute("QC_MClassDataImport") 呼叫，沒有匯入器原始碼/範本；先由家用端檢查可用套件、舊部署元件或範本檔，確認欄位順序/重複策略/錯誤回報後才定義 Excel API。公司端 MClassNo,Description CSV 為暫用，不能據以建 Production parser。
+- [ ] API 使用參數化 SQL、登入與 QC401 功能權限；更新 API 文件、migration 索引與本 TODO。不得連 MES Oracle。
+
 ### QC403 異常原因基本資料（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/異常原因基本資料.md`、`todolist_officepc.md` QC403 區段及 `docs/DATABASE_CONNECTION.md` 的 QC403 查詢紀錄。

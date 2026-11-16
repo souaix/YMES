@@ -67,7 +67,17 @@
 - [x] 新增 Vue DEV 頁 `web/src/components/QcHoldItemBasisMaster.vue`，路由 `/YMES/QC/HoldItemBasis`；含查詢、四狀態 Grid、CRUD/複製、欄位 picker、核准/刪除及 CSV 假資料匯入。
 - [x] 新增 `docs/modules/QC/異常原因基本資料.md`，更新規格索引、DB 連線查詢紀錄及 home/office TODO；正式 API、Issue Job 與 `.xls/.xlsx` 匯入由家用端接手。
 - [ ] 未執行 build、test 或瀏覽器驗收。DEV 核准僅模擬無 Job/Detail 的 0→2；已簽核/不使用欄位權限仍需家用端對接 IssueControl 規則。
-- [ ] 下一項依功能編號順序接續 QC401「主分類基本資料」。
+- [x] QC401「主分類基本資料」已完成公司端 DEV UI 與 WinForms/Service/Core 規格，詳見下節。
+- [ ] 下一項依功能編號順序接續 QC402「次分類基本資料」。
+
+### QC401 主分類基本資料（公司端 2026-11-17）
+
+- [x] 讀取 frmMClassBasis、frmMClassBasisDef、wsQC 與 clsHoldBasis；確認四狀態、MClassNo 查詢、Grid 欄位、Def 表單、Copy/Apply、批次 Delete/Approve、DataStamp 和 MCLASS BASIS Issue Job 規則。
+- [x] TBLQCMCLASSBASIS Oracle source DDL 與 PostgreSQL CREATE SQL 已由先前 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查得並與 QC406 共用，不新增重複 DDL/CREATE 檔；MClassNo 為 PK，僅 PK unique index，無 FK/額外索引。
+- [x] 新增 Vue DEV 頁 web/src/components/QcMClassBasisMaster.vue；加入三層 fallback menu、FunctionNo MCLASS BASIS / FunctionKey QC401 和 /YMES/QC/MClassBasis 路由。表格標頭與欄位使用 KD 黃色系；同步修正 QC403 藍色 Grid 表頭。DEV localStorage 假資料含四種狀態。
+- [x] 新增 docs/modules/QC/主分類基本資料.md，更新公司/家用 TODO、兩份功能索引及 Oracle 連線紀錄；家用端僅需核對 live schema，缺表才建立 migration。
+- [ ] 標準 WinForms 原始碼目前只有 ObjectFileHandler 的 QC_MClassDataImport 呼叫點；匯入器與範本未找到。DEV CSV 只作暫用互動，不代表正式格式；家用端先找原匯入器再定 Excel API。
+- [ ] 未執行 build、test、瀏覽器驗收或 YMES PostgreSQL 查詢。家用端 API、schema 比對與正式 Issue Job 仍待完成。
 
 ### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）
 
