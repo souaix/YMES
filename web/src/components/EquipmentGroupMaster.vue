@@ -147,7 +147,7 @@ async function loadGroups(): Promise<void> {
       const suffix = query.toString()
       rows.value = await request<EquipmentGroup[]>('api/equipment/groups' + (suffix ? '?' + suffix : ''))
     }
-    checkedGroups.value = checkedGroups.value.filter((key) => rows.value.some((x) => x.equipmentGroup === key))
+    checkedGroups.value = checkedGroups.value.filter((key) => visibleRows.value.some((x) => x.equipmentGroup === key))
     if (!visibleRows.value.some((x) => x.equipmentGroup === currentNo.value)) {
       currentNo.value = visibleRows.value[0]?.equipmentGroup ?? ''
     }
@@ -159,8 +159,9 @@ async function loadGroups(): Promise<void> {
     error.value = e instanceof Error ? e.message : '設備群組清單載入失敗。'
   } finally { loading.value = false }
 }
-function query(): void { void loadGroups() }
+function query(): void { checkedGroups.value = []; void loadGroups() }
 function applyStatus(): void {
+  checkedGroups.value = checkedGroups.value.filter((key) => visibleRows.value.some((x) => x.equipmentGroup === key))
   if (!visibleRows.value.some((x) => x.equipmentGroup === currentNo.value)) {
     currentNo.value = visibleRows.value[0]?.equipmentGroup ?? ''
     void loadDetails()
@@ -249,7 +250,7 @@ async function saveGroup(): Promise<void> {
   finally { busy.value = false }
 }
 async function groupAction(action: 'delete' | 'approve'): Promise<void> {
-  const selected = rows.value.filter((x) => checkedGroups.value.includes(x.equipmentGroup))
+  const selected = visibleRows.value.filter((x) => checkedGroups.value.includes(x.equipmentGroup))
   const targets = selected.length ? selected : current.value ? [current.value] : []
   const valid = targets.filter((x) => action === 'approve' ? x.issueState === 0 : [0, -1, 2].includes(x.issueState))
   if (!valid.length) {
@@ -431,7 +432,7 @@ onMounted(() => { void loadGroups() })
       <form class="eqgroup-form" @submit.prevent="saveGroup">
         <header><strong>設備群組資料定義（{{ mode==='edit'?'EDIT':'ADD' }}）</strong><button type="button" aria-label="關閉" @click="mode=null">×</button></header>
         <fieldset><legend>設備群組資料</legend>
-          <label><span>設備群組</span><input v-model.trim="form.equipmentGroup" maxlength="50" required :readonly="mode==='edit'" /></label>
+          <label><span>設備群組</span><input v-model.trim="form.equipmentGroup" maxlength="50" required :readonly="mode==='edit'" @blur="form.equipmentGroup = form.equipmentGroup.toUpperCase()" /></label>
           <label class="long"><span>說明</span><textarea v-model="form.description" maxlength="255" rows="4" /></label>
         </fieldset>
         <footer><button class="primary" type="submit" :disabled="busy">確定</button><button type="button" @click="mode=null">關閉</button><button type="button" disabled>套用</button></footer>

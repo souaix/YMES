@@ -25,6 +25,4 @@ CREATE TABLE IF NOT EXISTS ymes.tbleqpgroupdetail (
 );
 COMMENT ON TABLE ymes.tbleqpgroupdetail IS 'MES Oracle source: MESTEST.TBLEQPGROUPDETAIL';
 
--- Add/delete also synchronize SMD area mapping when the group is assigned to a layout:
--- TBLSMDAREARELATION and TBLSMDSMTAREAEQPMAP DDL are not present in this source dump.
--- Retrieve their exact Oracle DDL and verify YMES presence before implementing that integration.
+-- SMD area mapping source DDL and empty PostgreSQL CREATE SQL are in mestest_equipment_group_smd_source_ddl.sql and mestest_equipment_group_smd_create.sql.

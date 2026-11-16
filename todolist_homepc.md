@@ -11,7 +11,7 @@
 1. **系統目錄 migration 0012 已完成**：以 SSH 比對來源 schema，部署可回滾/可重跑 migration，載入 20 Module、601 MES MenuItem、553 Function 並保留 5 筆 YMES 自訂列。模組繁中名稱已核實、API/Web 已部署，瀏覽器已確認三層選單；逐筆自動比較來源與 API 回傳仍待補。
 2. **物料 API/schema 主體已完成**：已逐欄核對 8 張表並套用 0013 migration，保留 `tblmtlmaterialbasis` 的 7 個 YMES 欄位、補回 7 個 DEFAULT，建立缺少的 6 張表。Property、QC Item、Vendor Map、GumHour、JSON Import 及主檔交易 API/Vue Production 已部署；app-browser 找到並修正控制器 DI、`tblsysunitbasis`/`tblsyselementbasis` 唯讀授權及投料點 JSON 型別問題，瀏覽器已驗證主檔新增、屬性、QC、GumHour 讀寫。0014 授予必要唯讀權限。公司 Oracle 端仍需核實正式 ValueList、供應商名稱 Join、GumHour 參數來源；CSV/JSON 提交端到端、正式 Excel 範本、`.xls` 預覽及 WinForms 群組寫入規則仍待完成。
 3. **完成作業站延伸 API/schema**：比對 `database/reference/mestest_operation_and_system_create.sql` 內 18 張 OP 表；此批 18 張 OP 表及 3 張系統表的原始 Oracle DDL 在 `mestest_operation_and_system_source_ddl.sql`。YMES 目前作業站僅主檔 CRUD/核准/停用已部署；按 `docs/modules/OP/作業站主檔.md` 實作子表引用、資源、商業規則、參數、QC、Error、SubOP、Import 及交易。
-4. **繼續設備功能 API**：設備供應商已完成；設備狀態 GET/options/POST/PUT/DELETE API 與 0016 migration 已部署。公司端已交付兩張來源引用表 DDL、空表 CREATE SQL 與完整繁中 ValueList；家用端需新增 migration、啟用引用檢查並更新 options 標籤。工程群組成員表 TBLUSRUSERGROUP 的 Oracle DDL 與 PostgreSQL CREATE SQL 已於 2026-11-16 交付；先比對 YMES schema，再完成工程群組成員 API。其他類別、設備群組、點檢表功能依規格續做。
+4. **繼續設備功能 API**：設備供應商已完成；設備狀態 GET/options/POST/PUT/DELETE API 與 0016 migration 已部署。公司端已交付兩張來源引用表 DDL、空表 CREATE SQL 與完整繁中 ValueList；家用端需新增 migration、啟用引用檢查並更新 options 標籤。工程群組成員表 TBLUSRUSERGROUP 及設備群組用的兩張 SMD 映射表 Oracle DDL/PG CREATE SQL 已於 2026-11-16 交付；先比對 YMES schema，再完成工程群組與設備群組 API。其他類別、點檢表功能依規格續做。
 5. **完成全部第一層模組**：按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 的 ModuleOrder 逐個 FunctionNo/FormName/ExecutionFile，補齊 PostgreSQL 結構、API DTO/驗證/交易及部署。任何來源表缺少 DDL 時，讓公司端透過 PowerShell 直接查 MESTEST 並列出確切表名；不可猜 schema。
 
 每完成一項，更新本檔 checkbox、對應 module spec 與 migration/API 狀態，再 commit/push；不要把連線密碼、Token、SSH 私鑰或 Oracle 連線字串放入文件或 Git。
@@ -70,6 +70,7 @@
 
 - [x] 設備供應商 API/schema：2026-11-14 依 MESTEST DDL 套用 `0015_equipment_vendor_schema.sql`，migration 前備份 `/opt/ymes/backups/ymes_before_0015_equipment_vendor_20261114.dump`；供應商與聯絡人 CRUD、核准、DataStamp、狀態及引用限制 API 已部署。app-browser 驗證新增/修改供應商與聯絡人、重複編號拒絕及 `ES0001` 預設編號；修正新增後清單未更新，並清除測試資料。
 - [ ] 設備：`tbleqpequipmentbasis`、Chamber 關係、設備群/工程群組、設備屬性、參數、QC List；支援清單 CRUD、核准/停用、複製、匯入。
+- [ ] 設備群組與 SMD：比對 `TBLSMDAREARELATION`、`TBLSMDSMTAREAEQPMAP` 及設備群組 YMES 結構；缺表才建 migration。依規格在新增/移除設備明細時交易同步 SMD 映射；群組刪除保留舊 Service 僅刪明細與主檔、不清 SMD 映射的行為。
 - [ ] 設備工程群組：完成 tbleqpengineergroupbasis API CRUD、DataStamp 衝突檢查、複製與成員清單 API；先比對 `ymes.tblusrusergroup`，缺表才依來源 CREATE SQL 建 migration。成員 API 僅操作 GroupType=2、AgentOf=NA 的直接成員；規格：docs/modules/EQP/設備設定/設備工程群組資料.md。
 - [x] 設備狀態設定：Production API 與 `0016_equipment_state_api.sql` 已部署；核對 8 欄 YMES schema、恢復來源 DEFAULT，授予 app role 對主檔 CRUD；migration 前備份並驗證 `/opt/ymes/backups/ymes_before_0016_equipment_state_20261114_admin.dump`。app-browser 驗證 Production 清單/options、Create、Apply Update 與 HEX 色碼保留，測試列已清除；修正數字欄位驗證轉型錯誤。DELETE 缺少兩張 MES 引用表時回 503 fail-closed，待公司端來源 DDL 後驗證完整刪除流程。Vue 路由對應來源 `FunctionNo=EQP STATE`（FunctionKey `EP106`）。
 - [x] 設備狀態設定來源交付（2026-11-16）：公司端以 PowerShell 5.1 直接查 MESTEST，已確認 `TBLEQPSTATECONTROL`、`TBLEMSEQUIPMENTSTATE` 物件、欄位、NOT NULL、PK、唯一索引；兩張表無額外索引/FK。空表 PG CREATE SQL、Oracle 原始 DDL 在 `database/reference/mestest_equipment_state_references_create.sql` 與 `mestest_equipment_state_references_source_ddl.sql`。`TBLSYSVALUELIST` 正式值/繁中翻譯：StateType 0 系統、1 使用者定義；UtilizationType 0 非稼動、1 稼動。詳見 `docs/modules/EQP/設備設定/設備狀態設定.md`。
@@ -151,14 +152,16 @@
 先閱讀 docs/modules/EQP/設備設定/設備群組資料.md、docs/DATABASE_CONNECTION.md 與 database/reference/mestest_equipment_group_create.sql。此 SQL 建立已由 MES Oracle MESTEST 核實的兩張空表，不含業務資料；執行前先核對 YMES schema 既有結構。
 
 - [ ] 確認 YMES 已有 tbleqpgroupbasis、tbleqpgroupdetail；缺表才執行單表 CREATE SQL。第一階段 bootstrap 也已含兩表，Oracle 核實後的欄位來源註解已校正。
-- [ ] 等待公司電腦查 MES Oracle 唯讀字典並交付 TBLSMDAREARELATION、TBLSMDSMTAREAEQPMAP 原始 DDL/PK/索引與 CREATE SQL；家用電腦再確認 YMES 目標表存在及權限。暫不建立推測 SQL。
+- [x] 公司端已查得 TBLSMDAREARELATION、TBLSMDSMTAREAEQPMAP 原始 DDL、欄位/NULL/PK/索引/FK，交付 `database/reference/mestest_equipment_group_smd_source_ddl.sql` 與 `mestest_equipment_group_smd_create.sql`。
 - [ ] 實作設備群組清單、CRUD、核准/刪除 API：IssueState 0 才可修改；核准只允許 0，依 IssueNo EQP GROUP BASIS 啟動簽核；刪除只接受 0/-1/2，傳 DataStamp。
-- [ ] 新增 API 必須等價執行 ChkObjectForSMDLayout(EquipmentGroup,4) 編號檢查；未確認規則前不要只做長度檢查。
+- [ ] 新增 API 實作 ChkObjectForSMDLayout(EquipmentGroup,4)：歷史 helper 會拒絕已存在於 `tblSMDAreaBasis.AreaNo`、`tblEQPEquipmentBasis.EquipmentNo` 或 `tblINVInventoryBasis.InventoryNo` 的同值編號。此 helper 本體在 `modKC.vb` 是註解版本；若家用端有目前部署的 active helper，先比對錯誤訊息與例外行為。
 - [ ] 實作群組明細與可加入設備端點。可加入清單限定 IssueState=2、ChamberFlag=0、尚未出現在任何 group detail；新增前由 API 再次以交易/鎖定檢查設備跨群組唯一性。
 - [ ] 明細新增/刪除只允許父群組 IssueState=0；要同步 TBLSMDSMTAREAEQPMAP 的情況依 TBLSMDAREARELATION ObjectType=4 判斷。
-- [ ] 核實舊 DelEQPGroupBasis 刪除關聯明細但未見刪 SMD 映射的既有行為；以公司 MES 現況確認孤兒映射處理方式，再決定新 API 同步清理規則。
-- [ ] 授予 ymes_app 對兩個群組表的最小權限；若 SMD 映射 API 需要寫入，再依核實 DDL 補 CREATE SQL、migration 和權限。正式 API 不使用 Fake provider。
-- [ ] 公司電腦完成 UI/API 契約對接後，回寫遷移規格及本清單；不要提交連線字串、密碼、Token、私鑰。## 設備設定：設備狀態設定（公司電腦交接）
+- [x] 公司端已從 clsEQPBasis.DelEQPGroupBasis 確認舊行為：同一批刪 group detail 與 group basis，不刪 TBLSMDSMTAREAEQPMAP；API 保留此相容行為。
+- [ ] 核對並授予 ymes_app 對設備群組主從表與 SMD 映射表的最小讀寫權限；缺表時以已交付來源 SQL 建 migration。正式 API 不使用 Fake provider。
+- [ ] 公司電腦完成 UI/API 契約對接後，回寫遷移規格及本清單；不要提交連線字串、密碼、Token、私鑰。
+
+## 設備設定：設備狀態設定（公司電腦交接）
 
 先閱讀 docs/modules/EQP/設備設定/設備狀態設定.md 與 database/reference/mestest_equipment_state_create.sql。CREATE SQL 依 MES Oracle MESTEST 原始 DDL 轉為 PostgreSQL，只建立 ymes.tbleqpstatebasis 空表，不含 MES 業務資料。
 
