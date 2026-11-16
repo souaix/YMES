@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 type MasterMode = 'new' | 'edit' | 'copy' | null
 type DetailType = 0 | 1 | 2 | 3
@@ -19,10 +19,11 @@ interface QcItemForm {
   qcItem: string; qcType: DetailType | null; inputDataCount: number; stdValue: string
   miniValue: string; maxiValue: string; inspectionMethod: string; inspectionStandards: string
 }
+interface AuditFields { creator: string; createDate: string; reviser: string; reviseDate: string }
 
-const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string }>()
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const mock = import.meta.env.DEV
+const usesDevelopmentMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const keys = { lists: 'ymes-dev-mock:equipment-qc-lists:v1', items: 'ymes-dev-mock:equipment-qc-list-items:v1' }
 const fallbackQcTypes: ValueOption[] = [
   { value: 0, label: '開始生產時點檢' }, { value: 2, label: '手動點檢' },
@@ -65,12 +66,14 @@ const error = ref('')
 const notice = ref('')
 const mode = ref<MasterMode>(null)
 const masterForm = ref<QcListForm>(emptyMaster())
+const auditFields = ref<AuditFields>({ creator: '', createDate: '', reviser: '', reviseDate: '' })
 const detailForm = ref<QcItemForm>(emptyItem())
 const editingOrder = ref<number | null>(null)
 const formItems = ref<QcItem[]>([])
 const formItemsLoading = ref(false)
 const formItemsLoadFailed = ref(false)
 const formItemsRequestId = ref(0)
+const mainItemsRequestId = ref(0)
 const formDataStamp = ref(0)
 
 const visibleRows = computed(() => rows.value.filter((row) => !appliedQuery.value || row.qcListNo.toLowerCase().includes(appliedQuery.value.toLowerCase())))
@@ -81,6 +84,7 @@ const masterTitle = computed(() => mode.value === 'edit' ? '修改設備點檢�
 
 function emptyMaster(): QcListForm { return { qcListNo: '', qcListName: '', qcType: 2, unValidAction: -1, afterEventQc: false, description: '' } }
 function emptyItem(): QcItemForm { return { qcItem: '', qcType: null, inputDataCount: 1, stdValue: '', miniValue: '', maxiValue: '', inspectionMethod: '', inspectionStandards: '' } }
+function currentUserNo(): string { return props.currentUserNo?.trim() || (usesDevelopmentMock.value ? 'DEV001' : '') }
 function read<T>(key: string, initial: T): T {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) as T : structuredClone(initial) }
   catch { return structuredClone(initial) }
@@ -118,7 +122,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return await response.json() as T
 }
 function closePage(): void { window.history.pushState({}, '', appBase || '/'); window.dispatchEvent(new PopStateEvent('popstate')) }
-function setQuery(): void { appliedQuery.value = queryNo.value.trim(); void loadLists() }
+function setQuery(): void { appliedQuery.value = queryNo.value.trim(); selectedNos.value = []; void loadLists() }
 function toggleSelected(no: string): void {
   selectedNos.value = selectedNos.value.includes(no) ? selectedNos.value.filter((x) => x !== no) : [...selectedNos.value, no]
 }
@@ -147,7 +151,13 @@ function openMaster(nextMode: Exclude<MasterMode, null>): void {
   formItemsLoading.value = false
   formItemsLoadFailed.value = false
   const requestId = ++formItemsRequestId.value
-  if (nextMode === 'new') { masterForm.value = emptyMaster(); formDataStamp.value = 0; return }
+  const now = new Date().toISOString()
+  if (nextMode === 'new') {
+    masterForm.value = emptyMaster()
+    auditFields.value = { creator: currentUserNo(), createDate: now, reviser: '', reviseDate: '' }
+    formDataStamp.value = 0
+    return
+  }
   if (!row) return
   masterForm.value = {
     qcListNo: nextMode === 'edit' ? row.qcListNo : '',
@@ -157,8 +167,11 @@ function openMaster(nextMode: Exclude<MasterMode, null>): void {
     afterEventQc: row.afterEventQc === 1,
     description: row.description || '',
   }
+  auditFields.value = nextMode === 'copy'
+    ? { creator: currentUserNo(), createDate: now, reviser: '', reviseDate: '' }
+    : { creator: row.creator, createDate: row.createDate, reviser: currentUserNo(), reviseDate: now }
   formDataStamp.value = row.dataStamp
-  if (mock) {
+  if (usesDevelopmentMock.value) {
     const sourceItems = read<Record<string, QcItem[]>>(keys.items, seedItems)[row.qcListNo] ?? []
     formItems.value = sourceItems.map((item) => ({ ...item, qcListNo: masterForm.value.qcListNo }))
   } else {
@@ -181,10 +194,13 @@ async function loadFormItems(no: string, requestId: number): Promise<void> {
   }
 }
 function selectDetail(order: number): void {
+  selectDetailRow(order, false)
+}
+function selectDetailRow(order: number, preserveSelection: boolean): void {
   const row = formItems.value.find((item) => item.qcOrder === order)
   if (!row) return
   selectedItemOrder.value = order
-  selectedItemOrders.value = [order]
+  if (!preserveSelection) selectedItemOrders.value = [order]
   editingOrder.value = order
   detailForm.value = {
     qcItem: row.qcItem, qcType: row.qcType, inputDataCount: row.inputDataCount,
@@ -252,13 +268,18 @@ function commitDetail(): void {
   resetDetail()
 }
 function removeDetails(): void {
-  const selected = selectedItemOrders.value
+  const selectedOrders = new Set(selectedItemOrders.value)
+  if (selectedItemOrder.value !== null) selectedOrders.add(selectedItemOrder.value)
+  const selected = [...selectedOrders]
   if (selected.length === 0) { error.value = '請先選取要刪除的點檢項目。'; return }
   if (!window.confirm('確定刪除選取的 ' + selected.length + ' 筆點檢項目？')) return
-  const selectedSet = new Set(selected)
-  formItems.value = formItems.value.filter((item) => !selectedSet.has(item.qcOrder)).map((item, index) => ({ ...item, qcOrder: index + 1 }))
+  formItems.value = formItems.value.filter((item) => !selectedOrders.has(item.qcOrder)).map((item, index) => ({ ...item, qcOrder: index + 1 }))
   error.value = ''
   resetDetail()
+}
+function addDetail(): void {
+  editingOrder.value = null
+  commitDetail()
 }
 function moveDetail(direction: -1 | 1): void {
   const order = selectedItemOrder.value
@@ -298,6 +319,12 @@ function masterBody(): { qcListNo: string; qcListName: string; qcType: number; u
     items: formItems.value.map((item, index) => ({ ...item, qcListNo: masterForm.value.qcListNo.trim(), qcOrder: index + 1 })),
   }
 }
+function closeMaster(): void {
+  if (busy.value) return
+  mode.value = null
+  formItemsRequestId.value += 1
+  formItemsLoading.value = false
+}
 async function saveMaster(keepOpen: boolean): Promise<void> {
   if (!mode.value || busy.value || formItemsLoading.value) return
   if (formItemsLoadFailed.value) { error.value = '明細載入失敗，請關閉表單後重新載入再試。'; return }
@@ -305,23 +332,26 @@ async function saveMaster(keepOpen: boolean): Promise<void> {
   if (problem) { error.value = problem; return }
   const saveMode = mode.value
   const body = masterBody()
+  if (saveMode === 'edit') {
+    auditFields.value = { ...auditFields.value, reviser: currentUserNo(), reviseDate: new Date().toISOString() }
+  }
   busy.value = true
   error.value = ''
   try {
     let nextDataStamp = formDataStamp.value
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       const allLists = read<QcList[]>(keys.lists, seedLists)
       const allItems = read<Record<string, QcItem[]>>(keys.items, seedItems)
       if (saveMode === 'edit') {
         const index = allLists.findIndex((row) => row.qcListNo === currentNo.value)
         if (index < 0) throw new Error('設備點檢表已不存在，請重新載入。')
         nextDataStamp = allLists[index].dataStamp + 1
-        allLists[index] = { ...allLists[index], ...body, dataStamp: nextDataStamp, reviser: props.currentUserNo || 'DEV001', reviseDate: new Date().toISOString() }
+        allLists[index] = { ...allLists[index], ...body, dataStamp: nextDataStamp, reviser: auditFields.value.reviser, reviseDate: auditFields.value.reviseDate }
         delete allItems[currentNo.value]
       } else {
         if (allLists.some((row) => row.qcListNo === body.qcListNo)) throw new Error('QC List No 已存在。')
         nextDataStamp = 0
-        allLists.push({ ...body, creator: props.currentUserNo || 'DEV001', createDate: new Date().toISOString(), reviser: null, reviseDate: null, dataStamp: 0 })
+        allLists.push({ ...body, creator: auditFields.value.creator, createDate: auditFields.value.createDate, reviser: null, reviseDate: null, dataStamp: 0 })
       }
       allItems[body.qcListNo] = body.items
       write(keys.lists, allLists)
@@ -336,25 +366,31 @@ async function saveMaster(keepOpen: boolean): Promise<void> {
       else if (saveMode === 'edit') nextDataStamp += 1
     }
     currentNo.value = body.qcListNo
-    if (!mock) await loadLists()
+    if (!usesDevelopmentMock.value) await loadLists()
     else rows.value = read<QcList[]>(keys.lists, seedLists)
+    const savedRow = rows.value.find((row) => row.qcListNo === body.qcListNo)
+    if (savedRow) auditFields.value = { creator: savedRow.creator, createDate: savedRow.createDate, reviser: savedRow.reviser || '', reviseDate: savedRow.reviseDate || '' }
     itemRows.value = body.items.map((item) => ({ ...item }))
     formDataStamp.value = nextDataStamp
     notice.value = saveMode === 'edit' ? '設備點檢表已修改。' : saveMode === 'copy' ? '設備點檢表已複製。' : '設備點檢表已新增。'
-    if (keepOpen && saveMode !== 'edit') mode.value = 'edit'
     if (!keepOpen) mode.value = null
   } catch (e) { error.value = e instanceof Error ? e.message : '設備點檢表儲存失敗。' }
   finally { busy.value = false }
 }
 async function deleteSelected(): Promise<void> {
-  if (!selectedNos.value.length) { error.value = '請先勾選要刪除的設備點檢表。'; return }
-  const targets = rows.value.filter((row) => selectedNos.value.includes(row.qcListNo))
+  if (busy.value) return
+  const targetNos = new Set(selectedNos.value)
+  if (currentNo.value) targetNos.add(currentNo.value)
+  const targets = rows.value.filter((row) => targetNos.has(row.qcListNo))
+  if (!targets.length) { error.value = '請先選取要刪除的設備點檢表。'; return }
   if (!window.confirm('確定刪除選取的 ' + targets.length + ' 張設備點檢表及其點檢項目？')) return
   busy.value = true
   error.value = ''
   notice.value = ''
+  let changed = false
+  let deleteError = ''
   try {
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       const remove = new Set(targets.map((row) => row.qcListNo))
       const remaining = read<QcList[]>(keys.lists, seedLists).filter((row) => !remove.has(row.qcListNo))
       const allItems = read<Record<string, QcItem[]>>(keys.items, seedItems)
@@ -362,32 +398,46 @@ async function deleteSelected(): Promise<void> {
       write(keys.lists, remaining)
       write(keys.items, allItems)
       rows.value = remaining
+      changed = targets.length > 0
     } else {
-      for (const row of targets) await request<void>('api/equipment/qc-lists/' + encodeURIComponent(row.qcListNo), { method: 'DELETE' })
-      await loadLists()
+      for (const row of targets) {
+        await request<void>('api/equipment/qc-lists/' + encodeURIComponent(row.qcListNo), { method: 'DELETE' })
+        changed = true
+      }
     }
     selectedNos.value = []
-    if (targets.some((row) => row.qcListNo === currentNo.value)) {
+    if (usesDevelopmentMock.value && targets.some((row) => row.qcListNo === currentNo.value)) {
       currentNo.value = visibleRows.value[0]?.qcListNo ?? ''
       await loadItems()
     }
     notice.value = '已刪除 ' + targets.length + ' 張設備點檢表。'
-  } catch (e) { error.value = e instanceof Error ? e.message : '設備點檢表刪除失敗。' }
+  } catch (e) { deleteError = e instanceof Error ? e.message : '設備點檢表刪除失敗。' }
   finally { busy.value = false }
+  if (changed && !usesDevelopmentMock.value) await loadLists()
+  if (deleteError) error.value = deleteError
 }
 async function loadItems(): Promise<void> {
-  if (!currentNo.value) { itemRows.value = []; return }
+  const requestId = ++mainItemsRequestId.value
+  const listNo = currentNo.value
+  if (!listNo) { itemRows.value = []; return }
   try {
-    if (mock) itemRows.value = read<Record<string, QcItem[]>>(keys.items, seedItems)[currentNo.value] ?? []
-    else itemRows.value = await request<QcItem[]>('api/equipment/qc-lists/' + encodeURIComponent(currentNo.value) + '/items')
-  } catch (e) { itemRows.value = []; error.value = e instanceof Error ? e.message : '點檢項目載入失敗。' }
+    const data = usesDevelopmentMock.value
+      ? read<Record<string, QcItem[]>>(keys.items, seedItems)[listNo] ?? []
+      : await request<QcItem[]>('api/equipment/qc-lists/' + encodeURIComponent(listNo) + '/items')
+    if (requestId === mainItemsRequestId.value) itemRows.value = data
+  } catch (e) {
+    if (requestId === mainItemsRequestId.value) {
+      itemRows.value = []
+      error.value = e instanceof Error ? e.message : '點檢項目載入失敗。'
+    }
+  }
 }
 async function loadLists(): Promise<void> {
   loading.value = true
   error.value = ''
   notice.value = ''
   try {
-    if (mock) {
+    if (usesDevelopmentMock.value) {
       rows.value = normalizeDevQcTypes(read<QcList[]>(keys.lists, seedLists))
       qcTypes.value = read<ValueOption[]>('ymes-dev-mock:equipment-qc-types:v1', fallbackQcTypes).filter((option) => option.value === 0 || option.value === 2)
       equipmentStates.value = read<EquipmentStateOption[]>('ymes-dev-mock:equipment-states:v1', seedStates)
@@ -404,7 +454,7 @@ async function loadLists(): Promise<void> {
       equipmentStates.value = options.equipmentStates
     }
     rows.value = rows.value.slice().sort((a, b) => a.qcListNo.localeCompare(b.qcListNo))
-    selectedNos.value = selectedNos.value.filter((no) => rows.value.some((row) => row.qcListNo === no))
+    selectedNos.value = selectedNos.value.filter((no) => visibleRows.value.some((row) => row.qcListNo === no))
     if (!visibleRows.value.some((row) => row.qcListNo === currentNo.value)) currentNo.value = visibleRows.value[0]?.qcListNo ?? ''
     await loadItems()
   } catch (e) {
@@ -415,13 +465,19 @@ async function loadLists(): Promise<void> {
   } finally { loading.value = false }
 }
 onMounted(() => { void loadLists() })
+watch(() => [props.developmentPreview, props.apiBaseUrl], () => {
+  mode.value = null
+  formItemsRequestId.value += 1
+  void loadLists()
+})
 </script>
 <template>
   <section class="eqpqc-page">
-    <div v-if="mock" class="eqpqc-dev-note">開發模式：目前資料為 DEV 假資料，儲存在此瀏覽器；不會寫入 MES 或正式資料庫。</div>
+    <div v-if="usesDevelopmentMock" class="eqpqc-dev-note">開發模式：目前資料為 DEV 假資料，儲存在此瀏覽器；不會寫入 MES 或正式資料庫。</div>
     <div class="eqpqc-search">
       <label for="qcListNoSearch">QC List No</label>
       <input id="qcListNoSearch" v-model="queryNo" type="text" maxlength="100" @keydown.enter="setQuery">
+      <span class="eqpqc-like">%</span>
       <button type="button" class="eqpqc-primary" :disabled="loading" @click="setQuery">查詢</button>
     </div>
     <p v-if="error && !mode" class="eqpqc-message eqpqc-error" role="alert">{{ error }}</p>
@@ -439,8 +495,8 @@ onMounted(() => { void loadLists() })
               <tbody>
                 <tr v-if="loading"><td colspan="11" class="eqpqc-empty">載入中…</td></tr>
                 <tr v-else-if="visibleRows.length===0"><td colspan="11" class="eqpqc-empty">沒有符合的設備點檢表。</td></tr>
-                <tr v-for="row in visibleRows" :key="row.qcListNo" :class="{ 'eqpqc-current': currentNo===row.qcListNo }" @click="selectList(row.qcListNo)" @dblclick="selectList(row.qcListNo); openMaster('edit')">
-                  <td class="eqpqc-check" @click.stop><input type="checkbox" :checked="selectedNos.includes(row.qcListNo)" :aria-label="'選取 ' + row.qcListNo" @change="toggleSelected(row.qcListNo)"></td>
+                <tr v-for="row in visibleRows" :key="row.qcListNo" :class="{ 'eqpqc-current': currentNo===row.qcListNo, 'eqpqc-marked': selectedNos.includes(row.qcListNo) }" @click="selectList(row.qcListNo)" @dblclick="selectList(row.qcListNo); openMaster('edit')">
+                  <td class="eqpqc-check" @click.stop><input type="checkbox" :checked="selectedNos.includes(row.qcListNo)" :aria-label="'選取 ' + row.qcListNo" @change="toggleSelected(row.qcListNo); selectList(row.qcListNo)"></td>
                   <td>{{ row.qcListNo }}</td><td>{{ row.qcListName }}</td><td>{{ typeLabel(row.qcType) }}</td>
                   <td>{{ row.unValidAction===-1 ? '不動作' : (equipmentStates.find((x)=>x.equipmentState===row.unValidAction)?.stateName || row.unValidAction) }}</td>
                   <td>{{ row.afterEventQc===1 ? '是' : '否' }}</td><td>{{ row.description || '' }}</td><td>{{ row.creator }}</td><td>{{ dateText(row.createDate) }}</td><td>{{ row.reviser || '' }}</td><td>{{ dateText(row.reviseDate) }}</td>
@@ -468,44 +524,42 @@ onMounted(() => { void loadLists() })
       <aside class="eqpqc-actions">
         <button type="button" class="eqpqc-primary" :disabled="busy" @click="openMaster('new')">新增(A)</button>
         <button type="button" :disabled="busy || !current" @click="openMaster('edit')">修改(E)</button>
-        <button type="button" :disabled="busy || selectedNos.length===0" @click="deleteSelected">刪除(D)</button>
+        <button type="button" :disabled="busy || (selectedNos.length===0 && !current)" @click="deleteSelected">刪除(D)</button>
         <button type="button" :disabled="busy || !current" @click="openMaster('copy')">複製(C)</button>
         <button type="button" class="eqpqc-close-page" :disabled="busy" @click="closePage">關閉</button>
       </aside>
     </div>
 
-    <div v-if="mode" class="eqpqc-overlay" @click.self="mode=null">
+    <div v-if="mode" class="eqpqc-overlay" @click.self="closeMaster">
       <form class="eqpqc-dialog" @submit.prevent="saveMaster(false)">
-        <header class="eqpqc-dialog-header"><strong>{{ masterTitle }}</strong><button type="button" aria-label="關閉" @click="mode=null">×</button></header>
+        <header class="eqpqc-dialog-header"><strong>{{ masterTitle }}</strong><button type="button" aria-label="關閉" :disabled="busy" @click="closeMaster">×</button></header>
         <div class="eqpqc-dialog-body">
-          <section class="eqpqc-master-fields">
+          <fieldset class="eqpqc-master-fields">
+            <legend>設備點檢表主檔</legend>
             <label><span>QC List No <b>*</b></span><input v-model="masterForm.qcListNo" type="text" maxlength="100" :readonly="mode==='edit'"></label>
             <label><span>QC List Name <b>*</b></span><input v-model="masterForm.qcListName" type="text" maxlength="100"></label>
             <label><span>QC Type <b>*</b></span><select v-model.number="masterForm.qcType" @change="handleQcTypeChange"><option v-for="option in qcTypes" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
             <label><span>UnValid Action <b>*</b></span><select v-model.number="masterForm.unValidAction"><option :value="-1">不動作</option><option v-for="state in equipmentStates" :key="state.equipmentState" :value="state.equipmentState">{{ state.stateName }}</option></select></label>
             <label class="eqpqc-after-event"><input v-model="masterForm.afterEventQc" type="checkbox" :disabled="!afterEventEnabled"><span>After Event QC</span></label>
             <label class="eqpqc-desc"><span>Description</span><textarea v-model="masterForm.description" maxlength="255" rows="2"></textarea></label>
-          </section>
+          </fieldset>
 
           <section class="eqpqc-detail-editor">
             <header>點檢項目設定</header>
+            <div class="eqpqc-detail-workspace">
+              <div class="eqpqc-detail-list-area">
             <fieldset class="eqpqc-detail-form" :disabled="formItemsLoading || formItemsLoadFailed">
               <label class="eqpqc-item-name"><span>Check Item <b>*</b></span><input v-model="detailForm.qcItem" type="text" maxlength="1000"></label>
-              <label><span>Inspection Method</span><input v-model="detailForm.inspectionMethod" maxlength="100"></label>
-              <label><span>Inspection Standards</span><input v-model="detailForm.inspectionStandards" maxlength="100"></label>
+              <label class="eqpqc-method"><span>Inspection Method</span><input v-model="detailForm.inspectionMethod" maxlength="100"></label>
+              <label class="eqpqc-standards"><span>Inspection Standards</span><input v-model="detailForm.inspectionStandards" maxlength="100"></label>
+              <label class="eqpqc-input-count"><span>Input Data Count</span><input v-model.number="detailForm.inputDataCount" type="number" min="1" max="10" step="1"></label>
               <fieldset><legend>Type <b>*</b></legend>
                 <label v-for="option in detailTypeOptions" :key="option"><input type="radio" :checked="detailForm.qcType===option" @change="changeDetailType(option)">{{ typeLabels[option] }}</label>
               </fieldset>
-              <label><span>Input Data Count</span><input v-model.number="detailForm.inputDataCount" type="number" min="1" max="10" step="1"></label>
-              <label><span>Std Value</span><input v-model="detailForm.stdValue" maxlength="12" :disabled="detailForm.qcType!==0"></label>
-              <label><span>Minimum</span><input v-model="detailForm.miniValue" maxlength="12" :disabled="detailForm.qcType!==1"></label>
-              <label><span>Maximum</span><input v-model="detailForm.maxiValue" maxlength="12" :disabled="detailForm.qcType!==1"></label>
-              <div class="eqpqc-detail-actions">
-                <button type="button" class="eqpqc-primary" @click="commitDetail">{{ editingOrder===null ? '新增項目' : '修改項目' }}</button>
-                <button type="button" @click="resetDetail">清除</button>
-                <button type="button" :disabled="selectedItemOrder===null" @click="moveDetail(-1)">上移</button>
-                <button type="button" :disabled="selectedItemOrder===null" @click="moveDetail(1)">下移</button>
-                <button type="button" :disabled="selectedItemOrders.length===0" @click="removeDetails">刪除項目</button>
+              <div class="eqpqc-value-fields">
+                <label><span>Std Value</span><input v-model="detailForm.stdValue" maxlength="12" :disabled="detailForm.qcType!==0"></label>
+                <label><span>Minimum</span><input v-model="detailForm.miniValue" maxlength="12" :disabled="detailForm.qcType!==1"></label>
+                <label><span>Maximum</span><input v-model="detailForm.maxiValue" maxlength="12" :disabled="detailForm.qcType!==1"></label>
               </div>
             </fieldset>
             <div class="eqpqc-table-wrap eqpqc-items-wrap">
@@ -514,21 +568,36 @@ onMounted(() => { void loadLists() })
                 <tbody>
                   <tr v-if="formItemsLoading"><td colspan="10" class="eqpqc-empty">點檢項目載入中…</td></tr>
                   <tr v-else-if="formItems.length===0"><td colspan="10" class="eqpqc-empty">尚未加入點檢項目。</td></tr>
-                  <tr v-for="item in formItems" :key="item.qcOrder" :class="{ 'eqpqc-current': selectedItemOrder===item.qcOrder }" @click="selectDetail(item.qcOrder)">
-                    <td class="eqpqc-check" @click.stop><input type="checkbox" :checked="selectedItemOrders.includes(item.qcOrder)" :aria-label="'選取項目 ' + item.qcOrder" @change="toggleItemSelection(item.qcOrder)"></td>
+                  <tr v-for="item in formItems" :key="item.qcOrder" :class="{ 'eqpqc-current': selectedItemOrder===item.qcOrder, 'eqpqc-marked': selectedItemOrders.includes(item.qcOrder) }" @click="selectDetail(item.qcOrder)">
+                    <td class="eqpqc-check" @click.stop><input type="checkbox" :checked="selectedItemOrders.includes(item.qcOrder)" :aria-label="'選取項目 ' + item.qcOrder" @change="toggleItemSelection(item.qcOrder); selectDetailRow(item.qcOrder, true)"></td>
                     <td>{{ item.qcOrder }}</td><td>{{ item.qcItem }}</td><td>{{ item.inspectionMethod }}</td><td>{{ item.inspectionStandards }}</td><td>{{ itemTypeLabel(item.qcType) }}</td><td>{{ item.inputDataCount }}</td><td>{{ item.stdValue || '' }}</td><td>{{ item.miniValue || '' }}</td><td>{{ item.maxiValue || '' }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+              </div>
+              <aside class="eqpqc-detail-actions">
+                <button type="button" class="eqpqc-primary" :disabled="formItemsLoading || formItemsLoadFailed" @click="addDetail">新增</button>
+                <button type="button" :disabled="formItemsLoading || formItemsLoadFailed || selectedItemOrder===null" @click="removeDetails">刪除</button>
+                <button type="button" :disabled="formItemsLoading || formItemsLoadFailed || editingOrder===null" @click="commitDetail">修改</button>
+                <button type="button" :disabled="selectedItemOrder===null" @click="moveDetail(-1)">上移</button>
+                <button type="button" :disabled="selectedItemOrder===null" @click="moveDetail(1)">下移</button>
+              </aside>
+            </div>
           </section>
           <p v-if="error" class="eqpqc-message eqpqc-error" role="alert">{{ error }}</p>
+          <fieldset class="eqpqc-audit">
+            <legend>建立／修改資料</legend>
+            <label><span>建立人</span><input :value="auditFields.creator" readonly></label>
+            <label><span>建立日期</span><input :value="dateText(auditFields.createDate)" readonly></label>
+            <label><span>修改人</span><input :value="auditFields.reviser" readonly></label>
+            <label><span>修改日期</span><input :value="dateText(auditFields.reviseDate)" readonly></label>
+          </fieldset>
         </div>
         <footer class="eqpqc-dialog-footer">
-          <span v-if="mode==='edit'">DataStamp: {{ formDataStamp }}</span>
-          <button type="button" :disabled="busy || formItemsLoading || formItemsLoadFailed" @click="saveMaster(true)">套用</button>
           <button type="submit" class="eqpqc-primary" :disabled="busy || formItemsLoading || formItemsLoadFailed">確定</button>
-          <button type="button" :disabled="busy" @click="mode=null">取消</button>
+          <button type="button" :disabled="busy" @click="closeMaster">關閉</button>
+          <button type="button" :disabled="busy || formItemsLoading || formItemsLoadFailed" @click="saveMaster(true)">套用</button>
         </footer>
       </form>
     </div>
@@ -538,6 +607,7 @@ onMounted(() => { void loadLists() })
 .eqpqc-page{display:flex;height:100%;min-height:0;flex-direction:column;gap:6px;color:#333;font-size:13px}
 .eqpqc-dev-note{padding:7px 10px;border:1px solid #d8c577;background:#fff6c8;color:#66551b}
 .eqpqc-search{display:flex;align-items:center;gap:7px;padding:5px 9px;border:1px solid #c9c9c9;background:#fafafa}
+.eqpqc-like{margin-left:-7px;color:#555}
 .eqpqc-search input,.eqpqc-detail-form input,.eqpqc-master-fields input,.eqpqc-master-fields select,.eqpqc-master-fields textarea{min-height:29px;padding:4px 7px;border:1px solid #a9a9a9;background:#fff0b3;color:#333;font:inherit}
 .eqpqc-search input{width:min(270px,40vw)}
 .eqpqc-search button,.eqpqc-actions button,.eqpqc-detail-actions button,.eqpqc-dialog-footer button{min-height:30px;padding:4px 12px;border:1px solid #bdbdbd;border-radius:3px;background:#fafafa;color:#333;font:inherit;cursor:pointer}
@@ -559,6 +629,7 @@ onMounted(() => { void loadLists() })
 .eqpqc-grid tbody tr{cursor:pointer}
 .eqpqc-grid tbody tr:nth-child(even){background:#fafafa}
 .eqpqc-grid tbody tr:hover{background:#fff6d6}
+.eqpqc-grid tbody tr.eqpqc-marked{background:#fff7dc}
 .eqpqc-grid tbody tr.eqpqc-current{background:#fff0b7}
 .eqpqc-check{width:28px;text-align:center}
 .eqpqc-check input{margin:0;accent-color:#ad831b}
@@ -567,11 +638,12 @@ onMounted(() => { void loadLists() })
 .eqpqc-actions button{width:100%;min-height:32px}
 .eqpqc-actions .eqpqc-close-page{margin-top:auto}
 .eqpqc-overlay{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.35)}
-.eqpqc-dialog{display:flex;width:min(1260px,98vw);max-height:94vh;flex-direction:column;border:1px solid #999;background:#fdfdfd;box-shadow:0 5px 20px rgba(0,0,0,.24)}
+.eqpqc-dialog{display:flex;width:min(801px,98vw);height:min(630px,94vh);max-height:94vh;flex-direction:column;border:1px solid #999;background:#fdfdfd;box-shadow:0 5px 20px rgba(0,0,0,.24)}
 .eqpqc-dialog-header{display:flex;min-height:40px;align-items:center;justify-content:space-between;padding:7px 13px;border-bottom:1px solid #c9c9c9;background:#f4f1e8;font-size:15px}
 .eqpqc-dialog-header button{width:28px;height:26px;border:0;background:transparent;font-size:22px;cursor:pointer}
-.eqpqc-dialog-body{min-height:0;overflow:auto;padding:10px}
-.eqpqc-master-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 15px;margin:0 0 9px;padding:10px;border:1px solid #bdbdbd}
+.eqpqc-dialog-body{display:flex;min-height:0;flex:1;flex-direction:column;gap:6px;overflow:auto;padding:8px}
+.eqpqc-master-fields{display:grid;min-width:0;grid-template-columns:1fr 1fr;gap:5px 12px;margin:0;padding:5px 8px 7px;border:1px solid #bdbdbd}
+.eqpqc-master-fields legend{padding:0 4px;color:#555}
 .eqpqc-master-fields>label{display:flex;min-width:0;align-items:center;gap:8px}
 .eqpqc-master-fields>label>span{width:125px;flex:none;text-align:right;color:#555}
 .eqpqc-master-fields>label>input,.eqpqc-master-fields>label>select,.eqpqc-master-fields>label>textarea{flex:1;min-width:0}
@@ -579,20 +651,30 @@ onMounted(() => { void loadLists() })
 .eqpqc-master-fields .eqpqc-after-event{justify-content:flex-start;padding-left:133px}
 .eqpqc-master-fields .eqpqc-after-event input{accent-color:#a77a1d}
 .eqpqc-master-fields .eqpqc-desc{grid-column:1/-1;align-items:flex-start}
-.eqpqc-detail-editor{display:flex;min-height:300px;flex-direction:column;border:1px solid #bdbdbd}
-.eqpqc-detail-form{display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr .75fr;gap:7px;padding:8px;margin:0;min-width:0;border:0}
-.eqpqc-detail-form>label{display:flex;min-width:0;flex-direction:column;gap:4px}
-.eqpqc-detail-form>label input{width:100%;min-width:0}
+.eqpqc-detail-editor{display:flex;min-height:0;flex:1;flex-direction:column;border:1px solid #bdbdbd}
+.eqpqc-detail-workspace{display:grid;min-height:0;flex:1;grid-template-columns:minmax(0,1fr) 88px;gap:5px;padding:4px}
+.eqpqc-detail-list-area{display:flex;min-height:0;flex-direction:column}
+.eqpqc-detail-form{display:grid;flex:none;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 135px;gap:2px 7px;padding:3px 2px 5px;margin:0;min-width:0;border:0}
+.eqpqc-detail-form>label{display:grid;min-width:0;grid-template-columns:max-content minmax(0,1fr);align-items:center;gap:5px}
+.eqpqc-detail-form>label>span{white-space:nowrap;color:#555}
+.eqpqc-detail-form>label input{width:100%;min-width:0;min-height:22px;padding:2px 5px}
+.eqpqc-detail-form .eqpqc-item-name{grid-column:1/-1;grid-template-columns:75px minmax(0,1fr)}
+.eqpqc-detail-form>fieldset{grid-column:1/-1;display:flex;min-width:0;align-items:center;gap:4px 8px;margin:0;padding:1px 5px;border:0}
+.eqpqc-detail-form>fieldset legend{float:left;padding:0 4px 0 0;color:#555}
+.eqpqc-detail-form .eqpqc-value-fields{display:grid;grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.eqpqc-detail-form .eqpqc-value-fields label{display:grid;min-width:0;grid-template-columns:65px minmax(0,1fr);align-items:center;gap:4px}
+.eqpqc-detail-form .eqpqc-value-fields label span{color:#555;text-align:right;white-space:nowrap}
 .eqpqc-detail-form input:disabled{background:#eee}
-.eqpqc-detail-form fieldset{display:flex;min-width:0;flex-wrap:wrap;align-items:center;gap:4px 9px;margin:0;padding:3px 6px;border:1px solid #c4c4c4}
-.eqpqc-detail-form legend{padding:0 3px;color:#555}
 .eqpqc-detail-form fieldset label{display:flex;align-items:center;gap:3px;white-space:nowrap}
-.eqpqc-detail-form fieldset input{accent-color:#a77a1d}
-.eqpqc-item-name{grid-column:span 2}
-.eqpqc-detail-actions{display:flex;grid-column:1/-1;flex-wrap:wrap;gap:5px}
-.eqpqc-items-wrap{min-height:145px}
+.eqpqc-detail-form fieldset input{width:auto;min-height:auto;padding:0;border:0;background:transparent;accent-color:#a77a1d}
+.eqpqc-detail-actions{display:flex;min-height:0;flex-direction:column;gap:6px;padding-top:0}
+.eqpqc-detail-actions button{width:100%;min-height:32px}
+.eqpqc-items-wrap{min-height:0;flex:1}
+.eqpqc-audit{display:grid;flex:none;grid-template-columns:1fr 1fr;gap:4px 14px;margin:0;padding:5px 10px 7px;border:1px solid #bdbdbd}
+.eqpqc-audit legend{padding:0 4px;color:#555}
+.eqpqc-audit label{display:flex;min-width:0;align-items:center;gap:8px}
+.eqpqc-audit label span{width:72px;flex:none;text-align:right;color:#555}
+.eqpqc-audit input{flex:1;min-width:0;min-height:27px;padding:3px 6px;border:1px solid #c5c5c5;background:#eee;color:#555;font:inherit}
 .eqpqc-dialog-footer{display:flex;min-height:47px;align-items:center;justify-content:flex-end;gap:7px;padding:7px 12px;border-top:1px solid #ccc}
-.eqpqc-dialog-footer span{margin-right:auto;color:#777;font-size:12px}
-@media(max-width:1000px){.eqpqc-panels{grid-template-rows:minmax(180px,1fr) minmax(180px,1fr)}.eqpqc-detail-form{grid-template-columns:1fr 1fr 1fr}.eqpqc-item-name{grid-column:span 2}}
-@media(max-width:700px){.eqpqc-main{grid-template-columns:minmax(0,1fr) 76px}.eqpqc-actions{gap:4px}.eqpqc-actions button{font-size:11px;padding:3px 5px}.eqpqc-panels{grid-template-rows:minmax(190px,1fr) minmax(190px,1fr)}.eqpqc-grid{min-width:900px}.eqpqc-master-fields{grid-template-columns:1fr}.eqpqc-master-fields .eqpqc-desc{grid-column:auto}.eqpqc-detail-form{grid-template-columns:1fr 1fr}.eqpqc-item-name{grid-column:1/-1}.eqpqc-master-fields .eqpqc-after-event{padding-left:0}}
+@media(max-width:700px){.eqpqc-main{grid-template-columns:minmax(0,1fr) 76px}.eqpqc-actions{gap:4px}.eqpqc-actions button{font-size:11px;padding:3px 5px}.eqpqc-panels{grid-template-rows:minmax(190px,1fr) minmax(190px,1fr)}.eqpqc-grid{min-width:900px}.eqpqc-dialog{width:98vw;height:94vh}.eqpqc-master-fields{grid-template-columns:1fr}.eqpqc-master-fields .eqpqc-desc{grid-column:auto}.eqpqc-detail-workspace{grid-template-columns:minmax(0,1fr) 76px}.eqpqc-detail-form{grid-template-columns:1fr 1fr}.eqpqc-detail-form .eqpqc-item-name,.eqpqc-detail-form>fieldset,.eqpqc-detail-form .eqpqc-value-fields{grid-column:1/-1}.eqpqc-master-fields .eqpqc-after-event{padding-left:0}.eqpqc-audit{grid-template-columns:1fr}}
 </style>

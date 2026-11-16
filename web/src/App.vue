@@ -869,6 +869,7 @@ async function signOut(): Promise<void> {
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
         />
         <EquipmentTypeMaster
           v-else-if="isEquipmentTypePage"

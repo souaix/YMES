@@ -175,10 +175,11 @@
 - [ ] 在 YMES 實際 schema/migrations 比對 `tbleqpstatecontrol`、`tblemsequipmentstate` 與 `tbleqpqclistbasis.unvalidaction`；對已存在資料表保留額外欄位，只有缺少且 API 必須時新增 forward migration。
 - [ ] 給 `ymes_app` 對引用來源最小 SELECT 權限；migration/權限完成後移除 DELETE fail-closed 503，精確檢查三個來源，引用回 409、無引用回 204。
 - [ ] 部署後驗證引用狀態阻擋及未引用刪除；將結果回寫規格與本待辦。不得提交連線字串、密碼、Token 或私鑰。
-## 設備設定：設備點檢表設定（公司電腦交接）
+## 設備設定：設備點檢表設定（公司電腦 UI 已交付；家用端待 API）
 
 先閱讀 docs/modules/EQP/設備設定/設備點檢表設定.md 與 database/reference/mestest_equipment_qclist_create.sql。SQL 來自 MES Oracle MESTEST 原始 DDL，轉為 PostgreSQL 空表結構，不含 MES 點檢主檔/明細資料。
 
+- [x] 公司端已依 WinForms Form/Designer/Service 補齊 Vue DEV UI：主從清單、Add/Edit/Copy/Delete、明細新增/修改/多選刪除/排序、Confirm/Close/Apply、稽核欄位與作用列刪除行為；本輪無新表或新 DDL。
 - [ ] 確認 YMES ymes.tbleqpqclistbasis、ymes.tbleqpqclistdetail 是否已存在；逐欄比對後，缺表才套用參考 SQL。第一階段 bootstrap 已按 Oracle DDL 補上 AFTEREVENTQC DEFAULT 0、DATASTAMP DEFAULT 0、INPUTDATACOUNT DEFAULT 1。
 - [ ] 實作 GET /api/equipment/qc-lists（qcListNo 查詢、QCListNo 排序）、GET /api/equipment/qc-lists/{qcListNo}/items（QCOrder 排序）。
 - [ ] 實作 GET /api/equipment/qc-lists/options；QCType 只回 0「開始生產時點檢」和 2「手動點檢」（已由公司端唯讀核對 MESTEST ValueList/繁中資源），設備狀態選項依 YMES 設備狀態主檔；-1 顯示「不動作」。
