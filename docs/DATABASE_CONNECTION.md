@@ -65,6 +65,12 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 主檔 PK `(ComputerNo,FactoryNo)`；明細 PK `(ComputerNo,FactoryNo,AreaNo)`；兩表僅有 PK unique index，沒有 FK 或額外索引。DataStamp 是 NUMBER(11,0) DEFAULT 0 nullable。
 - Oracle logical source DDL 與 PostgreSQL 空表 CREATE SQL 位於 `database/reference/mestest_smd_computer_area_source_ddl.sql`、`mestest_smd_computer_area_create.sql`。只讀資料字典，沒有讀取 MES 業務資料或在 Oracle 執行 DDL；連線值沒有輸出或存檔。
 - WinForms、Service/Core、Vue 畫面與 API handoff 規格見 `docs/modules/SMD/過帳電腦之區域.md`。家用端先比對 YMES 現有 schema/migrations，再補缺項；不要把 DEV 假資料寫進正式 DB。
+
+### 更新 2026-11-16：SMD SD101 工廠基本資料
+
+- `MESTEST.TBLSMDFACTORYBASIS` 的 Oracle DDL、欄位 NULL/default、PK/index/FK 已由 PowerShell 5.1 + Oracle.ManagedDataAccess 於 EP303 來源查詢中直接取得；SD101 沿用該次查證，不需重查。
+- Oracle logical source DDL、PostgreSQL 空表 CREATE SQL 已在 `database/reference/mestest_carrier_basis_dependencies_source_ddl.sql`、`mestest_carrier_basis_dependencies_create.sql`；first-phase bootstrap 也已包含該表。家用端比對 YMES schema 後，缺少才新增 migration。
+- WinForms 狀態、核准/刪除、欄位、DataStamp 與 Vue/API handoff 見 `docs/modules/SMD/工廠基本資料.md`。只使用既有受保護 Oracle 設定查結構，連線值未輸出或寫入 Git。
 ### 更新 2026-11-16：設備工程群組成員表
 
 - 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查得 `MESTEST.TBLUSRUSERGROUP` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES` 與 `ALL_IND_COLUMNS`。

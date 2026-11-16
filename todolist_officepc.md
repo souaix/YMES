@@ -45,7 +45,7 @@
 - [x] 新增 `docs/modules/SMD/區域庫房基本設定.md`，更新 SMD 功能索引、資料庫查詢紀錄與家用端 API/schema handoff。
 - [ ] 尚未執行 build、test 或瀏覽器驗收；家用 API 完成後再 pull 對接。
 - [x] SD106「過帳電腦之區域」已完成 WinForms Form/Service/Core 對照、Oracle DDL 直查、DEV Vue 頁及 API/CREATE SQL handoff；進度見下方 SD106 區塊。
-- [ ] 下一個尚未完成的 SMD FunctionKey 是 SD101「工廠基本資料」；依序讀 WinForms Form/Designer/Service/Core，再查實際涉及的 Oracle DDL。
+- [x] SD101「工廠基本資料」已完成，WinForms/Service/Core 對照、Vue DEV 頁與家用端 API/schema handoff 見下方區塊。Oracle DDL 沿用 2026-11-16 EP303 已直連查詢的結果，沒有重查。
 
 ## 家用電腦完成後，公司端先做
 
@@ -85,7 +85,16 @@
 - [x] 新增 Vue DEV 頁 `web/src/components/ComputerAreaMaster.vue`、`/YMES/SMD/ComputerAreas` 路徑及 FunctionNo=`COMPUTER AREA`；實作查詢、多選、Add/Edit/Copy/Delete、approved Factory/Area 選擇、稽核與 Apply/Confirm。
 - [x] 新增 `docs/modules/SMD/過帳電腦之區域.md`，更新 SMD 規格索引、Oracle 連線查詢紀錄與家用端 schema/API handoff。
 - [ ] 未執行 build、test 或瀏覽器驗收；Production API/migration 待家用端完成。
-- [ ] 下一步按 FunctionKey 順序開始 SD101「工廠基本資料」。
+- [x] SD101「工廠基本資料」已接上 Vue DEV 路由；既有 Oracle DDL/PG CREATE SQL 已確認可沿用，完成規格及 API/schema handoff。
+- [ ] 下一個尚未完成的 SMD FunctionKey 是 SD103「儲位基本資料」；依序讀 WinForms Form/Designer/Service/Core，確認實際涉及的資料表，再用 PowerShell 直查缺少的 Oracle DDL。
+
+## 2026-11-16 SMD SD101 工廠基本資料公司端進度
+
+- [x] 對照 `frmFactoryBasis`、`frmFactoryBasisDef`、wsSMD 與 `clsSMDBasis`/`clsBasis_UPD`；記錄四種 IssueState、FactoryNo 搜尋、IC_FT_PKG FactoryName 顯示、欄位/按鈕、Copy、批次 Delete/Approve、DataStamp 與 Issue/Job 規則。
+- [x] Oracle `TBLSMDFACTORYBASIS` 原始 DDL、欄位 NULL/default、PK/index/FK 已於 2026-11-16 EP303 查詢直連取得；沿用 `mestest_carrier_basis_dependencies_*` 和 first-phase CREATE SQL，未重複查詢/新增 SQL。
+- [x] 新增 Vue DEV 頁 `web/src/components/FactoryBasisMaster.vue`，接上 `/YMES/SMD/Factories` 與 FunctionNo=`FACTORY BASIS`；包含查詢/狀態篩選、選列/多選、Add/Edit/Copy/Delete/Approve、KD 黃色定義表單、稽核及 Apply/Confirm。
+- [x] 新增 `docs/modules/SMD/工廠基本資料.md`，更新功能索引、Oracle 查詢記錄與家用端 API/schema/簽核 handoff。
+- [ ] 未執行 build、test 或瀏覽器驗收；Production API/schema 待家用端比對現況並補齊，核准需串正式 Issue/Job 流程。
 
 ## 結束規則
 

@@ -69,6 +69,20 @@
 5. wsSMD Edit 傳入 DataStamp，但本 checkout 的 `clsSMDBasis.EditComputerArea` 簽章沒有此參數，舊 Core SQL 沒有 CAS。新 API 補足 CAS/audit，不照搬舊缺漏。UI Delete 多選逐筆請求，首錯停止並回報已完成筆數。
 6. DDL 與 API 規格已交付；家用端完成 schema/migration/API 並部署後通知公司端 pull，對接 Production 驗收。
 
+## SMD SD101 工廠基本資料（公司端 2026-11-16 已交接）
+
+先讀 `docs/modules/SMD/工廠基本資料.md` 及公司端 SD101 區塊。公司端已完成 `/YMES/SMD/Factories` Vue DEV 頁，FunctionNo=`FACTORY BASIS`；Production 只呼叫 API。
+
+- Oracle `TBLSMDFACTORYBASIS` 已由公司端在 2026-11-16 EP303 DDL 查詢中直連查得。Oracle source logical DDL、PostgreSQL 空表 CREATE SQL 已在 `database/reference/mestest_carrier_basis_dependencies_source_ddl.sql`、`mestest_carrier_basis_dependencies_create.sql`，first-phase bootstrap 已含表；不要重查或建立重複 CREATE SQL。
+- 欄位：FactoryNo varchar(20) NOT NULL PK、Description varchar(255)、Creator varchar(10) NOT NULL、CreateDate timestamp NOT NULL、IssueState numeric(1,0) DEFAULT 0 NOT NULL、FabCode varchar(10)、FactoryName varchar(50)、Reviser varchar(10)、ReviseDate timestamp、DataStamp numeric(11,0) DEFAULT 0 nullable。只有 PK unique index，沒有 Oracle FK/額外 index。
+- 先比對 YMES schema/migrations。缺表或欄位才建 forward migration；保留 YMES 擴充欄位。DATE 對應 timestamp without time zone。
+- API：`GET /api/smd/factory-basis?factoryNo=`（大小寫不敏感包含查詢、空值回全部）、`GET /api/smd/factory-basis/options` 回 `{factoryNameEnabled}`、POST `/api/smd/factory-basis`、PUT `/{factoryNo}?issueState=0&dataStamp=`、DELETE `/{factoryNo}?issueState=&dataStamp=`、POST `/{factoryNo}/approve` body `{issueState:0,dataStamp}`。DTO/回應依規格與 `FactoryBasisMaster.vue`。
+- CRUD 權限需登入與 SMD 權限；FactoryNo 必填唯一。只允許 IssueState=0 修改；DataStamp nullable 要 CAS 並以 COALESCE(DataStamp,0)+1 更新。伺服器產生 Creator/CreateDate/Reviser/ReviseDate。Delete 僅狀態 0、2、-1 可實體刪除，狀態 1 回 409。
+- Approve IssueNo=`FACTORY BASIS`：沒有 Job/Detail 時依設定直達 2；有工作流程時建立 Issue Master 並轉 1，之後核准 2/退回 0。Production 不得使用 DEV 的直接轉狀態邏輯；家用端需重用正式 Issue/Job API。
+- `options.factoryNameEnabled` 依正式 `IC_FT_PKG` 設定；主 Grid 只有啟用時顯示 FactoryName，定義表單仍有欄位。舊 WinForms 清空 FactoryName 不會清除資料，Vue 延續此語意。
+- 舊 ws/Core 有不同版本的 DataStamp/audit 方法簽章；實作以規格明確定義的 CAS/登入稽核為準，不沿用舊簽章差異。
+- schema/API/Issue 流程完成並部署後，更新本待辦及 API 文件，通知公司端 pull 對接 Production。
+
 ## 公司電腦目前交付
 
 - Vue 主選單以三層 Module → Menu Group → Function 呈現；正式資料 API 不得把設定分類與主檔功能壓成兩層。

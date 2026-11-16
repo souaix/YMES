@@ -29,6 +29,7 @@ import ENTOSItemMaster from './components/ENTOSItemMaster.vue'
 import AreaBasisMaster from './components/AreaBasisMaster.vue'
 import AreaInventoryMapMaster from './components/AreaInventoryMapMaster.vue'
 import ComputerAreaMaster from './components/ComputerAreaMaster.vue'
+import FactoryBasisMaster from './components/FactoryBasisMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
@@ -62,6 +63,7 @@ const osItemRoute = appBasePath + '/Customer/OSItems'
 const areaBasisRoute = appBasePath + '/SMD/Areas'
 const areaInventoryRoute = appBasePath + '/SMD/AreaInventories'
 const computerAreaRoute = appBasePath + '/SMD/ComputerAreas'
+const factoryBasisRoute = appBasePath + '/SMD/Factories'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -236,6 +238,7 @@ const menuRoutes: Record<string, string> = {
   'function:SMD:AREA BASIS': areaBasisRoute,
   'function:SMD:AREA INV MAP': areaInventoryRoute,
   'function:SMD:COMPUTER AREA': computerAreaRoute,
+  'function:SMD:FACTORY BASIS': factoryBasisRoute,
   'function:EQP:RECIPE BASIS': equipmentRecipeBasisRoute,
   'equipment-accessory-categories': equipmentAccessoryCategoryRoute,
   'equipment-accessory-category-states': equipmentAccessoryCategoryStateRoute,
@@ -332,6 +335,7 @@ const isOsItemPage = computed(() => activeMasterKey.value === 'function:ENT:ENTO
 const isAreaBasisPage = computed(() => activeMasterKey.value === 'function:SMD:AREA BASIS')
 const isAreaInventoryPage = computed(() => activeMasterKey.value === 'function:SMD:AREA INV MAP')
 const isComputerAreaPage = computed(() => activeMasterKey.value === 'function:SMD:COMPUTER AREA')
+const isFactoryBasisPage = computed(() => activeMasterKey.value === 'function:SMD:FACTORY BASIS')
 const isEquipmentVendorPage = computed(() => activeMasterKey.value === 'equipment-vendor-master')
 const isEquipmentEngineerGroupPage = computed(() => activeMasterKey.value === 'equipment-engineer-group')
 const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment-group')
@@ -1030,6 +1034,14 @@ async function signOut(): Promise<void> {
         />
         <ComputerAreaMaster
           v-else-if="isComputerAreaPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <FactoryBasisMaster
+          v-else-if="isFactoryBasisPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
