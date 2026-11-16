@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 interface EngineerGroup {
   engineerGroupNo: string
@@ -18,9 +18,9 @@ interface EngineerUser {
 }
 type GroupMode = 'new' | 'edit' | 'copy' | null
 
-const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string }>()
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const appBase = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL.slice(0, -1) : import.meta.env.BASE_URL
-const usesDevelopmentMock = import.meta.env.DEV
+const usesDevelopmentMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const groupStoreKey = 'ymes-dev-mock:equipment-engineer-groups:v1'
 const memberStoreKey = 'ymes-dev-mock:equipment-engineer-group-users:v1'
 const seedGroups: EngineerGroup[] = [
@@ -114,7 +114,7 @@ async function loadMembers(groupNo: string): Promise<void> {
   if (!groupNo) { clearMemberDetail(); return }
   membersLoading.value = true
   try {
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       users.value = structuredClone(seedUsers)
       const store = readMock<Record<string, string[]>>(memberStoreKey, seedMembers)
       checkedUserNos.value = [...(store[groupNo] ?? [])]
@@ -141,7 +141,7 @@ async function loadGroups(): Promise<void> {
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       groups.value = readMock<EngineerGroup[]>(groupStoreKey, seedGroups)
     } else {
       const query = new URLSearchParams()
@@ -177,7 +177,7 @@ function openGroupForm(mode: Exclude<GroupMode, null>): void {
     ? { creator: row.creator ?? '', createDate: formatDate(row.createDate), reviser: props.currentUserNo || '', reviseDate: new Date().toLocaleString('zh-TW') }
     : { creator: props.currentUserNo || 'DEV001', createDate: new Date().toLocaleString('zh-TW'), reviser: '', reviseDate: '' }
 }
-async function saveGroup(): Promise<void> {
+async function saveGroup(closeAfterSave = true): Promise<void> {
   if (busy.value || !groupMode.value) return
   busy.value = true
   errorMessage.value = ''
@@ -185,7 +185,7 @@ async function saveGroup(): Promise<void> {
   const groupNo = groupForm.value.engineerGroupNo.trim()
   try {
     let result: EngineerGroup
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       const rows = readMock<EngineerGroup[]>(groupStoreKey, seedGroups)
       const index = rows.findIndex((row) => row.engineerGroupNo.toLocaleLowerCase() === groupNo.toLocaleLowerCase())
       if (mode !== 'edit' && index >= 0) throw new Error('工程群組編號已存在。')
@@ -219,8 +219,10 @@ async function saveGroup(): Promise<void> {
         body: JSON.stringify(body),
       })
     }
-    groupMode.value = null
+    if (closeAfterSave) groupMode.value = null
     keyword.value = ''
+    groupForm.value.dataStamp = result.dataStamp
+    groupAudit.value = { creator: result.creator ?? '', createDate: formatDate(result.createDate), reviser: result.reviser ?? '', reviseDate: formatDate(result.reviseDate) }
     activeGroupNo.value = result.engineerGroupNo
     await loadGroups()
     successMessage.value = mode === 'edit' ? '工程群組資料已修改。' : mode === 'copy' ? '工程群組資料已複製。' : '工程群組資料已新增。'
@@ -235,7 +237,7 @@ async function deleteGroups(): Promise<void> {
   busy.value = true
   errorMessage.value = ''
   try {
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       const removed = new Set(targets)
       writeMock(groupStoreKey, readMock<EngineerGroup[]>(groupStoreKey, seedGroups).filter((row) => !removed.has(row.engineerGroupNo)))
       const members = readMock<Record<string, string[]>>(memberStoreKey, seedMembers)
@@ -260,7 +262,7 @@ async function saveMembers(): Promise<void> {
   errorMessage.value = ''
   try {
     const userNos = [...new Set(checkedUserNos.value)]
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       const members = readMock<Record<string, string[]>>(memberStoreKey, seedMembers)
       members[row.engineerGroupNo] = userNos
       writeMock(memberStoreKey, members)
@@ -282,6 +284,7 @@ function closePage(): void {
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
 onMounted(() => { void loadGroups() })
+watch(() => [props.developmentPreview, props.apiBaseUrl], () => { void loadGroups() })
 </script>
 
 <template>
@@ -315,8 +318,8 @@ onMounted(() => { void loadGroups() })
         <aside class="group-actions" aria-label="工程群組操作">
           <button class="primary" type="button" :disabled="busy" @click="openGroupForm('new')">新增(A)</button>
           <button type="button" :disabled="busy || !selectedGroup" @click="openGroupForm('edit')">修改(E)</button>
-          <button type="button" :disabled="busy || !selectedGroup" @click="openGroupForm('copy')">複製(C)</button>
           <button type="button" :disabled="busy || (!selectedGroup && selectedForDelete.length === 0)" @click="deleteGroups">刪除(D)</button>
+          <button type="button" :disabled="busy || !selectedGroup" @click="openGroupForm('copy')">複製(C)</button>
           <button type="button" @click="closePage">關閉</button>
         </aside>
       </div>
@@ -347,10 +350,10 @@ onMounted(() => { void loadGroups() })
     </section>
 
     <div v-if="groupMode" class="group-overlay" @click.self="groupMode = null">
-      <form class="group-dialog" @submit.prevent="saveGroup">
+      <form class="group-dialog" @submit.prevent="saveGroup(true)">
         <header><strong>設備工程群組資料 ({{ groupMode === 'edit' ? 'EDIT' : groupMode === 'copy' ? 'COPY' : 'ADD' }})</strong><button type="button" aria-label="關閉" @click="groupMode = null">×</button></header>
         <fieldset><legend>工程群組資料</legend>
-          <label><span>工程群組編號</span><input v-model.trim="groupForm.engineerGroupNo" required maxlength="20" :readonly="groupMode === 'edit'" /></label>
+          <label><span>工程群組編號</span><input v-model.trim="groupForm.engineerGroupNo" required maxlength="20" :readonly="groupMode === 'edit'" @blur="groupForm.engineerGroupNo = groupForm.engineerGroupNo.toUpperCase()" /></label>
           <label><span>工程群組名稱</span><input v-model.trim="groupForm.engineerGroupName" required maxlength="50" /></label>
           <label class="description-field"><span>說明</span><textarea v-model="groupForm.description" maxlength="255" rows="4" /></label>
         </fieldset>
@@ -358,7 +361,7 @@ onMounted(() => { void loadGroups() })
           <label>建立人<input :value="groupAudit.creator" readonly /></label><label>建立日期<input :value="groupAudit.createDate" readonly /></label>
           <label>修改人<input :value="groupAudit.reviser" readonly /></label><label>修改日期<input :value="groupAudit.reviseDate" readonly /></label>
         </div>
-        <footer class="dialog-actions"><button type="button" @click="groupMode = null">關閉</button><button class="primary" type="submit" :disabled="busy">確定</button></footer>
+        <footer class="dialog-actions"><button class="primary" type="submit" :disabled="busy">確定</button><button type="button" @click="groupMode = null">關閉</button><button type="button" :disabled="busy" @click="saveGroup(false)">套用</button></footer>
       </form>
     </div>
   </div>
