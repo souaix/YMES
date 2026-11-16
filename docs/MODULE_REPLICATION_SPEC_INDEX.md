@@ -72,7 +72,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | EQP | 設備設定七項 DEV 頁面 | 設備設定功能規格已分頁；多張設備表已查 DDL | 待逐功能完成 |
 | SMD | SD101 工廠、SD103 儲位、SD104 區域、SD105 區域庫房、SD106 過帳電腦之區域、SD107 生產線別、SD108 區域設備狀態監控、SD109 工位基本資料 DEV 頁面；SMD 第一層三層選單列出 8 個功能 | [SD101](modules/SMD/工廠基本資料.md)、[SD103](modules/SMD/儲位基本資料.md)、[SD104](modules/SMD/區域基本資料.md)、[SD105](modules/SMD/區域庫房基本設定.md)、[SD106](modules/SMD/過帳電腦之區域.md)、[SD107](modules/SMD/生產線別基本資料.md)、[SD108](modules/SMD/設備狀態監控_區域.md)、[SD109](modules/SMD/工位基本資料.md)；來源 Oracle DDL 與 PostgreSQL 空表 CREATE 已交付 | SD101、SD103–SD109 Production API/schema 待家用端 |
 | OP | 作業站主檔及簡化 DEV 子功能 | [作業站主檔規格](modules/OP/作業站主檔.md)；18 張作業站相關表來源 DDL/CREATE SQL 已交付 | 待補子功能 API |
-| MTL | 物料主檔及簡化 DEV 子功能；ML101「物料供應商基本資料」、ML102「物料類別資料」DEV 頁 | [物料主檔規格](modules/MTL/物料主檔.md)、[物料資料匯入](modules/MTL/物料資料匯入.md)、[物料供應商基本資料](modules/MTL/物料供應商基本資料.md)、[物料類別資料](modules/MTL/物料類別資料.md)；ML101 兩表 DDL/CREATE 已交付，ML102 沿用物料 0013 已建的四表 | MTL basis API 部分完成；ML101、ML102 Production API 待家用端，其他功能仍待逐項復刻 |
+| MTL | 物料主檔及簡化 DEV 子功能；ML101「物料供應商基本資料」、ML102「物料類別資料」、ML105「物料類別品管項目設定」DEV 頁 | [物料主檔規格](modules/MTL/物料主檔.md)、[物料資料匯入](modules/MTL/物料資料匯入.md)、[物料供應商基本資料](modules/MTL/物料供應商基本資料.md)、[物料類別資料](modules/MTL/物料類別資料.md)、[物料類別品管項目設定](modules/MTL/物料類別品管項目設定.md)；ML101 兩表 DDL/CREATE 已交付，ML102/ML105 沿用物料 0013 已建資料表 | MTL basis API 部分完成；ML101、ML102、ML105 Production API 待家用端，其他功能仍待逐項復刻 |
 | PRS | 流程主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
 | PRD | 產品主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
 

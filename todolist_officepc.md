@@ -31,6 +31,13 @@
 - [x] 重新確認 origin/main 與公司端基線相同；已把 Copy 的單交易 API 契約與 GumHour POST/PUT 區分補進家用端待辦。
 - [ ] 未執行 build、test 或瀏覽器驗收；Production API/schema 待家用端完成後再對接與驗收。
 
+### 2026-11-17 MTL ML105 物料類別品管項目設定
+
+- [x] 對照 `frmMaterialTypeQCItem`、`wsMTL`、`wsQC`、`clsMTLBasis`；確認前綴查詢、三種 QC 候選清單、雙向多選、類別範本儲存及同步至所有關聯物料/IQC 項目。
+- [x] 確認 `TBLMTLTYPEQCITEM`、`TBLMTLQCITEM` 的 Oracle DDL/PG CREATE 已在 MTL reference 和 0013 migration；無新增 CREATE SQL。
+- [x] 新增 ML105 Vue DEV 頁與三層 MTL 路由，並建立 Production API/transaction handoff 規格。
+- [ ] 未執行 build、test 或瀏覽器驗收；等待家用端完成 API 後再接 Production endpoint。
+
 - Oracle MESTEST 直接查詢已可用，資料字典可見 1,287 張表。查詢方式及憑證規則見 `docs/DATABASE_CONNECTION.md`。
 - 2026-11-16 已用 PowerShell 5.1 + Oracle.ManagedDataAccess 查得 `TBLUSRUSERGROUP` 原始 DDL、6 欄 NULL/default、PK 與索引資訊；來源 DDL、空表 PostgreSQL CREATE SQL、設備工程群組規格及家用端待辦均已更新。
 - 2026-11-16 已查得 `TBLSMDAREARELATION`、`TBLSMDSMTAREAEQPMAP` 原始 DDL、欄位/PK/索引/FK；SMD 空表 CREATE SQL 與設備群組規格已補齊。

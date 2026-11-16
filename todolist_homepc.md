@@ -23,6 +23,13 @@
 - [ ] 新增 `POST /api/material-types/{sourceMaterialType}/copy`，以單一交易複製類別資料及來源的類別級 GumHour（若存在），重設 IssueState/audit/DataStamp；不複製 Property/QC 明細。GumHour 端點須支援 GET/POST/PUT，新增時 INSERT、更新時 CAS。
 - [ ] 完成並部署後更新規格、migration/API 狀態與本待辦，push 後通知公司端 pull。公司端 `/YMES/MTL/MaterialTypes` DEV 頁已建立。
 
+### MTL ML105 物料類別品管項目設定（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料類別品管項目設定.md`，核對 `TBLMTLTYPEQCITEM`、`TBLMTLQCITEM` 已在 MTL 0013/schema；Oracle DDL/PG CREATE 已在 `mestest_mtl_master_*` reference，沒有新表需建立。
+- [ ] 實作 `GET /api/material-types?materialType=`（不帶 IssueState 時回傳全部狀態，MaterialType 前綴搜尋）及 `GET /api/material-types/{materialType}/qc-items`，回傳三種 QC 候選目錄與已指派項目；候選需沿用 QC Attributes、Variables、Group 舊目錄服務。
+- [ ] 實作 `PUT /api/material-types/{materialType}/qc-items`，以單次 transaction 取代 Type QC 範本、同步該類別所有物料的 `TBLMTLQCITEM`，依舊程式補齊 `TBLOPQCITEM` 的 `OPNo='IQC'` 項目及異動紀錄；驗證項目存在/唯一性/型別及 MTL ML105 權限。
+- [ ] 完成 API 後更新規格與家用待辦、push 並通知公司端接 Production endpoint；公司端 `/YMES/MTL/MaterialTypeQCItems` DEV 頁已建立。
+
 公司端已整理一批可直接接手的來源結構與目錄資料。開始前先 pull 這份清單所在的最新 `main`，並閱讀 `todolist_officepc.md`、`docs/DATABASE_CONNECTION.md`、`docs/MES_MENU_FUNCTION_INVENTORY.md`、OP/MTL 規格及下列 SQL。家用端只負責 DB/API/migration；公司端後續接回 Vue/WinForms 畫面。
 
 1. **系統目錄 migration 0012 已完成**：以 SSH 比對來源 schema，部署可回滾/可重跑 migration，載入 20 Module、601 MES MenuItem、553 Function 並保留 5 筆 YMES 自訂列。模組繁中名稱已核實、API/Web 已部署，瀏覽器已確認三層選單；逐筆自動比較來源與 API 回傳仍待補。
