@@ -210,3 +210,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，讀取本機受保護連線，唯讀呼叫 DBMS_METADATA.GET_DDL 查 MESTEST.TBLMTLMATERIALVENDOR、TBLMTLMATERIALVENDORCONTACTOR。
 - 再查 ALL_INDEXES 與 ALL_CONSTRAINTS：主檔 PK VendorNo；連絡人 PK (VendorNo, ContactorName)；兩表都只有 PK unique index，沒有 FK 或額外索引。
 - Oracle 邏輯 DDL與 PostgreSQL 空表 CREATE SQL：database/reference/mestest_mtl_material_vendor_source_ddl.sql、database/reference/mestest_mtl_material_vendor_create.sql。僅查結構，未讀業務資料、未在 Oracle 執行 DDL，連線值未輸出或提交。
+### 更新 2026-11-17：MTL ML106 物料品管項目設定
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機既有受保護設定唯讀查詢 MESTEST.TBLQCITEMFORATTRIBUTES、TBLQCITEMFORVARIABLES、TBLQCITEMGROUPBASIS、TBLQCITEMBINDLOG 的 DBMS_METADATA DDL、欄位、PK 與 index；未查詢業務資料，未在 Oracle 執行 DDL。
+- 原始 Oracle DDL 與 PostgreSQL 空表 CREATE SQL 分別為 database/reference/mestest_mtl_qc_item_tables_source_ddl.sql、database/reference/mestest_mtl_qc_item_tables_create.sql。TBLMTLQCITEM 與 TBLOPQCITEM 沿用既有 MTL/OP reference。
+- 來源連線仍由本機受保護設定提供；IP、帳號、密碼不寫入 repo、終端或規格文件。家用端先核對 YMES schema/migrations，只新增缺漏結構。

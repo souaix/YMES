@@ -687,3 +687,26 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 - first-phase CREATE SQL 已修正 CreateDate DEFAULT LOCALTIMESTAMP NOT NULL、DataStamp DEFAULT 0；家用端實際 schema 仍須用 migration 比對與修正，不要重跑 bootstrap。
 
 家用端完成後更新本檔與兩份模組規格，部署 API/schema，再通知公司端 pull 進行 Production 對接。
+
+
+## MTL ML106 物料品管項目設定（公司端 2026-11-17 交接）
+
+先讀 docs/modules/MTL/物料品管項目設定.md、todolist_officepc.md 的 ML106 區塊與既有 ML105 規格。公司端頁面 /YMES/MTL/MaterialQCItems 已完成 Vue DEV UI；WinForms Form/Designer、wsMTL、clsMTLBasis、clsQCBasis 已對照。Production API 尚未完成。
+
+### Schema / DDL
+
+- Oracle DDL 由公司端 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 透過既有受保護連線唯讀查詢 MESTEST，DDL 檔：database/reference/mestest_mtl_qc_item_tables_source_ddl.sql。連線秘密仍存既有保護設定，不複製到 repo；不要再問使用者 IP/帳密，也不要在 Oracle 執行 CREATE。
+- PostgreSQL 空表參考檔：database/reference/mestest_mtl_qc_item_tables_create.sql，含 tblqcitemforattributes、tblqcitemforvariables、tblqcitemgroupbasis、tblqcitembindlog。先查 YMES PostgreSQL 實際 schema/table/columns/indexes 和 migration；若符合就沿用，缺表才加 migration，缺欄位/約束才 forward migration。不要盲目套用 IF NOT EXISTS。
+- TBLMTLQCITEM 在 mestest_mtl_master_create.sql；TBLOPQCITEM 在 mestest_operation_and_system_create.sql。這兩張先比對現有 schema，不要重建。
+- 四張新查 DDL 表各只有 Oracle DDL 列出的 PK，沒有 FK 或其他 index。Oracle DATE 用 timestamp without time zone，NUMBER 精度及 nullable/default 按 source DDL 保留。
+- 授予 ymes_app 本功能必要 SELECT/INSERT/UPDATE/DELETE 權限；避免為查目錄或寫 log 開放多餘權限。migration 前照既有家用端流程備份並留下部署紀錄。
+
+### API / Service
+
+1. 擴充物料清單 GET /api/materials 支援選填 materialType 精確條件及 materialNoPrefix 前綴條件。ML106 的查詢不限制 IssueState；materialType/materialNoPrefix 皆空時 API 需回傳完整清單以供 WinForms 等價 MaterialNo 查找視窗使用，Vue 主畫面 Query 按鈕自行要求至少一個條件。保留既有 keyword、issueState 呼叫行為。
+2. 新增 GET /api/materials/{no}/qc-item-library，回傳 { available, assigned }：available 以 IssueState=2 分別讀三個 QC catalog，輸出 qcItemNo/qcItemName/qcItemType（0 Attributes、1 Variables、2 Group）；assigned 讀 tblmtlqcitem 並依型別左 Join 正確 catalog 取得名稱，保留無法 Join 的舊綁定供移除，輸出 reviser/reviseDate。
+3. 保持既有 GET /api/materials/{no}/qc-items 的 type-template 行為，因 MaterialFeatureDialog.vue 依賴它；不可把其 available 換成 catalog 全表。前端新增的 library GET 路徑已獨立。
+4. 既有 PUT /api/materials/{no}/qc-items 接受 {items:[{qcItemNo,qcItemType}]} 並寫同一張 tblmtlqcitem。新增來源目錄驗證、完整交易及舊 WinForms 副作用：替換物料現有綁定；對各新 QC Item 用 INSERT ... SELECT/等價原子方式確保 tblopqcitem 的 opno='IQC'、inline=0、executeorder=0 存在且不重複；寫 tblqcitembindlog，BindType=2，刪除事件 ExecuteStatus=2、新增事件 ExecuteStatus=0，記錄 MTLNo、QCItemType/No、ExecuteDate、Executor。QCItemLogSerial 由伺服器產生唯一值，不建 Oracle sequence。
+5. Audit 由登入者與伺服器時間設定；同一 transaction 更新 assignment、IQC 關聯與 bind log。先核對目前 API 的 IssueState=0 寫入限制是否符合舊 WinForms；若為既有 MaterialFeatureDialog 必需，保持既有契約且明確處理兩種 UI 的合法狀態，不可意外禁止舊資料修正。
+6. TBLQCITEMBINDLOG 在 YMES 若缺少才使用 reference SQL 建表；如現有 schema 有擴充，保留它並用 forward migration 對齊必要欄位。其複合 PK 順序為 (QCITEMNO, BINDTYPE, QCITEMLOGSERIAL)，不能自行改成其他順序。
+7. 完成 migration/API/權限後部署，更新 API 文件、migration index、本待辦；通知公司端 pull。公司端會對照 ML106 頁面核對 response、錯誤、全狀態搜尋與儲存副作用。

@@ -396,3 +396,14 @@
 - [x] 完成 SMD SD108/SD109 規格、功能索引、DB 查詢紀錄與家用端 API/schema handoff。補明 nullable DataStamp 用 `dataStampIsNull=true` 做精確 NULL CAS，並修正 SD109 刪除請求漏傳版本值。
 - [ ] 尚未執行 build、測試或瀏覽器驗收；Production API/schema 需家用端按 todolist_homepc.md 完成。
 - [ ] 下一步依 MES_MENU_FUNCTION_INVENTORY 的 ModuleOrder/FunctionOrder 繼續找下一個尚未完整復刻的 Function（接續 MTL），先核對 WinForms Form/Designer/Service/Core，再查 Oracle DDL。
+
+
+## 2026-11-17 MTL ML106 物料品管項目設定公司端交接
+
+- [x] Pull GitHub main，確認遠端包含 ML102、ML105 最新公司端提交；之後開始 ML106。
+- [x] 依 frmMaterialQCItemSet.vb/Designer、wsMTL.LoadMTLQCItem/UpdMTLQCItem、clsMTLBasis、clsQCBasis 核對 Form/Service/Core：前綴查詢與全 IssueState、三種啟用 QC catalog、雙清單多選/雙擊、按 Confirm 才保存、IQC 虛擬站及 QC bind log 副作用。
+- [x] 以 Windows PowerShell 5.1 + ODP.NET 既有保護連線，直接唯讀查 MESTEST 三個 QC catalog 與 TBLQCITEMBINDLOG DDL；新增 source DDL 與 PostgreSQL 空表 CREATE SQL。現有 TBLMTLQCITEM、TBLOPQCITEM 沿用已交付 reference SQL。
+- [x] 新增 Vue DEV 頁 /YMES/MTL/MaterialQCItems，FunctionNo=MTL QCITEM；保持舊 GET /qc-items 類別範本契約，ML106 改走獨立 GET /qc-item-library；避免載入失敗以空集合覆寫。
+- [x] 新增 ML106 規格、索引列、家用端 schema/API handoff。
+- [ ] 沒有執行 build、test 或瀏覽器驗收。Production API/schema 尚待家用端，完成後公司端 pull 並逐項對接。
+- [ ] 下一步按 MES_MENU_FUNCTION_INVENTORY.md MTL FunctionOrder 繼續下一個未完整遷移功能；不得把簡化 DEV 佔位頁算成完成。

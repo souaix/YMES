@@ -38,6 +38,7 @@ import MasterDataMaster from './components/MasterDataMaster.vue'
 import MaterialVendorMaster from './components/MaterialVendorMaster.vue'
 import MaterialTypeMaster from './components/MaterialTypeMaster.vue'
 import MaterialTypeQCItemMaster from './components/MaterialTypeQCItemMaster.vue'
+import MaterialQCItemMaster from './components/MaterialQCItemMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -78,6 +79,7 @@ const areaShowRoute = appBasePath + '/SMD/AreaShow'
 const materialVendorRoute = appBasePath + '/MTL/MaterialVendors'
 const materialTypeRoute = appBasePath + '/MTL/MaterialTypes'
 const materialTypeQCItemRoute = appBasePath + '/MTL/MaterialTypeQCItems'
+const materialQCItemRoute = appBasePath + '/MTL/MaterialQCItems'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -209,6 +211,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:MTL:MTL VENDOR', label: '物料供應商基本資料', shortLabel: '供', functionNo: 'MTL VENDOR', moduleNo: 'MTL' },
       { id: 'function:MTL:MTL TYPE', label: '物料類別資料', shortLabel: '類', functionNo: 'MTL TYPE', moduleNo: 'MTL' },
       { id: 'function:MTL:MTL TYPE QCITEM', label: '物料類別品管項目設定', shortLabel: '品', functionNo: 'MTL TYPE QCITEM', moduleNo: 'MTL' },
+      { id: 'function:MTL:MTL QCITEM', label: '物料品管項目設定', shortLabel: '品', functionNo: 'MTL QCITEM', moduleNo: 'MTL' },
     ] }],
   },
   {
@@ -243,6 +246,7 @@ const menuRoutes: Record<string, string> = {
   'function:MTL:MTL VENDOR': materialVendorRoute,
   'function:MTL:MTL TYPE': materialTypeRoute,
   'function:MTL:MTL TYPE QCITEM': materialTypeQCItemRoute,
+  'function:MTL:MTL QCITEM': materialQCItemRoute,
   'equipment-master': equipmentRoute,
   'equipment-vendor-master': equipmentVendorRoute,
   'equipment-engineer-group': equipmentEngineerGroupRoute,
@@ -315,6 +319,7 @@ const functionRoutes: Record<string, string> = {
   'MTL VENDOR': materialVendorRoute,
   'MTL TYPE': materialTypeRoute,
   'MTL TYPE QCITEM': materialTypeQCItemRoute,
+  'MTL QCITEM': materialQCItemRoute,
   'PRS BASIS': `${appBasePath}/MasterData/Processes`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
 }
@@ -361,6 +366,7 @@ const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-mast
 const isMaterialVendorPage = computed(() => activeMasterKey.value === 'function:MTL:MTL VENDOR')
 const isMaterialTypePage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE')
 const isMaterialTypeQCItemPage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE QCITEM')
+const isMaterialQCItemPage = computed(() => activeMasterKey.value === 'function:MTL:MTL QCITEM')
 const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER BASIS')
 const isCustomerContactorPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER CONTACTOR')
 const isCustomerShipAddressPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER SHIP ADDRESS')
@@ -1233,6 +1239,14 @@ async function signOut(): Promise<void> {
         />
         <MaterialTypeQCItemMaster
           v-else-if="isMaterialTypeQCItemPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <MaterialQCItemMaster
+          v-else-if="isMaterialQCItemPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
