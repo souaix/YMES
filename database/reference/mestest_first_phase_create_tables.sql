@@ -302,7 +302,7 @@ CREATE TABLE IF NOT EXISTS tblentcustomerbasis (
     creator varchar(10),
     createdate timestamp without time zone,
     description varchar(255),
-    issuestate numeric(1,0),
+    issuestate numeric(1,0) DEFAULT 0,
     address2 varchar(255),
     country varchar(50),
     status varchar(5),
@@ -384,28 +384,28 @@ CREATE TABLE IF NOT EXISTS tblentbrokerbasis (
     email varchar(255),
     address varchar(500),
     bankno varchar(20),
-    issuestate numeric(1,0),
+    issuestate numeric(1,0) DEFAULT 0,
     creator varchar(10),
-    createdate timestamp without time zone,
-    datastamp numeric(11,0),
+    createdate timestamp without time zone DEFAULT LOCALTIMESTAMP,
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
     CONSTRAINT pk_tblentbrokerbasis PRIMARY KEY (brokerno)
 );
 COMMENT ON TABLE tblentbrokerbasis IS 'MES master data; Oracle source: MESTEST.TBLENTBROKERBASIS';
-COMMENT ON COLUMN tblentbrokerbasis.brokerno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.contactorname IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.telno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.faxno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.email IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.address IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.bankno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblentbrokerbasis.revisedate IS '修改時間（推測，請依業務確認）';
+COMMENT ON COLUMN tblentbrokerbasis.brokerno IS 'Broker No';
+COMMENT ON COLUMN tblentbrokerbasis.contactorname IS 'Contact person';
+COMMENT ON COLUMN tblentbrokerbasis.telno IS 'Telephone';
+COMMENT ON COLUMN tblentbrokerbasis.faxno IS 'Fax';
+COMMENT ON COLUMN tblentbrokerbasis.email IS 'Email';
+COMMENT ON COLUMN tblentbrokerbasis.address IS 'Address';
+COMMENT ON COLUMN tblentbrokerbasis.bankno IS 'Bank No';
+COMMENT ON COLUMN tblentbrokerbasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';
+COMMENT ON COLUMN tblentbrokerbasis.creator IS 'Creator';
+COMMENT ON COLUMN tblentbrokerbasis.createdate IS 'Creation time';
+COMMENT ON COLUMN tblentbrokerbasis.datastamp IS 'Optimistic concurrency stamp';
+COMMENT ON COLUMN tblentbrokerbasis.reviser IS 'Reviser';
+COMMENT ON COLUMN tblentbrokerbasis.revisedate IS 'Revision time';
 
 CREATE TABLE IF NOT EXISTS tblentforwarderbasis (
     forwarderno varchar(50) NOT NULL,

@@ -132,3 +132,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - PostgreSQL 空表 CREATE SQL 已追加到 `database/reference/mestest_customer_basis_create.sql`，不加來源未定義的 PK/索引/FK。沒有讀業務列、沒有在來源 Oracle 執行 CREATE。
 - DDL 查詢程式仍用 `%TEMP%\ymes-ep302-readonly-ddl.ps1` 中的本機受保護連線資料；本次只替換 helper 的表名為 `TBLENTCUSTOMERSHIPDECLARATION`。憑證未輸出或寫入文件/Git。
 - 詳細的雙 Grid、表單限制、無主鍵自然鍵/API 規格見 `docs/modules/ENT/客戶出貨地址資料.md`。
+
+### 更新 2026-11-16：ENT ET103 報關行基本資料
+
+- 使用 Windows PowerShell 5.1 啟動 Oracle.ManagedDataAccess，從先前提供的受保護連線設定直接唯讀查詢 `MESTEST.TBLENTBROKERBASIS` DBMS_METADATA DDL 及 ALL_TAB_COLUMNS/ALL_CONSTRAINTS/ALL_INDEXES/ALL_IND_COLUMNS；沒有讀業務資料或在 Oracle 執行 DDL。
+- 查得 BrokerNo 單欄 PK/唯一索引；無 FK/其他索引。Oracle DDL 的 IssueState、CreateDate、DataStamp DEFAULT 與 NULL 性質已逐欄記入 ET103 規格及來源 DDL。既有第一階段 PostgreSQL reference 的該表預設值也已修正。
+- PostgreSQL 空表 CREATE SQL 位於 `database/reference/mestest_customer_basis_create.sql`。連線憑證只使用本機受保護設定，未輸出、未寫入文件或 Git。
+- WinForms 查詢、狀態、刪除/停用與 IssueNo=`BROKER BASIS` 簽核邏輯見 `docs/modules/ENT/報關行基本資料.md`。

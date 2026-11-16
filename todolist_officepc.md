@@ -241,4 +241,15 @@
 - [x] 新增 Vue DEV 雙 Grid 頁 `web/src/components/CustomerShipAddressMaster.vue`、路徑 `/YMES/Customer/ShipAddresses`、FunctionNo `CUSTOMER SHIP ADDRESS`；含已核准客戶選擇、地址/報關 CRUD、報關預設值、Taker/Forwarder/Broker DEV 選擇器、稽核欄位與 KD 黃色表單。
 - [x] 建立 `docs/modules/ENT/客戶出貨地址資料.md`，更新規格索引、DB 連線記錄及家用端 migration/API 待辦。
 - [ ] 未執行 build、測試或瀏覽器驗收；Production API 尚待家用端完成。
-- [ ] 下一功能從 `docs/MES_MENU_FUNCTION_INVENTORY.md` 按客戶設定選單繼續，先核對報關行基本資料及其 WinForms/DDL/API 依賴，再往後處理貨運行、取貨公司等功能。
+- [x] 下一功能已依選單開始 ET103 報關行基本資料；最新狀態見下方 ET103 區塊。
+
+## ENT ET103 報關行基本資料公司端進度（2026-11-16）
+
+- [x] 開始 ET103 前已完成 ET106 並推送 `49fbd9c`；其後讀取 `frmBrokerBasis`、`frmBrokerBasisDef`、`wsENT`、`kcBasis_Query`、`kcBasis_UPD`、`kcENT.clsCustomerBasis`。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從先前提供的受保護連線直接唯讀查詢 `MESTEST.TBLENTBROKERBASIS` DDL、欄位 NULL/default、PK、索引/FK；未查業務資料、未執行 Oracle DDL，憑證未輸出/存檔。
+- [x] 查得 13 欄、BrokerNo 單欄 PK/唯一索引，無 FK/其他索引。補 Oracle source DDL 與 `ymes.tblentbrokerbasis` PostgreSQL CREATE SQL，並校正 first-phase reference 中此表遺漏的三個 DEFAULT。
+- [x] 新增 `web/src/components/BrokerBasisMaster.vue`、`/YMES/Customer/Brokers` 路徑與 `BROKER BASIS` 對應；DEV 假資料支援狀態篩選、搜尋、CRUD、停用/刪除、Apply/Confirm、稽核及直接核准預覽。
+- [x] 新增 `docs/modules/ENT/報關行基本資料.md`，記錄 WinForms 版面、欄位限制、狀態刪除規則、`BROKER BASIS` 簽核流程及 YMES API 契約；更新規格索引、DB 連線記錄及家用端待辦。
+- [ ] 家用端比對 YMES schema/migrations，依 DDL 只新增缺少的表；實作 Production CRUD、DataStamp、IssueState 軟刪除/硬刪除與既有簽核服務 API。
+- [ ] 本次未執行 build、測試或瀏覽器驗收；Production API 尚待家用端完成。
+- [ ] 下一個功能依 ENT FunctionOrder 接續 ET104「貨運行基本資料」，繼續直接讀 WinForms Form/Designer/Service；缺 DDL 時用 Windows PowerShell 5.1 直連 Oracle 查詢。

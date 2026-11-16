@@ -110,9 +110,29 @@ CREATE TABLE IF NOT EXISTS ymes.tblentcustomershipdeclaration (
     revisedate timestamp without time zone
 );
 
+-- Oracle source: MESTEST.TBLENTBROKERBASIS (ET103).
+CREATE TABLE IF NOT EXISTS ymes.tblentbrokerbasis (
+    brokerno varchar(50) CONSTRAINT n_tblentbrokerbasis_01 NOT NULL,
+    contactorname varchar(50),
+    telno varchar(25),
+    faxno varchar(25),
+    email varchar(255),
+    address varchar(500),
+    bankno varchar(20),
+    issuestate numeric(1,0) DEFAULT 0,
+    creator varchar(10),
+    createdate timestamp without time zone DEFAULT LOCALTIMESTAMP,
+    datastamp numeric(11,0) DEFAULT 0,
+    reviser varchar(10),
+    revisedate timestamp without time zone,
+    CONSTRAINT pk_tblentbrokerbasis PRIMARY KEY (brokerno)
+);
+
 COMMENT ON TABLE ymes.tblentcustomerbasis IS 'MES Oracle source: MESTEST.TBLENTCUSTOMERBASIS';
 COMMENT ON COLUMN ymes.tblentcustomerbasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';
 COMMENT ON COLUMN ymes.tblentcustomerbasis.datastamp IS 'Optimistic concurrency stamp';
 COMMENT ON TABLE ymes.tblentcustomercontactor IS 'MES Oracle source: MESTEST.TBLENTCUSTOMERCONTACTOR';
 COMMENT ON TABLE ymes.tblentcustomershipaddr IS 'MES Oracle source: MESTEST.TBLENTCUSTOMERSHIPADDR';
 COMMENT ON TABLE ymes.tblentcustomershipdeclaration IS 'MES Oracle source: MESTEST.TBLENTCUSTOMERSHIPDECLARATION; source has no PK/index';
+COMMENT ON TABLE ymes.tblentbrokerbasis IS 'MES Oracle source: MESTEST.TBLENTBROKERBASIS';
+COMMENT ON COLUMN ymes.tblentbrokerbasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';

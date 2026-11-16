@@ -437,3 +437,22 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 4. 出貨地址刪除/修改在舊 `clsCustomerBasis` 未同步 cascade/update `TBLENTCUSTOMERSHIPDECLARATION`；兩表無 FK，故會有舊 ShipTo 孤兒值。先維持來源可觀察行為並在規格留下記錄，migration 不加 FK/cascade。
 5. 表單的 Taker/Forwarder/Broker Lookup 分別依 WinForms `wsENT.LoadTakerBasis`、`LoadForwarderBasis`、`LoadBrokerBasis`，都只顯示 IssueState=2。提供 `GET /api/ent/takers`、`/forwarders`、`/brokers` 或將 Vue 接到各自正式 ENT 主檔 API；不要把 DEV picker 假資料回傳 Production。
 6. API 驗證與日期/稽核欄位依規格實作，授予 `ymes_app` 最小 SELECT/INSERT/UPDATE/DELETE 權限，部署並通知公司端 pull 對接 Production。WinForms/Core 目前的 Edit 方法宣告不含 wsENT 傳入的 DataStamp/Reviser/ReviseDate 命名參數，依 Modern API 明確實作，不照搬來源版本差異。
+
+## ENT ET103 報關行基本資料（公司端 2026-11-16 已交接）
+
+先讀 `docs/modules/ENT/報關行基本資料.md`、`todolist_officepc.md` ET103 區塊，以及 `database/reference/mestest_customer_basis_source_ddl.sql`、`database/reference/mestest_customer_basis_create.sql`。公司端已核對 WinForms、直連取得 Oracle DDL，並完成 Development Vue 頁 `/YMES/Customer/Brokers`。ET103 與 ET101/102/106 共用 ENT 範圍；若 controller/repository 尚未建立，請合併在同一 ENT API 結構中。
+
+### Schema / migration
+
+- Oracle `MESTEST.TBLENTBROKERBASIS` 已直接查得；Oracle source logical DDL 在 `database/reference/mestest_customer_basis_source_ddl.sql`，PostgreSQL 空表 CREATE SQL 在 `database/reference/mestest_customer_basis_create.sql`。
+- 欄位：`BROKERNO varchar(50) NOT NULL PK`、`CONTACTORNAME varchar(50)`、`TELNO varchar(25)`、`FAXNO varchar(25)`、`EMAIL varchar(255)`、`ADDRESS varchar(500)`、`BANKNO varchar(20)`、`ISSUESTATE numeric(1,0) DEFAULT 0` nullable、`CREATOR varchar(10)`、`CREATEDATE timestamp DEFAULT LOCALTIMESTAMP` nullable、`DATASTAMP numeric(11,0) DEFAULT 0` nullable、`REVISER varchar(10)`、`REVISEDATE timestamp`。
+- 唯一索引是 PK `BROKERNO`；無 FK/其他索引。`mestest_first_phase_create_tables.sql` 已校正這張表原先漏掉的 DEFAULT。先比對現存 YMES table/migrations，只補 schema 缺項，不覆蓋或刪除現有擴充。
+
+### API /簽核待辦
+
+1. 建立/延伸 ENT controller：`GET /api/ent/broker-basis?brokerNo=` 回傳欄位對應前端 `Broker` DTO 的清單。Vue 依 IssueState 在前端篩選；回傳資料須包含 IssueState/DataStamp，清單隱藏它們但操作會用到。WinForms 舊查詢沒有 ORDER BY；API 可以 BrokerNo 穩定排序，作為明確顯示約定。
+2. 新增 `POST /api/ent/broker-basis`，BrokerNo 必填且大寫正規化；IssueState=0，Creator/CreateDate/DataStamp 由 server 設定。欄位長度照 Oracle DDL；其餘聯絡資料可空白，空值採明確 NULL 語意。
+3. 新增 `PUT /api/ent/broker-basis/{brokerNo}?dataStamp=`，只可修改 ContactorName/TelNo/FaxNo/Email/Address/BankNo，伺服器必須確認 IssueState=0；更新 Reviser/ReviseDate 並遞增 DataStamp。失敗時區分 404 與 409。
+4. 新增 `DELETE /api/ent/broker-basis/{brokerNo}?issueState=&dataStamp=`：只接受目前狀態 0、-1、2，需同時驗證資料庫實際狀態。0/-1 在交易中實體刪除；2 改為 -1，並更新 Reviser/ReviseDate/DataStamp；狀態 1 回 409。舊 WinForms 對 0/-1 實體刪除雖傳 DataStamp，但舊 WebMethod 沒有把 stamp 傳入 DELETE SQL；新 API 請仍做 compare-and-swap 避免過期刪除。來源 DataStamp 可為 NULL，要能以 `IS NULL` 比對，更新成 `COALESCE(datastamp,0)+1`。
+5. 新增 `POST /api/ent/broker-basis/{brokerNo}/approve?dataStamp=`，只接受狀態 0，需使用 YMES 現有 Issue/Job 簽核服務及 IssueNo `BROKER BASIS`。沒有 JobMap/Detail 時按舊規則直接轉 2；有 Detail 時建立 Issue Master、狀態轉 1、簽核通過到 2、退回到 0，寄送第一簽核群組通知。主檔狀態、簽核單、稽核與通知需使用既有交易/簽核服務，不可將 DEV 直接核准複製到 Production。
+6. 所有端點檢查登入者 ENT 權限；設定 `ymes_app` 最小 CRUD 權限。更新 migration/API 文件後部署並通知公司端 pull。公司端 Production Vue 不使用假資料。
