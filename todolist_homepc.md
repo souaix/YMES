@@ -710,3 +710,10 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 5. Audit 由登入者與伺服器時間設定；同一 transaction 更新 assignment、IQC 關聯與 bind log。先核對目前 API 的 IssueState=0 寫入限制是否符合舊 WinForms；若為既有 MaterialFeatureDialog 必需，保持既有契約且明確處理兩種 UI 的合法狀態，不可意外禁止舊資料修正。
 6. TBLQCITEMBINDLOG 在 YMES 若缺少才使用 reference SQL 建表；如現有 schema 有擴充，保留它並用 forward migration 對齊必要欄位。其複合 PK 順序為 (QCITEMNO, BINDTYPE, QCITEMLOGSERIAL)，不能自行改成其他順序。
 7. 完成 migration/API/權限後部署，更新 API 文件、migration index、本待辦；通知公司端 pull。公司端會對照 ML106 頁面核對 response、錯誤、全狀態搜尋與儲存副作用。
+
+## 2026-11-17 ML103 物料基本資料 API 選項交接
+
+- ML103 主資料、屬性、QC、供應商、GumHour 等 Oracle DDL/PG CREATE 已在 database/reference/mestest_mtl_master_* 建立並由 0013 migration 比對/部署；本次公司端沒有發現新表，不新增 SQL 或 migration。
+- 公司端 ML103 多選核准/刪除會對每筆資料依序呼叫既有 POST /api/materials/{no}/approve 與 DELETE /api/materials/{no}?issueState=...&dataStamp=...；不需要額外批次 API。請確認現有單筆 API 的簽核檢查、引用檢查、DataStamp、稽核與狀態轉換和 WinForms 相同。已檢視 PostgresMasterDataRepository.ApproveMaterial：目前有 Controlled=1、DataStamp、IssueState 檢查，但缺少 WinForms 的條件式 GumHour 設定檢查；需在服務端補上。
+- GET /api/materials/lookups/options 現況由 MaterialFeaturesController.Options() 回傳 countWay=[]、checkLotNo=[]，且沒有 MATERIALMULTITIMECTRL / GumMaterialType。請從公司端 WinForms ValueListProvider.GetValueList("TBLMTLMATERIALBASIS", ...) 與 wsSYS.LoadParameter 核實真實值，不要以 DEV 樣本猜測；將 CountWay、CheckLotNo 顯示選項與 GumHour 參數設定加入 DTO/API response。若參數已有 YMES 系統設定來源，沿用既有結構，不新建設定表。
+- 完成後更新 MaterialOptionsDto、API 文件與本待辦。公司端 UI 已能讀取選項；多次回溫參數未提供時 Production 會隱藏 GumHour，避免對非適用物料開啟設定。

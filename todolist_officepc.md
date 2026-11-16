@@ -407,3 +407,14 @@
 - [x] 新增 ML106 規格、索引列、家用端 schema/API handoff。
 - [ ] 沒有執行 build、test 或瀏覽器驗收。Production API/schema 尚待家用端，完成後公司端 pull 並逐項對接。
 - [ ] 下一步按 MES_MENU_FUNCTION_INVENTORY.md MTL FunctionOrder 繼續下一個未完整遷移功能；不得把簡化 DEV 佔位頁算成完成。
+
+
+## 2026-11-17 MTL ML103 物料基本資料公司端進度
+
+- [x] Pull GitHub main，確認目前最新為 0e50278。
+- [x] 依 frmMaterialBasis / frmMaterialBasisDef、WinForms Designer、wsMTL、clsMTLBasis 核對狀態篩選、MaterialNo 查詢、ValueList 欄位、供應商子 Grid、Add/Edit/Copy、多選 Delete/Approve、Property/QC/Import/GumHour 功能。
+- [x] Vue 主 Grid 加入多選核取方塊；核准與刪除逐筆呼叫現有單筆 API，DEV 假資料執行相同狀態轉換及關聯假資料清理。已簽核 Delete 設為不使用，未簽核/不使用 Delete 實體移除。
+- [x] Vue 已接上 options API 的 CountWay/CheckLotNo 選項與 GumHour 顯示參數契約；Production API 目前回傳空 CountWay/CheckLotNo，且尚未回傳 MATERIALMULTITIMECTRL/GumMaterialType。另發現現有 Approve API 尚未執行條件式 GumHour 檢查，詳見 todolist_homepc.md。
+- [x] 更新 docs/modules/MTL/物料主檔.md 與規格索引；沿用已查 8 張物料表 Oracle DDL/PG CREATE，ML103 無新增資料表。
+- [ ] 未執行 build、test 或瀏覽器驗收。Production options API 待家用端補齊來源 ValueList/參數後 pull 回公司端再對照。
+- [ ] 下一項按 MTL FunctionOrder 繼續 ML104「物料群組資料」；先追 WinForms Form/Designer/Service/Core，只有新發現資料表才用 PowerShell 5.1 + ODP.NET 查 Oracle DDL。

@@ -48,6 +48,7 @@ const searchField = computed(() => ({
 const pageTitle = computed(() => config.value.title)
 const rows = ref<Row[]>([])
 const selected = ref<Row | null>(null)
+const selectedMaterialKeys = ref(new Set<string>())
 const issueState = ref(0)
 const keyword = ref('')
 const busy = ref(false)
@@ -76,8 +77,39 @@ const availableProcessNos = computed(() => [...new Set(availableProcesses.value.
 const availableProcessVersions = computed(() => availableProcesses.value.filter((item) => String(item.processNo) === String(processDraft.value.processNo)).map((item) => String(item.processVersion ?? '')).filter(Boolean))
 const isEditable = computed(() => selected.value?.issueState === 0)
 const selectedRouteKey = (row: Row) => config.value.keyFields.map((key) => String(row[key] ?? '')).join('/')
+function materialActionRows(): Row[] {
+  const checked = rows.value.filter((row) => selectedMaterialKeys.value.has(selectedRouteKey(row)))
+  return checked.length ? checked : selected.value ? [selected.value] : []
+}
+function sortMaterialRows(items: Row[]): Row[] {
+  return [...items].sort((left, right) =>
+    String(left.materialType ?? '').localeCompare(String(right.materialType ?? ''), undefined, { sensitivity: 'base' })
+    || String(left.materialNo ?? '').localeCompare(String(right.materialNo ?? ''), undefined, { sensitivity: 'base' }))
+}
+function changeMaterialSelection(row: Row, event: Event): void {
+  selectMasterRow(row)
+  const next = new Set(selectedMaterialKeys.value)
+  const key = selectedRouteKey(row)
+  if ((event.target as HTMLInputElement).checked) next.add(key)
+  else next.delete(key)
+  selectedMaterialKeys.value = next
+}
 const stateLabel = (value: Value) => ({ 0: '未簽核', 1: '簽核中', 2: '已簽核', '-1': '不使用' } as Record<string, string>)[String(value)] ?? '未知'
 const displayValue = (value: Value) => typeof value === 'boolean' ? (value ? '是' : '否') : value === null || value === undefined || value === '' ? '—' : String(value)
+function displayMasterCell(row: Row, field: Field): string {
+  const value = row[field.key]
+  if (props.masterKey === 'material-master') {
+    if (['putInPlace', 'countWay', 'checkLotNo'].includes(field.key)) {
+      const option = optionsForField(field).find((item) => String(item.value) === String(value ?? ''))
+      if (option) return option.label
+    }
+    if (['keyMaterials', 'openLimitTimeFlag', 'expireDateFlag', 'resetOpenDate'].includes(field.key)) {
+      if (['1', 'true', 'yes'].includes(String(value ?? '').toLowerCase())) return '是'
+      if (['0', 'false', 'no'].includes(String(value ?? '').toLowerCase())) return '否'
+    }
+  }
+  return displayValue(value)
+}
 const fieldValue = (field: Field) => {
   const value = form.value[field.key]
   return value === null || value === undefined ? '' : String(value)
@@ -85,18 +117,20 @@ const fieldValue = (field: Field) => {
 const hasFieldOptions = (field: Field) => Boolean(field.options?.length)
   || (props.masterKey === 'operation-master' && props.developmentPreview && ['materialOption', 'multiOperatorMode'].includes(field.key))
   || (props.masterKey === 'material-master' && field.key === 'putInPlace')
-  || (props.masterKey === 'material-master' && props.developmentPreview && ['countWay', 'checkLotNo'].includes(field.key))
+  || (props.masterKey === 'material-master' && ['countWay', 'checkLotNo'].includes(field.key))
 const optionsForField = (field: Field) => {
   if (field.options?.length) return field.options
   if (props.masterKey === 'material-master' && field.key === 'putInPlace') return [
-    { label: 'EQP', value: 0 }, { label: 'OP', value: 1 }, { label: 'WIP INV', value: 2 }, { label: 'MO', value: 3 },
+    ...(isMaterialPreview.value
+      ? [{ label: 'EQP', value: 0 }, { label: 'OP', value: 1 }, { label: 'WIP INV', value: 2 }, { label: 'MO', value: 3 }]
+      : materialOptions.value.putInPlace.map((item) => ({ label: item.label, value: item.value }))),
   ]
-  if (props.masterKey === 'material-master' && props.developmentPreview && field.key === 'countWay') return [
-    { label: 'Standard（DEV 代碼，ValueList 待核實）', value: 0 }, { label: 'Real（DEV 代碼，ValueList 待核實）', value: 1 },
-  ]
-  if (props.masterKey === 'material-master' && props.developmentPreview && field.key === 'checkLotNo') return [
-    { label: '否（DEV 代碼，ValueList 待核實）', value: 0 }, { label: '是（DEV 代碼，ValueList 待核實）', value: 1 },
-  ]
+  if (props.masterKey === 'material-master' && field.key === 'countWay') return isMaterialPreview.value
+    ? [{ label: 'Standard（DEV 代碼，ValueList 待核實）', value: 0 }, { label: 'Real（DEV 代碼，ValueList 待核實）', value: 1 }]
+    : materialOptions.value.countWay.map((item) => ({ label: item.label, value: item.value }))
+  if (props.masterKey === 'material-master' && field.key === 'checkLotNo') return isMaterialPreview.value
+    ? [{ label: '否（DEV 代碼，ValueList 待核實）', value: 0 }, { label: '是（DEV 代碼，ValueList 待核實）', value: 1 }]
+    : materialOptions.value.checkLotNo.map((item) => ({ label: item.label, value: item.value }))
   if (props.masterKey === 'operation-master' && props.developmentPreview && field.key === 'materialOption') return [
     { label: '發料點（DEV 來源碼選項）', value: 0 }, { label: '設備（DEV 來源碼選項）', value: 1 }, { label: '產線（DEV 來源碼選項）', value: 2 }, { label: '工位（DEV 來源碼選項）', value: 3 },
   ]
@@ -119,7 +153,21 @@ const vendorRows = ref<Row[]>([])
 const selectedVendor = ref<Row | null>(null)
 const materialLookupField = ref<string | null>(null)
 const isMaterialPreview = computed(() => props.masterKey === 'material-master' && Boolean(props.developmentPreview))
-const materialOptions = ref<{ materialTypes: Array<{value:string;label:string}>; units: Array<{value:string;label:string;unitType:string}>; unitTypes: Array<{value:string;label:string}> }>({ materialTypes: [], units: [], unitTypes: [] })
+type MaterialOption = { value: string; label: string }
+type MaterialOptions = {
+  materialTypes: MaterialOption[]
+  units: Array<MaterialOption & { unitType: string }>
+  unitTypes: MaterialOption[]
+  putInPlace: MaterialOption[]
+  countWay: MaterialOption[]
+  checkLotNo: MaterialOption[]
+  multiTimeControl?: boolean | number | string
+  gumMaterialTypes?: string[]
+}
+const materialOptions = ref<MaterialOptions>({ materialTypes: [], units: [], unitTypes: [], putInPlace: [], countWay: [], checkLotNo: [] })
+const materialMultiTimeControl = computed(() => isMaterialPreview.value || ['1', 'true', 'yes'].includes(String(materialOptions.value.multiTimeControl ?? '').toLowerCase()))
+const materialGumTypes = computed(() => isMaterialPreview.value ? ['GUM'] : materialOptions.value.gumMaterialTypes ?? [])
+const isGumMaterial = (row: Row | null | undefined) => Boolean(row && materialGumTypes.value.some((type) => type.toUpperCase() === String(row.materialType ?? '').toUpperCase()))
 const materialFeatureKeys = new Set<MaterialFeature>(['property', 'qc-item', 'import', 'gum-hour'])
 const devMaterialStorageKey = 'ymes:dev:master-data:materials:v1'
 
@@ -253,7 +301,8 @@ const masterActionSets: Record<MasterKey, MasterAction[]> = {
     { key: 'close', label: '關閉' },
   ],
 }
-const toolbarActions = computed(() => masterActionSets[props.masterKey])
+const toolbarActions = computed(() => masterActionSets[props.masterKey].filter((action) =>
+  action.key !== 'gum-hour' || props.masterKey !== 'material-master' || materialMultiTimeControl.value))
 const supportedToolbarActions = new Set(['add', 'edit', 'copy', 'approve', 'delete', 'close', 'new-version', 'draw', 'property', 'resource', 'business-rule', 'parameter', 'qc-item', 'error', 'copy-op-data', 'sub-op', 'import', 'gum-hour'])
 
 const operationFeatureKeys = new Set<OperationFeature>(['property', 'resource', 'business-rule', 'parameter', 'qc-item', 'error', 'copy-op-data', 'sub-op', 'import'])
@@ -262,6 +311,12 @@ function actionDisabled(key: string): boolean {
   if (busy.value) return true
   const row = selected.value
   if (!supportedToolbarActions.has(key)) return true
+  if (props.masterKey === 'material-master' && (key === 'approve' || key === 'delete')) {
+    const targets = materialActionRows()
+    return key === 'approve'
+      ? !targets.some((item) => Number(item.issueState) === 0)
+      : !targets.some((item) => [0, 2, -1].includes(Number(item.issueState)))
+  }
   if (props.masterKey === 'operation-master' && operationFeatureKeys.has(key as OperationFeature)) {
     if (!props.developmentPreview) return true
     return key !== 'import' && !row
@@ -269,7 +324,7 @@ function actionDisabled(key: string): boolean {
   if (materialFeatureKeys.has(key as MaterialFeature)) {
     if (props.masterKey !== 'material-master') return true
     if (key !== 'import' && !row) return true
-    if (key === 'gum-hour' && props.developmentPreview && String(row?.materialType ?? '').toUpperCase() !== 'GUM') return true
+    if (key === 'gum-hour' && (!materialMultiTimeControl.value || !isGumMaterial(row))) return true
   } else if (operationFeatureKeys.has(key as OperationFeature)) return true
   if (['edit', 'copy', 'approve', 'delete', 'new-version', 'set-current'].includes(key) && !row) return true
   if (key === 'edit' || key === 'approve') return row?.issueState !== 0
@@ -374,14 +429,15 @@ function rowPath(row: Row): string {
 async function loadRows(): Promise<void> {
   busy.value = true
   error.value = ''
+  if (props.masterKey === 'material-master') selectedMaterialKeys.value = new Set()
   try {
     if (isMaterialPreview.value) {
       const url = new URL(window.location.href)
       const hasAddressForm = url.searchParams.has('form')
       const wanted = url.searchParams.get('selected') || initialSelection
       const needle = keyword.value.trim().toUpperCase()
-      rows.value = readDevMaterials().filter((row) => Number(row.issueState) === issueState.value
-        && (!needle || String(row.materialNo ?? '').toUpperCase().includes(needle)))
+      rows.value = sortMaterialRows(readDevMaterials().filter((row) => Number(row.issueState) === issueState.value
+        && (!needle || String(row.materialNo ?? '').toUpperCase().includes(needle))))
       selected.value = rows.value.find((row) => selectedRouteKey(row) === wanted) ?? rows.value[0] ?? null
       initialSelection = ''
       loadVendorRows()
@@ -391,7 +447,8 @@ async function loadRows(): Promise<void> {
     }
     const query = new URLSearchParams({ issueState: String(issueState.value) })
     if (keyword.value.trim()) query.set('keyword', keyword.value.trim())
-    rows.value = await api<Row[]>(`${config.value.endpoint}?${query}`)
+    const loadedRows = await api<Row[]>(`${config.value.endpoint}?${query}`)
+    rows.value = props.masterKey === 'material-master' ? sortMaterialRows(loadedRows) : loadedRows
     const url = new URL(window.location.href)
     const hasAddressForm = url.searchParams.has('form')
     const wanted = url.searchParams.get('selected') || initialSelection
@@ -604,6 +661,10 @@ async function save(): Promise<void> {
 }
 
 async function command(action: 'approve' | 'delete' | 'new-version' | 'set-current'): Promise<void> {
+  if (props.masterKey === 'material-master' && (action === 'approve' || action === 'delete')) {
+    await commandMaterialBatch(action)
+    return
+  }
   const item = selected.value
   if (!item || busy.value) return
   if (action === 'delete' && !window.confirm(`確定${item.issueState === 2 ? '停用' : '刪除'}${config.value.plural} ${selectedRouteKey(item)}？`)) return
@@ -667,6 +728,88 @@ async function command(action: 'approve' | 'delete' | 'new-version' | 'set-curre
     await loadRows()
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '操作失敗。' }
   finally { busy.value = false }
+}
+
+async function commandMaterialBatch(action: 'approve' | 'delete'): Promise<void> {
+  const eligible = materialActionRows().filter((item) => action === 'approve'
+    ? Number(item.issueState) === 0
+    : [0, 2, -1].includes(Number(item.issueState)))
+  if (!eligible.length || busy.value) return
+  const operation = action === 'approve'
+    ? '核准'
+    : eligible.some((item) => Number(item.issueState) === 2) ? '停用/刪除' : '刪除'
+  if (!window.confirm(`確定${operation}選取的 ${eligible.length} 筆物料？`)) return
+
+  busy.value = true
+  error.value = ''
+  let completed = 0
+  let failureMessage = ''
+  let cancelled = false
+  try {
+    if (isMaterialPreview.value) {
+      let items = readDevMaterials()
+      for (const target of eligible) {
+        const materialNo = String(target.materialNo ?? '')
+        const current = items.find((item) => String(item.materialNo ?? '') === materialNo)
+        if (!current) continue
+        if (action === 'approve') {
+          const propertyKey = `ymes:dev:material-properties:${encodeURIComponent(materialNo)}:v1`
+          const propertyRows = JSON.parse(window.localStorage.getItem(propertyKey) || '[]') as Row[]
+          const missingRequired = propertyRows.filter((item) => Number(item.controlled) === 1 && !String(item.value ?? item.defaultValue ?? '').trim())
+          if (missingRequired.length) throw new Error(`${materialNo} 尚未設定必填屬性：${missingRequired.map((item) => String(item.propertyNo ?? '')).join(', ')}`)
+          const optionalWarnings = propertyRows.filter((item) => Number(item.controlled) === 2 && !String(item.value ?? item.defaultValue ?? '').trim())
+          if (optionalWarnings.length && !window.confirm(`${materialNo} 以下提示屬性未填，仍要核准嗎？ ${optionalWarnings.map((item) => String(item.propertyNo ?? '')).join(', ')}`)) { cancelled = true; break }
+          if (materialMultiTimeControl.value && isGumMaterial(current)) {
+            const gumKey = `ymes:dev:material-gum-hour:${encodeURIComponent(materialNo)}:v1`
+            if (!window.localStorage.getItem(gumKey)) throw new Error(`${materialNo} 尚未完成 GumHour 設定。`)
+          }
+          items = items.map((item) => String(item.materialNo ?? '') === materialNo
+            ? { ...item, issueState: 2, dataStamp: Number(item.dataStamp ?? 0) + 1 }
+            : item)
+        } else if (Number(current.issueState) === 2) {
+          items = items.map((item) => String(item.materialNo ?? '') === materialNo
+            ? { ...item, issueState: -1, dataStamp: Number(item.dataStamp ?? 0) + 1 }
+            : item)
+        } else {
+          items = items.filter((item) => String(item.materialNo ?? '') !== materialNo)
+          for (const kind of ['properties', 'qc-items', 'gum-hour', 'vendors']) {
+            window.localStorage.removeItem(`ymes:dev:material-${kind}:${encodeURIComponent(materialNo)}:v1`)
+          }
+        }
+        completed += 1
+        writeDevMaterials(items)
+      }
+    } else {
+      for (const item of eligible) {
+        const materialNo = String(item.materialNo ?? '')
+        if (action === 'approve') {
+          const properties = await api<Row[]>(`materials/${encodeURIComponent(materialNo)}/properties`)
+          const warnings = properties.filter((property) => Number(property.controlled) === 2 && !String(property.value ?? '').trim())
+          if (warnings.length && !window.confirm(`${materialNo} 以下提示屬性尚未填值，仍要核准嗎？ ${warnings.map((property) => String(property.propertyNo ?? '')).join(', ')}`)) { cancelled = true; break }
+          await api(`materials/${encodeURIComponent(materialNo)}/approve`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dataStamp: item.dataStamp }),
+          })
+        } else {
+          const query = new URLSearchParams({ issueState: String(item.issueState), dataStamp: String(item.dataStamp) })
+          await api(`materials/${encodeURIComponent(materialNo)}?${query}`, { method: 'DELETE' })
+        }
+        completed += 1
+      }
+    }
+    if (cancelled) notice.value = completed ? `已完成 ${completed} 筆物料；其餘項目已取消。` : '操作已取消，資料未變更。'
+    else if (completed) notice.value = `已${action === 'approve' ? '核准' : '處理'} ${completed} 筆物料。`
+  } catch (reason) {
+    failureMessage = reason instanceof Error ? reason.message : `物料${operation}失敗。`
+    if (completed) notice.value = `已完成 ${completed} 筆物料；後續操作中止，請重新查詢確認。`
+  } finally {
+    busy.value = false
+  }
+  if (completed) {
+    selectedMaterialKeys.value = new Set()
+    await loadRows()
+  }
+  if (failureMessage) error.value = error.value ? `${failureMessage}；重新查詢也失敗：${error.value}` : failureMessage
 }
 
 async function saveGraph(): Promise<void> {
@@ -783,18 +926,19 @@ watch(() => props.masterKey, () => { selected.value = null; void loadMaterialOpt
       <div class="md-list-panel">
         <header class="md-panel-heading"><h2>{{ config.plural }}</h2><span>{{ config.title }}</span></header>
         <div class="md-table-scroll"><table>
-          <thead><tr><th v-for="col in config.columns" :key="col.key">{{ col.label }}</th><th>狀態</th></tr></thead>
+          <thead><tr><th v-if="masterKey === 'material-master'" class="md-select-col">選取</th><th v-for="col in config.columns" :key="col.key">{{ col.label }}</th><th v-if="masterKey !== 'material-master'">狀態</th></tr></thead>
           <tbody>
             <tr v-for="row in rows" :key="selectedRouteKey(row)" :class="{ selected: selectedKey === selectedRouteKey(row) }" :aria-selected="selectedKey === selectedRouteKey(row)" tabindex="0"
                 @click="selectMasterRow(row)" @keydown.enter.prevent="selectMasterRow(row)" @keydown.space.prevent="selectMasterRow(row)"
                 @dblclick="row.issueState === 0 && openForm('edit', row)">
-              <td v-for="col in config.columns" :key="col.key">{{ displayValue(row[col.key]) }}</td><td>{{ stateLabel(row.issueState) }}</td>
+              <td v-if="masterKey === 'material-master'" class="md-select-col"><input class="md-row-select" type="checkbox" :checked="selectedMaterialKeys.has(selectedRouteKey(row))" :aria-label="`選取物料 ${row.materialNo}`" @click.stop @change="changeMaterialSelection(row, $event)" /></td>
+              <td v-for="col in config.columns" :key="col.key">{{ displayMasterCell(row, col) }}</td><td v-if="masterKey !== 'material-master'">{{ stateLabel(row.issueState) }}</td>
             </tr>
             <tr v-if="!busy && rows.length === 0"><td :colspan="config.columns.length + 1" class="empty">沒有符合條件的{{ config.plural }}資料</td></tr>
             <tr v-if="busy && rows.length === 0"><td :colspan="config.columns.length + 1" class="empty">資料載入中…</td></tr>
           </tbody>
         </table></div>
-        <footer>資料總筆數 <b>{{ rows.length }}</b></footer>
+        <footer>資料總筆數 <b>{{ rows.length }}</b><span v-if="masterKey === 'material-master'" class="md-selection-count">多選 {{ selectedMaterialKeys.size }} 筆</span></footer>
       </div>
 
       <section v-if="masterKey === 'process-master'" class="md-process-preview">
@@ -817,7 +961,7 @@ watch(() => props.masterKey, () => { selected.value = null; void loadMaterialOpt
       <aside class="md-actions" :aria-label="config.title + '功能'">
         <button v-for="action in toolbarActions" :key="action.key" class="md-button" :class="{ primary: action.key === 'add', danger: action.key === 'delete' }" type="button"
                 :disabled="actionDisabled(action.key)"
-                :title="actionDisabled(action.key) && !supportedToolbarActions.has(action.key) ? '此功能的 API 尚未提供' : actionDisabled(action.key) && masterKey==='operation-master' && operationFeatureKeys.has(action.key as OperationFeature) ? (developmentPreview ? '請先選取作業站' : '正式 API 尚未提供') : actionDisabled(action.key) && masterKey==='material-master' && materialFeatureKeys.has(action.key as MaterialFeature) ? (developmentPreview && action.key==='gum-hour' ? '僅固晶膠物料可設定 GumHour' : action.key==='import' ? '' : '請先選取物料') : ''"
+                :title="actionDisabled(action.key) && !supportedToolbarActions.has(action.key) ? '此功能的 API 尚未提供' : actionDisabled(action.key) && masterKey==='operation-master' && operationFeatureKeys.has(action.key as OperationFeature) ? (developmentPreview ? '請先選取作業站' : '正式 API 尚未提供') : actionDisabled(action.key) && masterKey==='material-master' && materialFeatureKeys.has(action.key as MaterialFeature) ? (action.key==='gum-hour' ? '只有符合 GumMaterialType 的物料可設定 GumHour' : action.key==='import' ? '' : '請先選取物料') : ''"
                 @click="runToolbarAction(action.key)">{{ action.label }}</button>
       </aside>
 
@@ -961,8 +1105,11 @@ watch(() => props.masterKey, () => { selected.value = null; void loadMaterialOpt
 .md-master tbody tr{cursor:pointer}
 .md-master tbody tr:hover{background:#fff8de}
 .md-master tbody tr.selected{background:#ffedaa}
+.md-select-col{width:42px;text-align:center!important}
+.md-row-select{width:15px;height:15px;accent-color:#a58d00;vertical-align:middle}
 .md-master .empty{text-align:center;padding:17px;color:var(--muted)}
-.md-list-panel footer{padding:7px 3px;color:var(--muted)}
+.md-list-panel footer{display:flex;align-items:center;gap:14px;padding:7px 3px;color:var(--muted)}
+.md-selection-count{color:#655b22}
 .md-actions{display:flex;max-height:76vh;flex-direction:column;gap:5px;overflow:auto;padding:5px;border:1px solid var(--line);background:#fff}
 .md-actions .md-button{text-align:center}
 .md-vendor-panel{grid-column:1/-1}
