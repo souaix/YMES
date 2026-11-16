@@ -70,6 +70,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | ENT | 外包商基本資料 ET201 DEV 雙 Grid 頁面 | [外包商基本資料規格](modules/ENT/外包商基本資料.md)；兩張 Oracle 來源 DDL/PG 空表 CREATE SQL 已建立 | YMES schema 比對、雙表 CRUD/交易與 Issue/Job 核准 API 待家用端 |
 | ENT | 外包項目設定 ET202 DEV 單 Grid 頁面 | [外包項目設定規格](modules/ENT/外包項目設定.md)；Oracle 來源 DDL/PG 空表 CREATE SQL 已建立 | YMES schema 比對、CRUD/DataStamp 與已核准外包流程查找 API 待家用端 |
 | EQP | 設備設定七項 DEV 頁面 | 設備設定功能規格已分頁；多張設備表已查 DDL | 待逐功能完成 |
+| SMD | 區域基本資料 SD104 DEV 頁面；SMD 第一層三層選單已列出 8 個功能 | [區域基本資料規格](modules/SMD/區域基本資料.md)；三張主表 Oracle DDL/PG 空表 CREATE 已交付，區域配置映射表 DDL 沿用設備群組 handoff | SD104 CRUD、Issue/Job、layout API/schema 待家用端；另外 7 項 UI 待逐頁復刻 |
 | OP | 作業站主檔及簡化 DEV 子功能 | [作業站主檔規格](modules/OP/作業站主檔.md)；18 張作業站相關表來源 DDL/CREATE SQL 已交付 | 待補子功能 API |
 | MTL | 物料主檔及簡化 DEV 子功能 | [物料主檔規格](modules/MTL/物料主檔.md)、[物料資料匯入](modules/MTL/物料資料匯入.md)；8 張來源表 DDL/CREATE SQL 已交付 | 主檔/API 部分完成；功能仍待逐項復刻 |
 | PRS | 流程主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |

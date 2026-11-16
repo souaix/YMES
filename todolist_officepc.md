@@ -27,6 +27,16 @@
 - 物料主檔及其子功能已有 DEV localStorage 互動雛形；物料匯入已補 CSV/`.xlsx` 預覽、9 欄解析、物料編號/名稱分組、結果列、開發範本下載及逐組假資料進度/取消；正式範本下載、`.xls` 預覽與群組 API 規則待家用端。詳細規格見 `docs/modules/MTL/物料資料匯入.md`。作業站子功能也有簡化 DEV 視窗。設備設定已有七個功能頁雛形。設備狀態的兩張刪除引用表 DDL、空表 PostgreSQL CREATE SQL、正式 ValueList 和繁中翻譯已於 2026-11-16 交付家用端；家用端仍需 migration 和 API 刪除檢查部署。其他頁面仍待逐項 WinForms 對照。
 - 本次未執行 build 或測試；未完成整套 MES 遷移，也未把尚未完成功能標為正式上線。
 
+## 2026-11-16 SMD SD104 區域基本資料公司端交接
+
+- [x] Pull `origin/main` 最新版本，確認 `82de6f4` 為當前基準。
+- [x] 從 `frmAreaBasis`、`frmAreaBasisDef`、`frmAreaLayout`、`frmNodeDef`、`wsSMD`、`clsSMDBasis` 邏輯完成 SD104 主 Grid/表單/狀態/核准/刪除規則整理；AddFlow 版面在 Vue 先做可操作簡化，差異已列規格。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 從既有受保護連線直查 `TBLSMDAREABASIS`、`TBLSMDAREAINVENTORY`、`TBLSMDAREAMAP` DDL、欄位、PK、索引與 FK；建立 source DDL 和 PG 空表 CREATE SQL。關聯配置兩表使用設備群組來源 DDL/CREATE SQL。
+- [x] 建立 SMD fallback 三層目錄（8 個 WinForms Function）；SD104 接上 DEV Vue 頁，其他 7 個仍由 FunctionPending 說明。
+- [x] 新增 `docs/modules/SMD/區域基本資料.md`，並更新規格索引、資料庫連線紀錄及家用端待辦。
+- [ ] 本段尚未執行 build/test/瀏覽器驗收；家用端 API/schema 完成後需 pull、逐欄對接並檢查正式行為。
+- [ ] 下一項依 SMD 選單次序復刻 SD105「區域庫房基本設定」；Oracle 表缺 DDL 時先用 PowerShell 5.1 + ODP.NET 直連查，並提供家用端空表 SQL/API 規格。
+
 ## 家用電腦完成後，公司端先做
 
 - [x] 2026-11-16 Pull 家用電腦最新提交 `944b793`，閱讀更新後的 DTO/endpoint/migration 與 `todolist_homepc.md`；設備狀態 Production endpoint 使用 `GET/options/POST/PUT/DELETE`，Vue 呼叫路徑已對上。

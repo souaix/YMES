@@ -16,6 +16,27 @@
 
 每完成一項，更新本檔 checkbox、對應 module spec 與 migration/API 狀態，再 commit/push；不要把連線密碼、Token、SSH 私鑰或 Oracle 連線字串放入文件或 Git。
 
+## SMD SD104 區域基本資料（公司端 2026-11-16 已交接）
+
+先讀 `docs/modules/SMD/區域基本資料.md`、`todolist_officepc.md` 的 SD104 區塊及以下 Oracle reference。公司端已有 `/YMES/SMD/Areas` Vue DEV 頁與 SMD 三層 fallback 選單；Production 不使用 localStorage 假資料。
+
+### Schema / migration
+
+- 新查 Oracle 主表 `TBLSMDAREABASIS`、`TBLSMDAREAINVENTORY`、`TBLSMDAREAMAP` 的 source DDL/PG 空表 SQL：`database/reference/mestest_smd_area_basis_source_ddl.sql`、`mestest_smd_area_basis_create.sql`。
+- 區域配置另外使用 `TBLSMDAREARELATION`、`TBLSMDSMTAREAEQPMAP`；其 Oracle DDL/CREATE SQL 在 `database/reference/mestest_equipment_group_smd_source_ddl.sql`、`mestest_equipment_group_smd_create.sql`。先比對 YMES 現況，保留已存在的 YMES 擴充，不重建重複表。
+- `TBLSMDAREABASIS` 16 欄、PK AreaNo；AreaType/Class/IssueState/AreaCompose DEFAULT 0 NOT NULL；BackgroundImage BLOB；DataStamp DEFAULT 0 nullable。`TBLSMDAREAINVENTORY` 9 欄、PK `(AreaNo,InventoryNo)`；DefaultInv DEFAULT 0 NOT NULL、DataStamp DEFAULT 0 nullable。`TBLSMDAREAMAP` 6 欄、PK `(BaseAreaNo,ParentAreaNo,ChildAreaNo)`。三表只有 PK unique index，沒有 FK/其他 index。完整欄位見規格與 reference SQL。
+- Oracle DATE → PostgreSQL timestamp without time zone；BLOB → bytea。WinForms 表單要求 DepartmentNo 必填，但 Oracle 欄位允許 NULL；資料庫欄位仍照 Oracle，API 做業務驗證。
+
+### API / Service handoff
+
+1. 建 SMD API 並檢查登入者 SMD 權限：`GET /api/smd/areas?issueState=&areaNo=`、`GET /api/smd/area-basis/options`、`POST /api/smd/areas`、`PUT/DELETE /api/smd/areas/{areaNo}`、`POST /{areaNo}/approve`、`GET/PUT /{areaNo}/layout`、`GET /{areaNo}/layout-options`。JSON camelCase DTO 與 query/body 欄位以功能規格和 `AreaBasisMaster.vue` 為準；layout PUT 回更新後完整 Area DTO/DataStamp。
+2. 新增只接受有效的區域類型組合；AreaNo 長度20、AreaName 50、Description 255；編號大寫。AreaNo/AreaName/FactoryNo/Creator/CreateDate 在 DB NOT NULL；DepartmentNo DB nullable 但 UI/API required。一般區域 BaseAreaNo 必填且必須屬於 active Base Area，FactoryNo 從 Base Area 繼承；Base Area 必須選 active Factory。Factory/Department options 不得使用 DEV 假資料。
+3. Create 設 IssueState=0、稽核與 DataStamp；Edit 僅 state 0，以 DataStamp compare-and-swap 更新；NULL DataStamp 也要正確 CAS，遞增 `COALESCE(DataStamp,0)+1`。Delete state 0/-1 實體刪除；2 改 -1；1 回 409。實體刪除要 transaction 檢查 `TBLSMDAREARELATION.ContainAreaNo`，若仍有 layout relation 要拒絕。多筆 UI 逐筆請求，錯誤回報完成筆數。
+4. Approval 僅接受 state 0，IssueNo=`AREA BASIS`，重用 YMES Issue/Job service：無 Job/Detail 依 WinForms 規則直達 2；有設定轉 1，核准2/退回0。Production 不得照 Vue DEV 直接轉狀態。
+5. Layout 必須讀舊 `frmAreaLayout.vb`、`frmNodeDef.vb` 與 `funSaveAreaData`，在 PostgreSQL 同一 transaction 處理 `TBLSMDAREARELATION`、`TBLSMDAREAMAP`、`TBLSMDAREAINVENTORY`、`TBLSMDSMTAREAEQPMAP` 及 `TBLSMDAREABASIS.BackgroundImage`。從節點推導 parent/child area map、top production line、inventory mapping、equipment/equipment group mapping，驗證 ObjectType、唯一鍵、節點尺寸/座標/顏色與 BaseArea 關聯。保存 BaseArea DataStamp 並回傳更新後完整 DTO，前端下一次操作才不會拿舊 stamp。
+6. WinForms AddFlow 支援多選/群組、Node Define、完整線型巢狀推導；公司端第一版簡化成可拖曳/數值調整節點與背景圖，尚未聲稱完整 AddFlow 等價。需按來源 Service 完成 API 邏輯並記錄無法逐一等價的部分。`ymes_app` 只授予所需 SELECT/INSERT/UPDATE/DELETE。
+7. 建 migration 前逐欄比對 PostgreSQL schema；缺表才新增。完成後部署 API、更新 migration/API 文件，再通知公司端 pull 接正式 API 驗收。公司端 DEV 還未執行 build/test/browser。
+
 ## 公司電腦目前交付
 
 - Vue 主選單以三層 Module → Menu Group → Function 呈現；正式資料 API 不得把設定分類與主檔功能壓成兩層。

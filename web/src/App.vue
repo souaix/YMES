@@ -26,6 +26,7 @@ import ForwarderBasisMaster from './components/ForwarderBasisMaster.vue'
 import TakerBasisMaster from './components/TakerBasisMaster.vue'
 import SubcontractorBasisMaster from './components/SubcontractorBasisMaster.vue'
 import ENTOSItemMaster from './components/ENTOSItemMaster.vue'
+import AreaBasisMaster from './components/AreaBasisMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
@@ -56,6 +57,7 @@ const forwarderBasisRoute = appBasePath + '/Customer/Forwarders'
 const takerBasisRoute = appBasePath + '/Customer/Takers'
 const subcontractorBasisRoute = appBasePath + '/Customer/Subcontractors'
 const osItemRoute = appBasePath + '/Customer/OSItems'
+const areaBasisRoute = appBasePath + '/SMD/Areas'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -155,6 +157,22 @@ const fallbackMenuTree: MenuNode[] = [
     { id: 'equipment-recipe-menu', label: '參數', shortLabel: '參', moduleNo: 'EQP', children: [{ id: 'equipment-recipe-basis', label: '設備參數資料', shortLabel: '參', functionNo: 'RECIPE BASIS', moduleNo: 'EQP' }] }],
   },
   {
+    id: 'smd-data',
+    label: '區域資料',
+    shortLabel: '區',
+    moduleNo: 'SMD',
+    children: [{ id: 'smd-factory-settings', label: '廠區設定', shortLabel: '廠', children: [
+      { id: 'function:SMD:AREA BASIS', label: '區域基本資料', shortLabel: '區', functionNo: 'AREA BASIS', moduleNo: 'SMD' },
+      { id: 'function:SMD:AREA INV MAP', label: '區域庫房基本設定', shortLabel: '庫', functionNo: 'AREA INV MAP', moduleNo: 'SMD' },
+      { id: 'function:SMD:COMPUTER AREA', label: '過帳電腦之區域', shortLabel: '電', functionNo: 'COMPUTER AREA', moduleNo: 'SMD' },
+      { id: 'function:SMD:FACTORY BASIS', label: '工廠基本資料', shortLabel: '工', functionNo: 'FACTORY BASIS', moduleNo: 'SMD' },
+      { id: 'function:SMD:LOCATOR BASIS', label: '儲位基本資料', shortLabel: '儲', functionNo: 'LOCATOR BASIS', moduleNo: 'SMD' },
+      { id: 'function:SMD:POSITION BASIS', label: '工位基本資料', shortLabel: '位', functionNo: 'POSITION BASIS', moduleNo: 'SMD' },
+      { id: 'function:SMD:PRODUCTION CONFIG', label: '設備狀態監控_區域', shortLabel: '監', functionNo: 'PRODUCTION CONFIG', moduleNo: 'SMD' },
+      { id: 'function:SMD:SMD PDLINE BASIS', label: '生產線別基本資料', shortLabel: '線', functionNo: 'SMD PDLINE BASIS', moduleNo: 'SMD' },
+    ] }],
+  },
+  {
     id: 'operation-data',
     label: '作業站資料',
     shortLabel: '站',
@@ -211,6 +229,7 @@ const menuRoutes: Record<string, string> = {
   'equipment-carrier-basis': equipmentCarrierBasisRoute,
   'function:EQP:CARRIER BASIS': equipmentCarrierBasisRoute,
   'equipment-recipe-basis': equipmentRecipeBasisRoute,
+  'function:SMD:AREA BASIS': areaBasisRoute,
   'function:EQP:RECIPE BASIS': equipmentRecipeBasisRoute,
   'equipment-accessory-categories': equipmentAccessoryCategoryRoute,
   'equipment-accessory-category-states': equipmentAccessoryCategoryStateRoute,
@@ -237,6 +256,7 @@ const functionRoutes: Record<string, string> = {
   'CUSTOMER BASIS': customerBasisRoute,
   'CUSTOMER CONTACTOR': customerContactorRoute,
   'CUSTOMER SHIP ADDRESS': customerShipAddressRoute,
+  'AREA BASIS': areaBasisRoute,
   'EQP BASIS': equipmentRoute,
   'CARRIER CATEGORY': equipmentCarrierCategoryRoute,
   'CARRIER TYPE': equipmentCarrierTypeRoute,
@@ -301,6 +321,7 @@ const isForwarderBasisPage = computed(() => activeMasterKey.value === 'function:
 const isTakerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:TAKER BASIS')
 const isSubcontractorBasisPage = computed(() => activeMasterKey.value === 'function:ENT:SUBCONTRACTOR BASIS')
 const isOsItemPage = computed(() => activeMasterKey.value === 'function:ENT:ENTOSITEM')
+const isAreaBasisPage = computed(() => activeMasterKey.value === 'function:SMD:AREA BASIS')
 const isEquipmentVendorPage = computed(() => activeMasterKey.value === 'equipment-vendor-master')
 const isEquipmentEngineerGroupPage = computed(() => activeMasterKey.value === 'equipment-engineer-group')
 const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment-group')
@@ -980,6 +1001,14 @@ async function signOut(): Promise<void> {
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
+        />
+        <AreaBasisMaster
+          v-else-if="isAreaBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
         />
         <EquipmentCarrierCategoryMaster
           v-else-if="isCarrierCategoryPage"

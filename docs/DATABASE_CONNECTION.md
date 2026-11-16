@@ -51,6 +51,13 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 以 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀取得 `MESTEST.TBLSMDAREARELATION`、`MESTEST.TBLSMDSMTAREAEQPMAP` 的 DBMS_METADATA DDL，並核對欄位、NULL、PK、索引及 FK。
 - `TBLSMDAREARELATION` 有 PK `(BASEAREANO, OBJECTNO)` 及非唯一索引 `(CONTAINAREANO, OBJECTTYPE)`；`TBLSMDSMTAREAEQPMAP` 的 PK 為 `(BASEAREANO, AREANO, EQUIPMENTNO)`。兩表沒有 FK。
 - Oracle 原始 DDL 與 PostgreSQL 空表 CREATE SQL 位於 `database/reference/mestest_equipment_group_smd_source_ddl.sql`、`database/reference/mestest_equipment_group_smd_create.sql`。家用端仍須比對實際 YMES schema；本次只讀結構，未讀取業務資料。
+
+### 更新 2026-11-16：SMD SD104 區域基本資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護連線直接唯讀查詢 MESTEST.TBLSMDAREABASIS、TBLSMDAREAINVENTORY、TBLSMDAREAMAP 的 DBMS_METADATA DDL，並核對欄位 NULL/default、PK、索引與 FK 字典。
+- 三張表只有 PK unique index，沒有外鍵或其他索引。`TBLSMDAREABASIS.BACKGROUNDIMAGE` 是 BLOB；`TBLSMDAREABASIS.DATASTAMP`、`TBLSMDAREAINVENTORY.DATASTAMP` DEFAULT 0 但 nullable。
+- 原始 logical Oracle DDL 與 PostgreSQL 空表 CREATE SQL 已保存於 `database/reference/mestest_smd_area_basis_source_ddl.sql`、`database/reference/mestest_smd_area_basis_create.sql`。`TBLSMDAREARELATION`、`TBLSMDSMTAREAEQPMAP` 的 DDL/CREATE 沿用設備群組來源檔。只查資料字典，沒有讀 MES 業務資料，也沒有在 Oracle 執行 DDL。
+- 主表 Form/Service 與配置交易/API 待辦見 `docs/modules/SMD/區域基本資料.md`。連線值僅使用本機受保護設定，未輸出到文件或 Git。
 ### 更新 2026-11-16：設備工程群組成員表
 
 - 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查得 `MESTEST.TBLUSRUSERGROUP` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES` 與 `ALL_IND_COLUMNS`。
