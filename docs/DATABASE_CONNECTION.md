@@ -267,3 +267,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 來源 DDL / PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_final_group_source_ddl.sql`、`mestest_qc_final_group_create.sql`。PK 為 `(MCLASSNO, OPNO)`，只有 PK unique index、沒有 FK；DataStamp nullable DEFAULT 0，IssueState NOT NULL DEFAULT 0。
 - 主分類、作業站、異常處理群組查找表與 QC406 共用，僅查詢 IssueState=2；不新增重複 lookup table。
 - 本次只讀取 DDL/資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。UI、狀態與 Issue Job `Final GROUP` 規則見 `docs/modules/QC/最後處理群組.md`。
+
+### 更新 2026-11-17：QC404 異常說明來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有本機受保護連線直連唯讀查詢 MESTEST.TBLQCHOLDDESCRIPTION 的 DBMS_METADATA.GET_DDL、`I_TBLQCHOLDDESCRIPTION_01` index DDL，以及 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES。
+- 來源 DDL / PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_hold_description_source_ddl.sql`、`mestest_qc_hold_description_create.sql`。PK 是 `HoldDescriptionID`，另有 `MClassNo` 非唯一索引，沒有 FK；`HoldDescription` VARCHAR2(4000) NOT NULL；DataStamp nullable DEFAULT 0。
+- 主分類查找重用 `TBLQCMCLASSBASIS`，WinForms LoadMClassBasis 預設 IssueState=2；不新增 lookup table。Core 以 `Guid.NewGuid().ToString()` 產生 HoldDescriptionID。
+- 本次只讀 DDL/資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。Form、狀態、Issue Job `HOLD DESCRIPTION` 規則見 `docs/modules/QC/異常說明.md`。

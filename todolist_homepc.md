@@ -6,6 +6,19 @@
 
 ## 家用電腦現在接手
 
+### QC404 異常說明（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/異常說明.md`、`docs/DATABASE_CONNECTION.md`；公司端已對照 `frmHoldDescription`、`frmHoldDescriptionDef`、`wsQC`、`clsHoldBasis`、`clsBasis_UPD`，完成 QC → 異常設定 → 異常說明 Vue DEV 頁與 `/YMES/QC/HoldDescription` 路由。
+- [ ] 先比對 YMES PostgreSQL live schema、constraints、indexes 與 migrations；來源 CREATE 參考 `database/reference/mestest_qc_hold_description_create.sql`，只在缺少時做 forward migration，保留 YMES 擴充欄位。
+- [ ] Oracle 原始 DDL：`database/reference/mestest_qc_hold_description_source_ddl.sql`。`tblqcholddescription` PK 為 `holddescriptionid`；`mclassno` 有非唯一索引、無 FK；`holddescription varchar(4000) NOT NULL`、`issuestate NOT NULL DEFAULT 0`、`datastamp nullable DEFAULT 0`。不對 `(mclassno, holddescription)` 加唯一限制。
+- [ ] 實作 `GET /api/qc/hold-descriptions?searchFieldName=MClassNo&searchFieldValue=`，回全部狀態及 audit/DataStamp；搜尋欄白名單只允許 MClassNo，保持 WinForms query condition 語意。
+- [ ] 實作主分類 options endpoint，只回 `TBLQCMCLASSBASIS.IssueState=2`；沿用 QC406 lookup table/API 時仍要驗證 QC404 FunctionKey。
+- [ ] 實作 POST `/api/qc/hold-descriptions` body `{mClassNo, holdDescription, description}`；檢查主分類核准、必填與長度，伺服器建立 GUID HoldDescriptionID、Creator/CreateDate、IssueState=0、DataStamp 初值，回傳完整新列。
+- [ ] 實作 PUT `/api/qc/hold-descriptions/{holdDescriptionId}?dataStamp=`，僅允許修改 Description；MClassNo/HoldDescription 在 WinForms 修改視窗唯讀。狀態 0/2 可更新，伺服器寫 Reviser/ReviseDate 並遞增 DataStamp，nullable DataStamp 以 `IS NULL` CAS。
+- [ ] 實作 DELETE：0/-1 實體刪除，2 軟停用為 -1，1 拒絕；所有寫入/刪除用 ID + DataStamp CAS。多選 UI 逐筆呼叫，首筆失敗停止並回報部分成功。
+- [ ] 實作核准端點，Issue Job Map key 為 `HOLD DESCRIPTION`；沒有 Job/Detail 時直接轉 2，有流程時建立 Issue、轉 1、處理附件/通知第一簽核群組，核准轉 2、退回 0。
+- [ ] 所有 API 驗證登入與 FunctionKey `QC404`、SQL 參數化。先核對 YMES live table/index，勿盲目執行 CREATE；部署 API/schema 後更新 handoff 並通知公司端 pull。公司端未執行 build/test/瀏覽器驗收。
+
 ### QC407 最後處理群組（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/最後處理群組.md`、`docs/DATABASE_CONNECTION.md`；公司端已對照 `frmFinalGroup`、`frmFinalGroupDef`、`wsQC`、`clsQCBasis`、`clsBasis_UPD`，完成 QC → 異常設定 → 最後處理群組 Vue DEV 頁與 `/YMES/QC/FinalGroup` 路由。

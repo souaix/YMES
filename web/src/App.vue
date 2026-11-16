@@ -46,6 +46,7 @@ import EquipmentAutoLoaderSetupMaster from './components/EquipmentAutoLoaderSetu
 import Qc8DReasonBasisMaster from './components/Qc8DReasonBasisMaster.vue'
 import QcFirstGroupMaster from './components/QcFirstGroupMaster.vue'
 import QcFinalGroupMaster from './components/QcFinalGroupMaster.vue'
+import QcHoldDescriptionMaster from './components/QcHoldDescriptionMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -239,6 +240,7 @@ const fallbackMenuTree: MenuNode[] = [
     children: [{ id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
     ] }, { id: 'quality-exception-settings', label: '異常設定', shortLabel: '異', children: [
+      { id: 'function:QC:HOLD DESCRIPTION', label: '異常說明', shortLabel: '說', functionNo: 'HOLD DESCRIPTION', moduleNo: 'QC', tableName: 'tblqcholddescription' },
       { id: 'function:QC:FIRST GROUP', label: '第一處理群組', shortLabel: '一', functionNo: 'FIRST GROUP', moduleNo: 'QC', tableName: 'tblqcfirstgroup' },
       { id: 'function:QC:FINAL GROUP', label: '最後處理群組', shortLabel: '末', functionNo: 'FINAL GROUP', moduleNo: 'QC', tableName: 'tblqcfinalgroup' },
     ] }],
@@ -283,6 +285,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'function:QC:FIRST GROUP': appBasePath + '/QC/FirstGroup',
   'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
+  'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'equipment-master': equipmentRoute,
   'equipment-vendor-master': equipmentVendorRoute,
   'equipment-engineer-group': equipmentEngineerGroupRoute,
@@ -340,6 +343,7 @@ const functionRoutes: Record<string, string> = {
   '8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'FIRST GROUP': appBasePath + '/QC/FirstGroup',
   'FINAL GROUP': appBasePath + '/QC/FinalGroup',
+  'HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'POSITION BASIS': positionBasisRoute,
   'PRODUCTION CONFIG': areaShowRoute,
   'EQP BASIS': equipmentRoute,
@@ -417,6 +421,7 @@ const isEquipmentAutoLoaderPage = computed(() => activeMasterKey.value === 'func
 const isQc8DReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:8D REASON BASIS')
 const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC:FIRST GROUP')
 const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
+const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DESCRIPTION')
 const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER BASIS')
 const isCustomerContactorPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER CONTACTOR')
 const isCustomerShipAddressPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER SHIP ADDRESS')
@@ -1361,6 +1366,14 @@ async function signOut(): Promise<void> {
         />
         <QcFinalGroupMaster
           v-else-if="isQcFinalGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcHoldDescriptionMaster
+          v-else-if="isQcHoldDescriptionPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

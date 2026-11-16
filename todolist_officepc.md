@@ -40,7 +40,15 @@
 - [x] 建立 Oracle source DDL、PostgreSQL 空表 CREATE、Vue DEV 頁 `/YMES/QC/FinalGroup`、QC → 異常設定 → 最後處理群組路由、規格文件及家用 API/schema handoff；共用 QC406 lookup table 定義。
 - [x] 保留核准 Job Map key 的原始字串 `Final GROUP`，與 FunctionNo `FINAL GROUP` 明確區分。
 - [ ] 未執行 build/test/瀏覽器驗收；DEV 核准僅模擬沒有 Job/Detail 時直接轉 Active。
-- [ ] 下一個功能依 `MES_MENU_FUNCTION_INVENTORY.md` 接續 QC404「異常說明（HOLD DESCRIPTION）」。
+- [x] 下一個功能 QC404「異常說明（HOLD DESCRIPTION）」已於本次完成，詳見下節。
+
+### QC404 異常說明（公司端 2026-11-17）
+
+- [x] 對照 `frmHoldDescription`、`frmHoldDescriptionDef`、`wsQC`、`clsHoldBasis` 與 `clsBasis_UPD`；整理單 Grid、四狀態、MClassNo 查詢、GUID 主鍵、唯讀欄位、複製/套用、刪除、DataStamp 與 `HOLD DESCRIPTION` Issue Job/附件通知規則。
+- [x] 用既有受保護連線，PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀查得 `TBLQCHOLDDESCRIPTION` table/index DDL、欄位/null/default、PK/index/FK。確認 PK 為 HoldDescriptionID、MClassNo 有非唯一索引、沒有 FK；未讀業務列、未執行 Oracle DDL、未輸出憑證。
+- [x] 建立 Oracle source DDL、PostgreSQL 空表 CREATE、Vue DEV 頁 `/YMES/QC/HoldDescription`、QC → 異常設定 → 異常說明三層選單、功能規格及家用端 schema/API handoff。
+- [ ] 未執行 build/test/瀏覽器驗收；DEV 核准只模擬無 Job/Detail 時直接轉 Active。
+- [ ] 下一個功能依 `MES_MENU_FUNCTION_INVENTORY.md` 接續 QC405「異常處理群組（HOLD DISP GROUP）」。
 
 ### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）
 
