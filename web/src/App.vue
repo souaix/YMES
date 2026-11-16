@@ -10,6 +10,7 @@ import EquipmentVendorMaster from './components/EquipmentVendorMaster.vue'
 import EquipmentEngineerGroupMaster from './components/EquipmentEngineerGroupMaster.vue'
 import EquipmentTypeMaster from './components/EquipmentTypeMaster.vue'
 import AccessoryTypeMaster from './components/AccessoryTypeMaster.vue'
+import AccessoryBasisMaster from './components/AccessoryBasisMaster.vue'
 import AccessoryCategoryMaster from './components/AccessoryCategoryMaster.vue'
 import AccessoryCategoryStateMaster from './components/AccessoryCategoryStateMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
@@ -24,6 +25,7 @@ const equipmentInspectionRoute = appBasePath + '/Equipment/Inspection'
 const equipmentAccessoryTypeRoute = appBasePath + '/Equipment/AccessoryTypes'
 const equipmentAccessoryCategoryRoute = appBasePath + '/Equipment/AccessoryCategories'
 const equipmentAccessoryCategoryStateRoute = appBasePath + '/Equipment/AccessoryCategoryStates'
+const equipmentAccessoryBasisRoute = appBasePath + '/Equipment/AccessoryBasis'
 const equipmentRoute = `${appBasePath}/Equipment`
 const equipmentVendorRoute = `${appBasePath}/Equipment/Vendors`
 const equipmentEngineerGroupRoute = `${appBasePath}/Equipment/EngineerGroups`
@@ -102,7 +104,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'equipment-group', label: '設備群組資料', shortLabel: '群', moduleNo: 'EQP' },
       { id: 'equipment-state', label: '設備狀態設定', shortLabel: '狀', moduleNo: 'EQP' },
       { id: 'equipment-inspection', label: '設備點檢表設定', shortLabel: '檢', moduleNo: 'EQP' },
-    ] }, { id: 'equipment-accessory-menu', label: '配件', shortLabel: '配', moduleNo: 'EQP', children: [{ id: 'equipment-accessory-categories', label: '配件分類資料', shortLabel: '分', functionNo: 'ACC CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-accessory-category-states', label: '配件分類狀態定義設定', shortLabel: '狀', functionNo: 'ACC CATEGORY STATE', moduleNo: 'EQP' }, { id: 'equipment-accessory-types', label: '配件類別資料', shortLabel: '類', functionNo: 'ACC TYPE', moduleNo: 'EQP' }] }],
+    ] }, { id: 'equipment-accessory-menu', label: '配件', shortLabel: '配', moduleNo: 'EQP', children: [{ id: 'equipment-accessory-categories', label: '配件分類資料', shortLabel: '分', functionNo: 'ACC CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-accessory-types', label: '配件類別資料', shortLabel: '類', functionNo: 'ACC TYPE', moduleNo: 'EQP' }, { id: 'equipment-accessory-basis', label: '配件基本資料', shortLabel: '主', functionNo: 'ACC BASIS', moduleNo: 'EQP' }, { id: 'equipment-accessory-category-states', label: '配件分類狀態定義設定', shortLabel: '狀', functionNo: 'ACC CATEGORY STATE', moduleNo: 'EQP' }] }],
   },
   {
     id: 'operation-data',
@@ -149,6 +151,8 @@ const menuRoutes: Record<string, string> = {
   'equipment-accessory-categories': equipmentAccessoryCategoryRoute,
   'equipment-accessory-category-states': equipmentAccessoryCategoryStateRoute,
   'equipment-accessory-types': equipmentAccessoryTypeRoute,
+  'equipment-accessory-basis': equipmentAccessoryBasisRoute,
+  'function:EQP:ACC BASIS': equipmentAccessoryBasisRoute,
   'function:EQP:ACC CATEGORY': equipmentAccessoryCategoryRoute,
   'function:EQP:ACC CATEGORY STATE': equipmentAccessoryCategoryStateRoute,
   'function:EQP:ACC TYPE': equipmentAccessoryTypeRoute,
@@ -164,6 +168,7 @@ const functionRoutes: Record<string, string> = {
   'ACC CATEGORY': equipmentAccessoryCategoryRoute,
   'ACC CATEGORY STATE': equipmentAccessoryCategoryStateRoute,
   'ACC TYPE': equipmentAccessoryTypeRoute,
+  'ACC BASIS': equipmentAccessoryBasisRoute,
   'OP BASIS': `${appBasePath}/MasterData/Operations`,
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
   'PRS BASIS': `${appBasePath}/MasterData/Processes`,
@@ -218,6 +223,7 @@ const isEquipmentTypePage = computed(() => activeMasterKey.value === 'equipment-
 const isAccessoryCategoryPage = computed(() => activeMasterKey.value === 'equipment-accessory-categories' || activeMasterKey.value === 'function:EQP:ACC CATEGORY')
 const isAccessoryCategoryStatePage = computed(() => activeMasterKey.value === 'equipment-accessory-category-states' || activeMasterKey.value === 'function:EQP:ACC CATEGORY STATE')
 const isAccessoryTypePage = computed(() => activeMasterKey.value === 'equipment-accessory-types' || activeMasterKey.value === 'function:EQP:ACC TYPE')
+const isAccessoryBasisPage = computed(() => activeMasterKey.value === 'equipment-accessory-basis' || activeMasterKey.value === 'function:EQP:ACC BASIS')
 const currentMenuNode = computed(() => findMenuNodeByRoute(menuTree.value, currentPath.value))
 const activeFunctionNode = computed(() => currentMenuNode.value && !activeMasterKey.value ? currentMenuNode.value : null)
 const currentMasterTitle = computed(() => currentMenuNode.value?.label ?? (activeMasterKey.value === 'equipment-vendor-master' ? '設備供應商基本資料' : activeMasterKey.value === 'equipment-engineer-group' ? '設備工程群組資料' : activeMasterKey.value === 'equipment-group' ? '設備群組資料' : activeMasterKey.value === 'equipment-state' ? '設備狀態設定' : activeMasterKey.value === 'equipment-inspection' ? '設備點檢表設定' : '主選單'))
@@ -866,18 +872,28 @@ async function signOut(): Promise<void> {
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
         />
         <AccessoryCategoryStateMaster
           v-else-if="isAccessoryCategoryStatePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
         />
         <AccessoryTypeMaster
           v-else-if="isAccessoryTypePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+        />
+        <AccessoryBasisMaster
+          v-else-if="isAccessoryBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
         />
         <MasterDataMaster
           v-else-if="activeMasterDataKey"

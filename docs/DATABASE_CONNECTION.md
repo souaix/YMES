@@ -86,3 +86,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - TBLEQPACCSTATEBASIS PK 為 ACCESSORYSTATE，STATETYPE DEFAULT 1 NOT NULL，DATASTAMP DEFAULT 0 但 nullable；僅 PK 唯一索引，沒有額外 FK/index。
 - 已修正 mestest_first_phase_create_tables.sql 中 lookup 表曾以推測註解呈現的欄位/default，並有單表 CREATE SQL 供家用端比對。套用前仍須檢查 YMES 現有 schema；缺表才 migration。本次只查結構，未讀取或匯出 MES 業務資料。
 - EP201 主表 TBLEQPACCESSORYCATEGORY 的 DDL/CREATE SQL 已在 EP202 共用依賴檔案中；家用端規格見 todolist_homepc.md 的 EP201/EP204 交接段落。
+
+### 更新 2026-11-16：EP203 配件基本資料 Oracle DDL
+
+- 公司端使用 Windows PowerShell 5.1 與本機已安裝的 Oracle.ManagedDataAccess.dll，從本機受保護設定讀取測試連線，唯讀呼叫 DBMS_METADATA.GET_DDL；以 ALL_INDEXES 取得 6 張表的 8 個 index 名稱，再逐個取 DDL。
+- 本次涉及 TBLEQPACCESSORYBASIS、TBLEMSACCESSORYSTATE、TBLEMSACCESSORYSTATELOG、TBLEQPACCSTATECONTROL、TBLEMSEQPACCSTATE、TBLEMSEQPACCSTATELOG；原始 DDL 及 PG 空表 SQL 已交付 database/reference/。
+- 僅查結構，沒有查詢 MES 業務資料，也沒有在 Oracle 執行 DDL。連線字串、IP、帳號、密碼及 SID 僅留在本機受保護設定，不寫入 Markdown/Git。

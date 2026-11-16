@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 type IssueState = 0 | 1 | 2 | -1
 type Mode = 'add' | 'edit' | 'copy' | null
@@ -23,10 +23,10 @@ interface StateRow {
 interface StateOption { accessoryState: number; stateName: string; stateColor: number }
 interface InterfaceOption { interfaceName: string; executionFile: string }
 interface CategoryOption { accessoryCategory: string; issueState: IssueState }
-const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; initialCategory?: string; compact?: boolean }>(), { initialCategory: '', compact: false })
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; initialCategory?: string; compact?: boolean; developmentPreview?: boolean }>(), { initialCategory: '', compact: false })
 const emit = defineEmits<{ close: [] }>()
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const mock = import.meta.env.DEV
+const mock = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const rowsKey = 'ymes-dev-mock:accessory-category-states:ep204:v1'
 const categoryKey = 'ymes-dev-mock:accessory-categories:ep201:v1'
 const stateSeed: StateRow[] = [
@@ -86,7 +86,7 @@ function query():void{reconcile();error.value='';notice.value=''}
 async function load():Promise<void>{
   loading.value=true;error.value=''
   try{
-    if(mock){
+    if(mock.value){
       rows.value=readArray(rowsKey,stateSeed)
       categories.value=readArray(categoryKey,[{accessoryCategory:'JIG',issueState:0},{accessoryCategory:'CONSUMABLE',issueState:2},{accessoryCategory:'MEASURING',issueState:-1}])
       stateOptions.value=structuredClone(seedStates)
@@ -147,7 +147,7 @@ async function save(keep:boolean):Promise<void>{
   const action=mode.value,old=current.value,category=form.value.accessoryCategory.trim().toUpperCase(),state=Number(form.value.accessoryState),operation=form.value.operationName.trim(),stamp=now(),selectedState=stateOptions.value.find(x=>x.accessoryState===state)
   const payload={accessoryCategory:category,accessoryState:state,accessoryStateName:form.value.accessoryStateName,initialFlag:form.value.initialFlag?1:0,operationName:operation,interfaceName:form.value.interfaceName||null,executionFile:form.value.executionFile||null,description:form.value.description||null,dataStamp:old?.dataStamp}
   try{
-    if(mock){
+    if(mock.value){
       const all=readArray(rowsKey,stateSeed)
       if(action==='edit'&&old){const i=all.findIndex(x=>rowKey(x)===rowKey(old));if(i<0)throw Error('找不到要修改的資料。');all[i]={...all[i],initialFlag:payload.initialFlag as 0|1,interfaceName:payload.interfaceName,executionFile:payload.executionFile,description:payload.description,dataStamp:all[i].dataStamp+1,reviser:userNo(),reviseDate:stamp}}
       else all.push({accessoryCategory:category,accessoryState:state,accessoryStateName:selectedState?.stateName||form.value.accessoryStateName,initialFlag:payload.initialFlag as 0|1,issueState:0,description:payload.description,creator:userNo(),createDate:stamp,operationName:operation,interfaceName:payload.interfaceName,executionFile:payload.executionFile,dataStamp:0,reviser:null,reviseDate:null,stateColor:selectedState?.stateColor||0})
@@ -164,7 +164,7 @@ async function approve():Promise<void>{
   if(!window.confirm('確定核准選取的配件分類狀態？'))return
   busy.value=true;error.value=''
   try{
-    if(mock){const keys=new Set(list.map(row=>rowKey(row))),stamp=now();writeArray(rowsKey,readArray(rowsKey,stateSeed).map(row=>keys.has(rowKey(row))?{...row,issueState:2 as IssueState,dataStamp:row.dataStamp+1,reviser:userNo(),reviseDate:stamp}:row))}
+    if(mock.value){const keys=new Set(list.map(row=>rowKey(row))),stamp=now();writeArray(rowsKey,readArray(rowsKey,stateSeed).map(row=>keys.has(rowKey(row))?{...row,issueState:2 as IssueState,dataStamp:row.dataStamp+1,reviser:userNo(),reviseDate:stamp}:row))}
     else for(const row of list)await api('api/equipment/accessory-category-states/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accessoryCategory:row.accessoryCategory,accessoryState:row.accessoryState,operationName:row.operationName,issueState:row.issueState,dataStamp:row.dataStamp})})
     await load();selectedKeys.value=[];notice.value='已送出核准；正式簽核結果依 API 回傳狀態顯示。'
   }catch(e){error.value=e instanceof Error?e.message:'核准失敗。'}finally{busy.value=false}
@@ -174,7 +174,7 @@ async function remove():Promise<void>{
   if(!window.confirm('確定刪除選取的可用狀態？'))return
   busy.value=true;error.value=''
   try{
-    if(mock){const hard=new Set(list.filter(row=>row.issueState!==2).map(row=>rowKey(row))),inactive=new Set(list.filter(row=>row.issueState===2).map(row=>rowKey(row))),stamp=now();writeArray(rowsKey,readArray(rowsKey,stateSeed).filter(row=>!hard.has(rowKey(row))).map(row=>inactive.has(rowKey(row))?{...row,issueState:-1 as IssueState,dataStamp:row.dataStamp+1,reviser:userNo(),reviseDate:stamp}:row))}
+    if(mock.value){const hard=new Set(list.filter(row=>row.issueState!==2).map(row=>rowKey(row))),inactive=new Set(list.filter(row=>row.issueState===2).map(row=>rowKey(row))),stamp=now();writeArray(rowsKey,readArray(rowsKey,stateSeed).filter(row=>!hard.has(rowKey(row))).map(row=>inactive.has(rowKey(row))?{...row,issueState:-1 as IssueState,dataStamp:row.dataStamp+1,reviser:userNo(),reviseDate:stamp}:row))}
     else for(const row of list)await api('api/equipment/accessory-category-states/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accessoryCategory:row.accessoryCategory,accessoryState:row.accessoryState,operationName:row.operationName,issueState:row.issueState,dataStamp:row.dataStamp})})
     selectedKeys.value=[];await load();notice.value='可用狀態已刪除。'
   }catch(e){error.value=e instanceof Error?e.message:'刪除失敗。'}finally{busy.value=false}
@@ -182,6 +182,7 @@ async function remove():Promise<void>{
 function close():void{if(props.compact){emit('close');return}history.pushState({},'',base+'/Equipment/AccessoryCategories');dispatchEvent(new PopStateEvent('popstate'))}
 function onStatusChange():void{query()}
 onMounted(()=>{void load()})
+watch(() => props.developmentPreview, () => { void load() })
 </script>
 
 <template>

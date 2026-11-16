@@ -264,3 +264,30 @@ API 路徑與 DTO 詳見 docs/modules/EQP/配件/配件類別資料.md；目前 
 9. 部署後更新規格與本段待辦，再通知公司端 pull 對接 Production；API 不可讓 Production 回退 localStorage。
 
 Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryMaster.vue、AccessoryCategoryStateMaster.vue；路徑為 /YMES/Equipment/AccessoryCategories、/YMES/Equipment/AccessoryCategoryStates。兩頁 Production endpoint 尚未存在。
+
+
+## EP203 配件基本資料（家用電腦接手）
+
+先讀 docs/modules/EQP/配件/配件基本資料.md 與 docs/DATABASE_CONNECTION.md。公司端以 Windows PowerShell 5.1 + ODP.NET 直接唯讀查 MESTEST DDL；本次沒有查詢或匯出業務資料。
+
+### Oracle 來源檔
+
+- 六張表原始 Oracle DDL、八個 index DDL：database/reference/mestest_accessory_basis_source_ddl.sql
+- 六張表 PostgreSQL 空表 CREATE SQL：database/reference/mestest_accessory_basis_create.sql
+- EP203 主表區塊已回寫 database/reference/mestest_first_phase_create_tables.sql。
+- 新表清單：TBLEQPACCESSORYBASIS、TBLEMSACCESSORYSTATE、TBLEMSACCESSORYSTATELOG、TBLEQPACCSTATECONTROL、TBLEMSEQPACCSTATE、TBLEMSEQPACCSTATELOG。
+- 原始 Oracle DDL 沒有 FK。非 PK index 僅主表 GETGROUPNO 與設備配件狀態 EQUIPMENTNO；其他六個 index 為 PK index。
+- DDL 僅描述結構；不得在來源 Oracle 執行 CREATE SQL，不得把本機憑證寫入 Git。
+
+### 家用端待辦
+
+1. 逐欄比對 YMES PostgreSQL schema/migrations 的上述六表：欄位型別、長度、NULL、DEFAULT、PK、index；查 TBLEQPACCESSORYPROPERTY、TBLEQPACCESSORYTYPE、TBLEQPACCESSORYCATEGORY、TBLEQPACCSTATEBASIS、TBLEQPACCCATEGORYSTATEBASIS、TBLEQPACCESSORYLIFE、TBLSYSELEMENTBASIS、設備狀態/簽核資料是否已有 YMES 對應。缺表才新增 forward migration；既有額外欄位不可刪。
+2. 實作 GET api/equipment/accessory-basis?issueState=all&currentOnly=false，回傳 WinForms Grid 所有非隱藏欄位及 IssueState、CurVersion、AccessoryVersion、DataStamp。排序 AccessoryType、AccessoryNo；保留前端查詢 AccessoryNo。
+3. 實作 POST 新增、PUT /{accessoryNo}/{version} 修改，伺服器驗證長度/必填/版本複合鍵；新增狀態 0、版本 01。PUT/Approve/Delete 驗 DataStamp，Creator/Reviser 與時間由登入上下文/server clock 取得。
+4. Approve 只接受狀態 0，依配件分類初始狀態、TBLEQPACCSTATECONTROL Initial/EMS、配件壽命 RepairCycle 和既有簽核 Job/Detail 實作。同步目前配件狀態、設備配件映射及歷程資料；回傳真實狀態，不可固定把每筆標成 2。多表更新使用單一 PostgreSQL transaction。
+5. Delete 接受 0/-1/2：0/-1 依舊 Service 刪配件現況、設備目前配件、屬性（所有版本）及主檔；2 改為 -1 並更新 DataStamp/Reviser/ReviseDate；1 回 409。多選回逐筆結果，避免部分失敗無法追蹤。
+6. Copy API 新增主檔及複製來源已核准的配件屬性至新版本，目標屬性 IssueState=0；必須同交易完成。公司 UI 目前使用新增後呼叫 copy-properties，建議收斂成單一 POST copy endpoint，或讓 API 提供相同原子契約。
+7. 子屬性依配件/版本提供 GET/POST/PUT/DELETE/Approve；使用既有 TBLEQPACCESSORYPROPERTY，不得另建重複表。核對 DataStamp、PropertyNo 定義 (PropertyType=1)、元素值 lookup (TBLSYSELEMENTBASIS) 與狀態規則。
+8. 提供已核准配件類別及供應商 lookup；舊配件類別清單須取 IssueState=2，AccessoryCategory 由所選類別帶入。API 從 auth context 取操作者，不信任前端 Creator/Reviser。
+9. 匯入需支援舊 Excel 第一工作表七欄：AccessoryNo、AccessoryType、AccessoryCategory、VendorNo、ModelNo、AssetNo、Description。前四項必填；重查已存在編號、已核准類別/供應商及分類關係；每組 (AccessoryNo, AccessoryType) 唯一；插入版本 01/狀態 0。實作 multipart /import/preview 回傳 token+逐列結果及 /import/commit 重新驗證後交易寫入；提供 ACC BASIS 範本下載。
+10. 完成後更新 API 規格/migration 記錄及本待辦，通知公司端 pull 對接。Production 不得回退 localStorage 假資料。

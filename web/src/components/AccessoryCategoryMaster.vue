@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import AccessoryCategoryStateMaster from './AccessoryCategoryStateMaster.vue'
 
 type IssueState = 0 | 1 | 2 | -1
 type Mode = 'add' | 'edit' | 'copy' | null
 interface Category { accessoryCategory: string; description: string | null; issueState: IssueState; dataStamp: number; creator: string | null; createDate: string | null; reviser: string | null; reviseDate: string | null }
 interface ImportRow { accessoryCategory: string; description: string; result: string; message: string }
-const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string }>()
+const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>()
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const mock = import.meta.env.DEV
+const mock = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const storageKey = 'ymes-dev-mock:accessory-categories:ep201:v1'
 const seed: Category[] = [
   { accessoryCategory: 'JIG', description: '開發假資料：治具類配件', issueState: 0, dataStamp: 0, creator: 'DEV001', createDate: '2026-11-01T08:00:00+08:00', reviser: null, reviseDate: null },
@@ -51,7 +51,7 @@ function apiPath(path: string): string { if (!props.apiBaseUrl.trim()) throw Err
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> { const r = await fetch(apiPath(path), { credentials: 'include', ...init }); if (r.status === 401) { location.assign(base + '/'); throw Error('登入狀態已逾期，請重新登入。') } if (!r.ok) { const body = await r.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null; if (r.status === 404) throw Error('配件分類 API 尚未建立，請依 todolist_homepc.md 完成資料表與 API。'); throw Error(body?.detail || body?.message || body?.title || 'API 回應錯誤 (' + r.status + ')。') } return r.status === 204 ? undefined as T : await r.json() as T }
 function reconcile(): void { selected.value = selected.value.filter(id => visible.value.some(row => row.accessoryCategory === id)); if (!visible.value.some(row => row.accessoryCategory === active.value)) active.value = visible.value[0]?.accessoryCategory || '' }
 function query(): void { reconcile(); error.value = ''; notice.value = '' }
-async function load(): Promise<void> { loading.value = true; error.value = ''; try { rows.value = mock ? readLocal() : await api<Category[]>('api/equipment/accessory-categories'); reconcile() } catch (e) { rows.value = []; error.value = e instanceof Error ? e.message : '配件分類載入失敗。' } finally { loading.value = false } }
+async function load(): Promise<void> { loading.value = true; error.value = ''; try { rows.value = mock.value ? readLocal() : await api<Category[]>('api/equipment/accessory-categories'); reconcile() } catch (e) { rows.value = []; error.value = e instanceof Error ? e.message : '配件分類載入失敗。' } finally { loading.value = false } }
 function choose(row: Category): void { active.value = row.accessoryCategory; error.value = '' }
 function toggle(id: string): void { selected.value = selected.value.includes(id) ? selected.value.filter(x => x !== id) : [...selected.value, id]; active.value = id }
 function openForm(next: Exclude<Mode,null>): void {
@@ -70,7 +70,7 @@ async function save(keep: boolean): Promise<void> {
   busy.value = true; error.value = ''
   const oldId = current.value?.accessoryCategory || '', action = mode.value, id = form.value.accessoryCategory.trim().toUpperCase(), stamp = now()
   try {
-    if (mock) {
+    if (mock.value) {
       const all = readLocal()
       if (action === 'edit') { const i = all.findIndex(row => row.accessoryCategory === oldId); if (i < 0) throw Error('找不到要修改的資料。'); all[i] = { ...all[i], description: form.value.description || null, dataStamp: all[i].dataStamp + 1, reviser: userNo(), reviseDate: stamp } }
       else all.push({ accessoryCategory: id, description: form.value.description || null, issueState: 0, dataStamp: 0, creator: userNo(), createDate: stamp, reviser: null, reviseDate: null })
@@ -87,7 +87,7 @@ async function approve(): Promise<void> {
   if (!window.confirm('確定核准選取的配件分類？')) return
   busy.value = true; error.value = ''
   try {
-    if (mock) { const keys = new Set(list.map(row => row.accessoryCategory)), stamp = now(); saveLocal(readLocal().map(row => keys.has(row.accessoryCategory) ? { ...row, issueState: 2 as IssueState, dataStamp: row.dataStamp + 1, reviser: userNo(), reviseDate: stamp } : row)) }
+    if (mock.value) { const keys = new Set(list.map(row => row.accessoryCategory)), stamp = now(); saveLocal(readLocal().map(row => keys.has(row.accessoryCategory) ? { ...row, issueState: 2 as IssueState, dataStamp: row.dataStamp + 1, reviser: userNo(), reviseDate: stamp } : row)) }
     else for (const row of list) await api('api/equipment/accessory-categories/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessoryCategory: row.accessoryCategory, issueState: row.issueState, dataStamp: row.dataStamp }) })
     await load(); selected.value = []; notice.value = '已送出核准；正式簽核結果依 API 回傳狀態顯示。'
   } catch (e) { error.value = e instanceof Error ? e.message : '核准失敗。' } finally { busy.value = false }
@@ -97,7 +97,7 @@ async function remove(): Promise<void> {
   if (!window.confirm('確定刪除選取的配件分類？')) return
   busy.value = true; error.value = ''
   try {
-    if (mock) { const hard = new Set(list.filter(row => row.issueState !== 2).map(row => row.accessoryCategory)), inactive = new Set(list.filter(row => row.issueState === 2).map(row => row.accessoryCategory)), stamp = now(); saveLocal(readLocal().filter(row => !hard.has(row.accessoryCategory)).map(row => inactive.has(row.accessoryCategory) ? { ...row, issueState: -1 as IssueState, dataStamp: row.dataStamp + 1, reviser: userNo(), reviseDate: stamp } : row)) }
+    if (mock.value) { const hard = new Set(list.filter(row => row.issueState !== 2).map(row => row.accessoryCategory)), inactive = new Set(list.filter(row => row.issueState === 2).map(row => row.accessoryCategory)), stamp = now(); saveLocal(readLocal().filter(row => !hard.has(row.accessoryCategory)).map(row => inactive.has(row.accessoryCategory) ? { ...row, issueState: -1 as IssueState, dataStamp: row.dataStamp + 1, reviser: userNo(), reviseDate: stamp } : row)) }
     else for (const row of list) await api('api/equipment/accessory-categories/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessoryCategory: row.accessoryCategory, issueState: row.issueState, dataStamp: row.dataStamp }) })
     selected.value = []; await load(); notice.value = '配件分類已刪除或停用。'
   } catch (e) { error.value = e instanceof Error ? e.message : '刪除失敗。' } finally { busy.value = false }
@@ -113,7 +113,7 @@ async function readImport(event: Event): Promise<void> {
   importFile.value = file.name
   const extension = file.name.toLowerCase().split('.').pop() || ''
   if (extension !== 'csv') {
-    if (!mock && ['xls', 'xlsx'].includes(extension)) {
+    if (!mock.value && ['xls', 'xlsx'].includes(extension)) {
       importError.value = '正式環境將由 API 讀取第一工作表；按「匯入」開始處理。'
       return
     }
@@ -134,11 +134,11 @@ async function readImport(event: Event): Promise<void> {
 function downloadTemplate(): void { const blob=new Blob(['AccessoryCategory,Description\r\nJIG,Fixture accessories\r\n'],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='配件分類匯入範本.csv';a.click();URL.revokeObjectURL(url) }
 async function runImport(): Promise<void> {
   const excelFile = importSource.value && /\.(xls|xlsx)$/i.test(importSource.value.name)
-  if (!importRows.value.length && (mock || !excelFile)) { importError.value = '請先選取 CSV 資料。'; return }
+  if (!importRows.value.length && (mock.value || !excelFile)) { importError.value = '請先選取 CSV 資料。'; return }
   busy.value = true
   importError.value = ''
   try {
-    if (mock) {
+    if (mock.value) {
       const all = readLocal()
       for (const row of importRows.value) {
         if (!row.accessoryCategory) { row.result = '失敗'; row.message = '配件分類為必填' }
@@ -167,6 +167,7 @@ async function runImport(): Promise<void> {
 }
 function closePage(): void { history.pushState({},'',base||'/'); dispatchEvent(new PopStateEvent('popstate')) }
 onMounted(() => { void load() })
+watch(() => props.developmentPreview, () => { void load() })
 </script>
 
 <template>
@@ -193,7 +194,7 @@ onMounted(() => { void load() })
       <div class="grid-scroll"><table class="category-grid"><thead><tr><th>配件分類</th><th>說明</th><th>結果</th><th>訊息</th></tr></thead><tbody><tr v-for="(row,index) in importRows" :key="index"><td>{{row.accessoryCategory}}</td><td>{{row.description}}</td><td>{{row.result}}</td><td>{{row.message}}</td></tr><tr v-if="!importRows.length"><td colspan="4" class="empty">請選取 CSV 檔案。</td></tr></tbody></table></div>
       <p v-if="importError" class="message error">{{importError}}</p><footer class="dialog-foot"><button class="win-btn primary" :disabled="busy" @click="runImport">匯入</button><button class="win-btn" @click="importOpen=false">關閉</button></footer>
     </section></div>
-    <AccessoryCategoryStateMaster v-if="statesOpen" :api-base-url="apiBaseUrl" :current-user-no="currentUserNo" :initial-category="stateCategory" :compact="true" @close="statesOpen=false" />
+    <AccessoryCategoryStateMaster v-if="statesOpen" :api-base-url="apiBaseUrl" :current-user-no="currentUserNo" :initial-category="stateCategory" :compact="true" :development-preview="props.developmentPreview" @close="statesOpen=false" />
   </section>
 </template>
 

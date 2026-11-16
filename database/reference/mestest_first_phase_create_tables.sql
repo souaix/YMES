@@ -1056,100 +1056,34 @@ CREATE TABLE IF NOT EXISTS tbleqpaccessorybasis (
     description varchar(255),
     creator varchar(10),
     createdate timestamp without time zone,
-    issuestate numeric(1,0) NOT NULL,
+    issuestate numeric(1,0) DEFAULT 0 NOT NULL,
     assetno varchar(50),
-    accessoryversion varchar(3) NOT NULL,
-    curversion numeric(1,0) NOT NULL,
+    accessoryversion varchar(3),
+    curversion numeric(1,0) DEFAULT 0 NOT NULL,
     accessorycategory varchar(50),
     erpno varchar(50),
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
-    xx_para1 varchar(100),
-    xx_para2 varchar(100),
-    xx_para3 varchar(100),
-    xx_para4 varchar(100),
-    xx_para5 varchar(100),
-    xx_para6 varchar(100),
-    xx_para7 varchar(100),
-    xx_para8 varchar(100),
-    xx_para9 varchar(100),
-    xx_para10 varchar(100),
-    xx_para11 varchar(100),
-    xx_para12 varchar(100),
-    xx_para13 varchar(100),
-    xx_para14 varchar(100),
-    xx_para15 varchar(100),
-    xx_para16 varchar(100),
-    xx_para17 varchar(100),
-    xx_para18 varchar(100),
-    xx_para19 varchar(100),
-    xx_para20 varchar(100),
-    xx_para21 varchar(100),
-    xx_para22 varchar(100),
-    xx_para23 varchar(100),
-    xx_para24 varchar(100),
+    xx_para1 varchar(100), xx_para2 varchar(100), xx_para3 varchar(100), xx_para4 varchar(100),
+    xx_para5 varchar(100), xx_para6 varchar(100), xx_para7 varchar(100), xx_para8 varchar(100),
+    xx_para9 varchar(100), xx_para10 varchar(100), xx_para11 varchar(100), xx_para12 varchar(100),
+    xx_para13 varchar(100), xx_para14 varchar(100), xx_para15 varchar(100), xx_para16 varchar(100),
+    xx_para17 varchar(100), xx_para18 varchar(100), xx_para19 varchar(100), xx_para20 varchar(100),
+    xx_para21 varchar(100), xx_para22 varchar(100), xx_para23 varchar(100), xx_para24 varchar(100),
     getansno varchar(50),
     ansstatus varchar(20),
     acc_file_path1 varchar(500),
     acc_file_path2 varchar(500),
     acc_file_path3 varchar(500),
-    accessorystate numeric(2,0),
+    accessorystate numeric(2,0) DEFAULT 0,
     getgroupno varchar(20),
     maintenancetime timestamp without time zone,
     begroupmainten varchar(1),
+    CONSTRAINT n_tbleqpaccessorybasis_06 CHECK (accessoryversion IS NOT NULL),
     CONSTRAINT pk_tbleqpaccessorybasis PRIMARY KEY (accessoryno, accessoryversion)
 );
-COMMENT ON TABLE tbleqpaccessorybasis IS 'MES master data; Oracle source: MESTEST.TBLEQPACCESSORYBASIS';
-COMMENT ON COLUMN tbleqpaccessorybasis.accessoryno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.accessorytype IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.vendorno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.modelno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.assetno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.accessoryversion IS '版本（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.curversion IS '版本（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.accessorycategory IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.erpno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para1 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para2 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para3 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para4 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para5 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para6 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para7 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para8 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para9 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para10 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para11 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para12 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para13 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para14 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para15 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para16 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para17 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para18 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para19 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para20 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para21 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para22 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para23 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.xx_para24 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.getansno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.ansstatus IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.acc_file_path1 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.acc_file_path2 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.acc_file_path3 IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.accessorystate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.getgroupno IS '群組（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.maintenancetime IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccessorybasis.begroupmainten IS '群組（推測，請依業務確認）';
+CREATE INDEX IF NOT EXISTS idx_eqpacc_getgroupno ON tbleqpaccessorybasis (getgroupno);
 
 CREATE TABLE IF NOT EXISTS tbleqpaccstatebasis (
     accessorystate numeric(2,0) NOT NULL,
