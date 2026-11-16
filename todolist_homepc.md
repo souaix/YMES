@@ -493,3 +493,24 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 3. `POST /{takerNo}/approve?dataStamp=` 只接受狀態 0，IssueNo=`TAKER BASIS`，沿用 YMES Issue/Job 簽核服務；無 Job/Detail 時直達 2，有簽核 Detail 時建立簽核、狀態 1、通過 2、退回 0。
 4. WinForms/WebService 與本 checkout 的 Core 參數不一致：wsENT Edit/SetIssueState 傳 DataStamp/Reviser/ReviseDate，但 `kcENT.clsCustomerBasis` 宣告沒有這些參數；Core Edit 不寫 audit/DataStamp，IssueState helper 也只更新狀態。Production 新 API 依規格完成稽核/併發，不複製舊缺漏。
 5. 所有端點檢查登入者 ENT 權限；server 產生 audit 欄位與時間，使用 PostgreSQL transaction 和 compare-and-swap。更新 API/migration 文件、授予 `ymes_app` 最小權限，部署後通知公司端對接 Production。
+
+## ENT ET201 外包商主檔與連絡人（公司端已完成 DEV UI/Oracle DDL，待家用端接手）
+
+先讀 `docs/modules/ENT/外包商基本資料.md`。Vue DEV 頁為 `/YMES/Customer/Subcontractors`、FunctionNo `SUBCONTRACTOR BASIS`。UI/規格根據 `frmSubcontractor`、兩個 Define Form、wsENT/Core 及 Oracle 來源 DDL。
+
+### Schema / migration
+
+- Oracle source logical DDL：`database/reference/mestest_subcontractor_source_ddl.sql`；PostgreSQL 空表 CREATE SQL：`database/reference/mestest_subcontractor_create.sql`。只供逐欄比對 YMES 現況，不表示 YMES 尚無表。
+- `ymes.tblentsubcontractor`: SubcontractorNo varchar(20) NOT NULL PK; SubcontractorName varchar(220) NOT NULL; Description varchar(255); Creator varchar(10); CreateDate timestamp; IssueState numeric(1,0) DEFAULT 0 NOT NULL; ERPNo varchar(50); DataStamp numeric(11,0) DEFAULT 0 nullable; Reviser varchar(10); ReviseDate timestamp。
+- `ymes.tblentsubcontractorcont`: SubcontractorNo varchar(20) NOT NULL; ContactorName varchar(50) NOT NULL; TelNo/FaxNo varchar(20); Title varchar(20); Address/Email varchar(50); Description varchar(255); DataStamp numeric(11,0) DEFAULT 0 nullable; Creator varchar(10); CreateDate timestamp; Reviser varchar(10); ReviseDate timestamp; composite PK `(SubcontractorNo, ContactorName)`。
+- 兩張 Oracle 表都僅 PK unique index，無 FK/其他 index。先比對實際 YMES schema/migrations；保留 YMES 額外欄位/索引，不自行加 FK。舊 Core 的實體刪除會先刪連絡人，再刪主檔，新的 API 需用同一 PostgreSQL transaction。
+
+### API / 業務規則
+
+1. 新增 ENT API：`GET /api/ent/subcontractor-basis?subcontractorNo=`、`POST /api/ent/subcontractor-basis`、`PUT /{subcontractorNo}?dataStamp=`、`DELETE /{subcontractorNo}?issueState=&dataStamp=`、`POST /{subcontractorNo}/approve?dataStamp=`。
+2. 連絡人端點：`GET/POST /{subcontractorNo}/contacts`、`PUT/DELETE /{subcontractorNo}/contacts/{contactorName}?dataStamp=`。回傳完整 DTO 與 DataStamp；主鍵姓名只能在新增/複製時指定，修改時不可更換。
+3. 主檔必填 SubcontractorNo/Name；新增狀態 0；只有狀態 0 可修改；編號與連絡人姓名大寫。長度依 Oracle DDL。連絡人必填 ContactorName，另外欄位皆可空。
+4. 主檔刪除：狀態 0/-1 在一個交易內比對 DataStamp 後刪除連絡人及主檔；狀態 2 改 -1、更新 audit/DataStamp 且保留明細；狀態 1 回 409。批次是前端逐筆請求，遇錯停止並回報已完成筆數。
+5. 核准只接受 IssueState=0，IssueNo=`SUBCONTRACTOR BASIS`。重用 YMES Issue/Job 簽核服務：無 Job/Detail 直達 2；有簽核明細則狀態 1，通過 2、退回 0。Production 不得照 DEV 直接核准。
+6. DataStamp nullable/default 0；CAS 同時支援原值 NULL（`IS NULL`）及數值、遞增使用 `COALESCE(DataStamp,0)+1`。所有 API 檢查登入者 ENT 權限、主檔存在、欄位長度/唯一鍵與伺服器 audit。Core/wsENT 此 checkout 的命名參數存在版本差異，依本文件的新 API 契約統一補足 audit/CAS，不照搬未寫 audit 的舊 SQL。
+7. 公司端尚未 build/test/瀏覽器驗收。API/schema 完成並部署後，通知公司端 pull 並對接 Production 驗收。

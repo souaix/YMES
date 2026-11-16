@@ -24,6 +24,7 @@ import CustomerShipAddressMaster from './components/CustomerShipAddressMaster.vu
 import BrokerBasisMaster from './components/BrokerBasisMaster.vue'
 import ForwarderBasisMaster from './components/ForwarderBasisMaster.vue'
 import TakerBasisMaster from './components/TakerBasisMaster.vue'
+import SubcontractorBasisMaster from './components/SubcontractorBasisMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
@@ -52,6 +53,7 @@ const customerShipAddressRoute = appBasePath + '/Customer/ShipAddresses'
 const brokerBasisRoute = appBasePath + '/Customer/Brokers'
 const forwarderBasisRoute = appBasePath + '/Customer/Forwarders'
 const takerBasisRoute = appBasePath + '/Customer/Takers'
+const subcontractorBasisRoute = appBasePath + '/Customer/Subcontractors'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -188,6 +190,7 @@ const menuRoutes: Record<string, string> = {
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
+  'function:ENT:SUBCONTRACTOR BASIS': subcontractorBasisRoute,
   'function:ENT:CUSTOMER BASIS': customerBasisRoute,
   'function:ENT:CUSTOMER CONTACTOR': customerContactorRoute,
   'function:ENT:CUSTOMER SHIP ADDRESS': customerShipAddressRoute,
@@ -226,6 +229,7 @@ const functionRoutes: Record<string, string> = {
   'BROKER BASIS': brokerBasisRoute,
   'FORWARDER BASIS': forwarderBasisRoute,
   'TAKER BASIS': takerBasisRoute,
+  'SUBCONTRACTOR BASIS': subcontractorBasisRoute,
   'CUSTOMER BASIS': customerBasisRoute,
   'CUSTOMER CONTACTOR': customerContactorRoute,
   'CUSTOMER SHIP ADDRESS': customerShipAddressRoute,
@@ -291,6 +295,7 @@ const isCustomerShipAddressPage = computed(() => activeMasterKey.value === 'func
 const isBrokerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:BROKER BASIS')
 const isForwarderBasisPage = computed(() => activeMasterKey.value === 'function:ENT:FORWARDER BASIS')
 const isTakerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:TAKER BASIS')
+const isSubcontractorBasisPage = computed(() => activeMasterKey.value === 'function:ENT:SUBCONTRACTOR BASIS')
 const isEquipmentVendorPage = computed(() => activeMasterKey.value === 'equipment-vendor-master')
 const isEquipmentEngineerGroupPage = computed(() => activeMasterKey.value === 'equipment-engineer-group')
 const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment-group')
@@ -951,6 +956,13 @@ async function signOut(): Promise<void> {
         />
         <TakerBasisMaster
           v-else-if="isTakerBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+        />
+        <SubcontractorBasisMaster
+          v-else-if="isSubcontractorBasisPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

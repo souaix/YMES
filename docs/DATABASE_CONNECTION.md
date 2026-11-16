@@ -151,3 +151,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護連線唯讀取得 `MESTEST.TBLENTTAKERBASIS` DBMS_METADATA DDL、欄位 NULL/default、constraints 與 indexes；只查資料字典，未讀取業務列，未在 Oracle 執行 DDL。
 - 表只有 TakerNo PK unique index，無 FK/其他 index。Oracle source DDL/PG 空表 CREATE SQL 已追加至 customer reference；first-phase table default 與欄位註解已按查得 DDL 校正。
 - 完整 DDL、WinForms 欄位/狀態/簽核規則見 `docs/modules/ENT/取貨公司基本資料.md`；Oracle 連線設定仍只留本機受保護設定。
+
+### 更新 2026-11-16：ENT ET201 外包商主檔與連絡人
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過既有本機受保護連線唯讀查詢 `MESTEST.TBLENTSUBCONTRACTOR`、`TBLENTSUBCONTRACTORCONT` 的 DBMS_METADATA DDL、欄位 NULL/default、PK、索引與 FK 字典；沒有查業務資料或在 Oracle 執行 DDL。
+- 主檔只有 SubcontractorNo PK unique index；連絡人只有 `(SubcontractorNo, ContactorName)` 複合 PK unique index。Oracle 資料字典兩表均無 FK、無額外索引；舊 Core 仍在刪除主檔時明確刪除連絡人。
+- Oracle logical DDL 與 PostgreSQL 空表 CREATE SQL 為 `database/reference/mestest_subcontractor_source_ddl.sql`、`database/reference/mestest_subcontractor_create.sql`。包含 IssueState NOT NULL DEFAULT 0、兩表 DataStamp nullable DEFAULT 0。
+- WinForms 雙 Grid、表單欄位、狀態刪除/簽核與 API 規格見 `docs/modules/ENT/外包商基本資料.md`。連線憑證只由本機受保護設定提供，未輸出或提交。

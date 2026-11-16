@@ -277,4 +277,14 @@
 - [x] 新增 `docs/modules/ENT/取貨公司基本資料.md`，更新功能索引、DB 連線記錄與家用端 API/schema TODO。
 - [ ] 家用端先比對 YMES schema/migrations；缺少才新增 Taker table migration。實作 GET/POST/PUT/DELETE/approve、DataStamp compare-and-swap、稽核與 `TAKER BASIS` 共用簽核服務。
 - [ ] 未執行 build、測試或瀏覽器驗收；Production API 待家用端完成。
-- [ ] 下一項依 ENT FunctionNo 接續 ET201「外包商基本資料」；先核對 `STD/MESWin/ENT/ET_Subcontractor` Forms/Service，Oracle DDL 缺漏以 PowerShell 5.1 + ODP.NET 直連查資料字典。
+- [x] 下一項 ET201 已開始；完成狀態見下方 ET201 區塊。
+
+## ENT ET201 外包商基本資料公司端進度（2026-11-16）
+
+- [x] 本次先 pull `origin/main`，確認 GitHub 最新版已同步且工作樹乾淨。
+- [x] 對照 `frmSubcontractor`、`frmSubcontractorDef`、`frmSubcontractorContDef`、wsENT 與 clsCustomerBasis；記錄雙 Grid、按鈕、欄位、主從刪除、複製、套用與 Issue/Job 簽核流程。
+- [x] Oracle 兩張表結構已由既有 PowerShell 5.1 + ODP.NET 唯讀查詢取得；新增 source DDL 與 PostgreSQL 空表 CREATE SQL。未讀取業務資料，也未對 MES Oracle 寫入。
+- [x] 新增 `web/src/components/SubcontractorBasisMaster.vue`，Development 使用獨立 localStorage 假資料，實作上下雙 Grid、狀態/編號查詢、多選、主檔/連絡人新增修改複製刪除、核准、Mail、KD 黃色欄位與稽核區。
+- [x] 加入 `/YMES/Customer/Subcontractors` 路由及 FunctionNo `SUBCONTRACTOR BASIS`；建立外包商規格並更新模組索引、Oracle 連線紀錄及家用端待辦。
+- [ ] 尚未執行 build、測試或瀏覽器驗收；Production API/migration/Issue service 仍待家用端完成。
+- [ ] 下一功能依 MES Function inventory 繼續 ET202 `ENTOSITEM` 外包項目設定；開始前先 pull 家用端最新提交並讀該功能 Form/Service。

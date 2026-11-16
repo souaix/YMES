@@ -67,6 +67,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | ENT | 報關行基本資料 ET103 DEV 頁面 | [報關行基本資料規格](modules/ENT/報關行基本資料.md)；已由 Oracle 直連核對 DDL，補 PostgreSQL 空表 CREATE SQL | Production CRUD、DataStamp 與簽核 API 待家用端 |
 | ENT | 貨運行基本資料 ET104 DEV 頁面 | [貨運行基本資料規格](modules/ENT/貨運行基本資料.md)；已由 Oracle 直連核對 DDL，補 PostgreSQL 空表 CREATE SQL | Production CRUD、已簽核報關行查找與簽核 API 待家用端 |
 | ENT | 取貨公司基本資料 ET105 DEV 頁面 | [取貨公司基本資料規格](modules/ENT/取貨公司基本資料.md)；已由 Oracle 直連核對 DDL，補 PostgreSQL 空表 CREATE SQL | Production CRUD、DataStamp 與簽核 API 待家用端 |
+| ENT | 外包商基本資料 ET201 DEV 雙 Grid 頁面 | [外包商基本資料規格](modules/ENT/外包商基本資料.md)；兩張 Oracle 來源 DDL/PG 空表 CREATE SQL 已建立 | YMES schema 比對、雙表 CRUD/交易與 Issue/Job 核准 API 待家用端 |
 | EQP | 設備設定七項 DEV 頁面 | 設備設定功能規格已分頁；多張設備表已查 DDL | 待逐功能完成 |
 | OP | 作業站主檔及簡化 DEV 子功能 | [作業站主檔規格](modules/OP/作業站主檔.md)；18 張作業站相關表來源 DDL/CREATE SQL 已交付 | 待補子功能 API |
 | MTL | 物料主檔及簡化 DEV 子功能 | [物料主檔規格](modules/MTL/物料主檔.md)、[物料資料匯入](modules/MTL/物料資料匯入.md)；8 張來源表 DDL/CREATE SQL 已交付 | 主檔/API 部分完成；功能仍待逐項復刻 |
