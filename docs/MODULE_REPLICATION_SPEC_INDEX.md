@@ -72,7 +72,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | EQP | 設備設定七項 DEV 頁面 | 設備設定功能規格已分頁；多張設備表已查 DDL | 待逐功能完成 |
 | SMD | SD101 工廠、SD103 儲位、SD104 區域、SD105 區域庫房、SD106 過帳電腦之區域、SD107 生產線別、SD108 區域設備狀態監控、SD109 工位基本資料 DEV 頁面；SMD 第一層三層選單列出 8 個功能 | [SD101](modules/SMD/工廠基本資料.md)、[SD103](modules/SMD/儲位基本資料.md)、[SD104](modules/SMD/區域基本資料.md)、[SD105](modules/SMD/區域庫房基本設定.md)、[SD106](modules/SMD/過帳電腦之區域.md)、[SD107](modules/SMD/生產線別基本資料.md)、[SD108](modules/SMD/設備狀態監控_區域.md)、[SD109](modules/SMD/工位基本資料.md)；來源 Oracle DDL 與 PostgreSQL 空表 CREATE 已交付 | SD101、SD103–SD109 Production API/schema 待家用端 |
 | OP | 作業站主檔及簡化 DEV 子功能 | [作業站主檔規格](modules/OP/作業站主檔.md)；18 張作業站相關表來源 DDL/CREATE SQL 已交付 | 待補子功能 API |
-| MTL | 物料主檔及簡化 DEV 子功能；ML101「物料供應商基本資料」、ML102「物料類別資料」、ML105「物料類別品管項目設定」DEV 頁 | [物料主檔規格](modules/MTL/物料主檔.md)、[物料資料匯入](modules/MTL/物料資料匯入.md)、[物料供應商基本資料](modules/MTL/物料供應商基本資料.md)、[物料類別資料](modules/MTL/物料類別資料.md)、[物料類別品管項目設定](modules/MTL/物料類別品管項目設定.md)；ML101 兩表 DDL/CREATE 已交付，ML102/ML105 沿用物料 0013 已建資料表 | MTL basis API 部分完成；ML101、ML102、ML105 Production API 待家用端，其他功能仍待逐項復刻 |
+| MTL | 物料主檔及 DEV 子功能；ML101、ML102、ML104、ML105、ML106、ML107 畫面/規格已建立 | [物料主檔](modules/MTL/物料主檔.md)、[ML101](modules/MTL/物料供應商基本資料.md)、[ML102](modules/MTL/物料類別資料.md)、[ML104](modules/MTL/物料群組資料.md)、[ML105](modules/MTL/物料類別品管項目設定.md)、[ML106](modules/MTL/物料品管項目設定.md)、[ML107](modules/MTL/物料標籤對應設定.md)；ML107 Oracle DDL/PG CREATE 已交付，ML101/104 DDL/CREATE 已交付，ML102/105 沿用既有 MTL reference | MTL API 部分部署；ML101、102、104、105、106、107 Production API/schema 依 `todolist_homepc.md` 待家用端完成 |
 | PRS | 流程主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
 | PRD | 產品主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
 
@@ -100,6 +100,17 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | 載具類別資料 | EP302；WinForms Form/Def/Designer、wsEQP/clsCarrierBasis、Oracle DDL 與 UseLayer/簽核規則已核實 | [規格](modules/EQP/載具/載具類別資料.md)、Oracle 原始 DDL/PG 空表 CREATE SQL 與 Vue DEV UI 已建立；Production schema/API/核准流程待家用電腦 |
 | 載具基本資料 | EP303；frmCarrierBasis/Def、wsEQP/clsCarrierBasis、主表/WIP 狀態/廠區 DDL 與交易/簽核規則已核實 | [規格](modules/EQP/載具/載具基本資料.md)、Oracle 原始 DDL/PG 空表 CREATE SQL 與 Vue DEV UI 已建立；Production schema/API/核准流程待家用電腦 |
 | 設備參數資料 | EP401；frmEQPRecipeBasis/Def、雙清單與 Recipe Detail/Copy/Version/簽核 Service 規則已核對；兩張 Oracle DDL、索引及 Type ValueList 已直連查證 | [規格](modules/EQP/設備設定/設備參數資料.md)、Oracle 原始 DDL/PG 空表 CREATE SQL、bootstrap 修正與 Vue DEV UI 已建立；Production schema/API/簽核待家用電腦 |
+
+## 物料資料 → 物料設定
+
+| 功能 | WinForms / 資料來源狀態 | Web 規格狀態 |
+| --- | --- | --- |
+| ML101 物料供應商基本資料 | Form/Service/Core、主從表 DDL 已核對 | [規格](modules/MTL/物料供應商基本資料.md)與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML102 物料類別資料 | Form/Service/Core 與 MTL 主表/屬性/QC/GumHour 結構已核對 | [規格](modules/MTL/物料類別資料.md)與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML104 物料群組資料 | 主從 Form/Service/Core、主表 Oracle DDL 已核對 | [規格](modules/MTL/物料群組資料.md)、Oracle DDL/PG CREATE 與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML105 物料類別品管項目設定 | Form/Service/Core、資料同步與 IQC 副作用已核對 | [規格](modules/MTL/物料類別品管項目設定.md)與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML106 物料品管項目設定 | Form/Service/Core、catalog 與 bind log 結構已核對 | [規格](modules/MTL/物料品管項目設定.md)、Oracle DDL/PG CREATE 與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML107 物料標籤對應設定 | Form/Service/Core；TBLMTLLABELMAP 與 TBLPRDLABELBASIS Oracle DDL 已由 PowerShell 直連核對 | [規格](modules/MTL/物料標籤對應設定.md)、兩張表 CREATE 參考與 Vue DEV 頁已建立；Production API 待家用端 |
 
 ## 全 MES 盤點狀態
 

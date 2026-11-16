@@ -222,3 +222,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - GROUPNO 與 MATERIALTYPE 的資料字典 column Nullable 顯示 Y，但各有 ENABLED CHECK constraint 強制非 NULL；DATASTAMP NUMBER(11,0) DEFAULT 0 可 NULL。唯一索引為 GroupNo PK index，無其他索引/FK。
 - Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 分別在 `database/reference/mestest_mtl_material_group_source_ddl.sql`、`database/reference/mestest_mtl_material_group_create.sql`；群組明細沿用 `mestest_mtl_master_source_ddl.sql`、`mestest_mtl_master_create.sql`。
 - 連線秘密仍只在本機受保護設定中；IP、帳號、密碼、SID 不寫入 repo 或待辦，也不需要重新向使用者索取。
+
+### 更新 2026-11-17：MTL ML107 物料標籤對應
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機既有受保護連線唯讀呼叫 DBMS_METADATA.GET_DDL，查得 `MESTEST.TBLMTLLABELMAP` 與 lookup table `MESTEST.TBLPRDLABELBASIS`；並查 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES、ALL_IND_COLUMNS。
+- TBLMTLLABELMAP 主鍵為 (MaterialType, MaterialNo, LabelSource, LabelType)，LabelSource=5 是物料來源；DataStamp nullable DEFAULT 0。TBLPRDLABELBASIS 主鍵為 LabelNo，兩表都只有 PK unique index，沒有 FK/額外索引。
+- Source DDL / PostgreSQL 空表參考見 `database/reference/mestest_mtl_label_map_source_ddl.sql`、`mestest_mtl_label_map_create.sql`、`mestest_prd_label_basis_lookup_create.sql`。本次只查資料字典結構，未讀業務列、未在 Oracle 執行 DDL。
+- IP、帳號、密碼、SID 仍由本機受保護設定提供，未輸出或寫入文件/Git；下次公司端查 DDL 沿用這個既有 PowerShell/ODP.NET 方式。

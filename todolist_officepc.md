@@ -417,7 +417,7 @@
 - [x] Vue 已接上 options API 的 CountWay/CheckLotNo 選項與 GumHour 顯示參數契約；Production API 目前回傳空 CountWay/CheckLotNo，且尚未回傳 MATERIALMULTITIMECTRL/GumMaterialType。另發現現有 Approve API 尚未執行條件式 GumHour 檢查，詳見 todolist_homepc.md。
 - [x] 更新 docs/modules/MTL/物料主檔.md 與規格索引；沿用已查 8 張物料表 Oracle DDL/PG CREATE，ML103 無新增資料表。
 - [ ] 未執行 build、test 或瀏覽器驗收。Production options API 待家用端補齊來源 ValueList/參數後 pull 回公司端再對照。
-- [x] ML104 物料群組資料已完成公司端 DEV 頁與規格；Production API/schema 交家用端。下一項依 MES FunctionOrder 為 ML107「物料標籤對應設定」。
+- [x] ML104 物料群組資料及後續 FunctionOrder 中的 ML107「物料標籤對應設定」均已完成公司端 DEV 頁與規格；Production API/schema 交家用端。ML107 規格見本檔較後方區塊。
 
 ## 2026-11-17 MTL ML104 物料群組資料公司端進度
 
@@ -427,4 +427,14 @@
 - [x] 新增 `web/src/components/MaterialGroupMaster.vue`、三層選單 `MTL GROUP` 與 `/YMES/MTL/MaterialGroups` 路徑；DEV 假資料頁包含主 Grid、多選刪除、編輯/複製/套用、稽核欄、類別 lookup、同類已核准物料雙清單與整組儲存。
 - [x] 新增 `docs/modules/MTL/物料群組資料.md`，記錄 Form/Service/Core、Oracle DDL、API 交易與 Vue 規則；更新索引、Oracle 連線查詢紀錄及家用端 API/schema handoff。
 - [ ] 未執行 build、測試或瀏覽器驗收；Production API/schema 仍待家用端完成。
-- [ ] 下一項按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 盤點 ML107「物料標籤對應設定」Form/Service/Core 與使用資料表，僅在來源 reference 不足時以 PowerShell 5.1 + ODP.NET 直查 Oracle DDL。
+- [x] ML107「物料標籤對應設定」已完成公司端 WinForms/Service/Core 對照、Oracle DDL 直查、Vue DEV 頁、功能規格及家用端 API/schema handoff，詳見本檔 ML107 區塊。
+
+## 2026-11-17 MTL ML107 物料標籤對應設定公司端進度
+
+- [x] 開始前 pull GitHub main，確認 YMES 已是 `71fef1e`，工作樹乾淨。
+- [x] 對照 `frmMTLLabelBasis`、Designer、`frmMTLLabelBasisDef`、`wsMTL`、`wsPRD`、`clsMTLBasis`、`clsBasis_UPD`、`clsProduct`：主畫面 Filter/Like 條件、初始不查詢、Grid 欄位、四個資料操作按鈕、Add/Edit/Copy/Delete、LabelSource=5、MaterialNo=`*`、DataStamp/Audit、Apply/Confirm 與 lookup 限制。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機既有受保護連線直接唯讀呼叫 DBMS_METADATA 並查 ALL_TAB_COLUMNS/ALL_CONSTRAINTS/ALL_INDEXES/ALL_IND_COLUMNS；取得 `TBLMTLLABELMAP` 與 label lookup `TBLPRDLABELBASIS` DDL。只查結構，未讀 MES 業務資料、未執行 Oracle DDL；連線值未輸出。
+- [x] 新增兩張表 Oracle source DDL、PostgreSQL 空表 CREATE SQL、`docs/modules/MTL/物料標籤對應設定.md`，並更新功能規格索引、Oracle 連線查詢紀錄及家用端 API/schema handoff。
+- [x] 新增 `web/src/components/MaterialLabelMapMaster.vue`，加入 FunctionNo `MTL LABEL MAP BASIS` 三層選單及 `/YMES/MTL/MaterialLabelMaps` route；DEV 頁包含初始空 Grid、三組查詢/lookup、多選刪除、Add/Edit/Copy、LabelSource/物料 lookup、稽核資訊及 KD 黃色輸入樣式。
+- [ ] 未執行 build、測試或瀏覽器驗收；Production schema/API 待家用端依 `todolist_homepc.md` 比對及完成。
+- [ ] 下一步依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 確認其餘未完成 FunctionNo，再讀 WinForms Form/Designer/Service/Core，查明缺少的 Oracle DDL 並續做 DEV UI。

@@ -16,6 +16,17 @@
 - [ ] 驗證登入者的 `MTL GROUP` 權限、GroupNo/MaterialType/Description 長度與必填、唯一鍵、DataStamp 衝突；此功能無核准 endpoint。沿用現有伺服器 event log，不建新表。
 - [ ] API/schema/migration 部署後更新規格及本清單並 push；通知公司端 pull 最新版接 Production API。公司端 `/YMES/MTL/MaterialGroups` 已完成 DEV 頁。
 
+### MTL ML107 物料標籤對應設定（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料標籤對應設定.md`、公司端 ML107 進度及本節。WinForms Form/Designer、Service/Core、Oracle 結構、Vue DEV 頁與 API 契約已整理。
+- [ ] 以家用端 PPK/SSH 比對 YMES live schema 和 migrations。主表 `tblmtllabelmap` 若缺少，依 `database/reference/mestest_mtl_label_map_create.sql` 新增 forward migration；標籤 lookup `tblprdlabelbasis` 若缺少，才依 `database/reference/mestest_prd_label_basis_lookup_create.sql` 建立。若已存在，核對欄位、NULL/default、PK/index 並保留 YMES 擴充欄位；不可盲跑 reference SQL。
+- [ ] 實作 `GET /api/material-label-maps?materialType=&materialNo=&labelNo=`，三條件以參數化 contains/LIKE 篩選，主查詢沿用舊 Core 的 `MaterialNo IS NOT NULL`（不加 LabelSource 條件），回傳物料/類別名稱、LabelSource、DataStamp、稽核欄，依 MaterialType/MaterialNo/LabelType 排序。
+- [ ] 實作 `GET /api/product-labels?labelSource=5` 讀標籤目錄；LabelSource 必須精確等於 5，回傳 LabelType、LabelNo、FormatFileName、Description、PrinterNo。另沿用 `GET /api/material-types?issueState=2` 及 `GET /api/materials?issueState=2&materialType={exact}` 選擇器；物料 lookup 支援虛擬 `MaterialNo='*'`，不可要求該值存在於物料表。
+- [ ] 實作 `POST /api/material-label-maps`：必填 MaterialType/MaterialNo/LabelType/LabelNo、來源固定為 5、長度符合 DDL、API 端設定 Creator/CreateDate、DataStamp 初值 0；複合 PK 衝突回 409。舊 WinForms 可手動輸入 LabelNo，沒有 label-map FK，因此不要要求手打的 LabelNo 必須存在於 label template 表。
+- [ ] 實作 `PUT /api/material-label-maps/{materialType}/{materialNo}/{labelType}?dataStamp=`：只更新 LabelNo；WHERE 限定 LabelSource=5 與舊 DataStamp，成功更新 Reviser/ReviseDate 並遞增 DataStamp；nullable DataStamp 需支援 `dataStamp=0&dataStampIsNull=true` 並用 `IS NULL` CAS。版本衝突/不存在回 409/404。實體刪除依複合 UI key 加 LabelSource=5；主 Grid 多筆刪除仍逐筆執行、遇錯停止並回報部分成功。
+- [ ] 所有端點檢查登入與 FunctionNo `MTL LABEL MAP BASIS` 權限；不加入 IssueState/核准流程、不新增 Oracle FK 或事件資料表。完成 schema/API 部署後更新規格與 migration index，push 並通知公司端 pull Production API。
+- [ ] 公司端頁面 `/YMES/MTL/MaterialLabelMaps` 已建立 DEV UI；Production API 未部署前不得以 localStorage 充當正式資料。
+
 ### MTL ML101 物料供應商基本資料（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/MTL/物料供應商基本資料.md`、`docs/DATABASE_CONNECTION.md` 新增段落及本檔公司端進度；WinForms Form/Service、API 契約、Issue 狀態與刪除交易均已記錄。
