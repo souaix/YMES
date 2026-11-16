@@ -237,3 +237,30 @@
 6. 部署後更新本節、功能規格與 API 狀態，再由公司端 pull 對接實際 API。
 
 API 路徑與 DTO 詳見 docs/modules/EQP/配件/配件類別資料.md；目前 Production API 尚未完成，不要以 Development 假資料結果回報正式成功。
+
+## EP201 配件分類與 EP204 可用狀態（公司端 2026-11-16 交接）
+
+先讀以下規格與程式，再做 YMES schema/API；公司端已用唯讀 Oracle 連線核實 DDL，並完成 Vue Development 假資料頁。不可把假資料視為 MES 業務資料。
+
+### 來源與 SQL
+
+- EP201 規格：docs/modules/EQP/配件/配件分類資料.md
+- EP204 規格：docs/modules/EQP/配件/配件分類狀態定義設定.md
+- EP201 主表 TBLEQPACCESSORYCATEGORY 的來源 DDL/PG 空表 SQL：database/reference/mestest_accessory_type_dependencies_source_ddl.sql、database/reference/mestest_accessory_type_dependencies_create.sql。
+- EP204 狀態定義表 TBLEQPACCCATEGORYSTATEBASIS：database/reference/mestest_accessory_category_state_source_ddl.sql、database/reference/mestest_accessory_category_state_create.sql。
+- EP204 lookup 表 TBLEQPACCSTATEBASIS：database/reference/mestest_accessory_state_source_ddl.sql、database/reference/mestest_accessory_state_create.sql。database/reference/mestest_first_phase_create_tables.sql 中的 lookup 表 block 已用 Oracle 原始 DDL 修正。
+- CREATE SQL 只建空結構、不含 MES 資料。開始前查 YMES PostgreSQL 實際 schema；既有表保留額外欄位，缺表才新增 forward migration，欄位/default 差異用 migration，不要在來源 Oracle 執行 SQL。
+
+### 家用端待辦
+
+1. 逐欄比對三張表的欄位型別、NULL/default、PK、索引與既有 migration。TBLEQPACCCATEGORYSTATEBASIS 的 PK 為 AccessoryCategory/AccessoryState/OperationName；DATASTAMP default 0 但可 NULL。TBLEQPACCSTATEBASIS 的 STATETYPE default 1 且 NOT NULL；DATASTAMP default 0 但可 NULL。沒有額外 Oracle FK/index。
+2. 若缺表，新增可重複/版本化 migration，套用前按既有部署慣例備份；授予 ymes_app 最小必要 CRUD 權限。不要直接改動已部署資料。
+3. 建立 EP201 API：GET/POST/PUT accessory-categories、POST approve/delete/import。對齊規格中的 0/1/2/-1 狀態、DataStamp、簽核 Job/Detail 流程；狀態 0/-1 物理刪除、2 改為 -1、1 拒絕。來源刪主分類不會 cascade 狀態子列，API 保留此行為。
+4. 建立 EP204 API：GET/POST accessory-category-states、PUT edit、POST approve/delete；GET accessory-states、GET accessory-state-controls?controlType=EMS、GET system/functions?executionMode=0&accessoryStateChangeInterface=true，以及分類 options。
+5. EP204 新增/修改需檢查每個 AccessoryCategory 至多一個 InitialFlag=1。Oracle 原表沒有相應 unique index；Production 需以交易/鎖或先確認既有資料後新增安全約束，避免並行同時設定兩個初始狀態。
+6. OperationName 不可等於 ControlType=EMS 標準動作的 ControlNo 或翻譯名稱。介面選項只限 EXECUTIONMODE=0 且 ACCStateChangeInterface=1；預設介面 frmACCStateChangeDescription，執行檔 ES_ACCStateChangeDescription.dll。
+7. 狀態清單以 AccessoryState join TBLEQPACCSTATEBASIS 取得 StateName/StateColor。EP204 刪除 0/-1 物理刪除、2 改成 -1、1 拒絕；核准走現有 issue workflow。
+8. 配合 Vue API DTO 欄位採 camelCase：AccessoryCategory/AccessoryState/OperationName 三欄為 EP204 key，寫入時驗 DataStamp。匯入回傳逐筆 results（accessoryCategory/result/message）；支援舊第一工作表 .xls/.xlsx 欄位 AccessoryCategory/Description 和 DataChecker 分組結果；Vue 以 multipart/form-data 的 file 欄位上傳 Excel，CSV 則傳 JSON。
+9. 部署後更新規格與本段待辦，再通知公司端 pull 對接 Production；API 不可讓 Production 回退 localStorage。
+
+Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryMaster.vue、AccessoryCategoryStateMaster.vue；路徑為 /YMES/Equipment/AccessoryCategories、/YMES/Equipment/AccessoryCategoryStates。兩頁 Production endpoint 尚未存在。

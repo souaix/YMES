@@ -1153,11 +1153,11 @@ COMMENT ON COLUMN tbleqpaccessorybasis.begroupmainten IS '群組（推測，請�
 
 CREATE TABLE IF NOT EXISTS tbleqpaccstatebasis (
     accessorystate numeric(2,0) NOT NULL,
-    statetype numeric(2,0) NOT NULL,
+    statetype numeric(2,0) DEFAULT 1 NOT NULL,
     statename varchar(50) NOT NULL,
     statecolor numeric(11,0) NOT NULL,
     description varchar(255),
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     creator varchar(10),
     createdate timestamp without time zone,
     reviser varchar(10),
@@ -1165,17 +1165,16 @@ CREATE TABLE IF NOT EXISTS tbleqpaccstatebasis (
     CONSTRAINT pk_tbleqpaccstatebasis PRIMARY KEY (accessorystate)
 );
 COMMENT ON TABLE tbleqpaccstatebasis IS 'MES master data; Oracle source: MESTEST.TBLEQPACCSTATEBASIS';
-COMMENT ON COLUMN tbleqpaccstatebasis.accessorystate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccstatebasis.statetype IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccstatebasis.statename IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccstatebasis.statecolor IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccstatebasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccstatebasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccstatebasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccstatebasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccstatebasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpaccstatebasis.revisedate IS '修改時間（推測，請依業務確認）';
-
+COMMENT ON COLUMN tbleqpaccstatebasis.accessorystate IS 'Accessory state code';
+COMMENT ON COLUMN tbleqpaccstatebasis.statetype IS 'Accessory state type';
+COMMENT ON COLUMN tbleqpaccstatebasis.statename IS 'Accessory state name';
+COMMENT ON COLUMN tbleqpaccstatebasis.statecolor IS 'Accessory state color';
+COMMENT ON COLUMN tbleqpaccstatebasis.description IS 'Description';
+COMMENT ON COLUMN tbleqpaccstatebasis.datastamp IS 'Optimistic concurrency stamp';
+COMMENT ON COLUMN tbleqpaccstatebasis.creator IS 'Creator user number';
+COMMENT ON COLUMN tbleqpaccstatebasis.createdate IS 'Creation timestamp';
+COMMENT ON COLUMN tbleqpaccstatebasis.reviser IS 'Last reviser user number';
+COMMENT ON COLUMN tbleqpaccstatebasis.revisedate IS 'Last revision timestamp';
 CREATE TABLE IF NOT EXISTS tbleqprecipebasis (
     recipegroup varchar(50) NOT NULL,
     recipeversion numeric(2,0) NOT NULL,

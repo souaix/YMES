@@ -77,3 +77,12 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢 MESTEST 的 TBLEQPACCESSORYTYPE、TBLEQPACCESSORYCATEGORY、TBLEQPACCESSORYPROPERTY、TBLEQPACCESSORYLIFE DDL、欄位 NULL/default、PK、索引與 FK 字典。
 - Oracle 原始 DDL/PG 空表 CREATE SQL：database/reference/mestest_equipment_type_accessory_catalog_source_ddl.sql、mestest_equipment_type_accessory_catalog_create.sql、mestest_accessory_type_dependencies_source_ddl.sql、mestest_accessory_type_dependencies_create.sql。
 - 四表均無額外索引及 FK；只有 PK 唯一索引。此批查詢只讀結構，未讀 MES 業務資料。家用端執行前需比對實際 YMES schema，缺表才經 migration 建立。
+
+### 更新 2026-11-16：EP201 配件分類與 EP204 可用狀態
+
+- 公司端用 PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護連線唯讀呼叫 DBMS_METADATA.GET_DDL，核實 MESTEST.TBLEQPACCCATEGORYSTATEBASIS、TBLEQPACCSTATEBASIS；另核對 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES。
+- EP204 原始 DDL與 PostgreSQL 空表 CREATE SQL：mestest_accessory_category_state_source_ddl.sql、mestest_accessory_category_state_create.sql；lookup DDL/CREATE：mestest_accessory_state_source_ddl.sql、mestest_accessory_state_create.sql。
+- TBLEQPACCCATEGORYSTATEBASIS PK 為 (ACCESSORYCATEGORY, ACCESSORYSTATE, OPERATIONNAME)，只有 PK 唯一索引，沒有 FK/額外索引。OPERATIONNAME 因 PK 而 NOT NULL；DATASTAMP DEFAULT 0 但 nullable。
+- TBLEQPACCSTATEBASIS PK 為 ACCESSORYSTATE，STATETYPE DEFAULT 1 NOT NULL，DATASTAMP DEFAULT 0 但 nullable；僅 PK 唯一索引，沒有額外 FK/index。
+- 已修正 mestest_first_phase_create_tables.sql 中 lookup 表曾以推測註解呈現的欄位/default，並有單表 CREATE SQL 供家用端比對。套用前仍須檢查 YMES 現有 schema；缺表才 migration。本次只查結構，未讀取或匯出 MES 業務資料。
+- EP201 主表 TBLEQPACCESSORYCATEGORY 的 DDL/CREATE SQL 已在 EP202 共用依賴檔案中；家用端規格見 todolist_homepc.md 的 EP201/EP204 交接段落。

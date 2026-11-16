@@ -79,6 +79,8 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | 設備工程群組資料 | Form、Service、主表及 `TBLUSRUSERGROUP` 成員表 Oracle DDL 已追；成員表 PK/欄位/索引已核對 | 規格與 PostgreSQL 空表 CREATE SQL 已建立；Vue Development 假資料頁已建立；YMES schema 比對及 CRUD/成員 API 待家用電腦 |
 | 設備類別資料 | WinForms/Service、5 張設備類別相關表及配件目錄表 Oracle DDL、FunctionNo/FunctionKey 已核實 | Vue DEV 頁已有類別 CRUD/子視窗；匯入依 WinForms 第一工作表固定欄序、結果列與取消流程；家用端待比對配件目錄 YMES schema 並實作 API |
 | 配件類別資料 | ACC TYPE / EP202；frmAccessoryType、定義、壽命、屬性及匯入原始碼已核對；4 張來源表 DDL/PK 已由 PowerShell 直連 Oracle 查得 | [規格](modules/EQP/配件/配件類別資料.md)與 Vue DEV 頁已建立；Excel/舊 Checker 簡化已記錄，Production API/schema 比對待家用端 |
+| 配件分類資料 | ACC CATEGORY / EP201；frmAccessoryCategory/Def/Import 與 Service 狀態規則已核對；主表 DDL 沿用 EP202 依賴檔 | [規格](modules/EQP/配件/配件分類資料.md)與 Vue DEV 頁已建立；CSV 暫代 Excel，API/schema 待家用端 |
+| 配件分類狀態定義設定 | ACC CATEGORY STATE / EP204；Form/Def、狀態/介面選項、InitialFlag 唯一性與簽核刪除規則已核對；兩張 Oracle DDL 已直連查得 | [規格](modules/EQP/配件/配件分類狀態定義設定.md)、PG 空表 CREATE SQL 與 Vue DEV 彈窗/獨立頁已建立；API/schema 待家用端 |
 | 設備基本資料 | WinForms 主/編輯/Chamber Form、屬性、參數、QC 關聯、匯入 Form 與 Service 均已追 | [設備基本資料](modules/EQP/設備設定/設備基本資料.md)、[設備屬性](modules/EQP/設備設定/設備屬性設定.md)、[設備參數](modules/EQP/設備設定/設備參數設定.md)、[設備點檢表關聯](modules/EQP/設備設定/設備點檢表關聯.md)、[設備匯入](modules/EQP/設備設定/設備資料匯入.md)規格已建立；設備子功能 DEV Vue 已接線；設備主表與參數表原始 DDL 已由使用者提供並轉成單表 CREATE SQL；其他未匯出關聯表仍待查 |
 | 設備群組資料 | WinForms/Service、主從表與兩張 SMD 區域映射表 Oracle DDL/索引已核對 | 規格與 PostgreSQL 空表 CREATE SQL 已建立；Vue Development 假資料頁已建立；YMES schema 比對及 Production API 待家用電腦 |
 | 設備狀態設定 | WinForms / Service、主表及兩張刪除引用表 Oracle DDL 已追；完整 ValueList/繁中翻譯已核實 | [規格](modules/EQP/設備設定/設備狀態設定.md)已建立；Vue 頁面已依 ValueList 本地化，Production API 已有，家用端待建立引用表 migration 並啟用精確刪除檢查 |

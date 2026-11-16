@@ -10,6 +10,8 @@ import EquipmentVendorMaster from './components/EquipmentVendorMaster.vue'
 import EquipmentEngineerGroupMaster from './components/EquipmentEngineerGroupMaster.vue'
 import EquipmentTypeMaster from './components/EquipmentTypeMaster.vue'
 import AccessoryTypeMaster from './components/AccessoryTypeMaster.vue'
+import AccessoryCategoryMaster from './components/AccessoryCategoryMaster.vue'
+import AccessoryCategoryStateMaster from './components/AccessoryCategoryStateMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
@@ -20,6 +22,8 @@ const equipmentGroupRoute = appBasePath + '/Equipment/Groups'
 const equipmentStateRoute = appBasePath + '/Equipment/States'
 const equipmentInspectionRoute = appBasePath + '/Equipment/Inspection'
 const equipmentAccessoryTypeRoute = appBasePath + '/Equipment/AccessoryTypes'
+const equipmentAccessoryCategoryRoute = appBasePath + '/Equipment/AccessoryCategories'
+const equipmentAccessoryCategoryStateRoute = appBasePath + '/Equipment/AccessoryCategoryStates'
 const equipmentRoute = `${appBasePath}/Equipment`
 const equipmentVendorRoute = `${appBasePath}/Equipment/Vendors`
 const equipmentEngineerGroupRoute = `${appBasePath}/Equipment/EngineerGroups`
@@ -98,7 +102,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'equipment-group', label: '設備群組資料', shortLabel: '群', moduleNo: 'EQP' },
       { id: 'equipment-state', label: '設備狀態設定', shortLabel: '狀', moduleNo: 'EQP' },
       { id: 'equipment-inspection', label: '設備點檢表設定', shortLabel: '檢', moduleNo: 'EQP' },
-    ] }, { id: 'equipment-accessory-menu', label: '配件', shortLabel: '配', moduleNo: 'EQP', children: [{ id: 'equipment-accessory-types', label: '配件類別資料', shortLabel: '類', functionNo: 'ACC TYPE', moduleNo: 'EQP' }] }],
+    ] }, { id: 'equipment-accessory-menu', label: '配件', shortLabel: '配', moduleNo: 'EQP', children: [{ id: 'equipment-accessory-categories', label: '配件分類資料', shortLabel: '分', functionNo: 'ACC CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-accessory-category-states', label: '配件分類狀態定義設定', shortLabel: '狀', functionNo: 'ACC CATEGORY STATE', moduleNo: 'EQP' }, { id: 'equipment-accessory-types', label: '配件類別資料', shortLabel: '類', functionNo: 'ACC TYPE', moduleNo: 'EQP' }] }],
   },
   {
     id: 'operation-data',
@@ -142,7 +146,11 @@ const menuRoutes: Record<string, string> = {
   'equipment-state': equipmentStateRoute,
   'equipment-inspection': equipmentInspectionRoute,
   'equipment-category': equipmentTypeRoute,
+  'equipment-accessory-categories': equipmentAccessoryCategoryRoute,
+  'equipment-accessory-category-states': equipmentAccessoryCategoryStateRoute,
   'equipment-accessory-types': equipmentAccessoryTypeRoute,
+  'function:EQP:ACC CATEGORY': equipmentAccessoryCategoryRoute,
+  'function:EQP:ACC CATEGORY STATE': equipmentAccessoryCategoryStateRoute,
   'function:EQP:ACC TYPE': equipmentAccessoryTypeRoute,
   'operation-master': `${appBasePath}/MasterData/Operations`,
   'material-master': `${appBasePath}/MasterData/Materials`,
@@ -153,6 +161,8 @@ const menuRoutes: Record<string, string> = {
 const functionRoutes: Record<string, string> = {
   'EQP BASIS': equipmentRoute,
   'EQP STATE': equipmentStateRoute,
+  'ACC CATEGORY': equipmentAccessoryCategoryRoute,
+  'ACC CATEGORY STATE': equipmentAccessoryCategoryStateRoute,
   'ACC TYPE': equipmentAccessoryTypeRoute,
   'OP BASIS': `${appBasePath}/MasterData/Operations`,
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
@@ -205,6 +215,8 @@ const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment
 const isEquipmentStatePage = computed(() => activeMasterKey.value === 'equipment-state')
 const isEquipmentInspectionPage = computed(() => activeMasterKey.value === 'equipment-inspection')
 const isEquipmentTypePage = computed(() => activeMasterKey.value === 'equipment-category')
+const isAccessoryCategoryPage = computed(() => activeMasterKey.value === 'equipment-accessory-categories' || activeMasterKey.value === 'function:EQP:ACC CATEGORY')
+const isAccessoryCategoryStatePage = computed(() => activeMasterKey.value === 'equipment-accessory-category-states' || activeMasterKey.value === 'function:EQP:ACC CATEGORY STATE')
 const isAccessoryTypePage = computed(() => activeMasterKey.value === 'equipment-accessory-types' || activeMasterKey.value === 'function:EQP:ACC TYPE')
 const currentMenuNode = computed(() => findMenuNodeByRoute(menuTree.value, currentPath.value))
 const activeFunctionNode = computed(() => currentMenuNode.value && !activeMasterKey.value ? currentMenuNode.value : null)
@@ -289,8 +301,8 @@ function addDevelopmentEquipmentFunctions(items: MenuNode[]): MenuNode[] {
     const accessoryMenu = equipment.children?.find((item) => item.label.trim() === '配件')
     if (!accessoryMenu) {
       equipment.children = [...(equipment.children ?? []), { ...fallbackAccessoryMenu, children: [...(fallbackAccessoryMenu.children ?? [])] }]
-    } else if (!containsLabel(accessoryMenu.children, '配件類別資料')) {
-      accessoryMenu.children = [...(accessoryMenu.children ?? []), ...(fallbackAccessoryMenu.children ?? [])]
+    } else {
+      const missing = (fallbackAccessoryMenu.children ?? []).filter((feature) => !containsLabel(accessoryMenu.children, feature.label)); accessoryMenu.children = [...(accessoryMenu.children ?? []), ...missing]
     }
   }
   return result
@@ -845,6 +857,18 @@ async function signOut(): Promise<void> {
         />
         <EquipmentTypeMaster
           v-else-if="isEquipmentTypePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+        />
+        <AccessoryCategoryMaster
+          v-else-if="isAccessoryCategoryPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+        />
+        <AccessoryCategoryStateMaster
+          v-else-if="isAccessoryCategoryStatePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
