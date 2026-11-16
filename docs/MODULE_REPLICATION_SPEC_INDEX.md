@@ -17,6 +17,7 @@
 ## 2026-11-17 新增功能規格
 
 - QC406「第一處理群組」：[功能規格](modules/QC/第一處理群組.md)。公司端已依 WinForms 建立 DEV 頁 `/YMES/QC/FirstGroup`；主表與查找表 Oracle source DDL、PostgreSQL 空表 CREATE 參考位於 [`database/reference`](../database/reference/) 下的 `mestest_qc_first_group*_*.sql`。來源主表是 `(MClassNo, OPNo)` 複合 PK，沒有 FK；家用端需比對 YMES schema 並實作 Issue Job 核准與查找端點。
+- QC407「最後處理群組」：[功能規格](modules/QC/最後處理群組.md)。公司端已依 `frmFinalGroup`/Service/Core 建立 DEV 頁 `/YMES/QC/FinalGroup`；Oracle source DDL 與 PostgreSQL 空表 CREATE 參考已建立。來源主表也是 `(MClassNo, OPNo)` 複合 PK，沒有 FK；Issue Job Map 的來源識別字串為 `Final GROUP`。
 - QC111「8D 原因基本資料」：[功能規格](modules/QC/8D原因基本資料.md)。公司端已接 WinForms 雙 Grid DEV 頁 `/YMES/QC/8DReasonBasis`；[Oracle source DDL](../database/reference/mestest_qc_8d_reason_source_ddl.sql) 與 [PostgreSQL 空表 CREATE 參考](../database/reference/mestest_qc_8d_reason_create.sql) 已建立。兩張來源表只有 PK unique index，沒有 FK；家用端需比對 YMES schema 並補 API/Issue Job 核准流程。
 
 ## 已確認的第一層模組

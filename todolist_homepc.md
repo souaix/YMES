@@ -6,6 +6,19 @@
 
 ## 家用電腦現在接手
 
+### QC407 最後處理群組（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/最後處理群組.md`、`docs/DATABASE_CONNECTION.md`；公司端已對照 `frmFinalGroup`、`frmFinalGroupDef`、`wsQC`、`clsQCBasis`、`clsBasis_UPD`，完成 QC → 異常設定 → 最後處理群組 Vue DEV 頁與 `/YMES/QC/FinalGroup` 路由。
+- [ ] 先比對 YMES PostgreSQL live schema、constraints、indexes、migrations；來源 CREATE 參考 `database/reference/mestest_qc_final_group_create.sql`，只在缺少時做 forward migration並保留 YMES 擴充欄位。
+- [ ] Oracle 原始 DDL：`database/reference/mestest_qc_final_group_source_ddl.sql`。`tblqcfinalgroup` 複合 PK `(mclassno, opno)`、只有 PK unique index、無 FK；`issuestate NOT NULL DEFAULT 0`、`datastamp nullable DEFAULT 0`。保留 `opno='*'` 通用作業站鍵。
+- [ ] 實作 `GET /api/qc/final-groups?searchFieldName=&searchFieldValue=`，回全部狀態/audit/DataStamp；搜尋欄白名單限 MClassNo、OPNo，四狀態由 UI 篩選。
+- [ ] 主分類、作業站、異常處理群組 options 只回 IssueState=2；可重用 QC406 查找實作，但檢查 QC407 FunctionKey 權限。先核對 YMES live schema，不重建已存在的 lookup 表。
+- [ ] 實作 POST `/api/qc/final-groups`，body `{mClassNo, operationNos, groupNo, description}`；逐個所選 OP 建列，驗證必填/長度/核准選項/複合鍵唯一；`*` 僅作明確允許的通用 OP。批次以單一交易寫入，Audit/DataStamp 由伺服器設定。
+- [ ] 實作 PUT `/api/qc/final-groups/{mClassNo}/{opNo}?dataStamp=`，僅更新 GroupNo/Description；狀態 0/2 可更新，修改者/日期與 DataStamp 由伺服器更新。nullable DataStamp 以 `IS NULL` CAS。
+- [ ] 實作 DELETE：0/-1 實體刪除、2 軟停用成 -1、1 拒絕；全部以 DataStamp CAS。UI 多選逐筆、首筆失敗停止並回報部分成功。
+- [ ] 實作核准端點，Issue Job Map 原始 key 必須使用 **`Final GROUP`**（注意它和 FunctionNo `FINAL GROUP` 不同）；沒有 Job/Detail 時直接轉 2，有流程時建立 Issue、轉 1、附件處理/通知第一簽核群組，核准 2、退回 0。
+- [ ] 所有 API 驗證登入與 FunctionKey `QC407`、SQL 參數化；部署 API/schema 後更新規格與 handoff，push 並通知公司端 pull。公司端未執行 build/test/瀏覽器驗收。
+
 ### QC406 第一處理群組（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/第一處理群組.md`、`docs/DATABASE_CONNECTION.md` 和本節。公司端已對照 WinForms/Form/Service/Core，完成 Vue DEV 畫面及 QC → 異常設定 → 第一處理群組路由。

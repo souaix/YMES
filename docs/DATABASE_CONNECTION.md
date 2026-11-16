@@ -260,3 +260,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 查找來源為 TBLQCMCLASSBASIS、TBLOPBASIS、TBLQCHOLDDISPGROUPBASIS；Form 僅載入 IssueState=2。三表 key 與必要欄位已由 Oracle 資料字典直連核對，本功能不新增查找表。
 - 本次只讀取 DDL/資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。
 - WinForms 多作業站新增/複製、`OPNo='*'` 通用設定、Issue Job `FIRST GROUP`、狀態刪除規則與 API 契約見 docs/modules/QC/第一處理群組.md。
+
+### 更新 2026-11-17：QC407 最後處理群組來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有本機受保護連線直連唯讀查詢 MESTEST.TBLQCFINALGROUP 的 DBMS_METADATA.GET_DDL 與 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES。
+- 來源 DDL / PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_final_group_source_ddl.sql`、`mestest_qc_final_group_create.sql`。PK 為 `(MCLASSNO, OPNO)`，只有 PK unique index、沒有 FK；DataStamp nullable DEFAULT 0，IssueState NOT NULL DEFAULT 0。
+- 主分類、作業站、異常處理群組查找表與 QC406 共用，僅查詢 IssueState=2；不新增重複 lookup table。
+- 本次只讀取 DDL/資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。UI、狀態與 Issue Job `Final GROUP` 規則見 `docs/modules/QC/最後處理群組.md`。

@@ -45,6 +45,7 @@ import MaterialVendorAutoLoaderSetupMaster from './components/MaterialVendorAuto
 import EquipmentAutoLoaderSetupMaster from './components/EquipmentAutoLoaderSetupMaster.vue'
 import Qc8DReasonBasisMaster from './components/Qc8DReasonBasisMaster.vue'
 import QcFirstGroupMaster from './components/QcFirstGroupMaster.vue'
+import QcFinalGroupMaster from './components/QcFinalGroupMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -239,6 +240,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
     ] }, { id: 'quality-exception-settings', label: '異常設定', shortLabel: '異', children: [
       { id: 'function:QC:FIRST GROUP', label: '第一處理群組', shortLabel: '一', functionNo: 'FIRST GROUP', moduleNo: 'QC', tableName: 'tblqcfirstgroup' },
+      { id: 'function:QC:FINAL GROUP', label: '最後處理群組', shortLabel: '末', functionNo: 'FINAL GROUP', moduleNo: 'QC', tableName: 'tblqcfinalgroup' },
     ] }],
   },
   {
@@ -280,6 +282,7 @@ const menuRoutes: Record<string, string> = {
   'function:EQP:B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
   'function:QC:8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'function:QC:FIRST GROUP': appBasePath + '/QC/FirstGroup',
+  'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
   'equipment-master': equipmentRoute,
   'equipment-vendor-master': equipmentVendorRoute,
   'equipment-engineer-group': equipmentEngineerGroupRoute,
@@ -336,6 +339,7 @@ const functionRoutes: Record<string, string> = {
   'SMD PDLINE BASIS': pdLineBasisRoute,
   '8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'FIRST GROUP': appBasePath + '/QC/FirstGroup',
+  'FINAL GROUP': appBasePath + '/QC/FinalGroup',
   'POSITION BASIS': positionBasisRoute,
   'PRODUCTION CONFIG': areaShowRoute,
   'EQP BASIS': equipmentRoute,
@@ -412,6 +416,7 @@ const isMaterialVendorAutoLoaderPage = computed(() => activeMasterKey.value === 
 const isEquipmentAutoLoaderPage = computed(() => activeMasterKey.value === 'function:EQP:B_EQP AUTOLOADER SETUP')
 const isQc8DReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:8D REASON BASIS')
 const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC:FIRST GROUP')
+const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
 const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER BASIS')
 const isCustomerContactorPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER CONTACTOR')
 const isCustomerShipAddressPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER SHIP ADDRESS')
@@ -1348,6 +1353,14 @@ async function signOut(): Promise<void> {
         />
         <QcFirstGroupMaster
           v-else-if="isQcFirstGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcFinalGroupMaster
+          v-else-if="isQcFinalGroupPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

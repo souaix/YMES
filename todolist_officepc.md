@@ -22,7 +22,7 @@
 - [x] 新增 Vue 雙 Grid DEV 頁 web/src/components/Qc8DReasonBasisMaster.vue，建立 QC → 基本資料 → 8D 原因基本資料 fallback 選單及 /YMES/QC/8DReasonBasis；包含四狀態、查詢、主/明細 CRUD/Copy/Approve、KD 黃色輸入欄及 localStorage 假資料。
 - [x] 新增 docs/modules/QC/8D原因基本資料.md，記錄 Oracle 欄位、WinForms/Form/Service/Core 邏輯、Issue Job 簽核、刪除孤兒明細行為及 API/schema handoff；更新規格索引、資料庫連線紀錄及兩台電腦 TODO。
 - [ ] 未執行 build/test/瀏覽器驗收。ReasonType 代碼與繁中資源已直接查證；DEV approval 只模擬無簽核 Job 的直接核准分支，Production 必須實作 Issue/Job。
-- [x] 原先排定的下一項為 QC406；確認目錄後已完成，實際下一項改為 QC407「最後處理群組（FINAL GROUP）」。
+- [x] 原先排定的下一項為 QC406；確認目錄後完成 QC406，再按功能目錄接續完成 QC407「最後處理群組（FINAL GROUP）」。
 
 ### QC406 第一處理群組（公司端 2026-11-17）
 
@@ -31,7 +31,16 @@
 - [x] 用 PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀查得 `TBLQCFIRSTGROUP` DDL、欄位 nullable/default、複合 PK、unique index 與 FK；並查核三張已存在查找表的 key/必要欄位。未讀業務資料，未執行 Oracle DDL，未輸出憑證。
 - [x] 建立來源 DDL、PostgreSQL 空表 CREATE、Vue DEV 畫面 `/YMES/QC/FirstGroup`、規格文件及家用端 API/schema handoff；更新 DB 連線紀錄與索引。
 - [ ] 未執行 build/test/瀏覽器驗收；DEV 核准僅模擬無簽核流程直接轉 Active。
-- [ ] 下一個功能依 MES_MENU_FUNCTION_INVENTORY.md 為 QC407「最後處理群組（FINAL GROUP）」。
+- [x] 下一個功能 QC407「最後處理群組（FINAL GROUP）」已於本次完成，詳見下節。
+
+### QC407 最後處理群組（公司端 2026-11-17）
+
+- [x] 對照 `frmFinalGroup`、`frmFinalGroupDef`、`wsQC.LoadFinalGroup*`/`*FinalGroup`、`clsQCBasis` 與 `clsBasis_UPD`；記錄四狀態篩選、複合鍵、查找、多 OP 新增/複製、`OPNo='*'`、刪除、DataStamp、Issue Job 與附件/通知流程。
+- [x] 使用既有受保護連線，PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得 `TBLQCFINALGROUP` DDL、欄位/null/default、PK/index/FK；確認無 FK、只有複合 PK unique index。未讀業務列、未在 Oracle 執行 DDL、未輸出憑證。
+- [x] 建立 Oracle source DDL、PostgreSQL 空表 CREATE、Vue DEV 頁 `/YMES/QC/FinalGroup`、QC → 異常設定 → 最後處理群組路由、規格文件及家用 API/schema handoff；共用 QC406 lookup table 定義。
+- [x] 保留核准 Job Map key 的原始字串 `Final GROUP`，與 FunctionNo `FINAL GROUP` 明確區分。
+- [ ] 未執行 build/test/瀏覽器驗收；DEV 核准僅模擬沒有 Job/Detail 時直接轉 Active。
+- [ ] 下一個功能依 `MES_MENU_FUNCTION_INVENTORY.md` 接續 QC404「異常說明（HOLD DESCRIPTION）」。
 
 ### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）
 
