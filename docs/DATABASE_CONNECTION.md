@@ -145,3 +145,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護連線直接唯讀查詢 `MESTEST.TBLENTFORWARDERBASIS` 的 DBMS_METADATA DDL、欄位 NULL/default、constraint、index 與 FK 字典；沒有查業務資料或在 Oracle 執行 DDL。
 - 表有 ForwarderNo 單欄 PK/唯一索引，無 FK/其他索引；PostgreSQL 空表 CREATE SQL 已加到 `database/reference/mestest_customer_basis_create.sql`，first-phase reference 也同步補 DEFAULT 與欄位註解。
 - DDL 直連方式、欄位與 ET104 邏輯見 `docs/modules/ENT/貨運行基本資料.md`。連線資訊仍僅由本機受保護設定提供，未輸出或寫入 Git。
+
+### 更新 2026-11-16：ENT ET105 取貨公司基本資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護連線唯讀取得 `MESTEST.TBLENTTAKERBASIS` DBMS_METADATA DDL、欄位 NULL/default、constraints 與 indexes；只查資料字典，未讀取業務列，未在 Oracle 執行 DDL。
+- 表只有 TakerNo PK unique index，無 FK/其他 index。Oracle source DDL/PG 空表 CREATE SQL 已追加至 customer reference；first-phase table default 與欄位註解已按查得 DDL 校正。
+- 完整 DDL、WinForms 欄位/狀態/簽核規則見 `docs/modules/ENT/取貨公司基本資料.md`；Oracle 連線設定仍只留本機受保護設定。

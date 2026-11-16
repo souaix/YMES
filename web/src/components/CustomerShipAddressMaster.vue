@@ -346,10 +346,10 @@ async function openLookup(kind: Exclude<LookupKind, null>): Promise<void> {
         : [{ code: 'DEV-BROKER-01', name: '開發用報關行' }]
     return
   }
-  const path = kind === 'taker' ? 'api/ent/takers' : kind === 'forwarder' ? 'api/ent/forwarders' : 'api/ent/brokers'
+  const path = kind === 'taker' ? 'api/ent/taker-basis?issueState=2' : kind === 'forwarder' ? 'api/ent/forwarder-basis?issueState=2' : 'api/ent/broker-basis?issueState=2'
   try {
     const rows = await requestJson<Record<string, string>[]>(path)
-    const keys = kind === 'taker' ? ['takerNo', 'takerName'] : kind === 'forwarder' ? ['forwarderNo', 'forwarderName'] : ['brokerNo', 'brokerName']
+    const keys = kind === 'taker' ? ['takerNo', 'contactorName'] : kind === 'forwarder' ? ['forwarderNo', 'contactorName'] : ['brokerNo', 'contactorName']
     lookupOptions.value = rows.map(row => ({ code: row[keys[0]] || '', name: row[keys[1]] || '' }))
   } catch (error) { lookupOptions.value = []; lookupError.value = error instanceof Error ? error.message : '選項清單載入失敗。' }
 }

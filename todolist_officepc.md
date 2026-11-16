@@ -263,5 +263,18 @@
 - [x] 新增 Vue DEV 頁 `web/src/components/ForwarderBasisMaster.vue`、`/YMES/Customer/Forwarders` 路徑、`FORWARDER BASIS` 對應；含狀態篩選、動態選列、多選、CRUD、停用/刪除、核准預覽、稽核及只顯示已簽核報關行的選擇器。
 - [x] 新增 `docs/modules/ENT/貨運行基本資料.md`，更新功能索引、DB 連線記錄、ET103 報關行 lookup query 規格與家用端 ET104 schema/API/簽核 TODO。
 - [ ] 家用端比對 YMES schema/migrations；只新增缺漏表或欄位，實作 ET104 Production CRUD、BrokerNo=已簽核報關行驗證、DataStamp、狀態刪除及 `FORWARDER BASIS` 簽核 API。
-- [ ] 未執行 build、測試或瀏覽器驗收。ET103 的 radio/checkbox KD 黃色 accent 與簽核完成後 audit/DataStamp 規格修正會跟 ET104 一起提交。
-- [ ] 下一項依 ENT FunctionOrder 接續 ET105「取貨公司基本資料」；先查 `STD/MESWin/ENT/ET_TakerBasis` 的 Form/Service，Oracle DDL 缺漏時仍以 PowerShell 5.1 + ODP.NET 直連取得。
+- [x] ET103 radio/checkbox KD 黃色 accent 與簽核完成後 audit/DataStamp 規格修正已包含於 ET104 提交 `39b2973`。
+- [ ] 未執行 build、測試或瀏覽器驗收；Production API 尚待家用端完成。
+- [x] ET104 與 ET103 收尾修正已提交並推送 GitHub：`39b2973 feat: add forwarder basis UI`。
+- [x] 後續已依 ENT FunctionOrder 開始 ET105「取貨公司基本資料」；最新進度見下方 ET105 區塊。
+
+## ENT ET105 取貨公司基本資料公司端進度（2026-11-16）
+
+- [x] 依 WinForms `frmTakerBasis`、`frmTakerBasisDef` inline Designer、`wsENT.Load/Add/Edit/Del/ApproveTakerBasisIssuestate` 與 `kcENT.clsCustomerBasis` 核對狀態、欄位、按鈕、稽核與來源版本不一致處。
+- [x] Oracle DDL 原先不在 repo。以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護連線只讀取得 `MESTEST.TBLENTTAKERBASIS` 的 DBMS_METADATA DDL/欄位 NULL-default/constraints/indexes；只查結構，不讀業務列、不執行 Oracle DDL，連線值未輸出。
+- [x] Oracle source logical DDL、PostgreSQL 空表 CREATE SQL 已追加 customer reference；first-phase SQL 預設值與猜測性欄位註解已修正。
+- [x] 新增 Vue DEV 頁 `web/src/components/TakerBasisMaster.vue`、路徑 `/YMES/Customer/Takers` 與 `TAKER BASIS` 路由；含狀態篩選、即時選列、多選 CRUD、停用/刪除、核准預覽、KD 黃色欄位與稽核。
+- [x] 新增 `docs/modules/ENT/取貨公司基本資料.md`，更新功能索引、DB 連線記錄與家用端 API/schema TODO。
+- [ ] 家用端先比對 YMES schema/migrations；缺少才新增 Taker table migration。實作 GET/POST/PUT/DELETE/approve、DataStamp compare-and-swap、稽核與 `TAKER BASIS` 共用簽核服務。
+- [ ] 未執行 build、測試或瀏覽器驗收；Production API 待家用端完成。
+- [ ] 下一項依 ENT FunctionNo 接續 ET201「外包商基本資料」；先核對 `STD/MESWin/ENT/ET_Subcontractor` Forms/Service，Oracle DDL 缺漏以 PowerShell 5.1 + ODP.NET 直連查資料字典。

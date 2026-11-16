@@ -159,3 +159,23 @@ CREATE TABLE IF NOT EXISTS ymes.tblentforwarderbasis (
 );
 COMMENT ON TABLE ymes.tblentforwarderbasis IS 'MES Oracle source: MESTEST.TBLENTFORWARDERBASIS';
 COMMENT ON COLUMN ymes.tblentforwarderbasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';
+
+-- Oracle source: MESTEST.TBLENTTAKERBASIS (ET105).
+CREATE TABLE IF NOT EXISTS ymes.tblenttakerbasis (
+    takerno varchar(50) CONSTRAINT n_tblenttakerbasis_01 NOT NULL,
+    contactorname varchar(50),
+    telno varchar(25),
+    faxno varchar(25),
+    email varchar(255),
+    address varchar(500),
+    bankno varchar(20),
+    issuestate numeric(1,0) DEFAULT 0,
+    creator varchar(10),
+    createdate timestamp without time zone DEFAULT LOCALTIMESTAMP,
+    datastamp numeric(11,0) DEFAULT 0,
+    reviser varchar(10),
+    revisedate timestamp without time zone,
+    CONSTRAINT pk_tblenttakerbasis PRIMARY KEY (takerno)
+);
+COMMENT ON TABLE ymes.tblenttakerbasis IS 'MES Oracle source: MESTEST.TBLENTTAKERBASIS';
+COMMENT ON COLUMN ymes.tblenttakerbasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';

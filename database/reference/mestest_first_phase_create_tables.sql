@@ -450,28 +450,28 @@ CREATE TABLE IF NOT EXISTS tblenttakerbasis (
     email varchar(255),
     address varchar(500),
     bankno varchar(20),
-    issuestate numeric(1,0),
+    issuestate numeric(1,0) DEFAULT 0,
     creator varchar(10),
-    createdate timestamp without time zone,
-    datastamp numeric(11,0),
+    createdate timestamp without time zone DEFAULT LOCALTIMESTAMP,
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
     CONSTRAINT pk_tblenttakerbasis PRIMARY KEY (takerno)
 );
 COMMENT ON TABLE tblenttakerbasis IS 'MES master data; Oracle source: MESTEST.TBLENTTAKERBASIS';
-COMMENT ON COLUMN tblenttakerbasis.takerno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.contactorname IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.telno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.faxno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.email IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.address IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.bankno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblenttakerbasis.revisedate IS '修改時間（推測，請依業務確認）';
+COMMENT ON COLUMN tblenttakerbasis.takerno IS 'Taker No';
+COMMENT ON COLUMN tblenttakerbasis.contactorname IS 'Contact person';
+COMMENT ON COLUMN tblenttakerbasis.telno IS 'Telephone';
+COMMENT ON COLUMN tblenttakerbasis.faxno IS 'Fax';
+COMMENT ON COLUMN tblenttakerbasis.email IS 'Email';
+COMMENT ON COLUMN tblenttakerbasis.address IS 'Address';
+COMMENT ON COLUMN tblenttakerbasis.bankno IS 'Bank No';
+COMMENT ON COLUMN tblenttakerbasis.issuestate IS 'Issue state: -1 unused, 0 unfrozen, 1 pending, 2 active';
+COMMENT ON COLUMN tblenttakerbasis.creator IS 'Creator';
+COMMENT ON COLUMN tblenttakerbasis.createdate IS 'Creation time';
+COMMENT ON COLUMN tblenttakerbasis.datastamp IS 'Optimistic concurrency stamp';
+COMMENT ON COLUMN tblenttakerbasis.reviser IS 'Reviser';
+COMMENT ON COLUMN tblenttakerbasis.revisedate IS 'Revision time';
 
 -- 系統共用主檔
 CREATE TABLE IF NOT EXISTS tblsyselementbasis (
