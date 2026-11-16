@@ -134,7 +134,8 @@
 
 - [ ] 先查 YMES ymes schema 是否已存在下列五表；逐欄比對既有結構，未存在才執行 database/reference/mestest_equipment_type_create.sql：tbleqpequipmenttype、tbleqpequipmenttypeacctype、tbleqpequipmenttype_picture、tbleqpequipmentproperty、tbleqpconsumebasis。
 - [ ] 本檔是公司電腦從 MES Oracle MESTEST 原始 DDL 轉換的 PostgreSQL 空表 CREATE SQL，沒有匯入業務資料。IF NOT EXISTS 不會修正已存在表的錯誤欄位。
-- [ ] 等待公司電腦從 MES Oracle 唯讀資料字典查出配件類別目錄的真實表名、完整 CREATE DDL、欄位/PK/索引並交付 SQL；家用電腦再確認 YMES 是否已有此表並實作。不可依 DEV-ACC-* 假資料猜表或欄位。
+- [x] 公司端已從 WinForms/Service 確認配件選項來源為 MESTEST.TBLEQPACCESSORYTYPE，並以 PowerShell 5.1 + ODP.NET 取得原始 DDL、9 欄 nullable/default、PK/索引/FK；來源與空表 PostgreSQL CREATE SQL 已交付。
+- [ ] 家用電腦先比對 ymes.tbleqpaccessorytype；缺表才建 migration。ACC Type options 依舊 Service 篩 IssueState=2、AccessoryType 非空提供。
 - [ ] 核實 tblsyselementbasis 既有 YMES 結構與 MES Oracle DDL；目前 mestest_first_phase_create_tables.sql 中部分欄位有「推測」註記。依 WinForms ValueList 確認屬性選項與 PropertyType=1 查詢規則後，才實作 /api/system/elements?elementType=1。
 - [ ] 實作設備類別清單/查詢、新增、修改、複製、刪除及核准 API。修改/核准/刪除使用 DataStamp；EDIT 僅 IssueState=0，核准僅 0，刪除只接受 0/-1/2，並沿用舊 Service 的引用檢查。
 - [ ] 核實並實作 wsEQP.ApproveEquipmentType 對簽核 Job/Detail 的流程；無待簽工作可直接到 2，有簽核流程先到 1，再依結果到 2 或退回 0。
@@ -194,7 +195,7 @@
 - [x] 公司端將使用者提供的 TBLEQPPARAMETERBASIS 原始 DDL 轉成 database/reference/mestest_equipment_parameter_basis_create.sql，並修正第一階段 bootstrap 的 NOT NULL constraint names，移除推測欄位註解。
 - [ ] 家用電腦比對 "YMES" schema 內 TBLEQPEQUIPMENTBASIS、TBLEQPPARAMETERBASIS 的欄位/NULL/DEFAULT/PK/index；缺表才套用 CREATE SQL，既有表若不符則建立 forward migration。不要在公司電腦連資料庫或執行 migration。
 - [ ] 核對設備 CRUD/Approve、Chamber 共表資料、DataStamp、IssueState、刪除轉停用與 Controlled 屬性核准檢查，確保多表更新使用正確交易。
-- [ ] 提供 EquipmentClass、設備類別、工程群組、供應商、點檢表及訊息佇列 lookup/options API；options 保留舊 ValueList 值和權限。
+- [ ] 提供 EquipmentClass、設備類別、配件類別、工程群組、供應商、點檢表及訊息佇列 lookup/options API；配件類別取自 ymes.tbleqpaccessorytype 並保留 IssueState=2 篩選。
 - [ ] 修正設備 DTO / write contract：回傳 Creator、Reviser；EqpRecipe 接受 0–3（WinForms ValueList 四種模式），目前 EquipmentWriteRequest 限制 0–1。
 - [ ] 屬性、參數、設備點檢關聯、資料匯入分別依 WinForms 子功能規格實作 API，並核實其原始資料表 DDL。
 - [ ] 設備屬性表 `TBLEQPEQUIPMENTPROPERTY` 已有 Oracle 來源單表 SQL：`database/reference/mestest_equipment_type_create.sql`；套用前比對 YMES 結構，API 保留 Equipment 可代表設備編號或設備類別編號的舊語意。

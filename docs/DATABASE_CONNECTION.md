@@ -40,6 +40,12 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 
 
+### 更新 2026-11-16：設備類別配件目錄
+
+- 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查得 MESTEST.TBLEQPACCESSORYTYPE 的 DBMS_METADATA DDL、9 欄 nullable/default、PK、index 與 FK 字典。
+- 舊 frmEQPTypeACCType 呼叫 LoadAccessoryType(IssueState=2)；clsAccBasis.ShowAccessoryType 的查詢還排除 AccessoryType IS NULL，沒有指定 AccessoryCategory。
+- PK 為 ACCESSORYTYPE，唯一索引僅 PK index，無額外索引/FK。Oracle 原始 DDL 與 PostgreSQL 空表 CREATE SQL 為 database/reference/mestest_equipment_type_accessory_catalog_source_ddl.sql、mestest_equipment_type_accessory_catalog_create.sql。家用端仍需先核對 YMES schema；本次只讀結構，未讀業務資料。
+
 ### 更新 2026-11-16：設備群組 SMD 區域映射
 
 - 以 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀取得 `MESTEST.TBLSMDAREARELATION`、`MESTEST.TBLSMDSMTAREAEQPMAP` 的 DBMS_METADATA DDL，並核對欄位、NULL、PK、索引及 FK。
