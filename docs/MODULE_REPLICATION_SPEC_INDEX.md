@@ -75,7 +75,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 
 | 功能 | WinForms / 資料來源狀態 | Web 規格狀態 |
 | --- | --- | --- |
-| 設備供應商基本資料 | Form 與 Service 已對照；Oracle DDL 已查 | [規格](modules/EQP/設備設定/設備供應商基本資料.md)已建立；Vue 已建立，API 待家用電腦 |
+| 設備供應商基本資料 | Form、Designer 與 Service 已對照；Oracle DDL 已查 | [規格](modules/EQP/設備設定/設備供應商基本資料.md)與 Vue 已依 WinForms 對齊；供應商/聯絡人 API 已部署 |
 | 設備工程群組資料 | Form、Service、主表及 `TBLUSRUSERGROUP` 成員表 Oracle DDL 已追；成員表 PK/欄位/索引已核對 | 規格與 PostgreSQL 空表 CREATE SQL 已建立；Vue Development 假資料頁已建立；YMES schema 比對及 CRUD/成員 API 待家用電腦 |
 | 設備類別資料 | WinForms/Service、5 張設備類別相關表及配件目錄表 Oracle DDL、FunctionNo/FunctionKey 已核實 | Vue DEV 頁已有類別 CRUD/子視窗；匯入依 WinForms 第一工作表固定欄序、結果列與取消流程；家用端待比對配件目錄 YMES schema 並實作 API |
 | 配件類別資料 | ACC TYPE / EP202；frmAccessoryType、定義、壽命、屬性及匯入原始碼已核對；4 張來源表 DDL/PK 已由 PowerShell 直連 Oracle 查得 | [規格](modules/EQP/配件/配件類別資料.md)與 Vue DEV 頁已建立；Excel/舊 Checker 簡化已記錄，Production API/schema 比對待家用端 |

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 interface Vendor { vendorNo: string; vendorName: string; description: string | null; issueState: number; erpNo: string | null; dataStamp: number; creator: string | null; createdAt: string | null; reviser: string | null; revisedAt: string | null }
 interface Contactor { vendorNo: string; contactorName: string; telNo: string | null; faxNo: string | null; title: string | null; address: string | null; email: string | null; description: string | null; dataStamp: number; creator: string | null; createdAt: string | null; reviser: string | null; revisedAt: string | null }
 type VendorMode = 'new' | 'edit' | 'copy' | null
 type ContactMode = 'new' | 'edit' | 'copy' | null
-const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string }>()
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const usesDevelopmentMock = import.meta.env.DEV
+const usesDevelopmentMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const vendorMockKey = 'ymes-dev-mock:equipment-vendors:v1'
 const contactMockKey = 'ymes-dev-mock:equipment-vendor-contactors:v1'
 const seedVendors: Vendor[] = [
@@ -34,6 +34,7 @@ const successMessage = ref('')
 const vendorMode = ref<VendorMode>(null)
 const contactMode = ref<ContactMode>(null)
 const vendorForm = ref({ vendorNo: '', vendorName: '', description: '', dataStamp: 0 })
+const vendorNoSuggestion = ref('')
 const contactForm = ref({ vendorNo: '', contactorName: '', telNo: '', faxNo: '', title: '', address: '', email: '', description: '', dataStamp: 0 })
 const vendorAudit = ref({ creator: '', createdAt: '', reviser: '', revisedAt: '' })
 const contactAudit = ref({ creator: '', createdAt: '', reviser: '', revisedAt: '' })
@@ -88,7 +89,7 @@ function applyFilter(): void {
 async function loadVendors(): Promise<void> {
   loading.value = true; errorMessage.value = ''; successMessage.value = ''
   try {
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       vendors.value = readMockRows(vendorMockKey, seedVendors)
       if (!visibleVendors.value.some(row => row.vendorNo === selectedVendorNo.value)) selectedVendorNo.value = visibleVendors.value[0]?.vendorNo ?? ''
       await loadContactors(selectedVendorNo.value)
@@ -106,7 +107,7 @@ async function loadContactors(vendorNo: string): Promise<void> {
   if (!vendorNo) { contactsLoading.value = false; return }
   contactsLoading.value = true
   try {
-    const rows = usesDevelopmentMock
+    const rows = usesDevelopmentMock.value
       ? readMockRows(contactMockKey, seedContactors).filter(row => row.vendorNo === vendorNo)
       : await requestJson<Contactor[]>('api/equipment/vendors/' + encodeURIComponent(vendorNo) + '/contactors')
     if (requestId === contactRequestId) contactors.value = rows
@@ -116,13 +117,15 @@ async function loadContactors(vendorNo: string): Promise<void> {
 function openVendorForm(mode: Exclude<VendorMode, null>): void {
   vendorMode.value = mode
   const row = selectedVendor.value
+  vendorNoSuggestion.value = mode === 'edit' ? '' : nextVendorNo()
   vendorForm.value = mode === 'edit' && row
     ? { vendorNo: row.vendorNo, vendorName: row.vendorName, description: row.description ?? '', dataStamp: row.dataStamp }
-    : { vendorNo: nextVendorNo(), vendorName: mode === 'copy' && row ? row.vendorName : '', description: mode === 'copy' && row ? row.description ?? '' : '', dataStamp: 0 }
+    : { vendorNo: vendorNoSuggestion.value, vendorName: mode === 'copy' && row ? row.vendorName : '', description: mode === 'copy' && row ? row.description ?? '' : '', dataStamp: 0 }
   vendorAudit.value = mode === 'edit' && row
     ? { creator: row.creator ?? '', createdAt: formatDate(row.createdAt), reviser: row.reviser ?? '', revisedAt: formatDate(row.revisedAt) }
     : { creator: props.currentUserNo ?? '', createdAt: new Date().toLocaleString('zh-TW'), reviser: '', revisedAt: '' }
 }
+function useSuggestedVendorNo(): void { vendorForm.value.vendorNo = vendorNoSuggestion.value }
 function openContactForm(mode: Exclude<ContactMode, null>): void {
   const vendor = selectedVendor.value
   if (!vendor) return
@@ -135,13 +138,13 @@ function openContactForm(mode: Exclude<ContactMode, null>): void {
     ? { creator: row.creator ?? '', createdAt: formatDate(row.createdAt), reviser: row.reviser ?? '', revisedAt: formatDate(row.revisedAt) }
     : { creator: props.currentUserNo ?? '', createdAt: new Date().toLocaleString('zh-TW'), reviser: '', revisedAt: '' }
 }
-async function saveVendor(): Promise<void> {
+async function saveVendor(closeAfterSave = true): Promise<void> {
   if (busy.value || !vendorMode.value) return
   busy.value = true; errorMessage.value = ''
   const mode = vendorMode.value
   try {
     let result: Vendor
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       const rows = readMockRows(vendorMockKey, seedVendors)
       const vendorNo = vendorForm.value.vendorNo.trim()
       const existing = rows.findIndex(row => row.vendorNo.toLowerCase() === vendorNo.toLowerCase())
@@ -161,8 +164,11 @@ async function saveVendor(): Promise<void> {
       const path = mode === 'edit' ? 'api/equipment/vendors/' + encodeURIComponent(vendorForm.value.vendorNo) : 'api/equipment/vendors'
       result = await requestJson<Vendor>(path, { method: mode === 'edit' ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(vendorForm.value) })
     }
-    vendorMode.value = null; keyword.value = ''
-    if (usesDevelopmentMock) vendors.value = readMockRows(vendorMockKey, seedVendors)
+    if (closeAfterSave) vendorMode.value = null
+    keyword.value = ''
+    vendorForm.value.dataStamp = result.dataStamp
+    vendorAudit.value = { creator: result.creator ?? '', createdAt: formatDate(result.createdAt), reviser: result.reviser ?? '', revisedAt: formatDate(result.revisedAt) }
+    if (usesDevelopmentMock.value) vendors.value = readMockRows(vendorMockKey, seedVendors)
     else {
       const index = vendors.value.findIndex(row => row.vendorNo.toLowerCase() === result.vendorNo.toLowerCase())
       if (index >= 0) vendors.value[index] = result
@@ -177,7 +183,7 @@ async function deleteVendor(): Promise<void> {
   if (!row || busy.value || !window.confirm('確定刪除供應商 ' + row.vendorNo + '？')) return
   busy.value = true; errorMessage.value = ''
   try {
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       saveMockRows(vendorMockKey, readMockRows(vendorMockKey, seedVendors).filter(item => item.vendorNo !== row.vendorNo))
       saveMockRows(contactMockKey, readMockRows(contactMockKey, seedContactors).filter(item => item.vendorNo !== row.vendorNo))
       selectedVendorNo.value = ''
@@ -196,7 +202,7 @@ async function approveVendor(): Promise<void> {
   if (!row || row.issueState !== 0 || busy.value || !window.confirm('確定核准供應商 ' + row.vendorNo + '？')) return
   busy.value = true; errorMessage.value = ''
   try {
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       const rows = readMockRows(vendorMockKey, seedVendors)
       const index = rows.findIndex(item => item.vendorNo === row.vendorNo)
       if (index < 0) throw new Error('找不到要核准的供應商。')
@@ -212,13 +218,13 @@ async function approveVendor(): Promise<void> {
   } catch (error) { errorMessage.value = error instanceof Error ? error.message : '供應商核准失敗。' }
   finally { busy.value = false }
 }
-async function saveContactor(): Promise<void> {
+async function saveContactor(closeAfterSave = true): Promise<void> {
   if (busy.value || !contactMode.value || !selectedVendor.value) return
   busy.value = true; contactError.value = ''
   const mode = contactMode.value; const vendorNo = contactForm.value.vendorNo
   try {
     let result: Contactor
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       const rows = readMockRows(contactMockKey, seedContactors)
       const contactorName = contactForm.value.contactorName.trim()
       const index = rows.findIndex(row => row.vendorNo === vendorNo && row.contactorName.toLowerCase() === contactorName.toLowerCase())
@@ -240,7 +246,10 @@ async function saveContactor(): Promise<void> {
       const path = mode === 'edit' ? root + '/' + encodeURIComponent(contactForm.value.contactorName) : root
       result = await requestJson<Contactor>(path, { method: mode === 'edit' ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(contactForm.value) })
     }
-    contactMode.value = null; await loadContactors(vendorNo); selectedContactorName.value = result.contactorName
+    if (closeAfterSave) contactMode.value = null
+    contactForm.value.dataStamp = result.dataStamp
+    contactAudit.value = { creator: result.creator ?? '', createdAt: formatDate(result.createdAt), reviser: result.reviser ?? '', revisedAt: formatDate(result.revisedAt) }
+    await loadContactors(vendorNo); selectedContactorName.value = result.contactorName
   } catch (error) { contactError.value = error instanceof Error ? error.message : '聯絡人資料儲存失敗。' }
   finally { busy.value = false }
 }
@@ -249,7 +258,7 @@ async function deleteContactor(): Promise<void> {
   if (!vendor || !row || busy.value || !window.confirm('確定刪除聯絡人 ' + row.contactorName + '？')) return
   busy.value = true; contactError.value = ''
   try {
-    if (usesDevelopmentMock) {
+    if (usesDevelopmentMock.value) {
       saveMockRows(contactMockKey, readMockRows(contactMockKey, seedContactors).filter(item => !(item.vendorNo === vendor.vendorNo && item.contactorName === row.contactorName)))
       await loadContactors(vendor.vendorNo)
     } else {
@@ -264,6 +273,7 @@ function mailSelected(): void { const email = selectedContactor.value?.email?.tr
 function closePage(): void { window.history.pushState({}, '', appBase + '/'); window.dispatchEvent(new PopStateEvent('popstate')) }
 function onContactorNameBlur(): void { if (contactForm.value.contactorName && !contactForm.value.email) contactForm.value.email = contactForm.value.contactorName + '@' }
 onMounted(() => { void loadVendors() })
+watch(() => [props.developmentPreview, props.apiBaseUrl], () => { void loadVendors() })
 </script>
 
 <template>
@@ -331,19 +341,19 @@ onMounted(() => { void loadVendors() })
       <footer class="vendor-count">資料總筆數 <strong>{{ contactors.length }}</strong></footer>
     </section>
     <div v-if="vendorMode" class="vendor-overlay" @click.self="vendorMode = null">
-      <form class="vendor-dialog" @submit.prevent="saveVendor">
+      <form class="vendor-dialog" @submit.prevent="saveVendor(true)">
         <header><strong>設備供應商基本資料 ({{ vendorMode === 'edit' ? 'EDIT' : vendorMode === 'copy' ? 'COPY' : 'ADD' }})</strong><button type="button" aria-label="關閉" @click="vendorMode = null">×</button></header>
         <fieldset><legend>供應商資料</legend>
-          <label><span>供應商編號</span><input v-model.trim="vendorForm.vendorNo" required maxlength="20" :readonly="vendorMode === 'edit'" @blur="vendorForm.vendorNo = vendorForm.vendorNo.toUpperCase()" /></label>
+          <label><span>供應商編號</span><span class="vendor-no-control"><input v-model.trim="vendorForm.vendorNo" required maxlength="20" :readonly="vendorMode === 'edit'" @blur="vendorForm.vendorNo = vendorForm.vendorNo.toUpperCase()" /><button v-if="vendorMode !== 'edit'" type="button" title="帶入建議編號" @click="useSuggestedVendorNo">...</button></span></label>
           <label><span>供應商名稱</span><input v-model.trim="vendorForm.vendorName" required maxlength="220" /></label>
           <label class="vendor-description"><span>說明</span><textarea v-model="vendorForm.description" maxlength="255" rows="4" /></label>
         </fieldset>
         <div class="vendor-audit"><label>建立人<input :value="vendorAudit.creator" readonly /></label><label>建立日期<input :value="vendorAudit.createdAt" readonly /></label><label>修改人<input :value="vendorAudit.reviser" readonly /></label><label>修改日期<input :value="vendorAudit.revisedAt" readonly /></label></div>
-        <footer class="vendor-dialog-actions"><button type="button" @click="vendorMode = null">關閉</button><button class="primary" type="submit" :disabled="busy">確定</button></footer>
+        <footer class="vendor-dialog-actions"><button class="primary" type="submit" :disabled="busy">確定</button><button type="button" @click="vendorMode = null">關閉</button><button type="button" :disabled="busy" @click="saveVendor(false)">套用</button></footer>
       </form>
     </div>
     <div v-if="contactMode" class="vendor-overlay" @click.self="contactMode = null">
-      <form class="vendor-dialog contact-dialog" @submit.prevent="saveContactor">
+      <form class="vendor-dialog contact-dialog" @submit.prevent="saveContactor(true)">
         <header><strong>設備供應商聯絡人 ({{ contactMode === 'edit' ? 'EDIT' : contactMode === 'copy' ? 'COPY' : 'ADD' }})</strong><button type="button" aria-label="關閉" @click="contactMode = null">×</button></header>
         <fieldset><legend>聯絡人資料</legend>
           <label><span>供應商編號</span><input :value="contactForm.vendorNo" readonly /></label>
@@ -356,7 +366,7 @@ onMounted(() => { void loadVendors() })
           <label class="vendor-description"><span>說明</span><textarea v-model="contactForm.description" maxlength="255" rows="3" /></label>
         </fieldset>
         <div class="vendor-audit"><label>建立人<input :value="contactAudit.creator" readonly /></label><label>建立日期<input :value="contactAudit.createdAt" readonly /></label><label>修改人<input :value="contactAudit.reviser" readonly /></label><label>修改日期<input :value="contactAudit.revisedAt" readonly /></label></div>
-        <footer class="vendor-dialog-actions"><button type="button" @click="contactMode = null">關閉</button><button class="primary" type="submit" :disabled="busy">確定</button></footer>
+        <footer class="vendor-dialog-actions"><button class="primary" type="submit" :disabled="busy">確定</button><button type="button" @click="contactMode = null">關閉</button><button type="button" :disabled="busy" @click="saveContactor(false)">套用</button></footer>
       </form>
     </div>
   </div>
@@ -405,6 +415,7 @@ onMounted(() => { void loadVendors() })
 .vendor-dialog fieldset{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;margin:12px;padding:14px;border:1px solid #c8c5bc}
 .vendor-dialog legend{padding:0 5px;color:#555}
 .vendor-dialog fieldset>label{display:grid;grid-template-columns:105px minmax(0,1fr);align-items:center;gap:8px}
+.vendor-no-control{display:flex;min-width:0;gap:4px}.vendor-no-control input{flex:1;min-width:0}.vendor-no-control>button{min-width:34px;min-height:30px;border:1px solid #c4c4c4;border-radius:3px;background:linear-gradient(#fff,#f4f3ef);color:#333}
 .vendor-dialog input,.vendor-dialog textarea{width:100%;min-height:30px;padding:5px 7px;border:1px solid #999;background:#fff0ae;color:#26251f;font:inherit}
 .vendor-dialog input:read-only{background:#eee}
 .vendor-dialog textarea{resize:vertical}

@@ -104,3 +104,12 @@
 - [ ] 家用端核對 YMES schema 並完成 Production API 後，公司端 pull 對接實際 API。
 - [ ] 下一項繼續按設備 FunctionNo 追 WinForms Form/Service；需新增資料表時由 PowerShell + ODP.NET 唯讀查 Oracle DDL。
 - [ ] 未執行 build 或測試；不代表 Production API 已完成。
+
+
+## EP101 設備供應商基本資料補正（公司端 2026-11-16）
+
+- [x] 重新核對 frmEQPVendor、frmEQPVendorDef、frmEQPVendorContactorDef：補上新增/複製供應商「...」帶入編號按鈕，以及供應商與聯絡人表單的「確定、關閉、套用」流程。
+- [x] Development 假資料改由應用程式環境選擇控制；切到 Development 才讀寫 localStorage，切換環境或 API 位址時重新載入。正式/測試環境使用 API。
+- [x] 儲存後更新表單 DataStamp 與稽核欄位；更新 EP101 規格、規格索引及本檔。
+- [ ] 下一項按設備功能清單繼續對照 WinForms Form/Designer/Service；只有發現未有規格的資料表時才查 Oracle DDL 並交付家用端。
+- [ ] 本次未執行 build 或測試；未變更 API 與資料庫 schema。
