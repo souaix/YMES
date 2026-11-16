@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { createXlsxTemplate, parseFirstWorksheetXlsx } from './materialImportWorkbook'
 
 type IssueState = -1 | 0 | 1 | 2
@@ -13,13 +13,13 @@ interface EquipmentType {
   issueState: IssueState; creator: string; createDate: string; reviser: string | null; reviseDate: string | null; dataStamp: number
 }
 interface Consume { equipmentType: string; consumeNo: string; quantity: number; toleranceQty: number; period: number; tolerancePeriod: number; creator: string; createDate: string }
-interface Property { equipment: string; propertyNo: string; elementName: string; defaultValue: string; propertySequence: number; description: string; issueState: number; creator: string; createDate: string; dataStamp: number }
+interface Property { equipment: string; propertyNo: string; elementName: string; defaultValue: string; propertySequence: number; description: string; issueState: number; creator: string; createDate: string; reviser?: string | null; reviseDate?: string | null; dataStamp: number }
 interface ImportRow { equipmentType: string; engineerGroupNo: string; capacity: number; equipmentClass: string; description: string; stdUnitEmpTime: number; stdUnitEqpTime: number; countEqpUnitQty: number }
 interface ImportResult { equipmentType: string; equipmentClass: string; result: string; message: string }
 interface ImportJob { jobId: string; status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'; progress: number; results: ImportResult[] }
-const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string }>()
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const mock = import.meta.env.DEV
+const isMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const keys = {
   types: 'ymes-dev-mock:equipment-types:v1', accessories: 'ymes-dev-mock:equipment-type-accessories:v1',
   consumes: 'ymes-dev-mock:equipment-type-consumes:v1', properties: 'ymes-dev-mock:equipment-type-properties:v1',
@@ -47,10 +47,16 @@ const propertySeed: Record<string, Property[]> = { 'DEV-EQP-LATHE': [
 ] }
 const pictureSeed = ['DEV-EQUIPMENT-01.png', 'DEV-EQUIPMENT-02.png', 'DEV-EQUIPMENT-03.png']
 const propertyOptions = ref([{ propertyNo: 'DEV-TEMP', elementName: '設備溫度' }, { propertyNo: 'DEV-PRESSURE', elementName: '設備壓力' }, { propertyNo: 'DEV-SPEED', elementName: '設備速度' }, { propertyNo: 'DEV-RUN-MODE', elementName: '運轉模式' }])
+const engineerGroupOptions = ref<{ engineerGroupNo: string; engineerGroupName: string }[]>([])
+const engineerGroupSearch = ref('')
+const selectedEngineerGroupNo = ref('')
+const engineerGroupDialogOpen = ref(false)
 const rows = ref<EquipmentType[]>([])
 const status = ref<IssueState>(0)
 const keyword = ref('')
 const currentNo = ref('')
+const typeSourceNo = ref('')
+const typeFormDirty = ref(false)
 const checked = ref<string[]>([])
 const loading = ref(false)
 const busy = ref(false)
@@ -83,10 +89,14 @@ const consumes = ref<Consume[]>([])
 const consumeNo = ref('')
 const consumeMode = ref<ChildMode>(null)
 const consumeForm = ref({ consumeNo: '', quantity: 0, toleranceQty: 0, period: -1, tolerancePeriod: -1 })
+const consumeAudit = ref({ creator: '', createDate: '' })
+const consumeFormDirty = ref(false)
 const properties = ref<Property[]>([])
 const propertyNo = ref('')
 const propertyMode = ref<ChildMode>(null)
 const propertyForm = ref({ propertyNo: '', defaultValue: '', propertySequence: 1, description: '' })
+const propertyAudit = ref({ creator: '', createDate: '', reviser: '', reviseDate: '' })
+const propertyFormDirty = ref(false)
 const importFile = ref<File | null>(null)
 const importRows = ref<ImportRow[]>([])
 const importResults = ref<ImportResult[]>([])
@@ -99,6 +109,7 @@ let importJobId = ''
 const selectedConsume = computed(() => consumes.value.find((r) => r.consumeNo === consumeNo.value) ?? null)
 const selectedProperty = computed(() => properties.value.find((r) => r.propertyNo === propertyNo.value) ?? null)
 const filteredPictureNames = computed(() => pictureNames.value.filter((name) => name.toLowerCase().includes(pictureSearch.value.trim().toLowerCase())))
+const filteredEngineerGroups = computed(() => engineerGroupOptions.value.filter((row) => (row.engineerGroupNo + ' ' + row.engineerGroupName).toLowerCase().includes(engineerGroupSearch.value.trim().toLowerCase())))
 
 function apiUrl(path: string): string {
   const base = props.apiBaseUrl.trim()
@@ -123,7 +134,7 @@ function dateText(value?: string | null): string { if (!value) return ''; const 
 async function load(): Promise<void> {
   loading.value=true; error.value=''; notice.value=''
   try {
-    if (mock) rows.value=read<EquipmentType[]>(keys.types,seed)
+    if (isMock.value) rows.value=read<EquipmentType[]>(keys.types,seed)
     else { const q=new URLSearchParams(); if(keyword.value.trim()) q.set('equipmentType',keyword.value.trim()); const suffix=q.toString(); const data=await request<EquipmentType[]>('api/equipment/types'+(suffix?'?'+suffix:'')); rows.value=data.map((r)=>({...r,equipmentClassShow:className(r.equipmentClass)})) }
     checked.value=checked.value.filter((x)=>rows.value.some((r)=>r.equipmentType===x))
     currentNo.value=(visibleRows.value.find((r)=>r.equipmentType===currentNo.value)??visibleRows.value[0])?.equipmentType??''
@@ -138,7 +149,7 @@ function openType(mode: Exclude<TypeMode,null>): void {
   const row=current.value
   if((mode==='edit'||mode==='copy')&&!row) return
   if(mode==='edit'&&row?.issueState!==0) { error.value='只有未審核的設備類別可以修改。'; return }
-  dialog.value='type'; typeMode.value=mode
+  dialog.value='type'; typeMode.value=mode; typeSourceNo.value=mode==='new'?'':row!.equipmentType; typeFormDirty.value=false
   const src=mode==='new'?null:row
   form.value=src?{equipmentType:mode==='copy'?'':src.equipmentType,equipmentClassNo:src.equipmentClassNo,capacity:src.capacity,pictureName:src.pictureName??'',equipmentPicture:src.equipmentPicture??'',engineerGroupNo:src.engineerGroupNo,description:src.description??'',stdUnitEmpTime:src.stdUnitEmpTime,stdUnitEqpTime:src.stdUnitEqpTime,countEqpUnitQty:src.countEqpUnitQty}:{equipmentType:'',equipmentClassNo:0,capacity:-1,pictureName:'',equipmentPicture:'',engineerGroupNo:'',description:'',stdUnitEmpTime:0,stdUnitEqpTime:0,countEqpUnitQty:1}
   audit.value=mode==='edit'&&src?{creator:src.creator,createDate:dateText(src.createDate),reviser:props.currentUserNo||'DEV001',reviseDate:new Date().toLocaleString('zh-TW')}:{creator:props.currentUserNo||'DEV001',createDate:new Date().toLocaleString('zh-TW'),reviser:'',reviseDate:''}
@@ -152,7 +163,7 @@ function pictureChanged(e: Event): void {
 }
 async function openPicturePicker(): Promise<void> {
   try {
-    pictureNames.value = mock ? read<string[]>(keys.pictures, pictureSeed) : await request<string[]>('api/equipment/types/pictures')
+    pictureNames.value = isMock.value ? read<string[]>(keys.pictures, pictureSeed) : await request<string[]>('api/equipment/types/pictures')
     pictureSearch.value = ''
     selectedLibraryPicture.value = form.value.pictureName
     pictureDialogOpen.value = true
@@ -163,7 +174,7 @@ async function openPicturePicker(): Promise<void> {
 async function previewLibraryPicture(name: string): Promise<void> {
   selectedLibraryPicture.value = name
   try {
-    if (mock) libraryPictureUrl.value = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"><rect width="100%" height="100%" fill="#f2efdf"/><path d="M35 145h250M70 145V75h180v70M105 75V45h110v30" fill="none" stroke="#897e54" stroke-width="5"/><text x="160" y="168" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#65551a">DEVELOPMENT MOCK</text></svg>')
+    if (isMock.value) libraryPictureUrl.value = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"><rect width="100%" height="100%" fill="#f2efdf"/><path d="M35 145h250M70 145V75h180v70M105 75V45h110v30" fill="none" stroke="#897e54" stroke-width="5"/><text x="160" y="168" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#65551a">DEVELOPMENT MOCK</text></svg>')
     else libraryPictureUrl.value = (await request<{ dataUrl: string }>('api/equipment/types/pictures/' + encodeURIComponent(name))).dataUrl
   } catch (e) { libraryPictureUrl.value = ''; error.value = e instanceof Error ? e.message : '設備圖片預覽載入失敗。' }
 }
@@ -172,13 +183,35 @@ function applyLibraryPicture(): void {
   form.value.pictureName = selectedLibraryPicture.value
   form.value.equipmentPicture = libraryPictureUrl.value
   selectedFile.value = null
+  typeFormDirty.value = true
   pictureDialogOpen.value = false
+}
+async function openEngineerGroupPicker(): Promise<void> {
+  engineerGroupSearch.value = ''
+  selectedEngineerGroupNo.value = form.value.engineerGroupNo
+  try {
+    if (isMock.value) {
+      engineerGroupOptions.value = read('ymes-dev-mock:equipment-engineer-groups:v1', [
+        { engineerGroupNo: 'DEV-EG-01', engineerGroupName: '開發用設備維護組' },
+        { engineerGroupNo: 'DEV-EG-02', engineerGroupName: '開發用公用設備組' },
+        { engineerGroupNo: 'DEV-EG-03', engineerGroupName: '開發用設備品保組' },
+      ])
+    } else engineerGroupOptions.value = await request<{ engineerGroupNo: string; engineerGroupName: string }[]>('api/equipment/engineer-groups')
+    engineerGroupDialogOpen.value = true
+  } catch (e) { error.value = e instanceof Error ? e.message : '工程群組資料載入失敗。' }
+}
+function applyEngineerGroup(): void {
+  const row = engineerGroupOptions.value.find((x) => x.engineerGroupNo === selectedEngineerGroupNo.value)
+  if (!row) return
+  form.value.engineerGroupNo = row.engineerGroupNo
+  typeFormDirty.value = true
+  engineerGroupDialogOpen.value = false
 }
 async function deleteLibraryPicture(): Promise<void> {
   const name = selectedLibraryPicture.value
   if (!name || !window.confirm('確定刪除圖片 ' + name + '？')) return
   try {
-    if (mock) {
+    if (isMock.value) {
       if (rows.value.some((row) => row.pictureName === name)) throw new Error('圖片仍被設備類別引用，不能刪除。')
       write(keys.pictures, read<string[]>(keys.pictures, pictureSeed).filter((item) => item !== name))
       pictureNames.value = read<string[]>(keys.pictures, pictureSeed)
@@ -193,23 +226,23 @@ async function deleteLibraryPicture(): Promise<void> {
 function validateType(): string {
   if(!form.value.equipmentType.trim()) return '設備類別編號為必填。'
   if(!form.value.engineerGroupNo.trim()) return '工程群組編號為必填。'
-  if(!Number.isInteger(Number(form.value.capacity))||Number(form.value.capacity)<-1) return '產能上限須為大於或等於 -1 的整數。'
+  if(!Number.isInteger(Number(form.value.capacity))||Number(form.value.capacity)<-1||Number(form.value.capacity)>999999) return '產能上限須為 -1 至 999999 的整數。'
   if(!Number.isFinite(Number(form.value.stdUnitEmpTime))||Number(form.value.stdUnitEmpTime)<0) return '標準人時須為大於或等於 0。'
   if(!Number.isFinite(Number(form.value.stdUnitEqpTime))||Number(form.value.stdUnitEqpTime)<0) return '標準機時須為大於或等於 0。'
   if(!Number.isInteger(Number(form.value.countEqpUnitQty))||Number(form.value.countEqpUnitQty)<1) return '機時單位批量須為大於或等於 1 的整數。'
   if(form.value.equipmentType.trim().length>50) return '設備類別編號不可超過 50 個字元。'
   return ''
 }
-async function saveType(): Promise<void> {
+async function saveType(closeAfterSave = true): Promise<void> {
   if(!typeMode.value||busy.value) return
   const problem=validateType(); if(problem) { error.value=problem; return }
   busy.value=true; error.value=''
-  const mode=typeMode.value, source=current.value, no=form.value.equipmentType.trim().toUpperCase()
+  const mode=typeMode.value, source=mode==='new'?null:(rows.value.find((r)=>r.equipmentType===typeSourceNo.value)??current.value), no=form.value.equipmentType.trim().toUpperCase()
   try {
     const c=classes.find((x)=>x.value===Number(form.value.equipmentClassNo))??classes[0]
     const body={equipmentType:no,equipmentClass:c.code,equipmentClassNo:c.value,pictureName:form.value.pictureName.trim()||null,engineerGroupNo:form.value.engineerGroupNo.trim(),capacity:Number(form.value.capacity),description:form.value.description.trim()||null,stdUnitEmpTime:Number(form.value.stdUnitEmpTime),stdUnitEqpTime:Number(form.value.stdUnitEqpTime),countEqpUnitQty:Number(form.value.countEqpUnitQty),...(mode==='edit'&&source?{dataStamp:source.dataStamp}:{})}
     let saved: EquipmentType
-    if(mock) {
+    if(isMock.value) {
       const data=read<EquipmentType[]>(keys.types,seed), index=data.findIndex((r)=>r.equipmentType===no)
       if(mode!=='edit'&&index>=0) throw new Error('設備類別編號已存在。')
       const now=new Date().toISOString()
@@ -224,7 +257,7 @@ async function saveType(): Promise<void> {
       else if(mode==='copy'&&source) saved=await request<EquipmentType>('api/equipment/types/'+encodeURIComponent(source.equipmentType)+'/copy',{method:'POST',body:upload})
       else saved=await request<EquipmentType>('api/equipment/types',{method:'POST',body:upload})
     }
-    dialog.value=null; typeMode.value=null; await load(); currentNo.value=saved.equipmentType; notice.value=mode==='edit'?'設備類別已修改。':mode==='copy'?'設備類別已複製。':'設備類別已新增。'
+    if(closeAfterSave){dialog.value=null;typeMode.value=null} typeFormDirty.value=false; await load(); currentNo.value=saved.equipmentType; audit.value={creator:saved.creator??props.currentUserNo??'',createDate:dateText(saved.createDate),reviser:saved.reviser??'',reviseDate:dateText(saved.reviseDate)}; notice.value=mode==='edit'?'設備類別已修改。':mode==='copy'?'設備類別已複製。':'設備類別已新增。'
   } catch(e) { error.value=e instanceof Error?e.message:'設備類別儲存失敗。' } finally { busy.value=false }
 }
 async function massAction(action:'delete'|'approve'): Promise<void> {
@@ -234,7 +267,7 @@ async function massAction(action:'delete'|'approve'): Promise<void> {
   if(!window.confirm('確定'+(action==='approve'?'核准':'刪除')+' '+valid.length+' 筆設備類別？')) return
   busy.value=true
   try {
-    if(mock) {
+    if(isMock.value) {
       const data=read<EquipmentType[]>(keys.types,seed)
       if(action==='approve') { for(const t of valid){const r=data.find((x)=>x.equipmentType===t.equipmentType);if(r){r.issueState=2;r.dataStamp++;r.reviser=props.currentUserNo||'DEV001';r.reviseDate=new Date().toISOString()}};write(keys.types,data) }
       else { const gone=new Set(valid.map((x)=>x.equipmentType));write(keys.types,data.filter((x)=>!gone.has(x.equipmentType)));for(const [key,seedValue] of [[keys.accessories,accessoryLinks],[keys.consumes,consumeSeed],[keys.properties,propertySeed]] as const){const map=read<Record<string,unknown>>(key,seedValue as Record<string,unknown>);write(key,Object.fromEntries(Object.entries(map).filter(([name])=>!gone.has(name))))} }
@@ -245,7 +278,7 @@ async function massAction(action:'delete'|'approve'): Promise<void> {
 async function openAccessories(): Promise<void> {
   if(!current.value) return
   dialog.value='accessories'; error.value=''
-  try { if(mock){accessoryAll.value=[...accessorySeed];accessorySelected.value=[...(read<Record<string,string[]>>(keys.accessories,accessoryLinks)[current.value.equipmentType]??[])]}else{const r=await request<{available:string[];selected:string[]}>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/accessory-types');accessoryAll.value=r.available;accessorySelected.value=[...r.selected]};accessorySaved.value=[...accessorySelected.value] }
+  try { if(isMock.value){accessoryAll.value=[...accessorySeed];accessorySelected.value=[...(read<Record<string,string[]>>(keys.accessories,accessoryLinks)[current.value.equipmentType]??[])]}else{const r=await request<{available:string[];selected:string[]}>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/accessory-types');accessoryAll.value=r.available;accessorySelected.value=[...r.selected]};accessorySaved.value=[...accessorySelected.value] }
   catch(e){error.value=e instanceof Error?e.message:'配件類別載入失敗。'}
 }
 function moveAccessories(dir:'add'|'remove',all=false):void {
@@ -254,38 +287,39 @@ function moveAccessories(dir:'add'|'remove',all=false):void {
 }
 async function saveAccessories():Promise<void>{
   if(!current.value||busy.value)return;busy.value=true
-  try{if(mock){const d=read<Record<string,string[]>>(keys.accessories,accessoryLinks);d[current.value.equipmentType]=[...accessorySelected.value];write(keys.accessories,d)}else await request<void>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/accessory-types',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({accessoryTypes:accessorySelected.value})});accessorySaved.value=[...accessorySelected.value];dialog.value=null;notice.value='配件類別設定已確認。'}
+  try{if(isMock.value){const d=read<Record<string,string[]>>(keys.accessories,accessoryLinks);d[current.value.equipmentType]=[...accessorySelected.value];write(keys.accessories,d)}else await request<void>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/accessory-types',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({accessoryTypes:accessorySelected.value})});accessorySaved.value=[...accessorySelected.value];dialog.value=null;notice.value='配件類別設定已確認。'}
   catch(e){error.value=e instanceof Error?e.message:'配件類別設定儲存失敗。'}finally{busy.value=false}
 }
 async function openConsumes():Promise<void>{
   if(!current.value)return;dialog.value='consumes';consumeNo.value=''
-  try{consumes.value=mock?(read<Record<string,Consume[]>>(keys.consumes,consumeSeed)[current.value.equipmentType]??[]):await request<Consume[]>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/consumes')}
+  try{consumes.value=isMock.value?(read<Record<string,Consume[]>>(keys.consumes,consumeSeed)[current.value.equipmentType]??[]):await request<Consume[]>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/consumes')}
   catch(e){consumes.value=[];error.value=e instanceof Error?e.message:'耗材資料載入失敗。'}
 }
 function openConsume(mode:Exclude<ChildMode,null>):void{
-  const row=selectedConsume.value;if((mode==='edit'||mode==='copy')&&!row)return;consumeMode.value=mode
-  consumeForm.value=row&&mode!=='new'?{consumeNo:mode==='copy'?'':row.consumeNo,quantity:row.quantity,toleranceQty:row.toleranceQty,period:row.period,tolerancePeriod:row.tolerancePeriod}:{consumeNo:'',quantity:0,toleranceQty:0,period:-1,tolerancePeriod:-1}
+  const row=selectedConsume.value;if((mode==='edit'||mode==='copy')&&!row)return;consumeMode.value=mode;consumeFormDirty.value=false
+  consumeForm.value=row&&mode!=='new'?{consumeNo:row.consumeNo,quantity:row.quantity,toleranceQty:row.toleranceQty,period:row.period,tolerancePeriod:row.tolerancePeriod}:{consumeNo:'',quantity:0,toleranceQty:0,period:-1,tolerancePeriod:-1}
+  consumeAudit.value=mode==='edit'&&row?{creator:row.creator,createDate:dateText(row.createDate)}:{creator:props.currentUserNo||'DEV001',createDate:new Date().toLocaleString('zh-TW')}
 }
 function periodChanged():void{if(Number(consumeForm.value.period)===-1)consumeForm.value.tolerancePeriod=-1}
-async function saveConsume():Promise<void>{
+async function saveConsume(closeAfterSave=true):Promise<void>{
   if(!current.value||!consumeMode.value||busy.value)return;const f=consumeForm.value,no=f.consumeNo.trim().toUpperCase(),n=[f.quantity,f.toleranceQty,f.period,f.tolerancePeriod].map(Number)
   if(!no){error.value='耗材編號為必填。';return}if(n.some((x)=>!Number.isInteger(x))){error.value='數量與週期欄位必須為整數。';return}if(n[0]<0||n[1]<0||n[2]<-1||n[3]<-1){error.value='數量不可小於 0，週期下限為 -1。';return}if(n[1]>n[0]){error.value='容許數量不可大於使用數量。';return}if(n[2]!==-1&&n[3]===-1){error.value='只有週期為 -1 時，容許週期才可為 -1。';return}
   const mode=consumeMode.value;if(mode!=='edit'&&consumes.value.some((x)=>x.consumeNo===no)){error.value='耗材編號已存在。';return}busy.value=true
   try{const body={consumeNo:no,quantity:n[0],toleranceQty:n[1],period:n[2],tolerancePeriod:n[3]}
-    if(mock){const all=read<Record<string,Consume[]>>(keys.consumes,consumeSeed),list=[...(all[current.value.equipmentType]??[])],i=list.findIndex((x)=>x.consumeNo===consumeNo.value),old=i>=0?list[i]:null;const result={equipmentType:current.value.equipmentType,...body,creator:old?.creator||props.currentUserNo||'DEV001',createDate:old?.createDate||new Date().toISOString()};if(mode==='edit'&&i>=0)list[i]=result;else list.push(result);all[current.value.equipmentType]=list;write(keys.consumes,all)}
+    if(isMock.value){const all=read<Record<string,Consume[]>>(keys.consumes,consumeSeed),list=[...(all[current.value.equipmentType]??[])],i=list.findIndex((x)=>x.consumeNo===consumeNo.value),old=i>=0?list[i]:null;const result={equipmentType:current.value.equipmentType,...body,creator:mode==='edit'&&old?old.creator:(props.currentUserNo||'DEV001'),createDate:mode==='edit'&&old?old.createDate:new Date().toISOString()};if(mode==='edit'&&i>=0)list[i]=result;else list.push(result);all[current.value.equipmentType]=list;write(keys.consumes,all)}
     else{const base='api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/consumes';if(mode==='edit')await request<void>(base+'/'+encodeURIComponent(consumeNo.value),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});else await request<void>(base,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
-    consumeMode.value=null;await openConsumes();consumeNo.value=no
+    if(closeAfterSave)consumeMode.value=null;consumeFormDirty.value=false;await openConsumes();consumeNo.value=no;const saved=selectedConsume.value;if(saved)consumeAudit.value={creator:saved.creator,createDate:dateText(saved.createDate)}
   }catch(e){error.value=e instanceof Error?e.message:'耗材儲存失敗。'}finally{busy.value=false}
 }
-async function copyConsume():Promise<void>{const r=selectedConsume.value;if(!r)return;const no=window.prompt('請輸入新的耗材編號',r.consumeNo+'-COPY');if(!no)return;consumeForm.value={consumeNo:no,quantity:r.quantity,toleranceQty:r.toleranceQty,period:r.period,tolerancePeriod:r.tolerancePeriod};consumeMode.value='copy';await saveConsume()}
+function copyConsume():void{openConsume('copy')}
 async function deleteConsume():Promise<void>{
   if(!current.value||!selectedConsume.value||!window.confirm('確定刪除耗材 '+consumeNo.value+'？'))return
-  try{if(mock){const d=read<Record<string,Consume[]>>(keys.consumes,consumeSeed);d[current.value.equipmentType]=(d[current.value.equipmentType]??[]).filter((x)=>x.consumeNo!==consumeNo.value);write(keys.consumes,d)}else await request<void>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/consumes/'+encodeURIComponent(consumeNo.value),{method:'DELETE'});consumeNo.value='';await openConsumes()}catch(e){error.value=e instanceof Error?e.message:'耗材刪除失敗。'}
+  try{if(isMock.value){const d=read<Record<string,Consume[]>>(keys.consumes,consumeSeed);d[current.value.equipmentType]=(d[current.value.equipmentType]??[]).filter((x)=>x.consumeNo!==consumeNo.value);write(keys.consumes,d)}else await request<void>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/consumes/'+encodeURIComponent(consumeNo.value),{method:'DELETE'});consumeNo.value='';await openConsumes()}catch(e){error.value=e instanceof Error?e.message:'耗材刪除失敗。'}
 }
 async function openProperties():Promise<void>{
   if(!current.value)return;dialog.value='properties';propertyNo.value=''
   try {
-    if (mock) properties.value = (read<Record<string,Property[]>>(keys.properties,propertySeed)[current.value.equipmentType] ?? []).filter((x)=>x.issueState===0)
+    if (isMock.value) properties.value = (read<Record<string,Property[]>>(keys.properties,propertySeed)[current.value.equipmentType] ?? []).filter((x)=>x.issueState===0)
     else {
       const result = await Promise.all([
         request<Property[]>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/properties?issueState=0'),
@@ -298,23 +332,24 @@ async function openProperties():Promise<void>{
   catch(e){properties.value=[];error.value=e instanceof Error?e.message:'設備屬性載入失敗。'}
 }
 function openProperty(mode:Exclude<ChildMode,null>):void{
-  const r=selectedProperty.value;if((mode==='edit'||mode==='copy')&&!r)return;if(mode==='edit'&&(!r||r.issueState!==0)){error.value='只有未審核的設備屬性可以修改。';return}propertyMode.value=mode
-  propertyForm.value=r&&mode!=='new'?{propertyNo:mode==='copy'?'':r.propertyNo,defaultValue:r.defaultValue,propertySequence:r.propertySequence,description:r.description}:{propertyNo:'',defaultValue:'',propertySequence:properties.value.length+1,description:''}
+  const r=selectedProperty.value;if((mode==='edit'||mode==='copy')&&!r)return;if(mode==='edit'&&(!r||r.issueState!==0)){error.value='只有未審核的設備屬性可以修改。';return}propertyMode.value=mode;propertyFormDirty.value=false
+  propertyForm.value=r&&mode!=='new'?{propertyNo:r.propertyNo,defaultValue:r.defaultValue,propertySequence:r.propertySequence,description:r.description}:{propertyNo:'',defaultValue:'',propertySequence:properties.value.length+1,description:''}
+  propertyAudit.value=mode==='edit'&&r?{creator:r.creator,createDate:dateText(r.createDate),reviser:r.reviser??props.currentUserNo??'',reviseDate:dateText(r.reviseDate)}:{creator:props.currentUserNo||'DEV001',createDate:new Date().toLocaleString('zh-TW'),reviser:'',reviseDate:''}
 }
-async function saveProperty():Promise<void>{
+async function saveProperty(closeAfterSave=true):Promise<void>{
   if(!current.value||!propertyMode.value||busy.value)return;const f=propertyForm.value,mode=propertyMode.value
   if(!f.propertyNo){error.value='屬性編號為必填。';return}if(!Number.isInteger(Number(f.propertySequence))||Number(f.propertySequence)<0||Number(f.propertySequence)>99){error.value='屬性順序須為 0 至 99 的整數。';return}if(mode!=='edit'&&properties.value.some((x)=>x.propertyNo===f.propertyNo)){error.value='此設備已有相同屬性。';return}
   busy.value=true
   try{const body={propertyNo:f.propertyNo,defaultValue:f.defaultValue,propertySequence:Number(f.propertySequence),description:f.description,...(mode==='edit'&&selectedProperty.value?{dataStamp:selectedProperty.value.dataStamp}:{})}
-    if(mock){const all=read<Record<string,Property[]>>(keys.properties,propertySeed),list=[...(all[current.value.equipmentType]??[])],i=list.findIndex((x)=>x.propertyNo===propertyNo.value),old=i>=0?list[i]:null,def=propertyOptions.value.find((x)=>x.propertyNo===f.propertyNo);const result:Property={equipment:current.value.equipmentType,...body,elementName:def?.elementName??f.propertyNo,issueState:0,creator:old?.creator||props.currentUserNo||'DEV001',createDate:old?.createDate||new Date().toISOString(),dataStamp:(old?.dataStamp??-1)+1};if(mode==='edit'&&i>=0)list[i]=result;else list.push(result);all[current.value.equipmentType]=list;write(keys.properties,all)}
+    if(isMock.value){const all=read<Record<string,Property[]>>(keys.properties,propertySeed),list=[...(all[current.value.equipmentType]??[])],i=list.findIndex((x)=>x.propertyNo===propertyNo.value),old=i>=0?list[i]:null,def=propertyOptions.value.find((x)=>x.propertyNo===f.propertyNo);const result:Property={equipment:current.value.equipmentType,...body,elementName:def?.elementName??f.propertyNo,issueState:0,creator:mode==='edit'&&old?old.creator:(props.currentUserNo||'DEV001'),createDate:mode==='edit'&&old?old.createDate:new Date().toISOString(),reviser:mode==='edit'?(props.currentUserNo||'DEV001'):null,reviseDate:mode==='edit'?new Date().toISOString():null,dataStamp:mode==='edit'?(old?.dataStamp??0)+1:0};if(mode==='edit'&&i>=0)list[i]=result;else list.push(result);all[current.value.equipmentType]=list;write(keys.properties,all)}
     else{const base='api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/properties';if(mode==='edit')await request<void>(base+'/'+encodeURIComponent(propertyNo.value),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});else await request<void>(base,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
-    propertyMode.value=null;await openProperties();propertyNo.value=f.propertyNo
+    if(closeAfterSave)propertyMode.value=null;propertyFormDirty.value=false;await openProperties();propertyNo.value=f.propertyNo;const saved=selectedProperty.value;if(saved)propertyAudit.value={creator:saved.creator,createDate:dateText(saved.createDate),reviser:saved.reviser??'',reviseDate:dateText(saved.reviseDate)}
   }catch(e){error.value=e instanceof Error?e.message:'設備屬性儲存失敗。'}finally{busy.value=false}
 }
-async function copyProperty():Promise<void>{const r=selectedProperty.value;if(!r)return;const no=window.prompt('請輸入複製後的屬性編號','');if(!no)return;propertyForm.value={propertyNo:no.trim().toUpperCase(),defaultValue:r.defaultValue,propertySequence:r.propertySequence,description:r.description};propertyMode.value='copy';await saveProperty()}
+function copyProperty():void{openProperty('copy')}
 async function deleteProperty():Promise<void>{
   if(!current.value||!selectedProperty.value||!window.confirm('確定刪除屬性 '+propertyNo.value+'？'))return
-  try{if(mock){const d=read<Record<string,Property[]>>(keys.properties,propertySeed);d[current.value.equipmentType]=(d[current.value.equipmentType]??[]).filter((x)=>x.propertyNo!==propertyNo.value);write(keys.properties,d)}else await request<void>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/properties/'+encodeURIComponent(propertyNo.value)+'?issueState='+selectedProperty.value.issueState+'&dataStamp='+selectedProperty.value.dataStamp,{method:'DELETE'});propertyNo.value='';await openProperties()}catch(e){error.value=e instanceof Error?e.message:'設備屬性刪除失敗。'}
+  try{if(isMock.value){const d=read<Record<string,Property[]>>(keys.properties,propertySeed);d[current.value.equipmentType]=(d[current.value.equipmentType]??[]).filter((x)=>x.propertyNo!==propertyNo.value);write(keys.properties,d)}else await request<void>('api/equipment/types/'+encodeURIComponent(current.value.equipmentType)+'/properties/'+encodeURIComponent(propertyNo.value)+'?issueState='+selectedProperty.value.issueState+'&dataStamp='+selectedProperty.value.dataStamp,{method:'DELETE'});propertyNo.value='';await openProperties()}catch(e){error.value=e instanceof Error?e.message:'設備屬性刪除失敗。'}
 }
 const equipmentTypeImportColumns = ['EquipmentType', 'EngineerGroupNo', 'Capacity', 'EquipmentClass', 'Description', 'StdUnitEMPTime', 'StdunitEQPTime', 'CountEQPUnitQty']
 function parseEquipmentTypeImportMatrix(matrix: string[][]): ImportRow[] {
@@ -375,7 +410,7 @@ async function importFileChanged(e:Event):Promise<void>{
     if(extension==='xlsx'){
       importRows.value=parseEquipmentTypeImportMatrix(await parseFirstWorksheetXlsx(file))
       importResults.value=uniqueImportResults(importRows.value)
-    }else if(extension==='xls'&&!mock){
+    }else if(extension==='xls'&&!isMock.value){
       const formData=new FormData();formData.append('file',file)
       const preview=await request<{results:ImportResult[]}>('api/equipment/types/import/preview',{method:'POST',body:formData})
       importResults.value=(preview.results??[]).map((row)=>({...row,result:row.result||'pending'}))
@@ -390,7 +425,7 @@ async function importFileChanged(e:Event):Promise<void>{
 async function downloadTemplate():Promise<void>{
   try{
     let blob:Blob
-    if(mock){
+    if(isMock.value){
       blob=createXlsxTemplate(equipmentTypeImportColumns,'EquipmentType',[['DEV-EQP-NEW','DEV-EG-01','-1','GENERAL','開發用範例','0','0','1']])
     }else{
       const response=await fetch(apiUrl('api/equipment/types/import/template'),{credentials:'include'})
@@ -406,17 +441,17 @@ async function cancelImport():Promise<void>{
   if(!importRunning.value)return
   cancelImportRequested=true
   if(cancelRequestSent)return
-  if(!mock&&importJobId){
+  if(!isMock.value&&importJobId){
     try{await request<void>('api/equipment/types/import/jobs/'+encodeURIComponent(importJobId)+'/cancel',{method:'POST'});cancelRequestSent=true}
     catch(e){importMessage.value=e instanceof Error?e.message:'取消匯入工作失敗。';return}
-  }else if(mock)cancelRequestSent=true
+  }else if(isMock.value)cancelRequestSent=true
   importMessage.value='已要求取消；目前處理中的類別完成後停止。'
 }
 async function runImport():Promise<void>{
   if(!importFile.value||!importResults.value.length){importMessage.value='請先選取並載入有效的 Excel 範本。';return}
   busy.value=true;importRunning.value=true;importProgress.value=0;cancelImportRequested=false;cancelRequestSent=false;importJobId=''
   try{
-    if(mock){
+    if(isMock.value){
       const data=read<EquipmentType[]>(keys.types,seed)
       const types=[...new Set(importResults.value.map((row)=>row.equipmentType))]
       for(let index=0;index<types.length;index++){
@@ -459,13 +494,14 @@ async function runImport():Promise<void>{
   }catch(e){importMessage.value=e instanceof Error?e.message:'匯入失敗。'}
   finally{busy.value=false;importRunning.value=false;importJobId=''}
 }
-function closeDialog():void{if(importRunning.value)return;if(dialog.value==='accessories'&&accessoryDirty.value&&!window.confirm('配件異動尚未確認，關閉會放棄變更。要繼續嗎？'))return;dialog.value=null;typeMode.value=null;consumeMode.value=null;propertyMode.value=null}
+function closeDialog():void{if(importRunning.value)return;if(dialog.value==='accessories'&&accessoryDirty.value&&!window.confirm('配件異動尚未確認，關閉會放棄變更。要繼續嗎？'))return;dialog.value=null;typeMode.value=null;consumeMode.value=null;propertyMode.value=null;engineerGroupDialogOpen.value=false}
 onMounted(()=>{void load()})
+watch(()=>[props.developmentPreview,props.apiBaseUrl],()=>{void load()})
 </script>
 
 <template>
   <section class="eqtype-page">
-    <div v-if="mock" class="eqtype-dev-note">開發假資料模式｜資料只保存在本機瀏覽器；正式環境只呼叫 API。</div>
+    <div v-if="isMock" class="eqtype-dev-note">開發假資料模式｜資料只保存在本機瀏覽器；正式環境只呼叫 API。</div>
     <div v-if="error" class="eqtype-message error" role="alert">{{ error }}<button type="button" @click="error = ''">×</button></div>
     <div v-if="notice" class="eqtype-message success" role="status">{{ notice }}<button type="button" @click="notice = ''">×</button></div>
     <section class="eqtype-query">
@@ -493,29 +529,37 @@ onMounted(()=>{void load()})
       <footer class="eqtype-footer">資料總筆數 <strong>{{ visibleRows.length }}</strong></footer>
     </section>
 
-    <div v-if="dialog==='type'" class="eqtype-overlay" @click.self="closeDialog"><form class="eqtype-form eqtype-main-form" @submit.prevent="saveType">
+    <div v-if="dialog==='type'" class="eqtype-overlay" @click.self="closeDialog"><form class="eqtype-form eqtype-main-form" @input="typeFormDirty=true" @change="typeFormDirty=true" @submit.prevent="saveType(true)">
       <header><strong>設備類別資料定義 ({{ typeMode==='edit'?'EDIT':typeMode==='copy'?'COPY':'ADD' }})</strong><button type="button" aria-label="關閉" @click="closeDialog">×</button></header>
       <fieldset><legend>設備類別主檔資料</legend><div class="eqtype-columns"><div class="eqtype-column">
         <label><span>設備類別編號</span><input v-model="form.equipmentType" required maxlength="50" :readonly="typeMode==='edit'" @blur="form.equipmentType=form.equipmentType.toUpperCase()" /></label>
         <label><span>設備分類</span><select v-model.number="form.equipmentClassNo"><option v-for="c in classes" :key="c.value" :value="c.value">{{ c.label }}</option></select></label>
-        <label><span>產能上限</span><span class="eqtype-inline"><input v-model.number="form.capacity" type="number" min="-1" step="1" required /><small>(-1 代表不限制)</small></span></label>
-        <label><span>工程群組編號</span><input v-model.trim="form.engineerGroupNo" maxlength="20" required /><small>範例：DEV-EG-01</small></label>
+        <label><span>產能上限</span><span class="eqtype-inline"><input v-model.number="form.capacity" type="number" min="-1" max="999999" maxlength="6" step="1" required /><small>(-1 代表不限制)</small></span></label>
+        <label class="eqtype-engineer-group"><span>工程群組編號</span><span class="eqtype-picture-name"><input v-model.trim="form.engineerGroupNo" maxlength="20" required readonly /><button type="button" :disabled="busy" @click="openEngineerGroupPicker">...</button></span></label>
         <label class="eqtype-long"><span>說明</span><textarea v-model="form.description" maxlength="255" rows="5" /></label>
       </div><div class="eqtype-column">
-        <label><span>圖片名稱</span><span class="eqtype-picture-name"><input v-model.trim="form.pictureName" maxlength="50" /><button type="button" @click="openPicturePicker">...</button></span></label><label><span>設備圖片</span><input type="file" accept=".bmp,.jpg,.jpeg,.gif,.png" @change="pictureChanged" /></label>
-        <div v-if="form.equipmentPicture" class="eqtype-image-preview"><img :src="form.equipmentPicture" alt="設備類別圖片" /><button type="button" @click="form.equipmentPicture='';form.pictureName='';selectedFile=null">清除圖片</button></div>
+        <label><span>圖片名稱</span><span class="eqtype-picture-name"><input v-model.trim="form.pictureName" maxlength="50" readonly /><button type="button" :disabled="busy" @click="openPicturePicker">...</button></span></label><label><span>設備圖片</span><input type="file" accept=".bmp,.jpg,.jpeg,.gif,.png" @change="pictureChanged" /></label>
+        <div v-if="form.equipmentPicture" class="eqtype-image-preview"><img :src="form.equipmentPicture" alt="設備類別圖片" /><button type="button" @click="form.equipmentPicture='';form.pictureName='';selectedFile=null;typeFormDirty=true">清除圖片</button></div>
         <label><span>標準人時</span><span class="eqtype-inline"><input v-model.number="form.stdUnitEmpTime" type="number" min="0" step="0.01" /><small>小時</small></span></label>
         <label><span>標準機時</span><span class="eqtype-inline"><input v-model.number="form.stdUnitEqpTime" type="number" min="0" step="0.01" /><small>小時</small></span></label>
         <label><span>機時單位批量</span><input v-model.number="form.countEqpUnitQty" type="number" min="1" step="1" required /></label><p class="eqtype-hint">設備類別可用產能 -1 表示不限制。</p>
       </div></div></fieldset>
       <div class="eqtype-audit"><span>建立人　{{ audit.creator }}</span><span>建立日期　{{ audit.createDate }}</span><span>修改人　{{ audit.reviser }}</span><span>修改日期　{{ audit.reviseDate }}</span></div>
-      <footer><button class="eqtype-confirm" type="submit" :disabled="busy">確定</button><button type="button" @click="closeDialog">關閉</button><button type="button" disabled>套用</button></footer>
+      <footer><button class="eqtype-confirm" type="submit" :disabled="busy">確定</button><button type="button" @click="closeDialog">關閉</button><button type="button" :disabled="busy||!typeFormDirty" @click="saveType(false)">套用</button></footer>
     </form></div>
 
     <div v-if="dialog==='type'&&pictureDialogOpen" class="eqtype-overlay eqtype-nested" @click.self="pictureDialogOpen=false"><section class="eqtype-form eqtype-picture-picker">
       <header><strong>設備圖片選擇</strong><button type="button" aria-label="關閉" @click="pictureDialogOpen=false">×</button></header>
       <div class="eqtype-picture-browser"><div><input v-model.trim="pictureSearch" placeholder="搜尋圖片名稱" /><div class="eqtype-picture-list"><button v-for="name in filteredPictureNames" :key="name" type="button" :class="{'selected-picture':name===selectedLibraryPicture}" @click="previewLibraryPicture(name)" @dblclick="applyLibraryPicture">{{ name }}</button><p v-if="!filteredPictureNames.length">沒有可用圖片</p></div></div><div class="eqtype-library-preview"><img v-if="libraryPictureUrl" :src="libraryPictureUrl" alt="設備圖片預覽" /><span v-else>選取圖片以預覽</span><strong>{{ selectedLibraryPicture }}</strong></div></div>
       <footer><button class="eqtype-confirm" type="button" :disabled="!selectedLibraryPicture" @click="applyLibraryPicture">OK</button><button type="button" :disabled="!selectedLibraryPicture" @click="deleteLibraryPicture">Remove</button><button type="button" @click="pictureDialogOpen=false">Close</button></footer>
+    </section></div>
+
+    <div v-if="dialog==='type'&&engineerGroupDialogOpen" class="eqtype-overlay eqtype-nested" @click.self="engineerGroupDialogOpen=false"><section class="eqtype-form eqtype-child-list eqtype-engineer-group-picker">
+      <header><strong>工程群組選擇</strong><button type="button" aria-label="關閉" @click="engineerGroupDialogOpen=false">×</button></header>
+      <label class="eqtype-picker-search"><span>工程群組編號</span><input v-model.trim="engineerGroupSearch" placeholder="輸入編號或名稱搜尋" @keyup.enter="applyEngineerGroup" /></label>
+      <div class="eqtype-child-grid"><table class="eqtype-table"><thead><tr><th>工程群組編號</th><th>工程群組名稱</th></tr></thead><tbody>
+        <tr v-for="row in filteredEngineerGroups" :key="row.engineerGroupNo" :class="{'selected-row':row.engineerGroupNo===selectedEngineerGroupNo}" @click="selectedEngineerGroupNo=row.engineerGroupNo" @dblclick="applyEngineerGroup"><td>{{ row.engineerGroupNo }}</td><td>{{ row.engineerGroupName }}</td></tr><tr v-if="!filteredEngineerGroups.length"><td colspan="2" class="eqtype-empty">沒有符合條件的工程群組</td></tr>
+      </tbody></table></div><footer><button class="eqtype-confirm" type="button" :disabled="!selectedEngineerGroupNo" @click="applyEngineerGroup">確定</button><button type="button" @click="engineerGroupDialogOpen=false">關閉</button></footer>
     </section></div>
 
     <div v-if="dialog==='accessories'&&current" class="eqtype-overlay" @click.self="closeDialog"><section class="eqtype-form eqtype-acc-form">
@@ -534,12 +578,12 @@ onMounted(()=>{void load()})
       </tbody></table></div>
       <div class="eqtype-child-actions"><button class="eqtype-action primary" type="button" @click="openConsume('new')">新增(A)</button><button class="eqtype-action" type="button" :disabled="!selectedConsume" @click="openConsume('edit')">修改(E)</button><button class="eqtype-action" type="button" :disabled="!selectedConsume" @click="copyConsume">複製(C)</button><button class="eqtype-action danger" type="button" :disabled="!selectedConsume" @click="deleteConsume">刪除(D)</button><span></span><button class="eqtype-action" type="button" @click="closeDialog">關閉</button></div>
     </section></div>
-    <div v-if="dialog==='consumes'&&consumeMode" class="eqtype-overlay eqtype-nested" @click.self="consumeMode=null"><form class="eqtype-form eqtype-child-form" @submit.prevent="saveConsume">
+    <div v-if="dialog==='consumes'&&consumeMode" class="eqtype-overlay eqtype-nested" @click.self="consumeMode=null"><form class="eqtype-form eqtype-child-form" @input="consumeFormDirty=true" @change="consumeFormDirty=true" @submit.prevent="saveConsume(true)">
       <header><strong>耗材資料定義 ({{ consumeMode==='edit'?'EDIT':consumeMode==='copy'?'COPY':'ADD' }})</strong><button type="button" aria-label="關閉" @click="consumeMode=null">×</button></header><fieldset><legend>耗材資料</legend>
         <label><span>設備類別</span><input :value="current?.equipmentType" readonly /></label><label><span>耗材編號</span><input v-model.trim="consumeForm.consumeNo" required maxlength="25" :readonly="consumeMode==='edit'" @blur="consumeForm.consumeNo=consumeForm.consumeNo.toUpperCase()" /></label>
         <label><span>數量</span><input v-model.number="consumeForm.quantity" type="number" min="0" step="1" required /></label><label><span>容許數量</span><input v-model.number="consumeForm.toleranceQty" type="number" min="0" step="1" required /></label>
         <label><span>週期</span><span class="eqtype-inline"><input v-model.number="consumeForm.period" type="number" min="-1" step="1" required @change="periodChanged" /><small>-1 代表不限</small></span></label><label><span>容許週期</span><input v-model.number="consumeForm.tolerancePeriod" type="number" min="-1" step="1" :disabled="Number(consumeForm.period)===-1" required /></label>
-      </fieldset><footer><button class="eqtype-confirm" type="submit" :disabled="busy">確定</button><button type="button" @click="consumeMode=null">關閉</button><button type="button" disabled>套用</button></footer>
+      </fieldset><div class="eqtype-audit"><span>建立人　{{ consumeAudit.creator }}</span><span>建立日期　{{ consumeAudit.createDate }}</span></div><footer><button class="eqtype-confirm" type="submit" :disabled="busy">確定</button><button type="button" @click="consumeMode=null">關閉</button><button type="button" :disabled="busy||!consumeFormDirty" @click="saveConsume(false)">套用</button></footer>
     </form></div>
 
     <div v-if="dialog==='properties'&&current" class="eqtype-overlay" @click.self="closeDialog"><section class="eqtype-form eqtype-child-list">
@@ -549,11 +593,11 @@ onMounted(()=>{void load()})
       </tbody></table></div>
       <div class="eqtype-child-actions"><button class="eqtype-action primary" type="button" @click="openProperty('new')">新增(A)</button><button class="eqtype-action" type="button" :disabled="!selectedProperty" @click="openProperty('edit')">修改(E)</button><button class="eqtype-action" type="button" :disabled="!selectedProperty" @click="copyProperty">複製(C)</button><button class="eqtype-action danger" type="button" :disabled="!selectedProperty" @click="deleteProperty">刪除(D)</button><span></span><button class="eqtype-action" type="button" @click="closeDialog">關閉</button></div>
     </section></div>
-    <div v-if="dialog==='properties'&&propertyMode" class="eqtype-overlay eqtype-nested" @click.self="propertyMode=null"><form class="eqtype-form eqtype-child-form" @submit.prevent="saveProperty">
+    <div v-if="dialog==='properties'&&propertyMode" class="eqtype-overlay eqtype-nested" @click.self="propertyMode=null"><form class="eqtype-form eqtype-child-form" @input="propertyFormDirty=true" @change="propertyFormDirty=true" @submit.prevent="saveProperty(true)">
       <header><strong>屬性資料定義 ({{ propertyMode==='edit'?'EDIT':propertyMode==='copy'?'COPY':'ADD' }})</strong><button type="button" aria-label="關閉" @click="propertyMode=null">×</button></header><fieldset><legend>屬性資料</legend>
         <label><span>設備類別</span><input :value="current?.equipmentType" readonly /></label><label><span>屬性編號</span><select v-model="propertyForm.propertyNo" required :disabled="propertyMode==='edit'"><option value="">請選擇</option><option v-for="x in propertyOptions" :key="x.propertyNo" :value="x.propertyNo">{{ x.propertyNo }}｜{{ x.elementName }}</option></select></label>
         <label><span>預設值</span><input v-model="propertyForm.defaultValue" maxlength="255" /></label><label><span>屬性順序</span><input v-model.number="propertyForm.propertySequence" type="number" min="0" max="99" step="1" /></label><label><span>說明</span><textarea v-model="propertyForm.description" rows="3" maxlength="255" /></label>
-      </fieldset><footer><button class="eqtype-confirm" type="submit" :disabled="busy">確定</button><button type="button" @click="propertyMode=null">關閉</button><button type="button" disabled>套用</button></footer>
+      </fieldset><div class="eqtype-audit"><span>建立人　{{ propertyAudit.creator }}</span><span>建立日期　{{ propertyAudit.createDate }}</span><span>修改人　{{ propertyAudit.reviser }}</span><span>修改日期　{{ propertyAudit.reviseDate }}</span></div><footer><button class="eqtype-confirm" type="submit" :disabled="busy">確定</button><button type="button" @click="propertyMode=null">關閉</button><button type="button" :disabled="busy||!propertyFormDirty" @click="saveProperty(false)">套用</button></footer>
     </form></div>
 
     <div v-if="dialog==='import'" class="eqtype-overlay" @click.self="closeDialog"><section class="eqtype-form eqtype-import">
@@ -579,5 +623,5 @@ onMounted(()=>{void load()})
 .eqtype-overlay{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:14px;background:#0005}.eqtype-nested{z-index:50}.eqtype-form{display:flex;max-height:96vh;flex-direction:column;gap:10px;overflow:auto;padding:12px 16px;border:1px solid #aaa;background:#fff;color:#444;box-shadow:0 10px 35px #0004;font:14px 'Segoe UI','Microsoft JhengHei',sans-serif}.eqtype-form>header{display:flex;align-items:center;justify-content:space-between;font-size:16px}.eqtype-form>header button{width:32px;height:30px;border:1px solid #ccc;background:#fafafa;font-size:20px;cursor:pointer}.eqtype-form fieldset{min-width:0;margin:0;padding:12px;border:1px solid #aaa}.eqtype-form fieldset>legend{padding:0 6px;color:#555}.eqtype-main-form{width:min(1000px,98vw)}.eqtype-columns{display:grid;grid-template-columns:1fr 1fr;gap:28px}.eqtype-column{display:grid;align-content:start;gap:9px}.eqtype-column>label,.eqtype-child-form fieldset>label{display:grid;grid-template-columns:minmax(130px,34%) minmax(0,1fr) auto;align-items:center;gap:7px}.eqtype-form input:not([type=file]),.eqtype-form select,.eqtype-form textarea{width:100%;min-width:0;min-height:31px;padding:4px 7px;border:1px solid #888;border-radius:0;background:#fff;font:inherit}.eqtype-form input:not([type=file]):not([readonly]),.eqtype-form select:not(:disabled){border-color:#b3a765}.eqtype-form input[required],.eqtype-form select[required]{background:#fff1aa}.eqtype-form input[readonly],.eqtype-form input:disabled{background:#eee}.eqtype-inline{display:flex;align-items:center;gap:8px}.eqtype-inline input{max-width:160px}.eqtype-inline small{white-space:nowrap;color:#666}.eqtype-long{align-items:start!important}.eqtype-long textarea{grid-column:2/-1}.eqtype-image-preview{display:flex;align-items:center;gap:10px;margin-left:34%;padding:5px;border:1px solid #ccc}.eqtype-image-preview img{max-width:150px;max-height:100px;object-fit:contain}.eqtype-image-preview button{padding:5px;border:1px solid #ccc;background:#fafafa}.eqtype-hint{margin:0}.eqtype-audit{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:9px;border:1px solid #c7c7c7;color:#777}.eqtype-form>footer{display:flex;justify-content:flex-end;gap:9px}.eqtype-form>footer button{min-width:100px;height:38px;border:1px solid #ccc;background:#fafafa;font:inherit;cursor:pointer}.eqtype-form>footer .eqtype-confirm{border-color:#f0a126;background:#ffa62b;color:#fff}.eqtype-readonly{display:grid;grid-template-columns:130px minmax(0,260px);align-items:center;gap:8px}
 .eqtype-acc-form{width:min(790px,96vw)}.eqtype-dual{display:grid;grid-template-columns:1fr 140px 1fr;gap:14px;min-height:320px}.eqtype-dual section{display:flex;min-height:300px;flex-direction:column;gap:8px}.eqtype-dual h3{margin:0;padding:5px 7px;background:#f1f1f1;font-size:13px}.eqtype-options{flex:1;overflow:auto;border:1px solid #aaa}.eqtype-options label{display:flex;gap:7px;padding:5px 8px;border-bottom:1px solid #eee}.eqtype-options input{width:auto!important;min-height:0!important}.eqtype-options p{padding:8px;color:#777}.eqtype-transfer{display:flex;flex-direction:column;justify-content:center;gap:8px}.eqtype-transfer button{min-height:34px;border:1px solid #bbb;background:linear-gradient(#fff,#eee);cursor:pointer}
 .eqtype-child-list{width:min(1050px,97vw);min-height:360px}.eqtype-child-grid{flex:1;min-height:200px;max-height:58vh}.eqtype-child-actions{display:flex;align-items:center;gap:6px}.eqtype-child-actions span{flex:1}.eqtype-child-form{width:min(620px,96vw)}.eqtype-child-form fieldset{display:grid;gap:10px}.eqtype-child-form fieldset>label{grid-template-columns:150px minmax(0,1fr)}.eqtype-import{width:min(1100px,97vw);min-height:540px}.eqtype-import-file{display:flex;align-items:center;gap:9px}.eqtype-import-file input[type=file]{flex:1;min-width:0;padding:5px;border:1px solid #bbb}.eqtype-import-file button{min-height:31px;border:1px solid #bbb;background:#f8f8f8;cursor:pointer}.eqtype-progress{height:14px;overflow:hidden;border:1px solid #bbb;background:#eee}.eqtype-progress span{display:block;height:100%;background:#e8bd45;transition:width .2s}.eqtype-import-grid{flex:1;min-height:200px;max-height:58vh}
-.eqtype-picture-picker{width:min(760px,96vw)}.eqtype-picture-browser{display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr);gap:14px;min-height:300px}.eqtype-picture-browser>div:first-child{display:flex;min-width:0;flex-direction:column;gap:8px}.eqtype-picture-list{min-height:240px;max-height:42vh;overflow:auto;border:1px solid #aaa;background:#fff}.eqtype-picture-list button{display:block;width:100%;padding:6px 9px;border:0;border-bottom:1px solid #eee;background:#fff;text-align:left;font:inherit;cursor:pointer}.eqtype-picture-list button:hover{background:#f8f2d8}.eqtype-picture-list button.selected-picture{background:#f5e7a8;box-shadow:inset 3px 0 #c89a36}.eqtype-picture-list p{padding:10px;color:#777}.eqtype-library-preview{display:flex;min-height:280px;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px;border:1px solid #ccc;background:#f8f8f8;color:#777}.eqtype-library-preview img{max-width:100%;max-height:34vh;object-fit:contain}.eqtype-library-preview strong{max-width:100%;overflow-wrap:anywhere;color:#444}.eqtype-picture-name{display:flex;min-width:0;gap:5px}.eqtype-picture-name input{flex:1}.eqtype-picture-name button{width:34px;border:1px solid #aaa;background:#f7f7f7;cursor:pointer}@media(max-width:1000px){.eqtype-columns{gap:14px}.eqtype-list{grid-template-columns:minmax(0,1fr) 105px}.eqtype-table{min-width:1300px}}@media(max-width:700px){.eqtype-query{flex-wrap:wrap}.eqtype-states{flex-wrap:wrap}.eqtype-list{grid-template-columns:minmax(0,1fr) 88px}.eqtype-action{min-height:32px;padding:4px;font-size:10px}.eqtype-columns,.eqtype-dual{grid-template-columns:1fr}.eqtype-audit{grid-template-columns:1fr 1fr}.eqtype-transfer{flex-direction:row;flex-wrap:wrap}.eqtype-import-file{flex-wrap:wrap}.eqtype-import-file input[type=file]{flex-basis:100%}}
+.eqtype-picture-picker{width:min(760px,96vw)}.eqtype-picture-browser{display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr);gap:14px;min-height:300px}.eqtype-picture-browser>div:first-child{display:flex;min-width:0;flex-direction:column;gap:8px}.eqtype-picture-list{min-height:240px;max-height:42vh;overflow:auto;border:1px solid #aaa;background:#fff}.eqtype-picture-list button{display:block;width:100%;padding:6px 9px;border:0;border-bottom:1px solid #eee;background:#fff;text-align:left;font:inherit;cursor:pointer}.eqtype-picture-list button:hover{background:#f8f2d8}.eqtype-picture-list button.selected-picture{background:#f5e7a8;box-shadow:inset 3px 0 #c89a36}.eqtype-picture-list p{padding:10px;color:#777}.eqtype-library-preview{display:flex;min-height:280px;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px;border:1px solid #ccc;background:#f8f8f8;color:#777}.eqtype-library-preview img{max-width:100%;max-height:34vh;object-fit:contain}.eqtype-library-preview strong{max-width:100%;overflow-wrap:anywhere;color:#444} .eqtype-engineer-group input[readonly]{background:#fff1aa}.eqtype-main-form .eqtype-picture-name input{background:#fff}.eqtype-picker-search{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;gap:8px}.eqtype-engineer-group-picker{width:min(620px,96vw);min-height:300px}.eqtype-child-form .eqtype-audit{grid-template-columns:repeat(2,1fr)}.eqtype-picture-name{display:flex;min-width:0;gap:5px}.eqtype-picture-name input{flex:1}.eqtype-picture-name button{width:34px;border:1px solid #aaa;background:#f7f7f7;cursor:pointer}@media(max-width:1000px){.eqtype-columns{gap:14px}.eqtype-list{grid-template-columns:minmax(0,1fr) 105px}.eqtype-table{min-width:1300px}}@media(max-width:700px){.eqtype-query{flex-wrap:wrap}.eqtype-states{flex-wrap:wrap}.eqtype-list{grid-template-columns:minmax(0,1fr) 88px}.eqtype-action{min-height:32px;padding:4px;font-size:10px}.eqtype-columns,.eqtype-dual{grid-template-columns:1fr}.eqtype-audit{grid-template-columns:1fr 1fr}.eqtype-transfer{flex-direction:row;flex-wrap:wrap}.eqtype-import-file{flex-wrap:wrap}.eqtype-import-file input[type=file]{flex-basis:100%}}
 </style>

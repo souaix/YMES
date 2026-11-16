@@ -77,7 +77,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | --- | --- | --- |
 | 設備供應商基本資料 | Form、Designer 與 Service 已對照；Oracle DDL 已查 | [規格](modules/EQP/設備設定/設備供應商基本資料.md)與 Vue 已依 WinForms 對齊；供應商/聯絡人 API 已部署 |
 | 設備工程群組資料 | Form、Designer、Service 與 GroupType=2 成員規則已對照；兩張來源表 DDL 已查 | [規格](modules/EQP/設備設定/設備工程群組資料.md)及 Vue UI 已依 WinForms 補正；YMES schema 比對及 API 待家用電腦 |
-| 設備類別資料 | WinForms/Service、5 張設備類別相關表及配件目錄表 Oracle DDL、FunctionNo/FunctionKey 已核實 | Vue DEV 頁已有類別 CRUD/子視窗；匯入依 WinForms 第一工作表固定欄序、結果列與取消流程；家用端待比對配件目錄 YMES schema 並實作 API |
+| 設備類別資料 | WinForms/Service、5 張設備類別相關表及配件目錄表 Oracle DDL、FunctionNo/FunctionKey 已核實 | [規格](modules/EQP/設備設定/設備類別資料.md)與 Vue Development UI 已依 WinForms 補齊主/子表單套用、稽核與工程群組/圖片選擇器；家用端待比對 schema 並實作 API |
 | 配件類別資料 | ACC TYPE / EP202；frmAccessoryType、定義、壽命、屬性及匯入原始碼已核對；4 張來源表 DDL/PK 已由 PowerShell 直連 Oracle 查得 | [規格](modules/EQP/配件/配件類別資料.md)與 Vue DEV 頁已建立；Excel/舊 Checker 簡化已記錄，Production API/schema 比對待家用端 |
 | 配件分類資料 | ACC CATEGORY / EP201；frmAccessoryCategory/Def/Import 與 Service 狀態規則已核對；主表 DDL 沿用 EP202 依賴檔 | [規格](modules/EQP/配件/配件分類資料.md)與 Vue DEV 頁已建立；CSV 暫代 Excel，API/schema 待家用端 |
 | 配件分類狀態定義設定 | ACC CATEGORY STATE / EP204；Form/Def、狀態/介面選項、InitialFlag 唯一性與簽核刪除規則已核對；兩張 Oracle DDL 已直連查得 | [規格](modules/EQP/配件/配件分類狀態定義設定.md)、PG 空表 CREATE SQL 與 Vue DEV 彈窗/獨立頁已建立；API/schema 待家用端 |

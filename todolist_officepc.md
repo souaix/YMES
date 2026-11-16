@@ -123,3 +123,14 @@
 - [x] 更新 EP102 規格、索引與本檔。正式 API及 TBLUSRUSERGROUP schema 工作仍留給家用端既有 TODO。
 - [ ] 下一項繼續依設備設定清單對照 WinForms Form/Designer/Service；需要新資料表才查 Oracle DDL 並交付家用端。
 - [ ] 未執行 build 或測試；沒有更動 API/schema。
+
+
+## EP103 設備類別資料公司端 UI 規格完成（2026-11-16）
+
+- [x] 直接對照 frmEquipmentType/Def、ConsumeBasis/Def、EQPProperty/Def、圖片選擇器及工程群組查詢事件；完成主表單、耗材表單、屬性表單的確定/關閉/套用與套用異動狀態。
+- [x] EngineerGroupNo、PictureName 改為唯讀欄位與 WinForms「...」選擇視窗；設備圖片上傳與圖片庫選擇保留。
+- [x] Development 假資料只在 Development preview 啟用；EP103 頁使用共用 api/equipment/engineer-groups 契約，其他環境走 API。
+- [x] 更新 docs/modules/EQP/設備設定/設備類別資料.md、規格索引及家用端 API 待辦；沒有新增資料表或 SQL。
+- [ ] 家用電腦比對五張設備類別表與配件目錄表 schema，完成 API/圖片/匯入/簽核流程後，拉回最新版本做 Production 契約核對。
+- [ ] 下一步核對 EP105「設備群組資料」WinForms Form/Designer/Service，逐欄補齊 UI 與規格；資料表缺 DDL 時用 PowerShell + ODP.NET 查 Oracle，再把空表 CREATE SQL 交家用端。
+- [ ] 本次未執行 build 或測試；未更動 API、資料庫或部署。
