@@ -350,4 +350,13 @@
 - [x] 新增 Vue DEV 頁 web/src/components/LocatorBasisMaster.vue，路由 /YMES/SMD/Locators、FunctionNo=LOCATOR BASIS；依 WinForms 具備查詢、狀態切換、選列、多選、Add/Edit/Copy/Delete/Approve、已核准庫存挑選器、KD 黃色欄位、稽核及 Apply/Confirm。
 - [x] 新增 docs/modules/SMD/儲位基本資料.md；更新資料庫連線查詢紀錄、功能索引、家用端 API/schema handoff。
 - [ ] 未執行 build、test 或瀏覽器驗收；家用端需比對已部署 YMES schema 並補 forward migration/API 和正式 Issue/Job 核准流程。
-- [ ] 下一個尚未完成的 SMD FunctionKey 是 SD107「生產線別基本資料」；依 Form/Service/Core 逐項完成，缺少 DDL 時用 PowerShell 直查 Oracle。
+- [x] SD107「生產線別基本資料」已依 Form/Service/Core 完成 DEV 頁、規格、Oracle DDL/PG CREATE 與家用端 API/schema handoff。下一個尚未完成的 SMD FunctionKey 為 SD108「設備狀態監控_區域」。
+## 2026-11-16 SMD SD107 生產線別基本資料公司端進度
+
+- [x] 直接對照 frmPDLineBasis / frmPDLineBasisDef、wsSMD、clsSMDBasis 與 clsBasis_UPD；整理欄位、按鈕、ValueList、四種 IssueState、Apply、批次操作、Delete 與 Issue/Job 核准邏輯。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線唯讀查得 TBLSMDPDLINEBASIS 完整 DDL、欄位 null/default、constraints、PK/index；未讀業務資料，未執行 Oracle DDL。
+- [x] 新增 web/src/components/ProductionLineBasisMaster.vue，路由 /YMES/SMD/ProductionLines，FunctionNo=SMD PDLINE BASIS；Development 使用 localStorage 假資料，Production 只呼叫 API。
+- [x] 新增 docs/modules/SMD/生產線別基本資料.md、Oracle source DDL 與 PostgreSQL 空表 CREATE SQL；修正 first-phase bootstrap 的來源 defaults 並移除猜測欄位註解。
+- [x] 更新 SMD 規格索引、Oracle 連線查詢紀錄及 todolist_homepc.md API/schema handoff。
+- [ ] 本次未執行 build、test 或瀏覽器驗收；家用端部署 API/schema 後公司端再 pull 對接。
+- [ ] 後續 SMD 頁面：SD108 設備狀態監控_區域、SD109 工位基本資料；依序讀 WinForms Form/Designer/Service/Core，再查缺少的 Oracle DDL。
