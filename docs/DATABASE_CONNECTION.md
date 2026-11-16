@@ -71,3 +71,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - API 啟動連線設定：src/YMes.Api/Program.cs
 - 部署環境範本：deploy/compose.yaml（檢視設定變數名稱時不得輸出 secret 值）
 - Oracle CREATE SQL handoff：database/reference/
+
+### 更新 2026-11-16：EP202 配件類別相關表
+
+- 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢 MESTEST 的 TBLEQPACCESSORYTYPE、TBLEQPACCESSORYCATEGORY、TBLEQPACCESSORYPROPERTY、TBLEQPACCESSORYLIFE DDL、欄位 NULL/default、PK、索引與 FK 字典。
+- Oracle 原始 DDL/PG 空表 CREATE SQL：database/reference/mestest_equipment_type_accessory_catalog_source_ddl.sql、mestest_equipment_type_accessory_catalog_create.sql、mestest_accessory_type_dependencies_source_ddl.sql、mestest_accessory_type_dependencies_create.sql。
+- 四表均無額外索引及 FK；只有 PK 唯一索引。此批查詢只讀結構，未讀 MES 業務資料。家用端執行前需比對實際 YMES schema，缺表才經 migration 建立。

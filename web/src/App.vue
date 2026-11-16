@@ -9,6 +9,7 @@ import EquipmentQCListMaster from './components/EquipmentQCListMaster.vue'
 import EquipmentVendorMaster from './components/EquipmentVendorMaster.vue'
 import EquipmentEngineerGroupMaster from './components/EquipmentEngineerGroupMaster.vue'
 import EquipmentTypeMaster from './components/EquipmentTypeMaster.vue'
+import AccessoryTypeMaster from './components/AccessoryTypeMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
@@ -18,6 +19,7 @@ const equipmentTypeRoute = appBasePath + '/Equipment/Types'
 const equipmentGroupRoute = appBasePath + '/Equipment/Groups'
 const equipmentStateRoute = appBasePath + '/Equipment/States'
 const equipmentInspectionRoute = appBasePath + '/Equipment/Inspection'
+const equipmentAccessoryTypeRoute = appBasePath + '/Equipment/AccessoryTypes'
 const equipmentRoute = `${appBasePath}/Equipment`
 const equipmentVendorRoute = `${appBasePath}/Equipment/Vendors`
 const equipmentEngineerGroupRoute = `${appBasePath}/Equipment/EngineerGroups`
@@ -96,7 +98,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'equipment-group', label: '設備群組資料', shortLabel: '群', moduleNo: 'EQP' },
       { id: 'equipment-state', label: '設備狀態設定', shortLabel: '狀', moduleNo: 'EQP' },
       { id: 'equipment-inspection', label: '設備點檢表設定', shortLabel: '檢', moduleNo: 'EQP' },
-    ] }],
+    ] }, { id: 'equipment-accessory-menu', label: '配件', shortLabel: '配', moduleNo: 'EQP', children: [{ id: 'equipment-accessory-types', label: '配件類別資料', shortLabel: '類', functionNo: 'ACC TYPE', moduleNo: 'EQP' }] }],
   },
   {
     id: 'operation-data',
@@ -140,6 +142,8 @@ const menuRoutes: Record<string, string> = {
   'equipment-state': equipmentStateRoute,
   'equipment-inspection': equipmentInspectionRoute,
   'equipment-category': equipmentTypeRoute,
+  'equipment-accessory-types': equipmentAccessoryTypeRoute,
+  'function:EQP:ACC TYPE': equipmentAccessoryTypeRoute,
   'operation-master': `${appBasePath}/MasterData/Operations`,
   'material-master': `${appBasePath}/MasterData/Materials`,
   'process-master': `${appBasePath}/MasterData/Processes`,
@@ -149,6 +153,7 @@ const menuRoutes: Record<string, string> = {
 const functionRoutes: Record<string, string> = {
   'EQP BASIS': equipmentRoute,
   'EQP STATE': equipmentStateRoute,
+  'ACC TYPE': equipmentAccessoryTypeRoute,
   'OP BASIS': `${appBasePath}/MasterData/Operations`,
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
   'PRS BASIS': `${appBasePath}/MasterData/Processes`,
@@ -200,6 +205,7 @@ const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment
 const isEquipmentStatePage = computed(() => activeMasterKey.value === 'equipment-state')
 const isEquipmentInspectionPage = computed(() => activeMasterKey.value === 'equipment-inspection')
 const isEquipmentTypePage = computed(() => activeMasterKey.value === 'equipment-category')
+const isAccessoryTypePage = computed(() => activeMasterKey.value === 'equipment-accessory-types' || activeMasterKey.value === 'function:EQP:ACC TYPE')
 const currentMenuNode = computed(() => findMenuNodeByRoute(menuTree.value, currentPath.value))
 const activeFunctionNode = computed(() => currentMenuNode.value && !activeMasterKey.value ? currentMenuNode.value : null)
 const currentMasterTitle = computed(() => currentMenuNode.value?.label ?? (activeMasterKey.value === 'equipment-vendor-master' ? '設備供應商基本資料' : activeMasterKey.value === 'equipment-engineer-group' ? '設備工程群組資料' : activeMasterKey.value === 'equipment-group' ? '設備群組資料' : activeMasterKey.value === 'equipment-state' ? '設備狀態設定' : activeMasterKey.value === 'equipment-inspection' ? '設備點檢表設定' : '主選單'))
@@ -277,6 +283,15 @@ function addDevelopmentEquipmentFunctions(items: MenuNode[]): MenuNode[] {
   settings.children = [...(settings.children ?? [])]
   for (const feature of fallbackSettings.children ?? []) {
     if (!containsLabel(equipment.children, feature.label)) settings.children.push({ ...feature })
+  }
+  const fallbackAccessoryMenu = fallbackEquipment.children?.find((item) => item.label.trim() === '配件')
+  if (fallbackAccessoryMenu) {
+    const accessoryMenu = equipment.children?.find((item) => item.label.trim() === '配件')
+    if (!accessoryMenu) {
+      equipment.children = [...(equipment.children ?? []), { ...fallbackAccessoryMenu, children: [...(fallbackAccessoryMenu.children ?? [])] }]
+    } else if (!containsLabel(accessoryMenu.children, '配件類別資料')) {
+      accessoryMenu.children = [...(accessoryMenu.children ?? []), ...(fallbackAccessoryMenu.children ?? [])]
+    }
   }
   return result
 }
@@ -830,6 +845,12 @@ async function signOut(): Promise<void> {
         />
         <EquipmentTypeMaster
           v-else-if="isEquipmentTypePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+        />
+        <AccessoryTypeMaster
+          v-else-if="isAccessoryTypePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

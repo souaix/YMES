@@ -219,3 +219,21 @@
 - [ ] 依規格為 Resource、Business Rule、Parameter、QC Item、Error、Copy OP Data、SubOP、Import 各建 API/DTO；多表更新使用交易。精確 endpoint 命名可依現有 YMES API 慣例調整並回寫本規格。
 - [ ] ValueList 的 MaterialOption、MultiOperatorMode、OSOption 從 MES 原始選項資料確認，不把程式註解中的舊選項清單直接當正式值。
 - [ ] Production API 完成後，公司電腦將 OP 子功能 DEV 假資料畫面接到正式 API 契約並回寫規格；Production 不可使用 localStorage Fake provider。
+
+## EP202 配件類別資料（公司端 2026-11-16 已交接）
+
+公司端已依 docs/modules/EQP/配件/配件類別資料.md 完成 Vue Development 假資料頁，並直連 Oracle 查得下列來源表 DDL。請先 pull，再比對 YMES 實際 schema；只有缺表才新增 forward migration，不直接執行 Oracle 原始 DDL。
+
+來源資料：
+- database/reference/mestest_equipment_type_accessory_catalog_source_ddl.sql / _create.sql：TBLEQPACCESSORYTYPE。
+- database/reference/mestest_accessory_type_dependencies_source_ddl.sql / _create.sql：TBLEQPACCESSORYCATEGORY、TBLEQPACCESSORYPROPERTY、TBLEQPACCESSORYLIFE。
+
+家用端工作：
+1. 比對四表實際 YMES 欄位、NULL/default、PK 及既有歷史 migration；保留 YMES 額外欄位，不覆蓋既有表。
+2. 實作規格中的 accessory type CRUD、category lookup、property（固定 AccessoryVersion=-1）、life API。
+3. 刪除須在單一交易依序清理屬性與壽命後刪主檔；Copy API 僅複製來源壽命列，不複製屬性列。
+4. 核准端接原有簽核流程並回傳實際 IssueState；DEV UI 直接轉為 2 只是本地簡化。
+5. Import API 支援舊第一工作表欄序 AccessoryType、AccessoryCategory、Description、.xlsx/.xls，保留前兩欄必填與逐組 DataChecker 結果/錯誤訊息。公司端目前只有 CSV 本地假匯入。
+6. 部署後更新本節、功能規格與 API 狀態，再由公司端 pull 對接實際 API。
+
+API 路徑與 DTO 詳見 docs/modules/EQP/配件/配件類別資料.md；目前 Production API 尚未完成，不要以 Development 假資料結果回報正式成功。
