@@ -377,3 +377,25 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 5. Recipe No picker 使用既有 `TBLSYSELEMENTBASIS`，提供 `GET /api/system/elements?elementType=9` 回傳 ElementNo/Description/DefaultValue/ElementSequence；不要建立重複元素表。
 6. Type options 經 MESTEST TBLSYSVALUELIST 查證：-1 NONE、0 TYPEVALUE、1 RANGE；Production DTO/畫面使用明確標籤。
 7. 授予 `ymes_app` 最小必要權限，完成 migration/API/簽核/併發驗證後更新規格並部署，再通知公司端 pull 對接 Production。
+
+## ENT ET101 客戶基本資料（公司端 2026-11-16 已交接）
+
+先讀 `docs/modules/ENT/客戶基本資料.md`、`docs/DATABASE_CONNECTION.md` 和以下來源 SQL。公司端已用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得三表結構；沒有讀取客戶業務資料，沒有在來源 Oracle 執行 DDL。
+
+### DDL / YMES schema
+
+- Oracle source logical DDL：`database/reference/mestest_customer_basis_source_ddl.sql`。
+- PostgreSQL 空表 CREATE SQL：`database/reference/mestest_customer_basis_create.sql`。
+- 三表：`TBLENTCUSTOMERBASIS`、`TBLENTCUSTOMERCONTACTOR`、`TBLENTCUSTOMERSHIPADDR`；各自只有 PK unique index，Oracle 無 FK/其他索引。
+- 先逐欄比較 YMES PostgreSQL schema/migrations 的型別、長度、NULL、DEFAULT、PK/index。缺表才新增 forward migration；保留 YMES 已有額外欄位/索引，不要以 `IF NOT EXISTS` 假設既有表已符合。
+- 來源列 CustomerSName VARCHAR2(100 CHAR)，PG 使用 varchar(100)；Oracle DATE 使用 timestamp without time zone；NUMBER(1,0)/NUMBER(11,0) 保留 numeric 型別/DEFAULT/NULL。
+
+### API / Service 待辦
+
+1. 實作 `GET /api/ent/customer-basis`，回傳 WinForms 33 個可見欄位、IssueState、DataStamp、稽核欄位及來源保留欄位；支援 CustomerNo 查詢。IssueState 列表篩選由 Vue 即時處理。
+2. 實作 POST 新增及 PUT `/{customerNo}` 修改。CustomerNo、CustomerName、CustomerSName 必填；CustomerNo 大寫，編號唯一；空白選項保存為 NULL/依既有 YMES API 契約處理。以登入上下文/伺服器時間寫 Creator/CreateDate/Reviser/ReviseDate，不信任用戶端稽核資料；修改以 DataStamp compare-and-swap。
+3. 對非 IssueState=0 的修改重現 WinForms 可編輯範圍：基本身份/聯絡欄位唯讀；允許交易/發票欄位更新。API 必須伺服器端以欄位 allow-list 強制此限制。來源的欄位清空 sentinel 不可靠，新 API 要能明確保存空值。
+4. 實作 DELETE `/{customerNo}?issueState=&dataStamp=`。狀態 0/-1 在一筆 PostgreSQL transaction 內依序刪 `tblentcustomershipaddr`、`tblentcustomercontactor`、`tblentcustomerbasis`；狀態 2 改為 -1 並更新 Reviser/ReviseDate/DataStamp；狀態 1 回 409。所有分支都先比對 DataStamp。不要新增未核實的 FK cascade。
+5. 實作 POST `/{customerNo}/approve?dataStamp=`，只接受 IssueState=0；沿用 YMES 簽核服務與 IssueNo `CUSTOMER BASIS`。未設定 Job/Detail 可直接到 2；有簽核 Detail 時轉 1、簽核通過到 2、退回到 0。關聯簽核與稽核更新需交易一致。
+6. 實作 multipart POST `/api/ent/customer-basis/import/preview`、POST `/import/commit` 及 GET `/import/template`。讀 Excel 第一工作表前三欄 CustomerNo/CustomerName/CustomerSName，逐列必填，預覽回傳依 CustomerNo 分組的結果列與短期 preview token；token 綁定登入者並於 commit 重新驗證。Commit 使用舊 DataImporter CustomerDataChecker 的等價檢查並回傳逐組 Message/進度。範本需沿用 FunctionNo `ENT BASIS` 的匯入範本格式；DEV CSV 不是正式範本。
+7. 設定 `ymes_app` 最小表權限；完成 schema/API、交易、簽核與匯入規格後更新 migration/API 文件和本待辦，部署並通知公司端 pull。公司端 Vue 頁在家用 API 完成後再對接 Production。

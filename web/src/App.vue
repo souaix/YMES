@@ -18,6 +18,7 @@ import AccessoryBasisMaster from './components/AccessoryBasisMaster.vue'
 import AccessoryStateBasisMaster from './components/AccessoryStateBasisMaster.vue'
 import AccessoryCategoryMaster from './components/AccessoryCategoryMaster.vue'
 import AccessoryCategoryStateMaster from './components/AccessoryCategoryStateMaster.vue'
+import CustomerBasisMaster from './components/CustomerBasisMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
@@ -40,6 +41,7 @@ const equipmentCarrierTypeRoute = `${appBasePath}/Equipment/CarrierTypes`
 
 const equipmentCarrierBasisRoute = appBasePath + '/Equipment/CarrierBasis'
 const equipmentRecipeBasisRoute = appBasePath + '/Equipment/Recipes'
+const customerBasisRoute = appBasePath + '/Customer/Basis'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -103,6 +105,26 @@ const environmentLabels: Record<EnvironmentKey, string> = {
 
 const fallbackMenuTree: MenuNode[] = [
   {
+    id: 'customer-data',
+    label: '客戶資料',
+    shortLabel: '客',
+    moduleNo: 'ENT',
+    children: [
+      { id: 'customer-config', label: '客戶資料設定', shortLabel: '客', children: [
+        { id: 'function:ENT:BROKER BASIS', label: '報關行基本資料', shortLabel: '報', functionNo: 'BROKER BASIS', moduleNo: 'ENT' },
+        { id: 'function:ENT:CUSTOMER BASIS', label: '客戶基本資料', shortLabel: '客', functionNo: 'CUSTOMER BASIS', moduleNo: 'ENT' },
+        { id: 'function:ENT:CUSTOMER CONTACTOR', label: '客戶連絡人資料', shortLabel: '連', functionNo: 'CUSTOMER CONTACTOR', moduleNo: 'ENT' },
+        { id: 'function:ENT:CUSTOMER SHIP ADDRESS', label: '客戶出貨地址資料', shortLabel: '址', functionNo: 'CUSTOMER SHIP ADDRESS', moduleNo: 'ENT' },
+        { id: 'function:ENT:FORWARDER BASIS', label: '貨運行基本資料', shortLabel: '貨', functionNo: 'FORWARDER BASIS', moduleNo: 'ENT' },
+        { id: 'function:ENT:TAKER BASIS', label: '取貨公司基本資料', shortLabel: '取', functionNo: 'TAKER BASIS', moduleNo: 'ENT' },
+      ] },
+      { id: 'subcontractor-config', label: '外包商資料設定', shortLabel: '外', children: [
+        { id: 'function:ENT:SUBCONTRACTOR BASIS', label: '外包商基本資料', shortLabel: '商', functionNo: 'SUBCONTRACTOR BASIS', moduleNo: 'ENT' },
+        { id: 'function:ENT:ENTOSITEM', label: '外包項目設定', shortLabel: '項', functionNo: 'ENTOSITEM', moduleNo: 'ENT' },
+      ] },
+    ],
+  },
+  {
     id: 'equipment-data',
     label: '設備資料',
     shortLabel: '設',
@@ -153,6 +175,7 @@ const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
 const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
+  'function:ENT:CUSTOMER BASIS': customerBasisRoute,
   'equipment-master': equipmentRoute,
   'equipment-vendor-master': equipmentVendorRoute,
   'equipment-engineer-group': equipmentEngineerGroupRoute,
@@ -185,6 +208,7 @@ const menuRoutes: Record<string, string> = {
 }
 
 const functionRoutes: Record<string, string> = {
+  'CUSTOMER BASIS': customerBasisRoute,
   'EQP BASIS': equipmentRoute,
   'CARRIER CATEGORY': equipmentCarrierCategoryRoute,
   'CARRIER TYPE': equipmentCarrierTypeRoute,
@@ -241,6 +265,7 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
   return key === 'operation-master' || key === 'material-master' || key === 'process-master' || key === 'product-master' ? key : null
 })
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
+const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER BASIS')
 const isEquipmentVendorPage = computed(() => activeMasterKey.value === 'equipment-vendor-master')
 const isEquipmentEngineerGroupPage = computed(() => activeMasterKey.value === 'equipment-engineer-group')
 const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment-group')
@@ -859,6 +884,13 @@ async function signOut(): Promise<void> {
         </div>
         <EquipmentMaster
           v-if="isEquipmentPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+        />
+        <CustomerBasisMaster
+          v-else-if="isCustomerBasisPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

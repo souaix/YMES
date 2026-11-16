@@ -182,6 +182,16 @@
 - [x] 已開始 `CARRIER TYPE` / EP302「載具類別資料」；進度見下方 EP302 區塊。
 - [ ] 未執行 build 或測試；Production API 未建置。
 
+## 2026-11-16 ENT ET101 客戶基本資料公司端交接
+
+- [x] 開始前 pull GitHub `origin/main`；當時最新提交為 `c6c7895`，工作樹乾淨。
+- [x] 追查 `frmCustomerBasis`、`frmCustomerBasisDef`、Designer、ET_ETDataImport、`clsCustomerBasis` 與 `wsENT`，記錄清單欄位、表單欄位/鎖定規則、批次刪除/核准、Customer BASIS 簽核與 Excel 匯入流程。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀查詢 `TBLENTCUSTOMERBASIS`、`TBLENTCUSTOMERCONTACTOR`、`TBLENTCUSTOMERSHIPADDR` 的 DDL、NULL/default、PK、索引/FK；沒有查客戶業務資料或執行 Oracle DDL。
+- [x] 新增 Vue DEV 頁 `web/src/components/CustomerBasisMaster.vue`、FunctionNo `CUSTOMER BASIS` 路由 `/YMES/Customer/Basis` 及 fallback 三層選單；Production 經 API，Development 使用標明的 localStorage 假資料。
+- [x] 新增 `docs/modules/ENT/客戶基本資料.md`、Oracle source logical DDL、PostgreSQL 空表 CREATE SQL、規格索引、DB 連線查詢紀錄及家用端 migration/API/簽核/匯入待辦。
+- [ ] 未執行 build/test 或瀏覽器人工驗收；待後續依要求驗證。
+- [ ] 下一個公司端功能從 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續依序核對 Form/Designer/Service。設備 AutoLoader Function `B_EQP AUTOLOADER SETUP` 的指定 Form 檔在目前 WinForms source tree 找不到；後續先記錄其 binary-only 來源限制，再做其餘有原始碼的功能。
+
 ## EP302 載具類別資料公司端進度（2026-11-16）
 
 - [x] 從 `D:\iMES\CSiMES\STD\MESWin\EQP\EP_CarrierType` 讀取 Form/Def/Designer；讀取 `wsEQP.Load/Add/Edit/Delete/ApproveCarrierType` 與 `clsCarrierBasis` CRUD/query 實作。

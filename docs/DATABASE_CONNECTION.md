@@ -118,3 +118,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀查得 `MESTEST.TBLEQPRECIPEBASIS`、`TBLEQPRECIPEDETAIL` 的 DBMS_METADATA DDL、欄位、NOT NULL/default、PK、索引與 FK 字典；另查 TBLSYSVALUELIST 的 Type 系統選項。沒有查 MES 業務資料或在 Oracle 執行 DDL。
 - 兩張表各有一個 PK unique index 與一個額外 non-unique index，沒有 Oracle FK。Oracle 原始 DDL 與 PostgreSQL 空表 CREATE SQL 為 `database/reference/mestest_equipment_recipe_source_ddl.sql`、`mestest_equipment_recipe_create.sql`；first-phase bootstrap 已依正式 DDL 校正。
 - 查詢時明確啟動 `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`；Codex 終端預設 PowerShell 7/.NET 10 不相容於本機舊版 ODP.NET 使用的 BinaryFormatter。連線值仍由受保護附件提供，不在終端、Markdown 或 Git 記錄。
+
+### 更新 2026-11-16：ENT 客戶基本資料
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有受保護連線唯讀查得 `TBLENTCUSTOMERBASIS`、`TBLENTCUSTOMERCONTACTOR`、`TBLENTCUSTOMERSHIPADDR` 的 DBMS_METADATA DDL、欄位 NULL/default、PK、索引與 FK 字典。
+- 三表僅 PK unique index，沒有外鍵或其他索引。舊 CustomerBasis 刪除程序仍會明確刪除兩個子表；這是 service 行為，不是 Oracle FK cascade。
+- Oracle 原始邏輯 DDL 與 PostgreSQL 空表 CREATE SQL 分別存於 `database/reference/mestest_customer_basis_source_ddl.sql`、`database/reference/mestest_customer_basis_create.sql`。本次只查結構，沒有查詢或匯出客戶業務資料，也沒有在 Oracle 執行 CREATE SQL。
