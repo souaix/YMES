@@ -82,27 +82,17 @@ COMMENT ON TABLE tblsmdcomputerareadetail IS 'MES master data; Oracle source: ME
 CREATE TABLE IF NOT EXISTS tblsmdpdlinebasis (
     pdlineno varchar(50) NOT NULL,
     pdlinename varchar(50) NOT NULL,
-    pdlinestatus numeric(1,0) NOT NULL,
+    pdlinestatus numeric(1,0) DEFAULT 1 NOT NULL,
     issuestate numeric(1,0) NOT NULL,
     description varchar(255),
     creator varchar(10),
-    createdate timestamp without time zone,
+    createdate timestamp without time zone DEFAULT LOCALTIMESTAMP,
     reviser varchar(10),
     revisedate timestamp without time zone,
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     CONSTRAINT pk_tblsmdpdlinebasis PRIMARY KEY (pdlineno)
 );
 COMMENT ON TABLE tblsmdpdlinebasis IS 'MES master data; Oracle source: MESTEST.TBLSMDPDLINEBASIS';
-COMMENT ON COLUMN tblsmdpdlinebasis.pdlineno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinebasis.pdlinename IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinebasis.pdlinestatus IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinebasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinebasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinebasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinebasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinebasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinebasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinebasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
 
 CREATE TABLE IF NOT EXISTS tblsmdpdlinepositionbasis (
     pdlineno varchar(50) NOT NULL,

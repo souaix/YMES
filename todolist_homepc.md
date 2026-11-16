@@ -613,3 +613,23 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 5. 舊 ws Edit 有送 DataStamp，但目前 Core `EditENTOSItem` 簽章沒有 CAS/audit；舊 Core Delete 只按 OSItemNo 實體刪除。新 API 補完整 CAS 與伺服器 audit。多選刪除由前端逐筆呼叫，首個錯誤即停止並回報已完成筆數。
 6. 本功能沒有簽核/IssueState；所有端點檢查登入者 ENT 權限、資料庫欄位長度、必填、ReturnType/PlanDays 範圍與流程參照。
 7. 公司端 Development 使用 localStorage 假資料；Production 只呼叫 API。API/schema 完成、部署並提供可用環境後，通知公司端 pull 最新版對接驗收。
+## SMD SD107 生產線別基本資料（公司端 DEV 已完成，家用端接手 API/schema）
+
+先讀 docs/modules/SMD/生產線別基本資料.md。Vue 頁為 /YMES/SMD/ProductionLines，FunctionNo=SMD PDLINE BASIS；公司端以本機假資料完成操作，不代表 Production API 已存在。
+
+### Schema / migration
+
+- Oracle source DDL：database/reference/mestest_smd_pdline_basis_source_ddl.sql；PostgreSQL 空表 CREATE SQL：database/reference/mestest_smd_pdline_basis_create.sql。DDL 是公司端 2026-11-16 以 Windows PowerShell 5.1 + ODP.NET 直連受保護連線唯讀取得；不要重問連線資訊，也不要在 MES Oracle 建表。
+- Oracle 表 MESTEST.TBLSMDPDLINEBASIS 欄位：PDLineNo varchar(50) NOT NULL PK；PDLineName varchar(50) NOT NULL；PDLineStatus numeric(1,0) DEFAULT 1 NOT NULL；IssueState numeric(1,0) NOT NULL 且無 default；Description varchar(255)；Creator varchar(10)；CreateDate timestamp DEFAULT LOCALTIMESTAMP nullable；Reviser varchar(10)；ReviseDate timestamp；DataStamp numeric(11,0) DEFAULT 0 nullable。
+- Oracle 僅一個 PDLineNo PK unique index，沒有 FK 或其他索引。DATE 對應 timestamp without time zone。此表已出現在 first-phase reference；先查 YMES 實際 schema/migration。缺漏才新增 forward migration，保留既有資料和 YMES 擴充欄位；如 first-phase 曾被套用且 defaults 不符，採 forward migration 修正，不重建表。
+- PostgreSQL CREATE 檔是空表定義，不是部署 migration；不要無條件執行 IF NOT EXISTS 取代欄位差異檢查。
+
+### API / 行為
+
+1. 新增 SMD API：GET /api/smd/pd-line-basis?pdLineNo=（回傳所有四種 IssueState，PDLineNo 大小寫不敏感部分查詢，依 PDLineNo 排序）；GET /api/smd/pd-line-basis/options 回傳 { pdLineStatuses: [{ value, label }] }。狀態選項需沿用正式 ValueListProvider，不能把 DEV 標籤當正式文案。
+2. POST /api/smd/pd-line-basis 新增 IssueState=0；PDLineNo、PDLineName 必填，長度各 50；PDLineNo 大寫，PDLineStatus 只接受 0/1/2，WinForms 新增預設 1；說明上限 255。Creator/CreateDate/DataStamp 由伺服器建立。
+3. PUT /api/smd/pd-line-basis/{pdLineNo}?issueState=0&dataStamp= 只允許 IssueState=0，主鍵不可改；更新名稱/狀態/說明並由伺服器寫 Reviser/ReviseDate/DataStamp。舊 Core 空白 Description 不更新也不清除；需維持相容。
+4. DELETE /api/smd/pd-line-basis/{pdLineNo}?issueState=&dataStamp= 按舊 wsSMD 規則：0、1、-1 實體刪除，2 轉為 -1 並寫修改稽核/DataStamp。注意此功能舊 Service 明確接受 IssueState=1 實體刪除；若要改成阻擋簽核中刪除，需在 API 文件標示行為修正。交易/CAS 需檢查傳入與實際狀態。
+5. POST /api/smd/pd-line-basis/{pdLineNo}/approve?issueState=0&dataStamp= 僅接受 0，IssueNo=SMD PDLINE BASIS。使用 YMES 共用 Issue/Job 簽核服務：無 Job/Detail 依設定直達 2；有流程時先 1，核准 2、退回 0，通知第一簽核群組。不可照搬 DEV 直接切成 2。
+6. 所有端點檢查登入與 SMD 功能權限、唯一鍵/欄位範圍及資料狀態。DataStamp nullable/default 0；NULL 原值需以 IS NULL CAS，更新遞增 COALESCE(datastamp,0)+1。批次 UI 逐筆呼叫，第一個錯誤停止並保留已成功筆數。
+7. API/schema/migration 完成並部署後，通知公司端 pull 最新 main 對接 Production；不要把假資料回退用於 Production。

@@ -192,3 +192,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 查得複合 PK (INVENTORYNO, LOCATORNO)，僅 PK unique index；沒有 Oracle FK 或其他索引。IssueState DEFAULT 0 NOT NULL、Capacity NUMBER(12,4) DEFAULT 0 nullable、DataStamp NUMBER(11,0) DEFAULT 0 nullable。
 - Oracle 原始 DDL 與 PostgreSQL 空表 CREATE SQL 為 database/reference/mestest_smd_locator_basis_source_ddl.sql、mestest_smd_locator_basis_create.sql。first-phase bootstrap 已同步校正預設值，移除尚未有 Oracle column comment 證據的猜測註解。
 - 只查資料字典，未讀業務資料、未在 Oracle 執行 DDL；IP、帳號、密碼、SID 僅由受保護設定讀取，未輸出或保存到 Git。庫存挑選沿用既有 TBLINVInventoryBasis，不涉及新增來源 DDL。
+### 更新 2026-11-16：SMD SD107 生產線別基本資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護連線唯讀查 MESTEST.TBLSMDPDLINEBASIS 的 DBMS_METADATA DDL、欄位、constraint、PK/index 與 index columns。
+- 核實 PDLineStatus NUMBER(1,0) DEFAULT 1 NOT NULL；IssueState NUMBER(1,0) NOT NULL 無 DEFAULT；CreateDate DATE DEFAULT SYSDATE 可 NULL；DataStamp NUMBER(11,0) DEFAULT 0 可 NULL。PDLineNo 是唯一 PK index；無 FK 或其他索引。
+- Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 為 database/reference/mestest_smd_pdline_basis_source_ddl.sql、mestest_smd_pdline_basis_create.sql。first-phase bootstrap 已校正來源 defaults 並移除無來源依據的欄位猜測註解；家用端仍須比對實際 schema/migration，缺漏才新增 forward migration。
+- 只查結構，未讀業務資料或在 Oracle 執行 DDL；受保護連線資料未輸出或保存至 Git。
