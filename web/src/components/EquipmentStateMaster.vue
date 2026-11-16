@@ -33,12 +33,12 @@ const mock = import.meta.env.DEV
 const storageKey = 'ymes-dev-mock:equipment-states:v1'
 const referenceStorageKey = 'ymes-dev-mock:equipment-state-references:v1'
 const fallbackStateTypes: ValueOption[] = [
-  { value: 0, label: 'System' },
-  { value: 1, label: 'User Define' },
+  { value: 0, label: '系統' },
+  { value: 1, label: '使用者定義' },
 ]
 const fallbackUtilizationTypes: ValueOption[] = [
-  { value: 0, label: 'Off' },
-  { value: 1, label: 'On' },
+  { value: 0, label: '非稼動' },
+  { value: 1, label: '稼動' },
 ]
 const seedRows: EquipmentState[] = [
   { equipmentState: 81, stateType: 1, stateName: 'DEV 假資料：待機', stateColor: -16711936, description: 'DEV 假資料，供畫面操作與色彩預覽', utilizationType: 1, stateColorHex: '00FF00' },
@@ -108,11 +108,23 @@ function colorToArgb(value: string): number {
 function colorToHex(value: string): string {
   return value.replace('#', '').toUpperCase()
 }
+function stateTypeOptionLabel(option: ValueOption): string {
+  if (option.value === 0) return '系統'
+  if (option.value === 1) return '使用者定義'
+  return option.label
+}
+function utilizationTypeOptionLabel(option: ValueOption): string {
+  if (option.value === 0) return '非稼動'
+  if (option.value === 1) return '稼動'
+  return option.label
+}
 function stateTypeLabel(value: number, supplied?: string): string {
-  return supplied || stateTypeOptions.value.find((item) => item.value === value)?.label || String(value)
+  const option = stateTypeOptions.value.find((item) => item.value === value)
+  return option ? stateTypeOptionLabel(option) : supplied || String(value)
 }
 function utilizationLabel(value: number, supplied?: string): string {
-  return supplied || utilizationTypeOptions.value.find((item) => item.value === value)?.label || String(value)
+  const option = utilizationTypeOptions.value.find((item) => item.value === value)
+  return option ? utilizationTypeOptionLabel(option) : supplied || String(value)
 }
 function closePage(): void {
   window.history.pushState({}, '', appBase || '/')
@@ -167,7 +179,7 @@ function validateForm(requireUtilization: boolean): string {
   if (!/^\d+$/.test(rawCode)) return '設備狀態編號必須是整數。'
   const code = Number(rawCode)
   if (code < 0 || code > 99) return '設備狀態編號需介於 0 到 99。'
-  if (form.value.stateType === 1 && code < 11) return 'User Define 類型不可使用 0 到 10。'
+  if (form.value.stateType === 1 && code < 11) return '使用者定義類型不可使用 0 到 10。'
   if (!form.value.stateName.trim()) return '狀態名稱為必填。'
   if (form.value.stateName.trim().length > 50) return '狀態名稱不可超過 50 個字元。'
   if (form.value.description.length > 255) return '說明不可超過 255 個字元。'
@@ -389,7 +401,7 @@ onMounted(() => { void loadRows() })
           <label>
             <span>狀態類型 <b>*</b></span>
             <select v-model.number="form.stateType" required @change="formDirty = true">
-              <option v-for="option in stateTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+              <option v-for="option in stateTypeOptions" :key="option.value" :value="option.value">{{ stateTypeOptionLabel(option) }}</option>
             </select>
           </label>
           <label>
@@ -409,7 +421,7 @@ onMounted(() => { void loadRows() })
             <span class="eqstate-radios">
               <label v-for="option in utilizationTypeOptions" :key="option.value">
                 <input v-model.number="form.utilizationType" type="radio" :value="option.value" @change="formDirty = true">
-                {{ option.label }}
+                {{ utilizationTypeOptionLabel(option) }}
               </label>
             </span>
           </label>
@@ -417,7 +429,7 @@ onMounted(() => { void loadRows() })
             <span>說明</span>
             <textarea v-model="form.description" maxlength="255" rows="4" @input="formDirty = true"></textarea>
           </label>
-          <p class="eqstate-hint">User Define 狀態編號不可使用 0–10；修改時狀態編號不可變更。</p>
+          <p class="eqstate-hint">使用者定義狀態編號不可使用 0–10；修改時狀態編號不可變更。</p>
         </div>
         <p v-if="error" class="eqstate-message eqstate-error" role="alert">{{ error }}</p>
         <footer class="eqstate-dialog-footer">

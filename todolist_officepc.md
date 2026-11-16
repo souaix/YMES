@@ -12,20 +12,20 @@
 - Oracle 來源 DDL 用 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢；使用本機受保護連線設定，不必請使用者重貼，也不得把連線值寫進文件、SQL 或 Git。
 - 目前只查詢過 Oracle 結構與系統選單中繼資料，沒有匯出 MES 業務資料。不要把 DEV 假資料當成正式資料。
 
-## 目前停留點（2026-11-13）
+## 目前停留點（2026-11-16）
 
 - Oracle MESTEST 直接查詢已可用，資料字典可見 1,287 張表。查詢方式及憑證規則見 `docs/DATABASE_CONNECTION.md`。
 - WinForms 正式選單目錄已查得 20 個 Module、601 筆 MenuItem、553 筆 Function；繁中第一層名稱取自 `D:\iMES\CSiMES\Customer\Production\MESClient\mesresource.zh-cht.resources`。完整 ModuleOrder、分類、FunctionNo、FormName、ExecutionFile 見 `docs/MES_MENU_FUNCTION_INVENTORY.md`。
-- 系統選單 20/601/553 筆來源資料的 upsert 已由家用電腦整合為 0012 migration，並於 2026-11-14 載入 YMES PostgreSQL。家用端更新 API 的 20 個繁中模組名稱已建置；待家用端 push/deploy 後，公司端 pull 最新 main，確認三層選單呈現、圖示、收合及未遷移提示。
+- 公司電腦已 pull 至 `944b793`；家用端已部署 20 個模組的三層選單、物料子功能 API、設備供應商 API 與設備狀態 API。接續先對照新 endpoint/options 的 Vue 呼叫契約與來源 WinForms。
 - 作業站主表、群組明細及 Service 明確使用的 16 張子表，連同 3 張系統目錄表，共 21 張來源 DDL/空表 CREATE SQL 已交付；物料 8 張來源 DDL/空表 CREATE SQL 也已交付。檔案索引見 `docs/DATABASE_CONNECTION.md`、`docs/modules/OP/作業站主檔.md`、`docs/modules/MTL/物料主檔.md`。
 - `TBLOPBASIS` 等 21 張作業站/系統表已確認每表一個 PK unique index，沒有額外獨立索引；本次查的 29 張 OP/系統/MTL 表沒有 Oracle FK constraint。PK/NOT NULL 保留在 CREATE SQL。
 - `tblmtlmaterialbasis` 的 YMES bootstrap 已補齊 7 個來源 DEFAULT；多出的 7 個 YMES 欄位仍保留，等家用電腦比對實際 schema，不要自行刪除。
-- 物料主檔及其子功能已有 DEV localStorage 互動雛形；物料匯入目前只支援 CSV。作業站子功能也有簡化 DEV 視窗。設備設定已有七個功能頁雛形。以上都尚未完成逐項 WinForms 對照。
+- 物料主檔及其子功能已有 DEV localStorage 互動雛形；物料匯入目前只支援 CSV。作業站子功能也有簡化 DEV 視窗。設備設定已有七個功能頁雛形。設備狀態的兩張刪除引用表 DDL、空表 PostgreSQL CREATE SQL、正式 ValueList 和繁中翻譯已於 2026-11-16 交付家用端；家用端仍需 migration 和 API 刪除檢查部署。其他頁面仍待逐項 WinForms 對照。
 - 本次未執行 build 或測試；未完成整套 MES 遷移，也未把尚未完成功能標為正式上線。
 
 ## 家用電腦完成後，公司端先做
 
-- [ ] Pull 家用電腦最新提交，閱讀 API DTO/endpoint/migration 與更新後的 `todolist_homepc.md`；檢查各 Vue 呼叫契約是否一致。
+- [x] 2026-11-16 Pull 家用電腦最新提交 `944b793`，閱讀更新後的 DTO/endpoint/migration 與 `todolist_homepc.md`；設備狀態 Production endpoint 使用 `GET/options/POST/PUT/DELETE`，Vue 呼叫路徑已對上。
 - [ ] 用公司端 Development 假資料頁逐頁核對 API 欄位名稱、狀態值、DataStamp、錯誤訊息與選項，不讓 Production 回退 localStorage。
 - [ ] 以目前已查到的 20 個模組與資源檔標題整合三層側欄：Module → Menu Group → Function；維持 ModuleOrder、MenuOrder、FunctionOrder。未遷移功能要明確顯示尚未遷移，不能導向空白頁。
 - [ ] 按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 逐筆核對 FunctionNo、FormName、ExecutionFile 與 `D:\iMES\CSiMES\STD\MESWin` Form/Designer/Service；一個 Function 建一份或更新一份獨立規格，不以截圖代替程式碼/DDL。
@@ -39,7 +39,7 @@
 
 ## Oracle 來源交付給家用電腦
 
-- [ ] **設備狀態設定：補齊刪除引用檢查來源 DDL 與 ValueList。** 在 Oracle MESTEST 唯讀查詢 `TBLEQPSTATECONTROL` 與程式使用的 `tblEMSEquipmentState`：先用資料字典確認實際 owner、物件名稱/型態（table/view/synonym）、欄位與 `EQUIPMENTSTATE` 的語意，再透過 `DBMS_METADATA.GET_DDL` 匯出結構，並列出 PK、索引、NOT NULL/default。家用端 SSH 查到 YMES 缺少這兩個來源物件；不可在 Oracle 建 YMES 表、不可匯出業務資料。另從 MES `ValueListProvider` 的正式設定查出 `TBLEQPSTATEBASIS.STATETYPE`、`UTILIZATIONTYPE` 的完整值與顯示文字。交付 Oracle 原始 DDL、對應空表 PostgreSQL CREATE SQL（只在來源確認且家用端需要時建立）、ValueList 值/文字及來源位置；更新 `docs/modules/EQP/設備設定/設備狀態設定.md`，完成後 commit/push 讓家用端實作安全的刪除引用檢查與 options API。不得從註解或 DEV 假資料推定選項。
+- [x] **設備狀態設定來源資料已交付（2026-11-16）**：以 PowerShell 5.1 唯讀查 MESTEST 的 `TBLEQPSTATECONTROL` / `TBLEMSEQUIPMENTSTATE` 物件、欄位、PK/唯一索引、NOT NULL/default 與 DDL；查 `TBLSYSVALUELIST` 的兩組選項，並核對 `mesresource.zh-cht.resources` 繁中翻譯。來源 DDL、PG 空表 CREATE SQL 與規格已更新；家用端 migration/API 部署仍待完成。
 
 ## 結束規則
 
