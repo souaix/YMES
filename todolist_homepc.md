@@ -514,3 +514,23 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 5. 核准只接受 IssueState=0，IssueNo=`SUBCONTRACTOR BASIS`。重用 YMES Issue/Job 簽核服務：無 Job/Detail 直達 2；有簽核明細則狀態 1，通過 2、退回 0。Production 不得照 DEV 直接核准。
 6. DataStamp nullable/default 0；CAS 同時支援原值 NULL（`IS NULL`）及數值、遞增使用 `COALESCE(DataStamp,0)+1`。所有 API 檢查登入者 ENT 權限、主檔存在、欄位長度/唯一鍵與伺服器 audit。Core/wsENT 此 checkout 的命名參數存在版本差異，依本文件的新 API 契約統一補足 audit/CAS，不照搬未寫 audit 的舊 SQL。
 7. 公司端尚未 build/test/瀏覽器驗收。API/schema 完成並部署後，通知公司端 pull 並對接 Production 驗收。
+
+## ENT ET202 外包項目設定（公司端 DEV 完成，家用端接手 API/schema）
+
+先讀 `docs/modules/ENT/外包項目設定.md`、`todolist_officepc.md` 的 ET202 區塊，以及 Oracle 來源 `database/reference/mestest_entositem_source_ddl.sql`、PostgreSQL 空表 `database/reference/mestest_entositem_create.sql`。公司端按 WinForms `frmENTOSItem`/`frmENTOSItemDef` 完成 Vue DEV 頁 `/YMES/Customer/OSItems`。Oracle DDL 是公司端以 PowerShell 5.1 + ODP.NET 直連受保護連線唯讀取得。
+
+### Schema / Migration
+
+- Oracle 主表 `MESTEST.TBLENTOSITEM` 11 欄：OSItemNo varchar(2) NOT NULL PK；OSItemName varchar(50) NOT NULL；PlanDays numeric(3,0) NOT NULL；ProcessNo varchar(30) NOT NULL；ReturnType numeric(1,0) NOT NULL；Description varchar(255)；Creator varchar(10)；CreateDate timestamp；DataStamp numeric(11,0) DEFAULT 0 nullable；Reviser varchar(10)；ReviseDate timestamp。
+- Oracle 只有 OSItemNo PK unique index，沒有 FK 或額外索引。Create SQL 是空表定義；先查 YMES 現有 schema、migration 和 API 使用的 schema 大小寫，再只建立缺漏項目，不要盲目執行 IF NOT EXISTS。
+- Oracle 沒有 IssueState。PlanDays、ReturnType 不可另加來源不存在的欄位/default；Oracle DATE 對應 PostgreSQL timestamp without time zone。
+
+### API / 業務規則
+
+1. ENT API：`GET /api/ent/os-items?osItemNo=`、`POST /api/ent/os-items`、`PUT /api/ent/os-items/{osItemNo}?dataStamp=`、`DELETE /api/ent/os-items/{osItemNo}?dataStamp=`。GET 空條件列全體，有值依編號查詢。JSON 欄位為 `osItemNo, osItemName, planDays, processNo, returnType, description`；POST/PUT 回傳完整 DTO。
+2. 必填與長度依 Oracle DDL；WinForms 輸入上限 OSItemNo 2、OSItemName 50、PlanDays 0–999 整數、ProcessNo 25（DB 上限 30）、Description 255。OSItemNo 儲存前大寫；ReturnType 只接受 0/1，新增預設 0。
+3. ProcessNo 必須存在於已簽核 `IssueState=2` 且 `ProcessClass=3` 的流程。查找用既有 `GET /api/processes?issueState=2`，以 DTO ProcessClass 篩選；舊 WinForms LoadProcess 未限制 CurVersion=1，不要額外只留目前版本。
+4. DataStamp nullable/default 0；Update/Delete 需 transaction/CAS，支援 NULL 原值和數值，更新 `COALESCE(datastamp,0)+1`。新增/更新的 Creator/CreateDate/Reviser/ReviseDate 由 API 設定，不接受用戶端 audit。
+5. 舊 ws Edit 有送 DataStamp，但目前 Core `EditENTOSItem` 簽章沒有 CAS/audit；舊 Core Delete 只按 OSItemNo 實體刪除。新 API 補完整 CAS 與伺服器 audit。多選刪除由前端逐筆呼叫，首個錯誤即停止並回報已完成筆數。
+6. 本功能沒有簽核/IssueState；所有端點檢查登入者 ENT 權限、資料庫欄位長度、必填、ReturnType/PlanDays 範圍與流程參照。
+7. 公司端 Development 使用 localStorage 假資料；Production 只呼叫 API。API/schema 完成、部署並提供可用環境後，通知公司端 pull 最新版對接驗收。

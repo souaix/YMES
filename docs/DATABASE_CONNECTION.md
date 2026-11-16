@@ -158,3 +158,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 主檔只有 SubcontractorNo PK unique index；連絡人只有 `(SubcontractorNo, ContactorName)` 複合 PK unique index。Oracle 資料字典兩表均無 FK、無額外索引；舊 Core 仍在刪除主檔時明確刪除連絡人。
 - Oracle logical DDL 與 PostgreSQL 空表 CREATE SQL 為 `database/reference/mestest_subcontractor_source_ddl.sql`、`database/reference/mestest_subcontractor_create.sql`。包含 IssueState NOT NULL DEFAULT 0、兩表 DataStamp nullable DEFAULT 0。
 - WinForms 雙 Grid、表單欄位、狀態刪除/簽核與 API 規格見 `docs/modules/ENT/外包商基本資料.md`。連線憑證只由本機受保護設定提供，未輸出或提交。
+
+### 更新 2026-11-16：ENT ET202 外包項目設定
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護連線唯讀查詢 `MESTEST.TBLENTOSITEM` 的 DBMS_METADATA DDL、欄位 NULL/default、constraints、indexes 與 index columns；未查業務資料，未在 Oracle 執行 DDL。
+- 查得 11 欄、OSITEMNO 單欄 PK；DataStamp nullable DEFAULT 0。Oracle 字典僅有 PK unique index，無 FK、無額外索引。source logical DDL 與 PostgreSQL 空表 CREATE SQL 為 `database/reference/mestest_entositem_source_ddl.sql`、`mestest_entositem_create.sql`。
+- 查詢 helper 從 `%TEMP%\ymes-ep302-readonly-ddl.ps1` 讀取受保護連線值，僅將表名改為 TBLENTOSITEM；連線資訊未輸出到文件或提交。本次只查結構，不讀取 MES 業務列，也沒有在來源資料庫執行 DDL。
+- WinForms、Service/Core、流程查找、版本差異及 API 契約見 `docs/modules/ENT/外包項目設定.md`。

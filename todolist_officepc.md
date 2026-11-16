@@ -287,4 +287,16 @@
 - [x] 新增 `web/src/components/SubcontractorBasisMaster.vue`，Development 使用獨立 localStorage 假資料，實作上下雙 Grid、狀態/編號查詢、多選、主檔/連絡人新增修改複製刪除、核准、Mail、KD 黃色欄位與稽核區。
 - [x] 加入 `/YMES/Customer/Subcontractors` 路由及 FunctionNo `SUBCONTRACTOR BASIS`；建立外包商規格並更新模組索引、Oracle 連線紀錄及家用端待辦。
 - [ ] 尚未執行 build、測試或瀏覽器驗收；Production API/migration/Issue service 仍待家用端完成。
-- [ ] 下一功能依 MES Function inventory 繼續 ET202 `ENTOSITEM` 外包項目設定；開始前先 pull 家用端最新提交並讀該功能 Form/Service。
+- [x] 後續依 ENT Function inventory 開始 ET202 `ENTOSITEM` 外包項目設定；以下為完成紀錄。
+
+## ENT ET202 外包項目設定公司端進度（2026-11-16）
+
+- [x] 開始前執行 `git pull --ff-only origin main`；GitHub `main` 已是最新版。
+- [x] 對照 `frmENTOSItem`、`frmENTOSItemDef`、wsENT、`clsCustomerBasis`，記錄查詢列、Grid 欄位/寬度、Add/Edit/Delete/Copy/Close、表單欄位驗證、Apply/Confirm 與外包流程選取條件。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護連線唯讀查到 `MESTEST.TBLENTOSITEM` DDL、欄位 nullable/default、constraints、PK/index；未讀業務資料、未在 Oracle 執行 DDL、憑證未輸出。
+- [x] 新增 Oracle source DDL、PostgreSQL 空表 CREATE SQL、ET202 模組規格與規格索引/連線查詢紀錄。
+- [x] 新增 Vue DEV 頁 `web/src/components/ENTOSItemMaster.vue`，路徑 `/YMES/Customer/OSItems`、FunctionNo `ENTOSITEM`；含單 Grid、列選取、多選刪除、Add/Edit/Copy、KD 黃色欄位、Audit、Apply/Confirm、外包流程 lookup 與 localStorage 假資料。
+- [ ] 家用端比較實際 YMES schema/migrations；缺表時依 `database/reference/mestest_entositem_create.sql` 建 migration，不得以 IF NOT EXISTS 代替欄位差異檢查。
+- [ ] 家用端實作 ENTOSITEM GET/POST/PUT/DELETE、DataStamp CAS、伺服器 audit、ProcessClass=3 + IssueState=2 流程驗證及權限檢查；遵守 API/DB 分離，Vue Production 不可使用假資料。
+- [ ] 公司端尚未執行 build、測試或瀏覽器驗收；Production API 尚待家用端完成。
+- [ ] ENT 八個 Function 已有 ET101/102/103/104/105/106/201/202 規格與 DEV 頁；下一步依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續盤點下一個尚未完整復刻的 MES 功能，先核對 Form/Service/Core，再查 Oracle DDL。
