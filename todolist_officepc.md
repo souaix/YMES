@@ -12,7 +12,7 @@
 - Oracle 來源 DDL 用 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢；使用本機受保護連線設定，不必請使用者重貼，也不得把連線值寫進文件、SQL 或 Git。
 - 目前只查詢過 Oracle 結構與系統選單中繼資料，沒有匯出 MES 業務資料。不要把 DEV 假資料當成正式資料。
 
-## 目前停留點（2026-11-16）
+## 目前停留點（2026-11-17）
 
 ### 2026-11-17 MTL ML101 物料供應商基本資料
 
@@ -20,6 +20,15 @@
 - [x] 對照 `frmMaterialVendor`、主檔/連絡人 Def、`wsMTL`、`clsMTLBasis`，完成四狀態查詢、雙 Grid、CRUD/複製/多筆刪除/核准、連絡人 Mail、Issue/Job、audit 與 DataStamp 規格；新增 Oracle source DDL、PostgreSQL 空表 CREATE SQL 及獨立規格文件。
 - [x] 新增 `web/src/components/MaterialVendorMaster.vue`，依 WinForms 雙 Grid 與 KD 黃色欄位完成 DEV localStorage 互動；新增 MTL fallback 三層選單與 `MTL VENDOR` 路由 `/YMES/MTL/MaterialVendors`。
 - [x] 已將 API、schema、migration handoff 寫入 `todolist_homepc.md`；提醒家用端修正 material vendor map 名稱查詢誤 join EQP vendor 的問題。
+- [ ] 未執行 build、test 或瀏覽器驗收；Production API/schema 待家用端完成後再對接與驗收。
+
+### 2026-11-17 MTL ML102 物料類別資料
+
+- [x] 對照 `frmMaterialType`、`frmMaterialTypeDef`、`frmMaterialGumType`、`frmMaterialProperty`、`wsMTL`、`clsMTLBasis`；整理畫面、狀態、CRUD、Copy GumHour、Property/MTL PROPERTY、固晶膠核准檢查與 GumHour 數值驗證。
+- [x] 確認 Oracle DDL/PG CREATE SQL 已存在於 `mestest_mtl_master_*`，包含 MaterialType、Property、TypeQCItem、TypeAcclimation；此功能沒有新增 table/CREATE SQL。
+- [x] 新增 `web/src/components/MaterialTypeMaster.vue`，建立 `/YMES/MTL/MaterialTypes`、`MTL TYPE` 動態/fallback 路由；包含狀態查詢、主 Grid、Add/Edit/Copy/Delete/Approve、Property 與 GumHour 視窗，Copy 會一併複製類別時效，核准後 GumHour 唯讀，DEV 假參數不代表正式系統參數值。
+- [x] 更新 ML102 規格、索引及家用端 schema/API/Issue handoff。
+- [x] 重新確認 origin/main 與公司端基線相同；已把 Copy 的單交易 API 契約與 GumHour POST/PUT 區分補進家用端待辦。
 - [ ] 未執行 build、test 或瀏覽器驗收；Production API/schema 待家用端完成後再對接與驗收。
 
 - Oracle MESTEST 直接查詢已可用，資料字典可見 1,287 張表。查詢方式及憑證規則見 `docs/DATABASE_CONNECTION.md`。

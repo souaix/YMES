@@ -14,6 +14,15 @@
 - [ ] 主檔實體刪除須同交易刪除 `TBLMTLMATERIALVENDORCONTACTOR`、`TBLMTLMATERIALVENDORMAP` 對應資料，再刪主檔；供應商名稱查詢需依 WinForms 舊碼使用 MTL vendor 表。核對並修正 `src/YMes.Api/MasterData/Data/PostgresMasterDataRepository.MaterialFeatures.cs` 目前把 material vendor map join 到 `tbleqpvendor` 的來源錯誤。
 - [ ] 對照規格確認 PostgreSQL 欄位長度、NULL/default、主鍵、API DTO 與 Vue 路徑 `/YMES/MTL/MaterialVendors`；完成後更新規格與 migration/API 部署狀態並 push，通知公司端 pull Production endpoint。
 
+### MTL ML102 物料類別資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料類別資料.md`、WinForms Form/Service 規則及現有 MTL API。此功能的 `TBLMTLMATERIALTYPE`、`TBLMTLMATERIALPROPERTY`、`TBLMTLTYPEQCITEM`、`TBLMTLTYPEACCLIMATION` Oracle DDL/空表 CREATE SQL 已在 `mestest_mtl_master_*` reference，並由 0013 建置；先以 PPK/SSH 核對當前 YMES schema/migration，缺表才補 forward migration，不要重建或覆蓋擴充欄位。
+- [ ] 實作 `/api/material-types` CRUD/搜尋/四狀態/核准與 DataStamp CAS；新增檢查 `MaterialType` 不可與 `tblmtlmaterialbasis.materialno` 重複；實體刪除在單一交易移除類別屬性、`tblmtltypeqcitem`、`tblmtltypeacclimation` 與主檔，已核准軟刪除為 -1，簽核中拒絕。
+- [ ] Property 子功能以 Material=`MaterialType` 操作共用 `tblmtlmaterialproperty`，補 CRUD/MTL PROPERTY Issue 核准及 CAS；不要把 MaterialType 屬性和一般 MaterialNo 記錄混在同一查詢結果。
+- [ ] GumHour 以 `tblmtltypeacclimation` 的 `(MaterialType, MaterialNo='*')` 讀寫類別級設定；套用 ACCMin/Max、回冰/ReForzenTimes、再次回溫欄位驗證與 CAS。核准前從系統參數取得 `GumMaterialType`、`MATERIALMULTITIMECTRL`，若屬固晶膠但未設定 GumHour 則拒絕核准；重用 `MTL TYPE` Issue/Job 流程及第一簽核群組通知。
+- [ ] 新增 `POST /api/material-types/{sourceMaterialType}/copy`，以單一交易複製類別資料及來源的類別級 GumHour（若存在），重設 IssueState/audit/DataStamp；不複製 Property/QC 明細。GumHour 端點須支援 GET/POST/PUT，新增時 INSERT、更新時 CAS。
+- [ ] 完成並部署後更新規格、migration/API 狀態與本待辦，push 後通知公司端 pull。公司端 `/YMES/MTL/MaterialTypes` DEV 頁已建立。
+
 公司端已整理一批可直接接手的來源結構與目錄資料。開始前先 pull 這份清單所在的最新 `main`，並閱讀 `todolist_officepc.md`、`docs/DATABASE_CONNECTION.md`、`docs/MES_MENU_FUNCTION_INVENTORY.md`、OP/MTL 規格及下列 SQL。家用端只負責 DB/API/migration；公司端後續接回 Vue/WinForms 畫面。
 
 1. **系統目錄 migration 0012 已完成**：以 SSH 比對來源 schema，部署可回滾/可重跑 migration，載入 20 Module、601 MES MenuItem、553 Function 並保留 5 筆 YMES 自訂列。模組繁中名稱已核實、API/Web 已部署，瀏覽器已確認三層選單；逐筆自動比較來源與 API 回傳仍待補。
