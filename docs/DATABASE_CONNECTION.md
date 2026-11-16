@@ -105,3 +105,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護設定直接唯讀查詢 MESTEST.TBLEQPCARRIERTYPE 的 DBMS_METADATA.GET_DDL，並核對 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES、ALL_IND_COLUMNS。
 - 查得 13 欄；PK 為 CARRIERTYPE，唯一索引只有 PK index，沒有其他索引或 FK。Oracle 原始 DDL/PG 空表 CREATE SQL 為 `database/reference/mestest_carrier_type_source_ddl.sql`、`database/reference/mestest_carrier_type_create.sql`。
 - 只查結構，未讀取 MES 業務資料或執行 Oracle DDL；連線資訊仍只由本機受保護設定讀取，不輸出、不保存到 Git。
+
+### 更新 2026-11-16：EP303 載具基本資料與選項依賴
+
+- 公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護設定唯讀查詢 MESTEST.TBLEQPCARRIERBASIS、TBLWIPCarrierState、TBLSMDFactoryBasis 的 DBMS_METADATA DDL 及欄位、NOT NULL/default、PK、index 字典。
+- 載具主表 DataStamp 為 nullable 且 DEFAULT 0；IssueState DEFAULT 0 NOT NULL。WIPCarrierState 主鍵為 CarrierNo；FactoryBasis IssueState DEFAULT 0 NOT NULL，DataStamp DEFAULT 0 nullable。三表均只有 PK unique index，沒有 FK。
+- Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 已保存於 database/reference/mestest_carrier_basis_source_ddl.sql、mestest_carrier_basis_create.sql、mestest_carrier_basis_dependencies_source_ddl.sql、mestest_carrier_basis_dependencies_create.sql。同步修正 first-phase CREATE SQL 對這些欄位的預設值，移除未經來源確認的欄位推測註解。
+- 本次僅查結構及系統設定，不讀取 MES 業務資料，不在 Oracle 執行 DDL；IP、帳號、密碼與 SID 仍只留在本機受保護設定。

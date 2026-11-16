@@ -89,6 +89,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | 設備點檢表設定 | WinForms 主從 Form / Designer / Service、主從 Oracle DDL、FunctionNo/FunctionKey、QCType ValueList 已核實 | [規格](modules/EQP/設備設定/設備點檢表設定.md)與 Vue DEV 畫面/互動已按來源補齊；Production API 待家用電腦 |
 | 載具分類資料 | EP301；WinForms Form/Def/Designer、wsEQP/clsCarrierBasis、Oracle DDL 與 IssueState/簽核規則已核實 | [規格](modules/EQP/載具/載具分類資料.md)、Oracle 原始 DDL/PG 空表 CREATE SQL 與 Vue DEV UI 已建立；Production schema/API/核准流程待家用電腦 |
 | 載具類別資料 | EP302；WinForms Form/Def/Designer、wsEQP/clsCarrierBasis、Oracle DDL 與 UseLayer/簽核規則已核實 | [規格](modules/EQP/載具/載具類別資料.md)、Oracle 原始 DDL/PG 空表 CREATE SQL 與 Vue DEV UI 已建立；Production schema/API/核准流程待家用電腦 |
+| 載具基本資料 | EP303；frmCarrierBasis/Def、wsEQP/clsCarrierBasis、主表/WIP 狀態/廠區 DDL 與交易/簽核規則已核實 | [規格](modules/EQP/載具/載具基本資料.md)、Oracle 原始 DDL/PG 空表 CREATE SQL 與 Vue DEV UI 已建立；Production schema/API/核准流程待家用電腦 |
 
 ## 全 MES 盤點狀態
 

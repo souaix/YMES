@@ -332,3 +332,27 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 - 新增/修改驗證 AccessoryState -99..99、StateType 0/1、User Define 不可用 0..10、StateName 必填、Description 最長 255；StateName 最長 50。稽核欄位取 auth context/伺服器時間；修改用 DataStamp 並行檢查。
 - DELETE 不 cascade；若 TBLEQPACCCATEGORYSTATEBASIS 引用該狀態，回 409，避免舊表無 FK 時留下孤兒狀態定義。舊 WinForms 直接刪除的差異記在 API 文件。
 - 確認 ymes_app 最小權限、API DTO/錯誤回應與 EP204 消費端一致；部署後更新規格/本待辦並通知公司端接 API。
+
+## 設備資料：載具基本資料 EP303（公司端 UI、規格與 Oracle DDL 已交付）
+
+先讀 docs/modules/EQP/載具/載具基本資料.md、docs/DATABASE_CONNECTION.md 及下列 SQL。公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查詢 MESTEST；沒有讀取業務資料，也沒有在 Oracle 執行 DDL。
+
+### 已交付
+
+- [x] Vue DEV 元件 web/src/components/EquipmentCarrierBasisMaster.vue；第三層 FunctionNo CARRIER BASIS，路徑 /YMES/Equipment/CarrierBasis。
+- [x] Oracle 原始 DDL：database/reference/mestest_carrier_basis_source_ddl.sql、database/reference/mestest_carrier_basis_dependencies_source_ddl.sql。
+- [x] PostgreSQL 空表 CREATE SQL：database/reference/mestest_carrier_basis_create.sql、database/reference/mestest_carrier_basis_dependencies_create.sql。
+- [x] 主表 TBLEQPCARRIERBASIS 15 欄，PK CarrierNo；依賴 TBLWIPCarrierState 6 欄、TBLSMDFactoryBasis 10 欄。三表各僅 PK unique index，無 FK；CarrierBasis IssueState DEFAULT 0 NOT NULL、DataStamp DEFAULT 0 nullable。
+- [x] first-phase SQL 已補載具在製狀態表，修正 CarrierBasis/FactoryBasis defaults，移除來源未證實的推測欄位註解。
+
+### 家用端待辦
+
+1. 先核對 YMES schema/migrations 中 ymes.tbleqpcarrierbasis、ymes.tblwipcarrierstate、ymes.tblsmdfactorybasis 的欄位型別/長度/NULL/DEFAULT/PK/index；FactoryBasis 已在第一階段 SQL，先確認 YMES 實際表。缺表才新增 forward migration，保留 YMES 額外欄位，不直接在 Oracle 執行 CREATE SQL。
+2. 實作 GET /api/equipment/carrier-basis?carrierNo=，回傳全部 IssueState，CarrierNo 部分符合；包含所有非隱藏 grid 欄位、DataStamp、稽核欄位。
+3. 實作 POST 新增主表與 WIP CarrierState=0 列，單一交易；CarrierNo 大寫/必填/最多 50，Category/Type 必填最多 50、FactoryNo 必填最多 20、Description 最多 255；Category/Type/Factory 必須是 IssueState=2 且 Type 屬於指定 Category。Creator/CreateDate 取 auth context/server clock，DataStamp 初值 0。
+4. 實作 PUT /api/equipment/carrier-basis/{carrierNo}，只允許 IssueState=0、DataStamp compare-and-swap；更新主表 Category/Type/FactoryNo/Description、Reviser/ReviseDate/DataStamp，並在同一交易同步 WIP CarrierCategory/CarrierType。
+5. 實作 DELETE /{carrierNo}?issueState=&dataStamp=：0/-1 在同一交易實體刪除主表與 WIP 列；2 僅將主表改為 -1 並更新稽核/DataStamp；1 回 409。舊服務物理刪除未帶 DataStamp 條件，新 API 兩種分支都要比對版本。
+6. 實作 POST /{carrierNo}/approve：IssueNo CARRIER BASIS；先確認 Issue/Job/Detail 配置。未配置簽核工作時可直轉 2；有簽核工作時建立工作並轉 1、通知第一簽核群組，核准轉 2、退回轉 0。使用既有 YMES 簽核服務，不把 DEV 直核流程當 Production。
+7. 提供 GET /api/master-data/factories?issueState=2，從 ymes.tblsmdfactorybasis 回傳 FactoryNo/FactoryName/Description；檢查 ymes_app 唯讀權限。
+8. EP302 的 GET /api/equipment/carrier-types 增加可選 carrierCategory 篩選；EP303 Type picker 傳 issueState=2 和 carrierCategory。現有狀態列仍由 Vue 前端即時切換。
+9. 三張表比對/migration、options、CRUD/簽核完成後更新規格/API 文件、本待辦與資料庫紀錄，再部署並通知公司端 pull 對接。公司端尚未做瀏覽器人工驗收。

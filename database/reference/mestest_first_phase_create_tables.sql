@@ -1,5 +1,5 @@
 -- PostgreSQL CREATE TABLE starter generated from the existing MES Oracle MESTEST data-dictionary extraction.
--- Scope: 75 first-phase master-data tables plus 3 MES system menu/function tables; no business rows are copied.
+-- Scope: first-phase master-data tables, the EP303 WIP carrier-state dependency, and 3 MES system menu/function tables; no business rows are copied.
 -- Target schema is YMES to align with the YMES API database. Review against the home-PC target before applying.
 -- This remains a starter DDL, not the complete MES schema; other domains and permission/translation tables are not included.
 
@@ -12,25 +12,15 @@ CREATE TABLE IF NOT EXISTS tblsmdfactorybasis (
     description varchar(255),
     creator varchar(10) NOT NULL,
     createdate timestamp without time zone NOT NULL,
-    issuestate numeric(1,0) NOT NULL,
+    issuestate numeric(1,0) DEFAULT 0 NOT NULL,
     fabcode varchar(10),
     factoryname varchar(50),
     reviser varchar(10),
     revisedate timestamp without time zone,
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     CONSTRAINT pk_tblsmdfactorybasis PRIMARY KEY (factoryno)
 );
 COMMENT ON TABLE tblsmdfactorybasis IS 'MES master data; Oracle source: MESTEST.TBLSMDFACTORYBASIS';
-COMMENT ON COLUMN tblsmdfactorybasis.factoryno IS '廠別（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdfactorybasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdfactorybasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdfactorybasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdfactorybasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdfactorybasis.fabcode IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdfactorybasis.factoryname IS '名稱（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdfactorybasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdfactorybasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdfactorybasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
 
 CREATE TABLE IF NOT EXISTS tblsmdareabasis (
     areano varchar(20) NOT NULL,
@@ -968,9 +958,9 @@ CREATE TABLE IF NOT EXISTS tbleqpcarrierbasis (
     description varchar(255),
     creator varchar(10),
     createdate timestamp without time zone,
-    issuestate numeric(1,0) NOT NULL,
+    issuestate numeric(1,0) DEFAULT 0 NOT NULL,
     factoryno varchar(20),
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
     getgroupno varchar(50),
@@ -980,21 +970,17 @@ CREATE TABLE IF NOT EXISTS tbleqpcarrierbasis (
     CONSTRAINT pk_tbleqpcarrierbasis PRIMARY KEY (carrierno)
 );
 COMMENT ON TABLE tbleqpcarrierbasis IS 'MES master data; Oracle source: MESTEST.TBLEQPCARRIERBASIS';
-COMMENT ON COLUMN tbleqpcarrierbasis.carrierno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.carriercategory IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.carriertype IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.issuestate IS '狀態（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.factoryno IS '廠別（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.getgroupno IS '群組（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.getansno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.maintenancetime IS '日期／時間（推測，請依業務確認）';
-COMMENT ON COLUMN tbleqpcarrierbasis.begroupmainten IS '群組（推測，請依業務確認）';
+
+CREATE TABLE IF NOT EXISTS tblwipcarrierstate (
+    carrierno varchar(50) NOT NULL,
+    carriercategory varchar(50) NOT NULL,
+    carriertype varchar(50) NOT NULL,
+    carrierstate numeric(1,0),
+    description varchar(255),
+    lotno varchar(50),
+    CONSTRAINT pk_tblwipcarrierstate PRIMARY KEY (carrierno)
+);
+COMMENT ON TABLE tblwipcarrierstate IS 'MES master data dependency; Oracle source: MESTEST.TBLWIPCARRIERSTATE';
 
 CREATE TABLE IF NOT EXISTS tbleqptoolbasis (
     toolno varchar(20) NOT NULL,
