@@ -4,6 +4,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 type State = -1 | 0 | 1 | 2
 type Mode = 'add' | 'edit' | 'copy' | null
 interface Row { mClassNo: string; description: string | null; creator: string | null; createDate: string | null; issueState: State; dataStamp: number | null; reviser: string | null; reviseDate: string | null }
+interface ImportPair { mClassNo: string; description: string }
+interface ImportResult extends ImportPair { result: 'success' | 'fail'; message: string }
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
@@ -34,8 +36,12 @@ const formError = ref('')
 const saving = ref(false)
 const importOpen = ref(false)
 const importName = ref('')
-const importText = ref('')
+const importFile = ref<File | null>(null)
+const importPairs = ref<ImportPair[]>([])
+const importResults = ref<ImportResult[]>([])
 const importError = ref('')
+const importing = ref(false)
+const importProgress = ref(0)
 const visible = computed(() => rows.value.filter(r => r.issueState === state.value && (!appliedSearch.value || r.mClassNo.toLowerCase().includes(appliedSearch.value.toLowerCase()))).sort((a, b) => a.mClassNo.localeCompare(b.mClassNo)))
 const selectedRows = computed(() => visible.value.filter(r => selected.value.includes(r.mClassNo)))
 const activeRow = computed(() => rows.value.find(r => r.mClassNo === active.value) ?? null)
@@ -55,7 +61,7 @@ function apiUrl(path: string): string {
 }
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers)
-  if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
+  if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   const response = await fetch(apiUrl(path), { credentials: 'include', ...init, headers })
   if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
   if (!response.ok) {
@@ -156,33 +162,87 @@ async function approveSelected(): Promise<void> {
     await refresh(); notice.value = '已送出核准；正式簽核結果依 Issue Job 流程更新。'
   } catch (e) { error.value = e instanceof Error ? e.message : '核准主分類失敗。' } finally { busy.value = false }
 }
-function openImport(): void { importOpen.value = true; importName.value = ''; importText.value = ''; importError.value = '' }
-function chooseFile(e: Event): void {
-  const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return
-  importName.value = file.name
-  if (!mock.value) { importError.value = '正式 Excel 匯入 API 尚待依 WinForms QC_MClassDataImport 範本實作。'; return }
-  if (!file.name.toLowerCase().endsWith('.csv')) { importError.value = 'DEV 預覽只讀 CSV；WinForms 原匯入器格式待確認。'; return }
-  const reader = new FileReader(); reader.onload = () => { importText.value = String(reader.result ?? ''); importError.value = '' }; reader.onerror = () => { importError.value = '無法讀取檔案。' }; reader.readAsText(file, 'UTF-8')
-}
-function importCsv(): void {
-  const lines = importText.value.replace(/^\uFEFF/, '').split(/\r?\n/).filter(x => x.trim())
-  if (lines.length < 2) { importError.value = 'CSV 至少需要標題列和一筆資料。'; return }
-  const headers = lines[0].split(',').map(x => x.trim().replace(/^"|"$/g, '').toLowerCase())
-  const key = headers.indexOf('mclassno'); const desc = headers.indexOf('description')
-  if (key < 0) { importError.value = '暫用 DEV CSV 標題需有 MClassNo，Description 可選。'; return }
-  const data = readStore(); let added = 0; let skipped = 0
-  for (const line of lines.slice(1)) {
-    const values = line.split(',').map(x => x.trim().replace(/^"|"$/g, '')); const no = (values[key] ?? '').toUpperCase()
-    if (!no || no.length > 30 || data.rows.some(r => r.mClassNo.toUpperCase() === no)) { skipped++; continue }
-    data.rows.push({ mClassNo: no, description: desc < 0 ? null : values[desc] || null, creator: props.currentUserNo || 'DEV001', createDate: now(), issueState: 0, dataStamp: 0, reviser: null, reviseDate: null }); added++
+function openImport(): void { importOpen.value = true; importName.value = ''; importFile.value = null; importPairs.value = []; importResults.value = []; importError.value = ''; importProgress.value = 0 }
+function parseCsv(text: string): string[][] {
+  const records: string[][] = []; let row: string[] = []; let field = ''; let quoted = false
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (ch === '"' && quoted && text[i + 1] === '"') { field += '"'; i++ }
+    else if (ch === '"') quoted = !quoted
+    else if (ch === ',' && !quoted) { row.push(field); field = '' }
+    else if ((ch === '\n' || ch === '\r') && !quoted) { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(field); if (row.some(value => value.trim())) records.push(row); row = []; field = '' }
+    else field += ch
   }
-  writeStore(data); void refresh(); notice.value = 'DEV CSV 匯入新增 ' + added + ' 筆，略過 ' + skipped + ' 筆。'; importOpen.value = false
+  row.push(field); if (row.some(value => value.trim())) records.push(row)
+  return records
+}
+async function chooseFile(e: Event): Promise<void> {
+  const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return
+  importName.value = file.name; importFile.value = file; importPairs.value = []; importResults.value = []; importError.value = ''
+  if (mock.value) {
+    if (!file.name.toLowerCase().endsWith('.csv')) { importError.value = 'DEV 預覽暫用 CSV；正式端依 WinForms 支援 .xls/.xlsx。'; return }
+    const text = await file.text(); const records = parseCsv(text.replace(/^\uFEFF/, ''))
+    if (records.length < 2) { importError.value = '匯入檔沒有資料列。'; return }
+    const pairs = records.slice(1).map(row => ({ mClassNo: (row[0] ?? '').trim(), description: (row[1] ?? '').trim() }))
+    if (pairs.some(row => !row.mClassNo)) { importError.value = '主分類編號必填；檔案第一欄的空白編號會使匯入檔檢核失敗。'; return }
+    importPairs.value = pairs.filter((item, index) => pairs.findIndex(other => other.mClassNo.toLocaleUpperCase() === item.mClassNo.toLocaleUpperCase() && other.description.toLocaleUpperCase() === item.description.toLocaleUpperCase()) === index)
+    return
+  }
+  try {
+    const body = new FormData(); body.append('file', file)
+    importPairs.value = await request<ImportPair[]>('api/qc/m-class-basis/import/preview', { method: 'POST', body })
+  } catch (error) { importError.value = error instanceof Error ? error.message : '讀取匯入 Excel 失敗。' }
+}
+async function downloadTemplate(): Promise<void> {
+  try {
+    let blob: Blob; let filename = 'MClassTemplate.csv'
+    if (mock.value) blob = new Blob(['MClassNo,Description\r\nMC-EXAMPLE,Example description\r\n'], { type: 'text/csv;charset=utf-8' })
+    else {
+      const response = await fetch(apiUrl('api/qc/m-class-basis/import/template'), { credentials: 'include' })
+      if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
+      if (!response.ok) throw new Error('QC401 匯入範本 API 尚未建立。')
+      blob = await response.blob()
+      const disposition = response.headers.get('Content-Disposition') ?? ''
+      filename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^\";]+)/i)?.[1] ?? 'MClassTemplate.xlsx'
+    }
+    const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = decodeURIComponent(filename); link.click(); URL.revokeObjectURL(url)
+  } catch (error) { importError.value = error instanceof Error ? error.message : '下載範本失敗。' }
+}
+async function startImport(): Promise<void> {
+  if (!importFile.value || !importPairs.value.length) return
+  if (!window.confirm('確定匯入 ' + importPairs.value.length + ' 筆主分類資料？')) return
+  importing.value = true; importError.value = ''; importResults.value = []; importProgress.value = 0
+  try {
+    if (!mock.value) {
+      const body = new FormData(); body.append('file', importFile.value)
+      importResults.value = await request<ImportResult[]>('api/qc/m-class-basis/import', { method: 'POST', body })
+      importProgress.value = importResults.value.length
+    } else {
+      const store = readStore(); const groups = new Map<string, ImportPair[]>()
+      for (const pair of importPairs.value) { const key = pair.mClassNo.toLocaleUpperCase(); groups.set(key, [...(groups.get(key) ?? []), pair]) }
+  for (const [mClassNo, pairs] of groups) {
+        const first = pairs[0]
+        if (pairs.length > 1) importResults.value.push(...pairs.map(pair => ({ ...pair, result: 'fail' as const, message: '同一 MClassNo 有多筆不同資料。' })))
+        else if (store.rows.some(row => row.mClassNo.toUpperCase() === mClassNo.toUpperCase())) importResults.value.push({ ...first, result: 'fail', message: '主分類編號已存在。' })
+        else if (mClassNo.length > 30 || first.description.length > 255) importResults.value.push({ ...first, result: 'fail', message: '欄位長度超過資料表限制。' })
+        else {
+          store.rows.push({ mClassNo: mClassNo.toUpperCase(), description: first.description || null, creator: props.currentUserNo || 'DEV001', createDate: now(), issueState: 0, dataStamp: 0, reviser: null, reviseDate: null })
+          importResults.value.push({ ...first, result: 'success', message: '' })
+        }
+        importProgress.value += pairs.length
+      }
+      writeStore(store)
+    }
+    if (importResults.value.some(result => result.result === 'success')) { await refresh(); notice.value = '匯入完成，成功 ' + importResults.value.filter(result => result.result === 'success').length + ' 筆。' }
+  } catch (error) { importError.value = error instanceof Error ? error.message : '匯入主分類失敗。' }
+  finally { importing.value = false }
 }
 function date(value: string | null): string {
   if (!value) return ''
   const d = new Date(value); if (Number.isNaN(d.getTime())) return value
   return new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(d)
 }
+function closeImport(): void { if (!importing.value) importOpen.value = false }
 watch(state, () => setActive())
 onMounted(() => { void (async () => { loading.value = true; try { await load(); setActive() } catch (e) { error.value = e instanceof Error ? e.message : '載入主分類失敗。' } finally { loading.value = false } })() })
 </script>
@@ -212,10 +272,17 @@ onMounted(() => { void (async () => { loading.value = true; try { await load(); 
         <p v-if="formError" class="message error" role="alert">{{ formError }}</p>
       </form><footer class="dialog-actions"><button type="button" class="button primary" :disabled="saving || readOnly" @click="save(false)">確定</button><button type="button" class="button" @click="closeForm">關閉</button><button type="button" class="button" :disabled="saving || readOnly" @click="save(true)">套用</button></footer>
     </section></div>
-    <div v-if="importOpen" class="backdrop" @click.self="importOpen = false"><section class="dialog import-dialog" role="dialog" aria-modal="true" aria-label="MClassImport">
-      <header class="titlebar"><h2>MClassImport</h2><button class="x" type="button" @click="importOpen = false">×</button></header>
-      <p class="import-hint">WinForms 呼叫 QC_MClassDataImport；目前來源碼未包含匯入器範本。DEV 暫用 CSV 欄位 MClassNo,Description；正式格式與逐筆規則待核對原匯入器。</p><input type="file" accept=".csv,.xls,.xlsx" @change="chooseFile"><p>{{ importName || '尚未選擇檔案' }}</p><p v-if="importError" class="message error">{{ importError }}</p><textarea v-if="mock" v-model="importText" class="import-text" placeholder="MClassNo,Description&#10;MC-01,外觀異常"></textarea>
-      <footer class="dialog-actions"><button class="button primary" :disabled="!mock || !importText" @click="importCsv">匯入 DEV CSV</button><button class="button" @click="importOpen = false">關閉</button></footer>
+    <div v-if="importOpen" class="backdrop" @click.self="closeImport"><section class="dialog import-dialog" role="dialog" aria-modal="true" aria-label="MClassImport">
+      <header class="titlebar"><h2>MClassImport</h2><button class="x" type="button" :disabled="importing" @click="closeImport">×</button></header>
+      <p class="import-hint">Excel 第一個工作表：第 1 欄 MClassNo（必填）、第 2 欄 Description（可空）；第 1 列視為標題列。載入後依欄位值去除完全重複列，再逐筆檢查主分類編號唯一性；同編號不同說明會回報重複資料。DEV 假資料只解析相同欄序的 CSV。</p>
+      <div class="import-toolbar"><input type="file" accept=".csv,.xls,.xlsx" :disabled="importing" @change="chooseFile"><span>{{ importName || '尚未選擇檔案' }}</span><button class="button" type="button" :disabled="importing" @click="downloadTemplate">下載範本</button></div>
+      <p v-if="importError" class="message error" role="alert">{{ importError }}</p>
+      <p v-if="importing" class="import-progress">處理中 {{ importProgress }} / {{ importPairs.length }}</p>
+      <div class="import-results"><table class="data-grid"><thead><tr><th>MClassNo</th><th>Description</th><th>Message</th></tr></thead><tbody>
+        <tr v-for="(row, index) in (importResults.length ? importResults : importPairs)" :key="index"><td>{{ row.mClassNo }}</td><td>{{ row.description }}</td><td v-if="'result' in row" :class="row.result === 'success' ? 'result-ok' : 'result-fail'">{{ row.result === 'success' ? 'success' : row.message }}</td><td v-else>待匯入</td></tr>
+        <tr v-if="!importPairs.length && !importResults.length"><td colspan="3">選取 Excel 檔後預覽資料與逐筆匯入結果。</td></tr>
+      </tbody></table></div>
+      <footer class="dialog-actions"><button class="button primary" :disabled="importing || !importFile || !importPairs.length" @click="startImport">{{ importing ? '匯入中…' : '匯入' }}</button><button class="button" :disabled="importing" @click="closeImport">關閉</button></footer>
     </section></div>
   </main>
 </template>
@@ -227,6 +294,6 @@ onMounted(() => { void (async () => { loading.value = true; try { await load(); 
 input,textarea{box-sizing:border-box;min-height:30px;padding:5px 7px;border:1px solid #a9a69f;border-radius:2px;background:var(--field);color:var(--text);font:inherit}input:focus,textarea:focus{border-color:#d18a21;outline:2px solid rgb(209 138 33 / 20%)}input[readonly],input:disabled,textarea[readonly]{background:#ecebe7;color:#777}textarea{resize:vertical}.button{min-height:30px;padding:4px 11px;border:1px solid #bdb9b0;border-radius:3px;background:linear-gradient(#fff,#f0efec);color:#343331;font:inherit;white-space:nowrap;cursor:pointer}.button:hover:not(:disabled){border-color:#d08a23;background:#fff6df}.button:disabled{opacity:.48;cursor:not-allowed}.button.primary{border-color:#df8612;background:var(--orange);color:#fff}
 .message{margin:0;padding:7px 10px;border:1px solid}.error{border-color:#d99b86;background:#fff0e9;color:#873820}.notice{border-color:#c9bc91;background:#fff8dc;color:#67551d}
 .grid-panel{display:grid;grid-template-columns:minmax(0,1fr) 88px;grid-template-rows:minmax(0,1fr) auto;gap:7px 9px;flex:1;min-height:220px;padding:6px;border:1px solid var(--line);background:#fff}.table-scroll{min-width:0;min-height:0;overflow:auto;border:1px solid #c9c6bf}.data-grid{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;white-space:nowrap}.data-grid th{position:sticky;top:0;z-index:1;padding:6px 8px;border-right:1px solid #e1ded8;border-bottom:1px solid #c9c6bf;background:#f5cd64;color:#39342a;text-align:left}.data-grid td{height:27px;padding:3px 7px;border-right:1px solid #e1ded8;border-bottom:1px solid #e1ded8}.data-grid tbody tr{cursor:pointer}.data-grid tbody tr:hover{background:#fff8e3}.data-grid tbody tr.active{background:#ffedaa}.data-grid input[type=checkbox]{width:15px;min-height:15px;height:15px;margin:0;accent-color:#d98717}.check{width:28px;text-align:center!important}.key{font-weight:600}.description{min-width:180px;white-space:pre-wrap}.empty{color:#777;text-align:center}.actions{display:flex;flex-direction:column;gap:7px}.actions .button{min-height:32px}.close{margin-top:auto}.grid-footer{grid-column:1/-1;min-height:20px;padding:3px 2px 0;color:var(--muted);font-size:12px}.grid-footer span{margin-left:12px}
-.backdrop{position:fixed;z-index:50;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgb(28 27 25 / 42%)}.dialog{display:flex;flex-direction:column;width:min(580px,97vw);max-height:94vh;overflow:auto;border:1px solid #b9b4aa;background:#f8f6f1;box-shadow:0 12px 36px rgb(0 0 0 / 24%)}.titlebar{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid #d2cec5;background:#f2efe8}.titlebar h2{margin:0;font-size:17px;font-weight:600}.x{border:0;background:none;font-size:23px;cursor:pointer}.editor{display:flex;flex-direction:column;gap:9px;padding:12px}.editor fieldset{min-width:0;border:1px solid #c9c4ba;padding:9px}.editor legend{padding:0 5px;color:#5a564f}.editor label{display:flex;flex-direction:column;gap:5px}.editor label>span{font-size:13px}.editor fieldset:first-child label{max-width:440px}.kd-field{background:var(--field)}.editor textarea{min-height:120px}.audit{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}.audit input{width:100%;background:#ecebe7}.required{padding-left:3px;color:#a33a25}.dialog-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:8px;padding:8px 12px 12px;border-top:1px solid #ddd9d1;background:#f8f6f1}.import-dialog{width:min(760px,97vw);padding:0 14px 12px}.import-hint{color:#68645c}.import-text{min-height:180px;margin:8px 0;font-family:Consolas,monospace}
+.backdrop{position:fixed;z-index:50;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgb(28 27 25 / 42%)}.dialog{display:flex;flex-direction:column;width:min(580px,97vw);max-height:94vh;overflow:auto;border:1px solid #b9b4aa;background:#f8f6f1;box-shadow:0 12px 36px rgb(0 0 0 / 24%)}.titlebar{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid #d2cec5;background:#f2efe8}.titlebar h2{margin:0;font-size:17px;font-weight:600}.x{border:0;background:none;font-size:23px;cursor:pointer}.editor{display:flex;flex-direction:column;gap:9px;padding:12px}.editor fieldset{min-width:0;border:1px solid #c9c4ba;padding:9px}.editor legend{padding:0 5px;color:#5a564f}.editor label{display:flex;flex-direction:column;gap:5px}.editor label>span{font-size:13px}.editor fieldset:first-child label{max-width:440px}.kd-field{background:var(--field)}.editor textarea{min-height:120px}.audit{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}.audit input{width:100%;background:#ecebe7}.required{padding-left:3px;color:#a33a25}.dialog-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:8px;padding:8px 12px 12px;border-top:1px solid #ddd9d1;background:#f8f6f1}.import-dialog{width:min(900px,97vw);padding:0 14px 12px}.import-hint{margin:10px 0;color:#68645c}.import-toolbar{display:flex;align-items:center;gap:9px;padding:7px 0}.import-toolbar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.import-results{min-height:170px;max-height:50vh;overflow:auto;border:1px solid #c9c6bf}.import-results .data-grid{white-space:normal}.import-progress{margin:3px 0;color:#6a6253;font-size:12px}.result-ok{color:#28643d}.result-fail{color:#a33a25}
 @media(max-width:620px){.query-panel{align-items:flex-start}.states{width:100%}.audit{grid-template-columns:1fr}}
 </style>

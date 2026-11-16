@@ -16,7 +16,8 @@
 - [ ] 實作 PUT /api/qc/m-class-basis/{mClassNo}?issueState=&dataStamp=，僅更新 Description；只允許 IssueState 0/2；MClassNo 唯讀，Reviser/ReviseDate 由伺服器更新。使用 nullable DataStamp CAS，衝突回 409。
 - [ ] 實作 DELETE：狀態 0/-1 實體刪除；狀態 2 以 CAS 改 IssueState=-1 並更新 Reviser/ReviseDate/DataStamp；狀態 1 拒絕。
 - [ ] 實作 POST /api/qc/m-class-basis/{mClassNo}/approve：限 IssueState=0，Issue Job Map key 為 MCLASS BASIS。找不到 Job 或 Job Detail 時直接轉 2；有流程時建立 Issue、轉 1、通知第一簽核群組；核准轉 2，退回回 0。更新共用 Issue Job/API 規格。
-- [ ] WinForms 只找到 ObjectFileHandler.Execute("QC_MClassDataImport") 呼叫，沒有匯入器原始碼/範本；先由家用端檢查可用套件、舊部署元件或範本檔，確認欄位順序/重複策略/錯誤回報後才定義 Excel API。公司端 MClassNo,Description CSV 為暫用，不能據以建 Production parser。
+- [ ] WinForms 匯入器已找到：STD/MESWin/QC/QC_MClassDataImport/frmMClassDataImport.vb、STD/MEStc/DataImporter/MClassDataImporter.cs。實作 POST /api/qc/m-class-basis/import/preview 與 /import：NPOI 讀 .xls/.xlsx 第一工作表；跳過首列，固定用第 1 欄 MClassNo（必填）、第 2 欄 Description（可空），不驗標題；先 distinct (MClassNo, Description)，按 MClassNo 分組逐組檢查/插入；大小寫不敏感拒絕已存在鍵、編號轉大寫；同編號不同說明失敗；每組獨立 transaction，部分成功並回傳結果。
+- [ ] 實作 GET /api/qc/m-class-basis/import/template，透過 YMES template storage 提供舊 wsSYS.GetTemplateFile 的 MCLASS BASIS 範本與副檔名。來源樹找到 downloader/extension API 呼叫，但未找到範本 binary；部署前須接原始 template storage 或取得正式範本。DEV CSV 只演示相同欄序，不能冒充官方 Excel 範本。
 - [ ] API 使用參數化 SQL、登入與 QC401 功能權限；更新 API 文件、migration 索引與本 TODO。不得連 MES Oracle。
 
 ### QC403 異常原因基本資料（公司端 2026-11-17 交接）

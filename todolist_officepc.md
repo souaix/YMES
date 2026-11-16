@@ -76,7 +76,7 @@
 - [x] TBLQCMCLASSBASIS Oracle source DDL 與 PostgreSQL CREATE SQL 已由先前 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查得並與 QC406 共用，不新增重複 DDL/CREATE 檔；MClassNo 為 PK，僅 PK unique index，無 FK/額外索引。
 - [x] 新增 Vue DEV 頁 web/src/components/QcMClassBasisMaster.vue；加入三層 fallback menu、FunctionNo MCLASS BASIS / FunctionKey QC401 和 /YMES/QC/MClassBasis 路由。表格標頭與欄位使用 KD 黃色系；同步修正 QC403 藍色 Grid 表頭。DEV localStorage 假資料含四種狀態。
 - [x] 新增 docs/modules/QC/主分類基本資料.md，更新公司/家用 TODO、兩份功能索引及 Oracle 連線紀錄；家用端僅需核對 live schema，缺表才建立 migration。
-- [ ] 標準 WinForms 原始碼目前只有 ObjectFileHandler 的 QC_MClassDataImport 呼叫點；匯入器與範本未找到。DEV CSV 只作暫用互動，不代表正式格式；家用端先找原匯入器再定 Excel API。
+- [x] 找到並對照獨立 frmMClassDataImport 與 DataImporter.MClassDataImport。確認 NPOI 第一工作表、首列跳過、前兩欄、distinct pair、MClassNo 大小寫不敏感去重、每編號獨立部分成功及結果 Grid；更新 QC401 規格與 Home API 契約。正式範本二進位檔未在來源樹找到，Production 需沿用系統 template storage。
 - [ ] 未執行 build、test、瀏覽器驗收或 YMES PostgreSQL 查詢。家用端 API、schema 比對與正式 Issue Job 仍待完成。
 
 ### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）

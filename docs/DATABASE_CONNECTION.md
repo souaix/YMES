@@ -292,4 +292,5 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - TBLQCMCLASSBASIS Oracle DBMS_METADATA DDL 及 PostgreSQL 空表 CREATE SQL 已由先前 PowerShell 5.1 + Oracle.ManagedDataAccess，使用本機既有受保護連線唯讀查得，納入 QC406 共用查找表 reference：`database/reference/mestest_qc_first_group_lookups_source_ddl.sql`、`mestest_qc_first_group_lookups_create.sql`。本次沿用既有結果，未重複連線查詢。
 - 主鍵為 MClassNo，只有 PK unique index，沒有 FK 或其他 index；本功能不新增 DDL/CREATE 檔。資料表欄位與 UI/API 規則見 `docs/modules/QC/主分類基本資料.md`。
+- 另由公司端原始碼確認匯入器位於 `STD/MESWin/QC/QC_MClassDataImport` 及 `STD/MEStc/DataImporter/MClassDataImporter.cs`；未找到 template binary。Excel 只讀程式與匯入檢查來源，不使用 Oracle 查業務列。
 - 不讀取 MES 業務列、不在 Oracle 執行 DDL；IP、帳號、密碼、SID 未輸出或保存於 Git。家用端只核對 YMES PostgreSQL live schema/migrations。
