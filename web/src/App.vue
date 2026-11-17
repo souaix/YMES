@@ -73,6 +73,7 @@ import QcSecondInspectionSampling from './components/QcSecondInspectionSampling.
 import QcVariableItemGroup from './components/QcVariableItemGroup.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
+import QcInspectionMaster from './components/QcInspectionMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -274,6 +275,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:QCITEM_G', label: '計量品管項目_群組', shortLabel: '群', functionNo: 'QCITEM_G', moduleNo: 'QC', tableName: 'tblqcitemgroupbasis' },
       { id: 'function:QC:QCITEM_G_PMI', label: '計量品管項目群組_減項', shortLabel: '減', functionNo: 'QCITEM_G_PMI', moduleNo: 'QC', tableName: 'tblqcitemgroupbasis_pmi' },
       { id: 'function:QC:QCITEM_G_A_ORDER', label: '計數品管項目_群組', shortLabel: '群', functionNo: 'QCITEM_G_A_ORDER', moduleNo: 'QC', tableName: 'tblqcitemattgrouporderbasis' },
+      { id: 'function:QC:QC INSPECTION', label: '設備品檢管理設定', shortLabel: '檢', functionNo: 'QC INSPECTION', moduleNo: 'QC', tableName: 'tblqcinspectionbasis' },
       { id: 'function:QC:SAMPLINGFOR2NDINSP', label: '二次檢驗抽樣計畫', shortLabel: '二', functionNo: 'SAMPLINGFOR2NDINSP', moduleNo: 'QC', tableName: 'tblqcsamplingfor2ndinsp' },
     ] }, { id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
@@ -358,6 +360,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:QCITEM_G': appBasePath + '/QC/VariableItemGroup',
   'function:QC:QCITEM_G_PMI': appBasePath + '/QC/PmiItemGroup',
   'function:QC:QCITEM_G_A_ORDER': appBasePath + '/QC/AttributeItemGroup',
+  'function:QC:QC INSPECTION': appBasePath + '/QC/Inspection',
   'function:QC:FIRST GROUP': appBasePath + '/QC/FirstGroup',
   'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
@@ -540,6 +543,7 @@ const isQcSecondInspectionSamplingPage = computed(() => activeMasterKey.value ==
 const isQcVariableItemGroupPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_G')
 const isQcPmiItemGroupPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_G_PMI')
 const isQcAttributeItemGroupPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_G_A_ORDER')
+const isQcInspectionMasterPage = computed(() => activeMasterKey.value === 'function:QC:QC INSPECTION')
 const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC:FIRST GROUP')
 const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
 const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DESCRIPTION')
@@ -1601,6 +1605,14 @@ async function signOut(): Promise<void> {
         />
         <QcAttributeItemGroup
           v-else-if="isQcAttributeItemGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcInspectionMaster
+          v-else-if="isQcInspectionMasterPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

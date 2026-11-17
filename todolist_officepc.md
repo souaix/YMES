@@ -14,6 +14,14 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC217 設備品檢管理設定（公司端 2026-11-17）
+
+- [x] 直接對照 `frmQCInspection`/Designer、`frmQCInspectionDef`/Designer、`wsQC` 和 `clsQCBasis`，整理兩個 Grid、查詢條件、Add/Edit/Delete/Copy/Approve、九種檢查週期、範圍選取、四類 QCItem、Mail Group、Issue Job 和 DataStamp 行為。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess，經本機受保護連線唯讀取得 `TBLQCINSPECTIONBASIS`、`TBLQCINSPECTIONDETAIL` Oracle table/index DDL；確認兩張表只有 PK unique index、無 FK/其他索引，未查業務列或執行 Oracle DDL。
+- [x] 新增 `/YMES/QC/Inspection` Vue DEV 頁、QC 三層選單及獨立 localStorage 假資料；保留 EQP「設備點檢表設定」獨立路由。新增 QC217 規格、Oracle DDL、PG CREATE-only 參考及家用端 API/SQL handoff。
+- [x] 記錄舊程式 Delete 會依 OP/設備/檢查類型清除共用明細；Issue Job callback SQL 將 InspWeek 誤寫 InspType，家用端 API 必須用完整正確複合鍵修正。
+- [ ] 未執行 build/test/瀏覽器驗收；Production API/schema 由家用端依 `todolist_homepc.md` 建置。此功能完成後，先按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續 QC218「計數品管項目產品原因對應設定」，讀 WinForms Form/Service/Core 後建立頁面和規格，再交家用端 API/DDL。
+
 ### QC216 計量品管項目群組_減項（公司端 2026-11-17）
 
 - [x] 直接閱讀 `frmPMI_QCItemGroup`、Define/Include/Deduction Define Forms、wsQC、clsQCBasis，整理三區 WinForms 版面、四狀態、主檔 CRUD、減項明細排序、扣除基準、Parameter/Op、簽核與硬刪引用清理。
