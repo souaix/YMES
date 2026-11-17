@@ -146,7 +146,10 @@ async function selectItem(qcItemNo: string): Promise<void> {
     let rows: Mapping[]
     if (mock.value) {
       const store = readStore()
-      rows = store.mappings.filter(row => row.qcItemNo === qcItemNo).map(row => ({ ...row, ...store.reasons.find(item => item.reasonNo === row.reasonNo), reasonType: store.reasons.find(item => item.reasonNo === row.reasonNo)?.reasonType ?? 0, reasonLevel: store.reasons.find(item => item.reasonNo === row.reasonNo)?.reasonLevel ?? 0, creator: 'DEV001', createDate: '2026-11-17 08:00:00', reviser: 'DEV001', reviseDate: '2026-11-17 08:00:00' }))
+      rows = store.mappings.filter(row => row.qcItemNo === qcItemNo).map(row => {
+        const reason = store.reasons.find(item => item.reasonNo === row.reasonNo)
+        return { ...row, reasonName: reason?.reasonName ?? row.reasonNo, description: reason?.description ?? '', reasonType: reason?.reasonType ?? 0, reasonLevel: reason?.reasonLevel ?? 0, creator: 'DEV001', createDate: '2026-11-17 08:00:00', reviser: 'DEV001', reviseDate: '2026-11-17 08:00:00' }
+      })
     } else {
       const payload = await request<Payload<Record<string, unknown>>>(`${apiRoot}?qcItemNo=${enc(qcItemNo)}&allData=true`)
       rows = listOf(payload).map(normalizeMapping)
@@ -384,7 +387,7 @@ onMounted(queryItems)
         <header class="dialog-heading"><h2>QC Reason Map</h2><span>{{ currentItem?.qcItemNo }}　{{ currentItem?.qcItemName }}</span></header>
         <div class="editor-fields">
           <label>QCItemNo<input :value="currentItem?.qcItemNo" readonly /></label><label>QCItemName<input :value="currentItem?.qcItemName" readonly /></label>
-          <label>ProductNo<div class="inline-field"><input v-model="editorProduct" @keydown.enter.prevent="refreshEditorProduct" /><button class="win-button lookup-button" type="button" @click="openProductPicker('editor')">...</button></div></label>
+          <label>ProductNo<div class="inline-field"><input v-model="editorProduct" @keydown.enter.prevent="refreshEditorProduct()" /><button class="win-button lookup-button" type="button" @click="openProductPicker('editor')">...</button></div></label>
           <label>ReasonType<select v-model.number="reasonType"><option :value="0">Scrap</option><option :value="1">Defect</option></select></label>
           <label>ReasonLevel<input v-model.number="reasonLevel" type="number" min="0" max="9" /></label>
           <span class="global-hint">ProductNo = * 代表所有產品共用原因</span>

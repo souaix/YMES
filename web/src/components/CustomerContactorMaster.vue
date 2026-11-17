@@ -146,10 +146,10 @@ async function saveForm(closeAfterSave: boolean): Promise<void> {
   const name = form.value.contactorName.trim()
   if (!name) { formError.value = '請輸入連絡人姓名。'; return }
   if (name.length > 50) { formError.value = '連絡人姓名不可超過 50 個字元。'; return }
-  if ((form.telNo || '').length > 25 || (form.faxNo || '').length > 25 || (form.email || '').length > 50 || (form.deptName || '').length > 25 || (form.description || '').length > 255) {
+  if ((form.value.telNo || '').length > 25 || (form.value.faxNo || '').length > 25 || (form.value.email || '').length > 50 || (form.value.deptName || '').length > 25 || (form.value.description || '').length > 255) {
     formError.value = '電話、傳真、Email、部門或說明超過資料庫欄位長度。'; return
   }
-  if ((form.title || '').length > 25) { formError.value = '職稱最多可輸入 50 字，但資料庫欄位限制 25 字，請縮短後再儲存。'; return }
+  if ((form.value.title || '').length > 25) { formError.value = '職稱最多可輸入 50 字，但資料庫欄位限制 25 字，請縮短後再儲存。'; return }
   form.value.contactorName = name
   busy.value = true; formError.value = ''; errorMessage.value = ''
   try {

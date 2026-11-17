@@ -204,7 +204,7 @@ watch(() => props.developmentPreview, () => { void load() })
     <div v-if="mode" class="backdrop" @click.self="mode=null"><form class="dialog" role="dialog" aria-modal="true" @submit.prevent="save(false)">
       <header class="dialog-head"><h2>配件分類狀態定義（{{mode==='add'?'新增':mode==='edit'?'修改':'複製'}}）</h2><button type="button" class="x" @click="mode=null">×</button></header>
       <fieldset class="group"><legend>配件分類狀態資料</legend>
-        <label class="form-row"><span>配件分類</span><select v-model="form.accessoryCategory" class="kd-input" :disabled="!!initialCategory||mode==='edit'||mode==='copy"><option value="">請選擇</option><option v-for="item in categories" :key="item.accessoryCategory" :value="item.accessoryCategory">{{item.accessoryCategory}}</option></select></label>
+        <label class="form-row"><span>配件分類</span><select v-model="form.accessoryCategory" class="kd-input" :disabled="!!initialCategory||mode==='edit'||mode==='copy'"><option value="">請選擇</option><option v-for="item in categories" :key="item.accessoryCategory" :value="item.accessoryCategory">{{item.accessoryCategory}}</option></select></label>
         <label class="form-row"><span>配件狀態</span><select v-model="form.accessoryState" class="kd-input" :disabled="mode==='edit'" @change="onStateChange"><option value="">請選擇</option><option v-for="item in stateOptions" :key="item.accessoryState" :value="String(item.accessoryState)">{{item.accessoryState}}｜{{item.stateName}}</option></select></label>
         <label class="form-row"><span>狀態名稱</span><input v-model="form.accessoryStateName" class="kd-input" readonly maxlength="50"></label>
         <label class="form-row"><span>初始狀態</span><span class="check-line"><input v-model="form.initialFlag" type="checkbox">設為此配件分類的初始狀態</span></label>

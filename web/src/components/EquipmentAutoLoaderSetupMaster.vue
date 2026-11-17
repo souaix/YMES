@@ -100,7 +100,7 @@ const activeRow = computed(() => rows.value.find(row => keyOf(row) === activeKey
 const allSelected = computed(() => visibleRows.value.length > 0 && visibleRows.value.every(row => selectedKeys.value.includes(keyOf(row))))
 const filteredTargets = computed(() => {
   const currentRows = mock.value ? readMock() : rows.value
-  return equipmentOptions.value.filter(item => item.equipmentNo.toUpperCase().startsWith(defaultPrefix.trim().toUpperCase()) && item.equipmentNo !== sourceRow.value?.equipmentNo && item.hasMatchingFormat !== true && !currentRows.some(row => row.equipmentNo === item.equipmentNo && row.fileNameFormat === sourceRow.value?.fileNameFormat))
+  return equipmentOptions.value.filter(item => item.equipmentNo.toUpperCase().startsWith(defaultPrefix.value.trim().toUpperCase()) && item.equipmentNo !== sourceRow.value?.equipmentNo && item.hasMatchingFormat !== true && !currentRows.some(row => row.equipmentNo === item.equipmentNo && row.fileNameFormat === sourceRow.value?.fileNameFormat))
 })
 const filteredEquipmentPickerRows = computed(() => equipmentPickerRows.value.filter(item => `${item.equipmentNo} ${item.equipmentType} ${item.equipmentName}`.toLowerCase().includes(equipmentPickerQuery.value.trim().toLowerCase())))
 const editorTitle = computed(() => `設備 AutoLoader 格式檔設定（${editorMode.value === 'add' ? '新增' : editorMode.value === 'copy' ? '複製' : '修改'}）`)

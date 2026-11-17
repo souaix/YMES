@@ -286,7 +286,7 @@ async function save(keepOpen: boolean): Promise<void> {
     sQtyCanBBiggerThenPQty: form.value.allowSampleAbovePopulation ? 1 : 0,
     dataStamp: original?.dataStamp ?? 0, reviser: revisedBy.value || null, reviseDate: revisedAt.value || null,
   }
-  const parameters = parameterRows.value.map(row => ({ parameterNo: row.parameterNo.trim(), parameterValue: row.parameterValue?.trim() || null }))
+  const parameters = parameterRows.value.map(row => ({ parameterNo: row.parameterNo.trim(), parameterValue: row.parameterValue?.trim() || null, showFlag: row.showFlag }))
   saving.value = true
   try {
     if (isMock.value) {

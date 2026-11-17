@@ -383,7 +383,7 @@ async function loadRelation(mode: RelationMode): Promise<void> {
     } else {
       const path = `${apiRoot}/${encodeURIComponent(activeItem.value!.qcItemNo)}/${mode}`
       const payload = await request<ListPayload<Record<string, unknown>>>(path)
-      relationRows.value = listOf(payload) as Array<ParameterRow | FactorRow | ReasonMapRow | SamplePlanChangeRow | OperationRow>
+      relationRows.value = listOf(payload) as unknown as Array<ParameterRow | FactorRow | ReasonMapRow | SamplePlanChangeRow | OperationRow>
       if (mode === 'reasons') {
         relationSelectedNos.value = relationRows.value.map(row => String((row as ReasonMapRow).reasonNo))
         const candidates = await request<ListPayload<ReasonRow>>(`${apiRoot}/options/reasons?issueState=2`)

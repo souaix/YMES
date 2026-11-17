@@ -318,7 +318,7 @@ onMounted(() => { void (async () => { loading.value = true; try { await load(); 
       <p v-if="importError" class="message error" role="alert">{{ importError }}</p>
       <p v-if="importing" class="import-progress">處理中 {{ importProgress }} / {{ importPairs.length }}</p>
       <div class="import-results"><table class="data-grid"><thead><tr><th>SClassNo</th><th>MClassNo</th><th>Description</th><th>Message</th></tr></thead><tbody>
-        <tr v-for="(row, index) in (importResults.length ? importResults : importPairs)" :key="index"><td>{{ row.sClassNo }}</td><td>{{ row.mClassNo }}</td><td>{{ row.description }}</td><td v-if="'result' in row" :class="row.result === 'success' ? 'result-ok' : 'result-fail'">{{ row.result === 'success' ? 'success' : row.message }}</td><td v-else>待匯入</td></tr>
+        <tr v-for="(row, index) in (importResults.length ? importResults : importPairs)" :key="index"><td>{{ row.sClassNo }}</td><td>{{ row.mClassNo }}</td><td>{{ row.description }}</td><td v-if="'result' in row" :class="row.result === 'success' ? 'result-ok' : 'result-fail'">{{ row.result === 'success' ? 'success' : ('message' in row ? row.message : '') }}</td><td v-else>待匯入</td></tr>
         <tr v-if="!importPairs.length && !importResults.length"><td colspan="4">選取 Excel 檔後預覽資料與逐筆匯入結果。</td></tr>
       </tbody></table></div>
       <footer class="dialog-actions"><button class="button primary" :disabled="importing || !importFile || !importPairs.length" @click="startImport">{{ importing ? '匯入中…' : '匯入' }}</button><button v-if="importing" class="button" @click="cancelImport">取消後續資料</button><button class="button" :disabled="importing" @click="closeImport">關閉</button></footer>

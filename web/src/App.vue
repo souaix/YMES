@@ -686,12 +686,15 @@ function addDevelopmentEquipmentFunctions(items: MenuNode[]): MenuNode[] {
 
 function routeForMenuNode(item: MenuNode): string {
   const functionNo = item.functionNo?.trim().toUpperCase()
+  const functionRouteKey = item.moduleNo && functionNo
+    ? `function:${item.moduleNo.trim().toUpperCase()}:${functionNo}`
+    : ''
   const knownRoute = item.moduleNo?.toUpperCase() === 'EQP' && item.label.trim() === '設備供應商基本資料'
     ? equipmentVendorRoute
     : item.moduleNo?.toUpperCase() === 'EQP' && item.label.trim() === '設備工程群組資料'
       ? equipmentEngineerGroupRoute
       : undefined
-  return menuRoutes[item.id] ?? knownRoute ?? (functionNo ? functionRoutes[functionNo] : undefined) ??
+  return menuRoutes[item.id] ?? (functionRouteKey ? menuRoutes[functionRouteKey] : undefined) ?? knownRoute ?? (functionNo ? functionRoutes[functionNo] : undefined) ??
     `${appBasePath}/Function/${encodeURIComponent(item.moduleNo || 'module')}/${encodeURIComponent(item.functionNo || item.menuNo || item.id)}`
 }
 

@@ -36,14 +36,16 @@
 
 ## 最新公司端 handoff：QC217 設備品檢管理設定（2026-11-17）
 
-- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/設備品檢管理設定.md`、`docs/DATABASE_CONNECTION.md` 與本節；FunctionNo=`QC INSPECTION`、FunctionKey=`QC217`。公司端 Vue 頁已掛 `/YMES/QC/Inspection`，EQP `/YMES/Equipment/Inspection` 維持獨立。
-- [ ] 用家用端 PostgreSQL 管理連線檢查 YMES live schema、migration 和既有 QC APIs。Oracle 原始 DDL：`database/reference/mestest_qc217_tblqcinspectionbasis_source_ddl.sql`、`database/reference/mestest_qc217_tblqcinspectiondetail_source_ddl.sql`；PostgreSQL 空結構參考：`database/reference/mestest_qc217_inspection_create.sql`。只對真實缺漏加 forward migration，不重建或覆蓋現存表。
-- [ ] 建立登入保護且要求 QC217 FunctionKey 的 API：`GET /api/qc/inspections`、`GET /options`、`GET /{opNo}/{equipmentNo}/{inspType}/details`、`POST /api/qc/inspections`、`PUT/DELETE /{opNo}/{equipmentNo}/{inspType}/{inspWeek}/{inspStartTime}`、`POST` 同 key 的 `/approval`。參數/DTO/驗證依 QC217 規格。
-- [ ] Options 需回傳已核准 OP、設備與設備類型、設備狀態、InspectionType/INSPWEEK MES ValueList、通知群組、四種 QCItemType 可選項目及 LotIsValid。OP `*` 表示全部作業站。Server 必須重新驗證單一設備範圍、排程條件、MailGroup/CC 關係、至少一筆明細及 LotIsValid != 0；所有 SQL 參數化。
-- [ ] Add 主/明細以交易寫入，預設 IssueState=0。Edit 僅能改狀態 0，保留主鍵型別；明細依 `(OPNO,EQUIPMENTNO,INSPTYPE)` 完整替換。DataStamp CAS 用在 update/delete/approve；Audit 從登入身份及伺服器時間產生。
-- [ ] Delete 狀態 0/-1 硬刪、2 改 -1、1 拒絕。舊 Core 對硬刪會刪掉同 OP/設備/檢查類型的所有明細，即使其他週期主檔仍在，API 規格需明確呈現並依手動需求審核共享明細風險。
-- [ ] Issue Job=`QC INSPECTION`。無 Job 直接狀態 2；有 Job 先 1，通過 2、退回 0。舊 `ApproveQCInspection` 的 callback SQL 誤把 `InspWeek` 寫成 `InspType`；API/callback 必須以完整複合鍵和正確 InspWeek 修正此 defect，並驗證簽核工作流回寫資料列正確。
-- [ ] 完成 options/schema/API 文件、migration 和必要權限後 commit/push；公司端 pull 後再做 Production API 對接。公司端未跑 build/test/瀏覽器驗收。
+- [x] Pull 最新 `main` 至 `19b8e11`，讀完 `docs/modules/QC/設備品檢管理設定.md`、`docs/DATABASE_CONNECTION.md` 與本節；FunctionNo=`QC INSPECTION`、FunctionKey=`QC217`。公司端 Vue 頁已掛 `/YMES/QC/Inspection`，EQP `/YMES/Equipment/Inspection` 維持獨立。
+- [x] 以家用端 PPK/SSH 查 YMES live schema：兩張 QC217 表原先都不存在；設備、作業站、設備狀態、計數/計量項目與計量群組主檔已存在。原始 DDL 與 CREATE 參考已比對，沒有覆蓋既有表。
+- [x] 新增及套用 `database/migrations/0023_qc217_equipment_inspection.sql`。套用前的 `/opt/ymes/backups/ymes_before_0023_qc217_20261117.dump` 已通過 `pg_restore --list`；套用後核對兩張表欄位、複合 PK 與 `ymes_app` CRUD grants。
+- [x] 建立登入保護 API：`GET /api/qc/inspections`、`GET /options`、`GET /{opNo}/{equipmentNo}/{inspType}/details`、POST、PUT、DELETE 及 `/approval`。主檔/共用明細原子交易、查找重驗、參數化 SQL、DataStamp CAS 及 audit 已實作；API 使用目前產品決策的登入保護，FunctionKey ACL 尚未建立。
+- [x] API 已部署至 Production `/YMES/API`，容器 healthy，`/health/ready` 回 200；Web 已重新建置並部署至 `/YMES`。app-browser 經正式三層選單可開啟 QC217，Options 載入、空清單查詢和新增表單開關正常。現場 options 缺 MES ValueList、通知群組及 QCItemType=3 群組目錄，API 以 `missingReferences` 回報、不使用假資料；目前資料庫也沒有 QC217 主檔/可用 QC Item 資料。
+- [x] Options 回傳已核准 OP、設備與設備類型、設備狀態及目前三種已存在 QCItemType 的可選項目/ LotIsValid；`missingReferences` 列出尚未複製的 ValueList、通知群組與 QCItemType=3 主檔。OP `*` 表示全部作業站。Server 重新驗證已存在的設備/OP/狀態及 QC Item，禁止未核准或 LotIsValid=0 的項目；所有 SQL 參數化。
+- [x] Add/Edit/Delete/Approval API 已實作並部署：主檔/明細原子交易、狀態限制、共用明細鍵、DataStamp CAS、登入身份與伺服器稽核；API 以正確完整複合鍵更新，不沿用舊 callback 的 InspWeek 條件錯誤。未在正式資料庫新增測試業務資料；寫入路徑尚未透過瀏覽器實際送出。
+- [x] Delete 規則依來源實作：狀態 0/-1 硬刪、2 改 -1、1 拒絕；硬刪依 legacy 共用鍵清除明細，UI 操作需留意同 OP/設備/檢查類型其他排程共用的細項。
+- [x] 核准 API 已依 live YMES 結構處理：沒有 Issue Job/Detail 表時沿用 legacy 直接 0→2；若簽核結構存在但共用簽核尚未接入，回 503 且不改狀態。
+- [ ] commit/push 本次 QC217 API、migration、Web 路由修正與必要 Vue build 修正後，公司端 pull 並以 Production API 對接。公司端 UI 實際 CRUD 瀏覽器驗收待資料來源補齊。
 
 ## 最新公司端 handoff：QC216 計量品管項目群組_減項（2026-11-17）
 

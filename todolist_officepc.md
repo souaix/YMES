@@ -48,7 +48,7 @@
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess，經本機受保護連線唯讀取得 `TBLQCINSPECTIONBASIS`、`TBLQCINSPECTIONDETAIL` Oracle table/index DDL；確認兩張表只有 PK unique index、無 FK/其他索引，未查業務列或執行 Oracle DDL。
 - [x] 新增 `/YMES/QC/Inspection` Vue DEV 頁、QC 三層選單及獨立 localStorage 假資料；保留 EQP「設備點檢表設定」獨立路由。新增 QC217 規格、Oracle DDL、PG CREATE-only 參考及家用端 API/SQL handoff。
 - [x] 記錄舊程式 Delete 會依 OP/設備/檢查類型清除共用明細；Issue Job callback SQL 將 InspWeek 誤寫 InspType，家用端 API 必須用完整正確複合鍵修正。
-- [ ] 未執行 build/test/瀏覽器驗收；Production API/schema 由家用端依 `todolist_homepc.md` 建置。QC218 已於上節完成 UI/spec/DDL handoff；公司端接續按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 選擇下一個尚未遷移功能。
+- [ ] 家用端已完成 QC217 schema/API 與 Production 部署；正式 `/YMES/QC/Inspection` 的選單路由、Options/空清單查詢及新增表單已由家用端驗證。公司端尚未執行 build/test/CRUD 驗收；家用端 commit push 後請先 pull 並對接 Production API，待共用資料來源補齊後再驗證寫入流程。QC218 UI/spec/DDL handoff 已於上節完成；公司端接續按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 選擇下一個尚未遷移功能。
 
 ### QC216 計量品管項目群組_減項（公司端 2026-11-17）
 

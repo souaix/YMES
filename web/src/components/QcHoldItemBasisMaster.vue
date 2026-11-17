@@ -123,6 +123,27 @@ const filteredLookupRows = computed(() => {
   return []
 })
 
+type LookupRow = ClassOption | SubClassOption | GroupOption | OcapOption
+function lookupRowText(row: LookupRow): string {
+  if ('mClassNo' in row && typeof row.mClassNo === 'string') {
+    const subClassNo = 'sClassNo' in row && typeof row.sClassNo === 'string' ? row.sClassNo : ''
+    return subClassNo ? `${row.mClassNo} / ${subClassNo}` : row.mClassNo
+  }
+  if ('groupNo' in row && typeof row.groupNo === 'string') return row.groupNo
+  return 'ocapNo' in row && typeof row.ocapNo === 'string' ? row.ocapNo : ''
+}
+function lookupRowKey(row: LookupRow): string {
+  if ('sClassNo' in row && typeof row.sClassNo === 'string' && 'mClassNo' in row && typeof row.mClassNo === 'string')
+    return `${row.mClassNo}|${row.sClassNo}`
+  if ('mClassNo' in row && typeof row.mClassNo === 'string') return row.mClassNo
+  if ('groupNo' in row && typeof row.groupNo === 'string') return row.groupNo
+  return 'ocapNo' in row && typeof row.ocapNo === 'string' ? row.ocapNo : ''
+}
+function lookupRowDescription(row: LookupRow): string {
+  if ('groupName' in row && typeof row.groupName === 'string') return row.groupName
+  return 'description' in row && typeof row.description === 'string' ? row.description : ''
+}
+
 function searchKey(field: SearchField): 'holdItemNo' | 'mClassNo' | 'sClassNo' {
   return field === 'HoldItemNo' ? 'holdItemNo' : field === 'MClassNo' ? 'mClassNo' : 'sClassNo'
 }
@@ -219,19 +240,14 @@ function openLookup(kind: Exclude<LookupKind, null>): void {
   lookupKind.value = kind; lookupSearch.value = ''; lookupSelection.value = ''
 }
 function closeLookup(): void { lookupKind.value = null; lookupSearch.value = ''; lookupSelection.value = '' }
-function selectLookup(row: ClassOption | SubClassOption | GroupOption | OcapOption): void {
-  lookupSelection.value = 'mClassNo' in row ? row.mClassNo + (('sClassNo' in row) ? ' / ' + row.sClassNo : '') : 'groupNo' in row ? row.groupNo : row.ocapNo
-}
+function selectLookup(row: LookupRow): void { lookupSelection.value = lookupRowText(row) }
 function confirmLookup(): void {
-  const row = filteredLookupRows.value.find(item => {
-    const value = 'mClassNo' in item ? item.mClassNo + (('sClassNo' in item) ? ' / ' + item.sClassNo : '') : 'groupNo' in item ? item.groupNo : item.ocapNo
-    return value === lookupSelection.value
-  })
+  const row = filteredLookupRows.value.find(item => lookupRowText(item) === lookupSelection.value)
   if (!row) return
-  if (lookupKind.value === 'mClass' && 'mClassNo' in row) { editor.value.mClassNo = row.mClassNo; editor.value.sClassNo = '' }
-  else if (lookupKind.value === 'sClass' && 'sClassNo' in row) editor.value.sClassNo = row.sClassNo
-  else if (lookupKind.value === 'group' && 'groupNo' in row) editor.value.holdDispGroup = row.groupNo
-  else if (lookupKind.value === 'ocap' && 'ocapNo' in row) editor.value.ocapNo = row.ocapNo
+  if (lookupKind.value === 'mClass' && 'mClassNo' in row && typeof row.mClassNo === 'string') { editor.value.mClassNo = row.mClassNo; editor.value.sClassNo = '' }
+  else if (lookupKind.value === 'sClass' && 'sClassNo' in row && typeof row.sClassNo === 'string') editor.value.sClassNo = row.sClassNo
+  else if (lookupKind.value === 'group' && 'groupNo' in row && typeof row.groupNo === 'string') editor.value.holdDispGroup = row.groupNo
+  else if (lookupKind.value === 'ocap' && 'ocapNo' in row && typeof row.ocapNo === 'string') editor.value.ocapNo = row.ocapNo
   closeLookup()
 }
 function onHoldDispToggle(): void {
@@ -554,9 +570,9 @@ onMounted(() => {
         <div class="table-scroll picker-table"><table class="data-grid">
           <thead><tr><th>編號</th><th>名稱/說明</th></tr></thead>
           <tbody>
-            <tr v-for="row in filteredLookupRows" :key="'sClassNo' in row ? row.mClassNo + '|' + row.sClassNo : 'mClassNo' in row ? row.mClassNo : 'groupNo' in row ? row.groupNo : row.ocapNo" :class="{ 'active-row': lookupSelection === ('mClassNo' in row ? row.mClassNo + (('sClassNo' in row) ? ' / ' + row.sClassNo : '') : 'groupNo' in row ? row.groupNo : row.ocapNo) }" @click="selectLookup(row)" @dblclick="confirmLookup">
-              <td>{{ 'mClassNo' in row ? row.mClassNo + (('sClassNo' in row) ? ' / ' + row.sClassNo : '') : 'groupNo' in row ? row.groupNo : row.ocapNo }}</td>
-              <td>{{ 'groupName' in row ? row.groupName : 'description' in row ? row.description : '' }}</td>
+            <tr v-for="row in filteredLookupRows" :key="lookupRowKey(row)" :class="{ 'active-row': lookupSelection === lookupRowText(row) }" @click="selectLookup(row)" @dblclick="confirmLookup">
+              <td>{{ lookupRowText(row) }}</td>
+              <td>{{ lookupRowDescription(row) }}</td>
             </tr>
             <tr v-if="!filteredLookupRows.length" class="empty-row"><td colspan="2">查無可選資料</td></tr>
           </tbody>

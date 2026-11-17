@@ -200,7 +200,8 @@ function makeStoredZip(files: Array<{ name: string; content: string }>): Blob {
   endView.setUint16(10, files.length, true)
   endView.setUint32(12, central.length, true)
   endView.setUint32(16, localOffset, true)
-  return new Blob([joinBytes([...localParts, central, end])], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const bytes = Uint8Array.from(joinBytes([...localParts, central, end]))
+  return new Blob([bytes.buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
 }
 
 function xlsxColumnName(index: number): string {
@@ -214,7 +215,7 @@ function xlsxColumnName(index: number): string {
     return result
 }
 
-export function createXlsxTemplate(columns: string[], sheetName = 'Template', sampleRows: string[][] = []): Blob {
+export function createXlsxTemplate(columns: readonly string[], sheetName = 'Template', sampleRows: string[][] = []): Blob {
   const rows = [columns, ...sampleRows]
   const sheetRows = rows.map((values, rowIndex) => {
     const cells = values.map((value, columnIndex) => `<c r="${xlsxColumnName(columnIndex)}${rowIndex + 1}" t="inlineStr"><is><t>${xmlEscape(value)}</t></is></c>`).join('')

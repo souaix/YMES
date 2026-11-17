@@ -146,12 +146,12 @@ async function loadOptions(): Promise<void> {
 async function loadRows(): Promise<void> {
   loading.value = true; error.value = ''; notice.value = ''
   try {
-    if (mock.value) rows.value = readStore().rows.map(normalizeRow)
+    if (mock.value) rows.value = readStore().rows
     else {
       const query = new URLSearchParams({ issueState: String(issueStateFilter.value), opNo: opSearch.value.trim(), equipmentNo: equipmentSearch.value.trim(), inspType: inspTypeSearch.value })
       const payload = await request<InspectionRow[] | { items?: Record<string, unknown>[] }>(`api/qc/inspections?${query}`)
-      const list = Array.isArray(payload) ? payload : payload.items ?? []
-      rows.value = list.map(normalizeRow)
+      const list: unknown[] = Array.isArray(payload) ? payload : (payload as { items?: unknown[] }).items ?? []
+      rows.value = list.map(item => normalizeRow(item as Record<string, unknown>))
     }
     selectedKeys.value = selectedKeys.value.filter(key => filteredRows.value.some(row => rowKey(row) === key))
     if (!filteredRows.value.some(row => rowKey(row) === selectedKey.value)) selectedKey.value = filteredRows.value[0] ? rowKey(filteredRows.value[0]) : ''
@@ -256,7 +256,7 @@ async function saveEditor(): Promise<void> {
       selectedKey.value = rowKey(next); selectedKeys.value = [rowKey(next)]
     } else if (mode.value === 'add' || mode.value === 'copy') {
       const result = await request<InspectionRow>('api/qc/inspections', { method: 'POST', body: JSON.stringify(payload) })
-      selectedKey.value = rowKey(normalizeRow(result)); selectedKeys.value = [selectedKey.value]
+      selectedKey.value = rowKey(result); selectedKeys.value = [selectedKey.value]
     } else if (editingOriginal.value) {
       await request(`api/qc/inspections/${encodeURIComponent(editingOriginal.value.opNo)}/${encodeURIComponent(editingOriginal.value.equipmentNo)}/${editingOriginal.value.inspType}/${editingOriginal.value.inspWeek}/${encodeURIComponent(editingOriginal.value.inspStartTime)}`, { method: 'PUT', body: JSON.stringify({ ...payload, dataStamp: editingOriginal.value.dataStamp }) })
     }

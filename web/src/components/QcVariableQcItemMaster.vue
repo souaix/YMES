@@ -400,7 +400,7 @@ async function loadChild(mode: ChildMode): Promise<void> {
           : mode === 'factors' ? store.factors[activeItem.value.qcItemNo]
             : mode === 'operations' ? store.operations[activeItem.value.qcItemNo]
               : store.samplePlanChanges[activeItem.value.qcItemNo]
-        childRows.value = structuredClone(source ?? []) as Array<Record<string, string | number | boolean>>
+        childRows.value = structuredClone(source ?? []) as unknown as Array<Record<string, string | number | boolean>>
       }
     }
     childSelection.value = []; childOpen.value = true
@@ -615,7 +615,7 @@ function chooseLookup(value: string): void {
         <template v-else>
           <div class="qcv-child-toolbar">
             <select v-if="childMode==='parameters' || childMode==='factors' || childMode==='operations'" v-model="childCandidate" class="qcv-input"><option value="">選擇要加入的項目</option><option v-for="item in candidateOptions" :key="item" :value="item">{{ item }}</option></select>
-            <button v-if="childMode!=='simulation'" class="qcv-btn" type="button" :disabled="!childEditable || (childMode!=='samplePlanChanges' && !childCandidate)" @click="addChildRow">新增</button>
+            <button class="qcv-btn" type="button" :disabled="!childEditable || (childMode!=='samplePlanChanges' && !childCandidate)" @click="addChildRow">新增</button>
             <button class="qcv-btn" type="button" :disabled="!childEditable || !childSelection.length" @click="removeChildRows">刪除選取</button>
             <span class="qcv-child-hint">QCItemType = 1</span>
           </div>

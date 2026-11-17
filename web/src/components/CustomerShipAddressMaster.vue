@@ -261,15 +261,17 @@ async function deleteAddresses(): Promise<void> {
 }
 
 function openDeclarationForm(mode: Exclude<DeclarationMode, null>): void {
-  if (!customer.value) return
-  if (mode === 'new' && !selectedAddress.value) { errorMessage.value = '新增報關資料前，請先選取單筆出貨地址。'; return }
+  const currentCustomer = customer.value
+  if (!currentCustomer) return
+  const address = selectedAddress.value
+  if (mode === 'new' && !address) { errorMessage.value = '新增報關資料前，請先選取單筆出貨地址。'; return }
   const source = selectedDeclaration.value
   if (mode === 'edit' && !source) { errorMessage.value = '修改請選取單筆報關資料。'; return }
   declarationMode.value = mode; declarationError.value = ''; errorMessage.value = ''; successMessage.value = ''
   declarationOriginal.value = mode === 'edit' ? { ...source! } : null
-  declarationForm.value = mode === 'new'
-    ? { ...blankDeclaration(), customerNo: customer.value.customerNo, shipTo: selectedAddress.value.shipCustomerName, overseaFlag: selectedAddress.value.overseaFlag, declarationFlag: selectedAddress.value.declarationFlag }
-    : { ...source! }
+  if (mode === 'new') {
+    declarationForm.value = { ...blankDeclaration(), customerNo: currentCustomer.customerNo, shipTo: address!.shipCustomerName, overseaFlag: address!.overseaFlag, declarationFlag: address!.declarationFlag }
+  } else declarationForm.value = { ...source! }
   if (mode === 'new') { declarationForm.value.dataStamp = 0; declarationForm.value.creator = null; declarationForm.value.createdAt = null; declarationForm.value.reviser = null; declarationForm.value.revisedAt = null; declarationForm.value.clientKey = undefined }
   const now = new Date().toISOString()
   declarationAudit.value = mode === 'edit'

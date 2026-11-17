@@ -54,7 +54,9 @@ const visibleRows = computed(() => {
   const value = appliedSearchValue.value.trim().toLowerCase()
   return rows.value.filter(row => {
     if (!value) return true
-    const candidate = String(row[appliedSearchField.value]).toLowerCase()
+    const candidate = String(appliedSearchField.value === 'SamplingTable'
+      ? row.samplingTable
+      : appliedSearchField.value === 'MinNum' ? row.minNum : row.maxNum).toLowerCase()
     return candidate.includes(value)
   }).sort((a, b) => a.samplingTable.localeCompare(b.samplingTable) || a.minNum - b.minNum || a.maxNum - b.maxNum)
 })
