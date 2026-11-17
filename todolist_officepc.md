@@ -661,7 +661,7 @@
 - [x] 新增 `/YMES/QC/AttributeMeasurementDelete` Vue DEV 頁、QC204 品質資料三層選單路由、操作確認、多選逐筆刪除與假資料回饋。
 - [x] 新增 QC204 功能規格、模組索引、資料庫紀錄，以及家用端 log schema/API handoff。
 - [ ] 尚未執行 build、測試或瀏覽器驗收；等待家用端 API/schema 完成後回公司端 pull 驗收。
-- [ ] 下一頁依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接 QC209「計量品管項目管制法則對應」（FunctionKey QC209；確認實際 MESTEST 企業 Form/資料邏輯後再做）。
+- [x] QC209 的 WinForms Form/Designer/Service/Core 已核對，UI 與 API/schema handoff 已完成；詳本檔末段。
 ## QC205 計量品管項目公司端進度（2026-11-17）
 
 - [x] 已 pull 最新 `origin/main`（本次 Already up to date），基於目前 THEIL BU1 WinForms 客製版直接讀主表、Define、Memo Forms、Designer、wsQC/Core 與共用 Parameter/Factor/OP/Simulation/SamplePlanChange 實作；非僅依截圖。
@@ -669,4 +669,13 @@
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護設定直連 MESTEST，只讀取得 Memo/變數量測/引用檢查所需 Oracle DDL；不讀業務列、不執行 Oracle DDL、不輸出或提交連線秘密。四個 Oracle 舊刪除目標在 MESTEST 不存在，已記錄。
 - [x] 已新增 Oracle source DDL、Memo PostgreSQL Create 參考、`docs/modules/QC/計量品管項目.md`、索引及 DB 連線查詢紀錄，並在 `todolist_homepc.md` 寫明 API/schema handoff。
 - [ ] 尚未執行 build、測試或瀏覽器驗收；家用端完成 PostgreSQL schema/API 後，公司端 pull 最新 main 並做 Production API 對接驗收。
-- [ ] 下一功能依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接 QC209「計量品管項目管制法則對應」。先 pull、讀 WinForms Form/Designer/Service/Core，再查缺少的 Oracle DDL；若原始碼或 DDL 確實找不到，記錄具體名稱與原因。
+- [x] QC209「計量品管項目管制法則對應」公司端 Vue DEV 頁、規格與 Create/API handoff 已完成，見本檔末段。
+
+## QC209 計量品管項目管制法則對應公司端進度（2026-11-17）
+
+- [x] 已直接閱讀 `STD/MESWin/QC/QC_ItemRule/frmQCItemRule.vb`、`frmQCItemRuleDef.vb`、wsQC 與 `clsQCBasis`：確認 QC Item lookup 預設已核准、SPCID 依 ChartType、候選規則只載已核准、四個 Action 分類、SPK 停用 Wait、Confirm/Apply 完整替換整組映射。
+- [x] Oracle `TBLQCITEMRULE` DDL/PK 沿用 QC205 之前由 PowerShell 5.1 + Oracle.ManagedDataAccess 直接查得的 `mestest_qc205_variable_dependencies_source_ddl.sql`；`TBLQCRULEBASIS` 沿用 QC108 source DDL。已找到，不需重新查 Oracle，也未使用 DBeaver UI。
+- [x] 建立 `/YMES/QC/VariableItemRuleMap` Vue 3 DEV 頁、QC209 route/三層 fallback menu、獨立 mock 資料、QC Item 查詢、四分類多選移動、ChartType/SPCID 與 Apply/Confirm。
+- [x] 新增 `mestest_qc209_variable_item_rule_map_create.sql`、QC209 功能規格、模組索引、Oracle 查詢紀錄與 `todolist_homepc.md` API/schema handoff。
+- [ ] Production API/schema 待家用端完成；本頁未執行 build、測試或瀏覽器驗收。家用端完成後公司端 pull 最新 main，以 QC209 Production API 驗收。
+- [ ] 下一功能依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 順序接續 QC210「刪除計量型品管項目量測記錄」。

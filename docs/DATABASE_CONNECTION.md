@@ -402,3 +402,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 取得 XX_TBLQCITEM_MEMO、XX_TBLSPC_TEMPDATA_VAR、TBLSPCVARDETAILLOG，以及 QC205 刪除/複製/引用檢查所需的 23 個候選物件；其中 TBLSPCQCHARTDETAIL、TBLSPCQCHARTDETAILLOG、TBLSPCQCHARTRULE、TBLSPCQCHARTBASIS 在 MESTEST 不存在。未讀業務資料、未在 Oracle 執行 DDL。
 - Oracle source DDL：database/reference/mestest_qc205_theil_custom_source_ddl.sql、mestest_qc205_variable_dependencies_source_ddl.sql；Memo PostgreSQL Create 參考：mestest_qc205_theil_custom_create.sql。家用端先核對 YMES live schema/migrations，再決定必要 migration。
 - 連線秘密、主機值、帳號、密碼、SID 與受保護附件路徑未輸出或寫入 Git。
+### 更新 2026-11-17：QC209 計量品管項目管制法則對應
+
+- QC209 `TBLQCITEMRULE` Oracle DDL/PK 沿用 QC205 前次以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀擷取結果：`database/reference/mestest_qc205_variable_dependencies_source_ddl.sql`。`TBLQCRULEBASIS` 沿用 QC108 直接查得來源 reference。本次未重複連線，也未查 MES 業務列或執行 Oracle DDL。
+- QC209 新增 YMES schema-only Create 參考：`database/reference/mestest_qc209_variable_item_rule_map_create.sql`；需由家用端比對 live PostgreSQL schema/migrations 後再決定是否建立 migration。

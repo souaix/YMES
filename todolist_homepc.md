@@ -1099,3 +1099,22 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 5. Memo GET 需回傳已核准 ParameterClass=1 清單加目前勾選；PUT 接 `{qcItemType:0,parameterNos}`，驗證 Parameter 清單並交易式全量替換 mapping。ParameterNo 僅為資料值，不得拼接成 SQL 欄名或執行動態 ALTER。
 6. Simulation 只回預覽結果、不寫量測日誌；所有 SQL parameterized，audit 使用登入者；端點遵循專案目前登入/權限約定。先在 API 文件列出 YMES 與舊 WinForms 行為差異，再實作。
 7. 更新 API/schema/migration 文件與本 TODO；commit/push 後通知公司端 pull，以 QC205 Production API 驗收。公司端此頁尚未執行 build、測試或瀏覽器驗收。
+## QC209 計量品管項目管制法則對應 API/schema handoff（公司端 2026-11-17）
+
+公司端已完成 Vue DEV 頁與 WinForms 規格。請 pull 最新 main，先讀 `docs/modules/QC/計量品管項目管制法則對應.md`、`docs/DATABASE_CONNECTION.md` 與本段。公司端沒有連 YMES PostgreSQL；本段提供 Create 參考，不表示 live schema 已比對或 migration 已套用。
+
+### Schema / Create SQL
+
+- Oracle `TBLQCITEMRULE` source DDL 已在 `database/reference/mestest_qc205_variable_dependencies_source_ddl.sql`，包含主鍵 `(QCITEMNO,SPCID,RULENO)` 及 `EQUIPMENTSTATE`、`ERFSTATE`、`EMAILSTATE` 三個 nullable 欄位；由公司端前次 PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得。Oracle 無 FK。
+- `TBLQCRULEBASIS` Oracle DDL 與 YMES Create 參考已在 QC108 files：`mestest_qc_variable_rule_basis_source_ddl.sql`、`mestest_qc_variable_rule_basis_create.sql`。QC Item variables DDL/CREATE 沿用 QC205。
+- `database/reference/mestest_qc209_variable_item_rule_map_create.sql` 是本次新增 PostgreSQL CREATE 參考。先查 live schema/migrations：若 `tblqcitemrule` 已存在，勿重建或覆寫資料；只有確認缺表才設計 forward migration/rollback。保留三個 nullable source 欄位及複合鍵，不新增 Oracle 沒有的 FK。
+- 舊 Core `UpdQCItemRule` 以 QCItemNo+SPCID 刪除整組後重插四欄；未寫的 EquipmentState/ERFState/EmailState 會變 NULL。記錄這個 legacy 副作用；migration 不得漏掉來源欄位。
+
+### API 工作
+
+1. `GET /api/qc/variable-qc-items?issueState=2`：沿用 QC205 API 為 lookup 提供 QCItemNo/Name/ChartType/IssueState。
+2. `GET /api/qc/rule-bases`：沿用 QC108 法則 API；候選加入清單只允許 IssueState=2。GET mapping 仍須回傳已指派但目前非核准/已刪除的規則，避免使用者儲存其他規則時誤清除既有對應。
+3. `GET /api/qc/variable-item-rules/options` 回傳 `{waitEnabled}`；伺服器依企業設定，SPK=false。
+4. `GET /api/qc/variable-item-rules/{qcItemNo}` 回傳所有 SPCID 對應及 RuleName。SPCID 顯示 0 Trend、1 Xbar、2 R、3 S、4 Rm；圖表可選組合依 QC Item ChartType，詳功能規格。
+5. `PUT /api/qc/variable-item-rules/{qcItemNo}/{spcId}` body `{rules:[{ruleNo,action}]}` 完整替換指定 QCItemNo+SPCID。transaction 內先查 QC Item 為已核准、SPCID 符合 ChartType，再新增所選規則；action 僅 0 Warning、1 Wait、2 Hold、3 Alert，RuleNo 在同組唯一；RULENO 最長 20 字元。SPK 禁止新增/移動 Wait，但保存其他動作時保留既有 Wait 規則，除非明確移出。
+6. API 必須以單一 DB transaction 做 set replacement，參數化 SQL；遵循專案現有登入/錯誤格式。部署後更新 API/schema 文件與本 TODO，commit/push 後通知公司端 pull 驗收。

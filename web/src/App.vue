@@ -48,6 +48,7 @@ import QcReasonBasisMaster from './components/QcReasonBasisMaster.vue'
 import QcReasonSubTypeMaster from './components/QcReasonSubTypeMaster.vue'
 import QcAttributeQcItemMaster from './components/QcAttributeQcItemMaster.vue'
 import QcVariableQcItemMaster from './components/QcVariableQcItemMaster.vue'
+import QcVariableItemRuleMap from './components/QcVariableItemRuleMap.vue'
 import QcSPCAttLimitMaster from './components/QcSPCAttLimitMaster.vue'
 import QcAttributeRuleMapMaster from './components/QcAttributeRuleMapMaster.vue'
 import QcAttributeMeasurementDelete from './components/QcAttributeMeasurementDelete.vue'
@@ -263,6 +264,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:QCITEM_A RULE MAP', label: '計數品管項目判別法則對應', shortLabel: '對', functionNo: 'QCITEM_A RULE MAP', moduleNo: 'QC', tableName: 'tblspcqcattrulemapbasis' },
       { id: 'function:QC:QCITEM_ADELETE', label: '刪除計數型品管項目量測記錄', shortLabel: '刪', functionNo: 'QCITEM_ADELETE', moduleNo: 'QC', tableName: 'tblspcattbasislog' },
       { id: 'function:QC:QCITEM_V', label: '計量品管項目', shortLabel: '量', functionNo: 'QCITEM_V', moduleNo: 'QC', tableName: 'tblqcitemforvariables' },
+      { id: 'function:QC:QCITEM RULE MAP', label: '計量品管項目管制法則對應', shortLabel: '則', functionNo: 'QCITEM RULE MAP', moduleNo: 'QC', tableName: 'tblqcitemrule' },
     ] }, { id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
       { id: 'function:QC:REASON BASIS', label: '品質原因基本資料', shortLabel: '原', functionNo: 'REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis' },
@@ -328,6 +330,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
   'function:QC:QCITEM_A': appBasePath + '/QC/AttributeQcItem',
   'function:QC:QCITEM_V': appBasePath + '/QC/VariableQcItem',
+  'function:QC:QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
   'function:QC:SPC ATT LIMIT': appBasePath + '/QC/AttributeControlLimit',
   'function:QC:QCITEM_A RULE MAP': appBasePath + '/QC/AttributeRuleMap',
   'function:QC:QCITEM_ADELETE': appBasePath + '/QC/AttributeMeasurementDelete',
@@ -406,6 +409,7 @@ const functionRoutes: Record<string, string> = {
   'REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
   QCITEM_A: appBasePath + '/QC/AttributeQcItem',
   QCITEM_V: appBasePath + '/QC/VariableQcItem',
+  'QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
   'QCITEM_A RULE MAP': appBasePath + '/QC/AttributeRuleMap',
   QCITEM_ADELETE: appBasePath + '/QC/AttributeMeasurementDelete',
   'QCITEM_A RULE DATA': appBasePath + '/QC/AttributeRuleBasis',
@@ -502,6 +506,7 @@ const isQcReasonBasisPage = computed(() => activeMasterKey.value === 'function:Q
 const isQcReasonSubTypeBasisPage = computed(() => activeMasterKey.value === 'function:QC:REASON SUBTYPE BASIS')
 const isQcAttributeQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A')
 const isQcVariableQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_V')
+const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM RULE MAP')
 const isQcSPCAttLimitPage = computed(() => activeMasterKey.value === 'function:QC:SPC ATT LIMIT')
 const isQcAttributeRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A RULE MAP')
 const isQcAttributeMeasurementDeletePage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_ADELETE')
@@ -1509,6 +1514,13 @@ async function signOut(): Promise<void> {
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcVariableItemRuleMap
+          v-else-if="isQcVariableItemRuleMapPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />

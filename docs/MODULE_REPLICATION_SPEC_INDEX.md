@@ -161,3 +161,4 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 - QC204「刪除計數型品管項目量測記錄」：[功能規格](modules/QC/刪除計數型品管項目量測記錄.md)。依 WinForms、wsQC/Core 完成 /YMES/QC/AttributeMeasurementDelete Vue DEV 頁與 API handoff；所需 Oracle DDL 已在 QC201 source reference，功能不新增表，家用端須核對 PostgreSQL 現有量測 log schema 並提供交易刪除 API。
 
 - QC205「計量品管項目」：[功能規格](modules/QC/計量品管項目.md)。THEIL BU1 WinForms 主/Define/Memo Form、wsQC/Core 已核對；已接入 /YMES/QC/VariableQcItem Vue DEV 頁及三層選單。Memo 的 Oracle 表與變數量測依賴 DDL 已由 PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得，並提供 Memo PG Create 參考；家用端待核 live schema、建置主/子資源/Issue Job API 與參數 JSONB 適配。
+- QC209「計量品管項目管制法則對應」：[功能規格](modules/QC/計量品管項目管制法則對應.md)。標準 QC_ItemRule Form/Service/Core 已核對；Vue DEV 頁已接三層選單。Oracle `TBLQCITEMRULE` DDL 沿用 QC205 前次 PowerShell/ODP.NET 直連擷取，QCRuleBasis 沿用 QC108；新增 QC209 PostgreSQL CREATE 參考與整組替換 API handoff，家用端待核 live schema/實作 API。
