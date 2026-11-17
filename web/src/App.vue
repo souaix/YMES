@@ -74,6 +74,7 @@ import QcVariableItemGroup from './components/QcVariableItemGroup.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
+import QcItemProductReasonMap from './components/QcItemProductReasonMap.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -266,6 +267,7 @@ const fallbackMenuTree: MenuNode[] = [
     moduleNo: 'QC',
     children: [{ id: 'quality-qc-settings', label: '品管設定', shortLabel: '管', children: [
       { id: 'function:QC:QCITEM_A', label: '計數品管項目', shortLabel: '數', functionNo: 'QCITEM_A', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
+      { id: 'function:QC:QCITEM PRD REASON MAP', label: '計數品管項目產品原因對應設定', shortLabel: '對', functionNo: 'QCITEM PRD REASON MAP', moduleNo: 'QC' },
       { id: 'function:QC:SPC ATT LIMIT', label: '計數管制內容', shortLabel: '管', functionNo: 'SPC ATT LIMIT', moduleNo: 'QC', tableName: 'tblspcattlimit' },
       { id: 'function:QC:QCITEM_A RULE MAP', label: '計數品管項目判別法則對應', shortLabel: '對', functionNo: 'QCITEM_A RULE MAP', moduleNo: 'QC', tableName: 'tblspcqcattrulemapbasis' },
       { id: 'function:QC:QCITEM_ADELETE', label: '刪除計數型品管項目量測記錄', shortLabel: '刪', functionNo: 'QCITEM_ADELETE', moduleNo: 'QC', tableName: 'tblspcattbasislog' },
@@ -361,6 +363,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:QCITEM_G_PMI': appBasePath + '/QC/PmiItemGroup',
   'function:QC:QCITEM_G_A_ORDER': appBasePath + '/QC/AttributeItemGroup',
   'function:QC:QC INSPECTION': appBasePath + '/QC/Inspection',
+  'function:QC:QCITEM PRD REASON MAP': appBasePath + '/QC/ItemProductReasonMap',
   'function:QC:FIRST GROUP': appBasePath + '/QC/FirstGroup',
   'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
@@ -544,6 +547,7 @@ const isQcVariableItemGroupPage = computed(() => activeMasterKey.value === 'func
 const isQcPmiItemGroupPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_G_PMI')
 const isQcAttributeItemGroupPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_G_A_ORDER')
 const isQcInspectionMasterPage = computed(() => activeMasterKey.value === 'function:QC:QC INSPECTION')
+const isQcItemProductReasonMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM PRD REASON MAP')
 const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC:FIRST GROUP')
 const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
 const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DESCRIPTION')
@@ -1613,6 +1617,14 @@ async function signOut(): Promise<void> {
         />
         <QcInspectionMaster
           v-else-if="isQcInspectionMasterPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcItemProductReasonMap
+          v-else-if="isQcItemProductReasonMapPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

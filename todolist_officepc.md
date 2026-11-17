@@ -14,13 +14,23 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC218 計數品管項目產品原因對應設定（公司端 2026-11-17）
+
+- [x] 閱讀 `frmItemPRDReasonMap`、`frmItemPRDReasonDef`、Import Form/Designer、`QCItemRPDReasonSOPFileImporter`、`wsQC`、`clsQCBasis`；記錄 QCItemNo 核准查詢、ProductNo 主從群組、ReasonType/Level 雙清單、整組替換、全域 `*`、範本與分列部分成功匯入。
+- [x] PowerShell 5.1 + Oracle.ManagedDataAccess 使用本機受保護唯讀連線取得兩張 mapping 表與三張共用 lookup 表 DBMS_METADATA DDL；兩張 mapping 只有 PK unique index、沒有 FK/其他 index，未查業務資料列、未在 Oracle 執行 DDL。
+- [x] 新增 Oracle source DDL 五份與只建立兩張 mapping 空結構的 PostgreSQL CREATE-only 參考 `database/reference/mestest_qc218_item_product_reason_map_create.sql`；三張共用 QC Item/Reason/Product 表不可重建。
+- [x] 新增 `web/src/components/QcItemProductReasonMap.vue`、FunctionNo=`QCITEM PRD REASON MAP` / QC218 fallback 三層選單與 `/YMES/QC/ItemProductReasonMap`。DEV localStorage 提供假 QC Item/Reason/Product、ProductNo 分組、產品篩選、`*` 全域、ReasonMap 左右移動/整組儲存及 CSV 部分成功匯入。
+- [x] 新增 `docs/modules/QC/計數品管項目產品原因對應設定.md`、規格索引及家用端 API/schema handoff。規格記錄 legacy 全域 `*` 編輯驗證疑點、Importer 重複查詢錯誤處理及略過最後 Excel row 的瑕疵，並要求 API 修正。
+- [ ] 未執行 build/test/瀏覽器驗收。DEV 預覽只接受 CSV；Production 需由 API 支援 WinForms `.xlsx/.xls` 第一工作表，家用端 schema/API 待依 `todolist_homepc.md` 實作。
+- [ ] 此功能完成；公司端接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 選下一個未遷移 Function，直接讀 Form/Designer、Service/Core 與表結構，再建立 UI/spec/API handoff。
+
 ### QC217 設備品檢管理設定（公司端 2026-11-17）
 
 - [x] 直接對照 `frmQCInspection`/Designer、`frmQCInspectionDef`/Designer、`wsQC` 和 `clsQCBasis`，整理兩個 Grid、查詢條件、Add/Edit/Delete/Copy/Approve、九種檢查週期、範圍選取、四類 QCItem、Mail Group、Issue Job 和 DataStamp 行為。
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess，經本機受保護連線唯讀取得 `TBLQCINSPECTIONBASIS`、`TBLQCINSPECTIONDETAIL` Oracle table/index DDL；確認兩張表只有 PK unique index、無 FK/其他索引，未查業務列或執行 Oracle DDL。
 - [x] 新增 `/YMES/QC/Inspection` Vue DEV 頁、QC 三層選單及獨立 localStorage 假資料；保留 EQP「設備點檢表設定」獨立路由。新增 QC217 規格、Oracle DDL、PG CREATE-only 參考及家用端 API/SQL handoff。
 - [x] 記錄舊程式 Delete 會依 OP/設備/檢查類型清除共用明細；Issue Job callback SQL 將 InspWeek 誤寫 InspType，家用端 API 必須用完整正確複合鍵修正。
-- [ ] 未執行 build/test/瀏覽器驗收；Production API/schema 由家用端依 `todolist_homepc.md` 建置。此功能完成後，先按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續 QC218「計數品管項目產品原因對應設定」，讀 WinForms Form/Service/Core 後建立頁面和規格，再交家用端 API/DDL。
+- [ ] 未執行 build/test/瀏覽器驗收；Production API/schema 由家用端依 `todolist_homepc.md` 建置。QC218 已於上節完成 UI/spec/DDL handoff；公司端接續按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 選擇下一個尚未遷移功能。
 
 ### QC216 計量品管項目群組_減項（公司端 2026-11-17）
 

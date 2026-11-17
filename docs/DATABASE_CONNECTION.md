@@ -439,3 +439,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 主檔 PK 為 GROUPNO；明細 PK 為 (GROUPNO, QCITEMNO)。兩表僅有 PK unique index，沒有 FK 或額外 index。預設值欄位在 Oracle 可為 NULL，CREATE 參考保留這項語意。額外查得 TBLOPGQCITEMDETAIL PK=(OPNO,QCITEMNO)，TBLPRDQCITEM PK=(PRODUCTNO,PRODUCTVERSION,OPNO,QCITEMNO)，兩表無 FK/額外索引；TBLWIPTEMP_QCITEM 無 PK，只有 (LOTNO,QCITEMNO) 與 (LOTNO) 索引。
 - Legacy Core 硬刪流程先確認 TBLWIPTEMP_QCITEM 沒有該 QC 群組的在線記錄，後清主表/明細以及 TBLQCITEMPARAMETER、TBLOPQCITEM、TBLOPGQCITEMDETAIL、TBLPRDQCITEM 對應資料。家用端須核對 YMES 實際關聯欄位並以 transaction 維持一致；共用 parameter/OP source DDL 沿用既有 QC reference。
 - 只查結構 metadata，未查 MES 業務列、未在 Oracle 執行 DDL。IP、帳號、密碼、SID 與受保護連線設定未輸出或寫入 Git。家用端只查 YMES PostgreSQL live schema/migrations，再對缺表建立 migration。
+
+### 更新 2026-11-17：QC218 計數品管項目產品原因對應設定
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，沿用本機受保護 MESTEST 唯讀連線，查詢兩張 mapping 表與三張共用 lookup 表的 DBMS_METADATA table/index DDL、欄位 nullable/default、PK/index/FK metadata；未查 MES 業務資料列，未在 Oracle 執行 DDL。
+- Oracle source DDL：`mestest_qc218_tblqcitemprdreasonmap_source_ddl.sql`、`mestest_qc218_tblqcitemreasonmap_source_ddl.sql`、`mestest_qc218_tblqcitemforattributes_source_ddl.sql`、`mestest_qc218_tblqcreasonbasis_source_ddl.sql`、`mestest_qc218_tblprdproductbasis_source_ddl.sql`。PostgreSQL CREATE-only 參考只建立兩張 mapping 表：`mestest_qc218_item_product_reason_map_create.sql`。Mapping tables 都只有 PK unique index，沒有 FK 或其他索引。
+- 僅查 Oracle metadata；連線 IP、帳號、密碼、SID 和受保護設定位置未輸出或寫入 Git。公司端未連 YMES PostgreSQL。家用端先核對 PostgreSQL live schema/migrations，只為缺少的 mapping 結構建立 forward migration；三張共用 lookup tables 不可重建。

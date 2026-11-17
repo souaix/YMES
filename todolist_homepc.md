@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## 最新公司端 handoff：QC218 計數品管項目產品原因對應設定（2026-11-17）
+
+- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/計數品管項目產品原因對應設定.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`QCITEM PRD REASON MAP`、FunctionKey=`QC218`；Vue DEV 頁 `/YMES/QC/ItemProductReasonMap` 已完成並掛到品質資料 → 品管設定。
+- [ ] 用 YMES PostgreSQL 管理連線查 live schema / migrations。Oracle 原始 DDL：`database/reference/mestest_qc218_tblqcitemprdreasonmap_source_ddl.sql`、`mestest_qc218_tblqcitemreasonmap_source_ddl.sql`；兩張 mapping 表的空結構參考：`database/reference/mestest_qc218_item_product_reason_map_create.sql`。只比對/建立缺少的 mapping 結構；`TBLQCITEMFORATTRIBUTES`、`TBLQCREASONBASIS`、`TBLPRDPRODUCTBASIS` 是共用表，另外三份 Oracle DDL 只供欄位核對，禁止重建或覆寫。
+- [ ] 建立登入保護並要求 QC218 FunctionKey 的 API：`GET /api/qc/item-product-reasons/qc-items?issueState=2&qcItemNo=`、`GET /api/qc/item-product-reasons?qcItemNo=&allData=true`、`GET /{qcItemNo}/products`（distinct 已對應 ProductNo）、`GET /reasons?issueState=2`、`GET /products?issueState=2&currentVersion=1&search=`、`GET /{qcItemNo}/{productNo}/reasons`、`PUT /{qcItemNo}/{productNo}`、`POST /import/preview`、`POST /import`、`GET /template`；細節依 QC218 規格，路徑若需配合既有 API 慣例請同步更新文件和 Vue。
+- [ ] Main QC Item 只讀已核准計數項目，QCItemNo `%keyword%` 模糊查詢；全量映射需 Join `TBLQCREASONBASIS` 回 ReasonName/Type/Level，再按 ProductNo 分組。ProductNo 查詢空白=全部、`*`=只看共用、其他值=模糊篩選；產品 `...` 查該 QC Item 已有映射的 distinct ProductNo。
+- [ ] ReasonType 0=Scrap、1=Defect；候選原因只取 IssueState=2，並依 ReasonType/ReasonLevel 篩選。Product 必須 IssueState=2 且 CurVersion=1，只有字面值 `*` 免查產品並代表全域映射。來源 WinForms 編輯器似乎把 `*` 當產品代碼驗證而可能無法儲存；API/UI 必須修正此 defect，將 `*` 寫 `TBLQCITEMREASONMAP`，其他產品寫 `TBLQCITEMPRDREASONMAP`。
+- [ ] `PUT` 以 `{ reasonNos: string[] }` 原子整組取代目標 QCItemNo/ProductNo；空陣列清空。先重驗核准 QC Item/Reason/產品目前版本及授權；不得跨產品寫入。對原有關聯保留 Creator/CreateDate，新增關聯以登入身份/伺服器時間建立，Reviser/ReviseDate 由 API 產生。全程參數化並正確處理 unique key race。
+- [ ] Import `.xlsx/.xls` 只讀第一工作表，欄位順序 QCItemNo、ProductNo、ReasonNo，需驗證每列必填；必須包含最後一列（舊程式有 off-by-one bug，勿照抄）。Preview 後逐列獨立驗證/交易/回報結果，允許部分成功與取消。拒絕重複三欄鍵、已存在映射、未核准 QC Item/Reason、非核准目前版本產品；`*` 不查產品。不要接受上傳檔或前端的 Creator。
+- [ ] 範本沿用 FunctionNo=`QCITEM PRD REASON MAP` 的既有 template storage。新增 migration/API/權限/範本後 commit/push；公司端 pull 再接 Production API。公司端尚未執行 build、測試或瀏覽器驗收。
+
 ## 最新公司端 handoff：QC217 設備品檢管理設定（2026-11-17）
 
 - [ ] Pull 最新 `main`，先讀 `docs/modules/QC/設備品檢管理設定.md`、`docs/DATABASE_CONNECTION.md` 與本節；FunctionNo=`QC INSPECTION`、FunctionKey=`QC217`。公司端 Vue 頁已掛 `/YMES/QC/Inspection`，EQP `/YMES/Equipment/Inspection` 維持獨立。
