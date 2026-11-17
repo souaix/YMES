@@ -12,7 +12,16 @@
 - Oracle 來源 DDL 用 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢；使用本機受保護連線設定，不必請使用者重貼，也不得把連線值寫進文件、SQL 或 Git。
 - 目前只查詢過 Oracle 結構與系統選單中繼資料，沒有匯出 MES 業務資料。不要把 DEV 假資料當成正式資料。
 
-## 最新公司端工作：QC301 管制圖內容（2026-11-17）
+## 最新公司端工作：QC303 品管項目規格（2026-11-17）
+
+- [x] 直接對照 `frmQCSpecBasis`、`frmQCSpecBasisDef`、`frmQCSpecCopy`、wsQC 與 clsQCBasis；記錄 QC Item、FactorSpec、四狀態、Detail SPCID、規格界限、Above helper、MEMO、簽核、刪除與跨 QC Item 複製行為。
+- [x] 沿用先前已保存的 Oracle 直連唯讀 DDL `mestest_qc205_variable_dependencies_source_ddl.sql` 中 `TBLQCSPECBASIS`/`TBLQCSPECDETAIL`；本次沒有讀業務資料列，也沒有在 Oracle 執行 DDL。
+- [x] 新增 `/YMES/QC/SpecBasis` Vue DEV 頁、品質資料→計量規格設定→品管項目規格選單/路由、QC303 規格文件與 PostgreSQL CREATE-only JSONB 對照。
+- [x] 更新規格索引、Oracle DDL provenance 記錄、家用端 schema/API/Issue Job handoff。
+- [ ] 公司端尚未執行 build、test 或瀏覽器驗收；禁止因此宣稱 Production API 已完成。家用端完成 schema/API 並 push 後，公司端 pull 對接、依 API 核對 QC Item/Factor lookup 及簽核狀態。
+- [ ] 接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接看下一項尚未遷移 WinForms Form/Service/Core；不以截圖替代原始碼調查。
+
+## 前一項公司端工作：QC301 管制圖內容（2026-11-17）
 
 - [x] 直接閱讀 `frmQCChartBasis`、`frmQCChartBasisDef`、`frmQCChartCopy`、Rule Define、wsQC 與 clsQCBasis；整理 QC Item、狀態篩選、動態 Factor 欄、Detail/Rule、簽核、刪除、跨 QC Item 複製與 sampling parameter 流程。
 - [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線唯讀取得 `TBLSPCQCCHARTSAMPLANPARAMETER` DDL/index。Chart Basis/Detail/DetailLog/Rule DDL 沿用 QC302 reference；沒有讀業務資料列或在 Oracle 執行 DDL。

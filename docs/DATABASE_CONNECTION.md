@@ -470,3 +470,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - QC301 共用 QC302 已查得的 `TBLSPCQCCHARTBASIS`、`TBLSPCQCCHARTDETAIL`、`TBLSPCQCCHARTDETAILLOG`、`TBLSPCQCCHARTRULE` Oracle DDL；本次另以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，使用本機受保護 MESTEST 唯讀設定，直接查 `TBLSPCQCCHARTSAMPLANPARAMETER` 的 DBMS_METADATA table/index DDL。
 - 新增 Oracle DDL reference `mestest_qc301_chart_sampling_parameter_source_ddl.sql` 和 PostgreSQL 空表 CREATE-only 對照 `mestest_qc301_chart_sampling_parameter_create.sql`。參數表 PK=(FactorSerial,ParameterNo)，未查到 FK 或額外索引。
 - 僅查 Oracle 結構 metadata，未讀業務資料列、未在 Oracle 執行 DDL。公司端未連 YMES PostgreSQL；家用端須先核對 live schema/migrations，缺少時才新增 forward migration。IP、帳號、密碼、SID 與受保護設定未輸出或寫入 Git。
+
+### 更新 2026-11-17：QC303 品管項目規格
+
+- QC303 沿用已保存的 Oracle DDL：`database/reference/mestest_qc205_variable_dependencies_source_ddl.sql` 中 `TBLQCSPECDETAIL` 與 `TBLQCSPECBASIS` 區塊。該 DDL 是先前由公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得，本次沒有改用 DBeaver 螢幕操作，也沒有重新讀業務列或執行 Oracle DDL。
+- 本次建立 PostgreSQL 適配的 CREATE-only 對照 `database/reference/mestest_qc303_spec_basis_create.sql`；因子欄收納為 JSONB。家用端先比對 YMES live schema/migrations，確認缺漏後再新增 forward migration。公司端不連 YMES PostgreSQL。
+- 本次未輸出或寫入 Oracle IP、帳號、密碼、SID 或本機受保護連線設定。
