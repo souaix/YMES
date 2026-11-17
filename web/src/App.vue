@@ -83,6 +83,7 @@ import QcSpecBasisMaster from './components/QcSpecBasisMaster.vue'
 import QcMaterialSpecMaster from './components/QcMaterialSpecMaster.vue'
 import QcProductSpecMaster from './components/QcProductSpecMaster.vue'
 import QcInspMachineParameterTypeMaster from './components/QcInspMachineParameterTypeMaster.vue'
+import QcInspectionMachineMaster from './components/QcInspectionMachineMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -275,6 +276,7 @@ const fallbackMenuTree: MenuNode[] = [
     moduleNo: 'QC',
     children: [{ id: 'quality-inspection-machine', label: '檢測儀器', shortLabel: '儀', children: [
       { id: 'function:QC:INSPMACHINE PARAMETER TYPE', label: '檢測儀器類別', shortLabel: '類', functionNo: 'INSPMACHINE PARAMETER TYPE', moduleNo: 'QC', tableName: 'tblqcinspmachineparametertype' },
+      { id: 'function:QC:INSPMACHINE PARAMETER', label: '檢測儀器基本資料', shortLabel: '機', functionNo: 'INSPMACHINE PARAMETER', moduleNo: 'QC', tableName: 'tblqcinspmachineparameter' },
     ] }, { id: 'quality-qc-settings', label: '品管設定', shortLabel: '管', children: [
       { id: 'function:QC:QCITEM_A', label: '計數品管項目', shortLabel: '數', functionNo: 'QCITEM_A', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
       { id: 'function:QC:IMPORT QCITEM ATTRIBUTES', label: '計數品管項目匯入', shortLabel: '匯', functionNo: 'IMPORT QCITEM ATTRIBUTES', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
@@ -368,6 +370,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:MTLQCITEM': appBasePath + '/QC/MaterialSpec',
   'function:QC:PRDQCITEM': appBasePath + '/QC/ProductSpec',
   'function:QC:INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
+  'function:QC:INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'function:QC:QCITEM_V': appBasePath + '/QC/VariableQcItem',
   'function:QC:IMPORT QCITEM VARIABLES': appBasePath + '/QC/VariableItemImport',
   'function:QC:QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
@@ -501,6 +504,7 @@ const functionRoutes: Record<string, string> = {
   'PRS BASIS': `${appBasePath}/MasterData/Processes`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
+  'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
 }
 
 const runtimeConfig = ref<RuntimeConfig>({
@@ -561,6 +565,7 @@ const isQcSpecBasisPage = computed(() => activeMasterKey.value === 'function:QC:
 const isQcMaterialSpecPage = computed(() => activeMasterKey.value === 'function:QC:MTLQCITEM')
 const isQcProductSpecPage = computed(() => activeMasterKey.value === 'function:QC:PRDQCITEM')
 const isQcInspMachineParameterTypePage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE PARAMETER TYPE')
+const isQcInspectionMachinePage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE PARAMETER')
 const isQcVariableQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_V')
 const isQcVariableItemImportPage = computed(() => activeMasterKey.value === 'function:QC:IMPORT QCITEM VARIABLES')
 const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM RULE MAP')
@@ -719,16 +724,16 @@ function addDevelopmentInspectionMachineFunctions(items: MenuNode[]): MenuNode[]
   if (!fallbackQuality || !fallbackGroup) return result
   const quality = result.find((item) => item.moduleNo?.toUpperCase() === 'QC')
   if (!quality) { result.push({ ...fallbackQuality, children: cloneTree(fallbackQuality.children ?? []) }); return result }
-  const hasFunction = (nodes: MenuNode[] | undefined): boolean => Boolean(nodes?.some((node) =>
-    node.functionNo?.trim().toUpperCase() === 'INSPMACHINE PARAMETER TYPE' || hasFunction(node.children)))
-  if (hasFunction(quality.children)) return result
   let group = quality.children?.find((item) => item.label.trim() === '檢測儀器')
   if (!group) {
     group = { id: 'development:QC:inspection-machine', label: '檢測儀器', shortLabel: '儀', moduleNo: 'QC', children: [] }
     quality.children = [...(quality.children ?? []), group]
   }
-  const leaf = fallbackGroup.children?.[0]
-  if (leaf) group.children = [...(group.children ?? []), { ...leaf }]
+  const hasFunction = (nodes: MenuNode[] | undefined, functionNo: string): boolean => Boolean(nodes?.some((node) =>
+    node.functionNo?.trim().toUpperCase() === functionNo || hasFunction(node.children, functionNo)))
+  for (const leaf of fallbackGroup.children ?? []) {
+    if (leaf.functionNo && !hasFunction(quality.children, leaf.functionNo.trim().toUpperCase())) group.children = [...(group.children ?? []), { ...leaf }]
+  }
   return result
 }
 
@@ -1646,6 +1651,14 @@ async function signOut(): Promise<void> {
         />
         <QcInspMachineParameterTypeMaster
           v-else-if="isQcInspMachineParameterTypePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcInspectionMachineMaster
+          v-else-if="isQcInspectionMachinePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
