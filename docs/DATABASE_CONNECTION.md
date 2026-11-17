@@ -426,6 +426,12 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端未連 YMES PostgreSQL。家用端須先比對 live schema 與已部署 migration，再建立缺少的 forward migration；不能把參考檔當成已套用 migration，也不能在 Oracle 執行 PostgreSQL DDL。
 - Oracle IP、帳號、密碼、SID 與受保護連線附件路徑仍只存在本機受保護設定，不記錄於 Git。
 
+### 更新 2026-11-17：QC216 計量品管項目群組_減項
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，經本機既有受保護設定直接唯讀查 MESTEST 的 PMI 群組主檔、明細、扣除基準及三張 SPC 表單 map。取得 DBMS_METADATA DDL、ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES；未讀 MES 業務列，未在 Oracle 執行 DDL。
+- Oracle source DDL 位於 `database/reference/mestest_qc216_*_source_ddl.sql`；PostgreSQL 空表 CREATE 參考 `database/reference/mestest_qc216_variable_item_group_pmi_create.sql`。六表均只有 Oracle PK unique index，沒有 FK 或額外索引。`TBLQCGROUPDEDUCTIONBASIS_PMI` 的 Factor 欄位會由舊 Core 動態新增，YMES 參考改用 `factorvalues JSONB`，不是 Oracle 欄位的原樣複製。
+- 查詢僅限資料字典/DDL。連線 IP、帳號、密碼、SID 和受保護設定位置未輸出或寫入 Git；公司端不連 YMES PostgreSQL。家用端必須先查 live schema/migrations，只為缺漏結構建立 forward migration。
+
 ### 更新 2026-11-17：QC213 計數品管項目群組
 
 - 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機既有受保護連線唯讀連至 MESTEST，取得兩張 QC213 主/明細表及兩張 Core 硬刪依賴表的 DBMS_METADATA.GET_DDL、ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES metadata。WIP 檢查表的來源 DDL 已在既有 QC205 dependency reference。

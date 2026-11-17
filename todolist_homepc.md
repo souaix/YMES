@@ -1,5 +1,18 @@
 # 家裡電腦接手清單
 
+## 最新公司端 handoff：QC216 計量品管項目群組_減項（2026-11-17）
+
+- [ ] 先讀 `docs/modules/QC/計量品管項目群組_減項.md`、`docs/DATABASE_CONNECTION.md` 與本節；FunctionNo=`QCITEM_G_PMI`、FunctionKey=`QC216`。公司端 Vue 頁已掛在 `/YMES/QC/PmiItemGroup`，Production API 尚未建立。
+- [ ] 用家用端 PostgreSQL 管理連線比對 YMES live schema、migration 與現有 QC API。 Oracle source DDL 在 `database/reference/mestest_qc216_*_source_ddl.sql`，空結構 CREATE 參考在 `database/reference/mestest_qc216_variable_item_group_pmi_create.sql`。只對實際缺漏新增 forward migration；三張 SPC map、TBLWIPTEMP_QCITEM 與共享 QC/OP/MTL/PRD 表先確認已存在及欄位/索引，不可重建或覆寫。
+- [ ] 新增 `QC216` 登入授權 API：`GET/POST /api/qc/pmi-item-groups`、`GET/PUT/DELETE /{groupNo}`、`POST /{groupNo}/approval`、`GET/PUT /{groupNo}/details`、`GET/POST /{groupNo}/deductions`、`PUT/DELETE /{groupNo}/deductions/{serial}`、`GET /options/factors`。DTO 和資料限制依 QC216 規格；Audit 由伺服器登入身份產生。
+- [ ] 編輯需重現共用 `ExeIssueControl`：IssueState=0 欄位可編輯；1 唯讀；2/-1 依 `wsSYS.LoadIssueControlForm` 針對 `frmPMI_QCItemGroupDef` 的設定逐欄授權，缺少設定時全唯讀。Vue 讀 `GET /{groupNo}/edit-policy`，PUT 端仍在伺服器重驗欄位。
+- [ ] 群組新增後 IssueState=0。Add/Edit 檢查 GroupNo 與 Attribute/Variable QC Item、一般 QC 群組及 PMI 群組互斥（來源大小寫無關）；Define UI 的 ComponentCollect、FormName、WebURL、Error/NoticeReportName、QCClass、CursorMode 等隱藏欄位在修改時必須保留。PlanNo 只可選同 ComponentCollect 且 IssueState=2 的計畫。
+- [ ] 明細完整替換必須交易處理：只接受已核准計量 QC Item、ComponentCollect 相同、QCItemNo 不重複；保存 ShowOrder、DeductionItem，至少保留一筆非減項。核准前每個目標群組均須至少有一筆 detail。簽核 Issue Job=`QCITEM_G_PMI`；無 Job 直接到 2，有 Job 先到 1，核准 2、退回 0。
+- [ ] 刪除依舊系統規則：IssueState=0/-1 硬刪、2 改 -1、1 拒絕；先查 TBLWIPTEMP_QCITEM 在線引用，再同 transaction 清 PMI 主/明細及 Core 實際清理的共用 QC Item Parameter、OP/MTL/PRD/SPC 關聯；只有任何一般/PMI 群組都不再引用時才清孤兒 Calculate Script。WinForms Core 沒有刪 `TBLQCGROUPDEDUCTIONBASIS_PMI`；為維持相容，API 預設保留這些 orphan rows，規格記為 legacy 缺陷。核對各關聯表實際 QCType 與鍵後實作，逐筆回報批次結果。
+- [ ] `TBLQCGROUPDEDUCTIONBASIS_PMI` 的 Oracle 動態要因欄位在 PostgreSQL 用 `factorvalues JSONB`；只允許 API 依啟用的 FactorOnline 白名單收鍵，不可把用戶輸入串成 SQL 欄位。保留 `*` 萬用條件，factor value 依 Oracle VARCHAR2(61) 限制；NormalTimes/DeductionTimes 1–99、CurPass 0–999、CurStatus 0/1/2、重複因子組合檢查與 DataStamp CAS 均由 API 執行。序號沿用 YMES serial 服務。
+- [ ] 共用子功能 Parameter 使用 QCItemType=4，PlanNo 有值時傳遞已核准 PlanType；Op 使用 QCType=4，GET 已核准作業站候選清單及該群組目前的關聯/FAI-IPQC-PQC 設定，PUT 以 transaction 完整替換。只允許已核准群組修改；LotIsValid=0 禁止 InLine；每筆 InLine 至少要有一種 FAI/IPQC/PQC。共享 API 仍需要求 QC216 授權。
+- [ ] migration、API、選項及 API 文件完成後 commit/push；公司端再 pull 並對接。公司端沒有連 YMES PostgreSQL，也沒有執行 build、test 或瀏覽器驗收。
+
 ## 最新公司端 handoff：QC213 計數品管項目群組（2026-11-17）
 
 - [ ] QC212 是本功能前置工作；先完成下方 QC212 handoff 的 live schema 比對與 API，再接 QC213，避免 QC 主檔 API 路徑重複或漏掉共用資源。

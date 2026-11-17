@@ -14,6 +14,17 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC216 計量品管項目群組_減項（公司端 2026-11-17）
+
+- [x] 直接閱讀 `frmPMI_QCItemGroup`、Define/Include/Deduction Define Forms、wsQC、clsQCBasis，整理三區 WinForms 版面、四狀態、主檔 CRUD、減項明細排序、扣除基準、Parameter/Op、簽核與硬刪引用清理。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護設定唯讀查六張 MESTEST 表的 DBMS_METADATA、ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES；群組主/明細/扣除基準及三張 SPC map 均只有來源 PK、無 FK/額外索引。未讀業務列、未執行 Oracle DDL、未輸出憑證。
+- [x] 新增六張 Oracle source DDL、PMI 主/明細/扣除基準及三張 hard-delete 關聯表的 PostgreSQL schema-only CREATE 參考。Oracle 動態 Factor 欄位以 `factorvalues JSONB` 作為 YMES 建議，保留 `*` wildcard；家用端需白名單化已啟用 FactorOnline key。
+- [x] 新增 `/YMES/QC/PmiItemGroup` Vue 3 DEV 頁與 QC 三層選單/路由，含主檔 CRUD/Copy/Delete/Approve、Detail 項目/排序/DeductionItem、扣除基準 CRUD/Copy、參數及作業站入口；使用獨立 localStorage 假資料。
+- [x] 新增 QC216 功能規格、索引列、Oracle metadata 查詢紀錄及家用端 schema/API TODO。
+- [x] 對照共用 `QC_ItemOp` Form/Service/Core，補上可選/已選雙清單、InLine/OffLine 批次加入、移除及 FAI/IPQC/PQC 驗證；非 ParameterType=2 的動態因子欄位改為來源選項清單。
+- [ ] 尚未執行 build、test 或瀏覽器驗收；Production API/schema 由家用端依 `todolist_homepc.md` 接手，完成後公司端 pull 並對接。
+- [ ] 公司端繼續按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 逐項讀 WinForms Form/Service/Core，完成 UI 和規格後再交 API/CREATE SQL，不以圖片替代程式碼調查。
+
 ### QC211 二次檢驗抽樣計畫（公司端 2026-11-17）
 
 - [x] 直接對照 frmSamplingFor2ndInsp / Define 的 WinForms、Designer、wsQC、clsQCBasis；記錄主 Grid、查找條件、Add/Edit/Delete/Copy、一般/Wafer plan lookup 與必填規則。

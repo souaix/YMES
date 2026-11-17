@@ -72,6 +72,7 @@ import QcSamplingPlanWaferMaster from './components/QcSamplingPlanWaferMaster.vu
 import QcSecondInspectionSampling from './components/QcSecondInspectionSampling.vue'
 import QcVariableItemGroup from './components/QcVariableItemGroup.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
+import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -271,6 +272,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:QCITEM_VDELETE', label: '刪除計量型品管項目量測記錄', shortLabel: '刪', functionNo: 'QCITEM_VDELETE', moduleNo: 'QC', tableName: 'tblspcvarfactorlog' },
       { id: 'function:QC:QCITEM RULE MAP', label: '計量品管項目管制法則對應', shortLabel: '則', functionNo: 'QCITEM RULE MAP', moduleNo: 'QC', tableName: 'tblqcitemrule' },
       { id: 'function:QC:QCITEM_G', label: '計量品管項目_群組', shortLabel: '群', functionNo: 'QCITEM_G', moduleNo: 'QC', tableName: 'tblqcitemgroupbasis' },
+      { id: 'function:QC:QCITEM_G_PMI', label: '計量品管項目群組_減項', shortLabel: '減', functionNo: 'QCITEM_G_PMI', moduleNo: 'QC', tableName: 'tblqcitemgroupbasis_pmi' },
       { id: 'function:QC:QCITEM_G_A_ORDER', label: '計數品管項目_群組', shortLabel: '群', functionNo: 'QCITEM_G_A_ORDER', moduleNo: 'QC', tableName: 'tblqcitemattgrouporderbasis' },
       { id: 'function:QC:SAMPLINGFOR2NDINSP', label: '二次檢驗抽樣計畫', shortLabel: '二', functionNo: 'SAMPLINGFOR2NDINSP', moduleNo: 'QC', tableName: 'tblqcsamplingfor2ndinsp' },
     ] }, { id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
@@ -354,6 +356,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:WAFER SAMPLING PLAN': appBasePath + '/QC/SamplingPlanWafer',
   'function:QC:SAMPLINGFOR2NDINSP': appBasePath + '/QC/SecondInspectionSampling',
   'function:QC:QCITEM_G': appBasePath + '/QC/VariableItemGroup',
+  'function:QC:QCITEM_G_PMI': appBasePath + '/QC/PmiItemGroup',
   'function:QC:QCITEM_G_A_ORDER': appBasePath + '/QC/AttributeItemGroup',
   'function:QC:FIRST GROUP': appBasePath + '/QC/FirstGroup',
   'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
@@ -535,6 +538,7 @@ const isQcSamplingPlanPage = computed(() => activeMasterKey.value === 'function:
 const isQcSamplingPlanWaferPage = computed(() => activeMasterKey.value === 'function:QC:WAFER SAMPLING PLAN')
 const isQcSecondInspectionSamplingPage = computed(() => activeMasterKey.value === 'function:QC:SAMPLINGFOR2NDINSP')
 const isQcVariableItemGroupPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_G')
+const isQcPmiItemGroupPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_G_PMI')
 const isQcAttributeItemGroupPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_G_A_ORDER')
 const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC:FIRST GROUP')
 const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
@@ -1581,6 +1585,14 @@ async function signOut(): Promise<void> {
         />
         <QcVariableItemGroup
           v-else-if="isQcVariableItemGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcPmiItemGroup
+          v-else-if="isQcPmiItemGroupPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
