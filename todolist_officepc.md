@@ -14,25 +14,32 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC107 計數判別法則基本資料（公司端 2026-11-17）
+
+- [x] 依 `frmQCAttRuleBasis`/Def、wsQC、`clsQCBasis`、`clsBasis_UPD` 對照主/明細雙 Grid、RuleNo LIKE、四狀態、ComponentCollect、Action/ReasonType/ReasonLevel、三種 RuleType、複製、刪除及 Issue Job 簽核行為。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線唯讀查 `TBLQCATTRULEBASIS`、`TBLQCATTRULEDETAIL`、共用查找 `TBLQCAQL` 的 table/index DDL 及 ALL_CONSTRAINTS；已確認複合 PK、沒有外鍵/其他索引、沒有 DataStamp；未讀業務列或在 Oracle 執行 DDL。
+- [x] 建立 Oracle source DDL、PG CREATE 參考、`/YMES/QC/AttributeRuleBasis` Vue 主從 DEV 頁、選單/路由、QC107 規格及家用端 API/schema handoff。自訂 AQL 依 `SysInfo/UserDefineAQL`，選項來自 TBLQCAQL。
+- [ ] 尚未執行 build/test/瀏覽器驗收；家用端核對 YMES 共用 TBLQCAQL/既有 QC104–QC106 API 與 schema，依待辦開發；公司端下一項接續 QC108「計量品管法則基本資料」。
+
 ### QC106 品質原因基本資料（公司端 2026-11-17）
 
 - [x] 依 WinForms `frmReasonBasis`/Def、wsQC、`clsQCBasis`、`clsBasis_UPD` 對照清單、CRUD、複製、ReasonType ValueList、QC105 子類別查找、Issue Control、Issue Job 簽核與 DataStamp 規則。
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess，經本機受保護連線唯讀取得 `MESTEST.TBLQCREASONBASIS` table/index DDL 與 ALL_CONSTRAINTS；ReasonNo 為 PK，僅 PK unique index，無 FK/額外索引；未讀業務列、未在 Oracle 執行 DDL。
 - [x] 建立 Oracle source DDL、PostgreSQL CREATE 參考、`/YMES/QC/ReasonBasis` Vue DEV 頁、QC 基本資料選單/路由、QC106 規格及家用端 API/schema handoff。ReasonType 正式選項須由 MES ValueList API 提供；子類別查找只顯示同類別且 IssueState=2。
-- [ ] 尚未執行 build/test/瀏覽器驗收；家用端依待辦核對 YMES live schema 並實作 API。公司端下一項接續 QC107「計數判別法則基本資料」。
+- [ ] 尚未執行 build/test/瀏覽器驗收；家用端依待辦核對 YMES live schema 並實作 API。QC107 已完成；公司端下一項接續 QC108「計量品管法則基本資料」。
 ### QC105 品質原因子類別資料（公司端 2026-11-17）
 
 - [x] 依 WinForms `frmReasonSubTypeBasis`/Def、wsQC、`clsQCBasis`、`clsBasis_UPD` 對照查詢、欄位、ValueList、CRUD、Copy、Issue Control、刪除及 Issue Job 簽核規則。
 - [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護設定唯讀查 `MESTEST.TBLQCREASONSUBTYPEBASIS` table/index DDL 與 ALL_CONSTRAINTS；ReasonSubType 為 PK，只有 PK unique index，沒有 FK/額外索引；未讀業務資料、未在 Oracle 執行 DDL。
 - [x] 建立 Oracle source DDL 與 PostgreSQL CREATE 參考；完成 `/YMES/QC/ReasonSubTypeBasis` Vue DEV 頁、QC 基本資料選單/路由、QC105 規格、DB 查詢來源及家用端 API/schema handoff。ReasonType 的 DEV 選項有標示 DEMO，正式環境需由 ValueList API 供應。
-- [ ] 未執行 build/test/瀏覽器驗收；家用端比對 live schema 並完成 API；QC106 品質原因基本資料已完成；公司端接續 QC107「計數判別法則基本資料」。
+- [ ] 未執行 build/test/瀏覽器驗收；家用端比對 live schema 並完成 API；QC106、QC107 已完成；公司端接續 QC108「計量品管法則基本資料」。
 
 ### QC104 Wafer 抽樣計劃（公司端 2026-11-17）
 
 - [x] 對照 `frmSamplingPlan_Wafer`/Def、wsQC、`clsQCBasis`/`clsBasis_UPD`：四狀態、PlanNo 查詢、六種可見 SampleType、區間/區域明細、CRUD/Copy/Approve/View、DataStamp、Issue Job 與首錯停止流程。
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護設定唯讀查 `TBLQCSAMPLINGPLAN_WAFER`、`TBLQCSAMPLINGRANGE`、`TBLQCSAMPLINGAREA_WAFER` table/index DDL、ALL_CONSTRAINTS；主檔 PK PlanNo、Area PK (PlanNo,Area)、Range 無 PK/index、沒有 FK；未讀業務列，未在 Oracle 執行 DDL。
 - [x] 建立 Oracle source DDL、PostgreSQL CREATE 參考、`/YMES/QC/SamplingPlanWafer` Vue DEV 頁、QC → 基本資料選單/路由及 QC104 規格/家用端 API/schema handoff。AQL DEV options 為假資料；正式 API 對照 `wsSYS.LoadMesParameterRef`。
-- [ ] 未執行 build/test/瀏覽器驗收；家用端先核對 `TBLQCSAMPLINGRANGE` 與 QC103 共用表的既有 schema/API，再依待辦實作 QC104；QC105、QC106 已完成；公司端下一項為 QC107「計數判別法則基本資料」。
+- [ ] 未執行 build/test/瀏覽器驗收；家用端先核對 `TBLQCSAMPLINGRANGE` 與 QC103 共用表的既有 schema/API，再依待辦實作 QC104；QC105–QC107 已完成；公司端下一項為 QC108「計量品管法則基本資料」。
 
 
 ### QC103 抽樣計劃（公司端 2026-11-17）
@@ -41,7 +48,7 @@
 - [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經既有受保護連線唯讀取得 `MESTEST.TBLQCSAMPLINGPLAN`、`TBLQCSAMPLINGPARAMETER` table/index DDL 與 ALL_CONSTRAINTS；兩表各有 PK index，沒有 FK/額外索引。未讀業務列、未在 Oracle 執行 DDL、未輸出憑證。
 - [x] 建立兩表 Oracle source DDL 與 PostgreSQL CREATE 參考；新增 `/YMES/QC/SamplingPlan` DEV 頁、QC → 基本資料選單/路由、QC103 規格、家用 API/schema handoff。
 - [x] DEV UI 有主檔/參數編輯、狀態篩選、查詢、複製、簽核、刪除、套用及 Simulation 操作；本地 Simulation 只示範 Fixed Sample Size，其餘由正式 API 使用 Core 規則計算。
-- [ ] 未執行 build/test/瀏覽器驗收；QC104、QC105 已完成，QC106 品質原因基本資料已完成；公司端接續 QC107「計數判別法則基本資料」。
+- [ ] 未執行 build/test/瀏覽器驗收；QC104、QC105 已完成，QC106、QC107 已完成；公司端接續 QC108「計量品管法則基本資料」。
 
 
 ### QC102 抽樣計劃設定_1916（公司端 2026-11-17）
@@ -50,7 +57,7 @@
 - [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 使用既有受保護連線，直連唯讀取得 `MESTEST.TBLQCSAMPLING1916` table/index DDL 與 ALL_CONSTRAINTS；確認四個 NOT NULL、唯一 index `(SamplingType,MinNum,MaxNum,SLevel)`，沒有 P constraint、FK 或其他 index。未讀業務列、未執行 Oracle DDL、未輸出憑證。
 - [x] 建立來源 DDL 與 PostgreSQL 空表 CREATE 參考；新增 `/YMES/QC/Sampling1916` DEV 頁、QC → 基本資料選單/路由、QC102 規格及家用 API/schema handoff。
 - [x] 更新規格索引、資料庫查詢來源紀錄及兩台電腦待辦。DEV 假資料限開發預覽 localStorage。
-- [ ] 未執行 build/test/瀏覽器驗收；QC103–QC105 已完成，QC106 品質原因基本資料已完成；公司端接續 QC107「計數判別法則基本資料」。
+- [ ] 未執行 build/test/瀏覽器驗收；QC103–QC105 已完成，QC106、QC107 已完成；公司端接續 QC108「計量品管法則基本資料」。
 
 
 ### QC101 抽樣表格（公司端 2026-11-17）
@@ -59,7 +66,7 @@
 - [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 透過受保護設定唯讀查得 MESTEST.TBLQCSAMPLINGTABLE table/index DDL 及 ALL_CONSTRAINTS；確認複合 PK (SAMPLINGTABLE, MINNUM, MAXNUM)、唯一 PK index、四個 NOT NULL、無 FK/其他索引。未讀業務資料，未在 Oracle 執行 DDL，未輸出憑證。
 - [x] 新增 PostgreSQL 空表 CREATE 參考、/YMES/QC/SamplingTable Vue DEV 畫面、QC → 基本資料 → 抽樣表格 fallback 選單與 API/schema handoff 規格。
 - [x] 更新 QC 規格索引、資料庫來源紀錄與兩台電腦待辦；未執行 build/test/瀏覽器驗收。
-- [x] QC102–QC105 已完成；QC106 品質原因基本資料已完成；公司端接續 QC107「計數判別法則基本資料」，依 MES_MENU_FUNCTION_INVENTORY.md 檢查 WinForms Form/Service、資料表及邏輯。
+- [x] QC102–QC107 已完成；公司端接續 QC108「計量品管法則基本資料」，依 MES_MENU_FUNCTION_INVENTORY.md 檢查 WinForms Form/Service、資料表及邏輯。
 ### QC111 8D 原因基本資料（公司端 2026-11-17）
 
 - [x] 從 8D 原因基本資料 WinForms Form、兩個 Def Form、wsQC 與 clsQCBasis 整理雙 Grid、欄位、查詢、狀態、CRUD、複製、刪除、核准與 Issue/Job 流程。

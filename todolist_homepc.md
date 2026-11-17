@@ -40,6 +40,19 @@
 - [ ] 實作 `POST /api/qc/reason-basis/{reasonNo}/approve`：依 Issue Job Map `REASON BASIS` 無 Job/Detail 時直接 0→2；有 Detail 建 Issue、0→1、通知首簽核群組；後續核准 2、退回 0。回傳真實狀態及 DataStamp，不能假設一律直接 Active。
 - [ ] 全部 SQL 參數化；API/schema/migration 變更後更新規格及本清單並 push GitHub，通知公司端 pull。公司端 DEV 頁 ReasonType 標 DEMO，Production 不使用 localStorage 假資料。
 
+### QC107 計數判別法則基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/計數判別法則基本資料.md`、公司端 QC107 區段與 `docs/DATABASE_CONNECTION.md`；依序完成 QC104–QC106 既有交接，然後核對 QC107 API/schema。
+- [ ] 對照 Oracle DDL `database/reference/mestest_qc_att_rule_basis_source_ddl.sql` 與 PG CREATE 參考 `database/reference/mestest_qc_att_rule_basis_create.sql`，檢查 YMES live schema/migrations。主檔 `tblqcattrulebasis` PK RuleNo；明細 `tblqcattruledetail` 複合 PK (RuleNo,Action,ReasonType,ReasonLevel)；兩表均無 FK、無 DataStamp。只建立必要 forward migration，不 drop/recreate、不清除資料。
+- [ ] 對照共用 AQL DDL `database/reference/mestest_qc_aql_source_ddl.sql`、PG CREATE 參考 `database/reference/mestest_qc_aql_create.sql`，檢查是否已經有 YMES `tblqcaql`。若已存在直接重用；只有確定缺少才新增 migration，保留現有共用表資料/擴充欄位。來源 PK (AQLType,MinNum,MaxNum,SLevel,AQL)，無 FK/額外索引。
+- [ ] `tblqcattrulebasis` 欄位：RuleNo varchar(20) NOT NULL PK；ComponentCollect numeric(1,0) NOT NULL DEFAULT 0；Creator/Reviser varchar(10) NULL；CreateDate/ReviseDate timestamp NULL；IssueState numeric(1,0) DEFAULT 0 NULL。`tblqcattruledetail`：RuleNo varchar(20)、Action numeric(1,0) NOT NULL、ReasonType numeric(1,0) NOT NULL DEFAULT 0、ReasonLevel numeric(1,0) NOT NULL DEFAULT -1、RejectNum numeric(14,4)、RuleType numeric(1,0) DEFAULT 0、Rate varchar(10)、ChangeAQL varchar(30)、Creator/Reviser varchar(10)、日期 timestamp；按來源保留 nullable/default。
+- [ ] 實作 FunctionKey QC107 登入權限保護的 `GET /api/qc/attribute-rule-bases?searchFieldName=RuleNo&searchFieldValue=` 與 `GET /{ruleNo}/details`，回主檔/明細及 Issue Control `editableFields`。RuleNo LIKE 支援 `%`/`_`；前端按四狀態過濾。主/明細讀取須授權同一 FunctionKey。
+- [ ] 建立 Action/ReasonType ValueList options API；Action 等價於 `TBLQCATTRULEDETAIL.ACTION`，ReasonType 等價於 `GetValueList(TBLQCATTRULEBASIS,REASONTYPE)`。舊程式註解只列部分值，不可作正式選項。自訂 AQL 選項先讀 SysInfo/UserDefineAQL，啟用時由 `tblqcaql` 回 distinct AQL、AQLType 非空；關閉時 API 回 enabled=false，不查選項資料列。
+- [ ] 實作 aggregate `POST/PUT /api/qc/attribute-rule-bases`：主檔與整組明細單一交易保存。驗證 RuleNo 大寫/長度/唯一、ComponentCollect 0/1、Action/ReasonType 合法、ReasonLevel -1..9、組合 PK 唯一；Number RejectNum 必填且 >=1 整數、上限 9,999,999,999（符合 NUMBER(14,4)）、Rate 必填正數且 <=10 字元、AQL 型態檢查 UserDefineAQL。非啟用模式的空 Rate/ChangeAQL 對 Oracle 等價 NULL；RejectNum 在非 Number 模式依舊 API 的空字串轉換為 0。
+- [ ] 舊 WinForms Edit 會刪除再重建主/明細，沒有 DataStamp；API 使用 transaction 原子化，保留舊狀態及 Creator/CreateDate。Def 雖設定 Reviser/ReviseDate，SOAP 未傳入，舊 Core 更新後沒有寫回修訂 audit；YMES 若補 audit 必須記錄為新 API 差異。
+- [ ] 實作 DELETE：狀態 0/-1/2 實體刪除明細與主檔，同交易；狀態 1 拒絕。Approve 僅 state0 且每個 RuleNo 至少一筆明細；依 Issue Job Map `QCITEM_A RULE DATA` 無流程時 0→2，有簽核則 0→1、通知首簽群組，核准2/退回0；回傳實際狀態。
+- [ ] 多選刪除/核准依 WinForms 逐筆執行，首錯停止並保留已完成筆數；全部 SQL 參數化。比對 YMES schema、遷移及 API 後更新文件並 push，通知公司端 pull。不得連 MES Oracle 或匯入業務列。
+
 ### QC103 抽樣計劃（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/抽樣計劃.md`、本檔 QC103 區段、公司端 QC103 區段及 `docs/DATABASE_CONNECTION.md`。
