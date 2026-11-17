@@ -11,7 +11,7 @@ public interface IMasterDataRepository
     OperationDto ApproveOperation(string no, int dataStamp, string actorUserNo);
     void DeleteOperation(string no, int issueState, int dataStamp, string actorUserNo);
 
-    IReadOnlyList<MaterialDto> ListMaterials(string? keyword, int? issueState, string? materialType);
+    IReadOnlyList<MaterialDto> ListMaterials(string? keyword, int? issueState, string? materialType, string? materialNoPrefix = null);
     MaterialDto GetMaterial(string no);
     MaterialDto CreateMaterial(MaterialWriteRequest request, string actorUserNo);
     MaterialDto UpdateMaterial(string no, MaterialWriteRequest request, string actorUserNo);

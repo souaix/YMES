@@ -29,18 +29,20 @@ public sealed partial class PostgresMasterDataRepository
         COALESCE(createdate, now())
         """;
 
-    public IReadOnlyList<MaterialDto> ListMaterials(string? keyword, int? issueState, string? materialType)
+    public IReadOnlyList<MaterialDto> ListMaterials(string? keyword, int? issueState, string? materialType, string? materialNoPrefix = null)
     {
         using var command = _dataSource.CreateCommand($"""
             SELECT {MaterialColumns}
             FROM "YMES".tblmtlmaterialbasis
             WHERE (@issueState IS NULL OR issuestate = @issueState)
               AND (@materialType IS NULL OR materialtype ILIKE @materialType)
+              AND (@materialNoPrefix IS NULL OR lower(left(materialno, length(@materialNoPrefix))) = lower(@materialNoPrefix))
               AND (@keyword IS NULL OR materialno ILIKE @keyword OR materialname ILIKE @keyword)
             ORDER BY materialno;
             """);
         AddNumeric(command, "issueState", issueState);
         AddVarchar(command, "materialType", string.IsNullOrWhiteSpace(materialType) ? null : materialType.Trim());
+        AddVarchar(command, "materialNoPrefix", string.IsNullOrWhiteSpace(materialNoPrefix) ? null : materialNoPrefix.Trim());
         AddVarchar(command, "keyword", string.IsNullOrWhiteSpace(keyword) ? null : $"%{keyword.Trim()}%");
         using var reader = command.ExecuteReader();
         var rows = new List<MaterialDto>();

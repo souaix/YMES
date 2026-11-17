@@ -99,24 +99,121 @@ public sealed partial class PostgresMasterDataRepository
         return new(available, assigned);
     }
 
+    public MaterialQCItemLibraryDto GetMaterialQCItemLibrary(string no)
+    {
+        EnsureMaterialExists(no);
+        var available = new List<MaterialQCItemLibraryEntryDto>();
+        using (var command = _dataSource.CreateCommand("""
+            SELECT qcitemno, COALESCE(qcitemname,''), 0::int
+            FROM "YMES".tblqcitemforattributes WHERE issuestate=2
+            UNION ALL
+            SELECT qcitemno, qcitemname, 1::int
+            FROM "YMES".tblqcitemforvariables WHERE issuestate=2
+            UNION ALL
+            SELECT groupno, COALESCE(groupname,''), 2::int
+            FROM "YMES".tblqcitemgroupbasis WHERE issuestate=2
+            ORDER BY 3, 1;
+            """))
+        using (var reader = command.ExecuteReader())
+            while (reader.Read()) available.Add(new(reader.GetString(0), reader.GetString(1), reader.GetInt32(2)));
+
+        var assigned = new List<MaterialQCItemLibraryEntryDto>();
+        using (var command = _dataSource.CreateCommand("""
+            SELECT q.qcitemno, q.qcitemtype::int,
+                   COALESCE(a.qcitemname, v.qcitemname, g.groupname, ''),
+                   q.reviser, q.revisedate
+            FROM "YMES".tblmtlqcitem q
+            LEFT JOIN "YMES".tblqcitemforattributes a
+              ON q.qcitemtype=0 AND lower(a.qcitemno)=lower(q.qcitemno)
+            LEFT JOIN "YMES".tblqcitemforvariables v
+              ON q.qcitemtype=1 AND lower(v.qcitemno)=lower(q.qcitemno)
+            LEFT JOIN "YMES".tblqcitemgroupbasis g
+              ON q.qcitemtype=2 AND lower(g.groupno)=lower(q.qcitemno)
+            WHERE lower(q.mtlno)=lower(@no)
+            ORDER BY q.qcitemtype, q.qcitemno;
+            """))
+        {
+            AddVarchar(command, "no", no.Trim());
+            using var reader = command.ExecuteReader();
+            while (reader.Read()) assigned.Add(new(
+                reader.GetString(0), reader.GetString(2), reader.GetInt32(1),
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetDateTime(4)));
+        }
+        return new(available, assigned);
+    }
+
     public void SaveMaterialQCItems(string no, MaterialQCItemsWriteRequest request, string actor)
     {
-        ValidateActor(actor); EnsureMaterialExists(no);
+        ValidateActor(actor);
+        if (request.Items is null) throw BadRequest("QC Item 清單不可為空值。");
         if (request.Items.Count > 500) throw BadRequest("單一物料最多設定 500 個 QC Item。");
         var items = request.Items.Select(x => new MaterialQCItemDto(RequiredCode(x.QCItemNo, "QC Item 編號", 25), x.QCItemType)).ToList();
         if (items.Any(x => x.QCItemType is < 0 or > 2)) throw BadRequest("QC Item 類型須為 0、1 或 2。");
         if (items.Select(x => x.QCItemNo).Distinct(StringComparer.OrdinalIgnoreCase).Count() != items.Count) throw BadRequest("QC Item 編號不可重複。");
         using var connection = _dataSource.OpenConnection(); using var transaction = connection.BeginTransaction();
         var material = GetMaterial(connection, transaction, no, true);
-        if (material.IssueState != 0) throw Conflict("只有未簽核物料可以修改 QC Item。");
+        foreach (var item in items)
+        {
+            var (table, numberColumn) = item.QCItemType switch
+            {
+                0 => ("tblqcitemforattributes", "qcitemno"),
+                1 => ("tblqcitemforvariables", "qcitemno"),
+                _ => ("tblqcitemgroupbasis", "groupno")
+            };
+            using var validate = new NpgsqlCommand($"SELECT EXISTS (SELECT 1 FROM \"YMES\".{table} WHERE lower({numberColumn})=lower(@item) AND issuestate=2);", connection, transaction);
+            AddVarchar(validate, "item", item.QCItemNo);
+            if (validate.ExecuteScalar() is not true) throw BadRequest($"QC Item {item.QCItemNo} 不存在、未核准或類型不符。");
+        }
+
+        var previous = new List<MaterialQCItemDto>();
+        using (var select = new NpgsqlCommand("SELECT qcitemno,qcitemtype::int FROM \"YMES\".tblmtlqcitem WHERE lower(mtlno)=lower(@no) ORDER BY qcitemtype,qcitemno FOR UPDATE;", connection, transaction))
+        {
+            AddVarchar(select, "no", material.MaterialNo);
+            using var reader = select.ExecuteReader();
+            while (reader.Read()) previous.Add(new(reader.GetString(0), reader.GetInt32(1)));
+        }
+        static string PairKey(string itemNo, int itemType) => $"{itemType}:{itemNo.Trim().ToUpperInvariant()}";
+        var wantedPairs = items.Select(x => PairKey(x.QCItemNo, x.QCItemType)).ToHashSet(StringComparer.Ordinal);
+        var previousPairs = previous.Select(x => PairKey(x.QCItemNo, x.QCItemType)).ToHashSet(StringComparer.Ordinal);
+
         using (var delete = new NpgsqlCommand("DELETE FROM \"YMES\".tblmtlqcitem WHERE lower(mtlno)=lower(@no);", connection, transaction))
-        { AddVarchar(delete, "no", no.Trim()); delete.ExecuteNonQuery(); }
+        { AddVarchar(delete, "no", material.MaterialNo); delete.ExecuteNonQuery(); }
         foreach (var item in items)
         {
             using var insert = new NpgsqlCommand("INSERT INTO \"YMES\".tblmtlqcitem(mtlno,qcitemno,qcitemtype,reviser,revisedate) VALUES(@no,@item,@type,@actor,now());", connection, transaction);
-            AddVarchar(insert, "no", no.Trim()); AddVarchar(insert, "item", item.QCItemNo); AddNumeric(insert, "type", item.QCItemType); AddVarchar(insert, "actor", actor.Trim()); insert.ExecuteNonQuery();
+            AddVarchar(insert, "no", material.MaterialNo); AddVarchar(insert, "item", item.QCItemNo); AddNumeric(insert, "type", item.QCItemType); AddVarchar(insert, "actor", actor.Trim()); insert.ExecuteNonQuery();
+
+            using var iqc = new NpgsqlCommand("""
+                INSERT INTO "YMES".tblopqcitem(opno,qcitemno,qcitemtype,inline,executeorder,reviser,revisedate)
+                VALUES('IQC',@item,@type,0,0,@actor,now())
+                ON CONFLICT (opno,qcitemno) DO NOTHING;
+                """, connection, transaction);
+            AddVarchar(iqc, "item", item.QCItemNo); AddNumeric(iqc, "type", item.QCItemType); AddVarchar(iqc, "actor", actor.Trim()); iqc.ExecuteNonQuery();
         }
+
+        foreach (var old in previous.Where(x => !wantedPairs.Contains(PairKey(x.QCItemNo, x.QCItemType))))
+            InsertQCItemBindLog(connection, transaction, material.MaterialNo, old, 2, actor);
+        foreach (var added in items.Where(x => !previousPairs.Contains(PairKey(x.QCItemNo, x.QCItemType))))
+            InsertQCItemBindLog(connection, transaction, material.MaterialNo, added, 0, actor);
+
         transaction.Commit();
+    }
+
+    private static void InsertQCItemBindLog(NpgsqlConnection connection, NpgsqlTransaction transaction, string materialNo, MaterialQCItemDto item, int executeStatus, string actor)
+    {
+        using var command = new NpgsqlCommand("""
+            INSERT INTO "YMES".tblqcitembindlog
+                (qcitemlogserial,qcitemtype,qcitemno,bindtype,mtlno,executestatus,executedate,executor)
+            VALUES(@serial,@type,@item,2,@material,@status,now(),@actor);
+            """, connection, transaction);
+        AddVarchar(command, "serial", Guid.NewGuid().ToString("N"));
+        AddNumeric(command, "type", item.QCItemType);
+        AddVarchar(command, "item", item.QCItemNo);
+        AddVarchar(command, "material", materialNo);
+        AddNumeric(command, "status", executeStatus);
+        AddVarchar(command, "actor", actor.Trim());
+        command.ExecuteNonQuery();
     }
 
     public IReadOnlyList<MaterialVendorDto> GetMaterialVendors(string no)

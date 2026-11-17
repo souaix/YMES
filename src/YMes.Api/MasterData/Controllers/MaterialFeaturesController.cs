@@ -30,6 +30,9 @@ public sealed class MaterialFeaturesController(PostgresMasterDataRepository repo
     [HttpGet("{no}/qc-items")]
     public IActionResult QCItems(string no) => Execute(() => Ok(repository.GetMaterialQCItems(no)));
 
+    [HttpGet("{no}/qc-item-library")]
+    public IActionResult QCItemLibrary(string no) => Execute(() => Ok(repository.GetMaterialQCItemLibrary(no)));
+
     [HttpPut("{no}/qc-items")]
     public IActionResult SaveQCItems(string no, [FromBody] MaterialQCItemsWriteRequest request) => ExecuteAction(() => repository.SaveMaterialQCItems(no, request, ActorUserNo));
 

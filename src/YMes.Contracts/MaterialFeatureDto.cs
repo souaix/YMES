@@ -4,6 +4,8 @@ public sealed record MaterialPropertyDto(string PropertyNo, string Value, int Se
 public sealed record MaterialPropertyWriteRequest(string PropertyNo, string? Value, int Sequence, int DataStamp = 0);
 public sealed record MaterialQCItemDto(string QCItemNo, int QCItemType, string QCItemName = "");
 public sealed record MaterialQCItemsDto(IReadOnlyList<MaterialQCItemDto> Available, IReadOnlyList<MaterialQCItemDto> Assigned);
+public sealed record MaterialQCItemLibraryEntryDto(string QCItemNo, string QCItemName, int QCItemType, string? Reviser = null, DateTime? ReviseDate = null);
+public sealed record MaterialQCItemLibraryDto(IReadOnlyList<MaterialQCItemLibraryEntryDto> Available, IReadOnlyList<MaterialQCItemLibraryEntryDto> Assigned);
 public sealed record MaterialQCItemsWriteRequest(IReadOnlyList<MaterialQCItemDto> Items);
 public sealed record MaterialVendorDto(string MaterialNo, string VendorNo, string VendorName, string Description, int DataStamp);
 public sealed record MaterialVendorWriteRequest(string VendorNo, string? Description, int DataStamp = 0);

@@ -97,9 +97,10 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return true;
     });
 
-    public IReadOnlyList<MaterialDto> ListMaterials(string? keyword, int? issueState, string? materialType) => Read(() => _materials.Values
+    public IReadOnlyList<MaterialDto> ListMaterials(string? keyword, int? issueState, string? materialType, string? materialNoPrefix = null) => Read(() => _materials.Values
         .Where(x => issueState is null || x.IssueState == issueState)
         .Where(x => string.IsNullOrWhiteSpace(materialType) || x.MaterialType.Equals(materialType, StringComparison.OrdinalIgnoreCase))
+        .Where(x => string.IsNullOrWhiteSpace(materialNoPrefix) || x.MaterialNo.StartsWith(materialNoPrefix.Trim(), StringComparison.OrdinalIgnoreCase))
         .Where(x => ContainsAny(keyword, x.MaterialNo))
         .OrderBy(x => x.MaterialNo, StringComparer.OrdinalIgnoreCase).ToArray());
 

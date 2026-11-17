@@ -28,7 +28,7 @@ public sealed class MasterDataController(IMasterDataRepository repository) : Con
     public IActionResult DeleteOperation(string no, [FromQuery] int issueState, [FromQuery] int dataStamp) => ExecuteAction(() => repository.DeleteOperation(no, issueState, dataStamp, ActorUserNo), "作業無法刪除或停用");
 
     [HttpGet("materials")]
-    public ActionResult<IReadOnlyList<MaterialDto>> ListMaterials([FromQuery] string? keyword, [FromQuery] int? issueState, [FromQuery] string? materialType) => Ok(repository.ListMaterials(keyword, issueState, materialType));
+    public ActionResult<IReadOnlyList<MaterialDto>> ListMaterials([FromQuery] string? keyword, [FromQuery] int? issueState, [FromQuery] string? materialType, [FromQuery] string? materialNoPrefix) => Ok(repository.ListMaterials(keyword, issueState, materialType, materialNoPrefix));
 
     [HttpGet("materials/{no}")]
     public ActionResult<MaterialDto> GetMaterial(string no) => Execute(() => repository.GetMaterial(no));

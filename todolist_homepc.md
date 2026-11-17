@@ -8,6 +8,7 @@
 
 ### QC112 品質原因產品指導書（公司端 2026-11-17 交接）
 
+- [x] 2026-11-17 家用端 live audit：QC112 的 `tblsysfunction.functionkey` 與品質資料選單項目已存在；`tblprdproductbasis` 已存在，但來源 `tblqcreasonbasis` 與關聯 `tblqcreasonprdsopfile` 缺表。目錄中的五個 `FILESERVICE*`/`REASONPRDSOPFILEPATH` 參數均不存在於 YMES `tblsyselementbasis`；API 沒有 file-service code，容器只有 Data Protection volume，主機也未掛載 NFS/CIFS。使用者功能授權表未在目前 YMES schema 內盤點到。
 - [ ] 閱讀 `docs/modules/QC/品質原因產品指導書.md`、公司端 QC112 區段與 `docs/DATABASE_CONNECTION.md`；pull 後核對 Vue route/menu 與 API 契約。
 - [ ] 核對 `TBLSYSMODULE`、`TBLSYSMENUITEM`、`TBLSYSFUNCTION` 及使用者功能授權是否已有 QC112「品質資料 → 基本資料 → 品質原因產品指導書」目錄；只補缺少的 YMES menu/function mapping，正式 API 回傳安全顯示路徑，不回傳檔案服務實體路徑。
 - [ ] 比對 `database/reference/mestest_qc_reason_prd_sop_file_source_ddl.sql`、`database/reference/mestest_qc_reason_prd_sop_file_create.sql` 與 YMES live schema/migrations 的 `tblqcreasonprdsopfile`。來源欄位為 `reasonno varchar(20) NOT NULL`、`productno varchar(50) NOT NULL`、`sopfilename varchar(100) NULL`、`sopfilepath varchar(2000) NULL`，PK `(reasonno,productno)`；無 FK、DataStamp、額外索引。只補缺少的結構，保留 YMES 自有擴充與資料，不 drop/recreate，不匯入 MES 業務資料。
@@ -973,7 +974,13 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 
 ## MTL ML106 物料品管項目設定（公司端 2026-11-17 交接）
 
-先讀 docs/modules/MTL/物料品管項目設定.md、todolist_officepc.md 的 ML106 區塊與既有 ML105 規格。公司端頁面 /YMES/MTL/MaterialQCItems 已完成 Vue DEV UI；WinForms Form/Designer、wsMTL、clsMTLBasis、clsQCBasis 已對照。Production API 尚未完成。
+- [x] 2026-11-17 遠端比對：`TBLMTLQCITEM` 欄位/複合 PK 符合 reference；三個 QC catalog、`TBLQCITEMBINDLOG`、`TBLOPQCITEM` 缺表。備份 `/opt/ymes/backups/ymes_before_0019_mtl_qc_20261117.dump` 已由 `pg_restore --list` 驗證；0019 migration 已套用，`ymes_app` 取得目錄 SELECT、IQC mapping INSERT、bind log INSERT 權限。
+- [x] 擴充 `GET /api/materials` 的 `materialNoPrefix`，新增 ML106 專用 `GET /api/materials/{no}/qc-item-library`，保留既有 `/qc-items` 類別範本回應。
+- [x] PUT 在單一交易驗證已核准 QC 目錄、替換直接綁定、補 `IQC` 虛擬站項目、寫 BindType=2 新增/移除事件及 server audit；依來源 WinForms 行為不限制物料 IssueState。
+- [x] .NET 9 API Release build 0 warning/0 error；只重建 `ymes-api`，遠端 readiness 200 且容器 healthy，`ymes-web` 與其他容器未重啟。
+- [ ] app-browser 直接開 `/YMES/MTL/MaterialQCItems` 後顯示主選單；尚未確認是否是 Production Web 尚未更新或功能授權/路由狀態，留給公司端核對 UI route。
+
+公司端頁面 `/YMES/MTL/MaterialQCItems` 已完成 Vue DEV UI；WinForms Form/Designer、wsMTL、clsMTLBasis、clsQCBasis 已對照。Production schema/API 已由家用端完成並部署；Production UI route 待公司端查明。
 
 ### Schema / DDL
 
