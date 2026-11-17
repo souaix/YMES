@@ -354,3 +354,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - Oracle source DDL：`database/reference/mestest_qc_variable_rule_basis_source_ddl.sql`；PostgreSQL CREATE 參考：`database/reference/mestest_qc_variable_rule_basis_create.sql`。
 - PK 為 RuleSerial；唯一索引只有 PK index，沒有外鍵或額外索引。RuleNo 沒有 DB unique constraint，舊服務以大寫 RuleNo 檢查重複；DataStamp nullable DEFAULT 0。
 - 僅查詢 metadata，沒有在 Oracle 執行 DDL；IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations。
+
+### 更新 2026-11-17：QC109 要因資料維護來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護設定唯讀查 `MESTEST.TBLSYSMESPARAMETER` 與 `ALL_TABLES` 中符合舊程式 `TableName LIKE 'FC_%'` 的表，再用 DBMS_METADATA、ALL_INDEXES、ALL_CONSTRAINTS 取得結構。本次查得 `FC_POSIONLIST`、`FC_QCFORMCALLBACKITEMMAP`、`FC_THICKNESS` 三表。
+- Oracle source DDL：`database/reference/mestest_qc_factor_maintain_source_ddl.sql`；PostgreSQL CREATE 參考：`database/reference/mestest_qc_factor_maintain_create.sql`。四表各只有 PK unique index，沒有 FK/額外索引。
+- 僅查詢表名與 DDL/資料字典 metadata，沒有讀取 MES 業務列，沒有在 Oracle 執行 DDL；IP、帳號、密碼、SID 未輸出或寫入 Git。家用端核對 YMES PostgreSQL 中既有參數目錄與 FC 表，必要時才建立 forward migration。

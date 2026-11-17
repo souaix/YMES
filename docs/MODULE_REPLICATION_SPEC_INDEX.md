@@ -16,6 +16,7 @@
 
 ## 2026-11-17 新增功能規格
 
+- QC109「要因資料維護」：[功能規格](modules/QC/要因資料維護.md)。公司端依 `frmQCFactorMaintain`、SYS/QC Service/Core 與 Oracle DDL 完成 metadata 驅動的動態 Grid DEV 頁、Import/Paste/整表 Save、QC 基本資料選單及 API handoff。來源以 `TBLSYSMESPARAMETER` 選出核准的 `FC_%` Table；本次字典查到三張 FC 表，沒有讀業務列。家用端需核對 YMES 既有參數目錄/動態表，再提供限制 `QC109` 權限的參數化整表 API。
 - QC108「計量品管法則基本資料」：[功能規格](modules/QC/計量品管法則基本資料.md)。公司端已依 `frmQCRuleBasis`/Def、wsQC、Core 與 Oracle DDL 完成單表清單/編輯 DEV 頁、路由/選單及 DataStamp、RuleOption 映射與 Issue Job 規格。Oracle 主鍵是 RuleSerial；RuleNo 唯一性由舊服務檢查。家用端需核對 YMES schema，提供 RuleOption/FunctionName 選項與 QC108 CRUD、nullable DataStamp CAS、`QC RULE BASIS` Issue Job。
 - QC107「計數判別法則基本資料」：[功能規格](modules/QC/計數判別法則基本資料.md)。公司端已對照 WinForms Form/Def、wsQC、Core、Oracle DDL，完成 `/YMES/QC/AttributeRuleBasis` 主從 DEV 頁與 QC 基本資料選單。主/明細複合 PK 已確認、無 FK/DataStamp；共用 TBLQCAQL 的 Oracle/PG DDL 參考亦已建立。家用端需重用 YMES AQL 表、實作 aggregate transaction CRUD、三種 RuleType、ValueList options、UserDefineAQL 與 `QCITEM_A RULE DATA` Issue Job。
 - QC106「品質原因基本資料」：[功能規格](modules/QC/品質原因基本資料.md)。公司端已對照 WinForms Form/Def、wsQC、Core、Oracle DDL，完成 `/YMES/QC/ReasonBasis` DEV 頁與 QC 基本資料選單。來源主表 ReasonNo 為 PK，只有 PK unique index、無 FK；家用端需核對 YMES schema、提供 MES ValueList ReasonType、同類且已核准 QC105 子類別 lookup，並實作 CRUD、Issue Control、nullable DataStamp CAS 與 `REASON BASIS` Issue Job。

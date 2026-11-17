@@ -6,6 +6,17 @@
 
 ## 家用電腦現在接手
 
+### QC109 要因資料維護（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/要因資料維護.md`、公司端 QC109 區段、`docs/DATABASE_CONNECTION.md`，並先 pull 取得 Vue DEV 頁與 API 規格。
+- [ ] 對照 Oracle source DDL `database/reference/mestest_qc_factor_maintain_source_ddl.sql` 與 PostgreSQL CREATE 參考 `database/reference/mestest_qc_factor_maintain_create.sql`，核對 YMES live schema/migrations 的 `tblsysmesparameter`、`fc_posionlist`、`fc_qcformcallbackitemmap`、`fc_thickness`。只對缺少的表/欄位新增 forward migration，保留 YMES 擴充與資料，不 drop/recreate、不匯入 MES 業務列、不在 Oracle 執行 CREATE。
+- [ ] 來源 NOT NULL/default：`tblsysmesparameter`: ParameterNo varchar(30) PK、ParameterName varchar(50)、IssueState numeric(1,0) DEFAULT 0、ParameterType numeric(1,0) DEFAULT 0、ParameterClass numeric(1,0)；TableName/FieldName varchar(50)、Condition varchar(50)、Description varchar(255)、FunctionName varchar(50)、ShowName varchar(50) DEFAULT 'N/A'、DataStamp numeric(11,0) DEFAULT 0、Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp。`fc_posionlist.posion_no varchar(50)` PK；`fc_qcformcallbackitemmap.fieldname varchar(30)` PK、QCItemNo varchar(50) NOT NULL、Description varchar(500) NULL；`fc_thickness.spec varchar(50)` PK。來源僅 PK unique index，沒有 FK/額外 index。資料庫欄位 NULL/default 依來源保留。
+- [ ] 實作 FunctionKey `QC109` 保護的 `GET /api/qc/factor-maintain/parameters`，只列出已核准、ParameterType=0、ParameterClass=1、TableName LIKE `FC_%` 的 Table 參數，回傳 ParameterNo/Name/TableName；以 ParameterNo 伺服器端查回設定，不採用 request 直接指定 TableName/FieldName/Condition。
+- [ ] 實作 `GET /api/qc/factor-maintain/parameters/{parameterNo}/data`：服務端驗證參數及允許的 YMES schema/table，依欄位 metadata 回傳 columns(name/type/length/nullable) 與資料 rows；套用目錄設定 Condition 並依 FieldName 排序。限制 table/column identifier 到 metadata allowlist，不可將使用者字串當 SQL identifier 或任意 where clause。
+- [ ] 實作 `PUT /api/qc/factor-maintain/parameters/{parameterNo}/data`：接收整份 Grid rows；驗欄位集合、型別、長度與 NOT NULL，在單一 transaction 內刪除 Condition 範圍資料，再 parameterize insert 所有 rows；插入失敗 rollback；空 rows 表示清空該 Condition 範圍。確保不刪除條件以外的記錄。沒有 DataStamp；完整替換需避免併發覆寫，至少以資料庫 transaction/適當鎖處理。
+- [ ] 實作 `POST /api/qc/factor-maintain/parameters/{parameterNo}/import-preview` 解析 WinForms `.xls` 範本（第一列欄名），只回 preview rows，不寫 DB；CSV 可由 Vue 本地解析。功能頁的 Import/Paste 都只修改前端 Grid，最後仍須按 Save。
+- [ ] FunctionKey/登入權限套用於目錄、讀取、preview 與更新 endpoints。完成後更新 API/schema/migration 文件、本待辦並 push GitHub，通知公司端 pull。若舊 Condition 字串無法安全轉換，設計可稽核的伺服器端固定 predicate 對照並記錄環境差異；不得任意執行目錄中的 SQL。
+
 ### QC104 Wafer 抽樣計劃（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/Wafer抽樣計劃.md`、本檔 QC104 區段、公司端 QC104 區段與 `docs/DATABASE_CONNECTION.md`。
