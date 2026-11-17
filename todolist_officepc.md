@@ -652,7 +652,7 @@
 - [x] 新增 QC203 功能規格並更新規格索引、Oracle 查詢紀錄、本待辦與家用端 API/schema handoff。舊 Core 刪除未刪 Parameter 的 orphan 行為和 YMES 完整交易清理差異已記錄。
 - [ ] 尚未執行 build、測試或瀏覽器驗收；Production API/schema 待家用端完成後，公司端 pull 最新 main 再對接驗收。
 - [x] 已於 2026-11-17 pull 最新 main，完成 QC204「刪除計數型品管項目量測記錄」Vue DEV 畫面、WinForms/Core 規格與 API handoff，使用既有 QC201 Oracle DDL reference，未新增表。
-- [ ] 下一功能依 MES_MENU_FUNCTION_INVENTORY.md 接續 QC205「計量品管項目」；開始前先 pull 最新 main，對照兩台電腦待辦和新增 API/schema。
+- [x] QC205「計量品管項目」已完成公司端 Vue DEV 頁與 API/schema 規格交接；進度與家用端待辦見本檔末段及 `todolist_homepc.md`。
 
 ## 2026-11-17 QC204 刪除計數型品管項目量測記錄公司端進度
 
@@ -661,4 +661,12 @@
 - [x] 新增 `/YMES/QC/AttributeMeasurementDelete` Vue DEV 頁、QC204 品質資料三層選單路由、操作確認、多選逐筆刪除與假資料回饋。
 - [x] 新增 QC204 功能規格、模組索引、資料庫紀錄，以及家用端 log schema/API handoff。
 - [ ] 尚未執行 build、測試或瀏覽器驗收；等待家用端 API/schema 完成後回公司端 pull 驗收。
-- [ ] 下一頁依 Function inventory 接 QC205 計量品管項目。
+- [ ] 下一頁依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接 QC209「計量品管項目管制法則對應」（FunctionKey QC209；確認實際 MESTEST 企業 Form/資料邏輯後再做）。
+## QC205 計量品管項目公司端進度（2026-11-17）
+
+- [x] 已 pull 最新 `origin/main`（本次 Already up to date），基於目前 THEIL BU1 WinForms 客製版直接讀主表、Define、Memo Forms、Designer、wsQC/Core 與共用 Parameter/Factor/OP/Simulation/SamplePlanChange 實作；非僅依截圖。
+- [x] 已新增 `/YMES/QC/VariableQcItem` Vue 3 DEV 頁，含主 Grid、四 IssueState、CRUD/Copy/Delete/Approve、欄位驗證、Factor/Parameter/OP/Simulation/SamplePlanChange/Memo 視窗、假資料；複製會比對 QCItem/目標 Plan 參數並提供 WinForms 來源選擇器。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護設定直連 MESTEST，只讀取得 Memo/變數量測/引用檢查所需 Oracle DDL；不讀業務列、不執行 Oracle DDL、不輸出或提交連線秘密。四個 Oracle 舊刪除目標在 MESTEST 不存在，已記錄。
+- [x] 已新增 Oracle source DDL、Memo PostgreSQL Create 參考、`docs/modules/QC/計量品管項目.md`、索引及 DB 連線查詢紀錄，並在 `todolist_homepc.md` 寫明 API/schema handoff。
+- [ ] 尚未執行 build、測試或瀏覽器驗收；家用端完成 PostgreSQL schema/API 後，公司端 pull 最新 main 並做 Production API 對接驗收。
+- [ ] 下一功能依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接 QC209「計量品管項目管制法則對應」。先 pull、讀 WinForms Form/Designer/Service/Core，再查缺少的 Oracle DDL；若原始碼或 DDL 確實找不到，記錄具體名稱與原因。

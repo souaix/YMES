@@ -1077,4 +1077,25 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 
 - 更新 QC204 API、schema/migration 文件及本 TODO；若需要新增 migration，列出已比對的 live table，保留既有欄位/索引。
 - Push 到 GitHub main，通知公司端 pull 後以 DEV UI 接 Production API 驗收：0/-1 狀態、一般日誌、Tape 特例、無記錄、transaction 失敗回復、多選中途錯誤與權限拒絕。
-- 公司端下一個 Function 是 QC205「計量品管項目」。
+- 公司端已完成 QC205 Vue DEV 頁並交付家用端 API/schema 工作，詳細清單見本檔「QC205 計量品管項目 API/schema handoff」。
+## QC205 計量品管項目 API/schema handoff（公司端 2026-11-17）
+
+公司端已完成 `/YMES/QC/VariableQcItem` Vue DEV 畫面、三層選單、WinForms/Service/Core 規格與 Oracle metadata 參考。先 pull 最新 main，再閱讀 `docs/modules/QC/計量品管項目.md`、`docs/DATABASE_CONNECTION.md`、本段與 Create SQL；此段不是部署授權，也不代表 live schema 已確認。
+
+### Schema / Create SQL
+
+- Oracle source DDL 僅供參照：`database/reference/mestest_qc205_theil_custom_source_ddl.sql`、`mestest_qc205_variable_dependencies_source_ddl.sql`。MESTEST 沒有 `TBLSPCQCHARTDETAIL`、`TBLSPCQCHARTDETAILLOG`、`TBLSPCQCHARTRULE`、`TBLSPCQCHARTBASIS` 四表；追查 YMES 等價表/實際程式路徑，勿直接建立四張替代表。
+- QC205 主表 `TBLQCITEMFORVARIABLES` 的 Oracle/PG 結構沿用 `mestest_mtl_qc_item_tables_source_ddl.sql`、`mestest_mtl_qc_item_tables_create.sql`；Parameter、Factor、SamplePlanChange 沿用 QC201 `mestest_qc_item_attributes_source_ddl.sql`、`mestest_qc_item_attributes_create.sql`。先檢查 live PostgreSQL schema、已部署 migration 與 API DTO，禁止重複建表或覆蓋既有資料。
+- THEIL Memo 的 Oracle 原表是 `XX_TBLQCITEM_MEMO`；PG CREATE 參考在 `database/reference/mestest_qc205_theil_custom_create.sql`，含 YMES composite PK 適配。若 live schema 尚無等價 memo mapping，再新增 forward migration 和 rollback；保留 `qcitemtype=0` 的來源行為。
+- `XX_TBLSPC_TEMPDATA_VAR` 與 `TBLSPCVARDETAILLOG` Oracle 欄位含動態 ParameterNo 欄名；不要在 PostgreSQL 動態 ALTER 欄位。依既有量測 log API/schema 以 JSONB 或正規化子表承接；先查目前 schema 再決定需要的遷移。
+- 記錄 live schema 對照結果與 migration 使用的既有表/欄位。Create reference 不能未比對就直接當 production migration 執行；備份、部署遵循既有家用端流程。
+
+### API 工作
+
+1. 新增登入保護的 QC205 API controller/service/DTO，路徑與 payload 依 `docs/modules/QC/計量品管項目.md`。Vue 使用的端點包含列表/options、主檔 CRUD/Copy/Delete/Approve、Parameter/Factor/OP/SamplePlanChange/Memo 子資源及 Simulation。
+2. 實作 `POST /api/qc/variable-qc-items/copy-preview`，回傳 QCItem Parameter 與目標 Sampling Plan Parameter；若兩者不同，前端以 `parameterSource` 明確選擇，取消不建立資料。Copy 主表與已勾選子資料須同一 transaction；未複製 Parameter 時以新 Plan 初始化參數。
+3. 狀態更新須用資料庫真實狀態及 DataStamp/CAS。QCItemNo 跨計數/計量/群組衝突檢查；Validate min/max 同時限制上下界。Approve 先檢查 Factor，IssueNo=`QCITEM_V` 接共用 Issue/Job 流程，依有無 Job/Detail 決定 1 或 2；不得直接把所有核准狀態寫成 2。
+4. DELETE：IssueState=2 改成 -1；0/-1 僅在無量測、WIP、材料/OP/產品/群組使用時交易式刪除主檔及相關子資料，另清理 Memo mapping。先追查既有 YMES 正規關聯，不可照搬四張 MESTEST 缺表名稱。
+5. Memo GET 需回傳已核准 ParameterClass=1 清單加目前勾選；PUT 接 `{qcItemType:0,parameterNos}`，驗證 Parameter 清單並交易式全量替換 mapping。ParameterNo 僅為資料值，不得拼接成 SQL 欄名或執行動態 ALTER。
+6. Simulation 只回預覽結果、不寫量測日誌；所有 SQL parameterized，audit 使用登入者；端點遵循專案目前登入/權限約定。先在 API 文件列出 YMES 與舊 WinForms 行為差異，再實作。
+7. 更新 API/schema/migration 文件與本 TODO；commit/push 後通知公司端 pull，以 QC205 Production API 驗收。公司端此頁尚未執行 build、測試或瀏覽器驗收。

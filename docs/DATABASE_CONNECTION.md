@@ -395,3 +395,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - QC204 所用的 `TBLQCITEMFORATTRIBUTES`、`TBLSPCATTBASISLOG`、`TBLSPCATTDETAILLOG`、`TBLSPCATTEDITLOG`、`TBLSPCATTDETAILLOG_TAPE` DDL 已存在 `database/reference/mestest_qc_item_attributes_source_ddl.sql`，本次直接閱讀現有 reference，未重新連 Oracle，也未查業務資料。
 - QC204 不新增 Oracle/YMES 資料表。家用端需先比較 PostgreSQL migration/schema；只有缺少來源日誌表時才按既有 Oracle reference 設計 YMES migration/Create SQL，保留已存在 schema 與資料。
+
+### 更新 2026-11-17：QC205 計量品管項目 THEIL BU1
+
+- 公司端沿用既有受保護本機連線，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST，唯讀查詢 ALL_TABLES、DBMS_METADATA.GET_DDL 及索引字典。
+- 取得 XX_TBLQCITEM_MEMO、XX_TBLSPC_TEMPDATA_VAR、TBLSPCVARDETAILLOG，以及 QC205 刪除/複製/引用檢查所需的 23 個候選物件；其中 TBLSPCQCHARTDETAIL、TBLSPCQCHARTDETAILLOG、TBLSPCQCHARTRULE、TBLSPCQCHARTBASIS 在 MESTEST 不存在。未讀業務資料、未在 Oracle 執行 DDL。
+- Oracle source DDL：database/reference/mestest_qc205_theil_custom_source_ddl.sql、mestest_qc205_variable_dependencies_source_ddl.sql；Memo PostgreSQL Create 參考：mestest_qc205_theil_custom_create.sql。家用端先核對 YMES live schema/migrations，再決定必要 migration。
+- 連線秘密、主機值、帳號、密碼、SID 與受保護附件路徑未輸出或寫入 Git。
