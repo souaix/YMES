@@ -2,13 +2,14 @@
 
 ## 最新公司端 handoff：QC302 匯入管制圖內容（2026-11-17）
 
-- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/匯入管制圖內容.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`IMPORT QC CHART DATA`、FunctionKey=`QC302`；Vue DEV 頁 `/YMES/QC/ChartDataImport` 已掛在品質資料 → 計量規格設定。
-- [ ] 先查 YMES PostgreSQL live schema/migrations。公司端 PowerShell 5.1 已直連 Oracle 唯讀取得四張 QC302 表 DDL：`mestest_qc302_spc_qc_chart_source_ddl.sql`；空表 CREATE 參考 `mestest_qc302_spc_qc_chart_create.sql`。只有 live schema 確認缺漏才新增 forward migration；不要重建共用 QC Item/Factor/Rule/抽樣表。
-- [ ] 實作登入保護並要求 QC302 FunctionKey 的 API：`POST /api/qc/chart-data-import/preview`（multipart `.xls/.xlsx`、第一工作表、範本第 1 列標頭、第 2 列跳過、第 3 列起資料、空白列終止）、`POST /import`（全列匯入，不設 Check endpoint）及 `GET /template`。Production Vue 依此契約；路徑變更需同步修 Vue/spec。
-- [ ] Preview 回 `{columns,rows}`。Import 一次處理全部列並回 `{rows:[{rowNo,qcItemNo,succeeded,execute,factorSerial}]}`；rowNo 使用提交陣列序號。每列獨立交易並回列級結果；只依核准計量 QC Item 讀 FactorOnline，動態 FactorNo 用白名單條件與 JSONB，不可把上傳欄名插入 SQL。
-- [ ] 實作 Trend/Xbar/R/S/Rm 的數值欄、TUS/TLS 與 SpecLineType、上下界排序、Y 軸範圍、RuleNo/Action 格式與核准規則檢查。以 `QCItemNo + 全部線上因子值` 查唯一管制圖；0 筆新增、1 筆更新且設為核准、超過 1 筆拒絕。新增/更新 basis、5 種 detail、detail history、Rule 和新圖表預設 `TBLQCITEMRULE` 複製必須各在列交易內完成。
-- [ ] 主檔動態 Factor 值建議以 JSONB 儲存；CREATE-only 參考中的 `(qcitemno,factorvalues)` 唯一限制需先檢查既有重複組合再套用。Creator/CreateDate/FactorSerial/Execute 必須由伺服器管理；不執行 Excel 公式，限制檔案與資料量，使用參數化 SQL。範本沿用 FunctionNo=`IMPORT QC CHART DATA`。
-- [ ] Oracle source DDL 由公司端經 PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得，沒有讀業務列或執行 Oracle DDL，連線 IP/帳密/SID 未輸出。家用端完成 schema/API/FunctionKey/template 後 commit/push；公司端再 pull 對接。本段未執行 build、測試或瀏覽器驗收。
+- [x] 以家用端 PPK/SSH 核對 YMES schema；QC302 四張圖表表原先都不存在，QC Item Variables/Factor 已存在。Rule、Sampling Plan 共用資料表也尚未複製，沒有在 QC302 migration 中重建共用表。
+- [x] 新增並套用 `database/migrations/0024_qc302_chart_data_import.sql`；套用前建立並以 `pg_restore --list` 驗證 `/opt/ymes/backups/ymes_before_0024_qc302_20261117.dump`。核對四張表共 68 欄及 `ymes_app` CRUD 權限；migration 只建結構，未新增業務資料。
+- [x] 完成登入保護 API：`POST /api/qc/chart-data-import/preview`（`.xls/.xlsx` 第一工作表、第 1 列標頭、第 2 列跳過、第 3 列起、空白列終止）、`POST /import`（全列匯入、無 Check）及 `GET /template`。因角色/功能權限依使用者決定暫緩，API 目前要求登入，不做 FunctionKey ACL。
+- [x] Preview 回 `{columns,rows}`；Import 回列級 `rowNo/qcItemNo/succeeded/execute/factorSerial`，每列獨立交易。已實作核准 QC Item/線上 Factor 白名單、JSONB、SpecLineType/TUS/TLS、數值/排序/Y 軸、RuleNo/Action 核准檢查、重複組合、basis、五種 detail、detail history、rule 複製/替換；Creator/CreateDate/FactorSerial 由伺服器管理，所有資料欄參數化。
+- [ ] 可匯入 QC302 的基本規則仍受 YMES 尚缺共用 `TBLQCITEMRULE`、`TBLQCRULEBASIS` 阻擋；新管制圖必須複製預設規則，API 會對該列回 503，不會略過。若輸入 PlanNo，因 `TBLQCSAMPLINGPLAN` 尚未複製也會回 503。待相關共用 QC schema 任務另行建立後再驗證匯入。
+- [ ] `GET /template` 目前以 503 明確回報尚未移轉 `FunctionNo=IMPORT QC CHART DATA` 的正式範本；未用 DEV 假檔冒充。待取得／移轉 MES 範本儲存區與 `QCChart_Template.xls/.xlsx` 後接上下載。
+- [x] 本機 `dotnet build src/YMes.Api/YMes.Api.csproj --no-restore` 成功（0 warning/0 error）；遠端 Docker API image build 成功，`ymes-api` healthy、`/YMES/API/health/ready`=200；未登入呼叫 QC302 端點回 401。app-browser 的認證狀態已失效並被導回登入頁，本回合未操作登入畫面。
+- [x] 已 `git fetch origin`；`origin/main` 最新為 `0b0f434`，已包含於家用端，沒有更新 commit。將只提交本 QC302 API/schema/docs 與 QC302 待辦段落，然後以一般 fast-forward push 同步 `main`，不 force push。Oracle source DDL 由公司端唯讀取得，沒有讀業務列或執行 Oracle DDL，連線 IP/帳密/SID 未輸出。
 
 ## 前一項公司端 handoff：QC215 計數品管項目匯入（2026-11-17）
 

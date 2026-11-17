@@ -20,8 +20,10 @@
 - [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 和本機受保護設定唯讀查四張實際寫入的 SPC QC Chart Oracle table/index DDL；沒有讀業務列或在 Oracle 執行 DDL。建立 `mestest_qc302_spc_qc_chart_source_ddl.sql` 及 PostgreSQL schema-only CREATE 參考 `mestest_qc302_spc_qc_chart_create.sql`；Factor 動態欄位以 JSONB handoff。
 - [x] 新增 `/YMES/QC/ChartDataImport` Vue DEV 頁、品質資料→計量規格設定三層選單、格式化欄位、動態 Grid 編輯/刪列、假資料逐列 Save/結果回報。
 - [x] 新增 `docs/modules/QC/匯入管制圖內容.md`，記錄程式來源、欄位與 Core 驗證/更新行為、API 契約及 Oracle/PG DDL；更新規格索引、DB 查詢紀錄與家用 TODO。並將 QC214 先前的 Oracle Chart table 拼字疑義修正為已確認名稱，仍要求家用端核對 YMES live schema。
-- [ ] QC302 Production API/schema 待家用端依 `todolist_homepc.md` 處理；四張來源表沒有 FK，API 需逐列交易、併發去重、逐列回傳、FunctionKey QC302、服務端 audit，FactorNo 禁止動態 SQL identifier。
-- [ ] 本段未執行 build、test 或瀏覽器驗收；接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接讀取下一個未遷移功能的 WinForms Form/Service/Core。
+- [x] 家用端已部署 QC302 migration `0024_qc302_chart_data_import.sql` 與登入保護 API：Preview `.xls/.xlsx`、全列 Import、JSONB 因子、逐列交易/結果、圖表 basis/五種 detail/history/rule 寫入；API health=200。角色/FunctionKey ACL 依使用者決定暫緩。
+- [ ] 公司端待家用端提交/推送後 pull 最新 `main`，再用正式頁面確認 API Preview/Import 回應與資料欄位映射。匯入目前會因 YMES 尚缺共用 `TBLQCITEMRULE`、`TBLQCRULEBASIS` 而拒絕新圖，傳入 PlanNo 且缺 `TBLQCSAMPLINGPLAN` 亦拒絕；不可把缺表視為成功。
+- [ ] 正式範本 binary/storage 尚未移轉，`GET /template` 暫回 503；待取得 MES `QCChart_Template.xls/.xlsx` 與模板儲存規則後再驗收下載。app-browser 本回合導回登入頁，需在登入狀態下完成 QC302 操作驗收。
+- [ ] API 部署後公司端可接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接讀取下一個未遷移功能的 WinForms Form/Service/Core。
 
 ### 前一項：QC215 計數品管項目匯入（公司端 2026-11-17）
 
