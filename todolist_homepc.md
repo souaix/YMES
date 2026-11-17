@@ -1,10 +1,22 @@
+## 最新公司端交接：PS103 流程類別資料（2026-11-18）
+
+- [ ] Pull 最新 GitHub `main`，讀 `docs/modules/PRS/流程類別資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS103 段落，以及 `database/reference/mestest_prs103_process_type_source_ddl.sql` / `mestest_prs103_process_type_create.sql`。
+- [ ] 查 YMES PostgreSQL live schema/migrations 的 `YMES.tblprstype`。PS103 是此表的 owner；先核對欄位、PK、nullable/default 和現存資料。缺表才新增 forward migration；若已存在，保留資料，只補 live schema 確認缺少的 default，禁止重建。
+- [ ] Oracle 結構：`processtype varchar(20) NOT NULL` PK；`description varchar(255) NULL`；creator/reviser varchar(10) nullable；create/revise date nullable；`issuestate numeric(1,0) DEFAULT 0 NOT NULL`；`datastamp numeric(11,0) DEFAULT 0 NULL`。來源僅 PK unique index，無 FK/額外 index。PostgreSQL CREATE 檔是參考，不是直接部署 migration。
+- [ ] 實作登入保護 FunctionNo=`PRS TYPE`、FunctionKey=`PS103` API：GET `/api/process-types?issueState=&processType=`、POST、PUT `/{processType}`、DELETE `/{processType}`、POST `/{processType}/approve`。Vue DEV 頁 `/YMES/PRS/ProcessType` 已固定此契約。
+- [ ] Add/Copy 共用新增流程：ProcessType 必填、正規化大寫、最多 20；Description 最多 255；server 設 Creator/CreateDate。除 PK unique 外，新增時還要以不分大小寫檢查 `TBLPRSProcessBasis.ProcessNo` 衝突，來源 clsProcess 明確禁止兩種識別碼相同。
+- [ ] Edit 僅允許 IssueState=0、ProcessType PK 不可改，只更新 Description、Reviser/ReviseDate，DataStamp null-safe CAS 並遞增，競爭回 409。IssueState 0/-1 刪除時同一 transaction 先清 `tblprsprocessproperty` 中 `processno=ProcessType` 的列再刪 `tblprstype`；狀態 2 CAS 改 -1，狀態 1 禁止。多選 UI 是逐筆處理，回報每筆成功/失敗。
+- [ ] Approve 只允許狀態 0，重用共用 IssueManagement IssueNo=`PRS TYPE`。無 Job/Detail 直升 2；有簽核設定先轉 1、發第一關通知，callback 核准 2/退回 0；API 不得略過簽核流程。
+- [ ] Property 按鈕重用 shared `TBLPRSProcessProperty` API。legacy 以 ProcessNo=ProcessType 開啟且 ProcessVersion 未指定，列表查詢省略版本以載入該 ProcessNo 的所有版本；Property 編輯畫面空白 ProcessVersion 對應資料庫鍵值 -1，新增、修改、刪除均須以 -1 傳送而 UI 顯示空白；default value 需重用 Element 驗證，新增檢查 ProcessNo/version，核准 IssueNo=`PRS PROPERTY`。勿將屬性列複製到新 ProcessType。協調 PS104，避免複製兩套 property controller。
+- [ ] PS104 `GET /api/process-basis/lookups/process-types?issueState=2` 應查同一張 `tblprstype`，重用 PS103 schema/lookup，不另建 lookup 表。完成 schema/API 後更新規格和 TODO、commit/push `main`；公司端再 pull 對接。公司端 PS103 使用 DEV localStorage，未連 YMES PostgreSQL，也未執行 build/test/browser。
+
 ## 最新公司端交接：PS104 流程基本資料（2026-11-18）
 
 - [ ] Pull GitHub `main`，先讀 `docs/modules/PRS/流程基本資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS104 段落，以及 `database/reference/mestest_prs104_process_basis_source_ddl.sql` / `mestest_prs104_process_basis_create.sql`。
 - [ ] 比對 YMES PostgreSQL live schema、migration 和欄位 defaults。Create SQL 是對照，不可直接整份執行、不可重建既有表。First-phase 有 `tblprsprocessbasis`、`tblprsnodebasis`、`tblprsopapsdetail` 三表；確認 live objects 後，只為缺失建立 migration。
 - [ ] Oracle DDL 中三個 `VARCHAR2(n CHAR)` 長度與 PostgreSQL varchar(n) 相同；`ALL_TAB_COLUMNS.DATA_LENGTH` 是 bytes，不是來源字元數，不要用 byte 數誤改欄寬。
 - [ ] Source defaults 與 first-phase Create 目前可見差異：ProcessBasis 的 IssueState/TuningProcess/CurVersion/PartialType/DataStamp = 0；NodeBasis 的 NodeType=0、NodeVersion='N/A'；OPAPSDetail 的 ApsFixEqpTime/ApsVarEqpTime/BatchOP=0、BatchMaxQty=999999。先查 live `pg_attrdef`，只對 live 缺少的 default 加 forward `ALTER COLUMN SET DEFAULT`；保留 nullable/原資料。
-- [ ] 首次新增其餘六表：`tblprsnoderelation`、`tblprsnodexml_clob`、`tblprsprocessproperty`、`tblprsopapsbase`、`tblprsproductionsegment`、`tblprstype`。Schema 欄位、PK、NULL/default 依 Oracle source DDL/CREATE 參照；Oracle 九表只有 PK unique index，無 FK 或額外 index。不要自行新增索引/FK。
+- [ ] 首次新增 PS104 專屬的五張缺表：`tblprsnoderelation`、`tblprsnodexml_clob`、`tblprsprocessproperty`、`tblprsopapsbase`、`tblprsproductionsegment`。`tblprstype` 由 PS103 handoff 建立並由 PS104 重用；欄位、PK、NULL/default 依 Oracle DDL/CREATE 參照，Oracle source 僅 PK unique index，無 FK/額外 index。不要自行新增索引/FK。
 - [ ] 完成登入保護 PS104 API，路徑、DTO 和 DEV Vue 實際呼叫見功能規格：process basis list/Add/Edit/Delete/Approve/Copy/Version、Property CRUD/Issue、Exclude OP、已核准 PS/ProcessType lookup 及 Excel import。
 - [ ] IssueState 語意：0 未核准、1 簽核中、2 已核准、-1 不使用。Edit/Draw 只允許 0；Version 只允許 Active/current；刪除 0/-1 實體清理子表，2 用 DataStamp CAS 標成 -1，1 禁止。多表 delete/copy 使用單一 transaction。Creator/Reviser/時間由 API principal/server 設定；DataStamp null-safe CAS，衝突回 409。
 - [ ] 核准不能由 API 直接改狀態：核對非空流程圖、Exclude OP；無 Issue Job/Detail 才可 direct Active，有設定則走共用 IssueManagement IssueNo=`PRS BASIS`，維持 Pending、簽核 callback、第一關通知與 CurVersion 前版切換。

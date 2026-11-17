@@ -4,6 +4,7 @@ import MenuTree from './components/MenuTree.vue'
 import MenuIcon from './components/MenuIcon.vue'
 import EquipmentMaster from './components/EquipmentMaster.vue'
 import ProcessBasisMaster from './components/ProcessBasisMaster.vue'
+import ProcessTypeMaster from './components/ProcessTypeMaster.vue'
 import EquipmentCarrierCategoryMaster from './components/EquipmentCarrierCategoryMaster.vue'
 import EquipmentCarrierTypeMaster from './components/EquipmentCarrierTypeMaster.vue'
 import EquipmentCarrierBasisMaster from './components/EquipmentCarrierBasisMaster.vue'
@@ -341,7 +342,7 @@ const fallbackMenuTree: MenuNode[] = [
     label: '流程資料',
     shortLabel: '流',
     moduleNo: 'PRS',
-    children: [{ id: 'process-settings', label: '流程設定', shortLabel: '設', children: [{ id: 'process-master', label: '流程主檔', tableName: 'tblprsprocessbasis', shortLabel: '主', functionNo: 'PRS BASIS', moduleNo: 'PRS' }] }],
+    children: [{ id: 'process-settings', label: '流程設定', shortLabel: '設', children: [{ id: 'process-master', label: '流程主檔', tableName: 'tblprsprocessbasis', shortLabel: '主', functionNo: 'PRS BASIS', moduleNo: 'PRS' }, { id: 'function:PRS:PRS TYPE', label: '流程類別資料', tableName: 'tblprstype', shortLabel: '類', functionNo: 'PRS TYPE', moduleNo: 'PRS' }] }],
   },
   {
     id: 'product-data',
@@ -451,6 +452,7 @@ const menuRoutes: Record<string, string> = {
   'function:EQP:ACC CATEGORY STATE': equipmentAccessoryCategoryStateRoute,
   'function:EQP:ACC TYPE': equipmentAccessoryTypeRoute,
   'function:PRS:PRS BASIS': `${appBasePath}/PRS/ProcessBasis`,
+  'function:PRS:PRS TYPE': `${appBasePath}/PRS/ProcessType`,
   'operation-master': `${appBasePath}/MasterData/Operations`,
   'function:OP:OP TYPE': appBasePath + '/MasterData/OperationTypes',
   'function:OP:OP RULE BASIS': appBasePath + '/OP/ControlRules',
@@ -534,6 +536,7 @@ const functionRoutes: Record<string, string> = {
   'B_MTL AUTOLOADER SETUP': materialVendorAutoLoaderRoute,
   'B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
   'PRS BASIS': `${appBasePath}/PRS/ProcessBasis`,
+  'PRS TYPE': `${appBasePath}/PRS/ProcessType`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
@@ -579,6 +582,7 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
   return key === 'operation-master' || key === 'material-master' || key === 'process-master' || key === 'product-master' ? key : null
 })
 const isPrsProcessBasisPage = computed(() => activeMasterKey.value === 'function:PRS:PRS BASIS')
+const isPrsProcessTypePage = computed(() => activeMasterKey.value === 'function:PRS:PRS TYPE')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
 const isOperationControlRulePage = computed(() => activeMasterKey.value === 'function:OP:OP RULE BASIS')
@@ -1317,6 +1321,14 @@ async function signOut(): Promise<void> {
         </div>
         <ProcessBasisMaster
           v-if="isPrsProcessBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProcessTypeMaster
+          v-else-if="isPrsProcessTypePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+### 更新 2026-11-18：PRS PS103 流程類別資料
+
+- 使用本機受保護 Oracle 設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查 `MESTEST.TBLPRSTYPE` 的 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`。只有 `PROCESSTYPE` PK unique index，沒有 FK/其他 index。
+- Oracle source DDL：`database/reference/mestest_prs103_process_type_source_ddl.sql`；YMES PostgreSQL CREATE-only 對照：`database/reference/mestest_prs103_process_type_create.sql`。只查結構 metadata，未讀業務列、未在 Oracle 執行 DDL/DML、未輸出/提交連線秘密。
+- `ISSUESTATE NUMBER(1,0) DEFAULT 0 NOT NULL`；`DATASTAMP NUMBER(11,0) DEFAULT 0` nullable。PS103 是 `TBLPRSTYPE` owner，供 PS104 流程類別 lookup 重用；若 YMES 已有表不重建，先比較 live defaults。
+- ProcessType 新增另有程式檢查：不可與 `TBLPRSProcessBasis.PROCESSNO` 大小寫不敏感重複。刪除 0/-1 要在同一交易清 `TBLPRSProcessProperty` 的同 ProcessNo 資料，再刪主檔；Oracle 無 FK。
+- Property 由 `PS_ProcessProperty` 共用模組管理，傳入 ProcessNo=ProcessType、ProcessVersion 未指定；核准 IssueNo=`PRS PROPERTY`。Oracle 連線秘密仍只保留本機受保護設定，不寫入 Git 文件或腳本。
+
 ### 更新 2026-11-18：PRS PS104 流程基本資料九表
 
 - 使用本機受保護既有 Oracle 設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接連 MESTEST 唯讀取得 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`：`TBLPRSPROCESSBASIS`、`TBLPRSNODEBASIS`、`TBLPRSNODERELATION`、`TBLPRSNODEXML_CLOB`、`TBLPRSPROCESSPROPERTY`、`TBLPRSOPAPSBASE`、`TBLPRSOPAPSDETAIL`、`TBLPRSPRODUCTIONSEGMENT`、`TBLPRSTYPE`。

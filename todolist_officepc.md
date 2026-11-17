@@ -1,3 +1,10 @@
+## 2026-11-18 公司端進度：PS103 流程類別資料
+
+- [x] 直接閱讀 `frmProcessType`/Def、Designer、`wsPRS.Load/Add/Edit/Del/ApproveProcessType`、`clsProcess`、`clsBasis_UPD`，以及共用 `PS_ProcessProperty` 子功能；確認列表欄位、四狀態、Apply/Confirm、ProcessNo 衝突、子資料刪除、簽核 IssueNo 和 DataStamp。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護 Oracle 設定唯讀取得 `MESTEST.TBLPRSTYPE` DBMS_METADATA DDL、欄位/default、constraint/index；未讀業務資料、未執行 Oracle DDL/DML、未輸出連線秘密。來源僅有 PK unique index。
+- [x] 新增 `ProcessTypeMaster.vue`、PS103 規格、Oracle source DDL、PostgreSQL CREATE-only 參考、三層選單路由與家用端 schema/API handoff；Property 共用 API 和 PS104 ProcessType lookup 相依已註明。
+- [ ] 尚未連 YMES PostgreSQL，未實作 Production API/migration；依規則未執行 build、test 或 browser 驗收。推送完成後依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接續下一個未遷移功能。
+
 ## 2026-11-18 公司端進度：PS104 流程基本資料
 
 - [x] 直接閱讀主/Def/Draw/Exclude OP WinForms、Property 子功能、Data Import Form、wsPRS 和 clsProcess，整理欄位、狀態、核准、版本、複製、刪除、流程圖及匯入行為。
@@ -6,7 +13,7 @@
 - [x] 新增 Vue DEV 流程基本資料頁：狀態查詢、欄位 Grid、Add/Edit/Copy/Approve/Delete/Property/Version/Exclude OP、簡化節點/連線編輯及 Import 視窗。假資料存在獨立 localStorage。
 - [ ] 流程圖 XML serializer、群組/分支拖曳編輯與舊版格式相容待確認；Excel checker 外部 DLL 未找到原始碼，DEV 只保留選檔視窗，不宣稱匯入完成。
 - [ ] 未連 YMES PostgreSQL、未實作 API/migration；未執行 build/test/browser。
-- [ ] 家用端完成 API/schema 並 push 後，公司端 pull、對接 Production API。下一個 Function 依清單為 PRS TYPE（PS103）。
+- [ ] 家用端完成 API/schema 並 push 後，公司端 pull、對接 Production API。PS103 現由公司端接續完成；下一項依流程設定清單為 PS BASIS（PS101）。
 
 ## 2026-11-18 公司端進度：OPB02 ECN 作業站群組設定
 
