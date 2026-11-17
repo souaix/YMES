@@ -541,3 +541,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 取得 TBL_BOPCUSTOPMAPBASIS、TBL_BOPCUSTOPMAPDETAIL DDL；兩表只有欄位 NOT NULL checks 與 PK，只有 PK unique index，沒有 FK/額外索引。
 - Oracle DDL 與 PostgreSQL CREATE-only 參照分別保存於 database/reference/mestest_opb03_customer_op_mapping_source_ddl.sql、database/reference/mestest_opb03_customer_op_mapping_create.sql。
 - 只讀結構 metadata，未查 MES 業務資料列、未執行 Oracle DDL/DML；連線秘密未輸出或寫入 Git。家用端先查 live schema/migrations，確定缺表才加 forward migration。
+
+### 更新 2026-11-18：OPB02 ECN 作業站群組設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護的 `DatabaseConfigs.CS.Test.Mes` MESTEST 設定唯讀取得 `TBLOPECNGROUPBASIS`、`TBLOPECNGROUPDETAIL` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。
+- Basis PK 為 `OPGROUPNO`；Detail PK 為單欄 `OPNO`。兩張表僅有 PK unique index 與 NOT NULL check，沒有 FK 或其他獨立 index。Basis `ISSUESTATE` 必填但無 Oracle default；`DATASTAMP` nullable DEFAULT 0。
+- Oracle source DDL 與 PostgreSQL CREATE-only 參照為 `database/reference/mestest_opb02_ecn_operation_group_source_ddl.sql`、`database/reference/mestest_opb02_ecn_operation_group_create.sql`。只查 metadata，未讀業務列、未執行 Oracle DDL/DML，連線秘密未輸出或提交；家用端先核對 live schema 再補 forward migration。

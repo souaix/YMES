@@ -40,6 +40,7 @@ import OperationControlRuleMaster from './components/OperationControlRuleMaster.
 import BusinessRuleBasisMaster from './components/BusinessRuleBasisMaster.vue'
 import OperationGroupMaster from './components/OperationGroupMaster.vue'
 import CustomerOPMappingMaster from './components/CustomerOPMappingMaster.vue'
+import EcnOperationGroupMaster from './components/EcnOperationGroupMaster.vue'
 import MaterialVendorMaster from './components/MaterialVendorMaster.vue'
 import MaterialTypeMaster from './components/MaterialTypeMaster.vue'
 import MaterialTypeQCItemMaster from './components/MaterialTypeQCItemMaster.vue'
@@ -258,7 +259,7 @@ const fallbackMenuTree: MenuNode[] = [
     label: '作業站資料',
     shortLabel: '站',
     moduleNo: 'OP',
-    children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP TYPE', label: '作業站類別資料', tableName: 'tbloptype', shortLabel: '類', functionNo: 'OP TYPE', moduleNo: 'OP' }, { id: 'function:OP:OP RULE BASIS', label: '作業站法則設定', tableName: 'tblopcontrolrule', shortLabel: '則', functionNo: 'OP RULE BASIS', moduleNo: 'OP' }, { id: 'function:OP:BR BASIS', label: '企業邏輯設定', tableName: 'tblopbusinessrulebasis', shortLabel: '企', functionNo: 'BR BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP GROUP BASIS', label: '作業站群組資料', tableName: 'tblopgroupbasis', shortLabel: '群', functionNo: 'OP GROUP BASIS', moduleNo: 'OP' }] }, { id: 'operation-industry-package', label: '行業包', shortLabel: '行', children: [{ id: 'function:OP:B_CUSTOMER OP MAPPING', label: '客戶站點對應設定', tableName: 'tbl_bopcustopmapbasis', shortLabel: '客', functionNo: 'B_CUSTOMER OP MAPPING', moduleNo: 'OP' }] }],
+    children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP TYPE', label: '作業站類別資料', tableName: 'tbloptype', shortLabel: '類', functionNo: 'OP TYPE', moduleNo: 'OP' }, { id: 'function:OP:OP RULE BASIS', label: '作業站法則設定', tableName: 'tblopcontrolrule', shortLabel: '則', functionNo: 'OP RULE BASIS', moduleNo: 'OP' }, { id: 'function:OP:BR BASIS', label: '企業邏輯設定', tableName: 'tblopbusinessrulebasis', shortLabel: '企', functionNo: 'BR BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP GROUP BASIS', label: '作業站群組資料', tableName: 'tblopgroupbasis', shortLabel: '群', functionNo: 'OP GROUP BASIS', moduleNo: 'OP' }] }, { id: 'operation-industry-package', label: '行業包', shortLabel: '行', children: [{ id: 'function:OP:B_CUSTOMER OP MAPPING', label: '客戶站點對應設定', tableName: 'tbl_bopcustopmapbasis', shortLabel: '客', functionNo: 'B_CUSTOMER OP MAPPING', moduleNo: 'OP' }, { id: 'function:OP:B_ECN OP GROUP BASIS', label: 'ECN 作業站群組設定', tableName: 'tblopecngroupbasis', shortLabel: 'E', functionNo: 'B_ECN OP GROUP BASIS', moduleNo: 'OP' }] }],
   },
   {
     id: 'material-data',
@@ -453,6 +454,7 @@ const menuRoutes: Record<string, string> = {
   'function:OP:BR BASIS': appBasePath + '/OP/BusinessRules',
   'function:OP:OP GROUP BASIS': appBasePath + '/OP/Groups',
   'function:OP:B_CUSTOMER OP MAPPING': appBasePath + '/OP/CustomerOPMapping',
+  'function:OP:B_ECN OP GROUP BASIS': appBasePath + '/OP/ECNOperationGroups',
   'material-master': `${appBasePath}/MasterData/Materials`,
   'process-master': `${appBasePath}/MasterData/Processes`,
   'product-master': `${appBasePath}/MasterData/Products`,
@@ -517,6 +519,7 @@ const functionRoutes: Record<string, string> = {
   'BR BASIS': appBasePath + '/OP/BusinessRules',
   'OP GROUP BASIS': appBasePath + '/OP/Groups',
   'B_CUSTOMER OP MAPPING': appBasePath + '/OP/CustomerOPMapping',
+  'B_ECN OP GROUP BASIS': appBasePath + '/OP/ECNOperationGroups',
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
   'MTL VENDOR': materialVendorRoute,
   'MTL TYPE': materialTypeRoute,
@@ -577,6 +580,7 @@ const isOperationControlRulePage = computed(() => activeMasterKey.value === 'fun
 const isBusinessRuleBasisPage = computed(() => activeMasterKey.value === 'function:OP:BR BASIS')
 const isOperationGroupPage = computed(() => activeMasterKey.value === 'function:OP:OP GROUP BASIS')
 const isCustomerOPMappingPage = computed(() => activeMasterKey.value === 'function:OP:B_CUSTOMER OP MAPPING')
+const isEcnOperationGroupPage = computed(() => activeMasterKey.value === 'function:OP:B_ECN OP GROUP BASIS')
 const isMaterialVendorPage = computed(() => activeMasterKey.value === 'function:MTL:MTL VENDOR')
 const isMaterialTypePage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE')
 const isMaterialTypeQCItemPage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE QCITEM')
@@ -750,6 +754,26 @@ function addDevelopmentEquipmentFunctions(items: MenuNode[]): MenuNode[] {
   return result
 }
 
+function addDevelopmentOperationIndustryFunctions(items: MenuNode[]): MenuNode[] {
+  const cloneTree = (nodes: MenuNode[]): MenuNode[] => nodes.map((item) => ({ ...item, children: item.children ? cloneTree(item.children) : undefined }))
+  const result = cloneTree(items)
+  const fallbackOperation = fallbackMenuTree.find((item) => item.moduleNo?.toUpperCase() === 'OP')
+  const fallbackIndustry = fallbackOperation?.children?.find((item) => item.label.trim() === '行業包')
+  if (!fallbackOperation || !fallbackIndustry) return result
+  let operation = result.find((item) => item.moduleNo?.toUpperCase() === 'OP')
+  if (!operation) { result.push(cloneTree([fallbackOperation])[0]); return result }
+  let industry = operation.children?.find((item) => item.label.trim() === '行業包')
+  if (!industry) {
+    industry = { id: 'development:OP:industry', label: '行業包', shortLabel: '行', moduleNo: 'OP', children: [] }
+    operation.children = [...(operation.children ?? []), industry]
+  }
+  const existing = new Set((industry.children ?? []).map((item) => item.functionNo?.toUpperCase() || item.id))
+  const fallbackFeatures = fallbackIndustry.children ?? []
+  industry.children = [...(industry.children ?? []), ...fallbackFeatures
+    .filter((item) => !existing.has(item.functionNo?.toUpperCase() || item.id))
+    .map((item) => cloneTree([item])[0])]
+  return result
+}
 function addDevelopmentInspectionMachineFunctions(items: MenuNode[]): MenuNode[] {
   const cloneTree = (nodes: MenuNode[]): MenuNode[] => nodes.map((item) => ({ ...item, children: item.children ? cloneTree(item.children) : undefined }))
   const result = cloneTree(items)
@@ -815,7 +839,7 @@ async function loadMenuTree(): Promise<void> {
     const response = await fetch(url, { credentials: 'include', cache: 'no-store' })
     if (!response.ok) throw new Error(`主選單 API 回應錯誤 (${response.status})。`)
     const apiMenuTree = mapMenuTree(await response.json() as MenuTreeApiResponse)
-    menuTree.value = import.meta.env.DEV ? addDevelopmentInspectionMachineFunctions(addDevelopmentEquipmentFunctions(apiMenuTree)) : apiMenuTree
+    menuTree.value = import.meta.env.DEV ? addDevelopmentOperationIndustryFunctions(addDevelopmentInspectionMachineFunctions(addDevelopmentEquipmentFunctions(apiMenuTree))) : apiMenuTree
     menuSource.value = 'api'
   } catch (error) {
     menuError.value = error instanceof Error ? error.message : '主選單載入失敗。'
@@ -1963,6 +1987,14 @@ async function signOut(): Promise<void> {
         />
         <CustomerOPMappingMaster
           v-else-if="isCustomerOPMappingPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <EcnOperationGroupMaster
+          v-else-if="isEcnOperationGroupPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

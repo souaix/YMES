@@ -1,3 +1,15 @@
+## 最新公司端交接：OPB02 ECN 作業站群組設定（2026-11-18）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/OP/ECN作業站群組設定.md`、`docs/DATABASE_CONNECTION.md` OPB02 段落，以及 Oracle source DDL / PostgreSQL CREATE 對照。
+- [ ] 比對 YMES PostgreSQL live schema/migrations：`YMES.tblopecngroupbasis`、`YMES.tblopecngroupdetail`。Oracle source DDL 在 `database/reference/mestest_opb02_ecn_operation_group_source_ddl.sql`；CREATE-only 參考在 `database/reference/mestest_opb02_ecn_operation_group_create.sql`。只補缺表的 forward migration；既有表只做必要 alter migration，不重建、不覆蓋資料。
+- [ ] 實作 FunctionNo=`B_ECN OP GROUP BASIS`、FunctionKey=`OPB02` 的登入/API 權限及規格所列 endpoints。Vue 固定使用 `/api/ecn-operation-groups`、`/{opGroupNo}/operations`、`/lookups/production-segments`、`/lookups/operations`、POST/PUT/DELETE、`/{opGroupNo}/approve`。
+- [ ] 主表 `OPGROUPNO VARCHAR2(20)` PK；GroupName 50、PSNo 50、Description 255；OPGroupOrder NUMBER(6,0) nullable；IssueState NUMBER(1,0) NOT NULL 且 Oracle 無 default；DataStamp NUMBER(11,0) nullable DEFAULT 0。保留來源 NULL/default，DataStamp 用 null-safe CAS，衝突回 409；audit 僅由 API principal/server 設定。
+- [ ] Detail PK 是 `OPNO` 單欄全表唯一（不是 `(OPGROUPNO, OPNO)`），OPGroupNo/OPNo 都必填 20 字元。新增只能選 `TBLOPBASIS.IssueState=2`、`PSNo` 與所屬群組完全相等，且目前未出現在任何 `TBLOPECNGROUPDETAIL` 的 OP；這是全域排除。不要把 `PSNo='*'` 當萬用值。
+- [ ] 主檔修改僅狀態 0；刪除時 DB 狀態 0/-1 在單一 transaction 先刪 detail 再刪 basis，狀態 2 採 DataStamp CAS 改 -1 並保留 details，狀態 1 禁止。不可相信 request body 的 IssueState 作為授權依據。來源沒有 FK 或 PK 以外的 index，不要自行新增。
+- [ ] 核准使用 IssueNo=`OP ECN GROUP BASIS`：重用共用 IssueManagement。無 Job 或 Job 無 Detail 時直接 0→2；否則建立 Job/Detail、設定 1，核准 SQL 更新 2、退回 SQL 還原 0，通知第一關。不要在 Vue/API 繞過既有簽核服務或遺漏通知。
+- [ ] 明細新增/刪除為逐筆操作、沒有明細 Edit；明細可在任何群組狀態操作（WinForms 沒有狀態限制）。明細新增需重驗群組、OP 核准狀態、PS 相同及全表 OPNo 唯一，刪除實體資料。
+- [ ] API/schema 完成後更新模組規格與 TODO、提交並 push `main`，供公司端 pull。DEV localStorage 假資料不得寫入正式資料庫。
+
 ## 最新公司端交接：OPB03 客戶站點對應設定（2026-11-18）
 
 - [ ] Pull 最新 main；閱讀 docs/modules/OP/客戶站點對應設定.md、OP101–OP105 規格，以及 database/reference/mestest_opb03_customer_op_mapping_source_ddl.sql 和 mestest_opb03_customer_op_mapping_create.sql。

@@ -1,3 +1,12 @@
+## 2026-11-18 公司端進度：OPB02 ECN 作業站群組設定
+
+- [x] 直接閱讀 `frmOP_B_ECNOPGroupBasis`/Def、Designer、`wsOP.Load/Add/Edit/Del/ApproveOPECNGroupBasis`、`clsOpBasis` 與 DataStamp update；確認主/明細雙 Grid、狀態篩選、Copy 僅複製主檔、OP lookup 限制、逐筆多選與簽核 Job 分流。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連受保護 MESTEST 連線唯讀取得 `TBLOPECNGROUPBASIS`、`TBLOPECNGROUPDETAIL` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。主鍵分別是 `OPGROUPNO` 與單欄 `OPNO`；只有 PK unique index，沒有 FK/額外索引；未讀業務列、未執行 Oracle DDL/DML、未輸出連線秘密。
+- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 參照、`docs/modules/OP/ECN作業站群組設定.md`；更新規格索引、資料庫連線紀錄及家用端 API/schema handoff。
+- [x] 完成作業站資料 → 行業包 → ECN 作業站群組設定 Vue DEV 頁 `/YMES/OP/ECNOperationGroups`：四狀態篩選、主/明細 Grid、CRUD/Copy/核准/刪除、PS/OP 選擇、稽核欄、DataStamp 欄位及 KD 黃色輸入欄；假資料僅 DEV localStorage。
+- [ ] 家用端尚未比對 YMES live schema、實作 Production API/migration；公司端未連 YMES PostgreSQL，未執行 build、test、browser。
+- [ ] 接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 的下一個尚未完成 FunctionNo，不要重做已交接功能。
+
 ## 2026-11-18 公司端進度：OPB03 客戶站點對應設定
 
 - [x] 直接閱讀 frmB_OPCustomerOPMapping、主檔/明細 Def Forms 與 Designer、wsOP、clsOpBasis、clsB_Basis_UPD；確認雙 Grid、lookup 狀態、Add/Edit/Copy/刪除、DataStamp、Audit 與批次刪除行為。
