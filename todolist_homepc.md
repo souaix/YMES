@@ -53,6 +53,16 @@
 - [ ] 實作 DELETE：狀態 0/-1/2 實體刪除明細與主檔，同交易；狀態 1 拒絕。Approve 僅 state0 且每個 RuleNo 至少一筆明細；依 Issue Job Map `QCITEM_A RULE DATA` 無流程時 0→2，有簽核則 0→1、通知首簽群組，核准2/退回0；回傳實際狀態。
 - [ ] 多選刪除/核准依 WinForms 逐筆執行，首錯停止並保留已完成筆數；全部 SQL 參數化。比對 YMES schema、遷移及 API 後更新文件並 push，通知公司端 pull。不得連 MES Oracle 或匯入業務列。
 
+### QC108 計量品管法則基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/計量品管法則基本資料.md`、公司端 QC108 區段與 `docs/DATABASE_CONNECTION.md`；完成既有 QC104–QC107 API/schema 交接後再核對 QC108。
+- [ ] 對照 Oracle source DDL `database/reference/mestest_qc_variable_rule_basis_source_ddl.sql` 與 PostgreSQL CREATE 參考 `database/reference/mestest_qc_variable_rule_basis_create.sql`，檢查 YMES live schema/migrations。只在確認缺表/欄位時新增 forward migration；保留 YMES 擴充與資料，不 drop/recreate，不在 Oracle 執行 CREATE。
+- [ ] 欄位 nullable/default 依來源保留：RuleSerial varchar(30) NOT NULL PK；RuleNo varchar(30) NOT NULL；RuleName varchar(50) NOT NULL；FunctionName varchar(50) NULL；RuleType/IssueState numeric(1,0) NULL DEFAULT 0；Creator/Reviser varchar(10) NULL；CreateDate/ReviseDate timestamp NULL；Description varchar(255) NULL；RuleOption numeric(1,0) NULL；TestOutof/TestCount numeric(2,0) NULL；CompareValue1/2/Relation varchar(10) NULL；WEType numeric(1,0) NULL DEFAULT 0；DataStamp numeric(11,0) NULL DEFAULT 0。唯一索引僅 PK(RuleSerial)，沒有 FK/額外索引；RuleNo 無 DB 唯一限制。
+- [ ] 實作 FunctionKey QC108 保護的 `GET /api/qc/rule-bases`，回傳四狀態資料、audit、DataStamp、editableFields；UI 篩選 IssueState、`RuleType<>2`、`WEType=0` 並依 RuleSerial/RuleNo 排序。新增 rule-options options API，從現存 ValueList 供應原始儲存值/標籤；依規格的 UI/Oracle RuleOption mapping。另實作 functions options API，等價於舊 `LoadQRFunctionName` 對 `udQCRule` 私有 FUNQR* 函式目錄，不載入 DLL 反射給 Web。
+- [ ] 實作 POST/PUT/DELETE/approve：新增 RuleSerial=RuleNo、state0、audit；RuleNo 大小寫不敏感重複檢查在 API transaction 內執行。更新以 DataStamp nullable CAS，維護 Reviser/ReviseDate/DataStamp；`editableFields` 缺失時唯讀。Delete 0/-1 實體刪除、2→-1、1 拒絕；Approve state0，依 Issue Job Map `QC RULE BASIS` bypass 0→2 或建立 Issue 後 0→1，核准2/退回0，使用共用 Issue/通知流程。
+- [ ] 依 WinForms sparse update：只更新有傳入的欄位；System Rule 欄位與 User Define FunctionName 的切換不應無意清除其他既有欄位。驗證 RuleName、RuleNo 長度/必填、RuleType、FunctionName、七種 RuleOption、TestOutof/TestCount 1–99、TestOutof≥TestCount、Value Range 上下限、SpecLimit relation 等。RuleOption=9 舊資料顯示 Other；API 保留既有 9，新建 Other 用 5。多選操作逐筆、第一個錯誤停止並回報已完成筆數；全部 SQL 參數化。
+- [ ] 更新 API/schema/migration 文件及本清單後 push GitHub 並通知公司端 pull。不得連 MES Oracle 或匯入 MES 業務資料。
+
 ### QC103 抽樣計劃（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/抽樣計劃.md`、本檔 QC103 區段、公司端 QC103 區段及 `docs/DATABASE_CONNECTION.md`。

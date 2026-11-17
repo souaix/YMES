@@ -347,3 +347,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - Oracle source DDL：`database/reference/mestest_qc_att_rule_basis_source_ddl.sql`、`database/reference/mestest_qc_aql_source_ddl.sql`；PG CREATE 參考為對應 `_create.sql`。
 - 主表 PK RuleNo；detail PK (RuleNo,Action,ReasonType,ReasonLevel)；AQL PK (AQLType,MinNum,MaxNum,SLevel,AQL)。三表皆無外鍵/額外索引；主與明細皆無 DataStamp。欄位 nullable/default 詳見 `docs/modules/QC/計數判別法則基本資料.md`。
 - 本次僅查 metadata、沒有讀取業務列或執行 Oracle DDL；IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations，現有 TBLQCAQL 必須優先重用。
+
+### 更新 2026-11-17：QC108 計量品管法則來源表
+
+- 使用 PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護設定唯讀取得 `MESTEST.TBLQCRULEBASIS` 的 DBMS_METADATA table/index DDL 與 ALL_CONSTRAINTS；未查詢 MES 業務列。
+- Oracle source DDL：`database/reference/mestest_qc_variable_rule_basis_source_ddl.sql`；PostgreSQL CREATE 參考：`database/reference/mestest_qc_variable_rule_basis_create.sql`。
+- PK 為 RuleSerial；唯一索引只有 PK index，沒有外鍵或額外索引。RuleNo 沒有 DB unique constraint，舊服務以大寫 RuleNo 檢查重複；DataStamp nullable DEFAULT 0。
+- 僅查詢 metadata，沒有在 Oracle 執行 DDL；IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations。

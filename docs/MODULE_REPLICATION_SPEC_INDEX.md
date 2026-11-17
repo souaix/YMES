@@ -16,6 +16,7 @@
 
 ## 2026-11-17 新增功能規格
 
+- QC108「計量品管法則基本資料」：[功能規格](modules/QC/計量品管法則基本資料.md)。公司端已依 `frmQCRuleBasis`/Def、wsQC、Core 與 Oracle DDL 完成單表清單/編輯 DEV 頁、路由/選單及 DataStamp、RuleOption 映射與 Issue Job 規格。Oracle 主鍵是 RuleSerial；RuleNo 唯一性由舊服務檢查。家用端需核對 YMES schema，提供 RuleOption/FunctionName 選項與 QC108 CRUD、nullable DataStamp CAS、`QC RULE BASIS` Issue Job。
 - QC107「計數判別法則基本資料」：[功能規格](modules/QC/計數判別法則基本資料.md)。公司端已對照 WinForms Form/Def、wsQC、Core、Oracle DDL，完成 `/YMES/QC/AttributeRuleBasis` 主從 DEV 頁與 QC 基本資料選單。主/明細複合 PK 已確認、無 FK/DataStamp；共用 TBLQCAQL 的 Oracle/PG DDL 參考亦已建立。家用端需重用 YMES AQL 表、實作 aggregate transaction CRUD、三種 RuleType、ValueList options、UserDefineAQL 與 `QCITEM_A RULE DATA` Issue Job。
 - QC106「品質原因基本資料」：[功能規格](modules/QC/品質原因基本資料.md)。公司端已對照 WinForms Form/Def、wsQC、Core、Oracle DDL，完成 `/YMES/QC/ReasonBasis` DEV 頁與 QC 基本資料選單。來源主表 ReasonNo 為 PK，只有 PK unique index、無 FK；家用端需核對 YMES schema、提供 MES ValueList ReasonType、同類且已核准 QC105 子類別 lookup，並實作 CRUD、Issue Control、nullable DataStamp CAS 與 `REASON BASIS` Issue Job。
 - QC105「品質原因子類別資料」：[功能規格](modules/QC/品質原因子類別資料.md)。公司端已對照 `frmReasonSubTypeBasis`/Def、wsQC、Core 與 Oracle DDL，完成 `/YMES/QC/ReasonSubTypeBasis` DEV 頁和 QC 基本資料選單。來源表以 ReasonSubType 為 PK，沒有 FK；家用端需比對既有 schema、提供正式 ReasonType ValueList，並實作 QC105 CRUD、Issue Control 編輯權限及 `ReasonSubType BASIS` Issue Job。

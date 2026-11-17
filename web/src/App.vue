@@ -47,6 +47,7 @@ import Qc8DReasonBasisMaster from './components/Qc8DReasonBasisMaster.vue'
 import QcReasonBasisMaster from './components/QcReasonBasisMaster.vue'
 import QcReasonSubTypeMaster from './components/QcReasonSubTypeMaster.vue'
 import QcAttributeRuleBasisMaster from './components/QcAttributeRuleBasisMaster.vue'
+import QcVariableRuleBasisMaster from './components/QcVariableRuleBasisMaster.vue'
 import QcFirstGroupMaster from './components/QcFirstGroupMaster.vue'
 import QcFinalGroupMaster from './components/QcFinalGroupMaster.vue'
 import QcHoldDescriptionMaster from './components/QcHoldDescriptionMaster.vue'
@@ -253,6 +254,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:REASON BASIS', label: '品質原因基本資料', shortLabel: '原', functionNo: 'REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis' },
       { id: 'function:QC:REASON SUBTYPE BASIS', label: '品質原因子類別資料', shortLabel: '因', functionNo: 'REASON SUBTYPE BASIS', moduleNo: 'QC', tableName: 'tblqcreasonsubtypebasis' },
       { id: 'function:QC:QCITEM_A RULE DATA', label: '計數判別法則基本資料', shortLabel: '則', functionNo: 'QCITEM_A RULE DATA', moduleNo: 'QC', tableName: 'tblqcattrulebasis' },
+      { id: 'function:QC:QC RULE BASIS', label: '計量品管法則基本資料', shortLabel: '量', functionNo: 'QC RULE BASIS', moduleNo: 'QC', tableName: 'tblqcrulebasis' },
       { id: 'function:QC:SAMPLING TABLE', label: '抽樣表格', shortLabel: '抽', functionNo: 'SAMPLING TABLE', moduleNo: 'QC', tableName: 'tblqcsamplingtable' },
       { id: 'function:QC:SAMPLING 1916', label: '抽樣計劃設定_1916', shortLabel: '抽', functionNo: 'SAMPLING 1916', moduleNo: 'QC', tableName: 'tblqcsampling1916' },
       { id: 'function:QC:SAMPLING PLAN', label: '抽樣計劃', shortLabel: '計', functionNo: 'SAMPLING PLAN', moduleNo: 'QC', tableName: 'tblqcsamplingplan' },
@@ -308,6 +310,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:REASON BASIS': appBasePath + '/QC/ReasonBasis',
   'function:QC:REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
   'function:QC:QCITEM_A RULE DATA': appBasePath + '/QC/AttributeRuleBasis',
+  'function:QC:QC RULE BASIS': appBasePath + '/QC/VariableRuleBasis',
   'function:QC:SAMPLING TABLE': appBasePath + '/QC/SamplingTable',
   'function:QC:SAMPLING 1916': appBasePath + '/QC/Sampling1916',
   'function:QC:SAMPLING PLAN': appBasePath + '/QC/SamplingPlan',
@@ -377,6 +380,7 @@ const functionRoutes: Record<string, string> = {
   'REASON BASIS': appBasePath + '/QC/ReasonBasis',
   'REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
   'QCITEM_A RULE DATA': appBasePath + '/QC/AttributeRuleBasis',
+  'QC RULE BASIS': appBasePath + '/QC/VariableRuleBasis',
   'SAMPLING TABLE': appBasePath + '/QC/SamplingTable',
   'SAMPLING 1916': appBasePath + '/QC/Sampling1916',
   'SAMPLING PLAN': appBasePath + '/QC/SamplingPlan',
@@ -465,6 +469,7 @@ const isQc8DReasonBasisPage = computed(() => activeMasterKey.value === 'function
 const isQcReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:REASON BASIS')
 const isQcReasonSubTypeBasisPage = computed(() => activeMasterKey.value === 'function:QC:REASON SUBTYPE BASIS')
 const isQcAttributeRuleBasisPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A RULE DATA')
+const isQcVariableRuleBasisPage = computed(() => activeMasterKey.value === 'function:QC:QC RULE BASIS')
 const isQcSamplingTablePage = computed(() => activeMasterKey.value === 'function:QC:SAMPLING TABLE')
 const isQcSampling1916Page = computed(() => activeMasterKey.value === 'function:QC:SAMPLING 1916')
 const isQcSamplingPlanPage = computed(() => activeMasterKey.value === 'function:QC:SAMPLING PLAN')
@@ -1452,6 +1457,14 @@ async function signOut(): Promise<void> {
         />
         <QcAttributeRuleBasisMaster
           v-else-if="isQcAttributeRuleBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcVariableRuleBasisMaster
+          v-else-if="isQcVariableRuleBasisPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
