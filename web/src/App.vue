@@ -52,6 +52,7 @@ import QcVariableItemRuleMap from './components/QcVariableItemRuleMap.vue'
 import QcSPCAttLimitMaster from './components/QcSPCAttLimitMaster.vue'
 import QcAttributeRuleMapMaster from './components/QcAttributeRuleMapMaster.vue'
 import QcAttributeMeasurementDelete from './components/QcAttributeMeasurementDelete.vue'
+import QcVariableMeasurementDelete from './components/QcVariableMeasurementDelete.vue'
 import QcAttributeRuleBasisMaster from './components/QcAttributeRuleBasisMaster.vue'
 import QcVariableRuleBasisMaster from './components/QcVariableRuleBasisMaster.vue'
 import QcFactorMaintainMaster from './components/QcFactorMaintainMaster.vue'
@@ -264,6 +265,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:QCITEM_A RULE MAP', label: '計數品管項目判別法則對應', shortLabel: '對', functionNo: 'QCITEM_A RULE MAP', moduleNo: 'QC', tableName: 'tblspcqcattrulemapbasis' },
       { id: 'function:QC:QCITEM_ADELETE', label: '刪除計數型品管項目量測記錄', shortLabel: '刪', functionNo: 'QCITEM_ADELETE', moduleNo: 'QC', tableName: 'tblspcattbasislog' },
       { id: 'function:QC:QCITEM_V', label: '計量品管項目', shortLabel: '量', functionNo: 'QCITEM_V', moduleNo: 'QC', tableName: 'tblqcitemforvariables' },
+      { id: 'function:QC:QCITEM_VDELETE', label: '刪除計量型品管項目量測記錄', shortLabel: '刪', functionNo: 'QCITEM_VDELETE', moduleNo: 'QC', tableName: 'tblspcvarfactorlog' },
       { id: 'function:QC:QCITEM RULE MAP', label: '計量品管項目管制法則對應', shortLabel: '則', functionNo: 'QCITEM RULE MAP', moduleNo: 'QC', tableName: 'tblqcitemrule' },
     ] }, { id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
@@ -334,6 +336,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:SPC ATT LIMIT': appBasePath + '/QC/AttributeControlLimit',
   'function:QC:QCITEM_A RULE MAP': appBasePath + '/QC/AttributeRuleMap',
   'function:QC:QCITEM_ADELETE': appBasePath + '/QC/AttributeMeasurementDelete',
+  'function:QC:QCITEM_VDELETE': appBasePath + '/QC/VariableMeasurementDelete',
   'function:QC:QCITEM_A RULE DATA': appBasePath + '/QC/AttributeRuleBasis',
   'function:QC:QC RULE BASIS': appBasePath + '/QC/VariableRuleBasis',
   'function:QC:QCFACTORMAINTAIN': appBasePath + '/QC/FactorMaintain',
@@ -412,6 +415,7 @@ const functionRoutes: Record<string, string> = {
   'QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
   'QCITEM_A RULE MAP': appBasePath + '/QC/AttributeRuleMap',
   QCITEM_ADELETE: appBasePath + '/QC/AttributeMeasurementDelete',
+  QCITEM_VDELETE: appBasePath + '/QC/VariableMeasurementDelete',
   'QCITEM_A RULE DATA': appBasePath + '/QC/AttributeRuleBasis',
   'QC RULE BASIS': appBasePath + '/QC/VariableRuleBasis',
   QCFACTORMAINTAIN: appBasePath + '/QC/FactorMaintain',
@@ -510,6 +514,7 @@ const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'fu
 const isQcSPCAttLimitPage = computed(() => activeMasterKey.value === 'function:QC:SPC ATT LIMIT')
 const isQcAttributeRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A RULE MAP')
 const isQcAttributeMeasurementDeletePage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_ADELETE')
+const isQcVariableMeasurementDeletePage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_VDELETE')
 const isQcAttributeRuleBasisPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A RULE DATA')
 const isQcVariableRuleBasisPage = computed(() => activeMasterKey.value === 'function:QC:QC RULE BASIS')
 const isQcFactorMaintainPage = computed(() => activeMasterKey.value === 'function:QC:QCFACTORMAINTAIN')
@@ -1542,6 +1547,13 @@ async function signOut(): Promise<void> {
         />
         <QcAttributeMeasurementDelete
           v-else-if="isQcAttributeMeasurementDeletePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcVariableMeasurementDelete
+          v-else-if="isQcVariableMeasurementDeletePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :development-preview="isDevelopmentPreview"

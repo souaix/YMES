@@ -678,4 +678,13 @@
 - [x] 建立 `/YMES/QC/VariableItemRuleMap` Vue 3 DEV 頁、QC209 route/三層 fallback menu、獨立 mock 資料、QC Item 查詢、四分類多選移動、ChartType/SPCID 與 Apply/Confirm。
 - [x] 新增 `mestest_qc209_variable_item_rule_map_create.sql`、QC209 功能規格、模組索引、Oracle 查詢紀錄與 `todolist_homepc.md` API/schema handoff。
 - [ ] Production API/schema 待家用端完成；本頁未執行 build、測試或瀏覽器驗收。家用端完成後公司端 pull 最新 main，以 QC209 Production API 驗收。
-- [ ] 下一功能依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 順序接續 QC210「刪除計量型品管項目量測記錄」。
+- [x] QC210「刪除計量型品管項目量測記錄」公司端 Vue DEV 頁、WinForms 規格、Oracle DDL 來源引用與 PostgreSQL Create/API handoff 已完成，詳本檔末段。
+- [ ] QC 頁面 Production API/schema 待家用端完成。公司端未執行 build、測試或瀏覽器驗收；家用端完成後 pull 最新 main 驗收，再按 MES_MENU_FUNCTION_INVENTORY.md 繼續尚未遷移功能。
+
+## QC210 刪除計量型品管項目量測記錄公司端進度（2026-11-17）
+
+- [x] 已直接讀取 QC_ItemDeleteForVariables Form/Designer、wsQC Load/Delete Service、clsQCBasis Load/Delete Core；確認 IssueState -1、0 清單、Visible Grid columns、Log=Log 分支和逐筆多選操作。
+- [x] 已核對保存的 MESTEST Oracle DDL：計量量測 log 來源沿用 QC205/201 的直接唯讀 DDL reference；本次未重連 Oracle，也未查看業務列或使用 DBeaver。
+- [x] 已新增 /YMES/QC/VariableMeasurementDelete Vue 3 DEV 頁，含 QC210 三層選單、-1/0 清單合併、WinForms 欄位與 ValueList、點列/多選、確認刪除、逐筆結果及獨立 DEV mock。表頭與選取色使用黃橘色系。
+- [x] 已新增 QC210 功能規格及 PostgreSQL Create SQL 參考，並更新 MODULE_REPLICATION_SPEC_INDEX.md、docs/DATABASE_CONNECTION.md 與 todolist_homepc.md。
+- [ ] 家用端尚未完成 QC205/209/210 Production API/schema；公司端未做 build、測試或瀏覽器驗收。

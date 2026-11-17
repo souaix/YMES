@@ -1118,3 +1118,24 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 4. `GET /api/qc/variable-item-rules/{qcItemNo}` 回傳所有 SPCID 對應及 RuleName。SPCID 顯示 0 Trend、1 Xbar、2 R、3 S、4 Rm；圖表可選組合依 QC Item ChartType，詳功能規格。
 5. `PUT /api/qc/variable-item-rules/{qcItemNo}/{spcId}` body `{rules:[{ruleNo,action}]}` 完整替換指定 QCItemNo+SPCID。transaction 內先查 QC Item 為已核准、SPCID 符合 ChartType，再新增所選規則；action 僅 0 Warning、1 Wait、2 Hold、3 Alert，RuleNo 在同組唯一；RULENO 最長 20 字元。SPK 禁止新增/移動 Wait，但保存其他動作時保留既有 Wait 規則，除非明確移出。
 6. API 必須以單一 DB transaction 做 set replacement，參數化 SQL；遵循專案現有登入/錯誤格式。部署後更新 API/schema 文件與本 TODO，commit/push 後通知公司端 pull 驗收。
+
+## QC210 刪除計量型品管項目量測記錄 API/schema handoff（公司端 2026-11-17）
+
+公司端已完成 QC210 WinForms 程式核對、Vue DEV 頁、功能規格與 PostgreSQL CREATE 參考。請 pull 最新 main，先讀 docs/modules/QC/刪除計量型品管項目量測記錄.md、docs/modules/QC/計量品管項目.md、docs/DATABASE_CONNECTION.md，再核對本段。公司端未連 YMES PostgreSQL，以下 Create 檔不表示已比對 live schema 或套用 migration。
+
+### Schema / Create SQL
+
+- 本功能查找表沿用 QC205 的 TBLQCITEMFORVARIABLES，沒有新增主檔表。
+- QC210 執行會使用 TBLSPCVARSTATISTICLOG、TBLSPCVARLIMITCONTENT、TBLSPCVARVIOLATIONCONTENT、TBLSPCVARDETAILLOG、TBLSPCVARDETAILONLINE、TBLSPCVARFACTORLOG、TBLSPCVARFACTORONLINE、TBLSPCVAREDITLOG、TBLQCSAMPLEPLANCHANGE、TBLSPCLOGFORSPLANCHANGE。
+- Oracle DDL 已保存在 database/reference/mestest_qc205_variable_dependencies_source_ddl.sql、mestest_qc205_theil_custom_source_ddl.sql、mestest_qc_item_attributes_source_ddl.sql。PostgreSQL CREATE 參考 database/reference/mestest_qc210_variable_measurement_log_delete_create.sql 覆蓋 9 張變數量測日誌表；TBLQCSAMPLEPLANCHANGE 已在 mestest_qc_item_attributes_create.sql。
+- 請先查 YMES live schema、部署 migration 及 QC205 對應資料表。若表已存在，不要重建或覆寫資料；若只有部分欄位/索引缺漏，再做 forward migration。確認缺表才使用 CREATE 參考設計 migration。CREATE IF NOT EXISTS 不會補齊既有表的欄位。
+- 不加 Oracle 沒有的 FK。不要在 MES Oracle 執行這些 PostgreSQL CREATE SQL。只查結構，不讀或匯入 MES 量測業務資料。
+
+### API 工作
+
+1. 沿用 QC205 GET /api/qc/variable-qc-items?issueState=-1 與 ?issueState=0。清單 DTO 要包含 QC210 顯示欄位：QCItemNo、QCItemName、ChartType、SpecLineType、ComponentCollect、LotIsValid、PlanNo、ChartControl、CollectType、LimitLotNum、SampleSize、Unit、QCDataType、Creator、CreateDate、Reviser、ReviseDate，以及隱藏使用的 IssueState。
+2. 新增登入保護的 POST /api/qc/variable-qc-items/{qcItemNo}/measurement-log-deletions，body 僅接受 { issueState }；FunctionKey 為 QC210。API 從資料庫讀真實 QC Item 和 IssueState，只允許 0、-1。Log 模式由伺服器固定，不接受用戶端傳 table name、SQL 或任意條件。
+3. 每個 QCItemNo 在單一 DB transaction 中先確認 TBLSPCVARFACTORLOG 有資料；沒有資料回傳可辨識的 404/409，不刪任何表。有資料時依規格刪統計、管制界限、違規內容、量測明細/即時明細、量測主檔/即時主檔、修改紀錄、SamplePlanChange 與 SPCLogForSPlanChange。
+4. 管制界限及違規內容的 SPCSerial 需從尚未刪除的 TBLSPCVARDETAILLOG 取出。先刪兩類 content，再刪 detail log。整個單一項目刪除應可 rollback；勿照抄 Core 在刪除成功後拋出成功例外，應回傳正常成功 JSON，含 QCItemNo 與各表刪除筆數。
+5. Vue 多選時逐筆呼叫上述 API；一項失敗不阻止其他項目，結果需回報成功/失敗 QCItemNo，並寫入 YMES 操作稽核。遵循專案既有登入、錯誤、權限與參數化 SQL 規約。
+6. 加上缺少的 forward migration 與 rollback、更新 schema/API 規格與 TODO；commit/push 後通知公司端 pull，等待 QC210 Production API 驗收。公司端尚未執行 build、測試或瀏覽器驗收。

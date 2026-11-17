@@ -406,3 +406,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - QC209 `TBLQCITEMRULE` Oracle DDL/PK 沿用 QC205 前次以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀擷取結果：`database/reference/mestest_qc205_variable_dependencies_source_ddl.sql`。`TBLQCRULEBASIS` 沿用 QC108 直接查得來源 reference。本次未重複連線，也未查 MES 業務列或執行 Oracle DDL。
 - QC209 新增 YMES schema-only Create 參考：`database/reference/mestest_qc209_variable_item_rule_map_create.sql`；需由家用端比對 live PostgreSQL schema/migrations 後再決定是否建立 migration。
+
+### 更新 2026-11-17：QC210 刪除計量型品管項目量測記錄
+
+- QC210 依賴的變數量測 Oracle DDL 沿用先前以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得的 reference：database/reference/mestest_qc205_variable_dependencies_source_ddl.sql、mestest_qc205_theil_custom_source_ddl.sql、mestest_qc_item_attributes_source_ddl.sql。本次重新核對已保存的 CREATE TABLE/index 定義，未再次連 Oracle，未讀業務資料。
+- PostgreSQL 空表 CREATE 參考為 database/reference/mestest_qc210_variable_measurement_log_delete_create.sql；包含 9 張 SPC 日誌表的來源欄位/PK/索引。TBLQCSAMPLEPLANCHANGE 沿用 QC201 的 mestest_qc_item_attributes_create.sql。
+- 公司端未連 YMES PostgreSQL。家用端須先比對 live schema 與已部署 migration，再建立缺少的 forward migration；不能把參考檔當成已套用 migration，也不能在 Oracle 執行 PostgreSQL DDL。
+- Oracle IP、帳號、密碼、SID 與受保護連線附件路徑仍只存在本機受保護設定，不記錄於 Git。
