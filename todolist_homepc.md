@@ -6,6 +6,20 @@
 
 ## 家用電腦現在接手
 
+### QC402 次分類基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/次分類基本資料.md`、`todolist_officepc.md` 的 QC402 區段及 `docs/DATABASE_CONNECTION.md` 的 QC402 查詢紀錄。
+- [ ] 比對 YMES PostgreSQL live schema/migrations。Oracle source DDL：`database/reference/mestest_qc_s_class_basis_source_ddl.sql`；空表 PostgreSQL CREATE 參考：`database/reference/mestest_qc_s_class_basis_create.sql`。僅在缺漏時補 forward migration，保留 YMES 擴充欄位；不要在 MES Oracle 執行 CREATE。
+- [ ] 保留 `tblqcsclassbasis` 欄位與來源預設：`sclassno varchar(30) NOT NULL PK`、`description varchar(255)`、`creator/reviser varchar(10)`、`createdate/revisedate timestamp without time zone`、`issuestate numeric(1,0) NOT NULL DEFAULT 0`、`mclassno varchar(30) NULL`、`datastamp numeric(11,0) NULL DEFAULT 0`。只建立 PK unique index，不加 FK 或其他索引；UI/API 以規則檢查已簽核 MClass。
+- [ ] 實作 `GET /api/qc/s-class-basis?searchFieldName=SClassNo&searchFieldValue=`，只接受 SClassNo 搜尋，回傳所有狀態與 audit/DataStamp；登入與 FunctionKey QC402 權限必須檢查。
+- [ ] 實作 `GET /api/qc/s-class-basis/m-class-options`，依 QC402 權限只回傳 `TBLQCMCLASSBASIS.IssueState=2` 的 MClassNo/Description；靜態 lookup route 必須先於 `/{sClassNo}` route，避免要求使用者另有 QC401 權限。
+- [ ] 實作 POST body `{ sClassNo, mClassNo, description }`：兩編號必填且最多 30 字、Description 最多 255 字、SClassNo 大小寫不敏感唯一、MClassNo 必須存在且已簽核。伺服器設定 Creator/CreateDate、IssueState=0。
+- [ ] 實作 PUT `/api/qc/s-class-basis/{sClassNo}?issueState=&dataStamp=` body `{ mClassNo, description }`；SClassNo 唯讀，僅 IssueState 0/2 更新，MClassNo 僅能選已簽核資料，Reviser/ReviseDate/DataStamp 由伺服器更新並做 nullable DataStamp CAS，衝突回 409。
+- [ ] DELETE：狀態 0/-1 實體刪除；2 改為 -1 並更新 audit/DataStamp；1 拒絕。Approve 僅接受 0，Issue Job Map `SCLASS BASIS`；沒有 Job/Detail 時轉 2，有流程則建立 Issue、轉 1、通知第一簽核群組，核准轉 2、退回回 0。
+- [ ] 實作 `/import/preview`、`/import` multipart `.xls/.xlsx`：NPOI 第一工作表、略過首列，前三欄固定為 SClassNo/MClassNo/Description，不驗標題；兩編號必填、Description 可空；preview distinct `(SClassNo,MClassNo)`，匯入按 SClassNo 分組，同組超過一列整組重複失敗；逐組交易、部分成功、回傳每個預覽 pair 結果並可取消後續列。驗 MClass 已簽核、SClassNo case-insensitive unique；成功時兩編號轉大寫，IssueState=0、Creator=登入者。
+- [ ] 實作 `/import/template`，透過 YMES template storage 供應 FunctionNo `SCLASS BASIS` 的正式範本及副檔名；來源樹找不到範本 binary。DEV CSV 僅示範欄序，不可冒充正式範本。
+- [ ] 全部 API 使用參數化 SQL、QC402 登入/功能權限和版本檢查；更新 API 文件/migration 索引及本 TODO。不得連 MES Oracle。
+
 ### QC401 主分類基本資料（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 docs/modules/QC/主分類基本資料.md、todolist_officepc.md 的 QC401 區段，以及 docs/DATABASE_CONNECTION.md 的 QC401 查詢紀錄。

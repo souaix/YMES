@@ -68,7 +68,8 @@
 - [x] 新增 `docs/modules/QC/異常原因基本資料.md`，更新規格索引、DB 連線查詢紀錄及 home/office TODO；正式 API、Issue Job 與 `.xls/.xlsx` 匯入由家用端接手。
 - [ ] 未執行 build、test 或瀏覽器驗收。DEV 核准僅模擬無 Job/Detail 的 0→2；已簽核/不使用欄位權限仍需家用端對接 IssueControl 規則。
 - [x] QC401「主分類基本資料」已完成公司端 DEV UI 與 WinForms/Service/Core 規格，詳見下節。
-- [ ] 下一項依功能編號順序接續 QC402「次分類基本資料」。
+- [x] QC402「次分類基本資料」已完成公司端 DEV UI、WinForms/Service/Core/Importer 規格與 Oracle DDL/PostgreSQL CREATE 交接，詳見本檔 QC402 區段。
+- [ ] 下一項依功能目錄與未遷移頁面，接續尚未完成的 MES Function。
 
 ### QC401 主分類基本資料（公司端 2026-11-17）
 
@@ -525,3 +526,14 @@
 - [ ] DEV 測試檢查、build 與瀏覽器驗收未執行；使用者未要求測試。
 - [ ] 家用端完成 YMES live schema 比對、migration/API 後，公司端 pull 並核對 Production 契約。
 - [x] 2026-11-17 已完成 EQP `B_EQP AUTOLOADER SETUP` WinForms Form/Service/Core/DDL 對照、Vue DEV 頁及家用端 API/schema handoff；後續項目改從功能目錄中下一個尚未完成的 Function 選取。
+
+## 2026-11-17 QC402 次分類基本資料公司端進度
+
+- [x] 開工前 pull `origin/main`，確認 `0d16dac` 最新且工作樹乾淨。
+- [x] 對照 `frmSClassBasis`/`frmSClassBasisDef`、`wsQC`、`clsHoldBasis`：主 Grid、MClassNo 已簽核 lookup、CRUD/Copy/Apply、四種狀態、DataStamp、`SCLASS BASIS` Issue Job 簽核及 `QC_SClassDataImport`/`SClassDataImporter` 規則。
+- [x] Windows PowerShell 7 不相容舊版 ODP.NET 初始化；改用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護設定直連唯讀查 `MESTEST.TBLQCSCLASSBASIS` table DDL 及 `PK_TBLQCSCLASSBASIS` unique index DDL。只讀結構，沒有查業務列/執行 Oracle DDL，連線值未輸出。
+- [x] 已建立 Oracle source DDL 與 PostgreSQL 空表 CREATE SQL；只保留 SClassNo PK，來源沒有 FK。MClassNo approved rule 由 QC402 API 查核，沒有在 SQL 中加 FK。
+- [x] 已加入 Vue `/YMES/QC/SClassBasis` DEV 假資料頁、三層 QC 選單、`QC402` route、MClass 已簽核 lookup、主 Grid/表單、四狀態、多選刪除/核准及 SClassImport 預覽/逐組結果/取消 UI。
+- [x] 已新增 `docs/modules/QC/次分類基本資料.md`，並更新規格索引、Oracle 查詢紀錄與 `todolist_homepc.md` API/schema handoff。
+- [ ] 未執行 build、測試或瀏覽器驗收；Production API/schema 依家用端交接完成後再 pull 核對。沒有新增 API implementation。
+- [ ] 下一段依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接續 QC 尚未完成 Function；每頁先讀 WinForms Form/Designer/Service/Core，再查缺少的 Oracle DDL 與實際 CREATE SQL/API handoff。

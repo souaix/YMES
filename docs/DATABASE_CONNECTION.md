@@ -294,3 +294,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 主鍵為 MClassNo，只有 PK unique index，沒有 FK 或其他 index；本功能不新增 DDL/CREATE 檔。資料表欄位與 UI/API 規則見 `docs/modules/QC/主分類基本資料.md`。
 - 另由公司端原始碼確認匯入器位於 `STD/MESWin/QC/QC_MClassDataImport` 及 `STD/MEStc/DataImporter/MClassDataImporter.cs`；未找到 template binary。Excel 只讀程式與匯入檢查來源，不使用 Oracle 查業務列。
 - 不讀取 MES 業務列、不在 Oracle 執行 DDL；IP、帳號、密碼、SID 未輸出或保存於 Git。家用端只核對 YMES PostgreSQL live schema/migrations。
+
+### 更新 2026-11-17：QC402 次分類基本資料來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護連線唯讀取得 `MESTEST.TBLQCSCLASSBASIS` 的 `DBMS_METADATA.GET_DDL`，並單獨查詢 `PK_TBLQCSCLASSBASIS` unique index DDL。
+- DDL 檔案：`database/reference/mestest_qc_s_class_basis_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_s_class_basis_create.sql`。
+- Primary Key 是 SClassNo；只有此 PK unique index，沒有 FK 或額外 index。MClassNo 在 Oracle DDL 可為 NULL、沒有 FK，但 WinForms 表單必填且僅允許選 IssueState=2 的主分類；由 QC402 API 驗證，不在 PostgreSQL DDL 自行加 FK。
+- 本次只有查 Oracle metadata，沒有讀取 MES 業務列或執行 DDL；連線字串、IP、帳號、密碼、SID 未輸出或寫入 Git。
