@@ -6,6 +6,18 @@
 
 ## 家用電腦現在接手
 
+### QC112 品質原因產品指導書（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/品質原因產品指導書.md`、公司端 QC112 區段與 `docs/DATABASE_CONNECTION.md`；pull 後核對 Vue route/menu 與 API 契約。
+- [ ] 核對 `TBLSYSMODULE`、`TBLSYSMENUITEM`、`TBLSYSFUNCTION` 及使用者功能授權是否已有 QC112「品質資料 → 基本資料 → 品質原因產品指導書」目錄；只補缺少的 YMES menu/function mapping，正式 API 回傳安全顯示路徑，不回傳檔案服務實體路徑。
+- [ ] 比對 `database/reference/mestest_qc_reason_prd_sop_file_source_ddl.sql`、`database/reference/mestest_qc_reason_prd_sop_file_create.sql` 與 YMES live schema/migrations 的 `tblqcreasonprdsopfile`。來源欄位為 `reasonno varchar(20) NOT NULL`、`productno varchar(50) NOT NULL`、`sopfilename varchar(100) NULL`、`sopfilepath varchar(2000) NULL`，PK `(reasonno,productno)`；無 FK、DataStamp、額外索引。只補缺少的結構，保留 YMES 自有擴充與資料，不 drop/recreate，不匯入 MES 業務資料。
+- [ ] 重用現有品質原因及產品主檔 schema/API，原因只回傳 `IssueState=2`；產品搜尋只回傳 `IssueState=2`、`CurVersion=1`，ProductNo 包含式搜尋，`*` 表示全部。
+- [ ] 實作本功能所有 endpoint 的登入及 FunctionKey `QC112` 授權：`GET /api/qc/reason-product-sop-file/reasons?issueState=2`、`GET /reasons/{reasonNo}/files`、`GET /products?issueState=2&currentVersion=1&search=...`、`POST/DELETE /reasons/{reasonNo}/products/{productNo}/file`、`POST /import/preview`、`POST /import/item`、`GET /import/template`。正式路徑需保留 `/api/qc/reason-product-sop-file` 前綴。
+- [ ] 新增關聯時確認原因/產品皆存在且符合核准/版本條件，依複合 PK 防重複；上傳副檔名限制為 JPG/JPEG/JPE/JFIF/PNG/BMP/PDF。檔案只能由 API 使用既有 YMES server-side 儲存，瀏覽器不可取得 FTP 帳密或內部實體路徑。
+- [ ] 舊端呼叫 `DataImporter.QCItemRPDReasonSOPFileImporter.ReasonPrdSOPFileChecker` 及 `ReasonPrdSOPFileRemoveChecker`，但該 importer 不在公司來源樹。請從既有 YMES/部署服務核實檢查條件、重複資料、實體檔路徑和刪除規則；移除關聯時僅在確認沒有其他關聯引用相同檔案後刪除實體檔，DB/檔案操作需處理失敗與補償。
+- [ ] 匯入範本依第一張工作表及欄序 ReasonNo、ProductNo、FileName、FilePath 解析；前三欄必填，逐列驗證並回傳結果/訊息。Web 版附件是使用者另外選取後按 FileName 配對，不能把 FilePath 當任意伺服器路徑開啟。沿用已存在的範本/檔案服務和安全參數設定，不把憑證放到 browser config。
+- [ ] 正式 API 完成後更新 migration/API 規格與本待辦並 push；公司端再 pull 做 Production UI 對接。尚未確認的舊 checker 行為需記錄實際差異，避免假設成功完成。
+
 ### QC110 特殊主檔維護（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/特殊主檔維護.md`、公司端 QC110 區段與 `docs/DATABASE_CONNECTION.md`，pull 後核對 Vue 頁面、選單及 API 契約。

@@ -366,3 +366,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - QC110 使用相同的 `TBLSYSMESPARAMETER` 目錄與 `FC_%` 動態表機制，但篩選 `ParameterClass=0`；QC109 篩選 `ParameterClass=1`。請家用端以獨立 FunctionKey/API 權限處理兩個功能。
 - QC110 所用 `TBLSYSMESPARAMETER`、`FC_POSIONLIST`、`FC_QCFORMCALLBACKITEMMAP`、`FC_THICKNESS` Oracle metadata DDL 及 PostgreSQL CREATE 參考已在 QC109 同一批次取得並交付，檔案位於 `database/reference/mestest_qc_factor_maintain_{source_ddl,create}.sql`；本次未重複連 Oracle 或查詢業務列，不需另一份相同 DDL。
 - 公司端只新增 Vue DEV 頁與 API handoff；YMES PostgreSQL 是否已有相同結構由家用端比對 live schema/migrations 決定，僅對缺少項新增 forward migration。不得在 Oracle 執行 DDL、不得從 MES 複製業務資料。
+
+### 更新 2026-11-17：QC112 品質原因產品指導書
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護設定直接唯讀取得 `MESTEST.TBLQCREASONPRDSOPFILE` 的 `DBMS_METADATA.GET_DDL`，並查詢欄位、PK、索引及外鍵字典。結構含四欄，PK `(REASONNO, PRODUCTNO)`；只有 PK unique index，無 FK、DataStamp 或其他索引。
+- Oracle source DDL 與 PostgreSQL 空表 CREATE 參考分別為 `database/reference/mestest_qc_reason_prd_sop_file_source_ddl.sql`、`database/reference/mestest_qc_reason_prd_sop_file_create.sql`。家用端應先比對 YMES live schema，只對缺少結構建立 migration。
+- 僅查詢資料字典，沒有讀取 MES 業務列，也沒有在 Oracle 執行 DDL。連線值及檔案服務參數值均未輸出、保存或提交。

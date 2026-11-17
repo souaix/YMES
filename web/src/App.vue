@@ -50,6 +50,7 @@ import QcAttributeRuleBasisMaster from './components/QcAttributeRuleBasisMaster.
 import QcVariableRuleBasisMaster from './components/QcVariableRuleBasisMaster.vue'
 import QcFactorMaintainMaster from './components/QcFactorMaintainMaster.vue'
 import QcSpecialBasisMaintainMaster from './components/QcSpecialBasisMaintainMaster.vue'
+import QcReasonProductSopFileMaster from './components/QcReasonProductSopFileMaster.vue'
 import QcFirstGroupMaster from './components/QcFirstGroupMaster.vue'
 import QcFinalGroupMaster from './components/QcFinalGroupMaster.vue'
 import QcHoldDescriptionMaster from './components/QcHoldDescriptionMaster.vue'
@@ -259,6 +260,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:QC RULE BASIS', label: '計量品管法則基本資料', shortLabel: '量', functionNo: 'QC RULE BASIS', moduleNo: 'QC', tableName: 'tblqcrulebasis' },
       { id: 'function:QC:QCFACTORMAINTAIN', label: '要因資料維護', shortLabel: '要', functionNo: 'QCFACTORMAINTAIN', moduleNo: 'QC', tableName: 'tblsysmesparameter' },
       { id: 'function:QC:SPECIALBASISMAINTAIN', label: '特殊主檔維護', shortLabel: '特', functionNo: 'SPECIALBASISMAINTAIN', moduleNo: 'QC', tableName: 'tblsysmesparameter' },
+      { id: 'function:QC:QC REASON PRD SOP FILE', label: '品質原因產品指導書', shortLabel: '書', functionNo: 'QC REASON PRD SOP FILE', moduleNo: 'QC', tableName: 'tblqcreasonprdsopfile' },
       { id: 'function:QC:SAMPLING TABLE', label: '抽樣表格', shortLabel: '抽', functionNo: 'SAMPLING TABLE', moduleNo: 'QC', tableName: 'tblqcsamplingtable' },
       { id: 'function:QC:SAMPLING 1916', label: '抽樣計劃設定_1916', shortLabel: '抽', functionNo: 'SAMPLING 1916', moduleNo: 'QC', tableName: 'tblqcsampling1916' },
       { id: 'function:QC:SAMPLING PLAN', label: '抽樣計劃', shortLabel: '計', functionNo: 'SAMPLING PLAN', moduleNo: 'QC', tableName: 'tblqcsamplingplan' },
@@ -317,6 +319,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:QC RULE BASIS': appBasePath + '/QC/VariableRuleBasis',
   'function:QC:QCFACTORMAINTAIN': appBasePath + '/QC/FactorMaintain',
   'function:QC:SPECIALBASISMAINTAIN': appBasePath + '/QC/SpecialBasisMaintain',
+  'function:QC:QC REASON PRD SOP FILE': appBasePath + '/QC/ReasonProductSOPFile',
   'function:QC:SAMPLING TABLE': appBasePath + '/QC/SamplingTable',
   'function:QC:SAMPLING 1916': appBasePath + '/QC/Sampling1916',
   'function:QC:SAMPLING PLAN': appBasePath + '/QC/SamplingPlan',
@@ -389,6 +392,7 @@ const functionRoutes: Record<string, string> = {
   'QC RULE BASIS': appBasePath + '/QC/VariableRuleBasis',
   QCFACTORMAINTAIN: appBasePath + '/QC/FactorMaintain',
   SPECIALBASISMAINTAIN: appBasePath + '/QC/SpecialBasisMaintain',
+  'QC REASON PRD SOP FILE': appBasePath + '/QC/ReasonProductSOPFile',
   'SAMPLING TABLE': appBasePath + '/QC/SamplingTable',
   'SAMPLING 1916': appBasePath + '/QC/Sampling1916',
   'SAMPLING PLAN': appBasePath + '/QC/SamplingPlan',
@@ -480,6 +484,7 @@ const isQcAttributeRuleBasisPage = computed(() => activeMasterKey.value === 'fun
 const isQcVariableRuleBasisPage = computed(() => activeMasterKey.value === 'function:QC:QC RULE BASIS')
 const isQcFactorMaintainPage = computed(() => activeMasterKey.value === 'function:QC:QCFACTORMAINTAIN')
 const isQcSpecialBasisMaintainPage = computed(() => activeMasterKey.value === 'function:QC:SPECIALBASISMAINTAIN')
+const isQcReasonProductSopFilePage = computed(() => activeMasterKey.value === 'function:QC:QC REASON PRD SOP FILE')
 const isQcSamplingTablePage = computed(() => activeMasterKey.value === 'function:QC:SAMPLING TABLE')
 const isQcSampling1916Page = computed(() => activeMasterKey.value === 'function:QC:SAMPLING 1916')
 const isQcSamplingPlanPage = computed(() => activeMasterKey.value === 'function:QC:SAMPLING PLAN')
@@ -1491,6 +1496,14 @@ async function signOut(): Promise<void> {
         />
         <QcSpecialBasisMaintainMaster
           v-else-if="isQcSpecialBasisMaintainPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcReasonProductSopFileMaster
+          v-else-if="isQcReasonProductSopFilePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

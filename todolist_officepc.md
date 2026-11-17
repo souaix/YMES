@@ -14,6 +14,15 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC112 品質原因產品指導書（公司端 2026-11-17）
+
+- [x] 對照 `frmReasonPrdSOPFile`、`frmReasonPrdSOPFileMaintain`、`frmReasonPrdSOPFileImport` 及 Designer；記錄已核准原因載入、選列即載入關聯、產品查找條件、左右移動、檔案上傳/移除、範本下載及逐列匯入進度。
+- [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 透過受保護連線唯讀取得 `TBLQCREASONPRDSOPFILE` DDL/欄位/PK/index/FK 字典；僅 PK `(REASONNO,PRODUCTNO)`，無 FK/DataStamp/額外索引；未讀業務列或在 Oracle 執行 DDL。
+- [x] 建立 `/YMES/QC/ReasonProductSOPFile` Vue DEV 頁與 QC 三層選單/路由，支援原因/關聯雙 Grid、Maintain、Import、localStorage 假資料及 API 呼叫契約；新增 QC112 規格、Oracle source DDL、PG CREATE 參考及本段 handoff。
+- [x] 舊 `DataImporter.QCItemRPDReasonSOPFileImporter` 實作不在來源樹，已把 checker 及共用檔案刪除語義列為家用端查證項。Web 匯入改為選取工作簿與附件，再按 FileName 配對，不允許用戶端路徑被 API 當伺服器路徑讀取。
+- [ ] 未執行 build/test/瀏覽器驗收。家用端需比對 YMES schema、確認檔案儲存與舊 checker 規則並實作受 QC112 權限保護的 API；公司端之後 pull 家用端 API 再做 Production 對接。
+- [ ] 下一個功能依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 排序，對照 WinForms Form/Designer/Service/Core 後繼續。
+
 ### QC110 特殊主檔維護（公司端 2026-11-17）
 
 - [x] 對照 `frmSpecialBasisMaintain`/Designer、`wsSYS.LoadMesParameter/LoadMesParameterRef/LoadTablesConstraints`、`wsQC.UpdFactorMaintain` 與共用 Core；確認 ParameterClass=0、選列自動載入、動態 Grid、80px 按鈕欄、欄位名稱驗證、大小寫、必填黃色格、Import/Paste、整表 Save 與放棄變更提示。
