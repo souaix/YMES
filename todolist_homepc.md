@@ -1017,3 +1017,12 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 - 公司端 ML103 多選核准/刪除會對每筆資料依序呼叫既有 POST /api/materials/{no}/approve 與 DELETE /api/materials/{no}?issueState=...&dataStamp=...；不需要額外批次 API。請確認現有單筆 API 的簽核檢查、引用檢查、DataStamp、稽核與狀態轉換和 WinForms 相同。已檢視 PostgresMasterDataRepository.ApproveMaterial：目前有 Controlled=1、DataStamp、IssueState 檢查，但缺少 WinForms 的條件式 GumHour 設定檢查；需在服務端補上。
 - GET /api/materials/lookups/options 現況由 MaterialFeaturesController.Options() 回傳 countWay=[]、checkLotNo=[]，且沒有 MATERIALMULTITIMECTRL / GumMaterialType。請從公司端 WinForms ValueListProvider.GetValueList("TBLMTLMATERIALBASIS", ...) 與 wsSYS.LoadParameter 核實真實值，不要以 DEV 樣本猜測；將 CountWay、CheckLotNo 顯示選項與 GumHour 參數設定加入 DTO/API response。若參數已有 YMES 系統設定來源，沿用既有結構，不新建設定表。
 - 完成後更新 MaterialOptionsDto、API 文件與本待辦。公司端 UI 已能讀取選項；多次回溫參數未提供時 Production 會隱藏 GumHour，避免對非適用物料開啟設定。
+
+
+## QC202 計數管制內容（公司端 UI handoff，2026-11-17）
+
+- 公司端已依 WinForms frmSPCAttLimit / frmSPCAttLimitDef、wsQC、clsQCBasis / clsBasis_UPD 建立 Vue DEV 頁 /YMES/QC/AttributeControlLimit，三層選單為「品質資料 → 品管設定 → 計數管制內容」。主 Grid 固定載入 IssueState=2 QC Item；管制內容可動態列出 FactorOnline 欄位，支援新增/修改/刪除/複製、規則集、界限、Apply/Confirm、多選刪除。
+- Oracle TBLSPCATTLIMIT DDL 已由公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直接查 MESTEST 後，納入 QC201 DDL 擷取；單表 reference 為 database/reference/mestest_qc_spc_att_limit_source_ddl.sql。PG schema 參考 database/reference/mestest_qc_spc_att_limit_create.sql 以 factorvalues JSONB 取代動態欄位，先核對 YMES live schema/migrations 再決定 migration，不可照 Oracle 動態欄位實作任意 ALTER。
+- API：GET api/qc/attribute-control-limits?qcItemNo=、GET .../options?qcItemNo=、POST collection、PUT /{qcItemNo} body 帶 originalFactorValues/dataStamp、DELETE /{qcItemNo} body 帶 factorValues/dataStamp。完整 DTO、FactorOnline 白名單、RuleSet 格式、nullable DataStamp CAS 見 docs/modules/QC/計數管制內容.md。
+- 因子沿用既有 QC201 Factor API，查找值沿用 MES parameter reference；法則從 TBLQCRULEBASIS 讀 IssueState=2。API 所有端點需檢查登入與 FunctionKey QC202，SQL 參數化；新增以 QCItemNo + 正規化 factorValues 防重，修改/刪除以 composite key + DataStamp CAS，NULL DataStamp 使用 IS NULL。勿把 FactorNo 直接拼成 PostgreSQL 欄位名。
+- TBLSPCATTLIMIT Oracle source 無 PK/FK/唯一鍵，只有 QCITEMNO index；WinForms 客戶端新增時先查重。PG CREATE reference 加入 composite unique constraint 作 server-side 防重，屬 YMES 適配，請在實作前確認與既有架構相容。

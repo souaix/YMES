@@ -154,3 +154,6 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 - Oracle 第一層 Module 清單、排序及功能目錄筆數已查；ModuleNo 翻譯標題與實際使用者權限仍待核實，553 個 Function 的 WinForms/API 遷移狀態尚需逐項追蹤。
 - 每發現一個 Function，新增或更新對應 Markdown，並在本索引登記 Form、主要資料表、API 狀態及待確認事項。
 - 本索引及功能規格需與 UI/API 變更同批更新，供公司與家用電腦共同開發。
+
+
+- QC202「計數管制內容」：modules/QC/計數管制內容.md。公司端依 frmSPCAttLimit/Def、wsQC、clsQCBasis/clsBasis_UPD 完成 /YMES/QC/AttributeControlLimit DEV 頁、三層選單及 API handoff。Oracle TBLSPCATTLIMIT source DDL 沿用 QC201 直接 PowerShell/Oracle.ManagedDataAccess 查詢成果；來源無 PK/FK，Factor 欄依 FactorOnline 動態增加。PostgreSQL CREATE reference 以 JSONB 保存要因組合並明確標示為 YMES 適配，家用端需核對 live schema 後再設計 migration/API。

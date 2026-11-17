@@ -378,3 +378,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護設定直接唯讀取得 `MESTEST.TBLQCREASONPRDSOPFILE` 的 `DBMS_METADATA.GET_DDL`，並查詢欄位、PK、索引及外鍵字典。結構含四欄，PK `(REASONNO, PRODUCTNO)`；只有 PK unique index，無 FK、DataStamp 或其他索引。
 - Oracle source DDL 與 PostgreSQL 空表 CREATE 參考分別為 `database/reference/mestest_qc_reason_prd_sop_file_source_ddl.sql`、`database/reference/mestest_qc_reason_prd_sop_file_create.sql`。家用端已核對 YMES live schema；`0020_qc112_reason_product_sop_file.sql` 只補缺少的 `tblqcreasonbasis` 與 `tblqcreasonprdsopfile`，並授予 `ymes_app` 必要 table privileges。
 - 僅查詢 Oracle 資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL。連線值及檔案服務參數值均未輸出、保存或提交。YMES API 的 QC112 附件存於獨立 named volume，不沿用未存在的 MES file-service 設定。
+
+### 更新 2026-11-17：QC202 計數管制內容
+
+- MESTEST.TBLSPCATTLIMIT Oracle DDL 沿用 QC201 當次由 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接連線取得的來源字典結果；本次未透過 DBeaver UI 查詢。來源 reference：database/reference/mestest_qc_spc_att_limit_source_ddl.sql，欄位及索引資訊也見 mestest_qc_item_attributes_source_ddl.sql 的 TBLSPCATTLIMIT 區塊。
+- QC202 不需要新增 Oracle 連線設定。既有連線方法、憑證保護原則和 driver 相容性見本文件前段；連線值只從本機受保護設定讀取，不輸出、不寫入 Markdown/Git。本次只引用既有結構查詢，沒有讀取 MES 業務列或在 Oracle 執行 DDL。
+- YMES PostgreSQL 空表參考 database/reference/mestest_qc_spc_att_limit_create.sql 以 JSONB 承接舊 Oracle 動態因子欄位，屬 YMES 固定 schema 適配；家用端需先核對 live schema/migrations，不得把參考檔直接當 migration。

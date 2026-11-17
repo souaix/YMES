@@ -634,3 +634,11 @@
 - [x] 已新增 `docs/modules/QC/次分類基本資料.md`，並更新規格索引、Oracle 查詢紀錄與 `todolist_homepc.md` API/schema handoff。
 - [ ] 未執行 build、測試或瀏覽器驗收；Production API/schema 依家用端交接完成後再 pull 核對。沒有新增 API implementation。
 - [ ] 下一段依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接續 QC 尚未完成 Function；每頁先讀 WinForms Form/Designer/Service/Core，再查缺少的 Oracle DDL 與實際 CREATE SQL/API handoff。
+
+
+## QC202 計數管制內容（公司端 2026-11-17）
+
+- [x] 已 pull 最新 main；公司端完成 QC202 Vue DEV 頁、三層選單與 WinForms / Service / Core 規格。
+- [x] Oracle TBLSPCATTLIMIT 沿用 QC201 透過 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查 MESTEST 取得的 DBMS_METADATA/欄位/索引結果；新增 QC202 單表 source DDL reference，未讀業務資料、未在 Oracle 執行 DDL，未將連線秘密寫入 Git。
+- [x] 建立 PostgreSQL JSONB 動態因子空表 CREATE reference；明確標示這是 YMES schema 適配，供家用端比對，不是可直接執行的 migration。
+- [ ] 後續功能依 WinForms Function inventory 順序繼續 QC203 計數品管項目判別法則對應：先讀 Form/Service/Core，再查其獨有表 DDL（若 reference 未涵蓋）並完成 UI/API/SQL handoff。
