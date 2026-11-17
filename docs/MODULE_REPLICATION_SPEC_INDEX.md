@@ -16,6 +16,7 @@
 
 ## 2026-11-17 新增功能規格
 
+- QC105「品質原因子類別資料」：[功能規格](modules/QC/品質原因子類別資料.md)。公司端已對照 `frmReasonSubTypeBasis`/Def、wsQC、Core 與 Oracle DDL，完成 `/YMES/QC/ReasonSubTypeBasis` DEV 頁和 QC 基本資料選單。來源表以 ReasonSubType 為 PK，沒有 FK；家用端需比對既有 schema、提供正式 ReasonType ValueList，並實作 QC105 CRUD、Issue Control 編輯權限及 `ReasonSubType BASIS` Issue Job。
 - QC104「抽樣計劃_元件」：[功能規格](modules/QC/Wafer抽樣計劃.md)。公司端依 `frmSamplingPlan_Wafer`/Def、wsQC 與 Core 完成 `/YMES/QC/SamplingPlanWafer` DEV 頁和 QC 基本資料選單。Oracle source DDL / PostgreSQL CREATE 參考包含 Wafer 主檔、共用 Range、Area 三表；Range 無 PK/index/FK，家用端需先協調和 QC103 共用表的 schema/API 行為，再補 QC104 transaction CRUD、DataStamp CAS 及 `WAFER SAMPLING PLAN` Issue Job。
 
 - QC103「抽樣計劃」：[功能規格](modules/QC/抽樣計劃.md)。公司端已對照 `frmSamplingPlan`/`frmSamplingPlanDef`、wsQC 與 Core，完成 `/YMES/QC/SamplingPlan` DEV 頁及 QC 基本資料選單。兩張 Oracle source DDL / PostgreSQL CREATE 參考已建立；來源各有 PK、沒有 FK/額外索引。家用端需實作交易式主檔/參數 API、`SAMPLING PLAN` Issue Job、DataStamp CAS、PlanType/參數選項及 Simulation。

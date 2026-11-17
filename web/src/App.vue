@@ -44,6 +44,7 @@ import MaterialLabelMapMaster from './components/MaterialLabelMapMaster.vue'
 import MaterialVendorAutoLoaderSetupMaster from './components/MaterialVendorAutoLoaderSetupMaster.vue'
 import EquipmentAutoLoaderSetupMaster from './components/EquipmentAutoLoaderSetupMaster.vue'
 import Qc8DReasonBasisMaster from './components/Qc8DReasonBasisMaster.vue'
+import QcReasonSubTypeMaster from './components/QcReasonSubTypeMaster.vue'
 import QcFirstGroupMaster from './components/QcFirstGroupMaster.vue'
 import QcFinalGroupMaster from './components/QcFinalGroupMaster.vue'
 import QcHoldDescriptionMaster from './components/QcHoldDescriptionMaster.vue'
@@ -247,6 +248,7 @@ const fallbackMenuTree: MenuNode[] = [
     moduleNo: 'QC',
     children: [{ id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
+      { id: 'function:QC:REASON SUBTYPE BASIS', label: '品質原因子類別資料', shortLabel: '因', functionNo: 'REASON SUBTYPE BASIS', moduleNo: 'QC', tableName: 'tblqcreasonsubtypebasis' },
       { id: 'function:QC:SAMPLING TABLE', label: '抽樣表格', shortLabel: '抽', functionNo: 'SAMPLING TABLE', moduleNo: 'QC', tableName: 'tblqcsamplingtable' },
       { id: 'function:QC:SAMPLING 1916', label: '抽樣計劃設定_1916', shortLabel: '抽', functionNo: 'SAMPLING 1916', moduleNo: 'QC', tableName: 'tblqcsampling1916' },
       { id: 'function:QC:SAMPLING PLAN', label: '抽樣計劃', shortLabel: '計', functionNo: 'SAMPLING PLAN', moduleNo: 'QC', tableName: 'tblqcsamplingplan' },
@@ -299,6 +301,7 @@ const menuRoutes: Record<string, string> = {
   'function:MTL:B_MTL AUTOLOADER SETUP': materialVendorAutoLoaderRoute,
   'function:EQP:B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
   'function:QC:8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
+  'function:QC:REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
   'function:QC:SAMPLING TABLE': appBasePath + '/QC/SamplingTable',
   'function:QC:SAMPLING 1916': appBasePath + '/QC/Sampling1916',
   'function:QC:SAMPLING PLAN': appBasePath + '/QC/SamplingPlan',
@@ -365,6 +368,7 @@ const functionRoutes: Record<string, string> = {
   'LOCATOR BASIS': locatorBasisRoute,
   'SMD PDLINE BASIS': pdLineBasisRoute,
   '8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
+  'REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
   'SAMPLING TABLE': appBasePath + '/QC/SamplingTable',
   'SAMPLING 1916': appBasePath + '/QC/Sampling1916',
   'SAMPLING PLAN': appBasePath + '/QC/SamplingPlan',
@@ -450,6 +454,7 @@ const isMaterialLabelMapPage = computed(() => activeMasterKey.value === 'functio
 const isMaterialVendorAutoLoaderPage = computed(() => activeMasterKey.value === 'function:MTL:B_MTL AUTOLOADER SETUP')
 const isEquipmentAutoLoaderPage = computed(() => activeMasterKey.value === 'function:EQP:B_EQP AUTOLOADER SETUP')
 const isQc8DReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:8D REASON BASIS')
+const isQcReasonSubTypeBasisPage = computed(() => activeMasterKey.value === 'function:QC:REASON SUBTYPE BASIS')
 const isQcSamplingTablePage = computed(() => activeMasterKey.value === 'function:QC:SAMPLING TABLE')
 const isQcSampling1916Page = computed(() => activeMasterKey.value === 'function:QC:SAMPLING 1916')
 const isQcSamplingPlanPage = computed(() => activeMasterKey.value === 'function:QC:SAMPLING PLAN')
@@ -1413,6 +1418,14 @@ async function signOut(): Promise<void> {
         />
         <QcSamplingPlanWaferMaster
           v-else-if="isQcSamplingPlanWaferPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcReasonSubTypeMaster
+          v-else-if="isQcReasonSubTypeBasisPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

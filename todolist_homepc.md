@@ -16,6 +16,17 @@
 - [ ] 參數化 SQL；依規格更新 API/schema 文件與本待辦，完成後 push GitHub 並通知公司端 pull。UI 的 DEV AQL 選項是假資料；不得將 MES 業務資料匯入 YMES。
 
 
+### QC105 品質原因子類別資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/品質原因子類別資料.md`、公司端 QC105 區段與 `docs/DATABASE_CONNECTION.md`。
+- [ ] 對照 `database/reference/mestest_qc_reason_subtype_basis_source_ddl.sql` 和 `database/reference/mestest_qc_reason_subtype_basis_create.sql`，核對 YMES live schema/migrations；保留 nullable/default。只有確認缺表或結構差異後建立 forward migration，不得 drop/recreate 或清除既有資料。
+- [ ] 欄位依來源保留：`reasontype numeric(1,0) NULL`、`reasonsubtype varchar(50) NOT NULL PK`、`reasonsubtypename varchar(100) NULL`、`description varchar(255) NULL`、`creator/reviser varchar(10) NULL`、`createdate/revisedate timestamp NULL`、`issuestate numeric(1,0) NOT NULL DEFAULT 0`、`datastamp numeric(11,0) NULL DEFAULT 0`。只需 PK unique index；來源沒有 FK 或額外索引。WinForms 雖要求 ReasonSubTypeName 必填，Oracle 欄位本身允許 NULL。
+- [ ] 實作 FunctionKey `QC105` 保護的 `GET /api/qc/reason-subtypes?searchFieldName=ReasonSubType&searchFieldValue=`，回傳所有狀態、ReasonType 顯示文字、audit/DataStamp 與依 Issue Control 設定計算的 `editableFields`；搜尋欄只接受 ReasonSubType。
+- [ ] 實作 `GET /api/qc/reason-subtypes/reason-types`，依 MES ValueList 等價設定回傳 `{ value, label }`。來源 VB 註解中的代碼不完整且不同年代內容互相矛盾，不可當成正式選項；如 YMES 尚無此 lookup，先記錄設定來源與缺口再決定相容方式。
+- [ ] 實作 POST/PUT/DELETE/approve：新增驗必填/長度/ValueList/主鍵唯一並建立狀態 0 audit；修改主鍵唯讀，狀態 1 拒絕，狀態 2/-1 僅允許 Issue Control 的 EditFlag 欄位；DataStamp nullable CAS，衝突回 409。刪除 0/-1 實體刪除、2→-1、1 拒絕。Approve Issue Job Map `ReasonSubType BASIS`，支援直接 0→2 或 Issue 流程 0→1→2/退回 0。
+- [ ] 多筆刪除／核准逐筆執行、第一筆錯誤停止，保留已成功項目；使用參數化 SQL、登入者 audit、交易與權限檢查。更新 API/schema 文件及 migration 索引並 push GitHub；不得連 MES Oracle 或匯入 MES 業務資料。
+
+
 ### QC103 抽樣計劃（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/抽樣計劃.md`、本檔 QC103 區段、公司端 QC103 區段及 `docs/DATABASE_CONNECTION.md`。
