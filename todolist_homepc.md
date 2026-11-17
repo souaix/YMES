@@ -27,7 +27,8 @@
 - [x] 新增 YMES API 專用 Docker named volume `ymes-qc112-files`，容器掛載 `/data/qc112`；資料庫只存 `QC112/yyyy/MM/{guid}.{ext}` 邏輯路徑。上限 1 GiB、單檔 25 MiB，允許 JPG/JPEG/JPE/JFIF/PNG/BMP/PDF，並驗證內容簽章。未找到既有檔案服務或 NFS/CIFS，這是 YMES 新增的 API server-side 儲存方式。
 - [x] 匯入支援第一張 XLS/XLSX/CSV 工作表、最多 1000 筆；產生四欄 XLSX 範本。`FilePath` 僅作顯示文字，API 不讀取該路徑；附件由使用者另外選取後依 FileName 上傳。
 - [ ] 公司來源樹缺少舊 `QCItemRPDReasonSOPFileImporter`，因此無法確認其中未記錄的額外 business checker 條件；已實作可核實的核准狀態、產品版本、重複鍵及共用檔案刪除保護。若客戶驗收發現額外舊規則，再由公司端提供具體規則補齊。
-- [ ] API 部署與遠端 ready/權限核對完成後，push GitHub 並請公司端 pull；公司端驗收 Production route 與匯入/附件操作。
+- [x] `5a0109b` 已 push 到共用 `main` 並部署 YMES API；遠端 `/health/ready` 回 ready、未登入 QC112 endpoint 回 401，專用 volume `ymes-qc112-files` 已建立。只重建 `ymes-api`，`ymes-web` 與其他容器未重啟。
+- [ ] 公司端 pull 最新 main 後驗收 Production route 與匯入/附件操作；舊 checker 額外規則仍待公司端提供具體依據。
 
 ### QC110 特殊主檔維護（公司端 2026-11-17 交接）
 

@@ -32,7 +32,7 @@
 - [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 透過受保護連線唯讀取得 `TBLQCREASONPRDSOPFILE` DDL/欄位/PK/index/FK 字典；僅 PK `(REASONNO,PRODUCTNO)`，無 FK/DataStamp/額外索引；未讀業務列或在 Oracle 執行 DDL。
 - [x] 建立 `/YMES/QC/ReasonProductSOPFile` Vue DEV 頁與 QC 三層選單/路由，支援原因/關聯雙 Grid、Maintain、Import、localStorage 假資料及 API 呼叫契約；新增 QC112 規格、Oracle source DDL、PG CREATE 參考及本段 handoff。
 - [x] 舊 `DataImporter.QCItemRPDReasonSOPFileImporter` 實作不在來源樹，已把 checker 及共用檔案刪除語義列為家用端查證項。Web 匯入改為選取工作簿與附件，再按 FileName 配對，不允許用戶端路徑被 API 當伺服器路徑讀取。
-- [ ] 家用端已建立 QC112 PostgreSQL schema/API，部署後請 pull 最新 main；以已登入正式環境開啟 `/YMES/QC/ReasonProductSOPFile`，核對原因/產品清單、附件新增/移除、XLS/XLSX/CSV 匯入、範本下載及錯誤顯示。Production API 使用登入保護；目前不含 FunctionKey 專屬 ACL（專案角色權限暫不處理）。
+- [ ] 家用端已建立 QC112 PostgreSQL schema/API 並部署；請 pull 最新 main，以已登入正式環境開啟 `/YMES/QC/ReasonProductSOPFile`，核對原因/產品清單、附件新增/移除、XLS/XLSX/CSV 匯入、範本下載及錯誤顯示。Production API 使用登入保護；目前不含 FunctionKey 專屬 ACL（專案角色權限暫不處理）。
 - [ ] 舊 `QCItemRPDReasonSOPFileImporter` 不在來源樹；若從 MES 原生程式確認到目前 API 未涵蓋的 checker/business 規則，請提供具體規則給家用端補齊。API 不會把工作簿 FilePath 當伺服器路徑使用。
 - [ ] 下一個功能依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 排序，對照 WinForms Form/Designer/Service/Core 後繼續。
 
