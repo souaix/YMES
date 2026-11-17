@@ -6,6 +6,18 @@
 
 ## 家用電腦現在接手
 
+### QC103 抽樣計劃（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/抽樣計劃.md`、本檔 QC103 區段、公司端 QC103 區段及 `docs/DATABASE_CONNECTION.md`。
+- [ ] 比對 YMES PostgreSQL live schema/migrations。Oracle source DDL：`database/reference/mestest_qc_sampling_plan_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_sampling_plan_create.sql`。只在確認缺漏時新增 forward migration，保留 YMES 擴充欄位；不可在 MES Oracle 執行 CREATE。
+- [ ] 保留 `tblqcsamplingplan` 欄位與 nullable/default：PlanNo varchar(25) NOT NULL PK；PlanName varchar(50) NOT NULL；PlanType numeric(1,0) NOT NULL；FunctionName varchar(50)、Description varchar(255)、Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp nullable；IssueState numeric(1,0) NOT NULL DEFAULT 0；SQtyCanBBiggerThenPQty numeric(1,0) NOT NULL DEFAULT 0；DataStamp numeric(11,0) nullable DEFAULT 0。`tblqcsamplingparameter` 欄位 PlanNo varchar(25)、ParameterNo varchar(20) NOT NULL 複合 PK，ParameterValue varchar(255) nullable。來源沒有 FK/額外索引。
+- [ ] 實作 FunctionKey `QC103` 保護的 GET/POST/PUT/DELETE `/api/qc/sampling-plans`；主檔和參數 Aggregate 寫入需單一交易，Edit/核准/狀態刪除使用 nullable DataStamp CAS。狀態 0/-1 實體刪除兩表、2 改 -1、1 拒絕。
+- [ ] 實作 `/plan-types`、`/function-options`、`/{planNo}/parameters`、`/parameter-options/{parameterNo}`：PlanType 取自現有 ValueList；FunctionName 依 `udSamplingFunction` 名稱篩選 `FUNSA*`；ParameterValue 選項依 `wsSYS.LoadElementValue` 對應邏輯；ShowFlag 依 PlanType 推導，不需新增資料庫欄位。
+- [ ] 實作核准 `POST /{planNo}/approve`：先驗證參數，再依 Issue Job Map `SAMPLING PLAN` 無 Job 時 0→2；有 Job/Detail 時建立 Issue、狀態 1、通知第一簽核群組，核准轉 2、退回回 0。所有狀態轉換維護 Reviser/ReviseDate/DataStamp。
+- [ ] 實作 `POST /{planNo}/simulate`：依 0–7 PlanType 呼叫 WinForms 原 Core 的 `ShowParameter_*` 對應規則；不能沿用 DEV 固定抽樣近似值作正式計算。
+- [ ] 使用參數化 SQL；完成後更新 API/schema 文件與本待辦並 push GitHub，通知公司端 pull。來源無 MES 業務資料，Oracle 只查 DDL。
+
+
 ### QC102 抽樣計劃設定_1916（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/抽樣計劃設定_1916.md`、本檔 QC102 區段、公司端 QC102 區段及 `docs/DATABASE_CONNECTION.md`。
