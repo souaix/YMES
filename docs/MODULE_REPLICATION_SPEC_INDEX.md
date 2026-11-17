@@ -11,6 +11,8 @@
 - OP102「企業邏輯設定」：[功能規格](modules/OP/企業邏輯設定.md)。已直接閱讀 WinForms 清單/定義 Form、wsOP、clsOpBasis、clsBasis_UPD，PowerShell 5.1/ODP.NET 唯讀取得主表與情境 lookup Oracle DDL，完成 OP 三層選單、Vue DEV CRUD/簽核/狀態頁及 PostgreSQL CREATE-only handoff；Production API 與 YMES live schema 比對待家用端。
 - OP103「作業站類別資料」：[功能規格](modules/OP/作業站類別資料.md)。已直接對照 frmOPType/Def、wsOP 與 clsOpBasis，完成 /YMES/MasterData/OperationTypes Vue DEV 清單/新增/修改/複製/刪除/核准及 Property 假資料視窗。Oracle TBLOPTYPE DDL 與 PostgreSQL CREATE-only 參考已保存；Production schema/API 與共享簽核待家用端實作。
 
+- OP105「作業站群組資料」：[功能規格](modules/OP/作業站群組資料.md)。已直接對照 WinForms 主/明細 Form、wsOP、clsOpBasis、clsBasis_UPD，並用 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBLOPGROUPBASIS/TBLOPGROUPDETAIL DDL、PK/index/constraint；完成 OP 三層選單與 Vue DEV 雙 Grid/主明細 CRUD/Check。Oracle source DDL 與 PG CREATE-only 已保存；家用端待核對 live schema、補缺 defaults migration，實作 group/member API 與交易刪除。
+
 ## 規格產出原則
 
 - 以 WinForms Form、Service/Core 類別及 MES Oracle 資料字典為依據；截圖用於核對版面，不取代程式碼與資料表證據。

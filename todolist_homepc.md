@@ -1,3 +1,16 @@
+## 最新公司端交接：OP105 作業站群組資料（2026-11-18）
+
+- [ ] Pull 最新 main；閱讀 docs/modules/OP/作業站群組資料.md、docs/DATABASE_CONNECTION.md 的 OP105 段落、OP101–OP104 規格，以及 database/reference/mestest_op105_group_basis_source_ddl.sql 與 mestest_op105_group_basis_create.sql。
+- [ ] 先核對 YMES live schema/migrations 的 tblopgroupbasis、tblopgroupdetail。Oracle 原始欄位、PK/NULL/default 已直接查證。database/reference/mestest_first_phase_create_tables.sql 已校正新庫預設值；CREATE TABLE IF NOT EXISTS 不會更新既有表。若 live schema 缺 DEFAULT 0，依現有 migration 慣例只補必要 forward migration，不重建表、不覆蓋資料。
+- [ ] 實作 FunctionNo=OP GROUP BASIS 登入/API 權限。Vue OperationGroupMaster.vue Production 路徑：GET /api/operation-groups?opGroupNo=&psNo=、GET /{opGroupNo}/members、POST/PUT/DELETE 群組、POST/PUT/DELETE 群組成員；路徑與 DTO 見功能規格。
+- [ ] 實作 GET /api/operation-groups/lookups/production-segments，重用既有 PS lookup；另實作/映射 GET /api/operation-groups/lookups/operations?psNo=&issueState=2，只回 IssueState=2 的已核准 OP。PSNo='*' 時不限制區段。不要建重複作業站或生產區段表。
+- [ ] 主檔驗證：OPGroupNo 必填、大寫、最多 20；OPGroupName 必填、最多 50；PSNo 必填、最多 50；OPGroupOrder 0–999999 整數；Description 最多 255。編輯以 DataStamp CAS，衝突回 409；Oracle DataStamp nullable + DEFAULT 0，舊值為 NULL 時須用 null-safe CAS 條件，不能把 NULL 靜默當成 0。Creator/CreateDate/Reviser/ReviseDate 由 API principal/server 寫入。
+- [ ] 成員驗證：複合 PK (OPGroupNo, OPNo)；OPRoleFlag 僅 0/1/2；WeightRate 必填且 0–100、最多兩位小數；新成員必須是此群組區段中的已核准 OP；修改只能變更角色/權重並採 DataStamp CAS；DataStamp nullable + DEFAULT 0，舊值為 NULL 時須用 null-safe CAS。audit 不信任 body。
+- [ ] 主檔刪除必須在單一 DB transaction 內先刪 TBLOPGROUPDETAIL 再刪 TBLOPGROUPBASIS。成員刪除為實體刪除。不得加 Oracle 未定義的 FK/index；依 YMES 的 schema extension 習慣處理參照完整性。
+- [ ] Check 是 WinForms 清單端即時檢核，不需 API 寫入：同一群組 Entry 最多 1、Exit 最多 1、WeightRate 合計 100；不要求 Entry/Exit 各至少一筆。不要讓合計規則阻止使用者逐筆編輯中間狀態的明細。
+- [ ] OP Basis 刪除會以 TBLOPGROUPDETAIL 引用阻擋；確認 OP104 API 保持此保護。
+- [ ] 完成 API/schema 後更新規格、migration/API handoff，提交並 push GitHub main。公司端尚未連 YMES PostgreSQL，未執行 build/test/browser 驗收；API/schema 完成後通知公司端 pull 整合。
+
 ## 最新公司端交接：OP103 作業站類別資料（2026-11-18）
 
 - [ ] Pull 最新 main；閱讀 docs/modules/OP/作業站類別資料.md、docs/DATABASE_CONNECTION.md OP103 段落與 WinForms frmOPType/Def、wsOP、clsOpBasis 規則摘要。

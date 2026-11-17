@@ -875,3 +875,12 @@
 - [x] 建立 OP102 詳細規格、兩張 Oracle source DDL 與 PostgreSQL CREATE-only 參考、索引與資料庫連線 provenance、家用端 API/schema handoff；補上作業站主檔規格交互連結。
 - [ ] 按工作規則未執行 build、test 或 browser 驗收；Production API/schema 待家用端依 todolist_homepc.md 完成。家用端 push 後公司端 pull 對接。
 - [ ] 接續依 docs/MES_MENU_FUNCTION_INVENTORY.md，直接閱讀下一項尚未遷移 WinForms Form/Service/Core，查缺漏 Oracle DDL，完成 UI/spec/handoff 並 push。
+
+## 2026-11-18 公司端進度：OP105 作業站群組資料
+
+- [x] 直接讀取 frmOPGroupBasis / frmOPGroupBasisDef / frmOPGroupDetailDef、wsOP、clsOpBasis、clsBasis_UPD；整理主檔/明細欄位、雙 Grid、ADD/EDIT/DEL/Copy/Check、DataStamp、已核准作業站與區段 lookup。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 MESTEST.TBLOPGROUPBASIS、TBLOPGROUPDETAIL DDL 與 ALL_TABLES/ALL_INDEXES/ALL_CONSTRAINTS；兩表僅 PK unique index，無 FK/額外 index。未查業務列、未在 Oracle 執行 DDL/DML。
+- [x] 新增 /YMES/OP/Groups Vue DEV 假資料雙 Grid/表單/lookup/檢核並接上作業站資料→作業站設定→作業站群組資料選單。
+- [x] 新增 OP105 規格、Oracle source DDL、PG CREATE-only SQL、校正 first-phase 新庫 DEFAULT 0，更新 module index、資料庫 provenance 與 todolist_homepc.md。
+- [ ] 尚未連 YMES PostgreSQL、未實作 API/schema；未執行 build、test 或 browser 驗收。已列明 API 路徑與 live schema/defaults 核對項目給家用端。
+- [ ] 推送 OP105 後依 docs/MES_MENU_FUNCTION_INVENTORY.md 接續下一個尚未完成 WinForms 功能；家用端 API/schema push 後 pull 並整合。

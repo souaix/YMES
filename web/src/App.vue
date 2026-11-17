@@ -38,6 +38,7 @@ import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
 import BusinessRuleBasisMaster from './components/BusinessRuleBasisMaster.vue'
+import OperationGroupMaster from './components/OperationGroupMaster.vue'
 import MaterialVendorMaster from './components/MaterialVendorMaster.vue'
 import MaterialTypeMaster from './components/MaterialTypeMaster.vue'
 import MaterialTypeQCItemMaster from './components/MaterialTypeQCItemMaster.vue'
@@ -256,7 +257,7 @@ const fallbackMenuTree: MenuNode[] = [
     label: '作業站資料',
     shortLabel: '站',
     moduleNo: 'OP',
-    children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP TYPE', label: '作業站類別資料', tableName: 'tbloptype', shortLabel: '類', functionNo: 'OP TYPE', moduleNo: 'OP' }, { id: 'function:OP:OP RULE BASIS', label: '作業站法則設定', tableName: 'tblopcontrolrule', shortLabel: '則', functionNo: 'OP RULE BASIS', moduleNo: 'OP' }, { id: 'function:OP:BR BASIS', label: '企業邏輯設定', tableName: 'tblopbusinessrulebasis', shortLabel: '企', functionNo: 'BR BASIS', moduleNo: 'OP' }] }],
+    children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP TYPE', label: '作業站類別資料', tableName: 'tbloptype', shortLabel: '類', functionNo: 'OP TYPE', moduleNo: 'OP' }, { id: 'function:OP:OP RULE BASIS', label: '作業站法則設定', tableName: 'tblopcontrolrule', shortLabel: '則', functionNo: 'OP RULE BASIS', moduleNo: 'OP' }, { id: 'function:OP:BR BASIS', label: '企業邏輯設定', tableName: 'tblopbusinessrulebasis', shortLabel: '企', functionNo: 'BR BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP GROUP BASIS', label: '作業站群組資料', tableName: 'tblopgroupbasis', shortLabel: '群', functionNo: 'OP GROUP BASIS', moduleNo: 'OP' }] }],
   },
   {
     id: 'material-data',
@@ -449,6 +450,7 @@ const menuRoutes: Record<string, string> = {
   'function:OP:OP TYPE': appBasePath + '/MasterData/OperationTypes',
   'function:OP:OP RULE BASIS': appBasePath + '/OP/ControlRules',
   'function:OP:BR BASIS': appBasePath + '/OP/BusinessRules',
+  'function:OP:OP GROUP BASIS': appBasePath + '/OP/Groups',
   'material-master': `${appBasePath}/MasterData/Materials`,
   'process-master': `${appBasePath}/MasterData/Processes`,
   'product-master': `${appBasePath}/MasterData/Products`,
@@ -511,6 +513,7 @@ const functionRoutes: Record<string, string> = {
   'OP TYPE': appBasePath + '/MasterData/OperationTypes',
   'OP RULE BASIS': appBasePath + '/OP/ControlRules',
   'BR BASIS': appBasePath + '/OP/BusinessRules',
+  'OP GROUP BASIS': appBasePath + '/OP/Groups',
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
   'MTL VENDOR': materialVendorRoute,
   'MTL TYPE': materialTypeRoute,
@@ -569,6 +572,7 @@ const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-mast
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
 const isOperationControlRulePage = computed(() => activeMasterKey.value === 'function:OP:OP RULE BASIS')
 const isBusinessRuleBasisPage = computed(() => activeMasterKey.value === 'function:OP:BR BASIS')
+const isOperationGroupPage = computed(() => activeMasterKey.value === 'function:OP:OP GROUP BASIS')
 const isMaterialVendorPage = computed(() => activeMasterKey.value === 'function:MTL:MTL VENDOR')
 const isMaterialTypePage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE')
 const isMaterialTypeQCItemPage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE QCITEM')
@@ -1939,6 +1943,14 @@ async function signOut(): Promise<void> {
         />
         <BusinessRuleBasisMaster
           v-else-if="isBusinessRuleBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OperationGroupMaster
+          v-else-if="isOperationGroupPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
