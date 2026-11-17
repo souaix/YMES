@@ -86,6 +86,7 @@ import QcInspMachineParameterTypeMaster from './components/QcInspMachineParamete
 import QcInspectionMachineMaster from './components/QcInspectionMachineMaster.vue'
 import QcInspDriverMaster from './components/QcInspDriverMaster.vue'
 import QcOcapBasisMaster from './components/QcOcapBasisMaster.vue'
+import QcOcapDispositionAdjust from './components/QcOcapDispositionAdjust.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -322,6 +323,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:HOLD DESCRIPTION', label: '異常說明', shortLabel: '說', functionNo: 'HOLD DESCRIPTION', moduleNo: 'QC', tableName: 'tblqcholddescription' },
       { id: 'function:QC:HOLD DISP GROUP', label: '異常處理群組', shortLabel: '群', functionNo: 'HOLD DISP GROUP', moduleNo: 'QC', tableName: 'tblqcholddispgroupbasis' },
       { id: 'function:QC:OCAP BASIS', label: 'OCAP基本資料', shortLabel: 'O', functionNo: 'OCAP BASIS', moduleNo: 'QC', tableName: 'tblqcocapbasis' },
+      { id: 'function:QC:OCAP DISPOSITION ADJUST', label: 'OCAP異常單處置調整', shortLabel: '處', functionNo: 'OCAP DISPOSITION ADJUST', moduleNo: 'QC', tableName: 'tblwiperfocapdisposition' },
       { id: 'function:QC:FIRST GROUP', label: '第一處理群組', shortLabel: '一', functionNo: 'FIRST GROUP', moduleNo: 'QC', tableName: 'tblqcfirstgroup' },
       { id: 'function:QC:FINAL GROUP', label: '最後處理群組', shortLabel: '末', functionNo: 'FINAL GROUP', moduleNo: 'QC', tableName: 'tblqcfinalgroup' },
     ] }],
@@ -377,6 +379,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'function:QC:INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
   'function:QC:OCAP BASIS': appBasePath + '/QC/OCAPBasis',
+  'function:QC:OCAP DISPOSITION ADJUST': appBasePath + '/QC/OCAPDispositionAdjust',
   'function:QC:QCITEM_V': appBasePath + '/QC/VariableQcItem',
   'function:QC:IMPORT QCITEM VARIABLES': appBasePath + '/QC/VariableItemImport',
   'function:QC:QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
@@ -484,6 +487,7 @@ const functionRoutes: Record<string, string> = {
   'HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'MCLASS BASIS': appBasePath + '/QC/MClassBasis',
   'HOLDITEM BASIS': appBasePath + '/QC/HoldItemBasis',
+  'OCAP DISPOSITION ADJUST': appBasePath + '/QC/OCAPDispositionAdjust',
   'POSITION BASIS': positionBasisRoute,
   'PRODUCTION CONFIG': areaShowRoute,
   'EQP BASIS': equipmentRoute,
@@ -575,6 +579,7 @@ const isQcInspMachineParameterTypePage = computed(() => activeMasterKey.value ==
 const isQcInspectionMachinePage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE PARAMETER')
 const isQcInspDriverPage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE DRIVER')
 const isQcOcapBasisPage = computed(() => activeMasterKey.value === 'function:QC:OCAP BASIS')
+const isQcOcapDispositionAdjustPage = computed(() => activeMasterKey.value === 'function:QC:OCAP DISPOSITION ADJUST')
 const isQcVariableQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_V')
 const isQcVariableItemImportPage = computed(() => activeMasterKey.value === 'function:QC:IMPORT QCITEM VARIABLES')
 const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM RULE MAP')
@@ -1691,6 +1696,14 @@ async function signOut(): Promise<void> {
           @close="navigateHome"
         />
 
+        <QcOcapDispositionAdjust
+          v-else-if="isQcOcapDispositionAdjustPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
         <QcVariableQcItemMaster
           v-else-if="isQcVariableQcItemPage"
           class="framework-content"

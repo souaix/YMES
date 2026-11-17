@@ -182,3 +182,5 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 
 - QC205「計量品管項目」：[功能規格](modules/QC/計量品管項目.md)。THEIL BU1 WinForms 主/Define/Memo Form、wsQC/Core 已核對；已接入 /YMES/QC/VariableQcItem Vue DEV 頁及三層選單。Memo 的 Oracle 表與變數量測依賴 DDL 已由 PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得，並提供 Memo PG Create 參考；家用端待核 live schema、建置主/子資源/Issue Job API 與參數 JSONB 適配。
 - QC209「計量品管項目管制法則對應」：[功能規格](modules/QC/計量品管項目管制法則對應.md)。標準 QC_ItemRule Form/Service/Core 已核對；Vue DEV 頁已接三層選單。Oracle `TBLQCITEMRULE` DDL 沿用 QC205 前次 PowerShell/ODP.NET 直連擷取，QCRuleBasis 沿用 QC108；新增 QC209 PostgreSQL CREATE 參考與整組替換 API handoff，家用端待核 live schema/實作 API。
+
+- QC409「OCAP異常單處置調整」：[功能規格](modules/QC/OCAP異常單處置調整.md)。直接核對 WinForms Form/流程圖選擇 Form、wsWIP/clsLot 業務交易，取得 3 張 OCAP WIP 表及 11 張共用 ERF/WIP side-effect Oracle DDL；Vue DEV 頁與專用表 PG CREATE/API handoff 已完成。此頁是生產異常單處置交易，不是三表 CRUD；Production API 需保留 LotStamp、ERF final disposition、WIP 狀態及 extension/通知副作用。

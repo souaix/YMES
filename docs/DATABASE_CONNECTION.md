@@ -505,3 +505,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - QC305 不新增表；重用 YMES Chart Basis/Detail/DetailLog、產品、PRDQCITEM、QC Item/Factor/Group schema。`TBLPRDTYPE` 是舊產品類別 lookup 依賴，但 repo 沒有獨立 Oracle DDL reference；家用端先核對 live schema/API，若確認 YMES 缺少對應物件，再由公司端透過 PowerShell + Oracle.ManagedDataAccess 取得原始 DDL。
 - 產品 Basis 的動態 PRODUCT 因子在 YMES 使用 `factorvalues JSONB`；家用端需按 QC302 實際資料存取方式核對舊 physical `product` 欄的相容性。QC305 Core 以 ProductNo 而非 ProductVersion/OPNo 讀寫 chart basis，規格已記錄此舊行為。
 - 本回合未在 Oracle 執行 DDL、未查 YMES PostgreSQL、未輸出或寫入 IP、帳號、密碼、SID 或受保護連線設定。
+
+### 更新 2026-11-18：QC409 OCAP 異常單處置調整
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，讀取既有受保護 DatabaseConfigs.CS.Test.Mes.ConnectionString，直連 MESTEST 查 DBMS_METADATA.GET_DDL 及 index metadata。查詢只讀結構，不讀 WIP 業務列；未在 Oracle 執行 DDL/DML，連線值未輸出或寫入 Git。
+- 專用表 DDL：mestest_qc409_wip_ocap_source_ddl.sql，涵蓋 TBLWIPERFOCAPDISPOSITION、TBLWIPERFOCAPSTATE、TBLWIPERFOCAPGROUPSTATE。
+- 核心 ERF/WIP/通知依賴 DDL：mestest_qc409_wip_disposition_dependencies_source_ddl.sql，涵蓋 TBLWIPERFBASIS、TBLWIPERFBATCHLOT、TBLWIPERFDISPOSITION、TBLWIPERFHOLDREASONDISP、TBLWIPLOTSTATE、TBLWIPLOTLOG、TBLWIPGOODBINSTATE、TBLWIPERF_ATTACHFILE、TBLWIPERFOCAP_ATTACHFILE、TBLUSRUSERBASIS、TBLENTCUSTOMERCONTACTOR，以及來源索引。
+- mestest_qc409_wip_ocap_create.sql 僅為三張 OCAP 專用表提供 YMES PostgreSQL schema-only Create 對照；其他表為共用 WIP/ENT/USR schema，家用端需查 live schema/migrations 再適配，勿重建或盲目套用 Oracle DDL。

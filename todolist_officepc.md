@@ -842,3 +842,11 @@
 - [x] 新增 Oracle source DDL reference、含 WIP/OP/PRD 關聯表的 PostgreSQL schema-only CREATE 參考、QC213 功能規格、DATABASE_CONNECTION.md 與 MODULE_REPLICATION_SPEC_INDEX.md 更新。
 - [x] 更新 todolist_homepc.md：先完成既有 QC212 API/schema，再依 QC213 handoff 比對所有主/明細/硬刪依賴及 YMES live schema，僅補缺 migration，實作 QC213 API/Issue Job/共用 QCType=3 operation。
 - [ ] 公司端未連 YMES PostgreSQL，也未執行 build、測試或瀏覽器驗收。家用端完成 migration/API 後 pull 再做整合驗收；之後依 MES_MENU_FUNCTION_INVENTORY.md 接下一個未遷移功能。
+
+## 2026-11-18 QC409 OCAP異常單處置調整公司端進度
+
+- [x] 已直接閱讀 STD/MESWin/QC/QC_OCAPDispositionAdjust/frmOCAPDispositionAdjust.vb、Designer、frmOCAPProcessDraw.vb、wsQC.LoadERFJoinOCAPDisposition、wsWIP.Exe_ERF_Disposition 與 clsLot.UpdOCAPAndERF_Disposition/OCAP helper。已記錄兩種動作、查詢條件、單筆作用列、同 ERF 多 Hold Item 的最終結案差異、LotStamp、WIP/OCAP side effects。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 使用既有受保護 MESTEST 設定，唯讀取得三張 OCAP 專用表 DDL 與 11 張共用 ERF/WIP/通知相依表 DDL/索引；未讀業務資料、未在 Oracle 執行 DDL，未輸出或提交連線秘密。
+- [x] 已建立 /YMES/QC/OCAPDispositionAdjust Vue DEV 頁、QC409 menu/route/元件掛載、功能規格、Oracle DDL reference、三張專用表 PG CREATE-only handoff，更新 module index、DATABASE_CONNECTION.md 及家用端 API/schema TODO。
+- [ ] Production API/schema 尚未實作；公司端未連 YMES PostgreSQL，未執行 build、測試或瀏覽器驗收。家用端完成 QC409 API/schema 後 pull，對照真 API/錯誤與交易行為整合驗收。
+- [ ] 接續依 docs/MES_MENU_FUNCTION_INVENTORY.md 遷移下一個尚未完成的 Function；各功能先追 WinForms Form/Service/Core，再查缺的 Oracle DDL，完成 DEV UI/規格/API handoff 並 push。

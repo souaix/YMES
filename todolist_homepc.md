@@ -1,3 +1,13 @@
+## 最新公司端 handoff：QC409 OCAP異常單處置調整（2026-11-18）
+
+- [ ] Pull 最新 main，閱讀 docs/modules/QC/OCAP異常單處置調整.md、QC408 OCAP流程規格與本檔下方 QC408 handoff、docs/DATABASE_CONNECTION.md QC409 段落。
+- [ ] Schema 核對：三張專用表 DDL 在 database/reference/mestest_qc409_wip_ocap_source_ddl.sql，PG CREATE-only 參考在 database/reference/mestest_qc409_wip_ocap_create.sql。先比對 YMES live schema/migrations；只補缺的 forward migration。不要重建或覆蓋共用 WIP 表。
+- [ ] 11 張 WIP/ERF/通知依賴的 MESTEST source DDL/index 在 database/reference/mestest_qc409_wip_disposition_dependencies_source_ddl.sql。逐張比對 YMES 現有 WIP/ENT/USR schema 和 API；表已存在時重用既有 mapping，不另建同義表。若有必要 mapping 缺表，先由來源 DDL 設計適配 migration，保留舊 schema/資料。
+- [ ] 完成 /api/qc/ocap-dispositions 查詢及 route-options、POST .../{erfNo}/{holdItemNo}/adjust；授權 FunctionNo=OCAP DISPOSITION ADJUST / FunctionKey=QC409。
+- [ ] 這不是只寫三張 OCAP history/state 表的 CRUD。依規格復刻 wsWIP.Exe_ERF_Disposition → clsLot.UpdOCAPAndERF_Disposition：ERF history/status、Lot Hold/LotStamp、WIP LotLog/GoodBin、OCAP current/group state、DispOrder、批次 ERF 分支、使用者定義 hook 及通知。
+- [ ] Finish 必須在 transaction 中重新計算同 ERF 的剩餘 Hold Item：最後一項採 DispType=2/Final；仍有其他項目則 DispType=0 但本筆 OCAPStatus=11。避免同時操作導致錯誤結案；系統 ERF 必須驗證新鮮 LotStamp，衝突回 409。
+- [ ] Change Group 只接受 server 從 OCAP graph/version/relation 驗證的可達節點；不可接受任意 GroupNo/NodeId/LinkName。附件和 mail 使用 YMES 現有 extension/outbox；確認不重複呼叫舊 side effect。
+- [ ] 完成後更新 migration/API 規格與 TODO，push GitHub main。公司端 pull 後以 Vue DEV UI 整合驗收；公司端尚未做 build、測試或瀏覽器驗收。
 # 家裡電腦接手清單
 
 ## 最新公司端 handoff：QC408 OCAP基本資料（2026-11-18）
