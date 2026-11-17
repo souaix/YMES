@@ -1019,6 +1019,32 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 - 完成後更新 MaterialOptionsDto、API 文件與本待辦。公司端 UI 已能讀取選項；多次回溫參數未提供時 Production 會隱藏 GumHour，避免對非適用物料開啟設定。
 
 
+## QC203 計數品管項目判別法則對應（公司端 UI / API handoff，2026-11-17）
+
+先讀 docs/modules/QC/計數品管項目判別法則對應.md、docs/DATABASE_CONNECTION.md 與本節。公司端已完成 Vue DEV UI /YMES/QC/AttributeRuleMap；Production API、YMES migration、schema 比對及部署尚未完成。FunctionNo=QCITEM_A RULE MAP，FunctionKey=QC203，IssueNo=QCITEM_A RULE MAP。
+
+### Oracle DDL / PostgreSQL schema
+
+- 公司端以 PowerShell 5.1 + Oracle.ManagedDataAccess，使用本機受保護的 MES Oracle 設定直連 MESTEST，只查 DBMS_METADATA/ALL_TABLES/index metadata，沒有查業務列或執行 Oracle DDL。Oracle source DDL：database/reference/mestest_qc_attribute_rule_map_source_ddl.sql；同一批表亦在 mestest_qc_item_attributes_source_ddl.sql。
+- 三張來源表為 TBLSPCQCATTRULEMAPBASIS、TBLSPCQCATTRULEMAPDETAIL、TBLSPCQCATTRULEMAPPARAMETER。來源 PK 分別為 QCAttSPSerial、(QCAttSPSerial,RetestLot)、(QCAttSPSerial,RetestLot,ParameterNo)；主表另有非唯一 QCItemNo index；三表沒有 Oracle FK。
+- PostgreSQL 空表 CREATE 參考：database/reference/mestest_qc_attribute_rule_map_create.sql。先比對 YMES live schema、已部署 migration、已存在的共享 ID/sequence service，再決定 forward migration；不可直接執行 reference 取代已有表。
+- Oracle 主表使用動態 FactorNo 欄位；CREATE 參考以 factorvalues JSONB 適配。API 只能接受該 QCItem 已核准 FactorOnline=Y 的 FactorNo 白名單，不能將傳入名稱拼成 SQL 欄位。精確重複組合由 (qcitemno,factorvalues) 防重；來源其他非該 QCItem 因子欄語義為 *。
+- Oracle 用 TBLSYSSERIALNO 的 QCAttSPSerial 產生 SP 加 8 位數 serial。CREATE reference 內的 qcattspserial_seq 是建議 ID 來源，先確認 live YMES 的共享 serial service 與既有 serial 最大值；禁止不檢查就從 1 使用。來源沒有 DataStamp、Reviser、ReviseDate；不要冒稱為 Oracle 欄位。若 YMES 新增版本欄位，必須另做 schema 適配說明。
+
+### API / transaction
+
+1. 全部端點驗證已登入、QC203 權限、資料狀態、欄位長度、已核准 lookup 來源及 factor whitelist；使用參數化 SQL。因舊服務以多句 SQL 全量替換 Detail/Parameter，新增、修改、刪除必須在同一交易原子完成。
+2. GET /api/qc/attribute-rule-maps?qcItemNo=&issueState= 回傳主 Grid rows：qcAttSpSerial、qcItemNo、issueState、creator、createDate、factorValues、canEdit。canEdit 依來源 ExeIssueControl/TBLSYSISSUECONTROL 規則計算，供 Vue 表單決定唯讀狀態。
+3. GET /api/qc/attribute-rule-maps/{qcAttSpSerial} 回傳 { basis, details, parameters }；Detail 依 RetestLot 排序，Parameter 按 RetestLot/ParameterNo 排序。
+4. GET /api/qc/attribute-rule-maps/options?qcItemNo= 回傳 qcItemRuleNo、componentCollect、已核准屬性法則、一般與元件抽樣計劃、FactorOnline 因子選項與 MES Parameter Reference 值、planParameters 對應表。一般 PlanNo 取已核准 TBLQCSAMPLINGPLAN；ComponentCollect 非 0 取已核准 TBLQCSAMPLINGPLAN_WAFER。法則取已核准 TBLQCATTRULEBASIS，依 ComponentCollect 0/1 分組。每種值的正式來源先核 WinForms/既有 YMES API，不要沿用 DEV 樣本。
+5. POST /api/qc/attribute-rule-maps body { qcItemNo, factorValues, details:[{retestLot,planNo,lotRuleNo,comRuleNo}], parameters:[{retestLot,parameterNo,parameterValue}] }。伺服器生成 SP########、IssueState=0；QC Item 必須已核准且 RuleNo 不可空，FactorOnline 至少一項，所有要因值必填；Detail 至少一筆；每筆 Detail 必填 PlanNo 且至少一筆 Parameter。ComponentCollect=0 且 PlanType=2 的 AQL 可以不填 LotRuleNo；其他一般 Plan 必填 LotRuleNo；元件模式至少填 LotRuleNo 或 ComRuleNo。驗證 RetestLot unique、同 RetestLot ParameterNo unique。對全部既有狀態做來源等價重複檢查；資料列/所有因子內容必須有相同語義才算精確 duplicate。序號需安全並行生成。
+6. PUT /api/qc/attribute-rule-maps/{qcAttSpSerial} 的 Vue request 僅送 details/parameters；API 不允許改 qcItemNo/factorValues/serial。依 ExeIssueControl：IssueState=0 可編輯；IssueState=1 唯讀；IssueState=2/-1 依 TBLSYSISSUECONTROL，無設定視為唯讀。交易內先驗證狀態，再替換所有 detail/parameter，保留 IssueState。來源 Core 會保留原 Creator 並將 CreateDate 更新為伺服器目前時間；若採正規 Reviser audit 或 CAS 是 YMES 行為改善，須在 API 文件記為適配，不得宣稱來源有這些欄位。
+7. DELETE /api/qc/attribute-rule-maps/{qcAttSpSerial}?issueState= 只接受來源允許刪除的 0、-1、2，Pending=1 拒絕。舊 Core 刪 Basis 和 Detail 卻漏刪 Parameter；新 API 應在一個交易刪三表，並以實際資料狀態/CAS 防止競態。Vue 多選逐筆呼叫，首錯停止並回報已完成筆數。
+8. POST /api/qc/attribute-rule-maps/{qcAttSpSerial}/approve?issueState=：接共用 Issue/Job，IssueNo=QCITEM_A RULE MAP；沒有 Job/Detail 時直接 2，有流程先 1，核准 2、退回 0，依既有 service 寫事件並通知第一簽核群組。WinForms UI 對 0/-1 都呼叫服務，但舊 wsQC 僅在傳入 0 時執行；-1 實際是成功 no-op。API 應拒絕 -1 或回報未變更，不能表示已核准。
+9. UI options/lookup 必須回正式資料：GET /api/qc/attribute-qc-items?issueState=2、GET /api/qc/attribute-qc-items/{qcItemNo}/factors?factorOnline=Y（QC201 已有），以及 QC203 options 提供 MES parameter reference、已核准 plans/rules/plan parameters。任何 API 不可將用戶端檔案路徑或因子名稱當 SQL。
+10. 先完成 live schema 比對與有資料備份，再採 forward migration；保留現有擴充欄位和資料。部署 API/schema 後更新 API/migration 文件、本 TODO 並 push，通知公司端 pull 以 Production 驗收主/Detail/Parameter、Issue Job 與錯誤狀態。
+
+
 ## QC202 計數管制內容（公司端 UI handoff，2026-11-17）
 
 - 公司端已依 WinForms frmSPCAttLimit / frmSPCAttLimitDef、wsQC、clsQCBasis / clsBasis_UPD 建立 Vue DEV 頁 /YMES/QC/AttributeControlLimit，三層選單為「品質資料 → 品管設定 → 計數管制內容」。主 Grid 固定載入 IssueState=2 QC Item；管制內容可動態列出 FactorOnline 欄位，支援新增/修改/刪除/複製、規則集、界限、Apply/Confirm、多選刪除。

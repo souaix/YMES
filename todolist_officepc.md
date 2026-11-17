@@ -641,4 +641,14 @@
 - [x] 已 pull 最新 main；公司端完成 QC202 Vue DEV 頁、三層選單與 WinForms / Service / Core 規格。
 - [x] Oracle TBLSPCATTLIMIT 沿用 QC201 透過 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查 MESTEST 取得的 DBMS_METADATA/欄位/索引結果；新增 QC202 單表 source DDL reference，未讀業務資料、未在 Oracle 執行 DDL，未將連線秘密寫入 Git。
 - [x] 建立 PostgreSQL JSONB 動態因子空表 CREATE reference；明確標示這是 YMES schema 適配，供家用端比對，不是可直接執行的 migration。
-- [ ] 後續功能依 WinForms Function inventory 順序繼續 QC203 計數品管項目判別法則對應：先讀 Form/Service/Core，再查其獨有表 DDL（若 reference 未涵蓋）並完成 UI/API/SQL handoff。
+- [x] 後續接續 QC203 計數品管項目判別法則對應：已先讀 Form/Service/Core，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 從 MESTEST 唯讀取得三張專用表 DDL；完成 Vue DEV 畫面與 API/CREATE SQL handoff。
+
+## 2026-11-17 QC203 計數品管項目判別法則對應公司端進度
+
+- [x] 直接閱讀 QC_AttRuleMap 的四個 WinForms Form/Designer 程式、wsQC、clsQCBasis；追查狀態查詢、FactorOnline、RuleNo/ComponentCollect、RetestLot、Plan/Rule 選擇、抽樣參數、CRUD、Issue Job 與歷史刪除副作用。
+- [x] 使用本機既有受保護連線設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接連至 MESTEST，唯讀取得 TBLSPCQCATTRULEMAPBASIS、TBLSPCQCATTRULEMAPDETAIL、TBLSPCQCATTRULEMAPPARAMETER 的 DDL 與獨立索引；無業務列查詢、無 Oracle DDL 執行、連線秘密未輸出。
+- [x] 新增 Oracle source DDL 與 PostgreSQL JSONB 因子值 CREATE 參考；標註三張 Oracle 表沒有 FK、serial sequence 是 YMES 建議，家用端需先比較 live schema 與共用 ID service。
+- [x] 新增 /YMES/QC/AttributeRuleMap Vue DEV 頁與品質資料三層選單；完成已核准 QC Item 查找、四狀態、動態因子欄、主/Detail/Parameter 清單、Add/Edit/Copy/Delete/Approve、RetestLot/Plan/Rule/Parameter 編輯及獨立假資料。
+- [x] 新增 QC203 功能規格並更新規格索引、Oracle 查詢紀錄、本待辦與家用端 API/schema handoff。舊 Core 刪除未刪 Parameter 的 orphan 行為和 YMES 完整交易清理差異已記錄。
+- [ ] 尚未執行 build、測試或瀏覽器驗收；Production API/schema 待家用端完成後，公司端 pull 最新 main 再對接驗收。
+- [ ] 下一功能依 MES_MENU_FUNCTION_INVENTORY.md 接續 QC204；開始前先 pull 最新 main，對照兩台電腦待辦和新增 API/schema。

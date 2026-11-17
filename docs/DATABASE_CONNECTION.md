@@ -384,3 +384,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - MESTEST.TBLSPCATTLIMIT Oracle DDL 沿用 QC201 當次由 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接連線取得的來源字典結果；本次未透過 DBeaver UI 查詢。來源 reference：database/reference/mestest_qc_spc_att_limit_source_ddl.sql，欄位及索引資訊也見 mestest_qc_item_attributes_source_ddl.sql 的 TBLSPCATTLIMIT 區塊。
 - QC202 不需要新增 Oracle 連線設定。既有連線方法、憑證保護原則和 driver 相容性見本文件前段；連線值只從本機受保護設定讀取，不輸出、不寫入 Markdown/Git。本次只引用既有結構查詢，沒有讀取 MES 業務列或在 Oracle 執行 DDL。
 - YMES PostgreSQL 空表參考 database/reference/mestest_qc_spc_att_limit_create.sql 以 JSONB 承接舊 Oracle 動態因子欄位，屬 YMES 固定 schema 適配；家用端需先核對 live schema/migrations，不得把參考檔直接當 migration。
+
+### 更新 2026-11-17：QC203 計數品管項目判別法則對應
+
+- 公司端使用 Windows PowerShell 5.1、既有受保護的 MESTEST 連線設定與 Oracle.ManagedDataAccess，唯讀查詢 TBLSPCQCATTRULEMAPBASIS、TBLSPCQCATTRULEMAPDETAIL、TBLSPCQCATTRULEMAPPARAMETER 的 DBMS_METADATA DDL、ALL_TABLES 與獨立 index metadata；未查業務列，也未在 Oracle 執行 DDL。過程採純 metadata SELECT；一次 session 被 Oracle 中斷後以精簡查詢重試並成功。
+- 原始 Oracle DDL reference：database/reference/mestest_qc_attribute_rule_map_source_ddl.sql；PostgreSQL CREATE reference：database/reference/mestest_qc_attribute_rule_map_create.sql。後者將來源動態因子欄適配為 JSONB，並提議 sequence 供 YMES serial 使用；必須先核對 live schema、migration 與共用 serial service，不可直接當 migration 執行。
+- 連線設定只在本機受保護附件內讀取，未把 IP、帳號、密碼、SID、連線字串或附件路徑輸出、保存到專案或提交 Git。
