@@ -75,6 +75,7 @@ import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
 import QcItemProductReasonMap from './components/QcItemProductReasonMap.vue'
+import QcVariableItemImport from './components/QcVariableItemImport.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -272,6 +273,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:QCITEM_A RULE MAP', label: '計數品管項目判別法則對應', shortLabel: '對', functionNo: 'QCITEM_A RULE MAP', moduleNo: 'QC', tableName: 'tblspcqcattrulemapbasis' },
       { id: 'function:QC:QCITEM_ADELETE', label: '刪除計數型品管項目量測記錄', shortLabel: '刪', functionNo: 'QCITEM_ADELETE', moduleNo: 'QC', tableName: 'tblspcattbasislog' },
       { id: 'function:QC:QCITEM_V', label: '計量品管項目', shortLabel: '量', functionNo: 'QCITEM_V', moduleNo: 'QC', tableName: 'tblqcitemforvariables' },
+      { id: 'function:QC:IMPORT QCITEM VARIABLES', label: '計量品管項目匯入', shortLabel: '匯', functionNo: 'IMPORT QCITEM VARIABLES', moduleNo: 'QC', tableName: 'tblqcitemforvariables' },
       { id: 'function:QC:QCITEM_VDELETE', label: '刪除計量型品管項目量測記錄', shortLabel: '刪', functionNo: 'QCITEM_VDELETE', moduleNo: 'QC', tableName: 'tblspcvarfactorlog' },
       { id: 'function:QC:QCITEM RULE MAP', label: '計量品管項目管制法則對應', shortLabel: '則', functionNo: 'QCITEM RULE MAP', moduleNo: 'QC', tableName: 'tblqcitemrule' },
       { id: 'function:QC:QCITEM_G', label: '計量品管項目_群組', shortLabel: '群', functionNo: 'QCITEM_G', moduleNo: 'QC', tableName: 'tblqcitemgroupbasis' },
@@ -344,6 +346,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
   'function:QC:QCITEM_A': appBasePath + '/QC/AttributeQcItem',
   'function:QC:QCITEM_V': appBasePath + '/QC/VariableQcItem',
+  'function:QC:IMPORT QCITEM VARIABLES': appBasePath + '/QC/VariableItemImport',
   'function:QC:QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
   'function:QC:SPC ATT LIMIT': appBasePath + '/QC/AttributeControlLimit',
   'function:QC:QCITEM_A RULE MAP': appBasePath + '/QC/AttributeRuleMap',
@@ -528,6 +531,7 @@ const isQcReasonBasisPage = computed(() => activeMasterKey.value === 'function:Q
 const isQcReasonSubTypeBasisPage = computed(() => activeMasterKey.value === 'function:QC:REASON SUBTYPE BASIS')
 const isQcAttributeQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A')
 const isQcVariableQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_V')
+const isQcVariableItemImportPage = computed(() => activeMasterKey.value === 'function:QC:IMPORT QCITEM VARIABLES')
 const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM RULE MAP')
 const isQcSPCAttLimitPage = computed(() => activeMasterKey.value === 'function:QC:SPC ATT LIMIT')
 const isQcAttributeRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A RULE MAP')
@@ -1625,6 +1629,14 @@ async function signOut(): Promise<void> {
         />
         <QcItemProductReasonMap
           v-else-if="isQcItemProductReasonMapPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcVariableItemImport
+          v-else-if="isQcVariableItemImportPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

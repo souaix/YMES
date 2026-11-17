@@ -1,6 +1,18 @@
 # 家裡電腦接手清單
 
-## 最新公司端 handoff：QC218 計數品管項目產品原因對應設定（2026-11-17）
+## 最新公司端 handoff：QC214 計量品管項目匯入（2026-11-17）
+
+- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/計量品管項目匯入.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`IMPORT QCITEM VARIABLES`、FunctionKey=`QC214`；Vue DEV 頁 `/YMES/QC/VariableItemImport` 已掛在品質資料 → 品管設定。
+- [ ] QC214 是匯入既有計量品管資料的功能，沒有專屬新資料表、沒有 QC214 專用 CREATE SQL。先查 YMES PostgreSQL live schema/migrations；主表沿用 `database/reference/mestest_mtl_qc_item_tables_source_ddl.sql` / `mestest_mtl_qc_item_tables_create.sql`，依賴表參考 `mestest_qc205_variable_dependencies_source_ddl.sql`、`mestest_qc210_variable_measurement_log_delete_create.sql`、`mestest_qc_item_attributes_create.sql` 及 QC205/QC201 的共用 CREATE SQL。只為實際缺少結構新增 forward migration，不複製重建 QC205 共用表。
+- [ ] 實作登入保護並要求 FunctionKey QC214 的 API：`POST /api/qc/variable-item-import/preview`（multipart `.xls/.xlsx` 第一工作表；相容 WinForms 第 1 列欄名、第 2 列範例跳過、第 3 列起資料）、`POST /check`（OnlyCheck、不寫入）、`POST /import`（Save）及 `GET /template`。Production Vue 現在依此契約呼叫；如採既有 controller 路徑，需同步修改 Vue/spec。
+- [ ] `/preview` 回 `{rows:[{recognizedColumns...}]}`；Check/Import 每列回 `{rows:[{rowNo,qcItemNo,succeeded,result,execute}]}`。前端只送所勾選且未鎖定資料列；結果需能依 `rowNo` 對回。以每列獨立交易、逐列回報，允許部分成功；不要只看 legacy Service 的整體 success。
+- [ ] 依 QC214 規格實作驗證：QCItemNo/Name、LotIsVaild、PlanNo、SampleSize、SpecLineType、ComponentCollect、CalType、ChartType/X-Rm 關係、Min/Max、LimitLotNum、MClass、Roundoff_Num、已核准 Class 1 Factor 集合及 FactorOnline/FactorSpec 子集合、核准 OP/Inline/Offline 與 FAI/IPQC/PQC。舊 Core 的 ComponentCollect/LotIsVaild 限制已註解；不要自行阻擋。
+- [ ] Save 覆寫既有 QCItem 前交易內重查：無 Spec/Chart/量測資料、無 WIP 使用，無 Material/MaterialType/OP/Product/一般 Group/PMI Group 綁定。舊 Core 會清除主檔與多張子表再重建；列出的清除範圍要用 YMES 正規化關聯表和參數化 SQL 重現。Factor 欄不准由客戶端輸入觸發 `ALTER TABLE`；只有白名單核准 Factor 可套用，動態量測資料沿用 YMES 結構化儲存設計。確認 transaction 可回滾所有主/子資料寫入。
+- [ ] Creator/CreateDate 雖是舊匯入欄位，API 必須忽略檔案提供的稽核資料，改用登入身份與伺服器時間。限制工作簿大小/列數/欄數，不執行公式、不採信用戶端檔案路徑；範本沿用 FunctionNo=`IMPORT QCITEM VARIABLES` 的既有 template storage。
+- [ ] Oracle DDL references 已由公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得，本次沿用 QC205/QC210/QC201 結構參照，不需要再問公司端索取 IP/帳密/SID，也沒有新增 Oracle 查詢或業務列讀取。已存在的來源 DDL 有 SPC chart table 拼字差異，按 QC214 規格核對 YMES 正式名稱，不要臆造 CREATE。
+- [ ] 家用端完成 schema 比對、API、權限與 template 後 commit/push；公司端 pull 對接。公司端本段未執行 build、測試或瀏覽器驗收。
+
+## 前一項公司端 handoff：QC218 計數品管項目產品原因對應設定（2026-11-17）
 
 - [ ] Pull 最新 `main`，先讀 `docs/modules/QC/計數品管項目產品原因對應設定.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`QCITEM PRD REASON MAP`、FunctionKey=`QC218`；Vue DEV 頁 `/YMES/QC/ItemProductReasonMap` 已完成並掛到品質資料 → 品管設定。
 - [ ] 用 YMES PostgreSQL 管理連線查 live schema / migrations。Oracle 原始 DDL：`database/reference/mestest_qc218_tblqcitemprdreasonmap_source_ddl.sql`、`mestest_qc218_tblqcitemreasonmap_source_ddl.sql`；兩張 mapping 表的空結構參考：`database/reference/mestest_qc218_item_product_reason_map_create.sql`。只比對/建立缺少的 mapping 結構；`TBLQCITEMFORATTRIBUTES`、`TBLQCREASONBASIS`、`TBLPRDPRODUCTBASIS` 是共用表，另外三份 Oracle DDL 只供欄位核對，禁止重建或覆寫。

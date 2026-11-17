@@ -14,6 +14,15 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC214 計量品管項目匯入（公司端 2026-11-17）
+
+- [x] 直接閱讀 `frmImport_QCItem_Variables` Form/Designer、`wsQC.ImportQCItem_Variables`、`clsQCBasis.ImportQCItem_Variables` 與 `DelQCItemForVariables`；整理 1008×591 Grid/按鈕、Excel 欄位解析、第 2 列跳過、勾選列 Check/Save、逐列錯誤、QC205 子資料重建、抽樣計畫/Factor/OP 驗證和外部引用阻擋。
+- [x] 確認 QC214 無專用資料表，不新增 CREATE SQL。沿用已查好的 QC205 主檔與 QC205/QC210/QC201 dependency Oracle DDL/PG CREATE 參考；本次未重連 Oracle、未讀業務列、未執行 Oracle DDL。
+- [x] 新增 `/YMES/QC/VariableItemImport` Vue 3 DEV 畫面和 QC214 三層選單；重現 File/Check Data/Save/Template DownLoad/Select All/UnSelect All/MultiSelect/Close、唯讀欄位、勾選匯入、逐列粉紅失敗/灰色成功。DEV sample 儲存在獨立 localStorage，成功操作僅改假資料。
+- [x] 新增 `docs/modules/QC/計量品管項目匯入.md`，記錄來源程式、解析欄位、驗證條件、覆寫副作用、API 契約和引用表；更新功能索引、DB 查詢紀錄及 `todolist_homepc.md`。
+- [ ] QC214 production API/schema 待家用端依 `todolist_homepc.md` 實作；沒有 QC214 新表，沿用既有 QC205 tables。API 需逐列交易/結果、FunctionKey QC214、服務端 audit、參數化 SQL，並禁止 Factor 動態 DDL。
+- [ ] 本段未執行 build、test 或瀏覽器驗收；接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 和未完成頁面直接讀 WinForms Form/Service/Core，再完成 UI/spec/API handoff。
+
 ### QC218 計數品管項目產品原因對應設定（公司端 2026-11-17）
 
 - [x] 閱讀 `frmItemPRDReasonMap`、`frmItemPRDReasonDef`、Import Form/Designer、`QCItemRPDReasonSOPFileImporter`、`wsQC`、`clsQCBasis`；記錄 QCItemNo 核准查詢、ProductNo 主從群組、ReasonType/Level 雙清單、整組替換、全域 `*`、範本與分列部分成功匯入。

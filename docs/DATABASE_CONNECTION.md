@@ -445,3 +445,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，沿用本機受保護 MESTEST 唯讀連線，查詢兩張 mapping 表與三張共用 lookup 表的 DBMS_METADATA table/index DDL、欄位 nullable/default、PK/index/FK metadata；未查 MES 業務資料列，未在 Oracle 執行 DDL。
 - Oracle source DDL：`mestest_qc218_tblqcitemprdreasonmap_source_ddl.sql`、`mestest_qc218_tblqcitemreasonmap_source_ddl.sql`、`mestest_qc218_tblqcitemforattributes_source_ddl.sql`、`mestest_qc218_tblqcreasonbasis_source_ddl.sql`、`mestest_qc218_tblprdproductbasis_source_ddl.sql`。PostgreSQL CREATE-only 參考只建立兩張 mapping 表：`mestest_qc218_item_product_reason_map_create.sql`。Mapping tables 都只有 PK unique index，沒有 FK 或其他索引。
 - 僅查 Oracle metadata；連線 IP、帳號、密碼、SID 和受保護設定位置未輸出或寫入 Git。公司端未連 YMES PostgreSQL。家用端先核對 PostgreSQL live schema/migrations，只為缺少的 mapping 結構建立 forward migration；三張共用 lookup tables 不可重建。
+
+### 更新 2026-11-17：QC214 計量品管項目匯入
+
+- QC214 沿用先前以 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查得的 QC205/QC201 Oracle 結構 reference：`mestest_mtl_qc_item_tables_source_ddl.sql`、`mestest_qc205_variable_dependencies_source_ddl.sql`、`mestest_qc_item_attributes_source_ddl.sql`；QC210 PostgreSQL CREATE 參考為 `mestest_qc210_variable_measurement_log_delete_create.sql`。本次直接閱讀 WinForms Form、wsQC 與 clsQCBasis，沒有再次連 Oracle、沒有讀業務列、沒有執行 DDL。
+- QC214 是匯入流程，不需要新 Oracle 表或獨立 PostgreSQL CREATE SQL。`TBLQCITEMFORVARIABLES` 空表 CREATE 參考在 `mestest_mtl_qc_item_tables_create.sql`；子表和引用表依 QC205/QC210/QC201 的現有 CREATE/reference 核對。
+- Core 對 SPC Chart Basis 的引用拼字與現有 QC205 dependency DDL 清單的缺表拼字不一致。家用端依 YMES live schema、migration 及 API 實際 SQL 確認正式物件名；不要為了讓舊拼字通過而臆造一張新表。
+- 本次沒有新查詢或資料連線。IP、帳號、密碼、SID 與受保護設定都未輸出或寫進 Git；公司端不連 YMES PostgreSQL。
