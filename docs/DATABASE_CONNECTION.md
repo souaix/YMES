@@ -547,3 +547,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護的 `DatabaseConfigs.CS.Test.Mes` MESTEST 設定唯讀取得 `TBLOPECNGROUPBASIS`、`TBLOPECNGROUPDETAIL` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。
 - Basis PK 為 `OPGROUPNO`；Detail PK 為單欄 `OPNO`。兩張表僅有 PK unique index 與 NOT NULL check，沒有 FK 或其他獨立 index。Basis `ISSUESTATE` 必填但無 Oracle default；`DATASTAMP` nullable DEFAULT 0。
 - Oracle source DDL 與 PostgreSQL CREATE-only 參照為 `database/reference/mestest_opb02_ecn_operation_group_source_ddl.sql`、`database/reference/mestest_opb02_ecn_operation_group_create.sql`。只查 metadata，未讀業務列、未執行 Oracle DDL/DML，連線秘密未輸出或提交；家用端先核對 live schema 再補 forward migration。
+
+### 更新 2026-11-18：OPB01 作業站參數群組設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護的 `DatabaseConfigs.CS.Test.Mes` 設定唯讀取得 `TBLOPGROUPATTRIB`、共用查找表 `TBLSYSELEMENTBASIS` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。
+- `TBLOPGROUPATTRIB` PK 為 `(CUSTOMERNO, OPGROUPNO, ELEMENTNO)`；只有 PK unique index 與 NOT NULL checks，沒有 FK/額外 index。`BYSECONDCLASS`、`DATASTAMP` nullable DEFAULT 0。`TBLSYSELEMENTBASIS` 是 first-phase 已存在共用表，本功能不重建。
+- Oracle source DDL 與 PostgreSQL CREATE-only 參考為 `database/reference/mestest_opb01_operation_group_attribute_source_ddl.sql`、`database/reference/mestest_opb01_operation_group_attribute_create.sql`。metadata-only；未讀業務列、未執行 Oracle DDL/DML，連線秘密未輸出或提交。家用端先核對 live schema 後，只對實際缺表新增 forward migration。

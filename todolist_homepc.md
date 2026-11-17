@@ -1,3 +1,16 @@
+## 最新公司端交接：OPB01 作業站參數群組設定（2026-11-18）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/OP/作業站參數群組設定.md`、`docs/DATABASE_CONNECTION.md` OPB01 段落，以及 Oracle source DDL / PostgreSQL CREATE-only 對照。
+- [ ] 先比對 YMES live schema/migrations 的 `YMES.tblopgroupattrib`。Oracle DDL 在 `database/reference/mestest_opb01_operation_group_attribute_source_ddl.sql`；空表 CREATE 參考在 `database/reference/mestest_opb01_operation_group_attribute_create.sql`。只缺表才新增 forward migration；既有表只做必要 ALTER，不重建、不覆蓋資料。
+- [ ] `TBLSYSELEMENTBASIS` 已由 first-phase schema 提供，不要建立重複 Element 表；重用客戶基本資料與 OPB02 ECN 群組 lookup。
+- [ ] 實作登入保護的 OPB01 API，FunctionNo=`B_OP GROUP ATTRIB`、FunctionKey=`OPB01`。Vue `OperationGroupAttribMaster.vue` 已固定 `GET /api/operation-group-attributes`、`GET .../editor`、`POST .../batch-save`、`DELETE ...`、三種 lookup、Element values/validation 及 `GET /api/system/parameters/InputAbortLog` 路徑；DTO 見模組規格。
+- [ ] 主表複合 PK `(CUSTOMERNO, OPGROUPNO, ELEMENTNO)`；來源 NOT NULL、欄長、nullable/default 照 Oracle DDL。`BYSECONDCLASS`、`DATASTAMP` nullable DEFAULT 0。Oracle 只有 PK unique index，無 FK/其他 index；不要自行加 FK/index。
+- [ ] 查找僅用已核准客戶、`TBLOPECNGROUPBASIS.ISSUESTATE=2` ECN 群組、`TBLSYSELEMENTBASIS.ISSUESTATE=2 AND ELEMENTTYPE=5` 產品 Element。CustomerNo=`*` 表共用。Select List values 重用 `wsSYS.LoadElementValue`；Key In 驗證重用 `wsSYS.ChkElementValueValid`/SYS Core，不能只檢查前端清單。
+- [ ] Batch Save 使用單一 transaction，依新增/修改/刪除旗標處理所有列；任一筆失敗整批 rollback。修改用 DataStamp null-safe CAS，舊值 NULL 以 `IS NULL` 比對，成功遞增；未命中回 HTTP 409。Audit 僅由 API principal/server 設定。
+- [ ] 複製改變 CustomerNo 或 OPGroupNo 時，對目的複合鍵新增存活明細，原群組不變；目的 PK 已存在則沿用舊 Copy Core 的略過語義。DataFlag=2 的刪除列不可複製。
+- [ ] 多選主 Grid 刪除依舊 WinForms 逐筆呼叫；每筆處理 optional `InputAbortLog`，不得把 UI request 當成批次原子交易。Element editor 的多列 Apply/Confirm 則必須是原子 batch transaction。
+- [ ] 檢查 YMES 權限、既有客戶/ECN/System Element API，並更新 API/schema 規格與 TODOLIST。完成後 commit/push `main`，公司端再 pull 對接 Production API。DEV localStorage 假資料不可寫正式資料庫。
+
 ## 最新公司端交接：OPB02 ECN 作業站群組設定（2026-11-18）
 
 - [ ] Pull 最新 `main`，閱讀 `docs/modules/OP/ECN作業站群組設定.md`、`docs/DATABASE_CONNECTION.md` OPB02 段落，以及 Oracle source DDL / PostgreSQL CREATE 對照。

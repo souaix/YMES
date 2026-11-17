@@ -17,6 +17,16 @@
 - [ ] 未連 YMES PostgreSQL、未實作 Production API/migration，未執行 build、test、browser。OPB03 已交家用端 API/schema；公司端接續功能依 docs/MES_MENU_FUNCTION_INVENTORY.md，下一項 OPB02 ECN 作業站群組設定。
 # 公司電腦續作清單
 
+## 2026-11-18 公司端進度：OPB01 作業站參數群組設定
+
+- [x] 直接閱讀 `frmOPGroupAttrib`/Designer、`frmOPGroupAttribDef`/Designer、`wsOP.Load/JoinElement/Save/DelOPGroupAttrib`、`clsOpBasis`、`clsB_Basis_UPD.SaveOPGroupAttrib` 與 `wsSYS.ChkElementValueValid`；確認三欄精確查詢、整組多列編輯、DataFlag、Copy、InputType、Sequence、BYSECONDCLASS 對應與 DataStamp。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護 MESTEST 連線唯讀取得 `TBLOPGROUPATTRIB`、`TBLSYSELEMENTBASIS` 的 `DBMS_METADATA.GET_DDL`、ALL_TAB_COLUMNS/CONSTRAINTS/INDEXES/IND_COLUMNS；OP 主表僅複合 PK，無 FK/額外索引。未讀業務列、未執行 Oracle DDL/DML、未輸出連線秘密。
+- [x] 新增 OPB01 Oracle source DDL、PG CREATE-only 參考、功能規格及本段家用端 API/schema handoff。`TBLSYSELEMENTBASIS` 是既有共用表，本功能不重建。
+- [x] 完成「作業站資料 → 行業包 → 作業站參數群組設定」Vue DEV 頁 `/YMES/OP/OperationGroupAttributes`：三條勾選精確查詢、Grid 多選刪除、Add/Edit/Copy，整組 Element 批次編輯、多選新增、InputType 下拉/Key In、AllowNull、Sequence、BYEQUIPMENT_TYPE、Apply/Confirm/Close、客戶/ECN 群組/Element lookup；localStorage 假資料限 DEV。
+- [ ] 家用端依 `todolist_homepc.md` 核對 YMES live schema、接登入/權限及 lookup，實作 batch transaction、DataStamp CAS、InputAbortLog 和 SYS Element value validation API；完成後公司端 pull 對接。
+- [ ] 未連 YMES PostgreSQL，未實作 Production API/migration，未執行 build、test、browser 或 CRUD 驗收。
+- [ ] OPB01 完成此 UI/spec handoff 後，繼續從 `docs/MES_MENU_FUNCTION_INVENTORY.md` 選下一個未完成 Function；整套 MES 遷移尚未完成。
+
 ## 2026-11-18 公司端進度：QC408 OCAP基本資料
 
 - [x] 直接閱讀 QC408 主/Def/流程繪製/節點 Form 與 Designer、`wsQC`、`clsQCBasis`，整理畫面、CRUD、核准、刪除、Copy、DataStamp、NodeType、群組 lookup、XML/節點/連線儲存規則。

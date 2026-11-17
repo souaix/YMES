@@ -41,6 +41,7 @@ import BusinessRuleBasisMaster from './components/BusinessRuleBasisMaster.vue'
 import OperationGroupMaster from './components/OperationGroupMaster.vue'
 import CustomerOPMappingMaster from './components/CustomerOPMappingMaster.vue'
 import EcnOperationGroupMaster from './components/EcnOperationGroupMaster.vue'
+import OperationGroupAttribMaster from './components/OperationGroupAttribMaster.vue'
 import MaterialVendorMaster from './components/MaterialVendorMaster.vue'
 import MaterialTypeMaster from './components/MaterialTypeMaster.vue'
 import MaterialTypeQCItemMaster from './components/MaterialTypeQCItemMaster.vue'
@@ -455,6 +456,7 @@ const menuRoutes: Record<string, string> = {
   'function:OP:OP GROUP BASIS': appBasePath + '/OP/Groups',
   'function:OP:B_CUSTOMER OP MAPPING': appBasePath + '/OP/CustomerOPMapping',
   'function:OP:B_ECN OP GROUP BASIS': appBasePath + '/OP/ECNOperationGroups',
+  'function:OP:B_OP GROUP ATTRIB': appBasePath + '/OP/OperationGroupAttributes',
   'material-master': `${appBasePath}/MasterData/Materials`,
   'process-master': `${appBasePath}/MasterData/Processes`,
   'product-master': `${appBasePath}/MasterData/Products`,
@@ -520,6 +522,7 @@ const functionRoutes: Record<string, string> = {
   'OP GROUP BASIS': appBasePath + '/OP/Groups',
   'B_CUSTOMER OP MAPPING': appBasePath + '/OP/CustomerOPMapping',
   'B_ECN OP GROUP BASIS': appBasePath + '/OP/ECNOperationGroups',
+  'B_OP GROUP ATTRIB': appBasePath + '/OP/OperationGroupAttributes',
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
   'MTL VENDOR': materialVendorRoute,
   'MTL TYPE': materialTypeRoute,
@@ -581,6 +584,7 @@ const isBusinessRuleBasisPage = computed(() => activeMasterKey.value === 'functi
 const isOperationGroupPage = computed(() => activeMasterKey.value === 'function:OP:OP GROUP BASIS')
 const isCustomerOPMappingPage = computed(() => activeMasterKey.value === 'function:OP:B_CUSTOMER OP MAPPING')
 const isEcnOperationGroupPage = computed(() => activeMasterKey.value === 'function:OP:B_ECN OP GROUP BASIS')
+const isOperationGroupAttribPage = computed(() => activeMasterKey.value === 'function:OP:B_OP GROUP ATTRIB')
 const isMaterialVendorPage = computed(() => activeMasterKey.value === 'function:MTL:MTL VENDOR')
 const isMaterialTypePage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE')
 const isMaterialTypeQCItemPage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE QCITEM')
@@ -1995,6 +1999,14 @@ async function signOut(): Promise<void> {
         />
         <EcnOperationGroupMaster
           v-else-if="isEcnOperationGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OperationGroupAttribMaster
+          v-else-if="isOperationGroupAttribPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
