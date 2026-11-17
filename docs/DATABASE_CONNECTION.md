@@ -333,3 +333,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - Oracle source DDL：`database/reference/mestest_qc_reason_subtype_basis_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_reason_subtype_basis_create.sql`。
 - 主鍵為 ReasonSubType；唯一索引只有 PK index，無 FK/其他 index。欄位 NULL/default 依 DDL 記錄於 `docs/modules/QC/品質原因子類別資料.md`。
 - 未在 Oracle 執行 DDL；連線字串、IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations。
+
+### 更新 2026-11-17：QC106 品質原因基本資料來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護設定唯讀取得 `MESTEST.TBLQCREASONBASIS` DBMS_METADATA table/index DDL 與 ALL_CONSTRAINTS；未查詢業務列。
+- Oracle source DDL：`database/reference/mestest_qc_reason_basis_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_reason_basis_create.sql`。
+- 主鍵為 ReasonNo；唯一索引只有 PK index，無 FK/額外 index。欄位 NULL/default 與簽核/API 規則記於 `docs/modules/QC/品質原因基本資料.md`。
+- 未在 Oracle 執行 DDL；連線字串、IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations。

@@ -27,6 +27,19 @@
 - [ ] 多筆刪除／核准逐筆執行、第一筆錯誤停止，保留已成功項目；使用參數化 SQL、登入者 audit、交易與權限檢查。更新 API/schema 文件及 migration 索引並 push GitHub；不得連 MES Oracle 或匯入 MES 業務資料。
 
 
+### QC106 品質原因基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/品質原因基本資料.md`、公司端 QC106 區段及 `docs/DATABASE_CONNECTION.md`；先完成 QC104/QC105 前置交接，尤其 QC105 子類別 options API。
+- [ ] 對照 Oracle source DDL `database/reference/mestest_qc_reason_basis_source_ddl.sql` 與 PostgreSQL CREATE 參考 `database/reference/mestest_qc_reason_basis_create.sql`，核對 YMES live schema/migrations；只有確認缺表/欄位時建立 forward migration，保留既有 YMES 擴充與資料，不可 drop/recreate，也不可在 MES Oracle 執行 CREATE。
+- [ ] 保留來源欄位：ReasonNo varchar(20) NOT NULL PK；ReasonName varchar(100) NOT NULL；ReasonType/ReasonLevel numeric(1,0) NOT NULL；Description varchar(255) NULL；Creator/Reviser varchar(10) NULL；CreateDate/ReviseDate timestamp NULL；IssueState numeric(1,0) NOT NULL DEFAULT 0；ReasonSubType varchar(50) NULL；DataStamp numeric(11,0) NULL DEFAULT 0。只有 PK unique index；Oracle 沒有 FK/額外索引。
+- [ ] 實作登入及 FunctionKey QC106 授權的 `GET /api/qc/reason-basis?searchFieldName=ReasonNo&searchFieldValue=`，回傳四種 IssueState、DataStamp 及依 Issue Control 算出的 `editableFields`。只允許 ReasonNo LIKE 搜尋，支援 `%`/`_` 萬用字元，狀態由 UI 篩選。
+- [ ] ReasonType options 由 MES `GetValueList(TBLQCREASONBASIS, REASONTYPE)` 等價服務提供；不可把 WinForms 舊註解中的數字/文字當正式清單。子類別 options 僅回傳 QC105 `IssueState=2` 且 ReasonType 相符的項目；`GET /api/qc/reason-basis/subtype-options?reasonType=` 需先授權並驗證參數。Oracle 沒 FK，新增/更新由 API 驗證引用。
+- [ ] 實作 `POST /api/qc/reason-basis`、`PUT /api/qc/reason-basis/{reasonNo}`：必填、長度、ReasonLevel 0–9、逗號禁用與 ReasonNo 大寫、ValueList/子類別狀態及類別檢查、Issue Control 欄位白名單。登入者與伺服器時間負責 audit；ReasonNo 修改唯讀。
+- [ ] DataStamp nullable DEFAULT 0；PUT/DELETE/approve compare-and-swap 必須區分 NULL 與 0，成功更新版本，衝突回 409。狀態 0 全欄位可編輯、1 唯讀、2/-1 僅允許 Issue Control EditFlag 欄位；缺少控制設定時唯讀。
+- [ ] 實作 DELETE：狀態 0/-1 實體刪除，狀態 2 CAS 後更新為 -1 並記錄 Reviser/ReviseDate/DataStamp，狀態 1 拒絕。多選 UI 逐筆呼叫，第一筆失敗停止並回報先前成功筆數。
+- [ ] 實作 `POST /api/qc/reason-basis/{reasonNo}/approve`：依 Issue Job Map `REASON BASIS` 無 Job/Detail 時直接 0→2；有 Detail 建 Issue、0→1、通知首簽核群組；後續核准 2、退回 0。回傳真實狀態及 DataStamp，不能假設一律直接 Active。
+- [ ] 全部 SQL 參數化；API/schema/migration 變更後更新規格及本清單並 push GitHub，通知公司端 pull。公司端 DEV 頁 ReasonType 標 DEMO，Production 不使用 localStorage 假資料。
+
 ### QC103 抽樣計劃（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/抽樣計劃.md`、本檔 QC103 區段、公司端 QC103 區段及 `docs/DATABASE_CONNECTION.md`。
