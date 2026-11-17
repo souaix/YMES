@@ -12,6 +12,7 @@
 ## 2026-11-17 品管項目匯入規格
 
 - QC301「管制圖內容」：[功能規格](modules/QC/管制圖內容.md)。已直接閱讀 QC301 Form/Define/Copy Form、QC Rule Form、wsQC 與 clsQCBasis；透過 PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得抽樣參數表 DDL，沿用 QC302 四張 chart DDL，完成三區 Vue DEV 頁與 API handoff。家用端待查 live schema/migrations、確認 Issue/Job、刪除引用與 factor JSONB，並建置登入保護 API。
+- QC303「品管項目規格」：[功能規格](modules/QC/品管項目規格.md)。已依 `frmQCSpecBasis`/Define/Copy、wsQC、clsQCBasis 記錄畫面、Detail SPCID、狀態、因子、規格驗證與簽核/複製；Oracle Basis/Detail DDL 沿用先前 PowerShell + Oracle.ManagedDataAccess 直連取得的 QC205 dependency reference，建立 PostgreSQL CREATE-only 對照及 Vue DEV 頁。家用端待比對 live schema/migrations 並建置 QC303 API。
 - QC302「匯入管制圖內容」：[功能規格](modules/QC/匯入管制圖內容.md)。已直接閱讀 WinForms Form、wsQC、clsQCBasis，透過 PowerShell 5.1 唯讀取得四張 SPC QC Chart Oracle DDL，並完成 Vue DEV 頁與 PostgreSQL CREATE-only 參考；家用端待比對 live schema、建立缺漏 migration/API。
 - QC215「計數品管項目匯入」：[功能規格](modules/QC/計數品管項目匯入.md)。已直接對照 WinForms Form、wsQC、clsQCBasis，完成 QC215 Vue DEV 頁與逐列匯入規則文件。沿用 QC201/QC205/QC213 的主子表與依賴表，不需要新表或 CREATE SQL；家用端待核對 YMES schema 並實作 API。
 - QC214「計量品管項目匯入」：[功能規格](modules/QC/計量品管項目匯入.md)。已直接對照 WinForms Form、wsQC、clsQCBasis，完成 Vue DEV 頁與逐列匯入規則文件。沿用 QC201/QC205/QC210 的主子表與依賴表，不需要新表或 CREATE SQL；家用端待核對 YMES schema 並實作 API。
