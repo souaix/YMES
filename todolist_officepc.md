@@ -6,7 +6,15 @@
 - [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀取得 QC501–QC503 共用六表 Oracle DDL/PK index，產生 Oracle source DDL 與 PostgreSQL 空表 CREATE 參考；無業務列、未執行 Oracle DDL、無連線秘密輸出。
 - [x] 建立 `/YMES/QC/InspectionMachineParameterType` Vue DEV 假資料頁、品質資料→檢測儀器→檢測儀器類別路由/選單、查詢狀態、WinForms 欄位與按鈕、RS232/UserDefine 編輯、Driver picker、複製、多選刪除/送簽、Audit 區及假資料操作。
 - [x] 新增 `docs/modules/QC/檢測儀器類別.md`，更新模組索引、資料庫連線紀錄與 `todolist_homepc.md` schema/API handoff。
-- [x] 家用端 merge 後以遠端 production Docker 成功完成 Web `vue-tsc`/Vite build，修正 `@submit.prevent` 型別錯誤；app-browser 確認 QC501 選單可見。QC501 API/migration 尚未完成，QC501 CRUD 未做正式操作驗收；下一功能仍是 QC502「檢測儀器」，其後 QC503「檢測 Driver」。
+- [x] 家用端 merge 後以遠端 production Docker 成功完成 Web `vue-tsc`/Vite build，修正 `@submit.prevent` 型別錯誤；app-browser 確認 QC501 選單可見。QC501 API/migration 尚未完成、未做正式 CRUD 驗收；QC502 handoff 已列於下方，下一功能 QC503「檢測 Driver」。
+
+## 2026-11-18 公司端進度：QC502 檢測儀器基本資料
+
+- [x] 直接閱讀 `frmInspMachineParameter`/Def、Designer、`wsQC`、`clsInspMachine` 的 Load/Add/Edit/Delete/Approve，追蹤類別 checkbox/lookup、類別參數複製、Driver lookup、RS232 必填與 IssueManagement Job 分流；非依截圖推測。
+- [x] 確認 QC502 直接主表為 QC501 已取得 DDL 的 `TBLQCINSPMACHINEPARAMETER`；QC501 類別與 Driver 是 lookup。`TBLQCINSPMACHINEBASIS` 不在此 Form/Core 的 CRUD 寫入路徑；Property 按鈕 Designer 預設隱藏。本次無需重查 Oracle 或另建 CREATE SQL。
+- [x] 新增 `/YMES/QC/InspectionMachine` Vue DEV 頁與品質資料→檢測儀器→檢測儀器基本資料路由；包含 IssueState/識別碼查詢、主 Grid、Add/Edit/Copy/Approve/Delete、類別帶入/本機 RS232/UserDefine Driver 表單、lookup modal、audit 與獨立假資料。
+- [x] 新增 `docs/modules/QC/檢測儀器基本資料.md`，更新 module index、資料庫紀錄與家用端共用 API/schema handoff。
+- [x] 家用端 merge 後已完成 production Web `vue-tsc`/Vite build；QC502 API/migration 尚未實作。app-browser 已確認 QC502 選單入口在正式 menu；待 API 完成後再驗證資料與 CRUD。QC501/502 交接已合併寫入 `todolist_homepc.md`；下一功能 QC503「檢測設備連線程式」。
 
 > 目的：記錄家用電腦完成資料庫/API交接後，公司電腦接著要做的 WinForms UI、互動邏輯與規格文件。公司電腦先讀本檔；家用電腦先讀 `todolist_homepc.md`。
 
@@ -43,8 +51,7 @@
 - [x] 沿用先前已保存的 Oracle 直連唯讀 DDL `mestest_qc205_variable_dependencies_source_ddl.sql` 中 `TBLQCSPECBASIS`/`TBLQCSPECDETAIL`；本次沒有讀業務資料列，也沒有在 Oracle 執行 DDL。
 - [x] 新增 `/YMES/QC/SpecBasis` Vue DEV 頁、品質資料→計量規格設定→品管項目規格選單/路由、QC303 規格文件與 PostgreSQL CREATE-only JSONB 對照。
 - [x] 更新規格索引、Oracle DDL provenance 記錄、家用端 schema/API/Issue Job handoff。
-- [x] 家用端已完成 QC303 schema/API、正式部署與 app-browser 頁面/狀態篩選驗收；live QC Item 清單為空，新增等資料操作待共用 QC Item/Factor/Parameter 與 Issue/Job 資源可用後補驗。詳見 `docs/modules/QC/品管項目規格.md`。
-- [ ] 家用端同步 GitHub 後，公司端 pull 最新 `main`，核對正式 API 欄位與 QC Item/Factor lookup，並依本端 DEV 頁回歸互動流程。
+- [ ] 公司端尚未執行 build、test 或瀏覽器驗收；禁止因此宣稱 Production API 已完成。家用端完成 schema/API 並 push 後，公司端 pull 對接、依 API 核對 QC Item/Factor lookup 及簽核狀態。
 - [ ] 接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接看下一項尚未遷移 WinForms Form/Service/Core；不以截圖替代原始碼調查。
 
 ## 前一項公司端工作：QC301 管制圖內容（2026-11-17）

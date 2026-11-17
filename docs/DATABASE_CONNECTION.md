@@ -6,6 +6,7 @@
 - 原始 Oracle DDL：`database/reference/mestest_qc501_inspection_machine_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc501_inspection_machine_create.sql`。來源只有 PK unique index，未查到 FK 或額外獨立索引。CREATE 是 YMES 對照參考，不是 migration；家用端必須查 live schema 後只補缺表。
 - 只讀資料字典/DDL，未讀業務資料列，未在 Oracle 執行 DDL；連線秘密未輸出/提交。PS7 載入此舊版 Oracle provider 時遇 BinaryFormatter 平台例外；改用 Windows PowerShell 5.1 後查詢成功。
 - QC501 表主鍵實際是 InspMachineType 單欄；來源 `IssueState`/`DataStamp` 可 NULL 且有 DEFAULT，CREATE reference 保留 nullable；`ChNo` 欄位長度為 3，但 WinForms TextBox MaxLength=10，API 需回報超長值錯誤，不得靜默截斷。
+- QC502「檢測儀器基本資料」沿用同一批 Oracle source DDL 與 PostgreSQL CREATE 對照；其主要寫入表 `TBLQCINSPMACHINEPARAMETER` 在 QC501 六表清單中已直接查得。本次未重查 Oracle，沒有讀業務列或執行 Oracle DDL。`TBLQCINSPMACHINEBASIS` 不在 QC502 Form/Core 的 Add/Edit/Delete 呼叫內，不要當成 QC502 主表。
 
 ## 連線用途與邊界
 
