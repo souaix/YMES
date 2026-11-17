@@ -16,6 +16,9 @@
 
 ## 2026-11-17 新增功能規格
 
+- QC101「抽樣表格」：modules/QC/抽樣表格.md。公司端已完成 Vue DEV 頁 /YMES/QC/SamplingTable、三欄查詢、區間 CRUD、單列/整表複製及 QC 基本資料選單；PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 TBLQCSAMPLINGTABLE DDL/index/constraints，建立來源 DDL 與 PostgreSQL 空表 CREATE 參考。家用端需先比對 YMES schema/migrations，再實作 QC101 CRUD、DataStamp CAS 與 CopyTable 部分成功 API；沒有簽核或 lookup。
+
+
 - QC401「主分類基本資料」：[功能規格](modules/QC/主分類基本資料.md)。公司端已完成 `/YMES/QC/MClassBasis` DEV 頁；重用 QC406 已查得的 `TBLQCMCLASSBASIS` DDL/CREATE。匯入器原碼已找到並記錄第一工作表/前兩欄/逐編號部分成功規則；官方 template binary 未找到，需由家用端接 YMES template storage。
 - QC402「次分類基本資料」：[功能規格](modules/QC/次分類基本資料.md)。公司端已完成 `/YMES/QC/SClassBasis` DEV 頁、QC402 路由/選單、已簽核主分類 lookup 及匯入器 UI。Oracle source DDL 和 PostgreSQL 空表 CREATE 參考已由公司端受保護 Oracle 連線直接查得；主鍵僅 SClassNo，沒有 FK。家用端需比對 live schema/migrations，實作 QC402 CRUD、`SCLASS BASIS` Issue Job 簽核、MClass lookup 與 `.xls/.xlsx` template/import API。
 

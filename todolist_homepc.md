@@ -6,6 +6,17 @@
 
 ## 家用電腦現在接手
 
+### QC101 抽樣表格（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 docs/modules/QC/抽樣表格.md、todolist_officepc.md 的 QC101 區段及資料庫連線紀錄。
+- [ ] 比對 YMES PostgreSQL live schema/migrations。Oracle 來源 DDL：database/reference/mestest_qc_sampling_table_source_ddl.sql；PostgreSQL 空表 CREATE 參考：database/reference/mestest_qc_sampling_table_create.sql。只有確認缺漏才建立 migration，不要在 Oracle 執行 CREATE，也不要刪除 YMES 擴充欄位。
+- [ ] 保留欄位與 NULL/default：SamplingTable varchar(25)、MinNum/MaxNum/SampleNum numeric(12,4) 必填、RejectNum numeric(12,4) 可空、Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp、DataStamp numeric(11,0) nullable DEFAULT 0。唯一索引只有複合 PK (SamplingTable, MinNum, MaxNum)，沒有 FK/其他索引。
+- [ ] 實作登入與 FunctionKey QC101 保護的 GET /api/qc/sampling-tables?searchFieldName=&searchFieldValue=，限定 SamplingTable/MinNum/MaxNum 搜尋、回傳全部區間與 audit/DataStamp；先核對舊系統共用 AdditionalXml helper 的實際比對方式，再與 DEV 搜尋及正式 API 對齊。
+- [ ] 實作 POST 與複合鍵 PUT/DELETE；沿用 UI required/numeric/integer/RejectNum 上限/MinNum≤MaxNum 驗證。Add 設 Creator/CreateDate，Edit 設 Reviser/ReviseDate 並 DataStamp + 1；PUT/DELETE 對 DataStamp nullable 做 CAS。此功能沒有 IssueState、簽核或 Issue Job API。
+- [ ] 實作 POST /api/qc/sampling-tables/copy：只複製 sourceSamplingTable 中目的表不存在的 MinNum/MaxNum 區間；逐筆插入，首錯停止但保留之前成功筆，回傳 insertedCount、skippedCount 與部分失敗資訊。前端已呼叫此端點。
+- [ ] 使用參數化 SQL、登入使用者 audit；先查現有 migration/API 是否已建置。完成後更新 API/schema 交接文件，推送 GitHub 並通知公司端 pull。
+
+
 ### QC402 次分類基本資料（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/次分類基本資料.md`、`todolist_officepc.md` 的 QC402 區段及 `docs/DATABASE_CONNECTION.md` 的 QC402 查詢紀錄。

@@ -301,3 +301,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - DDL 檔案：`database/reference/mestest_qc_s_class_basis_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_s_class_basis_create.sql`。
 - Primary Key 是 SClassNo；只有此 PK unique index，沒有 FK 或額外 index。MClassNo 在 Oracle DDL 可為 NULL、沒有 FK，但 WinForms 表單必填且僅允許選 IssueState=2 的主分類；由 QC402 API 驗證，不在 PostgreSQL DDL 自行加 FK。
 - 本次只有查 Oracle metadata，沒有讀取 MES 業務列或執行 DDL；連線字串、IP、帳號、密碼、SID 未輸出或寫入 Git。
+### 更新 2026-11-17：QC101 抽樣表格來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護連線唯讀取得 MESTEST.TBLQCSAMPLINGTABLE 的 DBMS_METADATA table/index DDL，並查 ALL_CONSTRAINTS。
+- 主鍵為 (SAMPLINGTABLE, MINNUM, MAXNUM)；只有 PK unique index；四個 NOT NULL 欄位約束；沒有 FK、其他 unique index 或額外索引。Oracle source DDL 與 PostgreSQL 空表 CREATE 參考為 database/reference/mestest_qc_sampling_table_source_ddl.sql、mestest_qc_sampling_table_create.sql。
+- 未讀取 MES 業務列、未在 Oracle 執行 DDL；連線字串、IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations，缺少時才建 migration。
