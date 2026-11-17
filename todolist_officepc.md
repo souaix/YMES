@@ -6,7 +6,7 @@
 - [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀取得 QC501–QC503 共用六表 Oracle DDL/PK index，產生 Oracle source DDL 與 PostgreSQL 空表 CREATE 參考；無業務列、未執行 Oracle DDL、無連線秘密輸出。
 - [x] 建立 `/YMES/QC/InspectionMachineParameterType` Vue DEV 假資料頁、品質資料→檢測儀器→檢測儀器類別路由/選單、查詢狀態、WinForms 欄位與按鈕、RS232/UserDefine 編輯、Driver picker、複製、多選刪除/送簽、Audit 區及假資料操作。
 - [x] 新增 `docs/modules/QC/檢測儀器類別.md`，更新模組索引、資料庫連線紀錄與 `todolist_homepc.md` schema/API handoff。
-- [ ] 未連 YMES PostgreSQL，沒有實作 API/migration；未執行 build、測試或瀏覽器驗收。家用端 API/schema 完成後 pull 再整合；下一功能 QC502「檢測儀器」，其後 QC503「檢測 Driver」。
+- [x] 家用端 merge 後以遠端 production Docker 成功完成 Web `vue-tsc`/Vite build，修正 `@submit.prevent` 型別錯誤；app-browser 確認 QC501 選單可見。QC501 API/migration 尚未完成，QC501 CRUD 未做正式操作驗收；下一功能仍是 QC502「檢測儀器」，其後 QC503「檢測 Driver」。
 
 > 目的：記錄家用電腦完成資料庫/API交接後，公司電腦接著要做的 WinForms UI、互動邏輯與規格文件。公司電腦先讀本檔；家用電腦先讀 `todolist_homepc.md`。
 

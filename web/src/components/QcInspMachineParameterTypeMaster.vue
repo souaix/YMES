@@ -252,7 +252,7 @@ onMounted(() => { void loadRows() })
 
     <div v-if="mode" class="backdrop" @click.self="mode = null"><section class="dialog" role="dialog" aria-modal="true" :aria-label="modeTitle + '檢測儀器類別'">
       <header class="titlebar"><h2>檢測儀器類別基本資料（{{ modeTitle }}）</h2><button class="x" aria-label="關閉" @click="mode = null">×</button></header>
-      <form class="editor-form" @submit.prevent="saveEditor">
+      <form class="editor-form" @submit.prevent="saveEditor()">
         <fieldset class="basis-fields" :disabled="editorLocked"><legend>檢測儀器類別資料</legend>
           <label class="field"><span>InspMachineType</span><input v-model="editor.inspMachineType" maxlength="50" :readonly="mode === 'edit'" required></label>
           <label class="field"><span>InspMachineTypeName</span><input v-model="editor.inspMachineTypeName" maxlength="50"></label>
