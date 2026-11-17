@@ -6,6 +6,18 @@
 
 ## 家用電腦現在接手
 
+### QC110 特殊主檔維護（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/特殊主檔維護.md`、公司端 QC110 區段與 `docs/DATABASE_CONNECTION.md`，pull 後核對 Vue 頁面、選單及 API 契約。
+- [ ] 核對 YMES 的 `TBLSYSMODULE`、`TBLSYSMENUITEM`、`TBLSYSFUNCTION` 及使用者功能授權是否已有 `SPECIALBASISMAINTAIN`（QC110）與「品質資料 → 基本資料」階層；僅補缺少的 YMES menu/function mapping，讓正式 API 菜單能顯示此功能。
+- [ ] QC110 沿用 QC109 已交付的 `database/reference/mestest_qc_factor_maintain_source_ddl.sql` 與 `database/reference/mestest_qc_factor_maintain_create.sql`；先比對 YMES live schema/migrations 的 `tblsysmesparameter` 與 `fc_*` 表，只對實際缺少的 schema 增加 forward migration。不要重複建表、清除既有資料、匯入 Oracle 業務列或在 Oracle 執行 CREATE。
+- [ ] 實作 FunctionKey `QC110` 保護的獨立 `GET /api/qc/special-basis-maintain/parameters`，只回傳 `IssueState=2`、`ParameterType=0`、`ParameterClass=0` 且 `TableName LIKE 'FC_%'` 的參數目錄；勿與 QC109 的 ParameterClass=1 混用。以 ParameterNo 查回伺服器設定，不接受 request 任意指定 table/column/condition。
+- [ ] 實作 `GET /api/qc/special-basis-maintain/parameters/{parameterNo}/data`，依已授權 ParameterNo 查 YMES metadata，回傳動態欄位（name/type/length/nullable）與 Condition 範圍的資料列；TableName、FieldName、Condition 都須由服務端參數目錄解析並用 schema/table/column allowlist 驗證。
+- [ ] 實作 `PUT /api/qc/special-basis-maintain/parameters/{parameterNo}/data`：伺服器端驗證 `^[A-Za-z][A-Za-z0-9_]*$` 欄名、metadata 欄位集合、型別、長度與 NOT NULL；單一 transaction 內刪除舊 Condition 範圍並插入完整 rows，空 rows 表示清除此範圍，失敗 rollback。沒有 DataStamp；避免併發整表覆寫。
+- [ ] 實作 `POST /api/qc/special-basis-maintain/parameters/{parameterNo}/import-preview` 解析 WinForms 接受的 Excel 檔並只回 preview rows，不寫資料庫；CSV/Paste 由 Vue 先編輯 Grid，最後才按 Save。
+- [ ] 舊 Condition 不可直接當任意 SQL 執行。若不能安全轉成固定 predicate，建立經審查的 server-side 對照並記錄 YMES 環境差異。所有 endpoint（含清單、資料、preview、更新）都需套登入與 QC110 功能授權。
+- [ ] 完成 YMES schema/API/migration 文件後 push GitHub 並通知公司端 pull，以驗收 Production API。
+
 ### QC109 要因資料維護（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/要因資料維護.md`、公司端 QC109 區段、`docs/DATABASE_CONNECTION.md`，並先 pull 取得 Vue DEV 頁與 API 規格。

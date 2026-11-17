@@ -360,3 +360,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護設定唯讀查 `MESTEST.TBLSYSMESPARAMETER` 與 `ALL_TABLES` 中符合舊程式 `TableName LIKE 'FC_%'` 的表，再用 DBMS_METADATA、ALL_INDEXES、ALL_CONSTRAINTS 取得結構。本次查得 `FC_POSIONLIST`、`FC_QCFORMCALLBACKITEMMAP`、`FC_THICKNESS` 三表。
 - Oracle source DDL：`database/reference/mestest_qc_factor_maintain_source_ddl.sql`；PostgreSQL CREATE 參考：`database/reference/mestest_qc_factor_maintain_create.sql`。四表各只有 PK unique index，沒有 FK/額外索引。
 - 僅查詢表名與 DDL/資料字典 metadata，沒有讀取 MES 業務列，沒有在 Oracle 執行 DDL；IP、帳號、密碼、SID 未輸出或寫入 Git。家用端核對 YMES PostgreSQL 中既有參數目錄與 FC 表，必要時才建立 forward migration。
+
+### 更新 2026-11-17：QC110 特殊主檔維護
+
+- QC110 使用相同的 `TBLSYSMESPARAMETER` 目錄與 `FC_%` 動態表機制，但篩選 `ParameterClass=0`；QC109 篩選 `ParameterClass=1`。請家用端以獨立 FunctionKey/API 權限處理兩個功能。
+- QC110 所用 `TBLSYSMESPARAMETER`、`FC_POSIONLIST`、`FC_QCFORMCALLBACKITEMMAP`、`FC_THICKNESS` Oracle metadata DDL 及 PostgreSQL CREATE 參考已在 QC109 同一批次取得並交付，檔案位於 `database/reference/mestest_qc_factor_maintain_{source_ddl,create}.sql`；本次未重複連 Oracle 或查詢業務列，不需另一份相同 DDL。
+- 公司端只新增 Vue DEV 頁與 API handoff；YMES PostgreSQL 是否已有相同結構由家用端比對 live schema/migrations 決定，僅對缺少項新增 forward migration。不得在 Oracle 執行 DDL、不得從 MES 複製業務資料。

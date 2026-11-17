@@ -14,19 +14,27 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC110 特殊主檔維護（公司端 2026-11-17）
+
+- [x] 對照 `frmSpecialBasisMaintain`/Designer、`wsSYS.LoadMesParameter/LoadMesParameterRef/LoadTablesConstraints`、`wsQC.UpdFactorMaintain` 與共用 Core；確認 ParameterClass=0、選列自動載入、動態 Grid、80px 按鈕欄、欄位名稱驗證、大小寫、必填黃色格、Import/Paste、整表 Save 與放棄變更提示。
+- [x] 新增 `/YMES/QC/SpecialBasisMaintain` Vue DEV 頁、QC 基本資料三層選單、QC110 規格與獨立 `special-basis-maintain` API handoff。DEV 假資料與 QC109 隔離；正式資料仍由 API metadata 驅動。
+- [x] QC110 與 QC109 共用既有 `TBLSYSMESPARAMETER`/`FC_%` 結構，沿用已查 Oracle source DDL 與 PostgreSQL CREATE 參考；本次不需新 DDL，也未查詢 MES 業務列。
+- [ ] 未執行 build/test/瀏覽器驗收。家用端需比對 YMES live schema 並實作 FunctionKey QC110 的 class=0 參數清單、資料載入、欄位驗證、Excel preview 與交易式整表保存；完成後公司端 pull 並驗收 Production API。
+- [ ] 下一步依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 核對尚未完整遷移的下一個 Function，直接對照 WinForms Form/Service/Core 再繼續。
+
 ### QC109 要因資料維護（公司端 2026-11-17）
 
 - [x] 對照 `frmQCFactorMaintain`、`wsSYS.LoadMesParameter/LoadMesParameterRef/LoadTablesConstraints`、`wsQC.UpdFactorMaintain`、`clsSYSMesParameter`、`clsQCBasis.UpdFactorMaintain_ArrayBinding`，確認參數篩選、動態 Grid、nullable 欄位底色、新增/編輯/刪除暫存、整表 Save、CSV/XLS Import、Clipboard Paste、離開提示與狀態列。
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess、本機受保護連線唯讀取得 `TBLSYSMESPARAMETER` 與本次 `TableName LIKE 'FC_%'` 的三張來源表 `FC_POSIONLIST`、`FC_QCFORMCALLBACKITEMMAP`、`FC_THICKNESS` 的 DBMS_METADATA table/index DDL、ALL_INDEXES、ALL_CONSTRAINTS；未讀業務列，未在 Oracle 執行 DDL。
 - [x] 建立 Oracle source DDL、PostgreSQL CREATE 參考、`/YMES/QC/FactorMaintain` Vue DEV 頁、QC 基本資料選單/路由、QC109 規格及家用端 API/schema handoff。DEV 僅使用三張表的 DEMO schema/假資料，正式環境由 API metadata 驅動。
-- [ ] 尚未執行 build/test/瀏覽器驗收；家用端先核對 YMES `TBLSYSMESPARAMETER`/`FC_*` 表，再依 QC109 handoff 建立必要 migration 與 FunctionKey QC109 的安全動態資料 API；公司端下一項接續 QC110「特殊主檔維護」。
+- [ ] 尚未執行 build/test/瀏覽器驗收；家用端先核對 YMES `TBLSYSMESPARAMETER`/`FC_*` 表，再依 QC109 handoff 建立必要 migration 與 FunctionKey QC109 的安全動態資料 API。QC110 已完成公司端 UI/規格，待家用端完成 API/schema 後再對接。
 
 ### QC108 計量品管法則基本資料（公司端 2026-11-17）
 
 - [x] 依 `frmQCRuleBasis`/Def、wsQC、`clsQCBasis`、`clsBasis_UPD` 對照主 Grid、四狀態、RuleType、七種 RuleOption、RuleNo/RuleSerial、DataStamp、刪除/核准與 Issue Job。
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護設定唯讀取得 `MESTEST.TBLQCRULEBASIS` table/index DDL 與 ALL_CONSTRAINTS；RuleSerial 為唯一 PK，僅 PK unique index，無 FK/額外索引；未讀業務列、未在 Oracle 執行 DDL。
 - [x] 建立 Oracle source DDL、PostgreSQL CREATE 參考、`/YMES/QC/VariableRuleBasis` Vue DEV 頁、選單/路由、QC108 規格及家用端 API/schema handoff。RuleOption UI/Oracle 代碼映射、舊 Other=9、FunctionName 目錄來源均已記錄。
-- [ ] 尚未執行 build/test/瀏覽器驗收；家用端核對 YMES schema/migration 並實作 API/ValueList/FunctionName options 與 Issue Job；公司端下一項接續 QC110「特殊主檔維護」。
+- [ ] 尚未執行 build/test/瀏覽器驗收；家用端核對 YMES schema/migration 並實作 API/ValueList/FunctionName options 與 Issue Job。QC110 公司端頁面與規格已完成。
 
 ### QC107 計數判別法則基本資料（公司端 2026-11-17）
 
