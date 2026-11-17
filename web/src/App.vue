@@ -46,6 +46,7 @@ import EquipmentAutoLoaderSetupMaster from './components/EquipmentAutoLoaderSetu
 import Qc8DReasonBasisMaster from './components/Qc8DReasonBasisMaster.vue'
 import QcReasonBasisMaster from './components/QcReasonBasisMaster.vue'
 import QcReasonSubTypeMaster from './components/QcReasonSubTypeMaster.vue'
+import QcAttributeQcItemMaster from './components/QcAttributeQcItemMaster.vue'
 import QcAttributeRuleBasisMaster from './components/QcAttributeRuleBasisMaster.vue'
 import QcVariableRuleBasisMaster from './components/QcVariableRuleBasisMaster.vue'
 import QcFactorMaintainMaster from './components/QcFactorMaintainMaster.vue'
@@ -252,7 +253,9 @@ const fallbackMenuTree: MenuNode[] = [
     label: '品質資料',
     shortLabel: '品',
     moduleNo: 'QC',
-    children: [{ id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
+    children: [{ id: 'quality-qc-settings', label: '品管設定', shortLabel: '管', children: [
+      { id: 'function:QC:QCITEM_A', label: '計數品管項目', shortLabel: '數', functionNo: 'QCITEM_A', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
+    ] }, { id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
       { id: 'function:QC:REASON BASIS', label: '品質原因基本資料', shortLabel: '原', functionNo: 'REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis' },
       { id: 'function:QC:REASON SUBTYPE BASIS', label: '品質原因子類別資料', shortLabel: '因', functionNo: 'REASON SUBTYPE BASIS', moduleNo: 'QC', tableName: 'tblqcreasonsubtypebasis' },
@@ -315,6 +318,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'function:QC:REASON BASIS': appBasePath + '/QC/ReasonBasis',
   'function:QC:REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
+  'function:QC:QCITEM_A': appBasePath + '/QC/AttributeQcItem',
   'function:QC:QCITEM_A RULE DATA': appBasePath + '/QC/AttributeRuleBasis',
   'function:QC:QC RULE BASIS': appBasePath + '/QC/VariableRuleBasis',
   'function:QC:QCFACTORMAINTAIN': appBasePath + '/QC/FactorMaintain',
@@ -388,6 +392,7 @@ const functionRoutes: Record<string, string> = {
   '8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'REASON BASIS': appBasePath + '/QC/ReasonBasis',
   'REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
+  QCITEM_A: appBasePath + '/QC/AttributeQcItem',
   'QCITEM_A RULE DATA': appBasePath + '/QC/AttributeRuleBasis',
   'QC RULE BASIS': appBasePath + '/QC/VariableRuleBasis',
   QCFACTORMAINTAIN: appBasePath + '/QC/FactorMaintain',
@@ -480,6 +485,7 @@ const isEquipmentAutoLoaderPage = computed(() => activeMasterKey.value === 'func
 const isQc8DReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:8D REASON BASIS')
 const isQcReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:REASON BASIS')
 const isQcReasonSubTypeBasisPage = computed(() => activeMasterKey.value === 'function:QC:REASON SUBTYPE BASIS')
+const isQcAttributeQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A')
 const isQcAttributeRuleBasisPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A RULE DATA')
 const isQcVariableRuleBasisPage = computed(() => activeMasterKey.value === 'function:QC:QC RULE BASIS')
 const isQcFactorMaintainPage = computed(() => activeMasterKey.value === 'function:QC:QCFACTORMAINTAIN')
@@ -1464,6 +1470,14 @@ async function signOut(): Promise<void> {
         />
         <QcReasonSubTypeMaster
           v-else-if="isQcReasonSubTypeBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcAttributeQcItemMaster
+          v-else-if="isQcAttributeQcItemPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

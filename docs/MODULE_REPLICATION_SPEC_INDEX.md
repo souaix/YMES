@@ -16,6 +16,7 @@
 
 ## 2026-11-17 新增功能規格
 
+- QC201「計數品管項目」：[功能規格](modules/QC/計數品管項目.md)。已依主/Define/Reason Form、QC_ItemOp 共用 Form 與 WinForms Service/Core 建立 `/YMES/QC/AttributeQcItem` DEV 頁、三層選單及主/子資源 API handoff。Oracle source DDL 涵蓋主表、直接子表與刪除流程關聯；PostgreSQL CREATE 參考只列 4 張直接維護子表，主表沿用 MTL 共用 SQL。家用端需先核對 YMES live schema，再實作 API、Issue Job、DataStamp 與引用檢查。
 - QC112「品質原因產品指導書」：[功能規格](modules/QC/品質原因產品指導書.md)。公司端依主畫面、Maintain/Import 表單、Oracle DDL 完成 Vue DEV 雙 Grid、產品對應維護、附件匯入 UI 與 API handoff。Oracle 關聯表以 `(ReasonNo, ProductNo)` 為 PK、無 FK/DataStamp；舊 DataImporter checker 未包含在來源樹，檔案共用/刪除規則及 YMES 檔案儲存整合待家用端查證。
 - QC110「特殊主檔維護」：[功能規格](modules/QC/特殊主檔維護.md)。公司端依 `frmSpecialBasisMaintain` 與共用 SYS/QC Service/Core 完成選列即載入的 metadata 動態 Grid DEV 頁、QC 基本資料選單及 API handoff。其 `ParameterClass=0`，與 QC109 class=1 分別授權；沿用 QC109 已查的 `TBLSYSMESPARAMETER`/`FC_%` Oracle DDL 及 PostgreSQL CREATE 參考，不重複建立 DDL。家用端需核對 YMES schema，實作 FunctionKey `QC110` 保護的安全動態讀寫 API。
 - QC109「要因資料維護」：[功能規格](modules/QC/要因資料維護.md)。公司端依 `frmQCFactorMaintain`、SYS/QC Service/Core 與 Oracle DDL 完成 metadata 驅動的動態 Grid DEV 頁、Import/Paste/整表 Save、QC 基本資料選單及 API handoff。來源以 `TBLSYSMESPARAMETER` 選出核准的 `FC_%` Table；本次字典查到三張 FC 表，沒有讀業務列。家用端需核對 YMES 既有參數目錄/動態表，再提供限制 `QC109` 權限的參數化整表 API。

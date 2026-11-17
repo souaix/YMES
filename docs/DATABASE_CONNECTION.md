@@ -367,6 +367,12 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - QC110 所用 `TBLSYSMESPARAMETER`、`FC_POSIONLIST`、`FC_QCFORMCALLBACKITEMMAP`、`FC_THICKNESS` Oracle metadata DDL 及 PostgreSQL CREATE 參考已在 QC109 同一批次取得並交付，檔案位於 `database/reference/mestest_qc_factor_maintain_{source_ddl,create}.sql`；本次未重複連 Oracle 或查詢業務列，不需另一份相同 DDL。
 - 公司端只新增 Vue DEV 頁與 API handoff；YMES PostgreSQL 是否已有相同結構由家用端比對 live schema/migrations 決定，僅對缺少項新增 forward migration。不得在 Oracle 執行 DDL、不得從 MES 複製業務資料。
 
+### 更新 2026-11-17：QC201 計數品管項目
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端本機既有受保護連線設定直接唯讀連接 MESTEST，取得 18 個 QC201 主表/子表/引用物件的 DBMS_METADATA DDL、欄位、NULL/default、constraints、PK/index metadata。連線方式沿用本檔既有公司端 Oracle 設定；不透過 DBeaver 操作畫面，不讀 MES 業務列。
+- 原始結構記錄：`database/reference/mestest_qc_item_attributes_source_ddl.sql`；四張直接維護子表的 PostgreSQL CREATE 參考：`database/reference/mestest_qc_item_attributes_create.sql`；主表 CREATE 已存在於 MTL 共用 reference SQL。只有 YMES schema 核對確認缺表/欄位後才新增 migration。
+- IP、帳號、密碼、SID 與 protected config 檔案路徑不寫入文件/SQL/Git；沒有在 Oracle 執行 DDL。
+
 ### 更新 2026-11-17：QC112 品質原因產品指導書
 
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護設定直接唯讀取得 `MESTEST.TBLQCREASONPRDSOPFILE` 的 `DBMS_METADATA.GET_DDL`，並查詢欄位、PK、索引及外鍵字典。結構含四欄，PK `(REASONNO, PRODUCTNO)`；只有 PK unique index，無 FK、DataStamp 或其他索引。

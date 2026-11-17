@@ -14,6 +14,18 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC201 計數品管項目（公司端 2026-11-17）
+
+- [x] 直接閱讀 `frmQCItemForAttributes`、`frmQCItemForAttributesDef`、`frmQCItemReason` 及共用 `QC_ItemParameter`、`QC_ItemFactor`、`QC_ItemOp`、`QC_SamplePlanChange`、`QC_SamplingParameterSimulation` WinForms 原始碼，核對主畫面、雙清單、狀態/簽核/刪除限制、欄位與按鈕事件；資料表行為依 wsQC/clsQCBasis 追查。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，經本機受保護連線直連 MESTEST 唯讀查主表、四張直接子表及刪除流程關聯物件的 DDL、欄位 nullable/default、PK/index/constraint；沒有讀 MES 業務列、沒有在 Oracle 執行 DDL，連線秘密未輸出。
+- [x] 建立 Oracle source DDL `database/reference/mestest_qc_item_attributes_source_ddl.sql` 與四張直接維護子表的 PostgreSQL CREATE 參考 `mestest_qc_item_attributes_create.sql`；主表 CREATE 沿用 MTL 共用 SQL，其他刪除關聯表不整批重建。
+- [x] 新增 `/YMES/QC/AttributeQcItem` Vue DEV 頁、QC 品質資料三層選單與 `QCITEM_A` 路由；主 Grid、四狀態、Add/Edit/Copy/Apply/Confirm、刪除/核准、Parameter/Factor/Reason/SamplePlanChange 及 Simulation 畫面可用 localStorage 假資料互動，欄位採 KD 淡黃色系。
+- [x] 續讀共用 `QC_ItemOp` Form/Service 行為並補 Vue 左右雙清單、InLine/OffLine、ExecuteOrder、FAI/IPQC/PQC；僅已簽核可修改，LotIsValid=0 禁止新增 InLine，InLine 確認前檢查至少一種檢驗時機。
+- [x] 新增 QC201 規格、規格索引列、Oracle 查詢紀錄及家用端 schema/API handoff；已將 SPK/ZKT/KYT 顯示差異與正式 ValueList 來源列入 API options 契約。
+- [ ] Plan/Rule/MClass 查找鈕仍是簡化選取器；Production API 選項由家用端提供。未執行 build、測試或瀏覽器驗收。
+- [ ] 未執行 build、測試或瀏覽器驗收。Production schema/API、權限、Issue Job、引用檢查由家用端依 `todolist_homepc.md` 接手；完成後公司端 pull 並對接驗收。
+- [ ] QC201 UI 完成後，依功能目錄選下一個尚未完成 Function；不可把功能佔位頁計為完成。
+
 ### QC112 品質原因產品指導書（公司端 2026-11-17）
 
 - [x] 對照 `frmReasonPrdSOPFile`、`frmReasonPrdSOPFileMaintain`、`frmReasonPrdSOPFileImport` 及 Designer；記錄已核准原因載入、選列即載入關聯、產品查找條件、左右移動、檔案上傳/移除、範本下載及逐列匯入進度。

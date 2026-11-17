@@ -6,6 +6,17 @@
 
 ## 家用電腦現在接手
 
+### QC201 計數品管項目（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/計數品管項目.md`、公司端 QC201 區段及 `docs/DATABASE_CONNECTION.md`；確認 Vue route/menu 使用 FunctionNo `QCITEM_A`、API 權限使用 FunctionKey `QC201`。
+- [ ] 比對 YMES live PostgreSQL schema 與 migrations：主表 `tblqcitemforattributes` 已列於 `mestest_mtl_qc_item_tables_create.sql`；四張直接子表 `tblqcitemparameter`、`tblqcitemfactor`、`tblqcitemreasonmap`、`tblqcsampleplanchange` 參考 `mestest_qc_item_attributes_create.sql`。只對實際缺少的表/欄位/constraint 建立 forward migration；保留 YMES 擴充欄位與資料，禁止 drop/recreate 或從 Oracle 複製 MES 業務資料。
+- [ ] `mestest_qc_item_attributes_source_ddl.sql` 含 18 張 Oracle 結構物件，包含舊刪除流程參照表；先把主表與 4 張直接子表以外的物件逐一對照 YMES 既有功能/表，不要將 raw DDL 全部批次建立。這四張子表各自只有列出的 PK，沒有 Oracle FK/非 PK index；SamplePlanChange 的 `LOTRANGE`、`AQLCHKFORSPLANCHG` 以 CHECK NOT NULL 實作，請保留語義。
+- [ ] 實作 FunctionKey QC201 保護的 API，契約詳見規格：主清單 GET、主檔 POST/PUT/DELETE、Copy POST、Approve POST；options、已核准 Reason lookup、ReasonType ValueList、Parameter/Factor/Reason/Operations/SamplePlanChange GET/PUT、Operation choices GET 及 Simulation POST。DTO 欄位大小寫/日期/nullable 請和 Vue `QcAttributeQcItemMaster.vue` 對齊。
+- [ ] API 必須重做 WinForms/Core 驗證：Add/Edit/Copy 的欄位限制、Issue Control、DataStamp concurrency、複製關聯交易、Approve 僅未簽核且至少有 Factor/Reason、Delete 的 0/-1 實刪/2→-1/1 拒絕及 WIP/MTL/MTL Type/OP/PRD/QC Group/SPC 引用檢查。刪除與子表清理必須交易化，按多選逐筆處理時保留前端首錯停止的結果語義。
+- [ ] Options 從 YMES 真實抽樣計劃、計數判別法則、主分類與介面目錄取得；`showQcClass` 對 ZKT/KYT 開啟，`showLotValid`/`showComponentCollect` 依 SPK 模式設定。ReasonType 由 MES ValueList 的實際有效值及顯示字串提供，不能照搬 DEV 假資料。
+- [ ] `QC_ItemOp` Vue 左右雙清單已完成；接 API `GET /api/qc/attribute-qc-items/{qcItemNo}/operations`、`GET /api/qc/attribute-qc-items/options/operations?qcType=0&lotIsValid=...`、`PUT /api/qc/attribute-qc-items/{qcItemNo}/operations`。保存採完整替換，保留 OP/Inline/ExecuteOrder/檢驗時機/Reviser/ReviseDate；僅 IssueState=2 可編輯、LotIsValid=0 不可加 InLine、每筆 InLine 必須至少勾一個 FAI/IPQC/PQC。沿用 YMES 已有的作業站及 `TBLOPQCITEM` schema，不另建重複表。
+- [ ] 完成後更新 migration/API 文件及本待辦，提交並 push；公司端 pull 後對照 QC201 Production 頁面及回應契約。
+
 ### QC112 品質原因產品指導書（公司端 2026-11-17 交接）
 
 - [x] 2026-11-17 家用端 live audit：QC112 的 `tblsysfunction.functionkey` 與品質資料選單項目已存在；`tblprdproductbasis` 已存在，但來源 `tblqcreasonbasis` 與關聯 `tblqcreasonprdsopfile` 缺表。目錄中的五個 `FILESERVICE*`/`REASONPRDSOPFILEPATH` 參數均不存在於 YMES `tblsyselementbasis`；API 沒有 file-service code，容器只有 Data Protection volume，主機也未掛載 NFS/CIFS。使用者功能授權表未在目前 YMES schema 內盤點到。
