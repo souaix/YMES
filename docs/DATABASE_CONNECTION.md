@@ -534,3 +534,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護的 MESTEST 設定直連唯讀取得 TBLOPGROUPBASIS、TBLOPGROUPDETAIL 的 DBMS_METADATA.GET_DDL，並查 ALL_TABLES、ALL_INDEXES、ALL_CONSTRAINTS。
 - 兩表只有主鍵唯一索引，沒有 FK/額外 index。來源 DDL 與 PostgreSQL CREATE-only 對照分別保存於 database/reference/mestest_op105_group_basis_source_ddl.sql、mestest_op105_group_basis_create.sql；first-phase bootstrap 也已同步 Oracle DEFAULT 0。
 - 只讀結構 metadata，未讀 MES 業務資料列、未在 Oracle 執行 DDL/DML；連線秘密未輸出或提交。家用端需先查 YMES live schema/migrations，已存在的表只補必要 defaults migration。
+
+### 更新 2026-11-18：OPB03 客戶站點對應設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從受保護的 MESTEST 連線唯讀執行 DBMS_METADATA.GET_DDL，並查 ALL_CONSTRAINTS、ALL_INDEXES。
+- 取得 TBL_BOPCUSTOPMAPBASIS、TBL_BOPCUSTOPMAPDETAIL DDL；兩表只有欄位 NOT NULL checks 與 PK，只有 PK unique index，沒有 FK/額外索引。
+- Oracle DDL 與 PostgreSQL CREATE-only 參照分別保存於 database/reference/mestest_opb03_customer_op_mapping_source_ddl.sql、database/reference/mestest_opb03_customer_op_mapping_create.sql。
+- 只讀結構 metadata，未查 MES 業務資料列、未執行 Oracle DDL/DML；連線秘密未輸出或寫入 Git。家用端先查 live schema/migrations，確定缺表才加 forward migration。

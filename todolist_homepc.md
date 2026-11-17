@@ -1,3 +1,14 @@
+## 最新公司端交接：OPB03 客戶站點對應設定（2026-11-18）
+
+- [ ] Pull 最新 main；閱讀 docs/modules/OP/客戶站點對應設定.md、OP101–OP105 規格，以及 database/reference/mestest_opb03_customer_op_mapping_source_ddl.sql 和 mestest_opb03_customer_op_mapping_create.sql。
+- [ ] 先核對 YMES PostgreSQL live schema/migrations 的 tbl_bopcustopmapbasis、tbl_bopcustopmapdetail。Oracle DDL 已由公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查證；source 只有兩表 PK、無 FK/額外索引。CREATE-only 檔不是直接部署指令；僅缺表才新增 forward migration，既有表先比欄位與資料。
+- [ ] 實作登入保護 FunctionNo=B_CUSTOMER OP MAPPING API。Vue CustomerOPMappingMaster.vue 頁面 /YMES/OP/CustomerOPMapping 已固定主/明細 CRUD 路徑及 lookup 路徑，細節見規格。
+- [ ] lookup 重用既有 Customer Basis、Production Segment、OP Basis API/資料；客戶與區段、作業站都只提供 IssueState=2。作業站需依主檔 PSNo 過濾，不新增相同主檔 lookup tables。
+- [ ] Basis PK (CustomerNo, CustomerOPNo)；Detail PK (CustomerNo, CustomerOPNo, OPNo)。必填及字數依 Oracle source DDL；TransactionFlag 僅 0/1。來源 CustomerOPSeq NUMBER(3,0)，但 WinForms NumericUpDown 範圍 0–999999；UI 保留原範圍，API 回清楚 DB 欄寬驗證錯誤，除非查 live schema/現存資料後另有遷移決定。
+- [ ] Edit 主檔 PK 不可變；已有明細時 PSNo 不可改。明細可修改 OPNo，路由用舊 OPNo 對應、body 帶新 OPNo，需驗複合 PK 唯一。
+- [ ] DataStamp nullable + DEFAULT 0；Basis/Detail edit 都要 null-safe CAS，衝突回 409；Creator/CreateDate/Reviser/ReviseDate 只由 API principal/server 產生，忽略 request audit 欄位。
+- [ ] 主檔刪除在單一 DB transaction 先刪全部 Detail 再刪 Basis；Oracle 無 FK，不要假定 DB cascade。Detail delete 為實體刪除。
+- [ ] Production API/schema 完成後更新規格與交接、提交並 push main，供公司端 pull 整合。公司端尚未接 YMES PostgreSQL；未執行 build/test/browser。
 ## 最新公司端交接：OP105 作業站群組資料（2026-11-18）
 
 - [ ] Pull 最新 main；閱讀 docs/modules/OP/作業站群組資料.md、docs/DATABASE_CONNECTION.md 的 OP105 段落、OP101–OP104 規格，以及 database/reference/mestest_op105_group_basis_source_ddl.sql 與 mestest_op105_group_basis_create.sql。

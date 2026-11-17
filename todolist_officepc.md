@@ -1,3 +1,11 @@
+## 2026-11-18 公司端進度：OPB03 客戶站點對應設定
+
+- [x] 直接閱讀 frmB_OPCustomerOPMapping、主檔/明細 Def Forms 與 Designer、wsOP、clsOpBasis、clsB_Basis_UPD；確認雙 Grid、lookup 狀態、Add/Edit/Copy/刪除、DataStamp、Audit 與批次刪除行為。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBL_BOPCUSTOPMAPBASIS、TBL_BOPCUSTOPMAPDETAIL DDL，並查 ALL_CONSTRAINTS/ALL_INDEXES；兩表只有 PK、沒有 FK/額外索引。未讀 MES 業務資料、未執行 Oracle DDL、未輸出連線秘密。
+- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 參照與 docs/modules/OP/客戶站點對應設定.md，更新規格索引、Oracle 查詢紀錄與家用端 API/schema handoff。
+- [x] 完成「作業站資料 → 行業包 → 客戶站點對應設定」Vue DEV 頁 /YMES/OP/CustomerOPMapping：上下雙 Grid、查詢、多選刪除、主檔 ADD/EDIT/DEL/Copy、明細 ADD/EDIT/DEL、Customer/PS/OP lookup、Audit 顯示與 KD 黃色欄位；假資料限 DEV localStorage。
+- [ ] Oracle CustomerOPSeq NUMBER(3,0) 與舊 NumericUpDown 最大 999999 不一致，已於規格和家用端 handoff 標明；Production API 依 live schema 驗證，沒有擴欄或截斷。
+- [ ] 未連 YMES PostgreSQL、未實作 Production API/migration，未執行 build、test、browser。OPB03 已交家用端 API/schema；公司端接續功能依 docs/MES_MENU_FUNCTION_INVENTORY.md，下一項 OPB02 ECN 作業站群組設定。
 # 公司電腦續作清單
 
 ## 2026-11-18 公司端進度：QC408 OCAP基本資料

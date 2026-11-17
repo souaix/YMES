@@ -12,6 +12,7 @@
 - OP103「作業站類別資料」：[功能規格](modules/OP/作業站類別資料.md)。已直接對照 frmOPType/Def、wsOP 與 clsOpBasis，完成 /YMES/MasterData/OperationTypes Vue DEV 清單/新增/修改/複製/刪除/核准及 Property 假資料視窗。Oracle TBLOPTYPE DDL 與 PostgreSQL CREATE-only 參考已保存；Production schema/API 與共享簽核待家用端實作。
 
 - OP105「作業站群組資料」：[功能規格](modules/OP/作業站群組資料.md)。已直接對照 WinForms 主/明細 Form、wsOP、clsOpBasis、clsBasis_UPD，並用 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBLOPGROUPBASIS/TBLOPGROUPDETAIL DDL、PK/index/constraint；完成 OP 三層選單與 Vue DEV 雙 Grid/主明細 CRUD/Check。Oracle source DDL 與 PG CREATE-only 已保存；家用端待核對 live schema、補缺 defaults migration，實作 group/member API 與交易刪除。
+- OPB03「客戶站點對應設定」：[功能規格](modules/OP/客戶站點對應設定.md)。已逐段閱讀三個 WinForms Form/Designer、wsOP、clsOpBasis、clsB_Basis_UPD；PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得兩表 DDL 並查 PK/index/constraint；完成行業包三層選單與 Vue DEV 雙 Grid、主/明細編輯/lookup/CRUD。Oracle source DDL 與 PostgreSQL CREATE-only handoff 已保存；家用端待比對 live schema 並實作 lookup/API/交易刪除。
 
 ## 規格產出原則
 
