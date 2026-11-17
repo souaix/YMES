@@ -243,7 +243,7 @@ async function openFactorPicker(factor: QcFactor): Promise<void> {
       ? factor.factorNo === 'PRODUCT' ? [{ value: '*', name: '全部產品' }, { value: 'PROD-A', name: '晶圓產品 A' }, { value: 'PROD-B', name: '晶圓產品 B' }]
         : factor.factorNo === 'EQUIPMENT' ? [{ value: '*', name: '全部設備' }, { value: 'EQP-01', name: '設備 01' }, { value: 'EQP-02', name: '設備 02' }]
           : [{ value: '*', name: '全部' }, { value: factor.factorNo + '-01', name: factor.parameterName + ' 01' }, { value: factor.factorNo + '-02', name: factor.parameterName + ' 02' }]
-      : records(await request<FactorOption[] | ApiEnvelope<FactorOption>>('/api/qc/spec-bases/factors/' + encodeURIComponent(factor.factorNo) + '/options'))
+      : records(await request<FactorOption[] | ApiEnvelope<FactorOption>>('/api/qc/spec-bases/factors/' + encodeURIComponent(factor.factorNo) + '/options?' + new URLSearchParams({ qcItemNo: activeItem.value?.qcItemNo ?? '' })))
     factorPicker.value = { open: true, factorNo: factor.factorNo, options }
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '讀取因子選項失敗。' }
 }

@@ -18,7 +18,8 @@
 - [x] 沿用先前已保存的 Oracle 直連唯讀 DDL `mestest_qc205_variable_dependencies_source_ddl.sql` 中 `TBLQCSPECBASIS`/`TBLQCSPECDETAIL`；本次沒有讀業務資料列，也沒有在 Oracle 執行 DDL。
 - [x] 新增 `/YMES/QC/SpecBasis` Vue DEV 頁、品質資料→計量規格設定→品管項目規格選單/路由、QC303 規格文件與 PostgreSQL CREATE-only JSONB 對照。
 - [x] 更新規格索引、Oracle DDL provenance 記錄、家用端 schema/API/Issue Job handoff。
-- [ ] 公司端尚未執行 build、test 或瀏覽器驗收；禁止因此宣稱 Production API 已完成。家用端完成 schema/API 並 push 後，公司端 pull 對接、依 API 核對 QC Item/Factor lookup 及簽核狀態。
+- [x] 家用端已完成 QC303 schema/API、正式部署與 app-browser 頁面/狀態篩選驗收；live QC Item 清單為空，新增等資料操作待共用 QC Item/Factor/Parameter 與 Issue/Job 資源可用後補驗。詳見 `docs/modules/QC/品管項目規格.md`。
+- [ ] 家用端同步 GitHub 後，公司端 pull 最新 `main`，核對正式 API 欄位與 QC Item/Factor lookup，並依本端 DEV 頁回歸互動流程。
 - [ ] 接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接看下一項尚未遷移 WinForms Form/Service/Core；不以截圖替代原始碼調查。
 
 ## 前一項公司端工作：QC301 管制圖內容（2026-11-17）

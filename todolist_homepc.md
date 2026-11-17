@@ -1,16 +1,12 @@
 # 家裡電腦接手清單
 
-## 最新公司端 handoff：QC303 品管項目規格（2026-11-17）
+## 最近完成家用端 handoff：QC303 品管項目規格（2026-11-18）
 
-- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/品管項目規格.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`QC SPEC BASIS`、FunctionKey=`QC303`；Vue DEV 頁 `/YMES/QC/SpecBasis` 位於品質資料 → 計量規格設定 → 品管項目規格。
-- [ ] 先查 YMES PostgreSQL live schema、migrations 和既有 QC API。QC303 Oracle Basis/Detail DDL 沿用 `database/reference/mestest_qc205_variable_dependencies_source_ddl.sql` 的 `TBLQCSPECBASIS`、`TBLQCSPECDETAIL` 區塊；PG CREATE-only 參考為 `database/reference/mestest_qc303_spec_basis_create.sql`。只在 live schema 確認缺漏後新增 forward migration；不要重建 QC Item、Factor、MES Parameter、Issue/Job 或 `QCSN` 共用服務/資料表。
-- [ ] 實作登入保護、要求 QC303 FunctionKey 的 API：`GET /api/qc/spec-bases/qc-items`、`GET /api/qc/spec-bases?qcItemNo&issueState`、`GET /{serial}/details`、`GET /factors/{factorNo}/options`、`POST /api/qc/spec-bases`、`PUT/DELETE /{serial}`、`POST /{serial}/approve`、`POST /{serial}/disapprove`、`POST /api/qc/spec-bases/copy`。若既有 API 有相同職責，沿用現有路由並同步 Vue/spec。
-- [ ] Basis 的 Oracle 動態欄 MO/PRODUCT/EQUIPMENT/CUSTOMER/OP/PROCESS/EQPTYPE/MATERIAL/POSION/EMPLOYEE/THINKNESS/THICKNESS/VERSION/DEVICE 在 YMES 用 `factorvalues JSONB`；key 只允許該 QC Item 的 FactorSpec 白名單。不可拼動態 SQL identifier。Factor 值可空或 `*`；不得自行新增全因子必填規則。新 serial 沿用共用 QCSN 服務；Creator/Reviser、時間、IssueState、DataStamp 由服務端管理。
-- [ ] 新增依 QC Item+全部 FactorSpec 值檢查重複（不因 IssueState 排除既有 Basis），並 transaction 寫 Basis+Details。修改僅允許 IssueState=0，執行 DataStamp CAS、更新 audit 並交易式替換 Detail；UI 的 Confirm 修改必填 MEMO、Apply 可留白。
-- [ ] Detail ChartType/SPCID：-1→0；0→0/1/2；1→0/1/3；2→資料 SPCID 0/4（讀取時有 4 才將 0 顯示 X Chart）；UI 的 Above 只作 CS±Above helper，不落庫。維持 SpecLineType 0/1/2/3、數值與 US≥UCL≥CL≥LCL≥LS 驗證及 UCL/CL/LCL 原字串來源語意。
-- [ ] 刪除 0/-1 實體刪除 Basis+Detail、2 改 UNUSED(-1)、1 拒絕；核准只接受 0，沿用 Issue Job（無 Detail 可直接 ACTIVE，有流程先 PENDING）；取消核准只接受 ACTIVE(2) 回 0。舊 Core 沒有量測引用檢查；若 YMES 需保護，先確認現有量測/API 真實引用，不要刪除或建立虛構的 log table。
-- [ ] Copy 單筆產生新 serial、狀態 0、複製 Factor/Detail；Copy2 僅在來源/目標 Spec Factor 名稱集合相同時執行，CopyType 3=來源 0+2、0=只 0、2=只 2；目標已有相同 Factor 組合者略過，複製的資料都以新 serial、UNFROZEN 建立。跨 QC Item 的 wildcard `*` 是執行期通用規格匹配規則。
-- [ ] API 必須交易處理 Basis/Detail/狀態/複製與 audit；重新查狀態、DataStamp、重複條件，不信任 request 中的使用者、狀態或 audit。Oracle 來源由公司端先前直連唯讀取得，這次不必再向公司端索取 IP/帳密/SID。本段未執行 build、測試或瀏覽器驗收。
+- [x] 已查 YMES PostgreSQL live schema；QC303 Basis/Detail 缺少，新增 migration `0026_qc303_spec_basis.sql` 並套用。套用前備份 `/opt/ymes/backups/ymes_before_0026_qc303_20261118.dump` 通過 `pg_restore --list`；僅建立 QC303 兩表及 `ymes_app` CRUD 權限，未重建 QC Item/Factor/Parameter/Issue/Job/QCSN 共用資源。
+- [x] 完成登入保護 API：QC Item/factor、規格清單與 detail、Factor options、新增/修改/刪除、Approve/Disapprove、Copy2。FactorSpec 白名單、JSONB/參數化 SQL、交易、duplicate、DataStamp 與服務端 audit 已實作。依使用者指示不做角色／FunctionKey ACL。
+- [x] .NET 9 Release build 0 warning/0 errors；遠端 API/Web build 成功並部署。正式 menu 的 QC303 路由曾因遠端舊 App.vue 落到通用「尚未遷移」頁，已同步 App.vue 並只重建 `ymes-web`；`ymes-web` healthy、API readiness=200、未登入 QC303 API=401、Web route=200。
+- [x] app-browser 正式登入，沿「品質資料 → 計量規格設定 → 品管項目規格」驗證正式頁；UNFROZEN/PENDING/ACTIVE/UNUSED 篩選與 Close 均正常。
+- [ ] Live 計量 QC Item 清單為空，無法操作新增/修改/刪除/Copy/簽核/Detail 的端到端流程；`tblsysmesparameter`、Issue/Job、共用 QCSN 序號服務亦不存在。現有 serial 使用服務端 35 字元 GUID fallback，非共用 QCSN。待共用資料與簽核/參數資源提供後接續補驗；詳見 `docs/modules/QC/品管項目規格.md`。
 
 ## 最新公司端 handoff：QC301 管制圖內容（2026-11-17）
 
