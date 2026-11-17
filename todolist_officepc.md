@@ -14,6 +14,16 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC211 二次檢驗抽樣計畫（公司端 2026-11-17）
+
+- [x] 直接對照 frmSamplingFor2ndInsp / Define 的 WinForms、Designer、wsQC、clsQCBasis；記錄主 Grid、查找條件、Add/Edit/Delete/Copy、一般/Wafer plan lookup 與必填規則。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護設定唯讀查 MESTEST.TBLQCSAMPLINGFOR2NDINSP 的欄位、constraints 與 indexes；取得五個 NOT NULL、唯一索引鍵序，確認沒有 PK/FK；未讀業務列、未執行 Oracle DDL、未輸出憑證。
+- [x] 建立 /YMES/QC/SecondInspectionSampling Vue 3 DEV 頁、QC 三層選單/route、功能規格、Oracle source DDL、PostgreSQL Create SQL 參考與家用 API/schema handoff。
+- [x] DEV 頁支援篩選、選取、多筆刪除、Add/Edit/Copy、operation/QC item/plan picker、Apply/Confirm、唯一鍵檢查及獨立 localStorage 假資料；色系使用 KD 黃橘色。
+- [x] 更新模組索引、DB metadata 查詢紀錄與兩台電腦 TODO。來源的 Edit Service/Core DataStamp/稽核參數不一致，已列為家用端 API 決策項。
+- [ ] 未執行 build、測試或瀏覽器驗收；家用端需先核對 live schema/migrations 並完成 QC211 API，之後公司端 pull 驗收。
+- [ ] 下一個功能依 MES_MENU_FUNCTION_INVENTORY.md 接續 QC212 計量品管項目群組；繼續以 WinForms Form/Designer/Service/Core 為依據完成 UI 與規格。
+
 ### QC201 計數品管項目（公司端 2026-11-17）
 
 - [x] 直接閱讀 `frmQCItemForAttributes`、`frmQCItemForAttributesDef`、`frmQCItemReason` 及共用 `QC_ItemParameter`、`QC_ItemFactor`、`QC_ItemOp`、`QC_SamplePlanChange`、`QC_SamplingParameterSimulation` WinForms 原始碼，核對主畫面、雙清單、狀態/簽核/刪除限制、欄位與按鈕事件；資料表行為依 wsQC/clsQCBasis 追查。

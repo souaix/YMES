@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 最新公司端 handoff：QC211 二次檢驗抽樣計畫（2026-11-17）
+
+- [ ] 讀取 docs/modules/QC/二次檢驗抽樣計畫.md、docs/DATABASE_CONNECTION.md 與 QC211 公司端紀錄；FunctionNo 為 SAMPLINGFOR2NDINSP，FunctionKey 為 QC211。
+- [ ] 比對 YMES live PostgreSQL schema 與 migrations。主表來源為 TBLQCSAMPLINGFOR2NDINSP；Oracle source DDL 與 PostgreSQL schema-only Create 參考分別在 database/reference/mestest_qc211_second_inspection_sampling_source_ddl.sql、mestest_qc211_second_inspection_sampling_create.sql。Oracle 沒有 PK constraint，只有唯一索引 U_TBLQCSAMPLINGFOR2NDINSP_01，鍵序為 QCITEMNO、QCITEMTYPE、OPNO、OLDSAMPLEPLAN；沒有 FK。只為確認缺少的結構新增 forward migration，不覆寫 YMES 資料。
+- [ ] 實作登入保護且使用 QC211 FunctionKey 的 list、Add、Edit、Delete API。Update/Delete 的資源鍵為 (qcItemType, qcItemNo, opNo, oldSamplePlan)；新增時檢查唯一鍵及 OP/QC Item/抽樣計畫關聯。Update 只允許變更 NewSamplePlan，使用交易與 DataStamp concurrency，並正確更新 Reviser/ReviseDate。
+- [ ] 提供作業站、IssueState=2 的計量型 QC Item（依 OP 過濾並回傳 ComponentCollect）、一般抽樣計畫、Wafer 抽樣計畫 lookup；沿用 YMES 既有 OP/QC/Plan 資源，不建立重複 lookup table。
+- [ ] 核對舊來源不一致：wsQC Edit 呼叫帶 DataStamp/Reviser/ReviseDate，但 clsQCBasis Edit 簽章只接受五個業務欄位且只更新 NewSamplePlan。API 需採明確的 YMES 稽核/並行更新規則並回填規格。
+- [ ] 完成 schema/API 文件與 migration 後 commit/push；公司端再 pull 並對接驗收。公司端未連 YMES PostgreSQL，也未執行 build、測試或瀏覽器驗收。
+
 > 目的：家裡電腦負責 YMES 的資料庫、migration、API 與遠端部署；公司電腦負責 Vue UI。兩邊共用 GitHub `souaix/YMES`，開工前先 pull，完成後提交並 push。
 
 > **本次接手身分：家用電腦。** MES 原生來源是公司端唯讀查詢的 Oracle MESTEST；本端要復刻的是 YMES PostgreSQL，透過桌面 PPK/SSH 核對、建表、migration、開發 API 與部署。`database/reference/*_create.sql` 是由原生 MES DDL 轉換的 PostgreSQL 建表結構，只能用於 YMES 復刻資料庫，不在 Oracle 執行，也不含 MES 業務資料。公司電腦只做 UI 並呼叫 `/YMES/API`，不能連 YMES PostgreSQL、SSH 或上版。不要因 API 應用帳號權限不足而把工作角色改成交由公司電腦；由家用端 SSH 使用資料庫管理權限完成。

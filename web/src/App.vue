@@ -69,6 +69,7 @@ import QcSamplingTableMaster from './components/QcSamplingTableMaster.vue'
 import QcSampling1916Master from './components/QcSampling1916Master.vue'
 import QcSamplingPlanMaster from './components/QcSamplingPlanMaster.vue'
 import QcSamplingPlanWaferMaster from './components/QcSamplingPlanWaferMaster.vue'
+import QcSecondInspectionSampling from './components/QcSecondInspectionSampling.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -267,6 +268,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:QCITEM_V', label: '計量品管項目', shortLabel: '量', functionNo: 'QCITEM_V', moduleNo: 'QC', tableName: 'tblqcitemforvariables' },
       { id: 'function:QC:QCITEM_VDELETE', label: '刪除計量型品管項目量測記錄', shortLabel: '刪', functionNo: 'QCITEM_VDELETE', moduleNo: 'QC', tableName: 'tblspcvarfactorlog' },
       { id: 'function:QC:QCITEM RULE MAP', label: '計量品管項目管制法則對應', shortLabel: '則', functionNo: 'QCITEM RULE MAP', moduleNo: 'QC', tableName: 'tblqcitemrule' },
+      { id: 'function:QC:SAMPLINGFOR2NDINSP', label: '二次檢驗抽樣計畫', shortLabel: '二', functionNo: 'SAMPLINGFOR2NDINSP', moduleNo: 'QC', tableName: 'tblqcsamplingfor2ndinsp' },
     ] }, { id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
       { id: 'function:QC:REASON BASIS', label: '品質原因基本資料', shortLabel: '原', functionNo: 'REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis' },
@@ -346,6 +348,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:SAMPLING 1916': appBasePath + '/QC/Sampling1916',
   'function:QC:SAMPLING PLAN': appBasePath + '/QC/SamplingPlan',
   'function:QC:WAFER SAMPLING PLAN': appBasePath + '/QC/SamplingPlanWafer',
+  'function:QC:SAMPLINGFOR2NDINSP': appBasePath + '/QC/SecondInspectionSampling',
   'function:QC:FIRST GROUP': appBasePath + '/QC/FirstGroup',
   'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
@@ -524,6 +527,7 @@ const isQcSamplingTablePage = computed(() => activeMasterKey.value === 'function
 const isQcSampling1916Page = computed(() => activeMasterKey.value === 'function:QC:SAMPLING 1916')
 const isQcSamplingPlanPage = computed(() => activeMasterKey.value === 'function:QC:SAMPLING PLAN')
 const isQcSamplingPlanWaferPage = computed(() => activeMasterKey.value === 'function:QC:WAFER SAMPLING PLAN')
+const isQcSecondInspectionSamplingPage = computed(() => activeMasterKey.value === 'function:QC:SAMPLINGFOR2NDINSP')
 const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC:FIRST GROUP')
 const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
 const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DESCRIPTION')
@@ -1556,6 +1560,14 @@ async function signOut(): Promise<void> {
           v-else-if="isQcVariableMeasurementDeletePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcSecondInspectionSampling
+          v-else-if="isQcSecondInspectionSamplingPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
