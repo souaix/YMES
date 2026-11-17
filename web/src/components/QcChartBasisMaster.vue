@@ -434,7 +434,12 @@ async function saveRules(): Promise<void> {
   if (new Set(ruleDraft.value.map(item => `${item.spcId}:${item.ruleNo}`)).size !== ruleDraft.value.length) { error.value = '同一圖表的 RuleNo 不可重複。'; return }
   try {
     if (devMock.value) recordAudit('維護管制圖法則', row.factorSerial)
-    else await request(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}/rules`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rules: ruleDraft.value.map(({ spcId, ruleNo, action }) => ({ spcId, ruleNo, action })) }) })
+    else {
+      const saved = await request<{ dataStamp: number; reviser: string; reviseDate: string }>(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}/rules`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rules: ruleDraft.value.map(({ spcId, ruleNo, action }) => ({ spcId, ruleNo, action })) }) })
+      row.dataStamp = saved.dataStamp
+      row.reviser = saved.reviser
+      row.reviseDate = saved.reviseDate
+    }
     row.rules = clone(ruleDraft.value)
     ruleEditorOpen.value = false
     message.value = 'Rule 資料已儲存。'
