@@ -1,3 +1,17 @@
+## 最新公司端交接：PS101 生產區段資料（2026-11-18）
+
+- [ ] Pull GitHub `main`，閱讀 `docs/modules/PRS/生產區段資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS101 段落，以及 `database/reference/mestest_prs101_production_segment_source_ddl.sql` / `mestest_prs101_production_segment_create.sql`。
+- [ ] 查 YMES PostgreSQL live schema/migrations 的 `YMES.tblprsproductionsegment`。PS101 是此表 owner；先核對欄位、PK、nullable/default 及現存資料。缺表才新增 forward migration；若已存在，保留資料，只補 live schema 明確缺少的 default，禁止重建。
+- [ ] 原始 Oracle DDL 由公司端以 PowerShell 5.1 + Oracle.ManagedDataAccess 直接連 MESTEST 唯讀取得。欄位及預設照 Oracle source：PSNo/PSName varchar(50) NOT NULL；PSOrder numeric(2,0) DEFAULT 0 NOT NULL；Description varchar(255) nullable；IssueState numeric(1,0) DEFAULT 0 NOT NULL；HaveComponent/HaveLevel numeric(1,0) DEFAULT 0 NOT NULL；SerialTypeNo_Lot/Comp varchar(50) nullable；IsPartial numeric(1,0) DEFAULT 0 NOT NULL；IsNetFlow numeric(1,0) DEFAULT 0 nullable；DataStamp numeric(11,0) DEFAULT 0 nullable；Creator/Reviser varchar(10) nullable；日期 timestamp nullable。只有 PSNo PK unique index；無 FK/其他 index。
+- [ ] `CREATE` 參考不是 migration。先比較 live PostgreSQL table 與 migrations，只新增缺表/必要 default forward migration，不覆蓋現有資料；若要使用 reference SQL，先確認 schema/table 名稱並做 migration review。
+- [ ] 實作登入保護 FunctionNo=`PS BASIS`、FunctionKey=`PS101` API：GET `/api/production-segments?psNo=`、POST、PUT/DELETE `/{psNo}`、POST `/{psNo}/approve`。請依 `docs/modules/PRS/生產區段資料.md` 保持 Vue 契約及 DTO。
+- [ ] 新增/編輯驗證：PSNo 必填、轉大寫、最多 50；PSName 必填最多 50；PSOrder 1–99；Description 最多 255；HaveComponent/HaveLevel 僅 0/1 且不可同時為 1。新增由 server 設 Creator/CreateDate、IssueState=0；DB 預設 IsPartial/IsNetFlow/DataStamp。Edit 僅 IssueState=0；DataStamp null-safe CAS、成功遞增，衝突回 409；Reviser/ReviseDate 由 server 設。
+- [ ] Delete 以資料庫目前狀態分流：0/-1 實體刪主表，2 CAS 改 -1，1 拒絕。舊 Core 沒有 cascade/reference cleanup，Oracle 無 FK；不要自行新增 cascade 或假定無引用。多選逐筆回報結果。
+- [ ] Approve 僅狀態 0，重用共用 IssueManagement IssueNo=`PS BASIS`：沒有 Job/Detail 才直接改 2；有簽核明細先建立簽核流程、改 1、通知第一關，callback 核准 2/退回 0。
+- [ ] 重用/建立共用 GET `/api/system/serial-rule-basis?serialType=LOTNO`，查既有 `TBLSYSSERIALRULEBASIS`。WinForms 沒傳 Enable 條件，因此 lookup 不要只傳啟用列。不要新建另一張序號類別表。Component 序號欄位在此畫面隱藏，編輯/Copy 要保存既有值。
+- [ ] WAHHONG 企業設定會強制 HaveComponent/HaveLevel=No 並停用 Radio；必須依可信任的登入企業資訊套用。PS104 流程主檔若需要 Production Segment lookup，重用 PS101 table/API，不要新增同義 table/controller。
+- [ ] 完成 schema/API、更新規格/TODO 後 commit/push `main`；公司端再 pull 對接。公司端 PS101 使用 DEV localStorage；未連 YMES PostgreSQL、未實作 Production API/migration、未執行 build/test/browser。
+
 ## 最新公司端交接：PS103 流程類別資料（2026-11-18）
 
 - [ ] Pull 最新 GitHub `main`，讀 `docs/modules/PRS/流程類別資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS103 段落，以及 `database/reference/mestest_prs103_process_type_source_ddl.sql` / `mestest_prs103_process_type_create.sql`。
@@ -16,7 +30,7 @@
 - [ ] 比對 YMES PostgreSQL live schema、migration 和欄位 defaults。Create SQL 是對照，不可直接整份執行、不可重建既有表。First-phase 有 `tblprsprocessbasis`、`tblprsnodebasis`、`tblprsopapsdetail` 三表；確認 live objects 後，只為缺失建立 migration。
 - [ ] Oracle DDL 中三個 `VARCHAR2(n CHAR)` 長度與 PostgreSQL varchar(n) 相同；`ALL_TAB_COLUMNS.DATA_LENGTH` 是 bytes，不是來源字元數，不要用 byte 數誤改欄寬。
 - [ ] Source defaults 與 first-phase Create 目前可見差異：ProcessBasis 的 IssueState/TuningProcess/CurVersion/PartialType/DataStamp = 0；NodeBasis 的 NodeType=0、NodeVersion='N/A'；OPAPSDetail 的 ApsFixEqpTime/ApsVarEqpTime/BatchOP=0、BatchMaxQty=999999。先查 live `pg_attrdef`，只對 live 缺少的 default 加 forward `ALTER COLUMN SET DEFAULT`；保留 nullable/原資料。
-- [ ] 首次新增 PS104 專屬的五張缺表：`tblprsnoderelation`、`tblprsnodexml_clob`、`tblprsprocessproperty`、`tblprsopapsbase`、`tblprsproductionsegment`。`tblprstype` 由 PS103 handoff 建立並由 PS104 重用；欄位、PK、NULL/default 依 Oracle DDL/CREATE 參照，Oracle source 僅 PK unique index，無 FK/額外 index。不要自行新增索引/FK。
+- [ ] 首次新增 PS104 專屬的四張缺表：`tblprsnoderelation`、`tblprsnodexml_clob`、`tblprsprocessproperty`、`tblprsopapsbase`。`tblprstype` 由 PS103 建立、`tblprsproductionsegment` 由 PS101 建立；PS104 重用兩張共用表及其 API/lookup，不另建重複表。欄位、PK、NULL/default 依 Oracle DDL/CREATE 參照，Oracle source 僅 PK unique index，無 FK/額外 index。不要自行新增索引/FK。
 - [ ] 完成登入保護 PS104 API，路徑、DTO 和 DEV Vue 實際呼叫見功能規格：process basis list/Add/Edit/Delete/Approve/Copy/Version、Property CRUD/Issue、Exclude OP、已核准 PS/ProcessType lookup 及 Excel import。
 - [ ] IssueState 語意：0 未核准、1 簽核中、2 已核准、-1 不使用。Edit/Draw 只允許 0；Version 只允許 Active/current；刪除 0/-1 實體清理子表，2 用 DataStamp CAS 標成 -1，1 禁止。多表 delete/copy 使用單一 transaction。Creator/Reviser/時間由 API principal/server 設定；DataStamp null-safe CAS，衝突回 409。
 - [ ] 核准不能由 API 直接改狀態：核對非空流程圖、Exclude OP；無 Issue Job/Detail 才可 direct Active，有設定則走共用 IssueManagement IssueNo=`PRS BASIS`，維持 Pending、簽核 callback、第一關通知與 CurVersion 前版切換。

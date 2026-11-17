@@ -1,3 +1,11 @@
+## 2026-11-18 公司端進度：PS101 生產區段資料
+
+- [x] 直接閱讀 `frmProductionSegment`/Def Form 與 Designer、`wsPRS.Load/Add/Edit/Del/ApproveProductionSegment`、`clsProcess`、`clsBasis_UPD.SetProductionSegmentIssueState`、`wsSYS.LoadSerialRuleBasis`/Core；核對列表、四狀態、Copy/Apply/Confirm、刪除/簽核、Lot serial lookup 與隱藏欄位。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線直連 MESTEST，唯讀取得 `TBLPRSPRODUCTIONSEGMENT` 的 `DBMS_METADATA.GET_DDL`、欄位/default、constraint/index metadata，並另外取得 PK index DDL；未讀業務列、未在 Oracle 執行 DDL/DML、未輸出連線秘密。僅 PK unique index，無 FK/其他 index。
+- [x] 完成 `ProductionSegmentMaster.vue`、PS101 規格、Oracle source DDL、PostgreSQL CREATE-only 參考、PRS 三層選單路由及家用端 API/schema handoff。PS104 改為重用 PS101 的 `tblprsproductionsegment`，避免重複建立。
+- [x] DEV 假資料在專用 localStorage；有四狀態、假資料直接核准/送簽兩種分流、定義窗及 LOTNO 選擇視窗。無 MES/ YMES 寫入。
+- [ ] 尚未連 YMES PostgreSQL，未實作 Production API/migration；未執行 build、test 或 browser 驗收。按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 下一個 PRS 功能為 PS102「製造層別設定」。
+
 ## 2026-11-18 公司端進度：PS103 流程類別資料
 
 - [x] 直接閱讀 `frmProcessType`/Def、Designer、`wsPRS.Load/Add/Edit/Del/ApproveProcessType`、`clsProcess`、`clsBasis_UPD`，以及共用 `PS_ProcessProperty` 子功能；確認列表欄位、四狀態、Apply/Confirm、ProcessNo 衝突、子資料刪除、簽核 IssueNo 和 DataStamp。
@@ -9,11 +17,11 @@
 
 - [x] 直接閱讀主/Def/Draw/Exclude OP WinForms、Property 子功能、Data Import Form、wsPRS 和 clsProcess，整理欄位、狀態、核准、版本、複製、刪除、流程圖及匯入行為。
 - [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線直連 MESTEST，只讀查九張表的 DBMS_METADATA DDL、欄位、constraints/indexes；未查業務列、未在 Oracle 執行 DDL/DML、未輸出連線秘密。
-- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 參照、PS104 規格和家用端 handoff。九張表只有 PK unique index，沒有 FK/額外索引。first-phase 三表 default 差異及新增六表需求已寫入交接。
+- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 參照、PS104 規格和家用端 handoff。九張表只有 PK unique index，沒有 FK/額外索引。first-phase 三表 default 差異及新增表責任已依 PS103/PS101/PS104 分拆寫入交接。
 - [x] 新增 Vue DEV 流程基本資料頁：狀態查詢、欄位 Grid、Add/Edit/Copy/Approve/Delete/Property/Version/Exclude OP、簡化節點/連線編輯及 Import 視窗。假資料存在獨立 localStorage。
 - [ ] 流程圖 XML serializer、群組/分支拖曳編輯與舊版格式相容待確認；Excel checker 外部 DLL 未找到原始碼，DEV 只保留選檔視窗，不宣稱匯入完成。
 - [ ] 未連 YMES PostgreSQL、未實作 API/migration；未執行 build/test/browser。
-- [ ] 家用端完成 API/schema 並 push 後，公司端 pull、對接 Production API。PS103 現由公司端接續完成；下一項依流程設定清單為 PS BASIS（PS101）。
+- [ ] 家用端完成 API/schema 並 push 後，公司端 pull、對接 Production API。PS103 與 PS101 的公司端 DEV 頁及交接已完成；下一項依 Function inventory 為 PS102 製造層別設定。
 
 ## 2026-11-18 公司端進度：OPB02 ECN 作業站群組設定
 

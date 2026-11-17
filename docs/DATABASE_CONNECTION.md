@@ -13,7 +13,7 @@
 - 使用本機受保護既有 Oracle 設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接連 MESTEST 唯讀取得 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`：`TBLPRSPROCESSBASIS`、`TBLPRSNODEBASIS`、`TBLPRSNODERELATION`、`TBLPRSNODEXML_CLOB`、`TBLPRSPROCESSPROPERTY`、`TBLPRSOPAPSBASE`、`TBLPRSOPAPSDETAIL`、`TBLPRSPRODUCTIONSEGMENT`、`TBLPRSTYPE`。
 - Oracle 原始 DDL 在 `database/reference/mestest_prs104_process_basis_source_ddl.sql`；PostgreSQL CREATE-only 對照在 `database/reference/mestest_prs104_process_basis_create.sql`。每表僅 PK unique index，無 FK 或其他 index。
 - 只查資料字典與 DDL，未讀 MES 業務列、未在 Oracle 執行 DDL/DML、未輸出/提交連線秘密。Oracle 來源連線值仍只保留在本機受保護設定，不寫進 Git 文件或腳本。
-- 第一階段已包含 ProcessBasis、NodeBasis、OPAPSDetail 三表；CREATE IF NOT EXISTS 不會更動已存在表。家用端需先比對 live defaults，再對實際缺 default 的欄位做 forward migration；新增 NodeRelation、NodeXML CLOB、ProcessProperty、OPAPSBase、ProductionSegment、ProcessType 六表。
+- 第一階段已包含 ProcessBasis、NodeBasis、OPAPSDetail 三表；CREATE IF NOT EXISTS 不會更動已存在表。家用端需先比對 live defaults，再對實際缺 default 的欄位做 forward migration；新增 PS104 專屬 NodeRelation、NodeXML CLOB、ProcessProperty、OPAPSBase 四表；ProductionSegment 由 PS101 建立，ProcessType 由 PS103 建立，PS104 重用。
 - NodeBasis SAP/客製欄位為 `VARCHAR2(4 CHAR/10 CHAR/3000 CHAR/10 CHAR)`；資料字典的 DATA_LENGTH 以 bytes 呈現（例如 4 CHAR 對應 16 bytes），不能當字元欄寬並據此擴欄。
 - 舊流程圖序列化依賴外部 `iMESXMLFlow.dll`；Excel checker 依賴外部 DataImporter DLL。相容性/部署方式見 `docs/modules/PRS/流程基本資料.md`。
 
@@ -570,3 +570,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護的 `DatabaseConfigs.CS.Test.Mes` 設定唯讀取得 `TBLOPGROUPATTRIB`、共用查找表 `TBLSYSELEMENTBASIS` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。
 - `TBLOPGROUPATTRIB` PK 為 `(CUSTOMERNO, OPGROUPNO, ELEMENTNO)`；只有 PK unique index 與 NOT NULL checks，沒有 FK/額外 index。`BYSECONDCLASS`、`DATASTAMP` nullable DEFAULT 0。`TBLSYSELEMENTBASIS` 是 first-phase 已存在共用表，本功能不重建。
 - Oracle source DDL 與 PostgreSQL CREATE-only 參考為 `database/reference/mestest_opb01_operation_group_attribute_source_ddl.sql`、`database/reference/mestest_opb01_operation_group_attribute_create.sql`。metadata-only；未讀業務列、未執行 Oracle DDL/DML，連線秘密未輸出或提交。家用端先核對 live schema 後，只對實際缺表新增 forward migration。
+
+### 更新 2026-11-18：PRS PS101 生產區段資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護連線直連 MESTEST 唯讀取得 `TBLPRSPRODUCTIONSEGMENT` 的 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`，並取得 PK index DDL。未讀業務列、未在 Oracle 執行 DDL/DML、未輸出或提交連線秘密。
+- Oracle source DDL：`database/reference/mestest_prs101_production_segment_source_ddl.sql`；PostgreSQL CREATE-only：`database/reference/mestest_prs101_production_segment_create.sql`。欄位 nullable/default 依 Oracle metadata；只有 `PSNO` 主鍵 unique index，沒有 FK 或其他 index。
+- `TBLPRSPRODUCTIONSEGMENT` 由 PS101 擁有；PS104 只重用此表，不另建同義表。MES Oracle 連線設定仍只留在本機受保護設定，不寫入文件或 Git。

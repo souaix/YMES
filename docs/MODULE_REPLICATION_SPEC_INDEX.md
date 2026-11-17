@@ -9,6 +9,7 @@
 
 - PS103「流程類別資料」：[功能規格](modules/PRS/流程類別資料.md)。已直接對照主/Def Form、`wsPRS`、`clsProcess`、`clsBasis_UPD` 與共用 `PS_ProcessProperty`，並以受保護 Oracle 連線直查 `TBLPRSTYPE` DDL；新增 Vue DEV 頁、三層選單、Oracle/PG SQL 參考及家用端 API/schema handoff。PS104 ProcessType lookup 共用同一張表。
 - PS104「流程基本資料」：[功能規格](modules/PRS/流程基本資料.md)。已直接閱讀主/Def/Draw/Exclude OP、Property、Import WinForms 與 `wsPRS`/`clsProcess`，並直連查得九張 Oracle DDL，完成 Vue DEV 畫面、PRS 路由、Oracle source DDL/PG CREATE-only；家用端核對 live schema/default、補缺 migrations、完成流程 API/共用簽核及 XML 相容方案。
+- PS101「生產區段資料」：[功能規格](modules/PRS/生產區段資料.md)。已直接閱讀主/Def WinForms、wsPRS、clsProcess、clsBasis_UPD 與 SYS LOTNO 序號規則 lookup，並直連取得 Oracle table/index DDL；完成 Vue DEV 清單/定義/選擇器、三層路由與 Oracle/PG SQL/API handoff。Production API/live schema 比對交由家用端，PS104 重用此表。
 - OP101「作業站法則設定」：[功能規格](modules/OP/作業站法則設定.md)。已閱讀 WinForms Form/Def、wsOP、clsOpBasis、clsBasis_UPD，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBLOPCONTROLRULE DDL，完成作業站資料→作業站設定三層選單、Vue DEV CRUD/複製及 PostgreSQL CREATE handoff；Production API 與 OP_Script 完整編輯器待家用端。
 - OP102「企業邏輯設定」：[功能規格](modules/OP/企業邏輯設定.md)。已直接閱讀 WinForms 清單/定義 Form、wsOP、clsOpBasis、clsBasis_UPD，PowerShell 5.1/ODP.NET 唯讀取得主表與情境 lookup Oracle DDL，完成 OP 三層選單、Vue DEV CRUD/簽核/狀態頁及 PostgreSQL CREATE-only handoff；Production API 與 YMES live schema 比對待家用端。
 - OP103「作業站類別資料」：[功能規格](modules/OP/作業站類別資料.md)。已直接對照 frmOPType/Def、wsOP 與 clsOpBasis，完成 /YMES/MasterData/OperationTypes Vue DEV 清單/新增/修改/複製/刪除/核准及 Property 假資料視窗。Oracle TBLOPTYPE DDL 與 PostgreSQL CREATE-only 參考已保存；Production schema/API 與共享簽核待家用端實作。
