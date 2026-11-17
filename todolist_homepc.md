@@ -1,3 +1,17 @@
+## 最新公司端交接：PS104 流程基本資料（2026-11-18）
+
+- [ ] Pull GitHub `main`，先讀 `docs/modules/PRS/流程基本資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS104 段落，以及 `database/reference/mestest_prs104_process_basis_source_ddl.sql` / `mestest_prs104_process_basis_create.sql`。
+- [ ] 比對 YMES PostgreSQL live schema、migration 和欄位 defaults。Create SQL 是對照，不可直接整份執行、不可重建既有表。First-phase 有 `tblprsprocessbasis`、`tblprsnodebasis`、`tblprsopapsdetail` 三表；確認 live objects 後，只為缺失建立 migration。
+- [ ] Oracle DDL 中三個 `VARCHAR2(n CHAR)` 長度與 PostgreSQL varchar(n) 相同；`ALL_TAB_COLUMNS.DATA_LENGTH` 是 bytes，不是來源字元數，不要用 byte 數誤改欄寬。
+- [ ] Source defaults 與 first-phase Create 目前可見差異：ProcessBasis 的 IssueState/TuningProcess/CurVersion/PartialType/DataStamp = 0；NodeBasis 的 NodeType=0、NodeVersion='N/A'；OPAPSDetail 的 ApsFixEqpTime/ApsVarEqpTime/BatchOP=0、BatchMaxQty=999999。先查 live `pg_attrdef`，只對 live 缺少的 default 加 forward `ALTER COLUMN SET DEFAULT`；保留 nullable/原資料。
+- [ ] 首次新增其餘六表：`tblprsnoderelation`、`tblprsnodexml_clob`、`tblprsprocessproperty`、`tblprsopapsbase`、`tblprsproductionsegment`、`tblprstype`。Schema 欄位、PK、NULL/default 依 Oracle source DDL/CREATE 參照；Oracle 九表只有 PK unique index，無 FK 或額外 index。不要自行新增索引/FK。
+- [ ] 完成登入保護 PS104 API，路徑、DTO 和 DEV Vue 實際呼叫見功能規格：process basis list/Add/Edit/Delete/Approve/Copy/Version、Property CRUD/Issue、Exclude OP、已核准 PS/ProcessType lookup 及 Excel import。
+- [ ] IssueState 語意：0 未核准、1 簽核中、2 已核准、-1 不使用。Edit/Draw 只允許 0；Version 只允許 Active/current；刪除 0/-1 實體清理子表，2 用 DataStamp CAS 標成 -1，1 禁止。多表 delete/copy 使用單一 transaction。Creator/Reviser/時間由 API principal/server 設定；DataStamp null-safe CAS，衝突回 409。
+- [ ] 核准不能由 API 直接改狀態：核對非空流程圖、Exclude OP；無 Issue Job/Detail 才可 direct Active，有設定則走共用 IssueManagement IssueNo=`PRS BASIS`，維持 Pending、簽核 callback、第一關通知與 CurVersion 前版切換。
+- [ ] Flow Form 依節點/連線表和 `NodeXmlString`/CLOB snapshot。舊 XML 由外部 iMESXMLFlow.dll 序列化；未證明相容前不要把 Vue JSON 寫入 XML 欄位，也不可對外宣稱 Web 流程圖可和舊 WinForms 互通。決定 serializer 方案後才開放 Production graph write。
+- [ ] 流程匯入舊程式只讀 xls/xlsx 第一個工作表、逐 ProcessNo/Version 呼叫外部 `DataImporter.DataImport.ProcessDataChecker`；程式碼不在來源樹。檢查部署是否可取得該 DLL/規則，否則以 API 實作核准作業站、同一區段、類別、重複主鍵、逐筆結果及取消/背景作業，不可回傳假成功。
+- [ ] 完成 schema/API 後更新規格與 TODO、commit/push `main`，公司端再 pull 對接。公司端 PS104 Vue DEV 使用 localStorage，未連 YMES PostgreSQL；未執行 build/test/browser。
+
 ## 最新公司端交接：OPB01 作業站參數群組設定（2026-11-18）
 
 - [ ] Pull 最新 `main`，閱讀 `docs/modules/OP/作業站參數群組設定.md`、`docs/DATABASE_CONNECTION.md` OPB01 段落，以及 Oracle source DDL / PostgreSQL CREATE-only 對照。

@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import MenuTree from './components/MenuTree.vue'
 import MenuIcon from './components/MenuIcon.vue'
 import EquipmentMaster from './components/EquipmentMaster.vue'
+import ProcessBasisMaster from './components/ProcessBasisMaster.vue'
 import EquipmentCarrierCategoryMaster from './components/EquipmentCarrierCategoryMaster.vue'
 import EquipmentCarrierTypeMaster from './components/EquipmentCarrierTypeMaster.vue'
 import EquipmentCarrierBasisMaster from './components/EquipmentCarrierBasisMaster.vue'
@@ -449,6 +450,7 @@ const menuRoutes: Record<string, string> = {
   'function:EQP:ACC CATEGORY': equipmentAccessoryCategoryRoute,
   'function:EQP:ACC CATEGORY STATE': equipmentAccessoryCategoryStateRoute,
   'function:EQP:ACC TYPE': equipmentAccessoryTypeRoute,
+  'function:PRS:PRS BASIS': `${appBasePath}/PRS/ProcessBasis`,
   'operation-master': `${appBasePath}/MasterData/Operations`,
   'function:OP:OP TYPE': appBasePath + '/MasterData/OperationTypes',
   'function:OP:OP RULE BASIS': appBasePath + '/OP/ControlRules',
@@ -458,7 +460,6 @@ const menuRoutes: Record<string, string> = {
   'function:OP:B_ECN OP GROUP BASIS': appBasePath + '/OP/ECNOperationGroups',
   'function:OP:B_OP GROUP ATTRIB': appBasePath + '/OP/OperationGroupAttributes',
   'material-master': `${appBasePath}/MasterData/Materials`,
-  'process-master': `${appBasePath}/MasterData/Processes`,
   'product-master': `${appBasePath}/MasterData/Products`,
 }
 
@@ -532,7 +533,7 @@ const functionRoutes: Record<string, string> = {
   'MTL LABEL MAP BASIS': materialLabelMapRoute,
   'B_MTL AUTOLOADER SETUP': materialVendorAutoLoaderRoute,
   'B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
-  'PRS BASIS': `${appBasePath}/MasterData/Processes`,
+  'PRS BASIS': `${appBasePath}/PRS/ProcessBasis`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
@@ -577,6 +578,7 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
   const key = activeMasterKey.value
   return key === 'operation-master' || key === 'material-master' || key === 'process-master' || key === 'product-master' ? key : null
 })
+const isPrsProcessBasisPage = computed(() => activeMasterKey.value === 'function:PRS:PRS BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
 const isOperationControlRulePage = computed(() => activeMasterKey.value === 'function:OP:OP RULE BASIS')
@@ -1313,8 +1315,16 @@ async function signOut(): Promise<void> {
         <div v-else-if="menuSource === 'error'" class="framework-menu-note error" role="alert">
           主選單載入失敗：{{ menuError }}
         </div>
+        <ProcessBasisMaster
+          v-if="isPrsProcessBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
         <EquipmentMaster
-          v-if="isEquipmentPage"
+          v-else-if="isEquipmentPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

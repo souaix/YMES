@@ -1,3 +1,13 @@
+## 2026-11-18 公司端進度：PS104 流程基本資料
+
+- [x] 直接閱讀主/Def/Draw/Exclude OP WinForms、Property 子功能、Data Import Form、wsPRS 和 clsProcess，整理欄位、狀態、核准、版本、複製、刪除、流程圖及匯入行為。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線直連 MESTEST，只讀查九張表的 DBMS_METADATA DDL、欄位、constraints/indexes；未查業務列、未在 Oracle 執行 DDL/DML、未輸出連線秘密。
+- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 參照、PS104 規格和家用端 handoff。九張表只有 PK unique index，沒有 FK/額外索引。first-phase 三表 default 差異及新增六表需求已寫入交接。
+- [x] 新增 Vue DEV 流程基本資料頁：狀態查詢、欄位 Grid、Add/Edit/Copy/Approve/Delete/Property/Version/Exclude OP、簡化節點/連線編輯及 Import 視窗。假資料存在獨立 localStorage。
+- [ ] 流程圖 XML serializer、群組/分支拖曳編輯與舊版格式相容待確認；Excel checker 外部 DLL 未找到原始碼，DEV 只保留選檔視窗，不宣稱匯入完成。
+- [ ] 未連 YMES PostgreSQL、未實作 API/migration；未執行 build/test/browser。
+- [ ] 家用端完成 API/schema 並 push 後，公司端 pull、對接 Production API。下一個 Function 依清單為 PRS TYPE（PS103）。
+
 ## 2026-11-18 公司端進度：OPB02 ECN 作業站群組設定
 
 - [x] 直接閱讀 `frmOP_B_ECNOPGroupBasis`/Def、Designer、`wsOP.Load/Add/Edit/Del/ApproveOPECNGroupBasis`、`clsOpBasis` 與 DataStamp update；確認主/明細雙 Grid、狀態篩選、Copy 僅複製主檔、OP lookup 限制、逐筆多選與簽核 Job 分流。

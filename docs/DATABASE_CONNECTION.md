@@ -1,5 +1,14 @@
 # YMES / MES 資料庫連線與憑證處理
 
+### 更新 2026-11-18：PRS PS104 流程基本資料九表
+
+- 使用本機受保護既有 Oracle 設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接連 MESTEST 唯讀取得 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`：`TBLPRSPROCESSBASIS`、`TBLPRSNODEBASIS`、`TBLPRSNODERELATION`、`TBLPRSNODEXML_CLOB`、`TBLPRSPROCESSPROPERTY`、`TBLPRSOPAPSBASE`、`TBLPRSOPAPSDETAIL`、`TBLPRSPRODUCTIONSEGMENT`、`TBLPRSTYPE`。
+- Oracle 原始 DDL 在 `database/reference/mestest_prs104_process_basis_source_ddl.sql`；PostgreSQL CREATE-only 對照在 `database/reference/mestest_prs104_process_basis_create.sql`。每表僅 PK unique index，無 FK 或其他 index。
+- 只查資料字典與 DDL，未讀 MES 業務列、未在 Oracle 執行 DDL/DML、未輸出/提交連線秘密。Oracle 來源連線值仍只保留在本機受保護設定，不寫進 Git 文件或腳本。
+- 第一階段已包含 ProcessBasis、NodeBasis、OPAPSDetail 三表；CREATE IF NOT EXISTS 不會更動已存在表。家用端需先比對 live defaults，再對實際缺 default 的欄位做 forward migration；新增 NodeRelation、NodeXML CLOB、ProcessProperty、OPAPSBase、ProductionSegment、ProcessType 六表。
+- NodeBasis SAP/客製欄位為 `VARCHAR2(4 CHAR/10 CHAR/3000 CHAR/10 CHAR)`；資料字典的 DATA_LENGTH 以 bytes 呈現（例如 4 CHAR 對應 16 bytes），不能當字元欄寬並據此擴欄。
+- 舊流程圖序列化依賴外部 `iMESXMLFlow.dll`；Excel checker 依賴外部 DataImporter DLL。相容性/部署方式見 `docs/modules/PRS/流程基本資料.md`。
+
 ### 更新 2026-11-18：QC408 OCAP 流程三表
 
 - 使用本機受保護的既有連線設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 `MESTEST.TBLQCOCAPBASIS`、`TBLQCOCAPNODEBASIS`、`TBLQCOCAPNODERELATION` 的 `DBMS_METADATA.GET_DDL` 與 PK/index/FK metadata。未讀 MES 業務列，未在 Oracle 執行 DDL，沒有輸出/提交連線秘密。
