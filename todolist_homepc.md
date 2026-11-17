@@ -1,12 +1,41 @@
 # 家裡電腦接手清單
 
-## 最近完成家用端 handoff：QC303 品管項目規格（2026-11-18）
+## 最新公司端交接：QC501 檢測儀器類別（2026-11-18）
 
-- [x] 已查 YMES PostgreSQL live schema；QC303 Basis/Detail 缺少，新增 migration `0026_qc303_spec_basis.sql` 並套用。套用前備份 `/opt/ymes/backups/ymes_before_0026_qc303_20261118.dump` 通過 `pg_restore --list`；僅建立 QC303 兩表及 `ymes_app` CRUD 權限，未重建 QC Item/Factor/Parameter/Issue/Job/QCSN 共用資源。
-- [x] 完成登入保護 API：QC Item/factor、規格清單與 detail、Factor options、新增/修改/刪除、Approve/Disapprove、Copy2。FactorSpec 白名單、JSONB/參數化 SQL、交易、duplicate、DataStamp 與服務端 audit 已實作。依使用者指示不做角色／FunctionKey ACL。
-- [x] .NET 9 Release build 0 warning/0 errors；遠端 API/Web build 成功並部署。正式 menu 的 QC303 路由曾因遠端舊 App.vue 落到通用「尚未遷移」頁，已同步 App.vue 並只重建 `ymes-web`；`ymes-web` healthy、API readiness=200、未登入 QC303 API=401、Web route=200。
-- [x] app-browser 正式登入，沿「品質資料 → 計量規格設定 → 品管項目規格」驗證正式頁；UNFROZEN/PENDING/ACTIVE/UNUSED 篩選與 Close 均正常。
-- [ ] Live 計量 QC Item 清單為空，無法操作新增/修改/刪除/Copy/簽核/Detail 的端到端流程；`tblsysmesparameter`、Issue/Job、共用 QCSN 序號服務亦不存在。現有 serial 使用服務端 35 字元 GUID fallback，非共用 QCSN。待共用資料與簽核/參數資源提供後接續補驗；詳見 `docs/modules/QC/品管項目規格.md`。
+- [ ] 先 pull 最新 `main`，閱讀 `docs/modules/QC/檢測儀器類別.md` 與 `docs/DATABASE_CONNECTION.md` QC501 段落。
+- [ ] 查 YMES PostgreSQL live schema/migrations 中 QC501–QC503 共用六表：`tblqcinspmachineparametertype`、`tblqcinspmachinetype`、`tblqcinspmachinebasis`、`tblqcinspmachineparameter`、`tblqcinspmachineproperty`、`tblqcinspdriver`。對照 `database/reference/mestest_qc501_inspection_machine_create.sql` 及 Oracle source DDL；只為缺表新增 forward migration，不要執行 Oracle source DDL、重建既有表或新增不符來源的 PK/FK。
+- [ ] 實作 QC501 API contract：GET 類別清單（IssueState/識別碼）、GET Driver lookup（舊服務未限制狀態）、POST/PUT/DELETE/approve。逐筆 CRUD 要驗證狀態與 DataStamp、參數化 SQL、由 server 管理 Creator/CreateDate/Reviser/ReviseDate/DataStamp，核准接既有 Issue Job。QC501 主鍵是 InspMachineType 單欄；不要改為複合鍵。IssueState/DataStamp 在 Oracle 可 NULL；`ChNo` 欄位 DB 長度 3，WinForms MaxLength=10，API 必須回明確驗證錯誤。
+- [ ] 編輯 API 依共用 `ExeIssueControl`/表單設定限制 IssueState=1 唯讀，IssueState=2/-1 按控制項配置；核准狀態由 Issue Job 回傳，不得由前端硬設。硬刪前查 QC502 儀器、QC503 Driver/屬性等引用並採一致交易策略；現有 Core 裸刪除缺少完整引用檢查。
+- [ ] 公司端 Vue 頁 `web/src/components/QcInspMachineParameterTypeMaster.vue` 使用上述路由；請將真 API 的回應 DTO、錯誤格式、route ACL、簽核服務與實際表名接起來。DEV mock 不寫正式資料庫。
+- [ ] API/schema 完成後回報或推送，供公司端 pull 後對接和驗收；QC502「檢測儀器」、QC503「檢測 Driver」仍未遷移，沿用同一批六表與 CREATE/source DDL。
+
+## 最新公司端 handoff：QC305 產品規格設定（2026-11-17）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/QC/產品規格設定.md`、`docs/DATABASE_CONNECTION.md`。FunctionNo=`PRDQCITEM`、FunctionKey=`QC305`；Vue DEV 頁 `/YMES/QC/ProductSpec` 位於品質資料 → 計量規格設定 → 產品規格設定。
+- [ ] 核對 YMES PostgreSQL live schema/migrations 與 QC302 API。Chart Basis/Detail/DetailLog 使用 migration 0024；產品 Basis Oracle DDL 參照 `mestest_qc218_tblprdproductbasis_source_ddl.sql`，PRDQCITEM/Variable/Factor 參照 QC205，Group 參照 QC212。QC305 沒有專屬資料表，不要新增重複 CREATE；`TBLPRDTYPE` 先查 live schema，只有確認 YMES lookup 依賴缺漏才請公司端取得 Oracle DDL。
+- [ ] 建立登入保護 QC305 API：`GET /api/qc/product-spec/product-types`、`GET /api/qc/product-spec/products?productType&productNoPrefix`、`GET /{productNo}/qc-items`、`GET /{productNo}/chart-details`、`POST /api/qc/product-spec/batch-update`。依既有授權方式檢查 PRDQCITEM/QC305；若已存在等效 API，沿用並更新 Vue/spec。
+- [ ] 查詢忠實採舊 `LoadProductBasisJoinPRDQC`：產品 `IssueState=2`，ProductType 精確、ProductNo 前綴，舊 `QC_Count=1`；產品 QC Item/Chart API 需讀 `TBLPRDQCITEM`、`TBLQCITEMFORVARIABLES`、`TBLQCITEMFACTOR` 及 Group 主/明細。只有恰好一個 FactorSpec 且 FactorNo=`PRODUCT` 的變數 QC Item 建 Detail；保留 GroupNo。ChartType/SPCID、X-Rm SPCID 0/5 映射、規格必填/排序和 MEMO 規則見功能規格。
+- [ ] `batch-update` 接受 `{productNos,details:[{qcItemNo,groupNo,spcId,us,cs,ls,ucl,cl,lcl}],memo}`，逐產品/QCItem transaction 重查 ACTIVE 與直接/Group 綁定、FactorSpec 和 SampleSize。Basis 依 `(QCItemNo,Product)` 定位；新建才產生 serial，SampleSize 取 QC Item、Product 因子寫 `factorvalues JSONB`（並按 QC302 核對 physical `product` 欄相容性）、IssueState=0；既有 Basis 沿用 serial/state。交易式替換 Detail、追加 DetailLog 界限快照；MEMO 進 audit/log。回傳逐項 updated/skipped/failed 結果，失敗需 rollback。
+- [ ] 舊 Core 的產品綁定和 chart 查詢只用 ProductNo，沒有 ProductVersion/OPNo 條件；API 應在規格中保留此相容行為及版本/多 OP 歧義，不要自行切換 key。對同一產品/QCItem 去重，避免不同 GroupNo 對同一 Basis 重複覆寫。
+- [ ] 公司端本次未執行 build、測試或瀏覽器驗收；QC305 沒有新增表，沒有額外 CREATE SQL。本 handoff 之外，QC303、QC304 API/schema 工作仍依各自段落追蹤。
+
+## 已完成家用端 handoff：QC303 品管項目規格（2026-11-18）
+
+- [x] YMES live schema 原先缺 Basis/Detail；新增並套用 `0026_qc303_spec_basis.sql`。套用前備份 `/opt/ymes/backups/ymes_before_0026_qc303_20261118.dump` 已通過 `pg_restore --list`；只建 QC303 兩表及 `ymes_app` CRUD 權限，不重建共用 QC Item/Factor/Parameter/Issue/Job/QCSN。
+- [x] 完成登入保護 API（QC Item/Factor、List/Detail/Options、CRUD、Approve/Disapprove、Copy2）、FactorSpec 白名單、JSONB/參數化 SQL、交易、重複檢查、DataStamp 與服務端 audit。依使用者指示暫不做角色／FunctionKey ACL。
+- [x] .NET 9 Release build 0 warnings/0 errors；正式 API/Web 已部署。正式 menu 路由更新後只重建 `ymes-web`；容器 healthy，API readiness=200、未登入 QC303 API=401、Web route=200。App-browser 驗證三層選單、正式頁、四個狀態篩選與 Close。
+- [ ] Live 計量 QC Item 清單為空，新增/修改/刪除/Copy/簽核/Detail 等依賴業務列的流程尚無對象可做端到端驗收。`tblsysmesparameter`、Issue/Job、共用 QCSN 序號服務亦不存在；現階段 serial 使用服務端 35 字元 GUID fallback。待共用資料、參數與簽核資源可用後補驗；詳見 `docs/modules/QC/品管項目規格.md`。
+
+## 下一個公司端 handoff：QC304 物料規格設定（2026-11-17）
+
+- [ ] 讀 `docs/modules/QC/物料規格設定.md`。FunctionNo=`MTLQCITEM`、FunctionKey=`QC304`；Vue DEV 頁 `/YMES/QC/MaterialSpec` 位於品質資料 → 計量規格設定 → 物料規格設定。
+- [ ] QC304 沒有專屬新表；先核對 YMES live schema/migrations。Chart Basis/Detail/DetailLog 已在 QC302 migration 0024；物料/QC Item/QC Group 使用既有 tables。Oracle/PG CREATE 參照沿用 `mestest_qc302_spc_qc_chart_source_ddl.sql`、`mestest_qc302_spc_qc_chart_create.sql`、MTL references、`mestest_qc_item_attributes_create.sql`、`mestest_qc212_item_group_create.sql`。不新增重複 schema；若 live schema 真的缺 group detail 或其他依賴，先以其既有 reference 做必要 forward migration。
+- [ ] 重用現有 `GET /api/materials/lookups/options` 供 MaterialType lookup。新增/沿用登入保護 QC304 API：`GET /api/qc/material-spec/materials?materialType&materialNoPrefix`、`GET /{materialNo}/qc-items`、`GET /{materialNo}/chart-details`、`POST /api/qc/material-spec/batch-update`；要求 QC304 FunctionKey，路由有變更時同步 Vue/spec。
+- [ ] 查詢限 Material IssueState=2，MaterialNo prefix；維持原 `QC_Count=1` 結果條件。物料的計量 QC Item 可由 direct binding/group 展開，但 Detail 只由 FactorSpec 恰為一個且 FactorNo=MATERIAL 的 QC Item 產生；QCItem ChartType=-1 不產 Detail。舊 Save 還會重查 direct `TBLMTLQCITEM`，未 direct 綁定的 group child 會被略過，API 必須明確回報每筆 Material/QCItem 的更新/略過結果。
+- [ ] SPCID：ChartType=0→0/1/2，=1→0/1/3，=2→1/4/5；X Chart SPCID=5 在既有 Chart Basis/Detail 存為 0，讀回時轉回 5。CheckBox 僅篩 Grid 顯示，Save 仍送全部明細。US/CS/LS/UCL/CL/LCL 驗數值與 US≥UCL≥CL≥LCL≥LS；SPCID0 按 SpecLineType 驗 US/LS 必填。CS/Tolerance Edit 算 CS±Tolerance；貼上只處理明確使用者資料。
+- [ ] `batch-update` 對每個 Material/QCItem transaction 中重查物料、直接綁定、FactorSpec 與現有 Chart Basis。Basis 不存在時以 Chart serial service 新增，SampleSize 取 QC Item、IssueState=0、Material 因子寫入 `factorvalues JSONB`（依現有 schema 同步 physical material 欄若需要）；存在時沿用 serial/IssueState，不重建 Basis。刪除該 serial 的舊 Detail、寫入完整新 Detail 並追加 DetailLog 界限快照。MEMO 必填；舊 Core 對既有 Basis 未保存 Memo/Revision，YMES 應將原因記入操作 audit，不要自動改其 IssueState。
+- [ ] 回傳 `{updatedCount,skippedCount,failedCount,results:[{materialNo,qcItemNo,status,message}]}` 給 Vue；逐項顯示直接綁定缺失的略過原因。真正資料庫失敗須在 transaction rollback，不能留下部分 Detail/DetailLog 並回報整批成功。
+- [ ] 保持跨多物料結果可見：來源一個更新 helper 接收整個 Material 清單與 Detail 集合；transaction 失敗不可假報整批成功。QC304 沒有新 Oracle DDL 或 CREATE SQL；公司端沿用先前唯讀取得的 reference，本回合未讀業務列、未執行 Oracle DDL，連線資訊未寫入 Git。
 
 ## 最新公司端 handoff：QC301 管制圖內容（2026-11-17）
 

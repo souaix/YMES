@@ -2,6 +2,8 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
+- QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。已依 WinForms 主/編輯 Form、`clsInspMachine` 與直接唯讀 Oracle DDL 完成 Vue DEV 清單/編輯/Driver 選擇、三層選單及 API handoff；QC501–QC503 共用六表 Oracle source DDL 與 PostgreSQL CREATE 參考已建立。家用端需核對 YMES live schema、接上共用 Issue Job/Issue Control，再實作 QC501 API；QC502/503 尚未遷移。
+
 ## 規格產出原則
 
 - 以 WinForms Form、Service/Core 類別及 MES Oracle 資料字典為依據；截圖用於核對版面，不取代程式碼與資料表證據。
@@ -12,7 +14,9 @@
 ## 2026-11-17 品管項目匯入規格
 
 - QC301「管制圖內容」：[功能規格](modules/QC/管制圖內容.md)。已直接閱讀 QC301 Form/Define/Copy Form、QC Rule Form、wsQC 與 clsQCBasis；透過 PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得抽樣參數表 DDL，沿用 QC302 四張 chart DDL，完成三區 Vue DEV 頁與 API handoff。家用端待查 live schema/migrations、確認 Issue/Job、刪除引用與 factor JSONB，並建置登入保護 API。
-- QC303「品管項目規格」：[功能規格](modules/QC/品管項目規格.md)。已完成 Vue 正式頁、登入保護的 QC303 API、QC303 PostgreSQL migration，並部署 YMES；僅需登入，FunctionKey/角色 ACL 依使用者指示暫緩。Live QC Item 清單為空，CRUD 尚未有業務資料可端到端驗收；QCSN、參數目錄、Issue/Job 共用表未複製，限制與後續接入方式記錄於模組文件。
+- QC303「品管項目規格」：[功能規格](modules/QC/品管項目規格.md)。已完成 Vue 正式頁、登入保護 API、QC303 PostgreSQL migration 並部署 YMES；依使用者指示只要求登入、不實作 FunctionKey/角色 ACL。正式頁及狀態篩選已驗收；live QC Item 為空，CRUD 無業務資料可端到端驗收；QCSN、參數目錄、Issue/Job 共用資源未建立，限制詳見模組文件。
+- QC304「物料規格設定」：[功能規格](modules/QC/物料規格設定.md)。已直接讀 `frmQCMaterialSpec`、wsQC 與 clsQCBasis，完成 Material search、SPEC detail editor、批次套用/貼上/驗證的 Vue DEV 頁；沿用 QC302 的 Chart Basis/Detail/DetailLog 表與既有 MTL/QC Item/Group references，無 QC304 專屬新表或 CREATE SQL。家用端待比對 live schema 並實作批次 API。
+- QC305「產品規格設定」：[功能規格](modules/QC/產品規格設定.md)。公司端依 `frmQCProductSpec` 與 `clsQCBasis` 完成產品類別/編號查詢、ProductData、SPEC 編輯與多產品套用 Vue DEV 頁；規格記錄 Product 因子、GroupNo、QC_Count、SPCID 映射及舊 Core 的 ProductNo-only 行為。沿用 QC302 圖表表與既有產品/QC Item 表，無 QC305 專屬新表或 CREATE SQL；家用端待核對 live schema 並實作批次 API。
 - QC302「匯入管制圖內容」：[功能規格](modules/QC/匯入管制圖內容.md)。已直接閱讀 WinForms Form、wsQC、clsQCBasis，透過 PowerShell 5.1 唯讀取得四張 SPC QC Chart Oracle DDL，並完成 Vue DEV 頁與 PostgreSQL CREATE-only 參考；家用端待比對 live schema、建立缺漏 migration/API。
 - QC215「計數品管項目匯入」：[功能規格](modules/QC/計數品管項目匯入.md)。已直接對照 WinForms Form、wsQC、clsQCBasis，完成 QC215 Vue DEV 頁與逐列匯入規則文件。沿用 QC201/QC205/QC213 的主子表與依賴表，不需要新表或 CREATE SQL；家用端待核對 YMES schema 並實作 API。
 - QC214「計量品管項目匯入」：[功能規格](modules/QC/計量品管項目匯入.md)。已直接對照 WinForms Form、wsQC、clsQCBasis，完成 Vue DEV 頁與逐列匯入規則文件。沿用 QC201/QC205/QC210 的主子表與依賴表，不需要新表或 CREATE SQL；家用端待核對 YMES schema 並實作 API。

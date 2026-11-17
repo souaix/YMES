@@ -1,5 +1,13 @@
 # 公司電腦續作清單
 
+## 2026-11-18 公司端進度：QC501 檢測儀器類別
+
+- [x] Pull `origin/main`（Already up to date），直接閱讀 QC501 WinForms 主/Def Forms、Designer、`clsInspMachine` Load/Add/Edit/Delete/Driver 來源與共用 `ExeIssueControl`；不是依截圖臆測。
+- [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀取得 QC501–QC503 共用六表 Oracle DDL/PK index，產生 Oracle source DDL 與 PostgreSQL 空表 CREATE 參考；無業務列、未執行 Oracle DDL、無連線秘密輸出。
+- [x] 建立 `/YMES/QC/InspectionMachineParameterType` Vue DEV 假資料頁、品質資料→檢測儀器→檢測儀器類別路由/選單、查詢狀態、WinForms 欄位與按鈕、RS232/UserDefine 編輯、Driver picker、複製、多選刪除/送簽、Audit 區及假資料操作。
+- [x] 新增 `docs/modules/QC/檢測儀器類別.md`，更新模組索引、資料庫連線紀錄與 `todolist_homepc.md` schema/API handoff。
+- [ ] 未連 YMES PostgreSQL，沒有實作 API/migration；未執行 build、測試或瀏覽器驗收。家用端 API/schema 完成後 pull 再整合；下一功能 QC502「檢測儀器」，其後 QC503「檢測 Driver」。
+
 > 目的：記錄家用電腦完成資料庫/API交接後，公司電腦接著要做的 WinForms UI、互動邏輯與規格文件。公司電腦先讀本檔；家用電腦先讀 `todolist_homepc.md`。
 
 > **公司電腦工作邊界：** MES 原生 Oracle MESTEST 僅供本端唯讀查詢 DDL、資料字典與舊系統規則；不得在原生 Oracle 建 YMES 表或寫入業務資料。本端只開發 UI、按鈕互動與呼叫 `/YMES/API`；不連 YMES PostgreSQL、不使用家用端 PPK/SSH、不執行 migration、不遠端部署。資料庫或 API 需求寫入規格並交給家用電腦。
@@ -12,7 +20,24 @@
 - Oracle 來源 DDL 用 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢；使用本機受保護連線設定，不必請使用者重貼，也不得把連線值寫進文件、SQL 或 Git。
 - 目前只查詢過 Oracle 結構與系統選單中繼資料，沒有匯出 MES 業務資料。不要把 DEV 假資料當成正式資料。
 
-## 最新公司端工作：QC303 品管項目規格（2026-11-17）
+## 最新公司端工作：QC305 產品規格設定（2026-11-17）
+
+- [x] 直接對照 `frmQCProductSpec` Designer/事件、`wsPRD.LoadProductType`、`wsQC.LoadProductBasisJoinPRDQC`、`LoadPRDQCItemJoinForVariables`、`LoadPRDQCItemJoinQCChart`、`UpdPRDQCChartData` 與 `clsQCBasis.cs`；記錄 ProductType/ProductNo 查詢、`QC_Count=1`、SPEC 載入、GroupNo、FactorSpec=PRODUCT、SPCID、MEMO、批次套用及舊 ProductNo-only 行為。
+- [x] 新增 `/YMES/QC/ProductSpec` Vue DEV 頁及 `PRDQCITEM/QC305` 選單/路由；支援假資料查詢、SPEC 編輯、群組關聯識別、Chart filter、CS±Tolerance、剪貼簿貼上、規格驗證及批次假資料套用。
+- [x] 建立 `docs/modules/QC/產品規格設定.md`，更新規格索引、資料庫連線/DDL provenance、家用端 API handoff。此功能沿用 QC302 Chart Basis/Detail/DetailLog 與既有產品/QC Item 表，沒有專屬 CREATE SQL；TBLPRDTYPE DDL 尚未保存，僅當家用端確認 YMES lookup 依賴缺漏才需由本機 Oracle 直連查詢。
+- [ ] 本回合未執行 build、test 或瀏覽器驗收。家用端完成 API/schema 後 pull，對照有/無既有 Basis、產品群組綁定、批次部分略過及 ProductVersion/OPNo 歧義。
+- [ ] 完成後依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續下一個尚未遷移的 WinForms 功能；維持 office fake UI/spec 與 home API/schema handoff 分工。
+
+## 最新公司端工作：QC304 物料規格設定（2026-11-17）
+
+- [x] 直接閱讀 `frmQCMaterialSpec` Designer/事件、wsQC、clsQCBasis；記錄 MaterialType/MaterialNo 查詢、Active 物料清單、SelectAll/UnSelectAll、SPEC 載入、QCItem FactorSpec 條件、ChartType/SPCID、CS/Tolerance、Paste、MEMO、完整數值/界限驗證與多物料套用。
+- [x] 確認此功能維護 QC302 的 Chart Basis/Detail/DetailLog 及既有 Material/QC Item/Group tables，沒有 QC304 專屬新表。Oracle/PG DDL 沿用 QC302、MTL、QC201/QC205/QC212 references，未重查 Oracle 業務資料，也沒有新增 CREATE SQL。
+- [x] 新增 `/YMES/QC/MaterialSpec` Vue DEV 頁與 QC304 三層選單/路由；完成查詢/選取假資料、點 SPEC 載入、圖表 filter、X-Rm mapping、CS±Tolerance、剪貼簿/文字框貼上、數值與界限驗證、MEMO、批次假資料保存。
+- [x] 建立 QC304 功能規格、更新規格索引與 Oracle DDL 查詢 provenance，並加入家用端 API/schema handoff。
+- [ ] 公司端未執行 build、test 或瀏覽器驗收。家用端完成 schema/API 後，pull 並對照不同 Material/QCItem 的 Chart Basis/Detail/DetailLog 與 group item 跳過結果。
+- [ ] 接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接對照下一項尚未遷移的 WinForms Form/Service/Core。
+
+## 前一項公司端工作：QC303 品管項目規格（2026-11-17）
 
 - [x] 直接對照 `frmQCSpecBasis`、`frmQCSpecBasisDef`、`frmQCSpecCopy`、wsQC 與 clsQCBasis；記錄 QC Item、FactorSpec、四狀態、Detail SPCID、規格界限、Above helper、MEMO、簽核、刪除與跨 QC Item 複製行為。
 - [x] 沿用先前已保存的 Oracle 直連唯讀 DDL `mestest_qc205_variable_dependencies_source_ddl.sql` 中 `TBLQCSPECBASIS`/`TBLQCSPECDETAIL`；本次沒有讀業務資料列，也沒有在 Oracle 執行 DDL。

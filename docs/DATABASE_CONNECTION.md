@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+### 更新 2026-11-18：QC501–QC503 檢測儀器共用資料表
+
+- 使用已保存的本機受保護連線設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 MESTEST 六張表的 CREATE TABLE/PK unique index DDL：`TBLQCINSPMACHINEPARAMETERTYPE`、`TBLQCINSPMACHINETYPE`、`TBLQCINSPMACHINEBASIS`、`TBLQCINSPMACHINEPARAMETER`、`TBLQCINSPMACHINEPROPERTY`、`TBLQCINSPDRIVER`。
+- 原始 Oracle DDL：`database/reference/mestest_qc501_inspection_machine_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc501_inspection_machine_create.sql`。來源只有 PK unique index，未查到 FK 或額外獨立索引。CREATE 是 YMES 對照參考，不是 migration；家用端必須查 live schema 後只補缺表。
+- 只讀資料字典/DDL，未讀業務資料列，未在 Oracle 執行 DDL；連線秘密未輸出/提交。PS7 載入此舊版 Oracle provider 時遇 BinaryFormatter 平台例外；改用 Windows PowerShell 5.1 後查詢成功。
+- QC501 表主鍵實際是 InspMachineType 單欄；來源 `IssueState`/`DataStamp` 可 NULL 且有 DEFAULT，CREATE reference 保留 nullable；`ChNo` 欄位長度為 3，但 WinForms TextBox MaxLength=10，API 需回報超長值錯誤，不得靜默截斷。
+
 ## 連線用途與邊界
 
 | 資料來源 | 用途 | 應用程式連線方式 |
@@ -477,3 +484,16 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - PostgreSQL 適配的 CREATE-only 對照 `database/reference/mestest_qc303_spec_basis_create.sql` 將因子欄收納為 JSONB。家用端查 live schema 後確認 QC303 Basis/Detail 缺少，套用 migration `database/migrations/0026_qc303_spec_basis.sql`；套用前備份 `/opt/ymes/backups/ymes_before_0026_qc303_20261118.dump` 通過 `pg_restore --list`。Migration 只建 QC303 結構與 `ymes_app` 權限；共用 QC Item/Factor/Parameter/Issue/Job/QCSN 資源未建立。
 - 遠端 `ymes-web` 已更新 QC303 App.vue 路由並單獨重建，healthy；API readiness=200、未登入 QC303 API=401、Web QC303 route=200。app-browser 已登入核對正式選單、頁面、四種狀態切換及 Close。正式 QC Item 清單為空，業務 CRUD 暫無資料可端到端驗收。詳細 API 限制與下一步記於 `docs/modules/QC/品管項目規格.md`。
 - 本次未輸出或寫入 Oracle IP、帳號、密碼、SID 或本機受保護連線設定。
+
+### 更新 2026-11-17：QC304 物料規格設定
+
+- QC304 的 Chart Basis/Detail/DetailLog Oracle DDL 沿用 QC302 既有 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀查詢 reference `mestest_qc302_spc_qc_chart_source_ddl.sql`；MTL/QC Item/Group DDL 沿用已保存 MTL、QC201、QC205、QC212 references。本次直接閱讀 WinForms Form、wsQC、clsQCBasis 原碼，未重新查 Oracle。
+- QC304 沒有新專屬資料表，重用 QC302 已建立的 chart schema/migration 0024 與既有物料/QC Item 關聯表；未新增 CREATE SQL。家用端先查 YMES live schema/migrations，只有確認相依物件缺漏才新增 forward migration。
+- 本次未查 MES 業務資料列，未在 Oracle 執行 DDL；未輸出或寫入 IP、帳號、密碼、SID 或本機受保護連線設定。
+
+### 更新 2026-11-17：QC305 產品規格設定
+
+- QC305 的 Chart Basis/Detail/DetailLog Oracle DDL 沿用 QC302 reference `mestest_qc302_spc_qc_chart_source_ddl.sql`；產品主檔 DDL 沿用 `mestest_qc218_tblprdproductbasis_source_ddl.sql`，PRD QC Item/Variable/Factor 依賴沿用 QC205 reference，QC Item Group CREATE 沿用 QC212 reference。本回合直接讀 `frmQCProductSpec.vb`、`clsQCBasis.cs` 與既有 DDL 檔，沒有重新連 Oracle 或讀取業務列。
+- QC305 不新增表；重用 YMES Chart Basis/Detail/DetailLog、產品、PRDQCITEM、QC Item/Factor/Group schema。`TBLPRDTYPE` 是舊產品類別 lookup 依賴，但 repo 沒有獨立 Oracle DDL reference；家用端先核對 live schema/API，若確認 YMES 缺少對應物件，再由公司端透過 PowerShell + Oracle.ManagedDataAccess 取得原始 DDL。
+- 產品 Basis 的動態 PRODUCT 因子在 YMES 使用 `factorvalues JSONB`；家用端需按 QC302 實際資料存取方式核對舊 physical `product` 欄的相容性。QC305 Core 以 ProductNo 而非 ProductVersion/OPNo 讀寫 chart basis，規格已記錄此舊行為。
+- 本回合未在 Oracle 執行 DDL、未查 YMES PostgreSQL、未輸出或寫入 IP、帳號、密碼、SID 或受保護連線設定。
