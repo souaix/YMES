@@ -81,6 +81,7 @@ import QcChartDataImport from './components/QcChartDataImport.vue'
 import QcChartBasisMaster from './components/QcChartBasisMaster.vue'
 import QcSpecBasisMaster from './components/QcSpecBasisMaster.vue'
 import QcMaterialSpecMaster from './components/QcMaterialSpecMaster.vue'
+import QcProductSpecMaster from './components/QcProductSpecMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -291,6 +292,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:QC CHART BASIS', label: '管制圖內容', shortLabel: '圖', functionNo: 'QC CHART BASIS', moduleNo: 'QC', tableName: 'tblspcqcchartbasis' },
       { id: 'function:QC:QC SPEC BASIS', label: '品管項目規格', shortLabel: '規', functionNo: 'QC SPEC BASIS', moduleNo: 'QC', tableName: 'tblqcspecbasis' },
       { id: 'function:QC:MTLQCITEM', label: '物料規格設定', shortLabel: '料', functionNo: 'MTLQCITEM', moduleNo: 'QC', tableName: 'tblspcqcchartbasis' },
+      { id: 'function:QC:PRDQCITEM', label: '產品規格設定', shortLabel: '產', functionNo: 'PRDQCITEM', moduleNo: 'QC', tableName: 'tblspcqcchartbasis' },
       { id: 'function:QC:IMPORT QC CHART DATA', label: '匯入管制圖內容', shortLabel: '匯', functionNo: 'IMPORT QC CHART DATA', moduleNo: 'QC', tableName: 'tblspcqcchartbasis' },
     ] }, { id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
@@ -361,6 +363,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:QC CHART BASIS': appBasePath + '/QC/ChartBasis',
   'function:QC:QC SPEC BASIS': appBasePath + '/QC/SpecBasis',
   'function:QC:MTLQCITEM': appBasePath + '/QC/MaterialSpec',
+  'function:QC:PRDQCITEM': appBasePath + '/QC/ProductSpec',
   'function:QC:QCITEM_V': appBasePath + '/QC/VariableQcItem',
   'function:QC:IMPORT QCITEM VARIABLES': appBasePath + '/QC/VariableItemImport',
   'function:QC:QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
@@ -551,6 +554,7 @@ const isQcChartDataImportPage = computed(() => activeMasterKey.value === 'functi
 const isQcChartBasisPage = computed(() => activeMasterKey.value === 'function:QC:QC CHART BASIS')
 const isQcSpecBasisPage = computed(() => activeMasterKey.value === 'function:QC:QC SPEC BASIS')
 const isQcMaterialSpecPage = computed(() => activeMasterKey.value === 'function:QC:MTLQCITEM')
+const isQcProductSpecPage = computed(() => activeMasterKey.value === 'function:QC:PRDQCITEM')
 const isQcVariableQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_V')
 const isQcVariableItemImportPage = computed(() => activeMasterKey.value === 'function:QC:IMPORT QCITEM VARIABLES')
 const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM RULE MAP')
@@ -1599,6 +1603,14 @@ async function signOut(): Promise<void> {
         />
         <QcMaterialSpecMaster
           v-else-if="isQcMaterialSpecPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcProductSpecMaster
+          v-else-if="isQcProductSpecPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

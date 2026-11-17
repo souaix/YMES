@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 最新公司端 handoff：QC305 產品規格設定（2026-11-17）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/QC/產品規格設定.md`、`docs/DATABASE_CONNECTION.md`。FunctionNo=`PRDQCITEM`、FunctionKey=`QC305`；Vue DEV 頁 `/YMES/QC/ProductSpec` 位於品質資料 → 計量規格設定 → 產品規格設定。
+- [ ] 核對 YMES PostgreSQL live schema/migrations 與 QC302 API。Chart Basis/Detail/DetailLog 使用 migration 0024；產品 Basis Oracle DDL 參照 `mestest_qc218_tblprdproductbasis_source_ddl.sql`，PRDQCITEM/Variable/Factor 參照 QC205，Group 參照 QC212。QC305 沒有專屬資料表，不要新增重複 CREATE；`TBLPRDTYPE` 先查 live schema，只有確認 YMES lookup 依賴缺漏才請公司端取得 Oracle DDL。
+- [ ] 建立登入保護 QC305 API：`GET /api/qc/product-spec/product-types`、`GET /api/qc/product-spec/products?productType&productNoPrefix`、`GET /{productNo}/qc-items`、`GET /{productNo}/chart-details`、`POST /api/qc/product-spec/batch-update`。依既有授權方式檢查 PRDQCITEM/QC305；若已存在等效 API，沿用並更新 Vue/spec。
+- [ ] 查詢忠實採舊 `LoadProductBasisJoinPRDQC`：產品 `IssueState=2`，ProductType 精確、ProductNo 前綴，舊 `QC_Count=1`；產品 QC Item/Chart API 需讀 `TBLPRDQCITEM`、`TBLQCITEMFORVARIABLES`、`TBLQCITEMFACTOR` 及 Group 主/明細。只有恰好一個 FactorSpec 且 FactorNo=`PRODUCT` 的變數 QC Item 建 Detail；保留 GroupNo。ChartType/SPCID、X-Rm SPCID 0/5 映射、規格必填/排序和 MEMO 規則見功能規格。
+- [ ] `batch-update` 接受 `{productNos,details:[{qcItemNo,groupNo,spcId,us,cs,ls,ucl,cl,lcl}],memo}`，逐產品/QCItem transaction 重查 ACTIVE 與直接/Group 綁定、FactorSpec 和 SampleSize。Basis 依 `(QCItemNo,Product)` 定位；新建才產生 serial，SampleSize 取 QC Item、Product 因子寫 `factorvalues JSONB`（並按 QC302 核對 physical `product` 欄相容性）、IssueState=0；既有 Basis 沿用 serial/state。交易式替換 Detail、追加 DetailLog 界限快照；MEMO 進 audit/log。回傳逐項 updated/skipped/failed 結果，失敗需 rollback。
+- [ ] 舊 Core 的產品綁定和 chart 查詢只用 ProductNo，沒有 ProductVersion/OPNo 條件；API 應在規格中保留此相容行為及版本/多 OP 歧義，不要自行切換 key。對同一產品/QCItem 去重，避免不同 GroupNo 對同一 Basis 重複覆寫。
+- [ ] 公司端本次未執行 build、測試或瀏覽器驗收；QC305 沒有新增表，沒有額外 CREATE SQL。本 handoff 之外，QC303、QC304 API/schema 工作仍依各自段落追蹤。
+
 ## 最新公司端 handoff：QC303 品管項目規格（2026-11-17）
 
 - [ ] Pull 最新 `main`，先讀 `docs/modules/QC/品管項目規格.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`QC SPEC BASIS`、FunctionKey=`QC303`；Vue DEV 頁 `/YMES/QC/SpecBasis` 位於品質資料 → 計量規格設定 → 品管項目規格。

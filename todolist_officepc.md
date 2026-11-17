@@ -12,6 +12,14 @@
 - Oracle 來源 DDL 用 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢；使用本機受保護連線設定，不必請使用者重貼，也不得把連線值寫進文件、SQL 或 Git。
 - 目前只查詢過 Oracle 結構與系統選單中繼資料，沒有匯出 MES 業務資料。不要把 DEV 假資料當成正式資料。
 
+## 最新公司端工作：QC305 產品規格設定（2026-11-17）
+
+- [x] 直接對照 `frmQCProductSpec` Designer/事件、`wsPRD.LoadProductType`、`wsQC.LoadProductBasisJoinPRDQC`、`LoadPRDQCItemJoinForVariables`、`LoadPRDQCItemJoinQCChart`、`UpdPRDQCChartData` 與 `clsQCBasis.cs`；記錄 ProductType/ProductNo 查詢、`QC_Count=1`、SPEC 載入、GroupNo、FactorSpec=PRODUCT、SPCID、MEMO、批次套用及舊 ProductNo-only 行為。
+- [x] 新增 `/YMES/QC/ProductSpec` Vue DEV 頁及 `PRDQCITEM/QC305` 選單/路由；支援假資料查詢、SPEC 編輯、群組關聯識別、Chart filter、CS±Tolerance、剪貼簿貼上、規格驗證及批次假資料套用。
+- [x] 建立 `docs/modules/QC/產品規格設定.md`，更新規格索引、資料庫連線/DDL provenance、家用端 API handoff。此功能沿用 QC302 Chart Basis/Detail/DetailLog 與既有產品/QC Item 表，沒有專屬 CREATE SQL；TBLPRDTYPE DDL 尚未保存，僅當家用端確認 YMES lookup 依賴缺漏才需由本機 Oracle 直連查詢。
+- [ ] 本回合未執行 build、test 或瀏覽器驗收。家用端完成 API/schema 後 pull，對照有/無既有 Basis、產品群組綁定、批次部分略過及 ProductVersion/OPNo 歧義。
+- [ ] 完成後依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續下一個尚未遷移的 WinForms 功能；維持 office fake UI/spec 與 home API/schema handoff 分工。
+
 ## 最新公司端工作：QC304 物料規格設定（2026-11-17）
 
 - [x] 直接閱讀 `frmQCMaterialSpec` Designer/事件、wsQC、clsQCBasis；記錄 MaterialType/MaterialNo 查詢、Active 物料清單、SelectAll/UnSelectAll、SPEC 載入、QCItem FactorSpec 條件、ChartType/SPCID、CS/Tolerance、Paste、MEMO、完整數值/界限驗證與多物料套用。

@@ -482,3 +482,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - QC304 的 Chart Basis/Detail/DetailLog Oracle DDL 沿用 QC302 既有 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀查詢 reference `mestest_qc302_spc_qc_chart_source_ddl.sql`；MTL/QC Item/Group DDL 沿用已保存 MTL、QC201、QC205、QC212 references。本次直接閱讀 WinForms Form、wsQC、clsQCBasis 原碼，未重新查 Oracle。
 - QC304 沒有新專屬資料表，重用 QC302 已建立的 chart schema/migration 0024 與既有物料/QC Item 關聯表；未新增 CREATE SQL。家用端先查 YMES live schema/migrations，只有確認相依物件缺漏才新增 forward migration。
 - 本次未查 MES 業務資料列，未在 Oracle 執行 DDL；未輸出或寫入 IP、帳號、密碼、SID 或本機受保護連線設定。
+
+### 更新 2026-11-17：QC305 產品規格設定
+
+- QC305 的 Chart Basis/Detail/DetailLog Oracle DDL 沿用 QC302 reference `mestest_qc302_spc_qc_chart_source_ddl.sql`；產品主檔 DDL 沿用 `mestest_qc218_tblprdproductbasis_source_ddl.sql`，PRD QC Item/Variable/Factor 依賴沿用 QC205 reference，QC Item Group CREATE 沿用 QC212 reference。本回合直接讀 `frmQCProductSpec.vb`、`clsQCBasis.cs` 與既有 DDL 檔，沒有重新連 Oracle 或讀取業務列。
+- QC305 不新增表；重用 YMES Chart Basis/Detail/DetailLog、產品、PRDQCITEM、QC Item/Factor/Group schema。`TBLPRDTYPE` 是舊產品類別 lookup 依賴，但 repo 沒有獨立 Oracle DDL reference；家用端先核對 live schema/API，若確認 YMES 缺少對應物件，再由公司端透過 PowerShell + Oracle.ManagedDataAccess 取得原始 DDL。
+- 產品 Basis 的動態 PRODUCT 因子在 YMES 使用 `factorvalues JSONB`；家用端需按 QC302 實際資料存取方式核對舊 physical `product` 欄的相容性。QC305 Core 以 ProductNo 而非 ProductVersion/OPNo 讀寫 chart basis，規格已記錄此舊行為。
+- 本回合未在 Oracle 執行 DDL、未查 YMES PostgreSQL、未輸出或寫入 IP、帳號、密碼、SID 或受保護連線設定。
