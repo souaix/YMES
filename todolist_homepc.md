@@ -6,6 +6,171 @@
 
 ## 家用電腦現在接手
 
+### QC401 主分類基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 docs/modules/QC/主分類基本資料.md、todolist_officepc.md 的 QC401 區段，以及 docs/DATABASE_CONNECTION.md 的 QC401 查詢紀錄。
+- [ ] 比對 YMES PostgreSQL live schema 與 migrations。TBLQCMCLASSBASIS Oracle source DDL / PostgreSQL CREATE 已存在於 database/reference/mestest_qc_first_group_lookups_source_ddl.sql 和 _create.sql；只在 YMES 缺表或欄位時補 forward migration，勿在 MES Oracle 建表或重建既有 YMES 擴充欄位。
+- [ ] schema 欄位需保留 MClassNo varchar(30) NOT NULL PK、Description varchar(255)、Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp without time zone、IssueState numeric(1,0) NOT NULL DEFAULT 0、DataStamp numeric(11,0) NULL DEFAULT 0。只有 PK unique index，沒有 FK/其他 index。
+- [ ] 實作 GET /api/qc/m-class-basis?searchFieldName=MClassNo&searchFieldValue=，回傳所有 IssueState 與 audit/DataStamp；只接受 MClassNo 搜尋，QC401 FunctionKey 權限及登入必須檢查。
+- [ ] 實作 POST 建立，body 為 mClassNo、description；驗證 MClassNo 必填/長度 30/唯一及 Description 長度 255；伺服器設定 Creator/CreateDate、IssueState=0，DataStamp 使用 default。
+- [ ] 實作 PUT /api/qc/m-class-basis/{mClassNo}?issueState=&dataStamp=，僅更新 Description；只允許 IssueState 0/2；MClassNo 唯讀，Reviser/ReviseDate 由伺服器更新。使用 nullable DataStamp CAS，衝突回 409。
+- [ ] 實作 DELETE：狀態 0/-1 實體刪除；狀態 2 以 CAS 改 IssueState=-1 並更新 Reviser/ReviseDate/DataStamp；狀態 1 拒絕。
+- [ ] 實作 POST /api/qc/m-class-basis/{mClassNo}/approve：限 IssueState=0，Issue Job Map key 為 MCLASS BASIS。找不到 Job 或 Job Detail 時直接轉 2；有流程時建立 Issue、轉 1、通知第一簽核群組；核准轉 2，退回回 0。更新共用 Issue Job/API 規格。
+- [ ] WinForms 匯入器已找到：STD/MESWin/QC/QC_MClassDataImport/frmMClassDataImport.vb、STD/MEStc/DataImporter/MClassDataImporter.cs。實作 POST /api/qc/m-class-basis/import/preview 與 /import：NPOI 讀 .xls/.xlsx 第一工作表；跳過首列，固定用第 1 欄 MClassNo（必填）、第 2 欄 Description（可空），不驗標題；先 distinct (MClassNo, Description)，按 MClassNo 分組逐組檢查/插入；大小寫不敏感拒絕已存在鍵、編號轉大寫；同編號不同說明失敗；每組獨立 transaction，部分成功並回傳結果。
+- [ ] 實作 GET /api/qc/m-class-basis/import/template，透過 YMES template storage 提供舊 wsSYS.GetTemplateFile 的 MCLASS BASIS 範本與副檔名。來源樹找到 downloader/extension API 呼叫，但未找到範本 binary；部署前須接原始 template storage 或取得正式範本。DEV CSV 只演示相同欄序，不能冒充官方 Excel 範本。
+- [ ] API 使用參數化 SQL、登入與 QC401 功能權限；更新 API 文件、migration 索引與本 TODO。不得連 MES Oracle。
+
+### QC403 異常原因基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/異常原因基本資料.md`、`todolist_officepc.md` QC403 區段及 `docs/DATABASE_CONNECTION.md` 的 QC403 查詢紀錄。
+- [ ] Oracle source DDL：`database/reference/mestest_qc_hold_item_basis_source_ddl.sql`；PostgreSQL 空表 CREATE：`database/reference/mestest_qc_hold_item_basis_create.sql`。先比對 YMES live schema/migrations；只有 `tblqcholditembasis` 缺少才新增 forward migration，保留 YMES 擴充欄位。不可在 MES Oracle 執行 CREATE。
+- [ ] 主表 PK `holditemno`；僅 PK unique index，無 FK/額外索引。保留來源 nullable/default：`createerf` numeric(1,0) DEFAULT 1 NULL、`datastamp` numeric(11,0) DEFAULT 0 NULL；`holdsystem` numeric(1,0) DEFAULT 0 NOT NULL；IssueState numeric(1,0) DEFAULT 0 NOT NULL。Oracle DATE 對應 timestamp without time zone。
+- [ ] 實作 `GET /api/qc/hold-item-basis?searchFieldName=&searchFieldValue=`，回傳查詢條件內所有 IssueState 與 audit/DataStamp；搜尋欄 whitelist 僅 HoldItemNo/MClassNo/SClassNo；FunctionKey `QC403`。
+- [ ] 實作 `GET /api/qc/hold-item-basis/lookups`：已簽核 MClass、依 MClass 過濾的已簽核 SClass、已簽核 HoldDispGroup、IssueState=2 且 CURVERSION=1 的 OCAP、HoldSystem 0/1/2（MES/EAP_Exception/EDA_Exception）。優先重用已有 QC lookup service，禁止新增重複 lookup 表。
+- [ ] 實作 POST 建立與 PUT 修改。伺服器設定 Creator/CreateDate、IssueState=0、Reviser/ReviseDate/DataStamp；HoldItemNo PK。修改只允許 HoldItemName、CreateERF、HoldSystem、HoldDispGroup、OCAPNo/Version、Description；HoldItemNo/MClassNo/SClassNo 唯讀；待簽核禁止修改，Active/Unused 按舊 IssueControl 設定的欄位權限限制。以 HoldItemNo + IssueState + nullable DataStamp CAS。
+- [ ] 實作 DELETE：IssueState 0/-1 實體刪除；2 以 DataStamp CAS 改為 -1；1 拒絕。核准只允許 0，FunctionNo/Issue Job Map key 為 `HOLDITEM BASIS`；沒有 Job/Detail 時直接轉 2，有簽核流程時建立 Issue、轉 1、通知第一群組，保留共用退回/核准流程。
+- [ ] 實作 `POST /api/qc/hold-item-basis/import` 支援 `.xls/.xlsx` 第一工作表，欄序為 HOLDITEMNO、MCLASSNO、SCLASSNO、HOLDITEMNAME、CREATEERF、HoldSystem、OCAPNo、HOLDDISPGROUP、DESCRIPTION；逐列檢查分類已簽核、群組存在、OCAP 已簽核、主鍵不重複。每列獨立 transaction，回傳成功/失敗與 message；維持舊系統部分成功行為。DEV 頁目前只解析 CSV。
+- [ ] 所有 endpoints 要登入並檢查 QC403 功能權限；參數化 SQL、DTO 驗證、檔案大小/格式限制，不讀/寫 MES Oracle。更新 API 文件、migration 索引及本 TODO。
+
+### QC405 異常處理群組（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/異常處理群組.md`；公司端已完成 `/YMES/QC/HoldDispGroup` Vue DEV 頁，包含群組主檔及主處理/CC 使用者三 Grid。
+- [ ] 先比對 YMES PostgreSQL live schema、constraints、indexes 與 migrations。Oracle source DDL/PG 空表 CREATE 已存在：`TBLQCHOLDDISPGROUPBASIS` 參照 `mestest_qc_first_group_lookups_source_ddl.sql` / `_create.sql`；`TBLUSRUSERGROUP` 參照 `mestest_equipment_engineer_group_member_source_ddl.sql` / `_create.sql`。兩表缺漏才新增 forward migration；本功能沒有新增表，不要在 Oracle 建表。
+- [ ] 實作 `GET /api/qc/hold-disposition-groups?searchFieldName=GroupNo&searchFieldValue=`：回傳四狀態群組及 audit/DataStamp，搜尋只允許 GroupNo。FunctionKey 權限為 QC405。
+- [ ] 實作 `GET /api/qc/hold-disposition-groups/options/users?issueState=2`，等價 WinForms `wsUSR.LoadUserSecurity(IssueState=2)`，只回已核准使用者的 DepartmentNo/UserNo/UserName。若 YMES 已有安全的使用者查找 API，優先重用。
+- [ ] 實作 `GET /api/qc/hold-disposition-groups/{groupNo}/members`，回 `{primary: string[], cc: string[]}`。直接 UI 成員對應 `TBLUSRUSERGROUP.GroupType=5/6 AND AgentOf='NA'`；顯示可沿用已核准使用者資料，缺失/停用的既存關聯仍需可見並可移除。
+- [ ] 實作 POST `/api/qc/hold-disposition-groups` body `{groupNo, groupName, description}`：GroupNo 必填/長度20/大寫、GroupName 必填/長度50、Description 長度255；伺服器寫 Creator/CreateDate、IssueState=0、DataStamp 初值。
+- [ ] 實作 PUT `/api/qc/hold-disposition-groups/{groupNo}?dataStamp=`，僅更新 GroupName/Description，只接受 IssueState 0/2；由伺服器更新 Reviser/ReviseDate/DataStamp，以 GroupNo + nullable DataStamp CAS。
+- [ ] 實作 POST `/api/qc/hold-disposition-groups/copy`，body `{sourceGroupNo, groupNo, groupName, description}`；transaction 同時新增主檔並複製舊 Core `ShowHoldDispGroupDetail(CCGroup=true)` 回傳的 5/6 類成員。舊 `Show...` 不限 AgentOf，但 `AddHoldDispGroupDetail` 將複製關聯寫成 AgentOf='NA'；保持這個相容行為，或在 API 規格清楚標註產品決策後的修正。
+- [ ] 實作 DELETE：IssueState 0/-1 實體刪除主檔與該 GroupNo 的 5/6 類成員；IssueState 2 改 -1 並保留成員；IssueState 1 拒絕。用主檔 DataStamp CAS 並在 transaction 中處理。
+- [ ] 實作 PUT `/api/qc/hold-disposition-groups/{groupNo}/members?dataStamp=`，body `{primaryUserNos, ccUserNos}`。單一 transaction 先以 GroupNo + DataStamp CAS 更新主檔 Reviser/ReviseDate/DataStamp，再刪除該群組所有 GroupType 5/6 關聯，重建選取的直接成員 (AgentOf='NA')；兩個清單不得重複同一 UserNo，空陣列表示清除。每個 GroupType 5 成員需沿用 USR `AddUserAgentToGroup(UserNo, GroupNo, 5)` 代理人同步副作用。
+- [ ] 實作 `POST /api/qc/hold-disposition-groups/{groupNo}/approve?issueState=0&dataStamp=`：Issue Job Map 精確 key `HOLD DISP GROUP`；沒有 Job/Detail 直接轉 2，有流程建立 Issue、狀態轉 1、通知第一簽核群組，核准轉 2、退回轉 0。
+- [ ] 所有端點驗證登入、QC405 功能權限、SQL 參數化及版本衝突；先比對 live schema，不重建已存在表。部署 API/schema 後更新 handoff、push 並通知公司端 pull。公司端未執行 build/test/瀏覽器驗收。
+
+### QC404 異常說明（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/異常說明.md`、`docs/DATABASE_CONNECTION.md`；公司端已對照 `frmHoldDescription`、`frmHoldDescriptionDef`、`wsQC`、`clsHoldBasis`、`clsBasis_UPD`，完成 QC → 異常設定 → 異常說明 Vue DEV 頁與 `/YMES/QC/HoldDescription` 路由。
+- [ ] 先比對 YMES PostgreSQL live schema、constraints、indexes 與 migrations；來源 CREATE 參考 `database/reference/mestest_qc_hold_description_create.sql`，只在缺少時做 forward migration，保留 YMES 擴充欄位。
+- [ ] Oracle 原始 DDL：`database/reference/mestest_qc_hold_description_source_ddl.sql`。`tblqcholddescription` PK 為 `holddescriptionid`；`mclassno` 有非唯一索引、無 FK；`holddescription varchar(4000) NOT NULL`、`issuestate NOT NULL DEFAULT 0`、`datastamp nullable DEFAULT 0`。不對 `(mclassno, holddescription)` 加唯一限制。
+- [ ] 實作 `GET /api/qc/hold-descriptions?searchFieldName=MClassNo&searchFieldValue=`，回全部狀態及 audit/DataStamp；搜尋欄白名單只允許 MClassNo，保持 WinForms query condition 語意。
+- [ ] 實作主分類 options endpoint，只回 `TBLQCMCLASSBASIS.IssueState=2`；沿用 QC406 lookup table/API 時仍要驗證 QC404 FunctionKey。
+- [ ] 實作 POST `/api/qc/hold-descriptions` body `{mClassNo, holdDescription, description}`；檢查主分類核准、必填與長度，伺服器建立 GUID HoldDescriptionID、Creator/CreateDate、IssueState=0、DataStamp 初值，回傳完整新列。
+- [ ] 實作 PUT `/api/qc/hold-descriptions/{holdDescriptionId}?dataStamp=`，僅允許修改 Description；MClassNo/HoldDescription 在 WinForms 修改視窗唯讀。狀態 0/2 可更新，伺服器寫 Reviser/ReviseDate 並遞增 DataStamp，nullable DataStamp 以 `IS NULL` CAS。
+- [ ] 實作 DELETE：0/-1 實體刪除，2 軟停用為 -1，1 拒絕；所有寫入/刪除用 ID + DataStamp CAS。多選 UI 逐筆呼叫，首筆失敗停止並回報部分成功。
+- [ ] 實作核准端點，Issue Job Map key 為 `HOLD DESCRIPTION`；沒有 Job/Detail 時直接轉 2，有流程時建立 Issue、轉 1、處理附件/通知第一簽核群組，核准轉 2、退回 0。
+- [ ] 所有 API 驗證登入與 FunctionKey `QC404`、SQL 參數化。先核對 YMES live table/index，勿盲目執行 CREATE；部署 API/schema 後更新 handoff 並通知公司端 pull。公司端未執行 build/test/瀏覽器驗收。
+
+### QC407 最後處理群組（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/最後處理群組.md`、`docs/DATABASE_CONNECTION.md`；公司端已對照 `frmFinalGroup`、`frmFinalGroupDef`、`wsQC`、`clsQCBasis`、`clsBasis_UPD`，完成 QC → 異常設定 → 最後處理群組 Vue DEV 頁與 `/YMES/QC/FinalGroup` 路由。
+- [ ] 先比對 YMES PostgreSQL live schema、constraints、indexes、migrations；來源 CREATE 參考 `database/reference/mestest_qc_final_group_create.sql`，只在缺少時做 forward migration並保留 YMES 擴充欄位。
+- [ ] Oracle 原始 DDL：`database/reference/mestest_qc_final_group_source_ddl.sql`。`tblqcfinalgroup` 複合 PK `(mclassno, opno)`、只有 PK unique index、無 FK；`issuestate NOT NULL DEFAULT 0`、`datastamp nullable DEFAULT 0`。保留 `opno='*'` 通用作業站鍵。
+- [ ] 實作 `GET /api/qc/final-groups?searchFieldName=&searchFieldValue=`，回全部狀態/audit/DataStamp；搜尋欄白名單限 MClassNo、OPNo，四狀態由 UI 篩選。
+- [ ] 主分類、作業站、異常處理群組 options 只回 IssueState=2；可重用 QC406 查找實作，但檢查 QC407 FunctionKey 權限。先核對 YMES live schema，不重建已存在的 lookup 表。
+- [ ] 實作 POST `/api/qc/final-groups`，body `{mClassNo, operationNos, groupNo, description}`；逐個所選 OP 建列，驗證必填/長度/核准選項/複合鍵唯一；`*` 僅作明確允許的通用 OP。批次以單一交易寫入，Audit/DataStamp 由伺服器設定。
+- [ ] 實作 PUT `/api/qc/final-groups/{mClassNo}/{opNo}?dataStamp=`，僅更新 GroupNo/Description；狀態 0/2 可更新，修改者/日期與 DataStamp 由伺服器更新。nullable DataStamp 以 `IS NULL` CAS。
+- [ ] 實作 DELETE：0/-1 實體刪除、2 軟停用成 -1、1 拒絕；全部以 DataStamp CAS。UI 多選逐筆、首筆失敗停止並回報部分成功。
+- [ ] 實作核准端點，Issue Job Map 原始 key 必須使用 **`Final GROUP`**（注意它和 FunctionNo `FINAL GROUP` 不同）；沒有 Job/Detail 時直接轉 2，有流程時建立 Issue、轉 1、附件處理/通知第一簽核群組，核准 2、退回 0。
+- [ ] 所有 API 驗證登入與 FunctionKey `QC407`、SQL 參數化；部署 API/schema 後更新規格與 handoff，push 並通知公司端 pull。公司端未執行 build/test/瀏覽器驗收。
+
+### QC406 第一處理群組（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/第一處理群組.md`、`docs/DATABASE_CONNECTION.md` 和本節。公司端已對照 WinForms/Form/Service/Core，完成 Vue DEV 畫面及 QC → 異常設定 → 第一處理群組路由。
+- [ ] 先比對 YMES PostgreSQL live schema、constraints、indexes 與 migrations。來源 CREATE 參考 `database/reference/mestest_qc_first_group_create.sql`；缺表/欄位才建 forward migration，不要盲目執行或刪除 YMES 擴充欄位。
+- [ ] Oracle 原始 DDL：`database/reference/mestest_qc_first_group_source_ddl.sql`。表 `tblqcfirstgroup` 的 PK 為 `(mclassno, opno)`，只有 PK unique index、沒有 FK；DataStamp nullable DEFAULT 0，IssueState NOT NULL DEFAULT 0。保留 `OPNo='*'` 作為通用作業站 key。
+- [ ] 實作 `GET /api/qc/first-groups?searchFieldName=&searchFieldValue=`，回全部狀態欄位與 audit/DataStamp，搜尋欄位白名單限 MClassNo、OPNo；UI 按四狀態本機篩選。
+- [ ] 查找器沿用 YMES 已有 endpoint；若不存在，提供只回已核准資料的 options API：主分類 `TBLQCMCLASSBASIS` (MClassNo)、作業站 `TBLOPBASIS` (OPNo/OPName)、異常處理群組 `TBLQCHOLDDISPGROUPBASIS` (GroupNo/GroupName/Description)，均對應 WinForms `IssueState=2`。先比對 live schema；主分類/異常群組缺表時參考 `mestest_qc_first_group_lookups_create.sql`，作業站缺表時參考現有 `mestest_operation_and_system_create.sql`。不要覆蓋既有 YMES 擴充欄位。
+- [ ] 實作 `POST /api/qc/first-groups` body `{mClassNo, operationNos, groupNo, description}`；一次對每個已選 OP 建列，驗證主分類/群組已核准、普通 OP 已核准、`*` 僅作為特殊通用 key 放行，檢查長度/必填/複合鍵唯一；API 設 Creator/CreateDate/IssueState=0/DataStamp 初值，多列寫入交易。
+- [ ] 實作複合鍵 `PUT /api/qc/first-groups/{mClassNo}/{opNo}?dataStamp=`，只改 GroupNo/Description；依舊 Service 僅接受狀態 0/2。更新 Reviser/ReviseDate 並遞增 DataStamp，nullable DataStamp 用 `dataStamp=0&dataStampIsNull=true` 以 `IS NULL` CAS。
+- [ ] 實作複合鍵 DELETE：狀態 0/-1 實體刪除，2 改 -1，1 拒絕；以 DataStamp CAS。UI 多選仍逐筆，第一筆失敗停止並回報部分成功。
+- [ ] 實作核准 endpoint，Issue Job Map key 為 `FIRST GROUP`；無 Job/Detail 時直接轉 2，有流程時建立 Issue、轉 1、附件處理/通知第一簽核群組，Issue 核准轉 2、退回轉 0。所有狀態變更需以複合鍵 + DataStamp CAS。
+- [ ] 所有 API 驗證登入與 FunctionKey `QC406` 權限，SQL 參數化；不新增 Oracle FK/cascade。部署 schema/API 後更新規格、push，通知公司端 pull Production API。公司端未執行 build/test/瀏覽器驗收。
+
+### QC111 8D 原因基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 docs/modules/QC/8D原因基本資料.md、docs/DATABASE_CONNECTION.md 和本節。公司端已對照 frmReasonBasis_8D、兩個 Def Form、wsQC/clsQCBasis，完成 Vue DEV 雙 Grid 及 QC → 基本資料 → 8D 原因基本資料路由。
+- [ ] 先以家用端管理連線比對 YMES live schema、constraints、indexes 及 migrations。來源 PostgreSQL 空表 CREATE 參考 database/reference/mestest_qc_8d_reason_create.sql；缺表/欄位才新增 forward migration，不要盲目執行或移除 YMES 擴充欄位。
+- [ ] Oracle 原始 DDL 在 database/reference/mestest_qc_8d_reason_source_ddl.sql。兩表為 tblqcreasonbasis_8d、tblqcreasonsubtype_8d；各只有單一 PK unique index、沒有 FK。Subtype 的 ReasonType 為 numeric(1,0)，detail 的 ReasonType 為 varchar(50)；DataStamp nullable DEFAULT 0。維持來源型別，不要把兩表欄位型別強制統一。
+- [ ] 實作 GET /api/qc/8d-reason-subtypes?search=，回傳 ReasonSubType 搜尋結果及四狀態資料；GET /api/qc/8d-reasons?reasonSubType= 必須按子類別精確查詢。ReasonType 值已由 Oracle TBLSYSVALUELIST 核實為 1 Men、2 Machine_8D、3 Material、4 Method、5 Environment；API/options 使用同代碼並從 YMES 字典提供繁中顯示名（人員、設備、物料、方法、環境）。
+- [ ] 實作 POST/PUT/DELETE 子類別 API：新增 IssueState=0、DataStamp=0 並由伺服器設定 audit；PUT 僅允許 IssueState=0；DELETE 狀態 0/-1 實體刪除、狀態 2 改 -1、狀態 1 拒絕。PUT/DELETE/核准都需以 nullable DataStamp 做 CAS，版本衝突回 409。
+- [ ] 實作 POST /api/qc/8d-reason-subtypes/{reasonSubType}/approve：查 Issue Job Map 的 ReasonSubType BASIS；沒有 Job 或 Job 無 Detail 時直接轉 2，有簽核明細則建立 Issue 流程並轉 1、通知第一簽核群組；Issue 核准轉 2、退回轉 0。回傳實際 IssueState/DataStamp；不可假設所有核准都立即 Active。
+- [ ] 實作原因明細 POST/PUT/DELETE。只允許父子類別 IssueState=0；ReasonType 從父列取得；ReasonNo/ReasonName 必填，ReasonLevel 0-9；更新需 DataStamp CAS 與伺服器 audit。來源沒有 FK，刪子類別不 cascade 明細；WinForms/Core 實際留下孤兒明細，保持可見相容性並在 API/日誌標示。
+- [ ] 驗證登入、QC111 權限、欄位長度、唯一鍵、ReasonType 有效選項、父列狀態與 DataStamp。主/明細批次刪除按舊 WinForms 逐筆執行，第一筆失敗停止並回報已完成筆數；不可宣稱整批交易回滾。
+- [ ] API/schema 部署後更新本節與規格狀態、push，通知公司端 pull 接 Production API。公司端尚未執行 build/test/瀏覽器驗收。
+
+### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/EQP/設備AutoLoader格式檔設定.md`、`docs/DATABASE_CONNECTION.md` 及本節；WinForms Form/Designer/Service/Core 已查，Oracle DDL 由公司端既有受保護 PowerShell 5.1 + ODP.NET 連線唯讀取得，Vue DEV 頁與三層選單已完成。
+- [ ] 先以家用端管理連線比對 YMES PostgreSQL 的 4 張表、索引、現有 migration 及擴充欄位。缺表/欄位才做 forward migration；reference CREATE 檔是空表定義，不能盲目套用或重建資料。
+- [ ] Oracle 來源表為 `TBLEQPALSCRIPT`、`TBLEQPALSCRIPT_TESTRECIPE`、`TBLEQPALSCRIPT_UNNUMERICFIELD`、`TBLEQPALSCRIPT_COORDINFO`。主表沒有 PK constraint，唯一索引 `(EquipmentNo,FileNameFormat)`；三個子表的複合 PK 如規格；四表沒有 FK。CLOB 轉 PostgreSQL text；`DataStamp` nullable DEFAULT 0。
+- [ ] 若 YMES 缺少來源表，依 `database/reference/mestest_eqp_autoloader_create.sql` 建 migration；來源 Oracle DDL `database/reference/mestest_eqp_autoloader_source_ddl.sql` 僅供比對。不要在 MES Oracle 執行 CREATE。
+- [ ] 實作 `GET /api/eqp/auto-loader-scripts?equipmentNo=&equipmentType=`。條件可空，equipmentNo/type 採 WinForms exact match；回主畫面所需設備欄位、格式腳本、稽核/DataStamp 及三類子明細。
+- [ ] 實作設備 lookup `GET /api/eqp/auto-loader-scripts/options/equipment?prefix=&equipmentType=&fileNameFormat=`。lookup 沿用設備主檔、依登入者權限過濾；有 fileNameFormat 時回 `hasMatchingFormat` 供預設套用排除已存在設備。
+- [ ] 從 WinForms `frmEquipmentAutoLoaderSetupDef`、測試配方 lookup Forms 與 `wsEQP` 追出 TestRecipe/Parameter 候選真正來源，再提供 `/options/test-recipes` 或沿用現有 YMES API。不要把 Vue DEV 選項當正式 ValueList。
+- [ ] 實作 POST/PUT/DELETE `/api/eqp/auto-loader-scripts`，所有 main/detail 在同交易寫入；更新/刪除採 DataStamp CAS（舊 NULL 需 `IS NULL` 比較，修改後 `COALESCE(DataStamp,0)+1`），POST/PUT request 不接受 audit/DataStamp，伺服器建立 audit。
+- [ ] 主列更新時區分 detail array 未提交與明確空陣列；刪除要在交易中先刪三張 detail，再刪 main。舊 Oracle 沒有 FK，不能依賴 cascade。
+- [ ] `POST /api/eqp/auto-loader-scripts/{equipmentNo}/{fileNameFormat}/default?dataStamp=` body 接受多個目標設備，排除已有相同檔名格式的目標、不覆寫，主列/三種明細完整複製，Creator/CreateDate 重設；來源 DataStamp CAS。回 `{ createdEquipmentNos, existingEquipmentNos, invalidEquipmentNos }`，UI 顯示新增/略過筆數。
+- [ ] API 必須承接 `ChkAutoLoaderSetup` 與 `ChkAutoLoaderSetup_Raw` 等價邏輯：Header 欄位、座標/IC Ingot 例外、動態參數/核准 Test Recipe、公式與 RawData 對照、NonNumeric DataType；不能信任前端生成的簡化 FormatScript。
+- [ ] 實作功能授權、輸入長度/唯一鍵/設備參照驗證及 409 CAS 回應；部署 API/schema/migration 後通知公司端 pull 做 Production 對接。公司端頁未執行 build/test/瀏覽器驗收。
+
+### MTL MLB01 來料 AutoLoader 格式檔設定（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/來料AutoLoader格式檔設定.md`、`docs/DATABASE_CONNECTION.md` 與本節；公司端已直接查 Oracle DDL、建立 Vue DEV 頁與 API handoff。
+- [ ] 先從家用端 SSH/管理連線比對 YMES PostgreSQL live schema、constraints、index 和 migration。新表來源是 `MESTEST.TBLMTLVENDORALSCRIPT`；若缺表，參考 `database/reference/mestest_mtl_autoloader_create.sql` 建 forward migration；不要直接執行 reference SQL 或覆蓋 YMES 擴充欄位。
+- [ ] Oracle 結構：PK `MTLFOLDERPATH varchar(400)`；`FORMATSCRIPT`/`RAWDATAFORMATSCRIPT` 是 CLOB；只有 PK index、無 FK。StoreRawData、SendMail NOT NULL DEFAULT 0；DataStamp nullable DEFAULT 0。來源 DDL：`database/reference/mestest_mtl_autoloader_source_ddl.sql`。
+- [ ] 實作 `GET /api/material-vendor-autoloader-scripts?mtlFolderPath=&vendorNo=`；兩條件皆精確相等、空白不套條件、依 Folder Path 排序，回傳全部欄位及稽核值。主畫面啟動不自動查詢。
+- [ ] 實作 POST/PUT/DELETE `/api/material-vendor-autoloader-scripts`：新增/修改稽核由伺服器設定；StoreRawData 固定為 0；新增/複製的 VendorNo 保持 NULL；Edit 不提供 VendorNo 修改；FormatScript/RawDataFormatScript 使用文字/CLOB 對應型別。
+- [ ] PUT/DELETE 加入主鍵及 DataStamp optimistic concurrency；支援舊 nullable `DataStamp`（NULL 與 0 不可混為必然相同），成功修改遞增版本。WinForms Service 傳 DataStamp，但目前檢視的 Core method signature/UPDATE SQL 未看到版本檢查，請核對家用端實際引用的 Industry_Base 版本；規格記有差異。
+- [ ] 實作受控 `GET /api/material-vendor-autoloader-scripts/directories` 只回傳伺服器允許目錄，不可讓瀏覽器任意瀏覽 MES Server 檔案系統。供應商選擇沿用 `GET /api/material-vendors`。
+- [ ] 實作 Test Item Setup `GET /api/test-recipes?recipeType=MTL_AUTOLOADER`，及 `POST /api/material-vendor-autoloader-scripts/validate`；validate 由 API 承接舊 `Industry_Base.wsSYS.ChkAutoLoaderSetup`。UI DEV 目前僅 CSV/TXT 預覽與簡化檢查；Excel/NPOI、完整欄位轉換/parser 要由 API/後續設定介面補齊。
+- [ ] 驗證登入者 `B_MTL AUTOLOADER SETUP` 權限、Folder Path 400、VendorNo 20、Description 255、separators 10、欄位序號、唯一鍵、DataStamp 衝突；逐筆 Delete 應在第一個失敗時停止。此功能無 IssueState/簽核、無 FK，不新增 audit table。
+- [ ] 比對並部署 schema/migration/API 後更新規格與本清單，再 push；通知公司端 pull Production API 契約。
+
+### MTL ML104 物料群組資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料群組資料.md`、公司端 ML104 區塊及 `docs/DATABASE_CONNECTION.md`。WinForms Form/Service/Core、DEV UI 與兩張表來源已核對。
+- [ ] 先比對 PostgreSQL live schema、欄位/constraints/indexes 與 migrations。`tblmtlmaterialgroupbasis`、`tblmtlmaterialgroupdetail` 已出現在既有物料 0013/first-phase reference；若 YMES schema 已有相符結構就沿用。缺主檔才用 `database/reference/mestest_mtl_material_group_create.sql`，缺明細才依 `database/reference/mestest_mtl_master_create.sql` 的 detail 定義建 forward migration；不得盲跑 `IF NOT EXISTS` 或覆蓋 YMES 擴充欄位。來源確認 `materialtype NOT NULL`、`datastamp DEFAULT 0` nullable；既有 schema 差異需用 forward migration 修正。
+- [ ] 實作 `GET /api/material-groups?groupNo=`、`POST /api/material-groups`、`PUT /api/material-groups/{groupNo}?dataStamp=...`、`DELETE /api/material-groups/{groupNo}?dataStamp=...`。清單不使用 IssueState；編輯只更新 Description；新增/修改稽核由伺服器設定；DataStamp nullable 必須支援 `dataStampIsNull=true` CAS。
+- [ ] 實作 `GET /api/material-groups/{groupNo}/materials` 與 `PUT /api/material-groups/{groupNo}/materials`，body `{materialNos:[...]}` 是整組取代，空陣列清空。以單一交易刪除舊明細、寫入新明細、事件記錄；刪主檔亦須同交易刪明細後刪 header。驗證新增成員存在、MaterialType 相符且 IssueState=2；既有歷史成員若後來不再核准，保持原狀時允許保存，移除後不可重新加入。
+- [ ] MaterialType picker 使用 `GET /api/material-types`（不帶 IssueState，對應 WinForms `LoadMaterialType` 全清單）；左側候選物料使用 `GET /api/materials?issueState=2&materialType=` 精確條件。檢查既有 endpoint 的篩選和資料權限。
+- [ ] 驗證登入者的 `MTL GROUP` 權限、GroupNo/MaterialType/Description 長度與必填、唯一鍵、DataStamp 衝突；此功能無核准 endpoint。沿用現有伺服器 event log，不建新表。
+- [ ] API/schema/migration 部署後更新規格及本清單並 push；通知公司端 pull 最新版接 Production API。公司端 `/YMES/MTL/MaterialGroups` 已完成 DEV 頁。
+
+### MTL ML107 物料標籤對應設定（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料標籤對應設定.md`、公司端 ML107 進度及本節。WinForms Form/Designer、Service/Core、Oracle 結構、Vue DEV 頁與 API 契約已整理。
+- [ ] 以家用端 PPK/SSH 比對 YMES live schema 和 migrations。主表 `tblmtllabelmap` 若缺少，依 `database/reference/mestest_mtl_label_map_create.sql` 新增 forward migration；標籤 lookup `tblprdlabelbasis` 若缺少，才依 `database/reference/mestest_prd_label_basis_lookup_create.sql` 建立。若已存在，核對欄位、NULL/default、PK/index 並保留 YMES 擴充欄位；不可盲跑 reference SQL。
+- [ ] 實作 `GET /api/material-label-maps?materialType=&materialNo=&labelNo=`，三條件以參數化 contains/LIKE 篩選，主查詢沿用舊 Core 的 `MaterialNo IS NOT NULL`（不加 LabelSource 條件），回傳物料/類別名稱、LabelSource、DataStamp、稽核欄，依 MaterialType/MaterialNo/LabelType 排序。
+- [ ] 實作 `GET /api/product-labels?labelSource=5` 讀標籤目錄；LabelSource 必須精確等於 5，回傳 LabelType、LabelNo、FormatFileName、Description、PrinterNo。另沿用 `GET /api/material-types?issueState=2` 及 `GET /api/materials?issueState=2&materialType={exact}` 選擇器；物料 lookup 支援虛擬 `MaterialNo='*'`，不可要求該值存在於物料表。
+- [ ] 實作 `POST /api/material-label-maps`：必填 MaterialType/MaterialNo/LabelType/LabelNo、來源固定為 5、長度符合 DDL、API 端設定 Creator/CreateDate、DataStamp 初值 0；複合 PK 衝突回 409。舊 WinForms 可手動輸入 LabelNo，沒有 label-map FK，因此不要要求手打的 LabelNo 必須存在於 label template 表。
+- [ ] 實作 `PUT /api/material-label-maps/{materialType}/{materialNo}/{labelType}?dataStamp=`：只更新 LabelNo；WHERE 限定 LabelSource=5 與舊 DataStamp，成功更新 Reviser/ReviseDate 並遞增 DataStamp；nullable DataStamp 需支援 `dataStamp=0&dataStampIsNull=true` 並用 `IS NULL` CAS。版本衝突/不存在回 409/404。實體刪除依複合 UI key 加 LabelSource=5；主 Grid 多筆刪除仍逐筆執行、遇錯停止並回報部分成功。
+- [ ] 所有端點檢查登入與 FunctionNo `MTL LABEL MAP BASIS` 權限；不加入 IssueState/核准流程、不新增 Oracle FK 或事件資料表。完成 schema/API 部署後更新規格與 migration index，push 並通知公司端 pull Production API。
+- [ ] 公司端頁面 `/YMES/MTL/MaterialLabelMaps` 已建立 DEV UI；Production API 未部署前不得以 localStorage 充當正式資料。
+
+### MTL ML101 物料供應商基本資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料供應商基本資料.md`、`docs/DATABASE_CONNECTION.md` 新增段落及本檔公司端進度；WinForms Form/Service、API 契約、Issue 狀態與刪除交易均已記錄。
+- [ ] 依 `database/reference/mestest_mtl_material_vendor_source_ddl.sql` 與 `mestest_mtl_material_vendor_create.sql`，透過家用端 PPK/SSH 先比對 YMES schema/migrations，再建立 forward migration；不得在 Oracle 執行 CREATE SQL，也不得移除 YMES 擴充欄位。
+- [ ] 實作 `/api/material-vendors` 及巢狀 `/contactors` API：搜尋/四狀態、CRUD、DataStamp CAS（NULL 版本用 `dataStampIsNull=true`）、批次逐筆刪除、已核准軟刪除、核准 Issue/Job 流程及 contactor 交易；登入及 MTL ML101 權限必須在 API 驗證。
+- [ ] 主檔實體刪除須同交易刪除 `TBLMTLMATERIALVENDORCONTACTOR`、`TBLMTLMATERIALVENDORMAP` 對應資料，再刪主檔；供應商名稱查詢需依 WinForms 舊碼使用 MTL vendor 表。核對並修正 `src/YMes.Api/MasterData/Data/PostgresMasterDataRepository.MaterialFeatures.cs` 目前把 material vendor map join 到 `tbleqpvendor` 的來源錯誤。
+- [ ] 對照規格確認 PostgreSQL 欄位長度、NULL/default、主鍵、API DTO 與 Vue 路徑 `/YMES/MTL/MaterialVendors`；完成後更新規格與 migration/API 部署狀態並 push，通知公司端 pull Production endpoint。
+
+### MTL ML102 物料類別資料（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料類別資料.md`、WinForms Form/Service 規則及現有 MTL API。此功能的 `TBLMTLMATERIALTYPE`、`TBLMTLMATERIALPROPERTY`、`TBLMTLTYPEQCITEM`、`TBLMTLTYPEACCLIMATION` Oracle DDL/空表 CREATE SQL 已在 `mestest_mtl_master_*` reference，並由 0013 建置；先以 PPK/SSH 核對當前 YMES schema/migration，缺表才補 forward migration，不要重建或覆蓋擴充欄位。
+- [ ] 實作 `/api/material-types` CRUD/搜尋/四狀態/核准與 DataStamp CAS；新增檢查 `MaterialType` 不可與 `tblmtlmaterialbasis.materialno` 重複；實體刪除在單一交易移除類別屬性、`tblmtltypeqcitem`、`tblmtltypeacclimation` 與主檔，已核准軟刪除為 -1，簽核中拒絕。
+- [ ] Property 子功能以 Material=`MaterialType` 操作共用 `tblmtlmaterialproperty`，補 CRUD/MTL PROPERTY Issue 核准及 CAS；不要把 MaterialType 屬性和一般 MaterialNo 記錄混在同一查詢結果。
+- [ ] GumHour 以 `tblmtltypeacclimation` 的 `(MaterialType, MaterialNo='*')` 讀寫類別級設定；套用 ACCMin/Max、回冰/ReForzenTimes、再次回溫欄位驗證與 CAS。核准前從系統參數取得 `GumMaterialType`、`MATERIALMULTITIMECTRL`，若屬固晶膠但未設定 GumHour 則拒絕核准；重用 `MTL TYPE` Issue/Job 流程及第一簽核群組通知。
+- [ ] 新增 `POST /api/material-types/{sourceMaterialType}/copy`，以單一交易複製類別資料及來源的類別級 GumHour（若存在），重設 IssueState/audit/DataStamp；不複製 Property/QC 明細。GumHour 端點須支援 GET/POST/PUT，新增時 INSERT、更新時 CAS。
+- [ ] 完成並部署後更新規格、migration/API 狀態與本待辦，push 後通知公司端 pull。公司端 `/YMES/MTL/MaterialTypes` DEV 頁已建立。
+
+### MTL ML105 物料類別品管項目設定（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/MTL/物料類別品管項目設定.md`，核對 `TBLMTLTYPEQCITEM`、`TBLMTLQCITEM` 已在 MTL 0013/schema；Oracle DDL/PG CREATE 已在 `mestest_mtl_master_*` reference，沒有新表需建立。
+- [ ] 實作 `GET /api/material-types?materialType=`（不帶 IssueState 時回傳全部狀態，MaterialType 前綴搜尋）及 `GET /api/material-types/{materialType}/qc-items`，回傳三種 QC 候選目錄與已指派項目；候選需沿用 QC Attributes、Variables、Group 舊目錄服務。
+- [ ] 實作 `PUT /api/material-types/{materialType}/qc-items`，以單次 transaction 取代 Type QC 範本、同步該類別所有物料的 `TBLMTLQCITEM`，依舊程式補齊 `TBLOPQCITEM` 的 `OPNo='IQC'` 項目及異動紀錄；驗證項目存在/唯一性/型別及 MTL ML105 權限。
+- [ ] 完成 API 後更新規格與家用待辦、push 並通知公司端接 Production endpoint；公司端 `/YMES/MTL/MaterialTypeQCItems` DEV 頁已建立。
+
 公司端已整理一批可直接接手的來源結構與目錄資料。開始前先 pull 這份清單所在的最新 `main`，並閱讀 `todolist_officepc.md`、`docs/DATABASE_CONNECTION.md`、`docs/MES_MENU_FUNCTION_INVENTORY.md`、OP/MTL 規格及下列 SQL。家用端只負責 DB/API/migration；公司端後續接回 Vue/WinForms 畫面。
 
 1. **系統目錄 migration 0012 已完成**：以 SSH 比對來源 schema，部署可回滾/可重跑 migration，載入 20 Module、601 MES MenuItem、553 Function 並保留 5 筆 YMES 自訂列。模組繁中名稱已核實、API/Web 已部署，瀏覽器已確認三層選單；逐筆自動比較來源與 API 回傳仍待補。
@@ -645,3 +810,51 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 5. POST /api/smd/pd-line-basis/{pdLineNo}/approve?issueState=0&dataStamp= 僅接受 0，IssueNo=SMD PDLINE BASIS。使用 YMES 共用 Issue/Job 簽核服務：無 Job/Detail 依設定直達 2；有流程時先 1，核准 2、退回 0，通知第一簽核群組。不可照搬 DEV 直接切成 2。
 6. 所有端點檢查登入與 SMD 功能權限、唯一鍵/欄位範圍及資料狀態。DataStamp nullable/default 0；NULL 原值需以 IS NULL CAS，更新遞增 COALESCE(datastamp,0)+1。批次 UI 逐筆呼叫，第一個錯誤停止並保留已成功筆數。
 7. API/schema/migration 完成並部署後，通知公司端 pull 最新 main 對接 Production；不要把假資料回退用於 Production。
+
+## SMD SD108 設備狀態監控_區域（公司端 UI handoff）
+
+- 公司端已新增 Development Vue 頁與規格：docs/modules/SMD/設備狀態監控_區域.md、web/src/components/AreaShowMaster.vue。Production 不使用 localStorage。
+- Oracle 表 DDL/PG 空表 SQL：database/reference/mestest_smd_area_shift_source_ddl.sql、mestest_smd_area_shift_create.sql，表為 TBLSMDAREASHIFT、TBLSMDAREAOPERATOR。先比對 YMES schema；只對缺漏新增 migration。
+- 實作班別/人員 API、DataStamp CAS、以 transaction 同步 Operator 明細、複製班別、刪除主從資料、同部門有效人員驗證及舊 ChkAreaShiftLoginState 規則（tblWIPAreaOperatorState 有登入即拒絕修改）。當來源 DataStamp 為 NULL，API 接收 `dataStamp=0&dataStampIsNull=true` 並以 `IS NULL` CAS；有值時則比較該值。
+- SD104 layout API 仍未完成；SD108 首頁依既有 GET /api/smd/areas/{areaNo}/layout 讀配置。另需 BaseArea lookup 與 shift-context/shift-options API。完整端點與 DTO 見 SD108 規格。
+- WIP 即時狀態與歷史由既有 WP_AreaOperatorState/WP_AreaOperatorLog 提供；補查 YMES WIP API 後沿用或實作 GET /api/wip/areas/{areaNo}/operator-state 與 /operator-log。不要將 DEV 假資料當正式狀態。
+
+## SMD SD109 工位基本資料（公司端 UI handoff）
+
+- 公司端已新增 Development Vue 頁與規格：docs/modules/SMD/工位基本資料.md、web/src/components/PositionBasisMaster.vue。Production 不使用 localStorage。
+- Oracle TBLSMDPDLINEPOSITIONBASIS 的來源 DDL/PG 空表 SQL 已加入 reference；先比對實際 YMES schema，缺漏/預設差異才新增 migration。
+- 實作複合鍵 (PDLineNo,PositionNo) GET/POST/PUT/DELETE、DataStamp CAS、audit，並驗證 PDLineNo 為已核准一般作業區（AreaClass=0、AreaType=0、IssueState=2）。DataStamp 為 NULL 時按 `dataStamp=0&dataStampIsNull=true` 以 `IS NULL` CAS；API 路徑/DTO 見 SD109 規格。
+- eSOP 選項由 Execute_eSOP 系統參數控制；瀏覽器不可直接呼叫 eSOP，請由 API 使用現有 ERP/EAI 設定代理 station.get。
+- first-phase CREATE SQL 已修正 CreateDate DEFAULT LOCALTIMESTAMP NOT NULL、DataStamp DEFAULT 0；家用端實際 schema 仍須用 migration 比對與修正，不要重跑 bootstrap。
+
+家用端完成後更新本檔與兩份模組規格，部署 API/schema，再通知公司端 pull 進行 Production 對接。
+
+
+## MTL ML106 物料品管項目設定（公司端 2026-11-17 交接）
+
+先讀 docs/modules/MTL/物料品管項目設定.md、todolist_officepc.md 的 ML106 區塊與既有 ML105 規格。公司端頁面 /YMES/MTL/MaterialQCItems 已完成 Vue DEV UI；WinForms Form/Designer、wsMTL、clsMTLBasis、clsQCBasis 已對照。Production API 尚未完成。
+
+### Schema / DDL
+
+- Oracle DDL 由公司端 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 透過既有受保護連線唯讀查詢 MESTEST，DDL 檔：database/reference/mestest_mtl_qc_item_tables_source_ddl.sql。連線秘密仍存既有保護設定，不複製到 repo；不要再問使用者 IP/帳密，也不要在 Oracle 執行 CREATE。
+- PostgreSQL 空表參考檔：database/reference/mestest_mtl_qc_item_tables_create.sql，含 tblqcitemforattributes、tblqcitemforvariables、tblqcitemgroupbasis、tblqcitembindlog。先查 YMES PostgreSQL 實際 schema/table/columns/indexes 和 migration；若符合就沿用，缺表才加 migration，缺欄位/約束才 forward migration。不要盲目套用 IF NOT EXISTS。
+- TBLMTLQCITEM 在 mestest_mtl_master_create.sql；TBLOPQCITEM 在 mestest_operation_and_system_create.sql。這兩張先比對現有 schema，不要重建。
+- 四張新查 DDL 表各只有 Oracle DDL 列出的 PK，沒有 FK 或其他 index。Oracle DATE 用 timestamp without time zone，NUMBER 精度及 nullable/default 按 source DDL 保留。
+- 授予 ymes_app 本功能必要 SELECT/INSERT/UPDATE/DELETE 權限；避免為查目錄或寫 log 開放多餘權限。migration 前照既有家用端流程備份並留下部署紀錄。
+
+### API / Service
+
+1. 擴充物料清單 GET /api/materials 支援選填 materialType 精確條件及 materialNoPrefix 前綴條件。ML106 的查詢不限制 IssueState；materialType/materialNoPrefix 皆空時 API 需回傳完整清單以供 WinForms 等價 MaterialNo 查找視窗使用，Vue 主畫面 Query 按鈕自行要求至少一個條件。保留既有 keyword、issueState 呼叫行為。
+2. 新增 GET /api/materials/{no}/qc-item-library，回傳 { available, assigned }：available 以 IssueState=2 分別讀三個 QC catalog，輸出 qcItemNo/qcItemName/qcItemType（0 Attributes、1 Variables、2 Group）；assigned 讀 tblmtlqcitem 並依型別左 Join 正確 catalog 取得名稱，保留無法 Join 的舊綁定供移除，輸出 reviser/reviseDate。
+3. 保持既有 GET /api/materials/{no}/qc-items 的 type-template 行為，因 MaterialFeatureDialog.vue 依賴它；不可把其 available 換成 catalog 全表。前端新增的 library GET 路徑已獨立。
+4. 既有 PUT /api/materials/{no}/qc-items 接受 {items:[{qcItemNo,qcItemType}]} 並寫同一張 tblmtlqcitem。新增來源目錄驗證、完整交易及舊 WinForms 副作用：替換物料現有綁定；對各新 QC Item 用 INSERT ... SELECT/等價原子方式確保 tblopqcitem 的 opno='IQC'、inline=0、executeorder=0 存在且不重複；寫 tblqcitembindlog，BindType=2，刪除事件 ExecuteStatus=2、新增事件 ExecuteStatus=0，記錄 MTLNo、QCItemType/No、ExecuteDate、Executor。QCItemLogSerial 由伺服器產生唯一值，不建 Oracle sequence。
+5. Audit 由登入者與伺服器時間設定；同一 transaction 更新 assignment、IQC 關聯與 bind log。先核對目前 API 的 IssueState=0 寫入限制是否符合舊 WinForms；若為既有 MaterialFeatureDialog 必需，保持既有契約且明確處理兩種 UI 的合法狀態，不可意外禁止舊資料修正。
+6. TBLQCITEMBINDLOG 在 YMES 若缺少才使用 reference SQL 建表；如現有 schema 有擴充，保留它並用 forward migration 對齊必要欄位。其複合 PK 順序為 (QCITEMNO, BINDTYPE, QCITEMLOGSERIAL)，不能自行改成其他順序。
+7. 完成 migration/API/權限後部署，更新 API 文件、migration index、本待辦；通知公司端 pull。公司端會對照 ML106 頁面核對 response、錯誤、全狀態搜尋與儲存副作用。
+
+## 2026-11-17 ML103 物料基本資料 API 選項交接
+
+- ML103 主資料、屬性、QC、供應商、GumHour 等 Oracle DDL/PG CREATE 已在 database/reference/mestest_mtl_master_* 建立並由 0013 migration 比對/部署；本次公司端沒有發現新表，不新增 SQL 或 migration。
+- 公司端 ML103 多選核准/刪除會對每筆資料依序呼叫既有 POST /api/materials/{no}/approve 與 DELETE /api/materials/{no}?issueState=...&dataStamp=...；不需要額外批次 API。請確認現有單筆 API 的簽核檢查、引用檢查、DataStamp、稽核與狀態轉換和 WinForms 相同。已檢視 PostgresMasterDataRepository.ApproveMaterial：目前有 Controlled=1、DataStamp、IssueState 檢查，但缺少 WinForms 的條件式 GumHour 設定檢查；需在服務端補上。
+- GET /api/materials/lookups/options 現況由 MaterialFeaturesController.Options() 回傳 countWay=[]、checkLotNo=[]，且沒有 MATERIALMULTITIMECTRL / GumMaterialType。請從公司端 WinForms ValueListProvider.GetValueList("TBLMTLMATERIALBASIS", ...) 與 wsSYS.LoadParameter 核實真實值，不要以 DEV 樣本猜測；將 CountWay、CheckLotNo 顯示選項與 GumHour 參數設定加入 DTO/API response。若參數已有 YMES 系統設定來源，沿用既有結構，不新建設定表。
+- 完成後更新 MaterialOptionsDto、API 文件與本待辦。公司端 UI 已能讀取選項；多次回溫參數未提供時 Production 會隱藏 GumHour，避免對非適用物料開啟設定。

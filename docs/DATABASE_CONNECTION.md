@@ -198,3 +198,99 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 核實 PDLineStatus NUMBER(1,0) DEFAULT 1 NOT NULL；IssueState NUMBER(1,0) NOT NULL 無 DEFAULT；CreateDate DATE DEFAULT SYSDATE 可 NULL；DataStamp NUMBER(11,0) DEFAULT 0 可 NULL。PDLineNo 是唯一 PK index；無 FK 或其他索引。
 - Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 為 database/reference/mestest_smd_pdline_basis_source_ddl.sql、mestest_smd_pdline_basis_create.sql。first-phase bootstrap 已校正來源 defaults 並移除無來源依據的欄位猜測註解；家用端仍須比對實際 schema/migration，缺漏才新增 forward migration。
 - 只查結構，未讀業務資料或在 Oracle 執行 DDL；受保護連線資料未輸出或保存至 Git。
+
+### 2026-11-16：SMD SD108、SD109
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 及本機受保護連線，直接唯讀查詢 MESTEST.TBLSMDAREASHIFT、TBLSMDAREAOPERATOR、TBLSMDPDLINEPOSITIONBASIS 的 DBMS_METADATA 與資料字典。
+- 新增 Oracle 邏輯來源 DDL 與 PostgreSQL 空表 CREATE SQL：mestest_smd_area_shift_source_ddl.sql / mestest_smd_area_shift_create.sql；mestest_smd_pdline_position_basis_source_ddl.sql / mestest_smd_pdline_position_basis_create.sql。
+- 僅查表結構、欄位 null/default、PK/index/FK；未讀業務資料、未在 Oracle 執行 DDL。連線值未輸出或寫入 Git。
+
+### 更新 2026-11-17：MTL ML101 物料供應商
+
+- 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，讀取本機受保護連線，唯讀呼叫 DBMS_METADATA.GET_DDL 查 MESTEST.TBLMTLMATERIALVENDOR、TBLMTLMATERIALVENDORCONTACTOR。
+- 再查 ALL_INDEXES 與 ALL_CONSTRAINTS：主檔 PK VendorNo；連絡人 PK (VendorNo, ContactorName)；兩表都只有 PK unique index，沒有 FK 或額外索引。
+- Oracle 邏輯 DDL與 PostgreSQL 空表 CREATE SQL：database/reference/mestest_mtl_material_vendor_source_ddl.sql、database/reference/mestest_mtl_material_vendor_create.sql。僅查結構，未讀業務資料、未在 Oracle 執行 DDL，連線值未輸出或提交。
+### 更新 2026-11-17：MTL ML106 物料品管項目設定
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機既有受保護設定唯讀查詢 MESTEST.TBLQCITEMFORATTRIBUTES、TBLQCITEMFORVARIABLES、TBLQCITEMGROUPBASIS、TBLQCITEMBINDLOG 的 DBMS_METADATA DDL、欄位、PK 與 index；未查詢業務資料，未在 Oracle 執行 DDL。
+- 原始 Oracle DDL 與 PostgreSQL 空表 CREATE SQL 分別為 database/reference/mestest_mtl_qc_item_tables_source_ddl.sql、database/reference/mestest_mtl_qc_item_tables_create.sql。TBLMTLQCITEM 與 TBLOPQCITEM 沿用既有 MTL/OP reference。
+- 來源連線仍由本機受保護設定提供；IP、帳號、密碼不寫入 repo、終端或規格文件。家用端先核對 YMES schema/migrations，只新增缺漏結構。
+
+### 更新 2026-11-17：MTL ML104 物料群組資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機既有受保護連線直接唯讀呼叫 DBMS_METADATA.GET_DDL，查得 `MESTEST.TBLMTLMATERIALGROUPBASIS` DDL；另查 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES、ALL_IND_COLUMNS。僅查結構，未讀 MES 業務列、未在 Oracle 執行 DDL。
+- GROUPNO 與 MATERIALTYPE 的資料字典 column Nullable 顯示 Y，但各有 ENABLED CHECK constraint 強制非 NULL；DATASTAMP NUMBER(11,0) DEFAULT 0 可 NULL。唯一索引為 GroupNo PK index，無其他索引/FK。
+- Oracle source DDL 與 PostgreSQL 空表 CREATE SQL 分別在 `database/reference/mestest_mtl_material_group_source_ddl.sql`、`database/reference/mestest_mtl_material_group_create.sql`；群組明細沿用 `mestest_mtl_master_source_ddl.sql`、`mestest_mtl_master_create.sql`。
+- 連線秘密仍只在本機受保護設定中；IP、帳號、密碼、SID 不寫入 repo 或待辦，也不需要重新向使用者索取。
+
+### 更新 2026-11-17：MTL ML107 物料標籤對應
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機既有受保護連線唯讀呼叫 DBMS_METADATA.GET_DDL，查得 `MESTEST.TBLMTLLABELMAP` 與 lookup table `MESTEST.TBLPRDLABELBASIS`；並查 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES、ALL_IND_COLUMNS。
+- TBLMTLLABELMAP 主鍵為 (MaterialType, MaterialNo, LabelSource, LabelType)，LabelSource=5 是物料來源；DataStamp nullable DEFAULT 0。TBLPRDLABELBASIS 主鍵為 LabelNo，兩表都只有 PK unique index，沒有 FK/額外索引。
+- Source DDL / PostgreSQL 空表參考見 `database/reference/mestest_mtl_label_map_source_ddl.sql`、`mestest_mtl_label_map_create.sql`、`mestest_prd_label_basis_lookup_create.sql`。本次只查資料字典結構，未讀業務列、未在 Oracle 執行 DDL。
+- IP、帳號、密碼、SID 仍由本機受保護設定提供，未輸出或寫入文件/Git；下次公司端查 DDL 沿用這個既有 PowerShell/ODP.NET 方式。
+
+### 更新 2026-11-17：MTL MLB01 來料 AutoLoader 格式檔設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，讀取本機既有受保護連線，唯讀取得 `MESTEST.TBLMTLVENDORALSCRIPT` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。
+- 主鍵為 `MTLFOLDERPATH`；只有 PK unique index，無外鍵/額外索引。`FORMATScript`、`RAWDATAFORMATSCRIPT` 是 CLOB；`DATASTAMP NUMBER(11,0) DEFAULT 0` 可 NULL；`STORERAWDATA`、`SENDMAIL` 為 NOT NULL DEFAULT 0。
+- Oracle 來源 DDL 與 PostgreSQL 空表參考分別在 `database/reference/mestest_mtl_autoloader_source_ddl.sql`、`database/reference/mestest_mtl_autoloader_create.sql`。僅查資料字典結構，未讀 MES 業務列，未在 Oracle 執行 DDL。
+- 連線秘密仍只在本機受保護設定中；IP、帳號、密碼、SID 未輸出或寫入文件/Git。家用端建立 migration 前須比對 YMES PostgreSQL live schema 與既有 migrations。
+
+### 更新 2026-11-17：EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader
+
+- 公司端以 PowerShell 5.1 + Oracle.ManagedDataAccess 從本機既有受保護連線唯讀取得四張表 DDL/資料字典：`TBLEQPALSCRIPT`、`TBLEQPALSCRIPT_TESTRECIPE`、`TBLEQPALSCRIPT_UNNUMERICFIELD`、`TBLEQPALSCRIPT_COORDINFO`。沒有讀取 MES 業務列，也沒有在 Oracle 執行 DDL。
+- Oracle source DDL 與 YMES 空表參考為 `database/reference/mestest_eqp_autoloader_source_ddl.sql`、`database/reference/mestest_eqp_autoloader_create.sql`。主表沒有 PK constraint，存在唯一索引 `(EquipmentNo,FileNameFormat)`；三個子表各有來源複合 PK unique index。四表間沒有 FK。
+- `FormatScript`、`RawDataFormatScript` 為 CLOB；`DataStamp NUMBER(11,0) DEFAULT 0` nullable。子表與主表需由 API transaction 一致維護。DDL/schema 與功能規格見 `docs/modules/EQP/設備AutoLoader格式檔設定.md`。
+- IP、帳號、密碼、SID 沒有輸出或寫入 Git；家用端只需核對 YMES PostgreSQL 結構並決定 forward migration，不要連 Oracle 建表。
+
+### 更新 2026-11-17：QC111 8D 原因基本資料來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有本機受保護 Oracle 連線直接唯讀查詢 MESTEST.TBLQCREASONBASIS_8D、TBLQCREASONSUBTYPE_8D 的 DBMS_METADATA.GET_DDL 及 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES。
+- 來源 DDL / PostgreSQL 空表 CREATE 參考：database/reference/mestest_qc_8d_reason_source_ddl.sql、database/reference/mestest_qc_8d_reason_create.sql。兩張表各只有 PK unique index，沒有外鍵或其他索引；DataStamp 是 nullable DEFAULT 0。Subtype ReasonType 是 NUMBER(1,0)，Reason 明細 ReasonType 是 VARCHAR2(50)。
+- 本次只讀取資料字典/DDL，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。
+- 同以 Oracle 唯讀查詢 MESTEST.TBLSYSVALUELIST 的 TBLQCREASONBASIS_8D.REASONTYPE 選項，並核對 Customer/Production/MESClient/mesresource.zh-cht.resources：1 Men、人員；2 Machine_8D、設備；3 Material、物料；4 Method、方法；5 Environment、環境。此為系統字典與語系資源，不是業務資料。
+- YMES 家用端先比對 live schema/migrations，缺少時才建立 forward migration；WinForms、簽核流程、API DTO/端點及子類別刪除留下無 FK 明細的行為見 docs/modules/QC/8D原因基本資料.md。
+
+### 更新 2026-11-17：QC406 第一處理群組來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有本機受保護 Oracle 連線直接唯讀查詢 MESTEST.TBLQCFIRSTGROUP 的 DBMS_METADATA.GET_DDL 與 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES。
+- 來源 DDL / PostgreSQL 空表 CREATE 參考：database/reference/mestest_qc_first_group_source_ddl.sql、mestest_qc_first_group_create.sql。主表 PK 為 `(MCLASSNO, OPNO)`，只有 PK unique index，沒有 FK；DataStamp nullable DEFAULT 0，IssueState NOT NULL DEFAULT 0。
+- 查找表 `TBLQCMCLASSBASIS` 與 `TBLQCHOLDDISPGROUPBASIS` 的來源 DDL / PostgreSQL CREATE 參考為 database/reference/mestest_qc_first_group_lookups_source_ddl.sql、mestest_qc_first_group_lookups_create.sql。作業站 `TBLOPBASIS` 已有 `mestest_operation_and_system_source_ddl.sql` / `mestest_operation_and_system_create.sql`。
+- 查找來源為 TBLQCMCLASSBASIS、TBLOPBASIS、TBLQCHOLDDISPGROUPBASIS；Form 僅載入 IssueState=2。三表 key 與必要欄位已由 Oracle 資料字典直連核對，本功能不新增查找表。
+- 本次只讀取 DDL/資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。
+- WinForms 多作業站新增/複製、`OPNo='*'` 通用設定、Issue Job `FIRST GROUP`、狀態刪除規則與 API 契約見 docs/modules/QC/第一處理群組.md。
+
+### 更新 2026-11-17：QC407 最後處理群組來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有本機受保護連線直連唯讀查詢 MESTEST.TBLQCFINALGROUP 的 DBMS_METADATA.GET_DDL 與 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES。
+- 來源 DDL / PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_final_group_source_ddl.sql`、`mestest_qc_final_group_create.sql`。PK 為 `(MCLASSNO, OPNO)`，只有 PK unique index、沒有 FK；DataStamp nullable DEFAULT 0，IssueState NOT NULL DEFAULT 0。
+- 主分類、作業站、異常處理群組查找表與 QC406 共用，僅查詢 IssueState=2；不新增重複 lookup table。
+- 本次只讀取 DDL/資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。UI、狀態與 Issue Job `Final GROUP` 規則見 `docs/modules/QC/最後處理群組.md`。
+
+### 更新 2026-11-17：QC404 異常說明來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從既有本機受保護連線直連唯讀查詢 MESTEST.TBLQCHOLDDESCRIPTION 的 DBMS_METADATA.GET_DDL、`I_TBLQCHOLDDESCRIPTION_01` index DDL，以及 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES。
+- 來源 DDL / PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_hold_description_source_ddl.sql`、`mestest_qc_hold_description_create.sql`。PK 是 `HoldDescriptionID`，另有 `MClassNo` 非唯一索引，沒有 FK；`HoldDescription` VARCHAR2(4000) NOT NULL；DataStamp nullable DEFAULT 0。
+- 主分類查找重用 `TBLQCMCLASSBASIS`，WinForms LoadMClassBasis 預設 IssueState=2；不新增 lookup table。Core 以 `Guid.NewGuid().ToString()` 產生 HoldDescriptionID。
+- 本次只讀 DDL/資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL；連線字串及憑證未輸出或寫入 Git。Form、狀態、Issue Job `HOLD DESCRIPTION` 規則見 `docs/modules/QC/異常說明.md`。
+
+### 更新 2026-11-17：QC405 異常處理群組
+
+- `TBLQCHOLDDISPGROUPBASIS` Oracle DDL/欄位/PK/index 已由公司端直連唯讀查得並放在 QC406 共用 lookup source DDL；PostgreSQL 空表 CREATE 也已存在。只有 GroupNo PK index，無其他 index/FK。
+- `TBLUSRUSERGROUP` Oracle DDL/欄位/複合 PK/索引已於 2026-11-16 由同一受保護連線直接查得；來源與 PostgreSQL 空表 CREATE 參照放在設備工程群組成員 DDL 檔。其 AgentOf 在 Oracle 欄位屬 nullable，但因納入 PK，實際不得為 NULL。QC405 使用 GroupType=5/6。
+- 本次未讀業務資料，未執行 Oracle DDL，沒有輸出或保存連線秘密；沒有新 CREATE SQL 要執行。功能及 API handoff 見 `docs/modules/QC/異常處理群組.md`。
+
+### 更新 2026-11-17：QC403 異常原因基本資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 及本機既有受保護連線，唯讀取得 MESTEST.TBLQCHOLDITEMBASIS 的 DBMS_METADATA DDL、ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES/ALL_IND_COLUMNS。
+- Oracle source DDL / PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_hold_item_basis_source_ddl.sql`、`database/reference/mestest_qc_hold_item_basis_create.sql`。PK 為 HoldItemNo，只有 PK unique index，沒有 FK/其他 index；CreateERF nullable DEFAULT 1，HoldSystem NOT NULL DEFAULT 0，DataStamp nullable DEFAULT 0，IssueState NOT NULL DEFAULT 0。
+- WinForms `HoldSystem` ValueList 對照由 `STD/MEStc/DataImporter/HoldItemDataImporter.cs` enum 核實：0=MES、1=EAP_Exception、2=EDA_Exception。查找來源是已簽核 MClass/SClass/異常處理群組，及已簽核且目前版本 OCAP；未建立重複查找表。
+- 本次僅查 DDL/資料字典，沒有讀 MES 業務資料，沒有在 Oracle 執行 DDL；連線字串/憑證未輸出或寫入 Git。畫面、CRUD、匯入與 Issue Job 規則見 `docs/modules/QC/異常原因基本資料.md`。
+
+### 更新 2026-11-17：QC401 主分類基本資料
+
+- TBLQCMCLASSBASIS Oracle DBMS_METADATA DDL 及 PostgreSQL 空表 CREATE SQL 已由先前 PowerShell 5.1 + Oracle.ManagedDataAccess，使用本機既有受保護連線唯讀查得，納入 QC406 共用查找表 reference：`database/reference/mestest_qc_first_group_lookups_source_ddl.sql`、`mestest_qc_first_group_lookups_create.sql`。本次沿用既有結果，未重複連線查詢。
+- 主鍵為 MClassNo，只有 PK unique index，沒有 FK 或其他 index；本功能不新增 DDL/CREATE 檔。資料表欄位與 UI/API 規則見 `docs/modules/QC/主分類基本資料.md`。
+- 另由公司端原始碼確認匯入器位於 `STD/MESWin/QC/QC_MClassDataImport` 及 `STD/MEStc/DataImporter/MClassDataImporter.cs`；未找到 template binary。Excel 只讀程式與匯入檢查來源，不使用 Oracle 查業務列。
+- 不讀取 MES 業務列、不在 Oracle 執行 DDL；IP、帳號、密碼、SID 未輸出或保存於 Git。家用端只核對 YMES PostgreSQL live schema/migrations。

@@ -9,6 +9,23 @@
 - 同時記錄 Vue UI 狀態、API 契約及資料庫待辦。公司電腦 Development 可用明確標示的本地假資料完成互動；Production API 尚未完成時，必須如實標示待建置。
 - 共用文件：[功能規格範本](MODULE_SPEC_TEMPLATE.md)、[資料庫連線與憑證處理](DATABASE_CONNECTION.md)、[開發分工與 UI 準則](DEVELOPMENT_STYLE.md)。
 
+## 2026-11-17 新增完成規格
+
+- EQP `B_EQP AUTOLOADER SETUP`（EPB01）設備 AutoLoader 格式檔設定：[`modules/EQP/設備AutoLoader格式檔設定.md`](modules/EQP/設備AutoLoader格式檔設定.md)。Oracle source DDL 與 YMES 空表 CREATE 參考：`database/reference/mestest_eqp_autoloader_source_ddl.sql`、`database/reference/mestest_eqp_autoloader_create.sql`。公司端 Vue DEV 頁掛載 `/YMES/EQP/EquipmentAutoLoaderSetup`；API、schema migration、選項與解析驗證待家用端交接。
+- Oracle 來源為 `TBLEQPALSCRIPT`、`TBLEQPALSCRIPT_TESTRECIPE`、`TBLEQPALSCRIPT_UNNUMERICFIELD`、`TBLEQPALSCRIPT_COORDINFO`；主表唯一索引是 `(EquipmentNo,FileNameFormat)`，來源無 FK。沒有在 Oracle 執行 DDL 或讀取 MES 業務列。
+
+## 2026-11-17 新增功能規格
+
+- QC401「主分類基本資料」：[功能規格](modules/QC/主分類基本資料.md)。公司端已完成 `/YMES/QC/MClassBasis` DEV 頁；重用 QC406 已查得的 `TBLQCMCLASSBASIS` DDL/CREATE。匯入器原碼已找到並記錄第一工作表/前兩欄/逐編號部分成功規則；官方 template binary 未找到，需由家用端接 YMES template storage。
+
+- QC403「異常原因基本資料」：[功能規格](modules/QC/異常原因基本資料.md)。公司端已完成 `/YMES/QC/HoldItemBasis` DEV 頁；Oracle source DDL 與 PostgreSQL 空表 CREATE 參考已建立。`TBLQCHOLDITEMBASIS` 以 HoldItemNo 為 PK，只有 PK unique index，無 FK/額外索引；家用端需比對 schema，實作 QC403 CRUD、HoldSystem/分類/群組/OCAP 查找、`HOLDITEM BASIS` Issue Job 與 Excel 匯入 API。
+
+- QC404「異常說明」：[功能規格](modules/QC/異常說明.md)。公司端已依 WinForms 建立 DEV 頁 `/YMES/QC/HoldDescription`；Oracle source DDL 與 PostgreSQL 空表 CREATE 參考已建立。來源主鍵是 HoldDescriptionID，另有 MClassNo 非唯一索引、沒有 FK；家用端需比對 YMES schema 並實作 `HOLD DESCRIPTION` Issue Job 核准流程。
+- QC405「異常處理群組」：[功能規格](modules/QC/異常處理群組.md)。公司端 Vue DEV 頁 `/YMES/QC/HoldDispGroup` 包含群組主檔、GroupType 5 主處理人員與 GroupType 6 CC 人員；沿用已查的 `TBLQCHOLDDISPGROUPBASIS`、`TBLUSRUSERGROUP` DDL/CREATE 參考，無新增資料表；家用端需實作群組/成員原子更新及 `HOLD DISP GROUP` Issue Job。
+- QC406「第一處理群組」：[功能規格](modules/QC/第一處理群組.md)。公司端已依 WinForms 建立 DEV 頁 `/YMES/QC/FirstGroup`；主表與查找表 Oracle source DDL、PostgreSQL 空表 CREATE 參考位於 [`database/reference`](../database/reference/) 下的 `mestest_qc_first_group*_*.sql`。來源主表是 `(MClassNo, OPNo)` 複合 PK，沒有 FK；家用端需比對 YMES schema 並實作 Issue Job 核准與查找端點。
+- QC407「最後處理群組」：[功能規格](modules/QC/最後處理群組.md)。公司端已依 `frmFinalGroup`/Service/Core 建立 DEV 頁 `/YMES/QC/FinalGroup`；Oracle source DDL 與 PostgreSQL 空表 CREATE 參考已建立。來源主表也是 `(MClassNo, OPNo)` 複合 PK，沒有 FK；Issue Job Map 的來源識別字串為 `Final GROUP`。
+- QC111「8D 原因基本資料」：[功能規格](modules/QC/8D原因基本資料.md)。公司端已接 WinForms 雙 Grid DEV 頁 `/YMES/QC/8DReasonBasis`；[Oracle source DDL](../database/reference/mestest_qc_8d_reason_source_ddl.sql) 與 [PostgreSQL 空表 CREATE 參考](../database/reference/mestest_qc_8d_reason_create.sql) 已建立。兩張來源表只有 PK unique index，沒有 FK；家用端需比對 YMES schema 並補 API/Issue Job 核准流程。
+
 ## 已確認的第一層模組
 
 以下清單已由公司端 PowerShell 5.1 唯讀查詢 MESTEST.TBLSYSMODULE、TBLSYSMENUITEM、TBLSYSFUNCTION 取得。第一層名稱依 WinForms 的 ModuleNo + Module 翻譯鍵，從 Customer/Production/MESClient/mesresource.zh-cht.resources 核實。詳細功能編號、分類、FormName 及 ExecutionFile 見 [MES Oracle 選單與功能目錄](MES_MENU_FUNCTION_INVENTORY.md)。目錄資料也不等同使用者實際可見權限，WinForms 另以使用者權限篩選。
@@ -70,9 +87,9 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | ENT | 外包商基本資料 ET201 DEV 雙 Grid 頁面 | [外包商基本資料規格](modules/ENT/外包商基本資料.md)；兩張 Oracle 來源 DDL/PG 空表 CREATE SQL 已建立 | YMES schema 比對、雙表 CRUD/交易與 Issue/Job 核准 API 待家用端 |
 | ENT | 外包項目設定 ET202 DEV 單 Grid 頁面 | [外包項目設定規格](modules/ENT/外包項目設定.md)；Oracle 來源 DDL/PG 空表 CREATE SQL 已建立 | YMES schema 比對、CRUD/DataStamp 與已核准外包流程查找 API 待家用端 |
 | EQP | 設備設定七項 DEV 頁面 | 設備設定功能規格已分頁；多張設備表已查 DDL | 待逐功能完成 |
-| SMD | SD101 工廠、SD103 儲位、SD104 區域、SD105 區域庫房、SD106 過帳電腦之區域、SD107 生產線別 DEV 頁面；SMD 第一層三層選單列出 8 個功能 | [SD101](modules/SMD/工廠基本資料.md)、[SD103](modules/SMD/儲位基本資料.md)、[SD104](modules/SMD/區域基本資料.md)、[SD105](modules/SMD/區域庫房基本設定.md)、[SD106](modules/SMD/過帳電腦之區域.md)、[SD107](modules/SMD/生產線別基本資料.md)；相關 Oracle DDL/PG 空表 CREATE 已交付 | SD101、SD103–SD107 API/schema 待家用端；SD108–SD109 UI 待逐頁復刻 |
+| SMD | SD101 工廠、SD103 儲位、SD104 區域、SD105 區域庫房、SD106 過帳電腦之區域、SD107 生產線別、SD108 區域設備狀態監控、SD109 工位基本資料 DEV 頁面；SMD 第一層三層選單列出 8 個功能 | [SD101](modules/SMD/工廠基本資料.md)、[SD103](modules/SMD/儲位基本資料.md)、[SD104](modules/SMD/區域基本資料.md)、[SD105](modules/SMD/區域庫房基本設定.md)、[SD106](modules/SMD/過帳電腦之區域.md)、[SD107](modules/SMD/生產線別基本資料.md)、[SD108](modules/SMD/設備狀態監控_區域.md)、[SD109](modules/SMD/工位基本資料.md)；來源 Oracle DDL 與 PostgreSQL 空表 CREATE 已交付 | SD101、SD103–SD109 Production API/schema 待家用端 |
 | OP | 作業站主檔及簡化 DEV 子功能 | [作業站主檔規格](modules/OP/作業站主檔.md)；18 張作業站相關表來源 DDL/CREATE SQL 已交付 | 待補子功能 API |
-| MTL | 物料主檔及簡化 DEV 子功能 | [物料主檔規格](modules/MTL/物料主檔.md)、[物料資料匯入](modules/MTL/物料資料匯入.md)；8 張來源表 DDL/CREATE SQL 已交付 | 主檔/API 部分完成；功能仍待逐項復刻 |
+| MTL | 物料主檔與 DEV 子功能；ML101、ML102、ML104、ML105、ML106、ML107、MLB01 畫面/規格已建立 | [物料主檔](modules/MTL/物料主檔.md)、[ML101](modules/MTL/物料供應商基本資料.md)、[ML102](modules/MTL/物料類別資料.md)、[ML104](modules/MTL/物料群組資料.md)、[ML105](modules/MTL/物料類別品管項目設定.md)、[ML106](modules/MTL/物料品管項目設定.md)、[ML107](modules/MTL/物料標籤對應設定.md)、[MLB01](modules/MTL/來料AutoLoader格式檔設定.md)；MLB01 Oracle DDL/PG CREATE 已交付 | MTL API 部分部署；ML101、102、104、105、106、107、MLB01 Production API/schema 依 `todolist_homepc.md` 待家用端完成 |
 | PRS | 流程主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
 | PRD | 產品主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
 
@@ -100,6 +117,17 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | 載具類別資料 | EP302；WinForms Form/Def/Designer、wsEQP/clsCarrierBasis、Oracle DDL 與 UseLayer/簽核規則已核實 | [規格](modules/EQP/載具/載具類別資料.md)、Oracle 原始 DDL/PG 空表 CREATE SQL 與 Vue DEV UI 已建立；Production schema/API/核准流程待家用電腦 |
 | 載具基本資料 | EP303；frmCarrierBasis/Def、wsEQP/clsCarrierBasis、主表/WIP 狀態/廠區 DDL 與交易/簽核規則已核實 | [規格](modules/EQP/載具/載具基本資料.md)、Oracle 原始 DDL/PG 空表 CREATE SQL 與 Vue DEV UI 已建立；Production schema/API/核准流程待家用電腦 |
 | 設備參數資料 | EP401；frmEQPRecipeBasis/Def、雙清單與 Recipe Detail/Copy/Version/簽核 Service 規則已核對；兩張 Oracle DDL、索引及 Type ValueList 已直連查證 | [規格](modules/EQP/設備設定/設備參數資料.md)、Oracle 原始 DDL/PG 空表 CREATE SQL、bootstrap 修正與 Vue DEV UI 已建立；Production schema/API/簽核待家用電腦 |
+
+## 物料資料 → 物料設定
+
+| 功能 | WinForms / 資料來源狀態 | Web 規格狀態 |
+| --- | --- | --- |
+| ML101 物料供應商基本資料 | Form/Service/Core、主從表 DDL 已核對 | [規格](modules/MTL/物料供應商基本資料.md)與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML102 物料類別資料 | Form/Service/Core 與 MTL 主表/屬性/QC/GumHour 結構已核對 | [規格](modules/MTL/物料類別資料.md)與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML104 物料群組資料 | 主從 Form/Service/Core、主表 Oracle DDL 已核對 | [規格](modules/MTL/物料群組資料.md)、Oracle DDL/PG CREATE 與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML105 物料類別品管項目設定 | Form/Service/Core、資料同步與 IQC 副作用已核對 | [規格](modules/MTL/物料類別品管項目設定.md)與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML106 物料品管項目設定 | Form/Service/Core、catalog 與 bind log 結構已核對 | [規格](modules/MTL/物料品管項目設定.md)、Oracle DDL/PG CREATE 與 Vue DEV 頁已建立；Production API 待家用端 |
+| ML107 物料標籤對應設定 | Form/Service/Core；TBLMTLLABELMAP 與 TBLPRDLABELBASIS Oracle DDL 已由 PowerShell 直連核對 | [規格](modules/MTL/物料標籤對應設定.md)、兩張表 CREATE 參考與 Vue DEV 頁已建立；Production API 待家用端 |
 
 ## 全 MES 盤點狀態
 

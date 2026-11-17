@@ -99,21 +99,43 @@ CREATE TABLE IF NOT EXISTS tblsmdpdlinepositionbasis (
     positionno varchar(50) NOT NULL,
     description varchar(50),
     creator varchar(10) NOT NULL,
-    createdate timestamp without time zone NOT NULL,
+    createdate timestamp without time zone DEFAULT LOCALTIMESTAMP NOT NULL,
     reviser varchar(10),
     revisedate timestamp without time zone,
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     CONSTRAINT pk_tblsmdpdlinepositionbasis PRIMARY KEY (pdlineno, positionno)
 );
-COMMENT ON TABLE tblsmdpdlinepositionbasis IS 'MES master data; Oracle source: MESTEST.TBLSMDPDLINEPOSITIONBASIS';
-COMMENT ON COLUMN tblsmdpdlinepositionbasis.pdlineno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinepositionbasis.positionno IS '識別碼／代碼（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinepositionbasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinepositionbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinepositionbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinepositionbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinepositionbasis.revisedate IS '修改時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblsmdpdlinepositionbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
+COMMENT ON TABLE tblsmdpdlinepositionbasis IS 'MES Oracle source: MESTEST.TBLSMDPDLINEPOSITIONBASIS';
+
+CREATE TABLE IF NOT EXISTS tblsmdareashift (
+    areano varchar(20) NOT NULL,
+    departmentno varchar(20) NOT NULL,
+    shiftno varchar(20) NOT NULL,
+    managerno varchar(10) NOT NULL,
+    exceptiontime numeric(4,0) NOT NULL,
+    description varchar(255),
+    creator varchar(10),
+    createdate timestamp without time zone,
+    reviser varchar(10),
+    revisedate timestamp without time zone,
+    datastamp numeric(11,0) DEFAULT 0,
+    CONSTRAINT pk_tblsmdareashift PRIMARY KEY (areano, departmentno, shiftno)
+);
+COMMENT ON TABLE tblsmdareashift IS 'MES Oracle source: MESTEST.TBLSMDAREASHIFT';
+
+CREATE TABLE IF NOT EXISTS tblsmdareaoperator (
+    areano varchar(20) NOT NULL,
+    departmentno varchar(20) NOT NULL,
+    shiftno varchar(20) NOT NULL,
+    userno varchar(10) NOT NULL,
+    description varchar(255),
+    creator varchar(10),
+    createdate timestamp without time zone,
+    reviser varchar(10),
+    revisedate timestamp without time zone,
+    CONSTRAINT pk_tblsmdareaoperator PRIMARY KEY (areano, departmentno, shiftno, userno)
+);
+COMMENT ON TABLE tblsmdareaoperator IS 'MES Oracle source: MESTEST.TBLSMDAREAOPERATOR';
 
 CREATE TABLE IF NOT EXISTS tblusrdepartmentbasis (
     departmentno varchar(20) NOT NULL,
@@ -1352,24 +1374,24 @@ CREATE TABLE IF NOT EXISTS tblmtlmaterialbasis (
 COMMENT ON TABLE tblmtlmaterialbasis IS 'MES master data; Oracle source: MESTEST.TBLMTLMATERIALBASIS';
 CREATE TABLE IF NOT EXISTS tblmtlmaterialgroupbasis (
     groupno varchar(50) NOT NULL,
-    materialtype varchar(50),
+    materialtype varchar(50) NOT NULL,
     description varchar(255),
     creator varchar(10),
     createdate timestamp without time zone,
-    datastamp numeric(11,0),
+    datastamp numeric(11,0) DEFAULT 0,
     reviser varchar(10),
     revisedate timestamp without time zone,
     CONSTRAINT pk_tblmtlmaterialgroupbasis PRIMARY KEY (groupno)
 );
 COMMENT ON TABLE tblmtlmaterialgroupbasis IS 'MES master data; Oracle source: MESTEST.TBLMTLMATERIALGROUPBASIS';
-COMMENT ON COLUMN tblmtlmaterialgroupbasis.groupno IS '群組（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialgroupbasis.materialtype IS '物料（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialgroupbasis.description IS '描述（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialgroupbasis.creator IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialgroupbasis.createdate IS '建立時間（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialgroupbasis.datastamp IS '來源欄位；尚未有來源註解（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialgroupbasis.reviser IS '使用者／人員（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialgroupbasis.revisedate IS '修改時間（推測，請依業務確認）';
+COMMENT ON COLUMN tblmtlmaterialgroupbasis.groupno IS '物料群組編號';
+COMMENT ON COLUMN tblmtlmaterialgroupbasis.materialtype IS '物料類別';
+COMMENT ON COLUMN tblmtlmaterialgroupbasis.description IS '說明';
+COMMENT ON COLUMN tblmtlmaterialgroupbasis.creator IS '建立人';
+COMMENT ON COLUMN tblmtlmaterialgroupbasis.createdate IS '建立日期';
+COMMENT ON COLUMN tblmtlmaterialgroupbasis.datastamp IS '並行版本戳記';
+COMMENT ON COLUMN tblmtlmaterialgroupbasis.reviser IS '修改人';
+COMMENT ON COLUMN tblmtlmaterialgroupbasis.revisedate IS '修改日期';
 
 CREATE TABLE IF NOT EXISTS tblmtlmaterialgroupdetail (
     groupno varchar(50) NOT NULL,
@@ -1377,8 +1399,8 @@ CREATE TABLE IF NOT EXISTS tblmtlmaterialgroupdetail (
     CONSTRAINT pk_tblmtlmaterialgroupdetail PRIMARY KEY (groupno, materialno)
 );
 COMMENT ON TABLE tblmtlmaterialgroupdetail IS 'MES master data; Oracle source: MESTEST.TBLMTLMATERIALGROUPDETAIL';
-COMMENT ON COLUMN tblmtlmaterialgroupdetail.groupno IS '群組（推測，請依業務確認）';
-COMMENT ON COLUMN tblmtlmaterialgroupdetail.materialno IS '物料（推測，請依業務確認）';
+COMMENT ON COLUMN tblmtlmaterialgroupdetail.groupno IS '物料群組編號';
+COMMENT ON COLUMN tblmtlmaterialgroupdetail.materialno IS '物料編號';
 
 CREATE TABLE IF NOT EXISTS tblmtldummywaferbasis (
     dummyno varchar(50) NOT NULL,

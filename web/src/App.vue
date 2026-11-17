@@ -32,7 +32,24 @@ import ComputerAreaMaster from './components/ComputerAreaMaster.vue'
 import FactoryBasisMaster from './components/FactoryBasisMaster.vue'
 import LocatorBasisMaster from './components/LocatorBasisMaster.vue'
 import ProductionLineBasisMaster from './components/ProductionLineBasisMaster.vue'
+import PositionBasisMaster from './components/PositionBasisMaster.vue'
+import AreaShowMaster from './components/AreaShowMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
+import MaterialVendorMaster from './components/MaterialVendorMaster.vue'
+import MaterialTypeMaster from './components/MaterialTypeMaster.vue'
+import MaterialTypeQCItemMaster from './components/MaterialTypeQCItemMaster.vue'
+import MaterialQCItemMaster from './components/MaterialQCItemMaster.vue'
+import MaterialGroupMaster from './components/MaterialGroupMaster.vue'
+import MaterialLabelMapMaster from './components/MaterialLabelMapMaster.vue'
+import MaterialVendorAutoLoaderSetupMaster from './components/MaterialVendorAutoLoaderSetupMaster.vue'
+import EquipmentAutoLoaderSetupMaster from './components/EquipmentAutoLoaderSetupMaster.vue'
+import Qc8DReasonBasisMaster from './components/Qc8DReasonBasisMaster.vue'
+import QcFirstGroupMaster from './components/QcFirstGroupMaster.vue'
+import QcFinalGroupMaster from './components/QcFinalGroupMaster.vue'
+import QcHoldDescriptionMaster from './components/QcHoldDescriptionMaster.vue'
+import QcHoldDispGroupMaster from './components/QcHoldDispGroupMaster.vue'
+import QcHoldItemBasisMaster from './components/QcHoldItemBasisMaster.vue'
+import QcMClassBasisMaster from './components/QcMClassBasisMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -68,6 +85,16 @@ const computerAreaRoute = appBasePath + '/SMD/ComputerAreas'
 const factoryBasisRoute = appBasePath + '/SMD/Factories'
 const locatorBasisRoute = appBasePath + '/SMD/Locators'
 const pdLineBasisRoute = appBasePath + '/SMD/ProductionLines'
+const positionBasisRoute = appBasePath + '/SMD/Positions'
+const areaShowRoute = appBasePath + '/SMD/AreaShow'
+const materialVendorRoute = appBasePath + '/MTL/MaterialVendors'
+const materialTypeRoute = appBasePath + '/MTL/MaterialTypes'
+const materialTypeQCItemRoute = appBasePath + '/MTL/MaterialTypeQCItems'
+const materialQCItemRoute = appBasePath + '/MTL/MaterialQCItems'
+const materialGroupRoute = appBasePath + '/MTL/MaterialGroups'
+const materialLabelMapRoute = appBasePath + '/MTL/MaterialLabelMaps'
+const materialVendorAutoLoaderRoute = appBasePath + '/MTL/MaterialVendorAutoLoaderSetup'
+const equipmentAutoLoaderRoute = appBasePath + '/EQP/EquipmentAutoLoaderSetup'
 
 type EnvironmentKey = 'production' | 'test' | 'development'
 type Screen = 'login' | 'change-password' | 'signed-in'
@@ -163,6 +190,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'equipment-group', label: '設備群組資料', shortLabel: '群', moduleNo: 'EQP' },
       { id: 'equipment-state', label: '設備狀態設定', shortLabel: '狀', moduleNo: 'EQP' },
       { id: 'equipment-inspection', label: '設備點檢表設定', shortLabel: '檢', moduleNo: 'EQP' },
+    ] }, { id: 'equipment-industry-package', label: '行業包', shortLabel: '行', moduleNo: 'EQP', children: [
+      { id: 'function:EQP:B_EQP AUTOLOADER SETUP', label: '設備AutoLoader格式檔設定', shortLabel: '自', functionNo: 'B_EQP AUTOLOADER SETUP', moduleNo: 'EQP', tableName: 'tbleqpalscript' },
     ] }, { id: 'equipment-carrier-menu', label: '載具', shortLabel: '載', moduleNo: 'EQP', children: [{ id: 'equipment-carrier-categories', label: '載具分類資料', shortLabel: '分', functionNo: 'CARRIER CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-carrier-types', label: '載具類別資料', shortLabel: '類', functionNo: 'CARRIER TYPE', moduleNo: 'EQP' }, { id: 'equipment-carrier-basis', label: '載具基本資料', shortLabel: '主', functionNo: 'CARRIER BASIS', moduleNo: 'EQP' }] }, { id: 'equipment-accessory-menu', label: '配件', shortLabel: '配', moduleNo: 'EQP', children: [{ id: 'equipment-accessory-categories', label: '配件分類資料', shortLabel: '分', functionNo: 'ACC CATEGORY', moduleNo: 'EQP' }, { id: 'equipment-accessory-types', label: '配件類別資料', shortLabel: '類', functionNo: 'ACC TYPE', moduleNo: 'EQP' }, { id: 'equipment-accessory-basis', label: '配件基本資料', shortLabel: '主', functionNo: 'ACC BASIS', moduleNo: 'EQP' }, { id: 'equipment-accessory-category-states', label: '配件分類狀態定義設定', shortLabel: '狀', functionNo: 'ACC CATEGORY STATE', moduleNo: 'EQP' }, { id: 'equipment-accessory-state-basis', label: '配件狀態設定', shortLabel: '狀', functionNo: 'EQP ACC STATE', moduleNo: 'EQP' }] },
     { id: 'equipment-recipe-menu', label: '參數', shortLabel: '參', moduleNo: 'EQP', children: [{ id: 'equipment-recipe-basis', label: '設備參數資料', shortLabel: '參', functionNo: 'RECIPE BASIS', moduleNo: 'EQP' }] }],
   },
@@ -194,7 +223,33 @@ const fallbackMenuTree: MenuNode[] = [
     label: '物料資料',
     shortLabel: '料',
     moduleNo: 'MTL',
-    children: [{ id: 'material-settings', label: '物料設定', shortLabel: '設', children: [{ id: 'material-master', label: '物料基本資料', tableName: 'tblmtlmaterialbasis', shortLabel: '主', functionNo: 'MTL BASIS', moduleNo: 'MTL' }] }],
+    children: [{ id: 'material-settings', label: '物料設定', shortLabel: '設', children: [
+      { id: 'material-master', label: '物料基本資料', tableName: 'tblmtlmaterialbasis', shortLabel: '主', functionNo: 'MTL BASIS', moduleNo: 'MTL' },
+      { id: 'function:MTL:MTL GROUP', label: '物料群組資料', shortLabel: '群', functionNo: 'MTL GROUP', moduleNo: 'MTL', tableName: 'tblmtlmaterialgroupbasis' },
+      { id: 'function:MTL:MTL LABEL MAP BASIS', label: '物料標籤對應設定', shortLabel: '標', functionNo: 'MTL LABEL MAP BASIS', moduleNo: 'MTL', tableName: 'tblmtllabelmap' },
+      { id: 'function:MTL:MTL VENDOR', label: '物料供應商基本資料', shortLabel: '供', functionNo: 'MTL VENDOR', moduleNo: 'MTL' },
+      { id: 'function:MTL:MTL TYPE', label: '物料類別資料', shortLabel: '類', functionNo: 'MTL TYPE', moduleNo: 'MTL' },
+      { id: 'function:MTL:MTL TYPE QCITEM', label: '物料類別品管項目設定', shortLabel: '品', functionNo: 'MTL TYPE QCITEM', moduleNo: 'MTL' },
+      { id: 'function:MTL:MTL QCITEM', label: '物料品管項目設定', shortLabel: '品', functionNo: 'MTL QCITEM', moduleNo: 'MTL' },
+    ] }, { id: 'material-industry-package', label: '行業包', shortLabel: '行', children: [
+      { id: 'function:MTL:B_MTL AUTOLOADER SETUP', label: '來料AutoLoader格式檔設定', shortLabel: '來', functionNo: 'B_MTL AUTOLOADER SETUP', moduleNo: 'MTL', tableName: 'tblmtlvendoralscript' },
+    ] }],
+  },
+  {
+    id: 'quality-data',
+    label: '品質資料',
+    shortLabel: '品',
+    moduleNo: 'QC',
+    children: [{ id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
+      { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
+    ] }, { id: 'quality-exception-settings', label: '異常設定', shortLabel: '異', children: [
+      { id: 'function:QC:MCLASS BASIS', label: '主分類基本資料', shortLabel: '主', functionNo: 'MCLASS BASIS', moduleNo: 'QC', tableName: 'tblqcmclassbasis' },
+      { id: 'function:QC:HOLDITEM BASIS', label: '異常原因基本資料', shortLabel: '因', functionNo: 'HOLDITEM BASIS', moduleNo: 'QC', tableName: 'tblqcholditembasis' },
+      { id: 'function:QC:HOLD DESCRIPTION', label: '異常說明', shortLabel: '說', functionNo: 'HOLD DESCRIPTION', moduleNo: 'QC', tableName: 'tblqcholddescription' },
+      { id: 'function:QC:HOLD DISP GROUP', label: '異常處理群組', shortLabel: '群', functionNo: 'HOLD DISP GROUP', moduleNo: 'QC', tableName: 'tblqcholddispgroupbasis' },
+      { id: 'function:QC:FIRST GROUP', label: '第一處理群組', shortLabel: '一', functionNo: 'FIRST GROUP', moduleNo: 'QC', tableName: 'tblqcfirstgroup' },
+      { id: 'function:QC:FINAL GROUP', label: '最後處理群組', shortLabel: '末', functionNo: 'FINAL GROUP', moduleNo: 'QC', tableName: 'tblqcfinalgroup' },
+    ] }],
   },
   {
     id: 'process-data',
@@ -225,6 +280,21 @@ const menuRoutes: Record<string, string> = {
   'function:ENT:CUSTOMER BASIS': customerBasisRoute,
   'function:ENT:CUSTOMER CONTACTOR': customerContactorRoute,
   'function:ENT:CUSTOMER SHIP ADDRESS': customerShipAddressRoute,
+  'function:MTL:MTL VENDOR': materialVendorRoute,
+  'function:MTL:MTL TYPE': materialTypeRoute,
+  'function:MTL:MTL TYPE QCITEM': materialTypeQCItemRoute,
+  'function:MTL:MTL QCITEM': materialQCItemRoute,
+  'function:MTL:MTL GROUP': materialGroupRoute,
+  'function:MTL:MTL LABEL MAP BASIS': materialLabelMapRoute,
+  'function:MTL:B_MTL AUTOLOADER SETUP': materialVendorAutoLoaderRoute,
+  'function:EQP:B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
+  'function:QC:8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
+  'function:QC:FIRST GROUP': appBasePath + '/QC/FirstGroup',
+  'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
+  'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
+  'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
+  'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
+  'function:QC:HOLDITEM BASIS': appBasePath + '/QC/HoldItemBasis',
   'equipment-master': equipmentRoute,
   'equipment-vendor-master': equipmentVendorRoute,
   'equipment-engineer-group': equipmentEngineerGroupRoute,
@@ -245,6 +315,8 @@ const menuRoutes: Record<string, string> = {
   'function:SMD:FACTORY BASIS': factoryBasisRoute,
   'function:SMD:LOCATOR BASIS': locatorBasisRoute,
   'function:SMD:SMD PDLINE BASIS': pdLineBasisRoute,
+  'function:SMD:POSITION BASIS': positionBasisRoute,
+  'function:SMD:PRODUCTION CONFIG': areaShowRoute,
   'function:EQP:RECIPE BASIS': equipmentRecipeBasisRoute,
   'equipment-accessory-categories': equipmentAccessoryCategoryRoute,
   'equipment-accessory-category-states': equipmentAccessoryCategoryStateRoute,
@@ -277,6 +349,15 @@ const functionRoutes: Record<string, string> = {
   'FACTORY BASIS': factoryBasisRoute,
   'LOCATOR BASIS': locatorBasisRoute,
   'SMD PDLINE BASIS': pdLineBasisRoute,
+  '8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
+  'FIRST GROUP': appBasePath + '/QC/FirstGroup',
+  'FINAL GROUP': appBasePath + '/QC/FinalGroup',
+  'HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
+  'HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
+  'MCLASS BASIS': appBasePath + '/QC/MClassBasis',
+  'HOLDITEM BASIS': appBasePath + '/QC/HoldItemBasis',
+  'POSITION BASIS': positionBasisRoute,
+  'PRODUCTION CONFIG': areaShowRoute,
   'EQP BASIS': equipmentRoute,
   'CARRIER CATEGORY': equipmentCarrierCategoryRoute,
   'CARRIER TYPE': equipmentCarrierTypeRoute,
@@ -290,6 +371,14 @@ const functionRoutes: Record<string, string> = {
   'EQP ACC STATE': equipmentAccessoryStateBasisRoute,
   'OP BASIS': `${appBasePath}/MasterData/Operations`,
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
+  'MTL VENDOR': materialVendorRoute,
+  'MTL TYPE': materialTypeRoute,
+  'MTL TYPE QCITEM': materialTypeQCItemRoute,
+  'MTL QCITEM': materialQCItemRoute,
+  'MTL GROUP': materialGroupRoute,
+  'MTL LABEL MAP BASIS': materialLabelMapRoute,
+  'B_MTL AUTOLOADER SETUP': materialVendorAutoLoaderRoute,
+  'B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
   'PRS BASIS': `${appBasePath}/MasterData/Processes`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
 }
@@ -333,6 +422,21 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
   return key === 'operation-master' || key === 'material-master' || key === 'process-master' || key === 'product-master' ? key : null
 })
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
+const isMaterialVendorPage = computed(() => activeMasterKey.value === 'function:MTL:MTL VENDOR')
+const isMaterialTypePage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE')
+const isMaterialTypeQCItemPage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE QCITEM')
+const isMaterialQCItemPage = computed(() => activeMasterKey.value === 'function:MTL:MTL QCITEM')
+const isMaterialGroupPage = computed(() => activeMasterKey.value === 'function:MTL:MTL GROUP')
+const isMaterialLabelMapPage = computed(() => activeMasterKey.value === 'function:MTL:MTL LABEL MAP BASIS')
+const isMaterialVendorAutoLoaderPage = computed(() => activeMasterKey.value === 'function:MTL:B_MTL AUTOLOADER SETUP')
+const isEquipmentAutoLoaderPage = computed(() => activeMasterKey.value === 'function:EQP:B_EQP AUTOLOADER SETUP')
+const isQc8DReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:8D REASON BASIS')
+const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC:FIRST GROUP')
+const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
+const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DESCRIPTION')
+const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
+const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
+const isQcHoldItemBasisPage = computed(() => activeMasterKey.value === 'function:QC:HOLDITEM BASIS')
 const isCustomerBasisPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER BASIS')
 const isCustomerContactorPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER CONTACTOR')
 const isCustomerShipAddressPage = computed(() => activeMasterKey.value === 'function:ENT:CUSTOMER SHIP ADDRESS')
@@ -347,6 +451,8 @@ const isComputerAreaPage = computed(() => activeMasterKey.value === 'function:SM
 const isFactoryBasisPage = computed(() => activeMasterKey.value === 'function:SMD:FACTORY BASIS')
 const isLocatorBasisPage = computed(() => activeMasterKey.value === 'function:SMD:LOCATOR BASIS')
 const isPdLineBasisPage = computed(() => activeMasterKey.value === 'function:SMD:SMD PDLINE BASIS')
+const isPositionBasisPage = computed(() => activeMasterKey.value === 'function:SMD:POSITION BASIS')
+const isAreaShowPage = computed(() => activeMasterKey.value === 'function:SMD:PRODUCTION CONFIG')
 const isEquipmentVendorPage = computed(() => activeMasterKey.value === 'equipment-vendor-master')
 const isEquipmentEngineerGroupPage = computed(() => activeMasterKey.value === 'equipment-engineer-group')
 const isEquipmentGroupPage = computed(() => activeMasterKey.value === 'equipment-group')
@@ -1075,6 +1181,22 @@ async function signOut(): Promise<void> {
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
+        <PositionBasisMaster
+          v-else-if="isPositionBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <AreaShowMaster
+          v-else-if="isAreaShowPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
         <EquipmentCarrierCategoryMaster
           v-else-if="isCarrierCategoryPage"
           class="framework-content"
@@ -1176,6 +1298,126 @@ async function signOut(): Promise<void> {
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
+        />
+        <MaterialTypeMaster
+          v-else-if="isMaterialTypePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <MaterialTypeQCItemMaster
+          v-else-if="isMaterialTypeQCItemPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <MaterialQCItemMaster
+          v-else-if="isMaterialQCItemPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <MaterialGroupMaster
+          v-else-if="isMaterialGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <MaterialLabelMapMaster
+          v-else-if="isMaterialLabelMapPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <EquipmentAutoLoaderSetupMaster
+          v-else-if="isEquipmentAutoLoaderPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <MaterialVendorAutoLoaderSetupMaster
+          v-else-if="isMaterialVendorAutoLoaderPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <MaterialVendorMaster
+          v-else-if="isMaterialVendorPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <Qc8DReasonBasisMaster
+          v-else-if="isQc8DReasonBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcFirstGroupMaster
+          v-else-if="isQcFirstGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcFinalGroupMaster
+          v-else-if="isQcFinalGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcHoldDispGroupMaster
+          v-else-if="isQcHoldDispGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcHoldItemBasisMaster
+          v-else-if="isQcHoldItemBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcMClassBasisMaster
+          v-else-if="isQcMClassBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcHoldDescriptionMaster
+          v-else-if="isQcHoldDescriptionPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
         />
         <MasterDataMaster
           v-else-if="activeMasterDataKey"

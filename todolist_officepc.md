@@ -12,7 +12,104 @@
 - Oracle 來源 DDL 用 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢；使用本機受保護連線設定，不必請使用者重貼，也不得把連線值寫進文件、SQL 或 Git。
 - 目前只查詢過 Oracle 結構與系統選單中繼資料，沒有匯出 MES 業務資料。不要把 DEV 假資料當成正式資料。
 
-## 目前停留點（2026-11-16）
+## 目前停留點（2026-11-17）
+
+### QC111 8D 原因基本資料（公司端 2026-11-17）
+
+- [x] 從 8D 原因基本資料 WinForms Form、兩個 Def Form、wsQC 與 clsQCBasis 整理雙 Grid、欄位、查詢、狀態、CRUD、複製、刪除、核准與 Issue/Job 流程。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 的既有受保護連線，直接唯讀查 MESTEST.TBLQCREASONBASIS_8D、TBLQCREASONSUBTYPE_8D 的 DBMS_METADATA DDL、欄位 NULL/default、PK、unique index 與 FK；確認僅 PK index、沒有 FK。未讀 MES 業務列、未在 Oracle 執行 DDL、未輸出憑證。
+- [x] 建立 Oracle source DDL 與 PostgreSQL 空表 CREATE 參考，檔案位於 database/reference/mestest_qc_8d_reason_source_ddl.sql、mestest_qc_8d_reason_create.sql。
+- [x] 新增 Vue 雙 Grid DEV 頁 web/src/components/Qc8DReasonBasisMaster.vue，建立 QC → 基本資料 → 8D 原因基本資料 fallback 選單及 /YMES/QC/8DReasonBasis；包含四狀態、查詢、主/明細 CRUD/Copy/Approve、KD 黃色輸入欄及 localStorage 假資料。
+- [x] 新增 docs/modules/QC/8D原因基本資料.md，記錄 Oracle 欄位、WinForms/Form/Service/Core 邏輯、Issue Job 簽核、刪除孤兒明細行為及 API/schema handoff；更新規格索引、資料庫連線紀錄及兩台電腦 TODO。
+- [ ] 未執行 build/test/瀏覽器驗收。ReasonType 代碼與繁中資源已直接查證；DEV approval 只模擬無簽核 Job 的直接核准分支，Production 必須實作 Issue/Job。
+- [x] 原先排定的下一項為 QC406；確認目錄後完成 QC406，再按功能目錄接續完成 QC407「最後處理群組（FINAL GROUP）」。
+
+### QC406 第一處理群組（公司端 2026-11-17）
+
+- [x] 修正 QC 選單功能識別：FunctionNo `FIRST GROUP` / FunctionKey `QC406`；`FINAL GROUP` 才是 QC407。
+- [x] 對照 `frmFirstGroup`、`frmFirstGroupDef`、`wsQC`、`clsHoldBasis`、`clsBasis_UPD`，整理狀態篩選、複合鍵、查找來源、多 OP 批次新增/複製、`OPNo='*'`、刪除、DataStamp 與 `FIRST GROUP` Issue Job 簽核。
+- [x] 用 PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀查得 `TBLQCFIRSTGROUP` DDL、欄位 nullable/default、複合 PK、unique index 與 FK；並查核三張已存在查找表的 key/必要欄位。未讀業務資料，未執行 Oracle DDL，未輸出憑證。
+- [x] 建立來源 DDL、PostgreSQL 空表 CREATE、Vue DEV 畫面 `/YMES/QC/FirstGroup`、規格文件及家用端 API/schema handoff；更新 DB 連線紀錄與索引。
+- [ ] 未執行 build/test/瀏覽器驗收；DEV 核准僅模擬無簽核流程直接轉 Active。
+- [x] 下一個功能 QC407「最後處理群組（FINAL GROUP）」已於本次完成，詳見下節。
+
+### QC407 最後處理群組（公司端 2026-11-17）
+
+- [x] 對照 `frmFinalGroup`、`frmFinalGroupDef`、`wsQC.LoadFinalGroup*`/`*FinalGroup`、`clsQCBasis` 與 `clsBasis_UPD`；記錄四狀態篩選、複合鍵、查找、多 OP 新增/複製、`OPNo='*'`、刪除、DataStamp、Issue Job 與附件/通知流程。
+- [x] 使用既有受保護連線，PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得 `TBLQCFINALGROUP` DDL、欄位/null/default、PK/index/FK；確認無 FK、只有複合 PK unique index。未讀業務列、未在 Oracle 執行 DDL、未輸出憑證。
+- [x] 建立 Oracle source DDL、PostgreSQL 空表 CREATE、Vue DEV 頁 `/YMES/QC/FinalGroup`、QC → 異常設定 → 最後處理群組路由、規格文件及家用 API/schema handoff；共用 QC406 lookup table 定義。
+- [x] 保留核准 Job Map key 的原始字串 `Final GROUP`，與 FunctionNo `FINAL GROUP` 明確區分。
+- [ ] 未執行 build/test/瀏覽器驗收；DEV 核准僅模擬沒有 Job/Detail 時直接轉 Active。
+- [x] 下一個功能 QC404「異常說明（HOLD DESCRIPTION）」已於本次完成，詳見下節。
+
+### QC404 異常說明（公司端 2026-11-17）
+
+- [x] 對照 `frmHoldDescription`、`frmHoldDescriptionDef`、`wsQC`、`clsHoldBasis` 與 `clsBasis_UPD`；整理單 Grid、四狀態、MClassNo 查詢、GUID 主鍵、唯讀欄位、複製/套用、刪除、DataStamp 與 `HOLD DESCRIPTION` Issue Job/附件通知規則。
+- [x] 用既有受保護連線，PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀查得 `TBLQCHOLDDESCRIPTION` table/index DDL、欄位/null/default、PK/index/FK。確認 PK 為 HoldDescriptionID、MClassNo 有非唯一索引、沒有 FK；未讀業務列、未執行 Oracle DDL、未輸出憑證。
+- [x] 建立 Oracle source DDL、PostgreSQL 空表 CREATE、Vue DEV 頁 `/YMES/QC/HoldDescription`、QC → 異常設定 → 異常說明三層選單、功能規格及家用端 schema/API handoff。
+- [ ] 未執行 build/test/瀏覽器驗收；DEV 核准只模擬無 Job/Detail 時直接轉 Active。
+- [x] QC405「異常處理群組（HOLD DISP GROUP）」已完成，詳見下節。
+
+### QC405 異常處理群組（公司端 2026-11-17）
+
+- [x] 對照 `frmHoldDispGroupBasis_THEIL_BU1`（來源 Form 位於 QC_HoldDispGroupBasis 專案）、`frmHoldDispGroupBasisDef`、`wsQC`、`clsHoldBasis`、`clsBasis_UPD`；完成上方群組 Grid 與下方三 Grid 人員分配版面、四狀態/GroupNo 查詢、CRUD/Copy/Delete/Approve、主處理/CC 切換、代理成員同步及 DataStamp/Issue Job 規格。
+- [x] 直接沿用已由 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查得的兩張 Oracle DDL：`TBLQCHOLDDISPGROUPBASIS` 在 QC406 lookup source DDL，`TBLUSRUSERGROUP` 在設備工程群組成員 source DDL；其 PostgreSQL 空表 CREATE 參考已存在。沒有新表或新 CREATE SQL 要交付。
+- [x] 新增 Vue DEV 頁 `web/src/components/QcHoldDispGroupMaster.vue`，建立 QC → 異常設定 → 異常處理群組與 `/YMES/QC/HoldDispGroup`；加入四狀態、群組 CRUD/Copy、組員多選移動、Type 5 主處理/Type 6 CC、套用式儲存及 localStorage DEV 假資料。
+- [x] 新增 `docs/modules/QC/異常處理群組.md`，記錄 Form/Service/Core、兩張表與 DDL 參照、精確 `HOLD DISP GROUP` Issue key 及 Production API/schema handoff；同步索引、DB 查詢紀錄與家用端 TODO。
+- [ ] 未執行 build、test 或瀏覽器驗收。DEV 核准只演示 0→2；Production 必須依 Issue/Job 處理。家用端比對 live schema/migrations 後實作 API；不可在 MES Oracle 執行 CREATE。
+- [x] QC403「異常原因基本資料（HOLDITEM BASIS）」已完成公司端 DEV UI、WinForms 規格與 Oracle/PG CREATE 參照，詳見下節。
+
+### QC403 異常原因基本資料（公司端 2026-11-17）
+
+- [x] 對照主清單/Def/匯入 Form、HoldItemDataImporter、wsQC、clsHoldBasis；完成四狀態與三欄查詢、欄位/lookup、CRUD/Copy/Delete/Approve、DataStamp、HoldSystem、OCAP/通知群組及 Excel 匯入規則。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 既有受保護唯讀連線，查得 MESTEST.TBLQCHOLDITEMBASIS DBMS_METADATA DDL、欄位 NULL/default、PK/index/FK。只有 HoldItemNo PK unique index，沒有其他 index/FK；未讀業務列，未在 Oracle 執行 DDL，未輸出憑證。
+- [x] 新增 Oracle source DDL 與 PostgreSQL 空表 CREATE：`database/reference/mestest_qc_hold_item_basis_source_ddl.sql`、`mestest_qc_hold_item_basis_create.sql`。
+- [x] 新增 Vue DEV 頁 `web/src/components/QcHoldItemBasisMaster.vue`，路由 `/YMES/QC/HoldItemBasis`；含查詢、四狀態 Grid、CRUD/複製、欄位 picker、核准/刪除及 CSV 假資料匯入。
+- [x] 新增 `docs/modules/QC/異常原因基本資料.md`，更新規格索引、DB 連線查詢紀錄及 home/office TODO；正式 API、Issue Job 與 `.xls/.xlsx` 匯入由家用端接手。
+- [ ] 未執行 build、test 或瀏覽器驗收。DEV 核准僅模擬無 Job/Detail 的 0→2；已簽核/不使用欄位權限仍需家用端對接 IssueControl 規則。
+- [x] QC401「主分類基本資料」已完成公司端 DEV UI 與 WinForms/Service/Core 規格，詳見下節。
+- [ ] 下一項依功能編號順序接續 QC402「次分類基本資料」。
+
+### QC401 主分類基本資料（公司端 2026-11-17）
+
+- [x] 讀取 frmMClassBasis、frmMClassBasisDef、wsQC 與 clsHoldBasis；確認四狀態、MClassNo 查詢、Grid 欄位、Def 表單、Copy/Apply、批次 Delete/Approve、DataStamp 和 MCLASS BASIS Issue Job 規則。
+- [x] TBLQCMCLASSBASIS Oracle source DDL 與 PostgreSQL CREATE SQL 已由先前 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查得並與 QC406 共用，不新增重複 DDL/CREATE 檔；MClassNo 為 PK，僅 PK unique index，無 FK/額外索引。
+- [x] 新增 Vue DEV 頁 web/src/components/QcMClassBasisMaster.vue；加入三層 fallback menu、FunctionNo MCLASS BASIS / FunctionKey QC401 和 /YMES/QC/MClassBasis 路由。表格標頭與欄位使用 KD 黃色系；同步修正 QC403 藍色 Grid 表頭。DEV localStorage 假資料含四種狀態。
+- [x] 新增 docs/modules/QC/主分類基本資料.md，更新公司/家用 TODO、兩份功能索引及 Oracle 連線紀錄；家用端僅需核對 live schema，缺表才建立 migration。
+- [x] 找到並對照獨立 frmMClassDataImport 與 DataImporter.MClassDataImport。確認 NPOI 第一工作表、首列跳過、前兩欄、distinct pair、MClassNo 大小寫不敏感去重、每編號獨立部分成功及結果 Grid；更新 QC401 規格與 Home API 契約。正式範本二進位檔未在來源樹找到，Production 需沿用系統 template storage。
+- [ ] 未執行 build、test、瀏覽器驗收或 YMES PostgreSQL 查詢。家用端 API、schema 比對與正式 Issue Job 仍待完成。
+
+### EQP B_EQP AUTOLOADER SETUP 設備 AutoLoader 格式檔設定（2026-11-17）
+
+- [x] 已確認舊 WinForms source tree 有完整原始碼：`Industry_Base/MESWin_Industry_Base/EQP/EP_B_EQPAutoLoaderSetup/`，並對照主畫面/編輯器/Default、相關子表單、`wsEQP`、`clsEQP` 及 `wsSYS` AutoLoader 檢查。先前 TODO 寫「找不到 Form」是錯誤，本次已修正認知。
+- [x] 使用既有 Oracle 受保護設定，PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得 4 張表的 source DDL、欄位、NULL/default、PK/index/FK；未讀 MES 業務資料，也未在 Oracle 執行 DDL。
+- [x] 加入 Vue DEV 頁 `web/src/components/EquipmentAutoLoaderSetupMaster.vue`，涵蓋三層選單、查詢/選取、完整可見欄位、格式腳本、CRUD/Copy/Default、5 個設定頁籤及 KD 黃色欄位。
+- [x] 加入功能規格、Oracle source DDL、PostgreSQL 空表 CREATE 參考、規格索引與家用端 API/schema handoff。詳細差異與簡化項目見 `docs/modules/EQP/設備AutoLoader格式檔設定.md`。
+- [ ] 未執行 build/test/瀏覽器驗收。家用端先完成 schema/API/migration 並部署後，公司端 pull 最新 main，逐欄對接 Production，再補完整 TestFile parser、公式/ValueList 與設備查找 UI。
+
+### 2026-11-17 MTL ML101 物料供應商基本資料
+
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護連線唯讀查得 `TBLMTLMATERIALVENDOR`、`TBLMTLMATERIALVENDORCONTACTOR` 完整欄位、NULL/default、主鍵、索引及 FK；沒有讀取 MES 業務資料或在 Oracle 執行 DDL。
+- [x] 對照 `frmMaterialVendor`、主檔/連絡人 Def、`wsMTL`、`clsMTLBasis`，完成四狀態查詢、雙 Grid、CRUD/複製/多筆刪除/核准、連絡人 Mail、Issue/Job、audit 與 DataStamp 規格；新增 Oracle source DDL、PostgreSQL 空表 CREATE SQL 及獨立規格文件。
+- [x] 新增 `web/src/components/MaterialVendorMaster.vue`，依 WinForms 雙 Grid 與 KD 黃色欄位完成 DEV localStorage 互動；新增 MTL fallback 三層選單與 `MTL VENDOR` 路由 `/YMES/MTL/MaterialVendors`。
+- [x] 已將 API、schema、migration handoff 寫入 `todolist_homepc.md`；提醒家用端修正 material vendor map 名稱查詢誤 join EQP vendor 的問題。
+- [ ] 未執行 build、test 或瀏覽器驗收；Production API/schema 待家用端完成後再對接與驗收。
+
+### 2026-11-17 MTL ML102 物料類別資料
+
+- [x] 對照 `frmMaterialType`、`frmMaterialTypeDef`、`frmMaterialGumType`、`frmMaterialProperty`、`wsMTL`、`clsMTLBasis`；整理畫面、狀態、CRUD、Copy GumHour、Property/MTL PROPERTY、固晶膠核准檢查與 GumHour 數值驗證。
+- [x] 確認 Oracle DDL/PG CREATE SQL 已存在於 `mestest_mtl_master_*`，包含 MaterialType、Property、TypeQCItem、TypeAcclimation；此功能沒有新增 table/CREATE SQL。
+- [x] 新增 `web/src/components/MaterialTypeMaster.vue`，建立 `/YMES/MTL/MaterialTypes`、`MTL TYPE` 動態/fallback 路由；包含狀態查詢、主 Grid、Add/Edit/Copy/Delete/Approve、Property 與 GumHour 視窗，Copy 會一併複製類別時效，核准後 GumHour 唯讀，DEV 假參數不代表正式系統參數值。
+- [x] 更新 ML102 規格、索引及家用端 schema/API/Issue handoff。
+- [x] 重新確認 origin/main 與公司端基線相同；已把 Copy 的單交易 API 契約與 GumHour POST/PUT 區分補進家用端待辦。
+- [ ] 未執行 build、test 或瀏覽器驗收；Production API/schema 待家用端完成後再對接與驗收。
+
+### 2026-11-17 MTL ML105 物料類別品管項目設定
+
+- [x] 對照 `frmMaterialTypeQCItem`、`wsMTL`、`wsQC`、`clsMTLBasis`；確認前綴查詢、三種 QC 候選清單、雙向多選、類別範本儲存及同步至所有關聯物料/IQC 項目。
+- [x] 確認 `TBLMTLTYPEQCITEM`、`TBLMTLQCITEM` 的 Oracle DDL/PG CREATE 已在 MTL reference 和 0013 migration；無新增 CREATE SQL。
+- [x] 新增 ML105 Vue DEV 頁與三層 MTL 路由，並建立 Production API/transaction handoff 規格。
+- [ ] 未執行 build、test 或瀏覽器驗收；等待家用端完成 API 後再接 Production endpoint。
 
 - Oracle MESTEST 直接查詢已可用，資料字典可見 1,287 張表。查詢方式及憑證規則見 `docs/DATABASE_CONNECTION.md`。
 - 2026-11-16 已用 PowerShell 5.1 + Oracle.ManagedDataAccess 查得 `TBLUSRUSERGROUP` 原始 DDL、6 欄 NULL/default、PK 與索引資訊；來源 DDL、空表 PostgreSQL CREATE SQL、設備工程群組規格及家用端待辦均已更新。
@@ -231,7 +328,7 @@
 - [x] 新增 Vue DEV 頁 `web/src/components/CustomerBasisMaster.vue`、FunctionNo `CUSTOMER BASIS` 路由 `/YMES/Customer/Basis` 及 fallback 三層選單；Production 經 API，Development 使用標明的 localStorage 假資料。
 - [x] 新增 `docs/modules/ENT/客戶基本資料.md`、Oracle source logical DDL、PostgreSQL 空表 CREATE SQL、規格索引、DB 連線查詢紀錄及家用端 migration/API/簽核/匯入待辦。
 - [ ] 未執行 build/test 或瀏覽器人工驗收；待後續依要求驗證。
-- [ ] 下一個公司端功能從 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續依序核對 Form/Designer/Service。設備 AutoLoader Function `B_EQP AUTOLOADER SETUP` 的指定 Form 檔在目前 WinForms source tree 找不到；後續先記錄其 binary-only 來源限制，再做其餘有原始碼的功能。
+- [ ] 依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 繼續下一個未遷移 Function；EQP AutoLoader 原始碼已確認並完成 DEV 頁，避免再標成 binary-only。
 
 ## EP302 載具類別資料公司端進度（2026-11-16）
 
@@ -364,3 +461,67 @@
 - [ ] 後續 SMD 頁面：SD108 設備狀態監控_區域、SD109 工位基本資料；依序讀 WinForms Form/Designer/Service/Core，再查缺少的 Oracle DDL。
 - [ ] 請以 Oracle ValueListProvider 同一來源查 `TBLSYSVALUELIST` 中 `TABLENAME='TBLSMDPDLINEBASIS'`、`FIELDNAME='PDLINESTATUS'` 的正式值、排序與顯示文字，並交付繁中資源翻譯；不要以 Vue DEV 標籤或舊註解代替。
 - [ ] 供家用端實作 Production Approve：核實 Issue/Job/IssueDetail/IssueJobMap 等簽核資料表的 Oracle DDL、資料欄位與 Service 建立流程；目前 YMES 尚無 Issue/Job 表，不能用 DEV 的直接 0→2 模擬代替。
+
+## SMD SD108、SD109 公司端交接（2026-11-17）
+
+- [x] 開始前 pull GitHub main，遠端新版本為 09dfd65；包含家用端 SD106 過帳電腦區域 migration/API 及 SD104/SD105 schema handoff，已一併納入。
+- [x] 依 WinForms frmAreaShow、frmAreaShift、frmAreaShiftDef、frmSMDPDLinePositionBasis、frmSMDPDLinePositionBasisDef 與 clsSMDBasis 核對畫面、事件、班別登入狀態檢查及複合鍵。
+- [x] SD108 區域圖、縮放/網格、右鍵狀態/歷史、雙擊班別維護與班別人員增刪已做 Vue Development Preview；SD109 搜尋、複合鍵 CRUD/Copy、多選刪除、作業區與 eSOP 選擇、Apply/Confirm 已做 Vue Development Preview。
+- [x] Oracle DDL 由本機受保護連線以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得；新增兩組 source DDL 與 PostgreSQL 空表 CREATE，並修正 first-phase SQL 中 SD109 defaults/猜測性欄位註解。
+- [x] 完成 SMD SD108/SD109 規格、功能索引、DB 查詢紀錄與家用端 API/schema handoff。補明 nullable DataStamp 用 `dataStampIsNull=true` 做精確 NULL CAS，並修正 SD109 刪除請求漏傳版本值。
+- [ ] 尚未執行 build、測試或瀏覽器驗收；Production API/schema 需家用端按 todolist_homepc.md 完成。
+- [ ] 下一步依 MES_MENU_FUNCTION_INVENTORY 的 ModuleOrder/FunctionOrder 繼續找下一個尚未完整復刻的 Function（接續 MTL），先核對 WinForms Form/Designer/Service/Core，再查 Oracle DDL。
+
+
+## 2026-11-17 MTL ML106 物料品管項目設定公司端交接
+
+- [x] Pull GitHub main，確認遠端包含 ML102、ML105 最新公司端提交；之後開始 ML106。
+- [x] 依 frmMaterialQCItemSet.vb/Designer、wsMTL.LoadMTLQCItem/UpdMTLQCItem、clsMTLBasis、clsQCBasis 核對 Form/Service/Core：前綴查詢與全 IssueState、三種啟用 QC catalog、雙清單多選/雙擊、按 Confirm 才保存、IQC 虛擬站及 QC bind log 副作用。
+- [x] 以 Windows PowerShell 5.1 + ODP.NET 既有保護連線，直接唯讀查 MESTEST 三個 QC catalog 與 TBLQCITEMBINDLOG DDL；新增 source DDL 與 PostgreSQL 空表 CREATE SQL。現有 TBLMTLQCITEM、TBLOPQCITEM 沿用已交付 reference SQL。
+- [x] 新增 Vue DEV 頁 /YMES/MTL/MaterialQCItems，FunctionNo=MTL QCITEM；保持舊 GET /qc-items 類別範本契約，ML106 改走獨立 GET /qc-item-library；避免載入失敗以空集合覆寫。
+- [x] 新增 ML106 規格、索引列、家用端 schema/API handoff。
+- [ ] 沒有執行 build、test 或瀏覽器驗收。Production API/schema 尚待家用端，完成後公司端 pull 並逐項對接。
+- [ ] 下一步按 MES_MENU_FUNCTION_INVENTORY.md MTL FunctionOrder 繼續下一個未完整遷移功能；不得把簡化 DEV 佔位頁算成完成。
+
+
+## 2026-11-17 MTL ML103 物料基本資料公司端進度
+
+- [x] Pull GitHub main，確認目前最新為 0e50278。
+- [x] 依 frmMaterialBasis / frmMaterialBasisDef、WinForms Designer、wsMTL、clsMTLBasis 核對狀態篩選、MaterialNo 查詢、ValueList 欄位、供應商子 Grid、Add/Edit/Copy、多選 Delete/Approve、Property/QC/Import/GumHour 功能。
+- [x] Vue 主 Grid 加入多選核取方塊；核准與刪除逐筆呼叫現有單筆 API，DEV 假資料執行相同狀態轉換及關聯假資料清理。已簽核 Delete 設為不使用，未簽核/不使用 Delete 實體移除。
+- [x] Vue 已接上 options API 的 CountWay/CheckLotNo 選項與 GumHour 顯示參數契約；Production API 目前回傳空 CountWay/CheckLotNo，且尚未回傳 MATERIALMULTITIMECTRL/GumMaterialType。另發現現有 Approve API 尚未執行條件式 GumHour 檢查，詳見 todolist_homepc.md。
+- [x] 更新 docs/modules/MTL/物料主檔.md 與規格索引；沿用已查 8 張物料表 Oracle DDL/PG CREATE，ML103 無新增資料表。
+- [ ] 未執行 build、test 或瀏覽器驗收。Production options API 待家用端補齊來源 ValueList/參數後 pull 回公司端再對照。
+- [x] ML104 物料群組資料及後續 FunctionOrder 中的 ML107「物料標籤對應設定」均已完成公司端 DEV 頁與規格；Production API/schema 交家用端。ML107 規格見本檔較後方區塊。
+
+## 2026-11-17 MTL ML104 物料群組資料公司端進度
+
+- [x] 對照 `frmMaterialGroup`、Designer、`frmMaterialGroupBasisDef`、`wsMTL`、`clsMTLBasis`：GroupNo 查詢、無 IssueState、主 Grid 欄位/排序、Add/Edit/Copy/Delete、DataStamp、Apply/Confirm 及下方雙清單替換式成員編輯已記錄。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護連線唯讀取得 `TBLMTLMATERIALGROUPBASIS` DBMS_METADATA DDL、欄位 Nullable/default、constraints、PK/index；確認兩個欄位以 CHECK constraint 強制 NOT NULL、DataStamp DEFAULT 0 nullable。未讀業務資料、未執行 Oracle DDL，連線秘密未輸出。
+- [x] 新增 `database/reference/mestest_mtl_material_group_source_ddl.sql` 及 PostgreSQL 空表參考 `mestest_mtl_material_group_create.sql`；校正 first-phase 物料群組主檔 DEFAULT/NULL 與欄位註解，明細沿用已查來源 SQL。
+- [x] 新增 `web/src/components/MaterialGroupMaster.vue`、三層選單 `MTL GROUP` 與 `/YMES/MTL/MaterialGroups` 路徑；DEV 假資料頁包含主 Grid、多選刪除、編輯/複製/套用、稽核欄、類別 lookup、同類已核准物料雙清單與整組儲存。
+- [x] 新增 `docs/modules/MTL/物料群組資料.md`，記錄 Form/Service/Core、Oracle DDL、API 交易與 Vue 規則；更新索引、Oracle 連線查詢紀錄及家用端 API/schema handoff。
+- [ ] 未執行 build、測試或瀏覽器驗收；Production API/schema 仍待家用端完成。
+- [x] ML107「物料標籤對應設定」已完成公司端 WinForms/Service/Core 對照、Oracle DDL 直查、Vue DEV 頁、功能規格及家用端 API/schema handoff，詳見本檔 ML107 區塊。
+
+## 2026-11-17 MTL ML107 物料標籤對應設定公司端進度
+
+- [x] 開始前 pull GitHub main，確認 YMES 已是 `71fef1e`，工作樹乾淨。
+- [x] 對照 `frmMTLLabelBasis`、Designer、`frmMTLLabelBasisDef`、`wsMTL`、`wsPRD`、`clsMTLBasis`、`clsBasis_UPD`、`clsProduct`：主畫面 Filter/Like 條件、初始不查詢、Grid 欄位、四個資料操作按鈕、Add/Edit/Copy/Delete、LabelSource=5、MaterialNo=`*`、DataStamp/Audit、Apply/Confirm 與 lookup 限制。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機既有受保護連線直接唯讀呼叫 DBMS_METADATA 並查 ALL_TAB_COLUMNS/ALL_CONSTRAINTS/ALL_INDEXES/ALL_IND_COLUMNS；取得 `TBLMTLLABELMAP` 與 label lookup `TBLPRDLABELBASIS` DDL。只查結構，未讀 MES 業務資料、未執行 Oracle DDL；連線值未輸出。
+- [x] 新增兩張表 Oracle source DDL、PostgreSQL 空表 CREATE SQL、`docs/modules/MTL/物料標籤對應設定.md`，並更新功能規格索引、Oracle 連線查詢紀錄及家用端 API/schema handoff。
+- [x] 新增 `web/src/components/MaterialLabelMapMaster.vue`，加入 FunctionNo `MTL LABEL MAP BASIS` 三層選單及 `/YMES/MTL/MaterialLabelMaps` route；DEV 頁包含初始空 Grid、三組查詢/lookup、多選刪除、Add/Edit/Copy、LabelSource/物料 lookup、稽核資訊及 KD 黃色輸入樣式。
+- [ ] 未執行 build、測試或瀏覽器驗收；Production schema/API 待家用端依 `todolist_homepc.md` 比對及完成。
+- [ ] 下一步依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 確認其餘未完成 FunctionNo，再讀 WinForms Form/Designer/Service/Core，查明缺少的 Oracle DDL 並續做 DEV UI。
+
+## 2026-11-17 MTL MLB01 來料 AutoLoader 格式檔設定公司端進度
+
+- [x] Pull GitHub main，從 `99c9fef` 開始；家用端先前已推送的 MTL ML107 內容已同步。
+- [x] 直接對照 `frmMaterialVendorAutoLoaderSetup`、`frmMaterialVendorAutoLoaderSetupDef`、相關 Dynamic Parameter/Test File 表單、`wsMTL_Base`、`clsMTLBasis_Industry_Base`；記錄初始不查詢、精確 Folder/Vendor 條件、Grid 可見欄、Add/Edit/Delete/Copy/Query/Close、格式生成、基本檢查、Apply/Confirm、CLOB 與 DataStamp 原始碼差異。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護設定直連 MESTEST 唯讀取得 `TBLMTLVENDORALSCRIPT` DBMS_METADATA DDL 與欄位/NULL/default/PK/index；無業務列查詢、無 Oracle 寫入，連線值未輸出。
+- [x] 新增 Oracle source DDL、PostgreSQL 空表參考、MLB01 功能規格、Vue DEV 頁與三層 `物料資料 → 行業包 → 來料AutoLoader格式檔設定` 選單，路徑 `/YMES/MTL/MaterialVendorAutoLoaderSetup`。
+- [x] Vue DEV 頁具有初始空 Grid、精確查詢、右側 WinForms 操作按鈕、多選逐筆刪除、唯讀 FormatScript 預覽、Add/Edit/Copy 定義窗、KD 淡黃輸入欄位、格式生成/檢查、CSV/TXT 預覽、動態測試參數、供應商/允許目錄/測試配方選擇器與 localStorage 假資料；Production 呼叫 API，不用假資料。
+- [x] 更新 `todolist_homepc.md` 的 schema/API/parser handoff、`docs/DATABASE_CONNECTION.md` 及功能規格索引。
+- [ ] DEV 測試檢查、build 與瀏覽器驗收未執行；使用者未要求測試。
+- [ ] 家用端完成 YMES live schema 比對、migration/API 後，公司端 pull 並核對 Production 契約。
+- [x] 2026-11-17 已完成 EQP `B_EQP AUTOLOADER SETUP` WinForms Form/Service/Core/DDL 對照、Vue DEV 頁及家用端 API/schema handoff；後續項目改從功能目錄中下一個尚未完成的 Function 選取。
