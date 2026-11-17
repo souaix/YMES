@@ -1346,3 +1346,18 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 4. 管制界限及違規內容的 SPCSerial 需從尚未刪除的 TBLSPCVARDETAILLOG 取出。先刪兩類 content，再刪 detail log。整個單一項目刪除應可 rollback；勿照抄 Core 在刪除成功後拋出成功例外，應回傳正常成功 JSON，含 QCItemNo 與各表刪除筆數。
 5. Vue 多選時逐筆呼叫上述 API；一項失敗不阻止其他項目，結果需回報成功/失敗 QCItemNo，並寫入 YMES 操作稽核。遵循專案既有登入、錯誤、權限與參數化 SQL 規約。
 6. 加上缺少的 forward migration 與 rollback、更新 schema/API 規格與 TODO；commit/push 後通知公司端 pull，等待 QC210 Production API 驗收。公司端尚未執行 build、測試或瀏覽器驗收。
+
+## OP101 作業站法則設定（公司端 UI / API handoff，2026-11-18）
+
+請 pull 最新 `main` 後先閱讀 `docs/modules/OP/作業站法則設定.md`、本段及 `docs/DATABASE_CONNECTION.md`。公司端完成 Vue DEV 頁 `/YMES/OP/ControlRules`；Production API、YMES live schema 比對與正式部署尚未完成。資料結構參考：`database/reference/mestest_op101_control_rule_source_ddl.sql`（Oracle 原始 DDL）及 `database/reference/mestest_op101_control_rule_create.sql`（PostgreSQL CREATE-only，禁止未比對就直接當 migration 套用）。
+
+- [ ] 先比對 YMES live schema/既有 migration 的 `tblopcontrolrule`；若已存在就沿用，若缺表才新增 migration，欄位必須遵循 CREATE 參考中的 NULL/default/主鍵。不要在 MES Oracle 執行 CREATE。
+- [ ] 實作登入保護、檢查 OP101 FunctionKey/權限的 API：`GET /api/operation-control-rules?ruleClass=0&ruleNo=`、`POST /api/operation-control-rules`、`PUT /api/operation-control-rules/{ruleNo}`、`DELETE /api/operation-control-rules/{ruleNo}`。
+- [ ] GET 僅回標準版 RuleClass=0；包含 UI Grid 欄及 DataStamp。保持 `RuleMode`、`RuleModeQty` 和未暴露欄位；RuleClass 1/2 不要出現在 OP101 清單。
+- [ ] POST 大小寫正規化 RuleNo、驗證 RuleNo/RuleName/RuleScript 必填與長度（20/50/3000）、RuleType 0 Lot/1 Component；server 設 Creator/CreateDate、RuleClass=0、DataStamp 初值，處理 RuleNo PK 重複。
+- [ ] PUT 僅修改允許的定義欄位，使用舊 DataStamp CAS，成功遞增 DataStamp 並由 server 設 Reviser/ReviseDate；不可重設 RuleMode/RuleModeQty。DataStamp 可為 NULL，實作 null-safe version check。
+- [ ] 相容 WinForms 儲存 payload：Apply 不帶 SendMail/HoldDispGroup，缺少欄位代表「保持現值」（新增採 DB/legacy 預設）；Confirm 才帶兩欄。不得把省略欄位轉成 null 清空。Legacy 另有新增 Apply 後仍留在新增模式的行為，詳規格。
+- [ ] DELETE 沿用 RuleNo 實體刪除；前端多選逐筆 DELETE，部分成功時回報成功/失敗項目。不連帶刪除 `TBLOPRULE`、`TBL_CPOPRULE` 等其他流程法則。
+- [ ] Hold Disp Group 選擇器重用 QC405 handoff 的 `GET /api/qc/hold-disposition-groups?searchFieldName=GroupNo&searchFieldValue=`，資料來源 `TBLQCHOLDDISPGROUPBASIS`，相容 WinForms 未傳 IssueState、載入全狀態的行為；不要另建 lookup table/API。SendMail=Yes 必須有群組。
+- [ ] 核對 `RuleScript` 僅當字串儲存，不在 API 執行腳本。原生 `OP_Script` 動態編輯器尚未移植，先用公司端純文字編輯器。
+- [ ] 先完成 YMES schema/API 實作，補 API 層驗證及 concurrency 驗收後再提交並 push；公司端 DEV localStorage 假資料不能作為正式資料寫入。

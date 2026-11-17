@@ -858,3 +858,11 @@
 - [x] 新增 /YMES/MasterData/OperationTypes Vue DEV mock UI 與 OP → 作業站設定 → 作業站類別資料路由、四狀態/查詢/清單/新增/修改/複製/刪除/核准/Property，KD 黃色欄位與 WinForms 版型。
 - [x] 新增 OP103 規格、模組索引、資料庫連線 provenance、家用端 live schema/API handoff，並在 OP Basis 規格互連。
 - [ ] Production API/schema 由家用端按 todolist_homepc.md 實作；未連 YMES PostgreSQL，未執行 build、test 或 browser 驗收。公司端持續依 docs/MES_MENU_FUNCTION_INVENTORY.md 下一個未遷移 WinForms 功能直接閱讀程式碼。
+
+## OP101 作業站法則設定（公司端 2026-11-18）
+
+- [x] 直接閱讀 `frmOPControlRule`/Def、`wsOP.Load/Add/Edit/DeleteOPControlRule`、`clsOpBasis` 與 `clsBasis_UPD.EditOPControlRule`；確認查詢 RuleNo、只顯示 RuleClass=0、無 IssueState/Approve、實體刪除及 DataStamp CAS。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連受保護設定，只讀取得 `MESTEST.TBLOPCONTROLRULE` Oracle DDL、constraint/index metadata；僅 RuleNo PK unique index，無 FK/額外 index。存 Oracle source DDL 與 PostgreSQL CREATE-only 對照。
+- [x] 新增 `/YMES/OP/ControlRules` Vue DEV 頁和 OP 三層選單。清單欄位、Add/Edit/Copy/Delete、定義欄位、Send Mail 群組 lookup、DataStamp/audit、legacy Apply payload 差異均已整理。
+- [x] 新增 `docs/modules/OP/作業站法則設定.md`、模組索引、Oracle 連線查詢紀錄，以及本段家用端 API/schema handoff。
+- [ ] 本段依工作規則未執行 build、test 或瀏覽器驗收；推送後下一項接續 OP102「企業邏輯設定」，先從 WinForms Form/Service/Core 原始碼開始。

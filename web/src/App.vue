@@ -36,6 +36,7 @@ import PositionBasisMaster from './components/PositionBasisMaster.vue'
 import AreaShowMaster from './components/AreaShowMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
+import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
 import MaterialVendorMaster from './components/MaterialVendorMaster.vue'
 import MaterialTypeMaster from './components/MaterialTypeMaster.vue'
 import MaterialTypeQCItemMaster from './components/MaterialTypeQCItemMaster.vue'
@@ -254,7 +255,7 @@ const fallbackMenuTree: MenuNode[] = [
     label: '作業站資料',
     shortLabel: '站',
     moduleNo: 'OP',
-    children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP TYPE', label: '作業站類別資料', tableName: 'tbloptype', shortLabel: '類', functionNo: 'OP TYPE', moduleNo: 'OP' }] }],
+    children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP TYPE', label: '作業站類別資料', tableName: 'tbloptype', shortLabel: '類', functionNo: 'OP TYPE', moduleNo: 'OP' }, { id: 'function:OP:OP RULE BASIS', label: '作業站法則設定', tableName: 'tblopcontrolrule', shortLabel: '則', functionNo: 'OP RULE BASIS', moduleNo: 'OP' }] }],
   },
   {
     id: 'material-data',
@@ -445,6 +446,7 @@ const menuRoutes: Record<string, string> = {
   'function:EQP:ACC TYPE': equipmentAccessoryTypeRoute,
   'operation-master': `${appBasePath}/MasterData/Operations`,
   'function:OP:OP TYPE': appBasePath + '/MasterData/OperationTypes',
+  'function:OP:OP RULE BASIS': appBasePath + '/OP/ControlRules',
   'material-master': `${appBasePath}/MasterData/Materials`,
   'process-master': `${appBasePath}/MasterData/Processes`,
   'product-master': `${appBasePath}/MasterData/Products`,
@@ -505,6 +507,7 @@ const functionRoutes: Record<string, string> = {
   'EQP ACC STATE': equipmentAccessoryStateBasisRoute,
   'OP BASIS': `${appBasePath}/MasterData/Operations`,
   'OP TYPE': appBasePath + '/MasterData/OperationTypes',
+  'OP RULE BASIS': appBasePath + '/OP/ControlRules',
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
   'MTL VENDOR': materialVendorRoute,
   'MTL TYPE': materialTypeRoute,
@@ -561,6 +564,7 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
 })
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
+const isOperationControlRulePage = computed(() => activeMasterKey.value === 'function:OP:OP RULE BASIS')
 const isMaterialVendorPage = computed(() => activeMasterKey.value === 'function:MTL:MTL VENDOR')
 const isMaterialTypePage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE')
 const isMaterialTypeQCItemPage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE QCITEM')
@@ -1915,6 +1919,14 @@ async function signOut(): Promise<void> {
         />
         <OperationTypeMaster
           v-else-if="isOperationTypePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OperationControlRuleMaster
+          v-else-if="isOperationControlRulePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
