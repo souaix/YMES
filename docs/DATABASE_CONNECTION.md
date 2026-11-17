@@ -413,6 +413,12 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 主表有五個 NOT NULL 欄位、QCITEMTYPE/ DATASTAMP 預設值；無 PK/FK constraint，唯一索引 U_TBLQCSAMPLINGFOR2NDINSP_01 的欄位順序為 QCITEMNO、QCITEMTYPE、OPNO、OLDSAMPLEPLAN。PostgreSQL schema-only Create 參考為 database/reference/mestest_qc211_second_inspection_sampling_create.sql。
 - 只查結構 metadata，未讀業務列、未在 Oracle 執行 DDL。IP、帳號、密碼、SID 與受保護連線設定未寫入 Git。
 
+### 更新 2026-11-17：QC212 計量品管項目群組
+
+- 本次直接閱讀已保存的 Oracle source DDL reference，沒有再次連線 Oracle：`TBLQCITEMGROUPBASIS` 在 `mestest_mtl_qc_item_tables_source_ddl.sql`；`TBLQCITEMGROUPDETAIL` 與 `TBLQCCALCULATESCRIPT` 在 `mestest_qc205_variable_dependencies_source_ddl.sql`；`XX_TBLQCITEM_MEMO` 在 `mestest_qc205_theil_custom_source_ddl.sql`；共用 `TBLQCITEMPARAMETER` / `TBLOPQCITEM` 也各有既有 DDL reference。
+- 新增 `database/reference/mestest_qc212_item_group_create.sql`，僅補 PostgreSQL YMES 的 `tblqcitemgroupdetail`、`tblqccalculatescript` schema-only CREATE 參考。群組主表與 THEIL Memo 已各有先前 CREATE 參考；家用端要先核對 live PostgreSQL 和 migration，再補缺表 migration。
+- 本次未讀 Oracle 業務列、未在 Oracle 執行 DDL；未使用 DBeaver 螢幕查詢，連線秘密未輸出、未寫入專案。
+
 ### 更新 2026-11-17：QC210 刪除計量型品管項目量測記錄
 
 - QC210 依賴的變數量測 Oracle DDL 沿用先前以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得的 reference：database/reference/mestest_qc205_variable_dependencies_source_ddl.sql、mestest_qc205_theil_custom_source_ddl.sql、mestest_qc_item_attributes_source_ddl.sql。本次重新核對已保存的 CREATE TABLE/index 定義，未再次連 Oracle，未讀業務資料。

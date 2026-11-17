@@ -22,7 +22,7 @@
 - [x] DEV 頁支援篩選、選取、多筆刪除、Add/Edit/Copy、operation/QC item/plan picker、Apply/Confirm、唯一鍵檢查及獨立 localStorage 假資料；色系使用 KD 黃橘色。
 - [x] 更新模組索引、DB metadata 查詢紀錄與兩台電腦 TODO。來源的 Edit Service/Core DataStamp/稽核參數不一致，已列為家用端 API 決策項。
 - [ ] 未執行 build、測試或瀏覽器驗收；家用端需先核對 live schema/migrations 並完成 QC211 API，之後公司端 pull 驗收。
-- [ ] 下一個功能依 MES_MENU_FUNCTION_INVENTORY.md 接續 QC212 計量品管項目群組；繼續以 WinForms Form/Designer/Service/Core 為依據完成 UI 與規格。
+- [x] 下一個功能 QC212 計量品管項目群組已完成公司端 UI/spec handoff；接續依 MES_MENU_FUNCTION_INVENTORY.md 處理 QC213 計數品管項目群組。
 
 ### QC201 計數品管項目（公司端 2026-11-17）
 
@@ -698,3 +698,13 @@
 - [x] 已新增 /YMES/QC/VariableMeasurementDelete Vue 3 DEV 頁，含 QC210 三層選單、-1/0 清單合併、WinForms 欄位與 ValueList、點列/多選、確認刪除、逐筆結果及獨立 DEV mock。表頭與選取色使用黃橘色系。
 - [x] 已新增 QC210 功能規格及 PostgreSQL Create SQL 參考，並更新 MODULE_REPLICATION_SPEC_INDEX.md、docs/DATABASE_CONNECTION.md 與 todolist_homepc.md。
 - [ ] 家用端尚未完成 QC205/209/210 Production API/schema；公司端未做 build、測試或瀏覽器驗收。
+
+## QC212 計量品管項目群組公司端交接（2026-11-17）
+
+- [x] pull `origin/main`（Already up to date），依 Customer/Production THEIL BU1 原始碼閱讀群組主 Form、Define Form、Memo Form/Designer、共用 Include/Parameter/OP/Calculate Script 子視窗，以及 `wsQC`、`clsQCBasis`；依據不是截圖。
+- [x] 完成 `/YMES/QC/VariableItemGroup` Vue 3 DEV 畫面與三層選單，包含四狀態/GroupNo 查詢、上下主/明細 Grid、Add/Edit/Delete/Copy/Approve、雙清單 Add QC/順序、Remove QC、Parameter、Op、Calculate Script、Memo；使用獨立 localStorage 假資料及 KD 黃橘配色。
+- [x] 主/明細/核准/刪除/Copy/Memo 的實際限制與 legacy 差異已寫入 `docs/modules/QC/計量品管項目群組.md`。已整理 API handoff，並記錄 QCITEM_G Issue Job、WIP 刪除檢查、DataStamp 與 Memo Type=1。
+- [x] Oracle DDL 沿用既有 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀 metadata 擷取：主表、明細、計算腳本、Memo 及共用表都已有 Oracle source reference；本次未再次連 Oracle、未讀業務資料、未在 Oracle 執行 DDL。
+- [x] 新增 `database/reference/mestest_qc212_item_group_create.sql`，供家用端核對並補缺的 `tblqcitemgroupdetail`、`tblqccalculatescript` PostgreSQL 建表參考；主表與 Memo 既有 Create reference 已在規格中引用。
+- [x] 更新 `todolist_homepc.md` 最新 QC212 schema/API handoff、`docs/DATABASE_CONNECTION.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md`。
+- [ ] 公司端未連 YMES PostgreSQL，未執行 build、測試或瀏覽器驗收；家用端完成 migration/API 後公司端 pull 再驗收。下一項依目錄為 QC213 計數品管項目群組。

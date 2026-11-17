@@ -1,6 +1,16 @@
 # 家裡電腦接手清單
 
-## 最新公司端 handoff：QC211 二次檢驗抽樣計畫（2026-11-17）
+## 最新公司端 handoff：QC212 計量品管項目群組（2026-11-17）
+
+- [ ] 讀取 `docs/modules/QC/計量品管項目群組.md`、`docs/DATABASE_CONNECTION.md` 與下方 QC212 handoff；選單 FunctionNo=`QCITEM_G`、API 權限 FunctionKey=`QC212`。
+- [ ] 使用家用端可用的 PostgreSQL 管理連線先查 live schema、migration 及 API 現況。核對 `tblqcitemgroupbasis`、`tblqcitemgroupdetail`、`tblqccalculatescript`、`xx_tblqcitem_memo`、`tblqcitemparameter`、`tblopqcitem`、QC Variable item、sampling plan、MES parameter。Oracle source DDL 已在 reference，不需要公司端重查 Oracle。
+- [ ] 若 live YMES 缺少群組明細或腳本表，參考 `database/reference/mestest_qc212_item_group_create.sql` 設計 forward migration；群組主檔既有參考為 `mestest_mtl_qc_item_tables_create.sql`，Memo 為 `mestest_qc205_theil_custom_create.sql`。先比對既有 schema，不可覆蓋/重建既有資料，不可把 PostgreSQL SQL 放到 Oracle 執行。
+- [ ] 實作登入保護且使用 QC212 FunctionKey 的主檔、Detail、Copy、Approve、Delete API。規格詳 `docs/modules/QC/計量品管項目群組.md`；包含完整替換明細/ShowOrder、ScriptIsValid、計算腳本、共用 Parameter/OP、Memo Type=1、抽樣計畫/WinSPC/QCClass 查找。
+- [ ] 狀態規則：刪除 0/-1 硬刪、2 轉 -1、1 禁刪；硬刪檢查 WIP 引用及 legacy 關聯清理。核准使用 QCITEM_G Issue Job，無 Job 直接至 2、有 Job 至 1。Detail Add/Remove 僅狀態 0；OP 編輯拒絕狀態 0/1。API 以真實 DB 狀態與 DataStamp 驗證，使用參數化 SQL/transaction，批次作業逐筆回報。
+- [ ] 明確決定群組硬刪是否一併清除 `XX_TBLQCITEM_MEMO`（Legacy Core 未刪該表），並記錄相容性決策；確認 Copy 是否只複製 detail（Legacy Core 沒有複製群組 Script 的程式）。
+- [ ] 完成 migration/API 文件、更新 `todolist_homepc.md`，commit/push 後通知公司端 pull Production API 驗收。公司端未連 YMES PostgreSQL，也未執行 build、測試或瀏覽器驗收。
+
+## 前一公司端 handoff：QC211 二次檢驗抽樣計畫（2026-11-17）
 
 - [ ] 讀取 docs/modules/QC/二次檢驗抽樣計畫.md、docs/DATABASE_CONNECTION.md 與 QC211 公司端紀錄；FunctionNo 為 SAMPLINGFOR2NDINSP，FunctionKey 為 QC211。
 - [ ] 比對 YMES live PostgreSQL schema 與 migrations。主表來源為 TBLQCSAMPLINGFOR2NDINSP；Oracle source DDL 與 PostgreSQL schema-only Create 參考分別在 database/reference/mestest_qc211_second_inspection_sampling_source_ddl.sql、mestest_qc211_second_inspection_sampling_create.sql。Oracle 沒有 PK constraint，只有唯一索引 U_TBLQCSAMPLINGFOR2NDINSP_01，鍵序為 QCITEMNO、QCITEMTYPE、OPNO、OLDSAMPLEPLAN；沒有 FK。只為確認缺少的結構新增 forward migration，不覆寫 YMES 資料。
