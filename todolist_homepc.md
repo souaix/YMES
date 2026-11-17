@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## 最新公司端 handoff：QC408 OCAP基本資料（2026-11-18）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/QC/OCAP基本資料.md`、`docs/DATABASE_CONNECTION.md` QC408 段落，以及 Oracle source DDL / PostgreSQL CREATE 對照。
+- [ ] 比對 YMES live schema 與 migrations：`tblqcocapbasis`、`tblqcocapnodebasis`、`tblqcocapnoderelation`。只為缺表補 forward migration，維持來源 PK、NULL/default 和 `OCAPLINKNAME` PK 隱含 NOT NULL；不新增 Oracle 未定義的 FK/index、不重建既有資料。
+- [ ] 原始 Oracle DDL 在 `database/reference/mestest_qc408_ocap_source_ddl.sql`；PG 空表 CREATE 參考在 `database/reference/mestest_qc408_ocap_create.sql`。公司端已用 PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取 DDL；不要在 Oracle 執行 CREATE。
+- [ ] 先確認 `OCAPXMLSTRING` 相容策略：WinForms 呼叫二進位 `iMESXMLFlow.dll` 的 `FlowToXML/XMLToFlow`，目前舊源碼庫沒有 serializer source。決定反編譯/相容轉換，或明確採 YMES 自有格式；不可把 Vue nodes/links JSON 直接寫成舊 AddFlow XML 並宣稱可相容 MES。
+- [ ] 實作登入/`OCAP BASIS`/QC408 權限保護 API：GET 清單及已簽核 HoldDispGroup lookup、POST 新增、PUT 說明、POST copy、PUT flow、POST approve、DELETE。細節以功能規格的 API 表為準，SQL 參數化，audit 和時間由 server 管理。
+- [ ] Flow 儲存/複製需同交易更新主 CLOB、NodeBasis、NodeRelation；保持 NodeID 和 relation 端點一致。實作 DataStamp CAS；舊 DataStamp NULL 要定義明確處理。流程狀態及刪除：未簽核 0 與停用 -1 硬刪三表；已核准 2 軟停用為 -1 並清 CurVersion；簽核中 1 禁刪；核准 0→2 並同 OCAPNo 只留一個 CurVersion=1。
+- [ ] 補 `FunctionNo=OCAP BASIS`、`FunctionKey=QC408` 授權；驗證 OCAP No/Version 組合唯一、版本長度 5、No 長度 50、Description 長度 255、節點和 relation 主鍵、GroupNo 已簽核、DataStamp 衝突回 409。
+- [ ] 完成 API/schema 後推到 GitHub，通知公司端 pull。不要將 DEV localStorage 假資料灌入資料庫。
+
 ## 最新公司端 handoff：QC503 檢測設備連線程式（2026-11-18）
 
 - [ ] Pull 最新 `main`，閱讀 `docs/modules/QC/檢測設備連線程式.md`、QC501/QC502 規格與 `docs/DATABASE_CONNECTION.md`。

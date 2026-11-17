@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+### 更新 2026-11-18：QC408 OCAP 流程三表
+
+- 使用本機受保護的既有連線設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 `MESTEST.TBLQCOCAPBASIS`、`TBLQCOCAPNODEBASIS`、`TBLQCOCAPNODERELATION` 的 `DBMS_METADATA.GET_DDL` 與 PK/index/FK metadata。未讀 MES 業務列，未在 Oracle 執行 DDL，沒有輸出/提交連線秘密。
+- Oracle DDL 保存於 `database/reference/mestest_qc408_ocap_source_ddl.sql`；YMES PostgreSQL CREATE-only 對照為 `database/reference/mestest_qc408_ocap_create.sql`。三表只有 PK unique index，沒有 FK/額外索引。Relation 的 `OCAPLINKNAME` 由複合 PK 實際要求 NOT NULL；OCAP Basis 的 DataStamp nullable 且 DEFAULT 0。
+- `OCAPXMLSTRING` 是舊 AddFlow serializer CLOB；Flow Form 呼叫 `iMESXMLFlow.dll` 的 `FlowToXML/XMLToFlow`，來源 repository 未含該 serializer 原始碼。家用端需在 API 儲存前確認相容格式，不能直接把 Vue 結構化 payload 當成舊 XML。
+- WinForms/UI、刪除/簽核、三表交易及 API handoff 見 `docs/modules/QC/OCAP基本資料.md`。
+
 ### 更新 2026-11-18：QC501–QC503 檢測儀器共用資料表
 
 - 使用已保存的本機受保護連線設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 MESTEST 六張表的 CREATE TABLE/PK unique index DDL：`TBLQCINSPMACHINEPARAMETERTYPE`、`TBLQCINSPMACHINETYPE`、`TBLQCINSPMACHINEBASIS`、`TBLQCINSPMACHINEPARAMETER`、`TBLQCINSPMACHINEPROPERTY`、`TBLQCINSPDRIVER`。

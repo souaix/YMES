@@ -5,6 +5,7 @@
 - QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。已依 WinForms 主/編輯 Form、`clsInspMachine` 與直接唯讀 Oracle DDL 完成 Vue DEV 清單/編輯/Driver 選擇、三層選單及 API handoff；QC501–QC503 共用六表 Oracle source DDL 與 PostgreSQL CREATE 參考已建立。家用端需核對 YMES live schema、接上共用 Issue Job/Issue Control，再實作 QC501 API；QC502、QC503 handoff 已列於下方。
 - QC502「檢測儀器基本資料」：[功能規格](modules/QC/檢測儀器基本資料.md)。已依 `frmInspMachineParameter`/Def、`wsQC`、`clsInspMachine` 完成類別帶入/本機 RS232/Driver 流程、Vue DEV 清單/編輯及 API handoff；主表是 QC501 已查的 `TBLQCINSPMACHINEPARAMETER`，沿用既有六表 DDL，不新增 CREATE SQL。家用端需與 QC501 共用 lookup、Issue Control、Issue Job/DataStamp，並檢查 YMES live schema。
 - QC503「檢測設備連線程式」：[功能規格](modules/QC/檢測設備連線程式.md)。已直接對照 WinForms 主/Def Form、`wsQC`、`clsInspMachine`、`clsBasis_UPD` 與 Driver Function assembly，完成 DEV Vue 頁/三層選單/API handoff；主表 `TBLQCINSPDRIVER` 沿用 QC501 已取得的共用 Oracle DDL/PostgreSQL CREATE，不新增表。家用端待核對 live schema、共享 Driver API 與簽核 Issue Job。
+- QC408「OCAP基本資料」：[功能規格](modules/QC/OCAP基本資料.md)。已對照四個 WinForms Form、`wsQC`、`clsQCBasis`，以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查得三張 OCAP 表 DDL，新增 Oracle source DDL/PG CREATE-only 參考及 QC → 異常設定三層選單、Vue DEV 清單/CRUD/核准/刪除/流程預覽與簡化節點繪製器。家用端待比對 YMES live schema、實作三表交易與 API，並先釐清 binary `iMESXMLFlow.dll` 的 XML 相容策略。
 
 ## 規格產出原則
 

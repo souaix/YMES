@@ -1,5 +1,14 @@
 # 公司電腦續作清單
 
+## 2026-11-18 公司端進度：QC408 OCAP基本資料
+
+- [x] 直接閱讀 QC408 主/Def/流程繪製/節點 Form 與 Designer、`wsQC`、`clsQCBasis`，整理畫面、CRUD、核准、刪除、Copy、DataStamp、NodeType、群組 lookup、XML/節點/連線儲存規則。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀取得 `TBLQCOCAPBASIS`、`TBLQCOCAPNODEBASIS`、`TBLQCOCAPNODERELATION` 原始 DDL；確認 PK、欄位空值/預設值，只有 PK index、未見 FK 或額外 index。未讀 MES 業務資料、未執行 Oracle DDL、未輸出連線秘密。
+- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 對照，並新增 `docs/modules/QC/OCAP基本資料.md`、索引、資料庫連線紀錄與家用端 API/schema handoff。
+- [x] 完成 QC → 異常設定 → OCAP基本資料 Vue DEV 頁：四狀態清單、查詢、多選 CRUD/Copy/Approve/Delete、稽核列、流程預覽與簡化節點/連線繪製器，KD 黃色輸入欄；路徑 `/YMES/QC/OCAPBasis`。
+- [ ] 流程編輯器是 AddFlow web 簡化版；舊 `iMESXMLFlow.dll` serializer 只有 binary，未完成 XML 格式相容與 nested group/Stage validation。Production API 前需由家用端決定相容策略。
+- [ ] 未連 YMES PostgreSQL，未實作 API/migration，未執行 build、測試或瀏覽器驗收。家用端完成 API/schema 並 push 後，公司端 pull 再整合驗收。
+
 ## 2026-11-18 公司端進度：QC501 檢測儀器類別
 
 - [x] Pull `origin/main`（Already up to date），直接閱讀 QC501 WinForms 主/Def Forms、Designer、`clsInspMachine` Load/Add/Edit/Delete/Driver 來源與共用 `ExeIssueControl`；不是依截圖臆測。
