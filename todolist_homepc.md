@@ -1,22 +1,32 @@
 # 家裡電腦接手清單
 
-## 最新公司端交接：QC501 檢測儀器類別（2026-11-18）
+## 最新公司端 handoff：QC503 檢測設備連線程式（2026-11-18）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/QC/檢測設備連線程式.md`、QC501/QC502 規格與 `docs/DATABASE_CONNECTION.md`。
+- [ ] 主表沿用 `TBLQCINSPDRIVER`，比較 YMES live schema/migrations 與 `database/reference/mestest_qc501_inspection_machine_create.sql`；確認缺表才建 migration，不重建既有資料。QC503 不需要新增 Oracle DDL 或重複 CREATE SQL。
+- [ ] 實作登入保護 API：GET `/api/qc/inspection-drivers?issueState&inspDriverNo`、GET `/api/qc/inspection-drivers/functions`、POST/PUT/DELETE/approve，授權 FunctionNo=`INSPMACHINE DRIVER`/FunctionKey=`QC503`。DriverNo PK 上限25、FunctionName 50、Description 255；DataStamp nullable+default、IssueState/DataStamp CAS、server audit、參數化 SQL。遇舊 NULL DataStamp 要按 live data/legacy 語義處理，不能跳過版本檢查。
+- [ ] Function options 必須由允許清單提供；本分支 WinForms reflection 只列出 `funDrv_Thick`、`funDrv_Channel`、`funDrFunctionC`，目前三個 legacy method 都回傳 default string。不要把任意用戶端字串反射執行。
+- [ ] 核准使用 IssueNo=`INSPMACHINE DRIVER`：依 Issue Job/Detail 決定直接 Active(2)或 Pending(1)，Issue Process 退回時回 0；前端不自行決定結果狀態。Edit 依共用 Issue Control，Pending 不可修改。
+- [ ] 刪除狀態 0/-1 硬刪、狀態2 改 -1 並遞增 DataStamp；1 禁止。舊 MES 沒明確檢查 QC502 儀器的 Driver 引用且 Oracle 無 FK；先查 YMES live schema/既有規則，再決定參照中 Driver 的防刪策略，記錄差異。
+- [ ] Driver GET 在不帶狀態條件時仍需回傳所有狀態，因 QC502 共用 Driver lookup 未限制 IssueState。逐筆動作遇首個失敗就停止的 WinForms 行為需保留。API/schema 完成後推送，供公司端 pull 整合。
+
+## 前次公司端交接：QC501 檢測儀器類別（2026-11-18）
 
 - [ ] 先 pull 最新 `main`，閱讀 `docs/modules/QC/檢測儀器類別.md` 與 `docs/DATABASE_CONNECTION.md` QC501 段落。
 - [ ] 查 YMES PostgreSQL live schema/migrations 中 QC501–QC503 共用六表：`tblqcinspmachineparametertype`、`tblqcinspmachinetype`、`tblqcinspmachinebasis`、`tblqcinspmachineparameter`、`tblqcinspmachineproperty`、`tblqcinspdriver`。對照 `database/reference/mestest_qc501_inspection_machine_create.sql` 及 Oracle source DDL；只為缺表新增 forward migration，不要執行 Oracle source DDL、重建既有表或新增不符來源的 PK/FK。
 - [ ] 實作 QC501 API contract：GET 類別清單（IssueState/識別碼）、GET Driver lookup（舊服務未限制狀態）、POST/PUT/DELETE/approve。逐筆 CRUD 要驗證狀態與 DataStamp、參數化 SQL、由 server 管理 Creator/CreateDate/Reviser/ReviseDate/DataStamp，核准接既有 Issue Job。QC501 主鍵是 InspMachineType 單欄；不要改為複合鍵。IssueState/DataStamp 在 Oracle 可 NULL；`ChNo` 欄位 DB 長度 3，WinForms MaxLength=10，API 必須回明確驗證錯誤。
 - [ ] 編輯 API 依共用 `ExeIssueControl`/表單設定限制 IssueState=1 唯讀，IssueState=2/-1 按控制項配置；核准狀態由 Issue Job 回傳，不得由前端硬設。硬刪前查 QC502 儀器、QC503 Driver/屬性等引用並採一致交易策略；現有 Core 裸刪除缺少完整引用檢查。
 - [ ] 公司端 Vue 頁 `web/src/components/QcInspMachineParameterTypeMaster.vue` 使用上述路由；請將真 API 的回應 DTO、錯誤格式、route ACL、簽核服務與實際表名接起來。DEV mock 不寫正式資料庫。
-- [ ] API/schema 完成後回報或推送，供公司端 pull 後對接和驗收；QC502 handoff 已列於下方，QC503「檢測 Driver」仍待遷移，沿用同一批六表與 CREATE/source DDL。
+- [ ] API/schema 完成後回報或推送，供公司端 pull 後對接和驗收；QC502/QC503 handoff 已列於本檔下方及開頭，沿用同一批六表與 CREATE/source DDL。
 
-## 公司端交接：QC502 檢測儀器基本資料（2026-11-18）
+## 前次公司端交接：QC502 檢測儀器基本資料（2026-11-18）
 
 - [ ] 閱讀 `docs/modules/QC/檢測儀器基本資料.md`。Vue 頁 `/YMES/QC/InspectionMachine`；QC502 主表是 `TBLQCINSPMACHINEPARAMETER`。它與 QC501 共用類別、Driver lookup 與六表 Oracle DDL/PG CREATE 參考，沒有新增 CREATE SQL。
 - [ ] 先查 YMES live schema/migrations 的 `tblqcinspmachineparameter`，比較 `database/reference/mestest_qc501_inspection_machine_create.sql`；只在確定缺表時新增 forward migration。主鍵 `InspMachineNo`；InspMachineType 可 NULL；來源 IssueState/DataStamp nullable+default。
 - [ ] 實作 QC502 GET/POST/PUT/DELETE/approve API，與 QC501 共用類別/Driver API。POST/PUT 欄位、RS232 必填、Format2/ChNo 空值寫 `NA`、可選類別帶入、audit/DataStamp/IssueState 依規格；`ChNo` Oracle 長度3但 WinForms MaxLength10，API 回清楚欄位錯誤。Edit 不能假裝清除空白類別已成功，需忠實處理舊 service 對空字串的語義。
 - [ ] Approval 連共用 IssueManagement：沒有 Job 時直接轉 IssueState=2，有 Job 時啟動簽核轉 1；前端只送簽，不指定結果狀態。Edit 要接 `ExeIssueControl`，Delete 檢查 live schema 與相關資料使用情況並以 DataStamp/IssueState CAS。
 - [ ] QC502 Property 按鈕在 WinForms 預設隱藏；不需要因此建 UI/API。`TBLQCINSPMACHINEBASIS` 雖在來源 DDL 內，QC502 主畫面 Add/Edit/Delete 沒有使用，勿誤作本頁主表。
-- [ ] QC501/QC502 API/schema 完成後回公司端 pull 整合；QC503 Driver 頁仍待遷移，沿用 QC501 已查 DDL。
+- [ ] QC501–QC503 API/schema 完成後回公司端 pull 整合；QC503 Driver 頁及其規格已完成並沿用 QC501 已查 DDL。
 
 ## 最新公司端 handoff：QC305 產品規格設定（2026-11-17）
 

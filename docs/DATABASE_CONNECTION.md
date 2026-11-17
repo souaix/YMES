@@ -7,6 +7,7 @@
 - 只讀資料字典/DDL，未讀業務資料列，未在 Oracle 執行 DDL；連線秘密未輸出/提交。PS7 載入此舊版 Oracle provider 時遇 BinaryFormatter 平台例外；改用 Windows PowerShell 5.1 後查詢成功。
 - QC501 表主鍵實際是 InspMachineType 單欄；來源 `IssueState`/`DataStamp` 可 NULL 且有 DEFAULT，CREATE reference 保留 nullable；`ChNo` 欄位長度為 3，但 WinForms TextBox MaxLength=10，API 需回報超長值錯誤，不得靜默截斷。
 - QC502「檢測儀器基本資料」沿用同一批 Oracle source DDL 與 PostgreSQL CREATE 對照；其主要寫入表 `TBLQCINSPMACHINEPARAMETER` 在 QC501 六表清單中已直接查得。本次未重查 Oracle，沒有讀業務列或執行 Oracle DDL。`TBLQCINSPMACHINEBASIS` 不在 QC502 Form/Core 的 Add/Edit/Delete 呼叫內，不要當成 QC502 主表。
+- QC503「檢測設備連線程式」主表 `TBLQCINSPDRIVER` 沿用上述已取得的 Oracle source DDL 與 PostgreSQL CREATE 參考；本功能不需另查 Oracle 或新增 CREATE SQL。此回合依 WinForms/wsQC/Core/Driver Function 原始碼核對行為；沒有讀取 MES 業務資料列、連 YMES PostgreSQL、執行 Oracle DDL 或輸出連線秘密。
 
 ## 連線用途與邊界
 

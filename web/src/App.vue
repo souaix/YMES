@@ -84,6 +84,7 @@ import QcMaterialSpecMaster from './components/QcMaterialSpecMaster.vue'
 import QcProductSpecMaster from './components/QcProductSpecMaster.vue'
 import QcInspMachineParameterTypeMaster from './components/QcInspMachineParameterTypeMaster.vue'
 import QcInspectionMachineMaster from './components/QcInspectionMachineMaster.vue'
+import QcInspDriverMaster from './components/QcInspDriverMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -277,6 +278,7 @@ const fallbackMenuTree: MenuNode[] = [
     children: [{ id: 'quality-inspection-machine', label: '檢測儀器', shortLabel: '儀', children: [
       { id: 'function:QC:INSPMACHINE PARAMETER TYPE', label: '檢測儀器類別', shortLabel: '類', functionNo: 'INSPMACHINE PARAMETER TYPE', moduleNo: 'QC', tableName: 'tblqcinspmachineparametertype' },
       { id: 'function:QC:INSPMACHINE PARAMETER', label: '檢測儀器基本資料', shortLabel: '機', functionNo: 'INSPMACHINE PARAMETER', moduleNo: 'QC', tableName: 'tblqcinspmachineparameter' },
+      { id: 'function:QC:INSPMACHINE DRIVER', label: '檢測設備連線程式', shortLabel: '連', functionNo: 'INSPMACHINE DRIVER', moduleNo: 'QC', tableName: 'tblqcinspdriver' },
     ] }, { id: 'quality-qc-settings', label: '品管設定', shortLabel: '管', children: [
       { id: 'function:QC:QCITEM_A', label: '計數品管項目', shortLabel: '數', functionNo: 'QCITEM_A', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
       { id: 'function:QC:IMPORT QCITEM ATTRIBUTES', label: '計數品管項目匯入', shortLabel: '匯', functionNo: 'IMPORT QCITEM ATTRIBUTES', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
@@ -371,6 +373,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:PRDQCITEM': appBasePath + '/QC/ProductSpec',
   'function:QC:INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'function:QC:INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
+  'function:QC:INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
   'function:QC:QCITEM_V': appBasePath + '/QC/VariableQcItem',
   'function:QC:IMPORT QCITEM VARIABLES': appBasePath + '/QC/VariableItemImport',
   'function:QC:QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
@@ -505,6 +508,7 @@ const functionRoutes: Record<string, string> = {
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
+  'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
 }
 
 const runtimeConfig = ref<RuntimeConfig>({
@@ -566,6 +570,7 @@ const isQcMaterialSpecPage = computed(() => activeMasterKey.value === 'function:
 const isQcProductSpecPage = computed(() => activeMasterKey.value === 'function:QC:PRDQCITEM')
 const isQcInspMachineParameterTypePage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE PARAMETER TYPE')
 const isQcInspectionMachinePage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE PARAMETER')
+const isQcInspDriverPage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE DRIVER')
 const isQcVariableQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_V')
 const isQcVariableItemImportPage = computed(() => activeMasterKey.value === 'function:QC:IMPORT QCITEM VARIABLES')
 const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM RULE MAP')
@@ -1659,6 +1664,14 @@ async function signOut(): Promise<void> {
         />
         <QcInspectionMachineMaster
           v-else-if="isQcInspectionMachinePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcInspDriverMaster
+          v-else-if="isQcInspDriverPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
