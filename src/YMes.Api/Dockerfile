@@ -22,7 +22,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /data/dpkeys \
-    && chown "$APP_UID":"$APP_UID" /data/dpkeys
+    && mkdir -p /data/qc112 \
+    && chown "$APP_UID":"$APP_UID" /data/dpkeys /data/qc112
 USER $APP_UID
 
 EXPOSE 8080

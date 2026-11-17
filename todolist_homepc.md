@@ -20,15 +20,14 @@
 ### QC112 品質原因產品指導書（公司端 2026-11-17 交接）
 
 - [x] 2026-11-17 家用端 live audit：QC112 的 `tblsysfunction.functionkey` 與品質資料選單項目已存在；`tblprdproductbasis` 已存在，但來源 `tblqcreasonbasis` 與關聯 `tblqcreasonprdsopfile` 缺表。目錄中的五個 `FILESERVICE*`/`REASONPRDSOPFILEPATH` 參數均不存在於 YMES `tblsyselementbasis`；API 沒有 file-service code，容器只有 Data Protection volume，主機也未掛載 NFS/CIFS。使用者功能授權表未在目前 YMES schema 內盤點到。
-- [ ] 閱讀 `docs/modules/QC/品質原因產品指導書.md`、公司端 QC112 區段與 `docs/DATABASE_CONNECTION.md`；pull 後核對 Vue route/menu 與 API 契約。
-- [ ] 核對 `TBLSYSMODULE`、`TBLSYSMENUITEM`、`TBLSYSFUNCTION` 及使用者功能授權是否已有 QC112「品質資料 → 基本資料 → 品質原因產品指導書」目錄；只補缺少的 YMES menu/function mapping，正式 API 回傳安全顯示路徑，不回傳檔案服務實體路徑。
-- [ ] 比對 `database/reference/mestest_qc_reason_prd_sop_file_source_ddl.sql`、`database/reference/mestest_qc_reason_prd_sop_file_create.sql` 與 YMES live schema/migrations 的 `tblqcreasonprdsopfile`。來源欄位為 `reasonno varchar(20) NOT NULL`、`productno varchar(50) NOT NULL`、`sopfilename varchar(100) NULL`、`sopfilepath varchar(2000) NULL`，PK `(reasonno,productno)`；無 FK、DataStamp、額外索引。只補缺少的結構，保留 YMES 自有擴充與資料，不 drop/recreate，不匯入 MES 業務資料。
-- [ ] 重用現有品質原因及產品主檔 schema/API，原因只回傳 `IssueState=2`；產品搜尋只回傳 `IssueState=2`、`CurVersion=1`，ProductNo 包含式搜尋，`*` 表示全部。
-- [ ] 實作本功能所有 endpoint 的登入及 FunctionKey `QC112` 授權：`GET /api/qc/reason-product-sop-file/reasons?issueState=2`、`GET /reasons/{reasonNo}/files`、`GET /products?issueState=2&currentVersion=1&search=...`、`POST/DELETE /reasons/{reasonNo}/products/{productNo}/file`、`POST /import/preview`、`POST /import/item`、`GET /import/template`。正式路徑需保留 `/api/qc/reason-product-sop-file` 前綴。
-- [ ] 新增關聯時確認原因/產品皆存在且符合核准/版本條件，依複合 PK 防重複；上傳副檔名限制為 JPG/JPEG/JPE/JFIF/PNG/BMP/PDF。檔案只能由 API 使用既有 YMES server-side 儲存，瀏覽器不可取得 FTP 帳密或內部實體路徑。
-- [ ] 舊端呼叫 `DataImporter.QCItemRPDReasonSOPFileImporter.ReasonPrdSOPFileChecker` 及 `ReasonPrdSOPFileRemoveChecker`，但該 importer 不在公司來源樹。請從既有 YMES/部署服務核實檢查條件、重複資料、實體檔路徑和刪除規則；移除關聯時僅在確認沒有其他關聯引用相同檔案後刪除實體檔，DB/檔案操作需處理失敗與補償。
-- [ ] 匯入範本依第一張工作表及欄序 ReasonNo、ProductNo、FileName、FilePath 解析；前三欄必填，逐列驗證並回傳結果/訊息。Web 版附件是使用者另外選取後按 FileName 配對，不能把 FilePath 當任意伺服器路徑開啟。沿用已存在的範本/檔案服務和安全參數設定，不把憑證放到 browser config。
-- [ ] 正式 API 完成後更新 migration/API 規格與本待辦並 push；公司端再 pull 做 Production UI 對接。尚未確認的舊 checker 行為需記錄實際差異，避免假設成功完成。
+- [x] 閱讀 QC112 規格、公司端 handoff 與資料庫連線紀錄；核對 `/YMES/QC/ReasonProductSOPFile` route、選單及 API 契約。遠端已存在 QC112 Function/Menu 項目，不需另建。
+- [x] 檢查 YMES 使用者功能授權資料表；目前 schema 沒有 user-function 對照。本專案依使用者決策「角色/權限先不管」，使用既有登入保護，不新增角色模型，也不宣稱有 QC112 專屬 ACL。
+- [x] 套用 `0020_qc112_reason_product_sop_file.sql`：僅建立缺少的 `tblqcreasonbasis`、`tblqcreasonprdsopfile`，沒有匯入 Oracle 業務資料、FK 或額外索引；`ymes_app` 僅獲原因 SELECT 與關聯表 SELECT/INSERT/DELETE。套用前已建立並驗證遠端備份 `ymes_before_0020_qc112_20261117.dump`。
+- [x] 完成登入保護的 QC112 API：原因僅回 IssueState=2；產品僅回 IssueState=2/CurVersion=1，ProductNo 包含式搜尋、`*` 查全部；新增驗證原因/產品狀態與複合鍵；移除時檢查共用檔案引用並以 pending move 在 DB rollback 時補償。
+- [x] 新增 YMES API 專用 Docker named volume `ymes-qc112-files`，容器掛載 `/data/qc112`；資料庫只存 `QC112/yyyy/MM/{guid}.{ext}` 邏輯路徑。上限 1 GiB、單檔 25 MiB，允許 JPG/JPEG/JPE/JFIF/PNG/BMP/PDF，並驗證內容簽章。未找到既有檔案服務或 NFS/CIFS，這是 YMES 新增的 API server-side 儲存方式。
+- [x] 匯入支援第一張 XLS/XLSX/CSV 工作表、最多 1000 筆；產生四欄 XLSX 範本。`FilePath` 僅作顯示文字，API 不讀取該路徑；附件由使用者另外選取後依 FileName 上傳。
+- [ ] 公司來源樹缺少舊 `QCItemRPDReasonSOPFileImporter`，因此無法確認其中未記錄的額外 business checker 條件；已實作可核實的核准狀態、產品版本、重複鍵及共用檔案刪除保護。若客戶驗收發現額外舊規則，再由公司端提供具體規則補齊。
+- [ ] API 部署與遠端 ready/權限核對完成後，push GitHub 並請公司端 pull；公司端驗收 Production route 與匯入/附件操作。
 
 ### QC110 特殊主檔維護（公司端 2026-11-17 交接）
 

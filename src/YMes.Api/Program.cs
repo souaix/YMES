@@ -8,6 +8,7 @@ using MES.Api.Data;
 using Npgsql;
 using YMes.Api.Data;
 using YMes.Api.Endpoints;
+using YMes.Api.Quality;
 using YMes.Api.Security;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,6 +54,8 @@ if (!localDemoAuth)
     builder.Services.AddSingleton(dataSource);
     builder.Services.AddSingleton<AuthRepository>();
     builder.Services.AddSingleton<NavigationRepository>();
+    builder.Services.AddSingleton<IYmesQc112FileStorage, LocalYmesQc112FileStorage>();
+    builder.Services.AddSingleton<Qc112Repository>();
 }
 builder.Services.AddControllers();
 

@@ -15,10 +15,13 @@ services:
       YMES_MASTER_DATA_PROVIDER: postgres
       YMES_ALLOWED_ORIGINS: https://152.42.195.128;https://yakuyama.com
       YMES_DATA_PROTECTION_PATH: /data/dpkeys
+      YMES_QC112_FILE_STORAGE_PATH: /data/qc112
+      YMES_QC112_MAX_STORAGE_BYTES: 1073741824
       AllowedHosts: 152.42.195.128;yakuyama.com;127.0.0.1;localhost
       ConnectionStrings__YMes: ${YMES_CONNECTION_STRING:?YMES_CONNECTION_STRING is required}
     volumes:
       - ymes-dpkeys:/data/dpkeys
+      - ymes-qc112-files:/data/qc112
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:18088/YMES/API/health/ready"]
       interval: 30s
@@ -45,3 +48,5 @@ services:
 volumes:
   ymes-dpkeys:
     name: ymes-dpkeys
+  ymes-qc112-files:
+    name: ymes-qc112-files

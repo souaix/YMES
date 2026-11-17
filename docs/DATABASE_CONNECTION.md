@@ -376,5 +376,5 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-17：QC112 品質原因產品指導書
 
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護設定直接唯讀取得 `MESTEST.TBLQCREASONPRDSOPFILE` 的 `DBMS_METADATA.GET_DDL`，並查詢欄位、PK、索引及外鍵字典。結構含四欄，PK `(REASONNO, PRODUCTNO)`；只有 PK unique index，無 FK、DataStamp 或其他索引。
-- Oracle source DDL 與 PostgreSQL 空表 CREATE 參考分別為 `database/reference/mestest_qc_reason_prd_sop_file_source_ddl.sql`、`database/reference/mestest_qc_reason_prd_sop_file_create.sql`。家用端應先比對 YMES live schema，只對缺少結構建立 migration。
-- 僅查詢資料字典，沒有讀取 MES 業務列，也沒有在 Oracle 執行 DDL。連線值及檔案服務參數值均未輸出、保存或提交。
+- Oracle source DDL 與 PostgreSQL 空表 CREATE 參考分別為 `database/reference/mestest_qc_reason_prd_sop_file_source_ddl.sql`、`database/reference/mestest_qc_reason_prd_sop_file_create.sql`。家用端已核對 YMES live schema；`0020_qc112_reason_product_sop_file.sql` 只補缺少的 `tblqcreasonbasis` 與 `tblqcreasonprdsopfile`，並授予 `ymes_app` 必要 table privileges。
+- 僅查詢 Oracle 資料字典，沒有讀取 MES 業務列、沒有在 Oracle 執行 DDL。連線值及檔案服務參數值均未輸出、保存或提交。YMES API 的 QC112 附件存於獨立 named volume，不沿用未存在的 MES file-service 設定。
