@@ -464,3 +464,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，使用本機受保護的 MESTEST 唯讀設定，查詢 `TBLSPCQCCHARTBASIS`、`TBLSPCQCCHARTDETAIL`、`TBLSPCQCCHARTDETAILLOG`、`TBLSPCQCCHARTRULE` 的 DBMS_METADATA table/index DDL。沒有讀 MES 業務資料列，沒有在 Oracle 執行 DDL。
 - Oracle source DDL `mestest_qc302_spc_qc_chart_source_ddl.sql` 與 PostgreSQL 空表 CREATE-only 參考 `mestest_qc302_spc_qc_chart_create.sql` 已保存於 `database/reference/`。QC302 匯入不會新增/更新 `TBLSPCQCCHARTSAMPLANPARAMETER`，因此未納入此功能的 CREATE handoff。
 - Oracle 欄位中的 FactorNo 動態欄位在 YMES CREATE 參考採 `factorvalues JSONB`；家用端須核對 live schema/migrations 並檢查重複 QCItem/Factor 組合，才建立 forward migration。連線值未輸出或寫入 Git；公司端不連 YMES PostgreSQL。
+
+### 更新 2026-11-17：QC301 管制圖內容
+
+- QC301 共用 QC302 已查得的 `TBLSPCQCCHARTBASIS`、`TBLSPCQCCHARTDETAIL`、`TBLSPCQCCHARTDETAILLOG`、`TBLSPCQCCHARTRULE` Oracle DDL；本次另以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，使用本機受保護 MESTEST 唯讀設定，直接查 `TBLSPCQCCHARTSAMPLANPARAMETER` 的 DBMS_METADATA table/index DDL。
+- 新增 Oracle DDL reference `mestest_qc301_chart_sampling_parameter_source_ddl.sql` 和 PostgreSQL 空表 CREATE-only 對照 `mestest_qc301_chart_sampling_parameter_create.sql`。參數表 PK=(FactorSerial,ParameterNo)，未查到 FK 或額外索引。
+- 僅查 Oracle 結構 metadata，未讀業務資料列、未在 Oracle 執行 DDL。公司端未連 YMES PostgreSQL；家用端須先核對 live schema/migrations，缺少時才新增 forward migration。IP、帳號、密碼、SID 與受保護設定未輸出或寫入 Git。
