@@ -6,6 +6,16 @@
 
 ## 家用電腦現在接手
 
+### QC104 Wafer 抽樣計劃（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/Wafer抽樣計劃.md`、本檔 QC104 區段、公司端 QC104 區段與 `docs/DATABASE_CONNECTION.md`。
+- [ ] 對照 Oracle source DDL `database/reference/mestest_qc_sampling_plan_wafer_source_ddl.sql`、PostgreSQL CREATE 參考 `database/reference/mestest_qc_sampling_plan_wafer_create.sql`，核對 YMES live schema/migrations。特別先查 `tblqcsamplingrange`：WinForms QC103/QC104 都以相同 PlanNo 表名讀寫，Oracle 沒有 FK/PK/index；核對 QC103 已建表/程式/API及其他既有使用，決定兼容的共用儲存策略，再新增必要 forward migration。不可 drop/recreate、清空既有資料或在 MES Oracle 執行 CREATE。
+- [ ] 保留 `tblqcsamplingplan_wafer` nullable/default：PlanNo varchar(25) NOT NULL PK；SampleType numeric(1,0) NOT NULL；SampleRate numeric(3,0)、EveryNum/SamplePieceNum numeric(4,0)、SamplePointNum numeric(6,0) NOT NULL DEFAULT 0；Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp nullable；IssueState numeric(1,0) NOT NULL DEFAULT 0；FunctionName varchar(50)、AQLType varchar(25)、AQL varchar(10)、QCLevel varchar(6)、RejectQty numeric(4,0) nullable；DataStamp numeric(11,0) nullable DEFAULT 0。`tblqcsamplingarea_wafer` 以 (PlanNo,Area) PK，AreaType numeric(18,0) NOT NULL DEFAULT 0、AreaNo varchar(50) nullable DEFAULT '0'。來源三表都無 FK；range 表本身無 PK/index。
+- [ ] 實作 FunctionKey `QC104` 保護的 GET/POST/PUT/DELETE `/api/qc/sampling-plans/wafer`，明細 GET `/{planNo}/details`、選項 GET `/aql-options`。List 回傳 audit/DataStamp；主檔、Range、Area aggregate 寫入同一 transaction。AQLType/QCLevel/AQL 選項依 `wsSYS.LoadMesParameterRef` 的 AQLType/QCLevel/AQLData 參數和 105E/GB2828 前綴篩選。
+- [ ] 實作狀態規則：編輯限 0；0/-1 刪除主檔與明細，2 用 nullable DataStamp CAS 轉 -1，1 拒絕。Approve IssueNo `WAFER SAMPLING PLAN`：無 Job/Detail 時 0→2，有簽核流程時建立 Issue、轉 1、通知首簽核群組，核准 2/退回 0；狀態與 Reviser/ReviseDate/DataStamp 一併維護。
+- [ ] 參數化 SQL；依規格更新 API/schema 文件與本待辦，完成後 push GitHub 並通知公司端 pull。UI 的 DEV AQL 選項是假資料；不得將 MES 業務資料匯入 YMES。
+
+
 ### QC103 抽樣計劃（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 `docs/modules/QC/抽樣計劃.md`、本檔 QC103 區段、公司端 QC103 區段及 `docs/DATABASE_CONNECTION.md`。

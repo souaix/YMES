@@ -318,3 +318,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - Oracle source DDL：`database/reference/mestest_qc_sampling_plan_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_sampling_plan_create.sql`。
 - 主表以 PlanNo 為 PK；參數表以 (PlanNo,ParameterNo) 為複合 PK。兩表只有 PK unique index，沒有 FK/其他 index；欄位 NULL/default 依 Oracle DDL 保留。
 - 未在 Oracle 執行 DDL；連線字串、IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations。
+
+### 更新 2026-11-17：QC104 Wafer 抽樣計劃來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護連線直接唯讀取得 `MESTEST.TBLQCSAMPLINGPLAN_WAFER`、`TBLQCSAMPLINGRANGE`、`TBLQCSAMPLINGAREA_WAFER` 的 DBMS_METADATA table/index DDL，並查詢 ALL_CONSTRAINTS；未讀取業務列。
+- Oracle source DDL：`database/reference/mestest_qc_sampling_plan_wafer_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_sampling_plan_wafer_create.sql`。
+- 主檔 PK 為 PlanNo；Area PK 為 (PlanNo,Area)；Range 無 PK/index/FK。三表沒有 FK。`TBLQCSAMPLINGRANGE` 由 WinForms QC103/QC104 共用名稱，API/schema 變更前需核對 YMES 現有使用。
+- 未在 Oracle 執行 DDL；連線字串、IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations。
