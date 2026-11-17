@@ -455,7 +455,9 @@
 - [x] 新增 web/src/components/ProductionLineBasisMaster.vue，路由 /YMES/SMD/ProductionLines，FunctionNo=SMD PDLINE BASIS；Development 使用 localStorage 假資料，Production 只呼叫 API。
 - [x] 新增 docs/modules/SMD/生產線別基本資料.md、Oracle source DDL 與 PostgreSQL 空表 CREATE SQL；修正 first-phase bootstrap 的來源 defaults 並移除猜測欄位註解。
 - [x] 更新 SMD 規格索引、Oracle 連線查詢紀錄及 todolist_homepc.md API/schema handoff。
-- [ ] 本次未執行 build、test 或瀏覽器驗收；家用端部署 API/schema 後公司端再 pull 對接。
+- [ ] 家用端 2026-11-17 app-browser 驗收：主 menu 可登入；SMD → 廠區設定 → 生產線別基本資料仍開到「尚未遷移」占位畫面。Production Web 尚未佈署公司端的 Vue 主檔頁。
+- [ ] 修復 `web/src/components/AccessoryTypeMaster.vue` 第 52、59 行的 TypeScript 語法錯誤（`row.description||:` 缺少 `||` 後的運算元），再執行 Web build；目前 `npm.cmd run build` 因 TS1109 失敗，阻擋 Vue 主檔部署。
+- [ ] `ProductionLineBasisMaster.vue` 已在 main；待 Web build 通過後通知家用端以 SSH 只更新 `ymes-web`，再驗收 Production 頁與 API 串接。家用端 API 健康檢查 200；登入後 GET `/api/smd/pd-line-basis` 回 `[]`；正式 `/options` 回 503，等 ValueList handoff；Approve 也等 Issue/Job handoff。
 - [ ] 後續 SMD 頁面：SD108 設備狀態監控_區域、SD109 工位基本資料；依序讀 WinForms Form/Designer/Service/Core，再查缺少的 Oracle DDL。
 - [ ] 請以 Oracle ValueListProvider 同一來源查 `TBLSYSVALUELIST` 中 `TABLENAME='TBLSMDPDLINEBASIS'`、`FIELDNAME='PDLINESTATUS'` 的正式值、排序與顯示文字，並交付繁中資源翻譯；不要以 Vue DEV 標籤或舊註解代替。
 - [ ] 供家用端實作 Production Approve：核實 Issue/Job/IssueDetail/IssueJobMap 等簽核資料表的 Oracle DDL、資料欄位與 Service 建立流程；目前 YMES 尚無 Issue/Job 表，不能用 DEV 的直接 0→2 模擬代替。
