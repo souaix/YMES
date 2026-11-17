@@ -1,5 +1,13 @@
 # 公司電腦續作清單
 
+## 2026-11-18 公司端進度：QC501 檢測儀器類別
+
+- [x] Pull `origin/main`（Already up to date），直接閱讀 QC501 WinForms 主/Def Forms、Designer、`clsInspMachine` Load/Add/Edit/Delete/Driver 來源與共用 `ExeIssueControl`；不是依截圖臆測。
+- [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀取得 QC501–QC503 共用六表 Oracle DDL/PK index，產生 Oracle source DDL 與 PostgreSQL 空表 CREATE 參考；無業務列、未執行 Oracle DDL、無連線秘密輸出。
+- [x] 建立 `/YMES/QC/InspectionMachineParameterType` Vue DEV 假資料頁、品質資料→檢測儀器→檢測儀器類別路由/選單、查詢狀態、WinForms 欄位與按鈕、RS232/UserDefine 編輯、Driver picker、複製、多選刪除/送簽、Audit 區及假資料操作。
+- [x] 新增 `docs/modules/QC/檢測儀器類別.md`，更新模組索引、資料庫連線紀錄與 `todolist_homepc.md` schema/API handoff。
+- [ ] 未連 YMES PostgreSQL，沒有實作 API/migration；未執行 build、測試或瀏覽器驗收。家用端 API/schema 完成後 pull 再整合；下一功能 QC502「檢測儀器」，其後 QC503「檢測 Driver」。
+
 > 目的：記錄家用電腦完成資料庫/API交接後，公司電腦接著要做的 WinForms UI、互動邏輯與規格文件。公司電腦先讀本檔；家用電腦先讀 `todolist_homepc.md`。
 
 > **公司電腦工作邊界：** MES 原生 Oracle MESTEST 僅供本端唯讀查詢 DDL、資料字典與舊系統規則；不得在原生 Oracle 建 YMES 表或寫入業務資料。本端只開發 UI、按鈕互動與呼叫 `/YMES/API`；不連 YMES PostgreSQL、不使用家用端 PPK/SSH、不執行 migration、不遠端部署。資料庫或 API 需求寫入規格並交給家用電腦。

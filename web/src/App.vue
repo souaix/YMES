@@ -82,6 +82,7 @@ import QcChartBasisMaster from './components/QcChartBasisMaster.vue'
 import QcSpecBasisMaster from './components/QcSpecBasisMaster.vue'
 import QcMaterialSpecMaster from './components/QcMaterialSpecMaster.vue'
 import QcProductSpecMaster from './components/QcProductSpecMaster.vue'
+import QcInspMachineParameterTypeMaster from './components/QcInspMachineParameterTypeMaster.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -272,7 +273,9 @@ const fallbackMenuTree: MenuNode[] = [
     label: '品質資料',
     shortLabel: '品',
     moduleNo: 'QC',
-    children: [{ id: 'quality-qc-settings', label: '品管設定', shortLabel: '管', children: [
+    children: [{ id: 'quality-inspection-machine', label: '檢測儀器', shortLabel: '儀', children: [
+      { id: 'function:QC:INSPMACHINE PARAMETER TYPE', label: '檢測儀器類別', shortLabel: '類', functionNo: 'INSPMACHINE PARAMETER TYPE', moduleNo: 'QC', tableName: 'tblqcinspmachineparametertype' },
+    ] }, { id: 'quality-qc-settings', label: '品管設定', shortLabel: '管', children: [
       { id: 'function:QC:QCITEM_A', label: '計數品管項目', shortLabel: '數', functionNo: 'QCITEM_A', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
       { id: 'function:QC:IMPORT QCITEM ATTRIBUTES', label: '計數品管項目匯入', shortLabel: '匯', functionNo: 'IMPORT QCITEM ATTRIBUTES', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
       { id: 'function:QC:QCITEM PRD REASON MAP', label: '計數品管項目產品原因對應設定', shortLabel: '對', functionNo: 'QCITEM PRD REASON MAP', moduleNo: 'QC' },
@@ -364,6 +367,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:QC SPEC BASIS': appBasePath + '/QC/SpecBasis',
   'function:QC:MTLQCITEM': appBasePath + '/QC/MaterialSpec',
   'function:QC:PRDQCITEM': appBasePath + '/QC/ProductSpec',
+  'function:QC:INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'function:QC:QCITEM_V': appBasePath + '/QC/VariableQcItem',
   'function:QC:IMPORT QCITEM VARIABLES': appBasePath + '/QC/VariableItemImport',
   'function:QC:QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
@@ -496,6 +500,7 @@ const functionRoutes: Record<string, string> = {
   'B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
   'PRS BASIS': `${appBasePath}/MasterData/Processes`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
+  'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
 }
 
 const runtimeConfig = ref<RuntimeConfig>({
@@ -555,6 +560,7 @@ const isQcChartBasisPage = computed(() => activeMasterKey.value === 'function:QC
 const isQcSpecBasisPage = computed(() => activeMasterKey.value === 'function:QC:QC SPEC BASIS')
 const isQcMaterialSpecPage = computed(() => activeMasterKey.value === 'function:QC:MTLQCITEM')
 const isQcProductSpecPage = computed(() => activeMasterKey.value === 'function:QC:PRDQCITEM')
+const isQcInspMachineParameterTypePage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE PARAMETER TYPE')
 const isQcVariableQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_V')
 const isQcVariableItemImportPage = computed(() => activeMasterKey.value === 'function:QC:IMPORT QCITEM VARIABLES')
 const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM RULE MAP')
@@ -705,6 +711,27 @@ function addDevelopmentEquipmentFunctions(items: MenuNode[]): MenuNode[] {
   return result
 }
 
+function addDevelopmentInspectionMachineFunctions(items: MenuNode[]): MenuNode[] {
+  const cloneTree = (nodes: MenuNode[]): MenuNode[] => nodes.map((item) => ({ ...item, children: item.children ? cloneTree(item.children) : undefined }))
+  const result = cloneTree(items)
+  const fallbackQuality = fallbackMenuTree.find((item) => item.moduleNo?.toUpperCase() === 'QC')
+  const fallbackGroup = fallbackQuality?.children?.find((item) => item.label.trim() === '檢測儀器')
+  if (!fallbackQuality || !fallbackGroup) return result
+  const quality = result.find((item) => item.moduleNo?.toUpperCase() === 'QC')
+  if (!quality) { result.push({ ...fallbackQuality, children: cloneTree(fallbackQuality.children ?? []) }); return result }
+  const hasFunction = (nodes: MenuNode[] | undefined): boolean => Boolean(nodes?.some((node) =>
+    node.functionNo?.trim().toUpperCase() === 'INSPMACHINE PARAMETER TYPE' || hasFunction(node.children)))
+  if (hasFunction(quality.children)) return result
+  let group = quality.children?.find((item) => item.label.trim() === '檢測儀器')
+  if (!group) {
+    group = { id: 'development:QC:inspection-machine', label: '檢測儀器', shortLabel: '儀', moduleNo: 'QC', children: [] }
+    quality.children = [...(quality.children ?? []), group]
+  }
+  const leaf = fallbackGroup.children?.[0]
+  if (leaf) group.children = [...(group.children ?? []), { ...leaf }]
+  return result
+}
+
 function routeForMenuNode(item: MenuNode): string {
   const functionNo = item.functionNo?.trim().toUpperCase()
   const functionRouteKey = item.moduleNo && functionNo
@@ -749,7 +776,7 @@ async function loadMenuTree(): Promise<void> {
     const response = await fetch(url, { credentials: 'include', cache: 'no-store' })
     if (!response.ok) throw new Error(`主選單 API 回應錯誤 (${response.status})。`)
     const apiMenuTree = mapMenuTree(await response.json() as MenuTreeApiResponse)
-    menuTree.value = import.meta.env.DEV ? addDevelopmentEquipmentFunctions(apiMenuTree) : apiMenuTree
+    menuTree.value = import.meta.env.DEV ? addDevelopmentInspectionMachineFunctions(addDevelopmentEquipmentFunctions(apiMenuTree)) : apiMenuTree
     menuSource.value = 'api'
   } catch (error) {
     menuError.value = error instanceof Error ? error.message : '主選單載入失敗。'
@@ -1611,6 +1638,14 @@ async function signOut(): Promise<void> {
         />
         <QcProductSpecMaster
           v-else-if="isQcProductSpecPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcInspMachineParameterTypeMaster
+          v-else-if="isQcInspMachineParameterTypePage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

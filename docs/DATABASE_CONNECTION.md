@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+### 更新 2026-11-18：QC501–QC503 檢測儀器共用資料表
+
+- 使用已保存的本機受保護連線設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 MESTEST 六張表的 CREATE TABLE/PK unique index DDL：`TBLQCINSPMACHINEPARAMETERTYPE`、`TBLQCINSPMACHINETYPE`、`TBLQCINSPMACHINEBASIS`、`TBLQCINSPMACHINEPARAMETER`、`TBLQCINSPMACHINEPROPERTY`、`TBLQCINSPDRIVER`。
+- 原始 Oracle DDL：`database/reference/mestest_qc501_inspection_machine_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc501_inspection_machine_create.sql`。來源只有 PK unique index，未查到 FK 或額外獨立索引。CREATE 是 YMES 對照參考，不是 migration；家用端必須查 live schema 後只補缺表。
+- 只讀資料字典/DDL，未讀業務資料列，未在 Oracle 執行 DDL；連線秘密未輸出/提交。PS7 載入此舊版 Oracle provider 時遇 BinaryFormatter 平台例外；改用 Windows PowerShell 5.1 後查詢成功。
+- QC501 表主鍵實際是 InspMachineType 單欄；來源 `IssueState`/`DataStamp` 可 NULL 且有 DEFAULT，CREATE reference 保留 nullable；`ChNo` 欄位長度為 3，但 WinForms TextBox MaxLength=10，API 需回報超長值錯誤，不得靜默截斷。
+
 ## 連線用途與邊界
 
 | 資料來源 | 用途 | 應用程式連線方式 |

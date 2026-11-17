@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 最新公司端交接：QC501 檢測儀器類別（2026-11-18）
+
+- [ ] 先 pull 最新 `main`，閱讀 `docs/modules/QC/檢測儀器類別.md` 與 `docs/DATABASE_CONNECTION.md` QC501 段落。
+- [ ] 查 YMES PostgreSQL live schema/migrations 中 QC501–QC503 共用六表：`tblqcinspmachineparametertype`、`tblqcinspmachinetype`、`tblqcinspmachinebasis`、`tblqcinspmachineparameter`、`tblqcinspmachineproperty`、`tblqcinspdriver`。對照 `database/reference/mestest_qc501_inspection_machine_create.sql` 及 Oracle source DDL；只為缺表新增 forward migration，不要執行 Oracle source DDL、重建既有表或新增不符來源的 PK/FK。
+- [ ] 實作 QC501 API contract：GET 類別清單（IssueState/識別碼）、GET Driver lookup（舊服務未限制狀態）、POST/PUT/DELETE/approve。逐筆 CRUD 要驗證狀態與 DataStamp、參數化 SQL、由 server 管理 Creator/CreateDate/Reviser/ReviseDate/DataStamp，核准接既有 Issue Job。QC501 主鍵是 InspMachineType 單欄；不要改為複合鍵。IssueState/DataStamp 在 Oracle 可 NULL；`ChNo` 欄位 DB 長度 3，WinForms MaxLength=10，API 必須回明確驗證錯誤。
+- [ ] 編輯 API 依共用 `ExeIssueControl`/表單設定限制 IssueState=1 唯讀，IssueState=2/-1 按控制項配置；核准狀態由 Issue Job 回傳，不得由前端硬設。硬刪前查 QC502 儀器、QC503 Driver/屬性等引用並採一致交易策略；現有 Core 裸刪除缺少完整引用檢查。
+- [ ] 公司端 Vue 頁 `web/src/components/QcInspMachineParameterTypeMaster.vue` 使用上述路由；請將真 API 的回應 DTO、錯誤格式、route ACL、簽核服務與實際表名接起來。DEV mock 不寫正式資料庫。
+- [ ] API/schema 完成後回報或推送，供公司端 pull 後對接和驗收；QC502「檢測儀器」、QC503「檢測 Driver」仍未遷移，沿用同一批六表與 CREATE/source DDL。
+
 ## 最新公司端 handoff：QC305 產品規格設定（2026-11-17）
 
 - [ ] Pull 最新 `main`，閱讀 `docs/modules/QC/產品規格設定.md`、`docs/DATABASE_CONNECTION.md`。FunctionNo=`PRDQCITEM`、FunctionKey=`QC305`；Vue DEV 頁 `/YMES/QC/ProductSpec` 位於品質資料 → 計量規格設定 → 產品規格設定。

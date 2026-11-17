@@ -2,6 +2,8 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
+- QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。已依 WinForms 主/編輯 Form、`clsInspMachine` 與直接唯讀 Oracle DDL 完成 Vue DEV 清單/編輯/Driver 選擇、三層選單及 API handoff；QC501–QC503 共用六表 Oracle source DDL 與 PostgreSQL CREATE 參考已建立。家用端需核對 YMES live schema、接上共用 Issue Job/Issue Control，再實作 QC501 API；QC502/503 尚未遷移。
+
 ## 規格產出原則
 
 - 以 WinForms Form、Service/Core 類別及 MES Oracle 資料字典為依據；截圖用於核對版面，不取代程式碼與資料表證據。
