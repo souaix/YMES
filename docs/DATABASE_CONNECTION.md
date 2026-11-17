@@ -452,3 +452,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - QC214 是匯入流程，不需要新 Oracle 表或獨立 PostgreSQL CREATE SQL。`TBLQCITEMFORVARIABLES` 空表 CREATE 參考在 `mestest_mtl_qc_item_tables_create.sql`；子表和引用表依 QC205/QC210/QC201 的現有 CREATE/reference 核對。
 - Core 對 SPC Chart Basis 的引用拼字與現有 QC205 dependency DDL 清單的缺表拼字不一致。家用端依 YMES live schema、migration 及 API 實際 SQL 確認正式物件名；不要為了讓舊拼字通過而臆造一張新表。
 - 本次沒有新查詢或資料連線。IP、帳號、密碼、SID 與受保護設定都未輸出或寫進 Git；公司端不連 YMES PostgreSQL。
+
+### 更新 2026-11-17：QC215 計數品管項目匯入
+
+- QC215 沿用先前已保存的 QC201/QC205/QC213 Oracle 結構參照：`mestest_mtl_qc_item_tables_source_ddl.sql`、`mestest_qc_item_attributes_source_ddl.sql`、`mestest_qc213_attribute_item_group_detail_source_ddl.sql` 及 QC205 dependency DDL；PostgreSQL CREATE 參考沿用對應 QC201/QC205/QC213 reference。本次直接閱讀 WinForms Form、wsQC 與 clsQCBasis，沒有再次連 Oracle、沒有讀業務列、沒有執行 Oracle DDL。
+- QC215 是匯入既有 `TBLQCITEMFORATTRIBUTES` 計數品管資料的功能，沒有 QC215 專用資料表，不新增 CREATE SQL。範圍依賴 QC Item Parameter/Factor/Reason Map、抽樣計畫、作業站、群組及 SPC 既有資料表；不得重建共用表。家用端只比對 YMES PostgreSQL live schema/migrations，缺漏時建立 forward migration。
+- 連線 IP、帳號、密碼、SID 與受保護設定都未輸出或寫進 Git；公司端不連 YMES PostgreSQL。

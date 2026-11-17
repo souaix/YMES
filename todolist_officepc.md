@@ -14,7 +14,16 @@
 
 ## 目前停留點（2026-11-17）
 
-### QC214 計量品管項目匯入（公司端 2026-11-17）
+### QC215 計數品管項目匯入（公司端 2026-11-17）
+
+- [x] 直接閱讀 `frmImport_QCItem_Attributes` Form/Designer、`wsQC.ImportQCItem_Attributes`、`clsQCBasis.ImportQCItem_Attributes` 與 `DelQCItemForAttributes`；整理 1008×591 Grid/按鈕、Excel 欄位解析、第 2 列跳過、勾選列 Check/Save、逐列錯誤、計數 QC Item 子資料重建、抽樣計畫/Rule/Factor/OP/Reason 驗證與外部引用規則。
+- [x] 確認 QC215 沒有專用資料表，不新增 CREATE SQL。沿用已保存 QC201/QC205/QC213 Oracle DDL 與 PostgreSQL CREATE 參考；本次未重連 Oracle、未讀業務列、未執行 Oracle DDL。
+- [x] 新增 `/YMES/QC/AttributeItemImport` Vue 3 DEV 頁與 QC215 三層選單；保留 WinForms File/Check Data/Save/Template DownLoad/Select All/UnSelect All/MultiSelect/Close、勾選列處理、逐列結果樣式與假資料操作。API 漏回列級結果時前端顯示失敗。
+- [x] 新增 `docs/modules/QC/計數品管項目匯入.md`，記錄來源程式、欄位、驗證、覆寫副作用、API 契約與資料表參照；更新規格索引、資料庫查詢紀錄及 `todolist_homepc.md`。
+- [ ] QC215 Production API/schema 由家用端依 `todolist_homepc.md` 實作；無新表/CREATE SQL。API 需在每列交易內重驗引用、逐列回報、要求 QC215 FunctionKey、由伺服器寫 audit，並禁止 Factor 動態 DDL。
+- [ ] 本段未執行 build、test 或瀏覽器驗收。接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接讀未遷移功能的 WinForms Form/Service/Core，完成 UI、規格與 API/schema handoff。
+
+### 前一項：QC214 計量品管項目匯入（公司端 2026-11-17）
 
 - [x] 直接閱讀 `frmImport_QCItem_Variables` Form/Designer、`wsQC.ImportQCItem_Variables`、`clsQCBasis.ImportQCItem_Variables` 與 `DelQCItemForVariables`；整理 1008×591 Grid/按鈕、Excel 欄位解析、第 2 列跳過、勾選列 Check/Save、逐列錯誤、QC205 子資料重建、抽樣計畫/Factor/OP 驗證和外部引用阻擋。
 - [x] 確認 QC214 無專用資料表，不新增 CREATE SQL。沿用已查好的 QC205 主檔與 QC205/QC210/QC201 dependency Oracle DDL/PG CREATE 參考；本次未重連 Oracle、未讀業務列、未執行 Oracle DDL。

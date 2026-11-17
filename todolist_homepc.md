@@ -1,6 +1,17 @@
 # 家裡電腦接手清單
 
-## 最新公司端 handoff：QC214 計量品管項目匯入（2026-11-17）
+## 最新公司端 handoff：QC215 計數品管項目匯入（2026-11-17）
+
+- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/計數品管項目匯入.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`IMPORT QCITEM ATTRIBUTES`、FunctionKey=`QC215`；Vue DEV 頁 `/YMES/QC/AttributeItemImport` 已掛在品質資料 → 品管設定。
+- [ ] QC215 匯入既有計數品管資料，沒有 QC215 專用表，也沒有新的 CREATE SQL。先核對 YMES PostgreSQL live schema/migrations；主檔沿用 `mestest_mtl_qc_item_tables_source_ddl.sql` / `mestest_mtl_qc_item_tables_create.sql`，Parameter/Factor/ReasonMap 等子表參考 `mestest_qc_item_attributes_source_ddl.sql` / `mestest_qc_item_attributes_create.sql`，群組與依賴表參考 QC205/QC213 既有 source/CREATE。不得複製重建共用表；只為 live schema 真正缺少的 YMES 結構新增 forward migration。
+- [ ] 實作登入保護並要求 FunctionKey QC215 的 API：`POST /api/qc/attribute-item-import/preview`（multipart `.xls/.xlsx` 第一工作表；保留 WinForms 第 1 列欄名、第 2 列跳過、第 3 列起讀取）、`POST /check`（唯讀驗證）、`POST /import`（Save）及 `GET /template`。Production Vue 目前依此路徑呼叫；如配合既有 controller 改路徑，請同步改 Vue/spec。
+- [ ] Preview 回 `{rows:[{recognizedColumns...}]}`；Check/Import 每列回 `{rows:[{rowNo,qcItemNo,succeeded,result,execute}]}`。只處理前端勾選列，逐列獨立交易並回列級結果；缺少任何列結果要視為失敗，不能因 HTTP 200 或空訊息標成功。
+- [ ] 依 QC215 規格驗證 QCItemNo/Name、量測記錄引用、LotIsVaild、PlanNo/ComponentCollect、核准 RuleNo、正整數 LimitLotNum、MClass、FactorNo/FactorOnline、核准 OP/Inline/Offline、檢驗旗標與核准 Reason 清單；修正 legacy 重複 Reason 檢查失效問題。FactorNo 只能是核准 Parameter 白名單，絕不可由上傳值構造 SQL 欄名或觸發任意 `ALTER TABLE`。
+- [ ] Save 覆寫前在該列交易中重查 WIP、SPC Attribute Log、Material/MaterialType/OP/Product、`TBLQCITEMATTGORDERDETAIL` 及一般 QC Item Group 綁定。Legacy 會刪除既有主/子資料且未先保護一般 Group Detail；YMES 必須在群組仍有引用時拒絕覆寫，不可靜默解除綁定。完整清除/重建範圍及欄位預設值依 QC215 規格實作。
+- [ ] Creator/CreateDate 必須由登入身份與伺服器時間產生，不信任檔案內容；限制上傳檔案大小/列數/欄數，不執行公式或使用者提供的路徑。範本沿用 FunctionNo=`IMPORT QCITEM ATTRIBUTES` 的既有 template storage。
+- [ ] 公司端沿用已保存 Oracle DDL reference，本次沒有再查 Oracle、沒有讀業務列、不需要索取 IP/帳密/SID，也沒有新 CREATE SQL。家用端完成 schema/API/權限/template 後 commit/push；公司端再 pull 對接。公司端本段未執行 build、測試或瀏覽器驗收。
+
+## 前一項公司端 handoff：QC214 計量品管項目匯入（2026-11-17）
 
 - [ ] Pull 最新 `main`，先讀 `docs/modules/QC/計量品管項目匯入.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`IMPORT QCITEM VARIABLES`、FunctionKey=`QC214`；Vue DEV 頁 `/YMES/QC/VariableItemImport` 已掛在品質資料 → 品管設定。
 - [ ] QC214 是匯入既有計量品管資料的功能，沒有專屬新資料表、沒有 QC214 專用 CREATE SQL。先查 YMES PostgreSQL live schema/migrations；主表沿用 `database/reference/mestest_mtl_qc_item_tables_source_ddl.sql` / `mestest_mtl_qc_item_tables_create.sql`，依賴表參考 `mestest_qc205_variable_dependencies_source_ddl.sql`、`mestest_qc210_variable_measurement_log_delete_create.sql`、`mestest_qc_item_attributes_create.sql` 及 QC205/QC201 的共用 CREATE SQL。只為實際缺少結構新增 forward migration，不複製重建 QC205 共用表。

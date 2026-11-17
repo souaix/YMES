@@ -76,6 +76,7 @@ import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
 import QcItemProductReasonMap from './components/QcItemProductReasonMap.vue'
 import QcVariableItemImport from './components/QcVariableItemImport.vue'
+import QcAttributeItemImport from './components/QcAttributeItemImport.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -268,6 +269,7 @@ const fallbackMenuTree: MenuNode[] = [
     moduleNo: 'QC',
     children: [{ id: 'quality-qc-settings', label: '品管設定', shortLabel: '管', children: [
       { id: 'function:QC:QCITEM_A', label: '計數品管項目', shortLabel: '數', functionNo: 'QCITEM_A', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
+      { id: 'function:QC:IMPORT QCITEM ATTRIBUTES', label: '計數品管項目匯入', shortLabel: '匯', functionNo: 'IMPORT QCITEM ATTRIBUTES', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
       { id: 'function:QC:QCITEM PRD REASON MAP', label: '計數品管項目產品原因對應設定', shortLabel: '對', functionNo: 'QCITEM PRD REASON MAP', moduleNo: 'QC' },
       { id: 'function:QC:SPC ATT LIMIT', label: '計數管制內容', shortLabel: '管', functionNo: 'SPC ATT LIMIT', moduleNo: 'QC', tableName: 'tblspcattlimit' },
       { id: 'function:QC:QCITEM_A RULE MAP', label: '計數品管項目判別法則對應', shortLabel: '對', functionNo: 'QCITEM_A RULE MAP', moduleNo: 'QC', tableName: 'tblspcqcattrulemapbasis' },
@@ -345,6 +347,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:REASON BASIS': appBasePath + '/QC/ReasonBasis',
   'function:QC:REASON SUBTYPE BASIS': appBasePath + '/QC/ReasonSubTypeBasis',
   'function:QC:QCITEM_A': appBasePath + '/QC/AttributeQcItem',
+  'function:QC:IMPORT QCITEM ATTRIBUTES': appBasePath + '/QC/AttributeItemImport',
   'function:QC:QCITEM_V': appBasePath + '/QC/VariableQcItem',
   'function:QC:IMPORT QCITEM VARIABLES': appBasePath + '/QC/VariableItemImport',
   'function:QC:QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
@@ -530,6 +533,7 @@ const isQc8DReasonBasisPage = computed(() => activeMasterKey.value === 'function
 const isQcReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:REASON BASIS')
 const isQcReasonSubTypeBasisPage = computed(() => activeMasterKey.value === 'function:QC:REASON SUBTYPE BASIS')
 const isQcAttributeQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_A')
+const isQcAttributeItemImportPage = computed(() => activeMasterKey.value === 'function:QC:IMPORT QCITEM ATTRIBUTES')
 const isQcVariableQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_V')
 const isQcVariableItemImportPage = computed(() => activeMasterKey.value === 'function:QC:IMPORT QCITEM VARIABLES')
 const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM RULE MAP')
@@ -1535,6 +1539,14 @@ async function signOut(): Promise<void> {
         />
         <QcAttributeQcItemMaster
           v-else-if="isQcAttributeQcItemPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcAttributeItemImport
+          v-else-if="isQcAttributeItemImportPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
