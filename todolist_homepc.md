@@ -1,5 +1,17 @@
 # 家裡電腦接手清單
 
+## 最新公司端 handoff：QC301 管制圖內容（2026-11-17）
+
+- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/管制圖內容.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`QC CHART BASIS`、FunctionKey=`QC301`；Vue DEV 頁 `/YMES/QC/ChartBasis` 位於品質資料 → 計量規格設定 → 管制圖內容。
+- [ ] 先查 YMES PostgreSQL live schema/migrations。QC Chart Basis/Detail/DetailLog/Rule Oracle DDL 沿用 `database/reference/mestest_qc302_spc_qc_chart_source_ddl.sql`；QC301 本次直連查得 Sampling Parameter DDL：`database/reference/mestest_qc301_chart_sampling_parameter_source_ddl.sql`。空表 CREATE 對照分別為 `mestest_qc302_spc_qc_chart_create.sql` 與 `mestest_qc301_chart_sampling_parameter_create.sql`。只有確認 live schema 缺表/欄位/index 才新增 forward migration；不要重建共用 QC Item、Factor、`TBLQCITEMRULE`、抽樣計畫、Issue 或量測表。
+- [ ] 實作登入保護的 QC301 API：`GET /api/qc/chart-bases/qc-items`（WinForms 預設不依 QC Item IssueState 篩選，需含 FactorOnline/FactorSpec）、`GET /chart-bases?qcItemNo&issueState`、`GET /{factorSerial}/detail`、`GET /{factorSerial}/rules`、`POST /chart-bases`、`PUT /{factorSerial}`、`DELETE /{factorSerial}`、`POST /{factorSerial}/approve`、`POST /{factorSerial}/disapprove`、`PUT /{factorSerial}/rules`、`POST /chart-bases/copy`、`GET /api/qc/sampling-plans?issueState=2&componentCollect={n}`、核准 Plan Parameter lookup；Copy 回 `{copiedCount}`。路徑若沿用既有 QC resource，請同步 Vue/spec。
+- [ ] 主檔 DTO 含 QCItemNo、FactorSerial、IssueState、DataStamp、SampleSize、KeyNode、ChartTitle、ChartUnit、Sponsor、PlanNo、Memo、Creator/CreateDate/Reviser/ReviseDate、FactorValues JSONB、SPCID Detail、SamplingPlanParameters；動態 FactorNo 只接受該 QC Item 核准 FactorOnline 白名單，不可拼 SQL 欄名或動態 ALTER。系統端產生 FactorSerial/Creator/CreateDate/Reviser/ReviseDate。
+- [ ] 新增/修改需 transaction 一併寫 Basis、Detail、抽樣參數並做 DataStamp/CAS。新增時同交易從既有 `TBLQCITEMRULE` 複製 SPCID/RuleNo/Action 預設 Rule；Rule 編輯用獨立 transaction 替換。Detail SPCID 依 ChartType：0 Xbar-R→0/1/2，1 Xbar-S→0/1/3，2 X-Rm→0/4。保留 SpecLineType 限值、SampleSize、數值/Y 軸、PlanNo/ComponentCollect、Factor 必填規則。Factor combination duplicate check 以 QCItemNo + JSONB factor values 作安全的等值條件；先查現有重複，再決定唯一限制。
+- [ ] Approve 必須查重及確認 factor 值非 `*`，沿用 YMES Issue/Job：無 Job Detail 可直接 ACTIVE(2) 並新增 Detail Log；有 Job 流程先 PENDING(1)，不可直接批次把 IssueState 寫 2。Disapprove 只允許 ACTIVE(2)/UNUSED(-1) 回 UNFROZEN(0)。對每次狀態轉換驗證真實狀態及 DataStamp，並寫服務端 audit。
+- [ ] Delete：狀態 2 改 UNUSED(-1)；狀態 0/-1 實體刪除；其他狀態拒絕。硬刪前交易內查 `TBLSPCVARDETAILLOG` 使用紀錄，有量測資料即拒絕；硬刪 Basis、Detail、DetailLog、Rule、SamplingPlanParameter 必須同一交易。不能建／清量測日誌表來繞過檢查。
+- [ ] Copy2 依舊碼 `CopyType=3` (UNFROZEN+ACTIVE)、0 (UNFROZEN)、2 (ACTIVE)，來源與目標 QC Item FactorSpec 必須完全一致；新 FactorSerial、副本狀態 UNFROZEN，複製 Detail、Rule、抽樣參數。一般 Copy 僅複製同一 QC Item 的單筆資料。Rule replacement 以 FactorSerial+SPCID 為範圍，RuleNo 需已核准且組內唯一，Action 僅 0 Warning/1 Wait/2 Hold/3 Alert。
+- [ ] API 要求 FunctionKey QC301；禁止信任 request Creator/Reviser/狀態/DataStamp。所有動態因子及參數值參數化處理；交易需包含共用 Issue service 與操作稽核。家用端完成 schema/API/權限文件後 commit/push，通知公司端 pull 對接。
+
 ## 最新公司端 handoff：QC302 匯入管制圖內容（2026-11-17）
 
 - [x] 以家用端 PPK/SSH 核對 YMES schema；QC302 四張圖表表原先都不存在，QC Item Variables/Factor 已存在。Rule、Sampling Plan 共用資料表也尚未複製，沒有在 QC302 migration 中重建共用表。

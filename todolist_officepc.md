@@ -12,6 +12,15 @@
 - Oracle 來源 DDL 用 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢；使用本機受保護連線設定，不必請使用者重貼，也不得把連線值寫進文件、SQL 或 Git。
 - 目前只查詢過 Oracle 結構與系統選單中繼資料，沒有匯出 MES 業務資料。不要把 DEV 假資料當成正式資料。
 
+## 最新公司端工作：QC301 管制圖內容（2026-11-17）
+
+- [x] 直接閱讀 `frmQCChartBasis`、`frmQCChartBasisDef`、`frmQCChartCopy`、Rule Define、wsQC 與 clsQCBasis；整理 QC Item、狀態篩選、動態 Factor 欄、Detail/Rule、簽核、刪除、跨 QC Item 複製與 sampling parameter 流程。
+- [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線唯讀取得 `TBLSPCQCCHARTSAMPLANPARAMETER` DDL/index。Chart Basis/Detail/DetailLog/Rule DDL 沿用 QC302 reference；沒有讀業務資料列或在 Oracle 執行 DDL。
+- [x] 建立 `/YMES/QC/ChartBasis` Vue DEV 頁，對齊三層選單、QC Item/Chart Grid、四種狀態、Detail/Rule tabs、Define/Cross Copy/Rule modal、表單驗證、假資料 CRUD/簽核/刪除與稽核。
+- [x] 新增 `docs/modules/QC/管制圖內容.md`、Oracle/PG sampling parameter reference，更新資料庫查詢紀錄、規格索引與家用 handoff。
+- [ ] 家用端依 `todolist_homepc.md` 先查 PostgreSQL live schema/migrations，再完成 QC301 API/schema/Issue Job；Production API 完成後公司端 pull 對接與後續 UI 調整。
+- [ ] 公司端本段未執行 build、test 或瀏覽器驗收；接續沿 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接查看下一項 WinForms Form/Service/Core。
+
 ## 目前停留點（2026-11-17）
 
 ### QC302 匯入管制圖內容（公司端 2026-11-17）
