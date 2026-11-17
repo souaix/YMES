@@ -1052,3 +1052,29 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 - API：GET api/qc/attribute-control-limits?qcItemNo=、GET .../options?qcItemNo=、POST collection、PUT /{qcItemNo} body 帶 originalFactorValues/dataStamp、DELETE /{qcItemNo} body 帶 factorValues/dataStamp。完整 DTO、FactorOnline 白名單、RuleSet 格式、nullable DataStamp CAS 見 docs/modules/QC/計數管制內容.md。
 - 因子沿用既有 QC201 Factor API，查找值沿用 MES parameter reference；法則從 TBLQCRULEBASIS 讀 IssueState=2。API 所有端點需檢查登入與 FunctionKey QC202，SQL 參數化；新增以 QCItemNo + 正規化 factorValues 防重，修改/刪除以 composite key + DataStamp CAS，NULL DataStamp 使用 IS NULL。勿把 FactorNo 直接拼成 PostgreSQL 欄位名。
 - TBLSPCATTLIMIT Oracle source 無 PK/FK/唯一鍵，只有 QCITEMNO index；WinForms 客戶端新增時先查重。PG CREATE reference 加入 composite unique constraint 作 server-side 防重，屬 YMES 適配，請在實作前確認與既有架構相容。
+
+
+## QC204 刪除計數型品管項目量測記錄（公司端 UI handoff，2026-11-17）
+
+先讀 `docs/modules/QC/刪除計數型品管項目量測記錄.md`。公司端已完成 Vue DEV 頁 `/YMES/QC/AttributeMeasurementDelete`。FunctionNo=`QCITEM_ADELETE`、FunctionKey=`QC204`；此為刪除量測日誌操作，不是刪除 QC Item 主檔。
+
+### YMES schema / DDL
+
+- QC204 不新增資料表。Oracle reference `database/reference/mestest_qc_item_attributes_source_ddl.sql` 已包含 `TBLQCITEMFORATTRIBUTES`、`TBLSPCATTBASISLOG`、`TBLSPCATTDETAILLOG`、`TBLSPCATTEDITLOG`、`TBLSPCATTDETAILLOG_TAPE` 的來源 DDL/索引。
+- 先查 YMES PostgreSQL 現有 schema 和 migration，確認 QC201 日誌 API 所用表名/欄位。保留已部署 schema 與資料；只有確定缺表時才依既有 Oracle source DDL 做 YMES forward migration/Create SQL 並記錄適配，勿在公司端臆造或重複建表。
+
+### API
+
+1. Vue 清單依序讀取 `GET /api/qc/attribute-qc-items?issueState=-1`、`GET /api/qc/attribute-qc-items?issueState=0`，依 WinForms 順序合併；QC201 list DTO 必須包含畫面欄位、`FormName`、`IssueState`。目前 API 專案若尚未實作 QC201 list，需一併完成此依賴。
+2. 新增 `POST /api/qc/attribute-qc-items/{qcItemNo}/measurement-log-deletions`，body `{ issueState }`；成功回傳 QCItemNo、刪除表/筆數。端點檢查登入、FunctionKey QC204 權限、QC Item 存在、真實 IssueState 與請求一致且限 0/-1；不得只依賴前端資料。
+3. 以資料庫讀到的 FormName 判斷是否為 `frmAtt_OnlineControlMeasureDataForTape`。不得接受用戶端的 FormName/table name/SQL。
+4. 先確認 `TBLSPCATTBASISLOG` 有該 QCItemNo 資料；無資料回 404/409、使用者可讀錯誤。存在時，在單一 transaction 刪除 BasisLog、DetailLog、EditLog；Tape Form 另刪 Tape DetailLog。所有條件參數化、整筆 operation rollback on error。
+5. 相容舊 Core：`Log=Log` 模式不刪 QC Item/Parameter/Factor/Reason/Group 或其他設定，並略過一般 OP/WIP 使用檢查。業務目標是刪除量測日誌；不得擴大刪除範圍。
+6. 舊 Core 在成功刪除後丟 `0000-000001`，舊 WebService 包成失敗。本 API 應回 2xx 成功，不複製此錯誤包裝；無資料回錯誤。多選由 Vue 逐筆依清單順序呼叫，首錯停止並回報已完成筆數。
+7. 成功/失敗均記錄目前登入者、QCItemNo、時間、電腦/請求識別與實際刪除表筆數。避免日誌內容或連線設定被寫入應用 log。
+
+### 完成後
+
+- 更新 QC204 API、schema/migration 文件及本 TODO；若需要新增 migration，列出已比對的 live table，保留既有欄位/索引。
+- Push 到 GitHub main，通知公司端 pull 後以 DEV UI 接 Production API 驗收：0/-1 狀態、一般日誌、Tape 特例、無記錄、transaction 失敗回復、多選中途錯誤與權限拒絕。
+- 公司端下一個 Function 是 QC205「計量品管項目」。

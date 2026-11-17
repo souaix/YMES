@@ -651,4 +651,14 @@
 - [x] 新增 /YMES/QC/AttributeRuleMap Vue DEV 頁與品質資料三層選單；完成已核准 QC Item 查找、四狀態、動態因子欄、主/Detail/Parameter 清單、Add/Edit/Copy/Delete/Approve、RetestLot/Plan/Rule/Parameter 編輯及獨立假資料。
 - [x] 新增 QC203 功能規格並更新規格索引、Oracle 查詢紀錄、本待辦與家用端 API/schema handoff。舊 Core 刪除未刪 Parameter 的 orphan 行為和 YMES 完整交易清理差異已記錄。
 - [ ] 尚未執行 build、測試或瀏覽器驗收；Production API/schema 待家用端完成後，公司端 pull 最新 main 再對接驗收。
-- [ ] 下一功能依 MES_MENU_FUNCTION_INVENTORY.md 接續 QC204；開始前先 pull 最新 main，對照兩台電腦待辦和新增 API/schema。
+- [x] 已於 2026-11-17 pull 最新 main，完成 QC204「刪除計數型品管項目量測記錄」Vue DEV 畫面、WinForms/Core 規格與 API handoff，使用既有 QC201 Oracle DDL reference，未新增表。
+- [ ] 下一功能依 MES_MENU_FUNCTION_INVENTORY.md 接續 QC205「計量品管項目」；開始前先 pull 最新 main，對照兩台電腦待辦和新增 API/schema。
+
+## 2026-11-17 QC204 刪除計數型品管項目量測記錄公司端進度
+
+- [x] 閱讀 frmQCItemDeleteForAttributes Form/Designer、wsQC Load/Delete methods、clsQCBasis Load/Delete Core；確認狀態範圍、Log 旗標、四種日誌刪除表、Tape Form 特例及歷史成功訊息被包裝成失敗的行為。
+- [x] 沿用 `database/reference/mestest_qc_item_attributes_source_ddl.sql` 已有 QC Item master/BasisLog/DetailLog/EditLog/Tape DetailLog Oracle DDL；確認本功能不新增表，因此不另造 CREATE SQL，也未再次連 Oracle。
+- [x] 新增 `/YMES/QC/AttributeMeasurementDelete` Vue DEV 頁、QC204 品質資料三層選單路由、操作確認、多選逐筆刪除與假資料回饋。
+- [x] 新增 QC204 功能規格、模組索引、資料庫紀錄，以及家用端 log schema/API handoff。
+- [ ] 尚未執行 build、測試或瀏覽器驗收；等待家用端 API/schema 完成後回公司端 pull 驗收。
+- [ ] 下一頁依 Function inventory 接 QC205 計量品管項目。

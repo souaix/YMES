@@ -390,3 +390,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端使用 Windows PowerShell 5.1、既有受保護的 MESTEST 連線設定與 Oracle.ManagedDataAccess，唯讀查詢 TBLSPCQCATTRULEMAPBASIS、TBLSPCQCATTRULEMAPDETAIL、TBLSPCQCATTRULEMAPPARAMETER 的 DBMS_METADATA DDL、ALL_TABLES 與獨立 index metadata；未查業務列，也未在 Oracle 執行 DDL。過程採純 metadata SELECT；一次 session 被 Oracle 中斷後以精簡查詢重試並成功。
 - 原始 Oracle DDL reference：database/reference/mestest_qc_attribute_rule_map_source_ddl.sql；PostgreSQL CREATE reference：database/reference/mestest_qc_attribute_rule_map_create.sql。後者將來源動態因子欄適配為 JSONB，並提議 sequence 供 YMES serial 使用；必須先核對 live schema、migration 與共用 serial service，不可直接當 migration 執行。
 - 連線設定只在本機受保護附件內讀取，未把 IP、帳號、密碼、SID、連線字串或附件路徑輸出、保存到專案或提交 Git。
+
+### 更新 2026-11-17：QC204 刪除計數型品管項目量測記錄
+
+- QC204 所用的 `TBLQCITEMFORATTRIBUTES`、`TBLSPCATTBASISLOG`、`TBLSPCATTDETAILLOG`、`TBLSPCATTEDITLOG`、`TBLSPCATTDETAILLOG_TAPE` DDL 已存在 `database/reference/mestest_qc_item_attributes_source_ddl.sql`，本次直接閱讀現有 reference，未重新連 Oracle，也未查業務資料。
+- QC204 不新增 Oracle/YMES 資料表。家用端需先比較 PostgreSQL migration/schema；只有缺少來源日誌表時才按既有 Oracle reference 設計 YMES migration/Create SQL，保留已存在 schema 與資料。
