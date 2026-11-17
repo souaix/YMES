@@ -1,3 +1,14 @@
+## 最新公司端交接：OP103 作業站類別資料（2026-11-18）
+
+- [ ] Pull 最新 main；閱讀 docs/modules/OP/作業站類別資料.md、docs/DATABASE_CONNECTION.md OP103 段落與 WinForms frmOPType/Def、wsOP、clsOpBasis 規則摘要。
+- [ ] 先查 YMES PostgreSQL live schema/migrations 的 YMES.tbloptype、tblopbasis 與 Property 表。原生 MES Oracle DDL 在 database/reference/mestest_op103_optype_source_ddl.sql；空表 CREATE 對照在 database/reference/mestest_op103_optype_create.sql。CREATE 只是參考；只對實際缺表建立 forward migration，保留既有 YMES 資料/擴充欄，不重建 tblopbasis、Property 或 Issue/Job 共用表。
+- [ ] API：登入保護 GET /api/operation-types?issueState=-1&opType=、POST、PUT /{opType}、DELETE /{opType}、POST /{opType}/approve。Vue OperationTypeMaster.vue 已固定以上路徑/body；如需改路由，前後端與此 spec 一起更新。
+- [ ] 新增驗證 Oracle 欄位長度（OPType 20、Description 255）、Trim/大寫 OPType、PK 唯一；另檢查 TBLOPBASIS.OPNO 大小寫不敏感衝突，因舊 Core 把 OPType/OPNo 視為同一 Property namespace。
+- [ ] 修改只允許 IssueState=0，僅更新 Description；DATASTAMP 在 Oracle 可 NULL、預設 0，確認現有 YMES 型別/live NULL 語義後採 CAS 並回 409；Creator/日期、Reviser/日期與狀態不信任前端，由 API 管理。
+- [ ] Delete 0/-1 硬刪、2 改 -1、1 禁止。舊 clsOpBasis.DelOPType 先刪 TBLOPPROPERTY 中相同 OPNo 屬性再刪類別；確認 YMES 的共享屬性資料讀寫策略、OPType/OPBasis 碰撞與實際 FK/引用，使用單一 transaction，不要在 schema reference 臆造 FK。
+- [ ] Approve 只允許 0，IssueNo=OP TYPE；共用 Issue Job/Detail 不存在才 direct Active(2)，有流程則 Pending(1)、通過 2、退回 0，第一關通知由共用簽核服務處理。不要在 API/前端自行猜狀態或重建 Issue 表。
+- [ ] Property WinForms 呼叫 OP_OPProperty 並以 OPType 當 OPNo。先核對 OP BASIS 共用 Property API/表，不要為 OP103 重複建 Property table。完成 API/schema 後提交並 push；公司端 DEV mock 不會寫入正式 DB。
+- [ ] OP103 本回合僅新增 Oracle source DDL、PG CREATE-only 參考、Vue DEV UI、規格及 handoff；未連 YMES PG、未實作 API/migration，未執行 build/test/browser 驗收。
 ## 最新公司端 handoff：QC409 OCAP異常單處置調整（2026-11-18）
 
 - [ ] Pull 最新 main，閱讀 docs/modules/QC/OCAP異常單處置調整.md、QC408 OCAP流程規格與本檔下方 QC408 handoff、docs/DATABASE_CONNECTION.md QC409 段落。

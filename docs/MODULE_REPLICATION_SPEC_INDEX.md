@@ -7,6 +7,8 @@
 - QC503「檢測設備連線程式」：[功能規格](modules/QC/檢測設備連線程式.md)。已直接對照 WinForms 主/Def Form、`wsQC`、`clsInspMachine`、`clsBasis_UPD` 與 Driver Function assembly，完成 DEV Vue 頁/三層選單/API handoff；主表 `TBLQCINSPDRIVER` 沿用 QC501 已取得的共用 Oracle DDL/PostgreSQL CREATE，不新增表。家用端待核對 live schema、共享 Driver API 與簽核 Issue Job。
 - QC408「OCAP基本資料」：[功能規格](modules/QC/OCAP基本資料.md)。已對照四個 WinForms Form、`wsQC`、`clsQCBasis`，以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查得三張 OCAP 表 DDL，新增 Oracle source DDL/PG CREATE-only 參考及 QC → 異常設定三層選單、Vue DEV 清單/CRUD/核准/刪除/流程預覽與簡化節點繪製器。家用端待比對 YMES live schema、實作三表交易與 API，並先釐清 binary `iMESXMLFlow.dll` 的 XML 相容策略。
 
+- OP103「作業站類別資料」：[功能規格](modules/OP/作業站類別資料.md)。已直接對照 frmOPType/Def、wsOP 與 clsOpBasis，完成 /YMES/MasterData/OperationTypes Vue DEV 清單/新增/修改/複製/刪除/核准及 Property 假資料視窗。Oracle TBLOPTYPE DDL 與 PostgreSQL CREATE-only 參考已保存；Production schema/API 與共享簽核待家用端實作。
+
 ## 規格產出原則
 
 - 以 WinForms Form、Service/Core 類別及 MES Oracle 資料字典為依據；截圖用於核對版面，不取代程式碼與資料表證據。

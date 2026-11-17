@@ -512,3 +512,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 專用表 DDL：mestest_qc409_wip_ocap_source_ddl.sql，涵蓋 TBLWIPERFOCAPDISPOSITION、TBLWIPERFOCAPSTATE、TBLWIPERFOCAPGROUPSTATE。
 - 核心 ERF/WIP/通知依賴 DDL：mestest_qc409_wip_disposition_dependencies_source_ddl.sql，涵蓋 TBLWIPERFBASIS、TBLWIPERFBATCHLOT、TBLWIPERFDISPOSITION、TBLWIPERFHOLDREASONDISP、TBLWIPLOTSTATE、TBLWIPLOTLOG、TBLWIPGOODBINSTATE、TBLWIPERF_ATTACHFILE、TBLWIPERFOCAP_ATTACHFILE、TBLUSRUSERBASIS、TBLENTCUSTOMERCONTACTOR，以及來源索引。
 - mestest_qc409_wip_ocap_create.sql 僅為三張 OCAP 專用表提供 YMES PostgreSQL schema-only Create 對照；其他表為共用 WIP/ENT/USR schema，家用端需查 live schema/migrations 再適配，勿重建或盲目套用 Oracle DDL。
+### 更新 2026-11-18：OP103 作業站類別 TBLOPTYPE
+
+- 以公司端既有受保護 Oracle 設定，透過 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 MESTEST.TBLOPTYPE 的 DBMS_METADATA.GET_DDL 與索引資訊；DDL 保存為 database/reference/mestest_op103_optype_source_ddl.sql。只讀 metadata，沒有讀 MES 業務資料列或執行 Oracle DDL；連線秘密沒有寫入 Git。
+- 確認主鍵只有 OPTYPE；無 FK/額外 index。DATASTAMP nullable + DEFAULT 0；ISSUESTATE NOT NULL + DEFAULT 0。PostgreSQL CREATE-only 對照為 database/reference/mestest_op103_optype_create.sql，不等於 migration。
+- WinForms 舊 Core 新增作業站類別前，會檢查 TBLOPBASIS.OPNO 是否已存在同名 OP；刪除會先清除 TBLOPPROPERTY 中對應 OPNo。家用端須先比 live schema 與 YMES OP Property API，再實作交易及 namespace 保護，詳見 docs/modules/OP/作業站類別資料.md。

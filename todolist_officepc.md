@@ -850,3 +850,11 @@
 - [x] 已建立 /YMES/QC/OCAPDispositionAdjust Vue DEV 頁、QC409 menu/route/元件掛載、功能規格、Oracle DDL reference、三張專用表 PG CREATE-only handoff，更新 module index、DATABASE_CONNECTION.md 及家用端 API/schema TODO。
 - [ ] Production API/schema 尚未實作；公司端未連 YMES PostgreSQL，未執行 build、測試或瀏覽器驗收。家用端完成 QC409 API/schema 後 pull，對照真 API/錯誤與交易行為整合驗收。
 - [ ] 接續依 docs/MES_MENU_FUNCTION_INVENTORY.md 遷移下一個尚未完成的 Function；各功能先追 WinForms Form/Service/Core，再查缺的 Oracle DDL，完成 DEV UI/規格/API handoff 並 push。
+
+## 2026-11-18 公司端進度：OP103 作業站類別資料
+
+- [x] 直接對照 frmOPType/Designer、frmOPTypeDef/Designer、wsOP.Load/Add/Edit/Delete/ApproveOPType 與 clsOpBasis；記錄四狀態查詢、Grid 隱藏狀態/DataStamp、定義窗欄位、OP namespace 衝突、Property cascade、IssueNo 與狀態轉移。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 直連受保護連線唯讀取得 MESTEST.TBLOPTYPE 原始 DDL/index；沒有讀業務資料、沒有在 Oracle 執行 DDL、未輸出連線秘密。完成 Oracle source DDL 和 PostgreSQL CREATE-only 參考。
+- [x] 新增 /YMES/MasterData/OperationTypes Vue DEV mock UI 與 OP → 作業站設定 → 作業站類別資料路由、四狀態/查詢/清單/新增/修改/複製/刪除/核准/Property，KD 黃色欄位與 WinForms 版型。
+- [x] 新增 OP103 規格、模組索引、資料庫連線 provenance、家用端 live schema/API handoff，並在 OP Basis 規格互連。
+- [ ] Production API/schema 由家用端按 todolist_homepc.md 實作；未連 YMES PostgreSQL，未執行 build、test 或 browser 驗收。公司端持續依 docs/MES_MENU_FUNCTION_INVENTORY.md 下一個未遷移 WinForms 功能直接閱讀程式碼。
