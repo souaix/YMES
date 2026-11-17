@@ -708,3 +708,12 @@
 - [x] 新增 `database/reference/mestest_qc212_item_group_create.sql`，供家用端核對並補缺的 `tblqcitemgroupdetail`、`tblqccalculatescript` PostgreSQL 建表參考；主表與 Memo 既有 Create reference 已在規格中引用。
 - [x] 更新 `todolist_homepc.md` 最新 QC212 schema/API handoff、`docs/DATABASE_CONNECTION.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md`。
 - [ ] 公司端未連 YMES PostgreSQL，未執行 build、測試或瀏覽器驗收；家用端完成 migration/API 後公司端 pull 再驗收。下一項依目錄為 QC213 計數品管項目群組。
+
+## QC213 計數品管項目群組公司端交接（2026-11-17）
+
+- [x] 依 STD WinForms frmQCItemAttOrderGroup/Define、共用 QC_ItemGroupInclude（IsAttributes=True）、QC_ItemOp（QCType=3）、wsQC 與 clsQCBasis 核對欄位、按鈕、狀態、刪除/簽核規則；沒有用截圖代替原始碼。
+- [x] 新增 /YMES/QC/AttributeItemGroup Vue 3 DEV 頁並掛到品質資料 > 品管設定 > 計數品管項目_群組。包含四狀態及 GroupNo 查詢、上下 Grid、Add/Edit/Delete/Copy/Approve、雙清單 Add QC、移除/排序及共用 OP 對應欄位；使用獨立 localStorage 假資料與 KD 黃橘色系。
+- [x] 依 PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護連線唯讀取得 QC213 主/明細及硬刪 OP/PRD 依賴 DDL/欄位/PK/index；WIP 檢查表沿用既有來源 DDL。沒有查詢 MES 業務列、沒有在 Oracle 執行 DDL，連線資料未輸出。
+- [x] 新增 Oracle source DDL reference、含 WIP/OP/PRD 關聯表的 PostgreSQL schema-only CREATE 參考、QC213 功能規格、DATABASE_CONNECTION.md 與 MODULE_REPLICATION_SPEC_INDEX.md 更新。
+- [x] 更新 todolist_homepc.md：先完成既有 QC212 API/schema，再依 QC213 handoff 比對所有主/明細/硬刪依賴及 YMES live schema，僅補缺 migration，實作 QC213 API/Issue Job/共用 QCType=3 operation。
+- [ ] 公司端未連 YMES PostgreSQL，也未執行 build、測試或瀏覽器驗收。家用端完成 migration/API 後 pull 再做整合驗收；之後依 MES_MENU_FUNCTION_INVENTORY.md 接下一個未遷移功能。

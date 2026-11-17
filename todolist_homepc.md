@@ -1,6 +1,19 @@
 # 家裡電腦接手清單
 
-## 最新公司端 handoff：QC212 計量品管項目群組（2026-11-17）
+## 最新公司端 handoff：QC213 計數品管項目群組（2026-11-17）
+
+- [ ] QC212 是本功能前置工作；先完成下方 QC212 handoff 的 live schema 比對與 API，再接 QC213，避免 QC 主檔 API 路徑重複或漏掉共用資源。
+- [ ] 先讀 docs/modules/QC/計數品管項目群組.md、docs/DATABASE_CONNECTION.md、docs/MES_MENU_FUNCTION_INVENTORY.md；FunctionNo=QCITEM_G_A_ORDER，FunctionKey=QC213。
+- [ ] Oracle source DDL 已由公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得，無須重查：QC213 主/明細及 OP/PRD 硬刪依賴表各有 reference；WIP 檢查表在 QC205 dependency reference。PostgreSQL CREATE-only 參考 `database/reference/mestest_qc213_attribute_item_group_create.sql` 列出這些表及必要索引。
+- [ ] 查 YMES PostgreSQL live schema、migrations、API 現況。僅在缺表時新增 forward migration；主檔與明細 PK 分別是 tblqcitemattgrouporderbasis(groupno)、tblqcitemattgorderdetail(groupno,qcitemno)。逐一比較 CREATE 參考中的硬刪依賴表及既有 QC 共用表欄位/PK/index，不可覆寫現有資料，也不可把 PostgreSQL SQL 放到 MES Oracle 執行。
+- [ ] 實作登入保護及 QC213 FunctionKey 授權 API：GET/POST/PUT/DELETE /api/qc/attribute-item-groups、GET/PUT /{groupNo}/details、POST /{groupNo}/approval。詳細 DTO、欄位限制、交易及錯誤處理依 QC213 功能規格。
+- [ ] 主檔欄位限制 GroupNo 25、GroupName 50、Description 255；LotIsValid 僅 0/1。Add/Edit 應避免 GroupNo 與 Attribute QC Item、Variable QC Item、計量群組 TBLQCITEMGROUPBASIS、PMI 群組 TBLQCITEMGROUPBASIS_PMI 重複（來源 Core 以大小寫無關比對）。
+- [ ] 伺服器依實際 IssueState/DataStamp 決定操作：新增狀態 0；編輯僅 0；刪除 0/-1 硬刪、2 改 -1、1 拒絕。硬刪先檢查 TBLWIPTEMP_QCITEM 是否在線使用；來源 Core 另清除 QC Item Parameter、OPQCItem、OPGQCItemDetail、PRDQCItem 關聯。單一 transaction 執行，並核對 YMES 現有表的 QCType 條件與刪除順序。
+- [ ] 核准使用 Issue Job ATTQCITEM_G_ORDER；有 Job 時設 1 並啟動簽核，核准後 2、退回回 0；沒有 Job 直接設 2。API 每筆都確認群組至少有一筆有效 Attribute 明細，批次逐筆回報。
+- [ ] 明細 API lookup 沿用已核准 Attribute QC Item：GET /api/qc/attribute-qc-items?issueState=2。Add/Remove/reorder 寫入以單一 transaction 完整替換 details，檢查群組未簽核、QC item IssueState=2、Attribute 類型、唯一性；ShowOrder 連續 0..N-1。沿用共用作業站資源 QCType=3，LotIsValid=0 不可指定 Inline，InLine 至少勾選 FAI/IPQC/PQC 一種；不要建 QC213 專屬 operation table。
+- [ ] 更新 migration/API 文件與 todolist_homepc.md，commit/push 後通知公司端 pull。公司端尚未連 YMES PostgreSQL，未執行 build、測試或瀏覽器驗收。
+
+## QC212 前置 handoff：計量品管項目群組（2026-11-17）
 
 - [ ] 讀取 `docs/modules/QC/計量品管項目群組.md`、`docs/DATABASE_CONNECTION.md` 與下方 QC212 handoff；選單 FunctionNo=`QCITEM_G`、API 權限 FunctionKey=`QC212`。
 - [ ] 使用家用端可用的 PostgreSQL 管理連線先查 live schema、migration 及 API 現況。核對 `tblqcitemgroupbasis`、`tblqcitemgroupdetail`、`tblqccalculatescript`、`xx_tblqcitem_memo`、`tblqcitemparameter`、`tblopqcitem`、QC Variable item、sampling plan、MES parameter。Oracle source DDL 已在 reference，不需要公司端重查 Oracle。

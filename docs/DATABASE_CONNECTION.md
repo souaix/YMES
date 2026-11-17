@@ -425,3 +425,11 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - PostgreSQL 空表 CREATE 參考為 database/reference/mestest_qc210_variable_measurement_log_delete_create.sql；包含 9 張 SPC 日誌表的來源欄位/PK/索引。TBLQCSAMPLEPLANCHANGE 沿用 QC201 的 mestest_qc_item_attributes_create.sql。
 - 公司端未連 YMES PostgreSQL。家用端須先比對 live schema 與已部署 migration，再建立缺少的 forward migration；不能把參考檔當成已套用 migration，也不能在 Oracle 執行 PostgreSQL DDL。
 - Oracle IP、帳號、密碼、SID 與受保護連線附件路徑仍只存在本機受保護設定，不記錄於 Git。
+
+### 更新 2026-11-17：QC213 計數品管項目群組
+
+- 公司端使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機既有受保護連線唯讀連至 MESTEST，取得兩張 QC213 主/明細表及兩張 Core 硬刪依賴表的 DBMS_METADATA.GET_DDL、ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_INDEXES metadata。WIP 檢查表的來源 DDL 已在既有 QC205 dependency reference。
+- Oracle source DDL：`mestest_qc213_attribute_item_group_basis_source_ddl.sql`、`mestest_qc213_attribute_item_group_detail_source_ddl.sql`、`mestest_qc213_attribute_item_group_op_detail_source_ddl.sql`、`mestest_qc213_attribute_item_group_prd_item_source_ddl.sql`；WIP source 為 `mestest_qc205_variable_dependencies_source_ddl.sql`。PostgreSQL YMES 空表 CREATE 參考：`mestest_qc213_attribute_item_group_create.sql`，列出 QC213 主/明細表、OP Group/PRD 清理關聯、WIP 使用檢查表與來源索引。
+- 主檔 PK 為 GROUPNO；明細 PK 為 (GROUPNO, QCITEMNO)。兩表僅有 PK unique index，沒有 FK 或額外 index。預設值欄位在 Oracle 可為 NULL，CREATE 參考保留這項語意。額外查得 TBLOPGQCITEMDETAIL PK=(OPNO,QCITEMNO)，TBLPRDQCITEM PK=(PRODUCTNO,PRODUCTVERSION,OPNO,QCITEMNO)，兩表無 FK/額外索引；TBLWIPTEMP_QCITEM 無 PK，只有 (LOTNO,QCITEMNO) 與 (LOTNO) 索引。
+- Legacy Core 硬刪流程先確認 TBLWIPTEMP_QCITEM 沒有該 QC 群組的在線記錄，後清主表/明細以及 TBLQCITEMPARAMETER、TBLOPQCITEM、TBLOPGQCITEMDETAIL、TBLPRDQCITEM 對應資料。家用端須核對 YMES 實際關聯欄位並以 transaction 維持一致；共用 parameter/OP source DDL 沿用既有 QC reference。
+- 只查結構 metadata，未查 MES 業務列、未在 Oracle 執行 DDL。IP、帳號、密碼、SID 與受保護連線設定未輸出或寫入 Git。家用端只查 YMES PostgreSQL live schema/migrations，再對缺表建立 migration。
