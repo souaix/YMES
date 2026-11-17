@@ -1361,3 +1361,28 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 - [ ] Hold Disp Group 選擇器重用 QC405 handoff 的 `GET /api/qc/hold-disposition-groups?searchFieldName=GroupNo&searchFieldValue=`，資料來源 `TBLQCHOLDDISPGROUPBASIS`，相容 WinForms 未傳 IssueState、載入全狀態的行為；不要另建 lookup table/API。SendMail=Yes 必須有群組。
 - [ ] 核對 `RuleScript` 僅當字串儲存，不在 API 執行腳本。原生 `OP_Script` 動態編輯器尚未移植，先用公司端純文字編輯器。
 - [ ] 先完成 YMES schema/API 實作，補 API 層驗證及 concurrency 驗收後再提交並 push；公司端 DEV localStorage 假資料不能作為正式資料寫入。
+
+## OP102 企業邏輯設定（公司端 Vue / API handoff，2026-11-18）
+
+請 pull 最新 main，先讀 docs/modules/OP/企業邏輯設定.md、docs/DATABASE_CONNECTION.md 與本段。公司端已完成 /YMES/OP/BusinessRules Vue DEV 頁；Production API/schema 尚未實作。Oracle source DDL 與 PostgreSQL CREATE-only 參考：
+- database/reference/mestest_op102_business_rule_basis_source_ddl.sql
+- database/reference/mestest_op102_business_rule_basis_create.sql
+- database/reference/mestest_op102_scenario_basis_lookup_source_ddl.sql
+- database/reference/mestest_op102_scenario_basis_lookup_create.sql
+
+資料庫工作：
+- [ ] 先查 YMES live schema/migrations 的 tblopbusinessrulebasis 和 tblopscenariobasis。已存在的表不得重建；只在確認缺表後新增 forward migration，對照 Oracle 欄位 nullability/default/PK。CREATE-only reference 不是 migration，也不要在 MES Oracle 執行 PostgreSQL SQL。
+- [ ] 情境表是 OP102 DT 下拉的共享 lookup。若 YMES 已有則重用；若沒有，評估新增其 schema dependency；OP102 handoff 不要求另外建立情境 CRUD。
+- [ ] 企業邏輯主表 Oracle 只有 BRNO PK unique index，無 FK/額外 index；情境表只有 SCENARIONO PK unique index，無 FK/額外 index。
+
+API 工作：
+- [ ] 實作登入保護及 OP102 FunctionKey/權限驗證。路由需求：GET /api/operation-business-rules?issueState=all&brNo=、GET /api/operation-business-rules/options、POST /api/operation-business-rules、PUT /api/operation-business-rules/{brNo}、DELETE /api/operation-business-rules/{brNo}、POST /api/operation-business-rules/{brNo}/approve。
+- [ ] List 回傳 UI 14 個 Grid 欄位及隱藏 IssueState/DataStamp。Options 回傳已允許的 plugin function/ExecutionFile、FRMBR interface/ExecutionFile、核准 ScenarioNo/Name、BRProdType 與 AllowTimeLimitControl ValueList。前端傳入的 DLL/function 名稱不得被服務端任意載入或執行。
+- [ ] POST/PUT 只接受 OP102 畫面欄位，Creator/CreateDate/Reviser/ReviseDate/IssueState/DataStamp 與 Issue Job 權限由 server 控制。修改時保留 KernelModule、KernelFunctionName、ActiveModule 與所有產品線旗標欄位，不得以空 DTO 清空。
+- [ ] PUT、已簽核停用、Approve 使用 BRNO + 舊 DataStamp compare-and-swap，成功才遞增 DataStamp；Oracle DataStamp nullable/default 0，實作需有 null-safe CAS 並檢查受影響列數，零列回傳 concurrency conflict。
+- [ ] 刪除規則：IssueState 0/-1 實體刪除；2 以 DataStamp CAS 改成 -1 並寫 audit；1 拒絕。多筆刪除是逐筆操作，需回報成功/失敗 BRNo。
+- [ ] 核准只接受 IssueState=0，沿用 IssueNo BR BASIS 與共用 Issue Job/Issue Control：沒有簽核設定時直接到 2，有設定則先到 1，callback 核准到 2、退回到 0。多筆需回報逐筆結果與 server EventLog。
+- [ ] BRProdType ValueList 來源為 TBLOPBUSINESSRULEBASIS/BRPRODTYPE；AllowTimeLimitControl 清單來源鍵是 TBLOPBUSINESSRULEBASIS/TIMELIMITCONTROL。定義窗會停用兩欄；更新時保留已載入值，沒有提交 null。
+- [ ] Manual RuleMethod 可用 FunctionName，或 InterfaceName/InterfaceURL；FunctionName 不可與 Interface/URL 同填。DT 的 ScenarioNo 持久化於 InterfaceName；API options 僅回核准情境。
+- [ ] Add/Edit 的 Apply 與 Confirm 使用相同業務欄位；Apply 保持視窗開啟，Confirm 關閉。服務端 audit 一律由登入身分建立。
+- [ ] 完成 API、schema、權限與簽核驗收後 commit/push，通知公司端 pull 並接正式 API。公司端本段尚未 build/test/browser 驗收。

@@ -522,3 +522,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護連線唯讀取得 `MESTEST.TBLOPCONTROLRULE` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_CONSTRAINTS`/`ALL_INDEXES`；確認僅有 RuleNo 主鍵唯一索引，無 FK 或其他索引。
 - Oracle source DDL 與 PostgreSQL CREATE-only 參考：`database/reference/mestest_op101_control_rule_source_ddl.sql`、`mestest_op101_control_rule_create.sql`。未讀 MES 業務列，沒有在 Oracle 執行 DDL；憑證未輸出或保存到 Git。
+
+### 更新 2026-11-18：OP102 企業邏輯設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護 DatabaseConfigs.CS.Test.Mes.ConnectionString 直連 MESTEST，唯讀取得 TBLOPBUSINESSRULEBASIS、TBLOPSCENARIOBASIS 的 DBMS_METADATA.GET_DDL，並查 ALL_INDEXES/ALL_CONSTRAINTS。
+- 兩表各只有主鍵 unique index、沒有外鍵或額外索引。Oracle source DDL 與 PostgreSQL CREATE-only 對照分別保存於 OP102 reference 檔案；情境表僅為 DT 選項 lookup。
+- 僅查結構 metadata，沒有查詢 MES 業務資料列、沒有在 Oracle 執行 DDL；連線值未輸出或放入 Git。

@@ -8,6 +8,7 @@
 - QC408「OCAP基本資料」：[功能規格](modules/QC/OCAP基本資料.md)。已對照四個 WinForms Form、`wsQC`、`clsQCBasis`，以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查得三張 OCAP 表 DDL，新增 Oracle source DDL/PG CREATE-only 參考及 QC → 異常設定三層選單、Vue DEV 清單/CRUD/核准/刪除/流程預覽與簡化節點繪製器。家用端待比對 YMES live schema、實作三表交易與 API，並先釐清 binary `iMESXMLFlow.dll` 的 XML 相容策略。
 
 - OP101「作業站法則設定」：[功能規格](modules/OP/作業站法則設定.md)。已閱讀 WinForms Form/Def、wsOP、clsOpBasis、clsBasis_UPD，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBLOPCONTROLRULE DDL，完成作業站資料→作業站設定三層選單、Vue DEV CRUD/複製及 PostgreSQL CREATE handoff；Production API 與 OP_Script 完整編輯器待家用端。
+- OP102「企業邏輯設定」：[功能規格](modules/OP/企業邏輯設定.md)。已直接閱讀 WinForms 清單/定義 Form、wsOP、clsOpBasis、clsBasis_UPD，PowerShell 5.1/ODP.NET 唯讀取得主表與情境 lookup Oracle DDL，完成 OP 三層選單、Vue DEV CRUD/簽核/狀態頁及 PostgreSQL CREATE-only handoff；Production API 與 YMES live schema 比對待家用端。
 - OP103「作業站類別資料」：[功能規格](modules/OP/作業站類別資料.md)。已直接對照 frmOPType/Def、wsOP 與 clsOpBasis，完成 /YMES/MasterData/OperationTypes Vue DEV 清單/新增/修改/複製/刪除/核准及 Property 假資料視窗。Oracle TBLOPTYPE DDL 與 PostgreSQL CREATE-only 參考已保存；Production schema/API 與共享簽核待家用端實作。
 
 ## 規格產出原則

@@ -866,3 +866,12 @@
 - [x] 新增 `/YMES/OP/ControlRules` Vue DEV 頁和 OP 三層選單。清單欄位、Add/Edit/Copy/Delete、定義欄位、Send Mail 群組 lookup、DataStamp/audit、legacy Apply payload 差異均已整理。
 - [x] 新增 `docs/modules/OP/作業站法則設定.md`、模組索引、Oracle 連線查詢紀錄，以及本段家用端 API/schema handoff。
 - [ ] 本段依工作規則未執行 build、test 或瀏覽器驗收；推送後下一項接續 OP102「企業邏輯設定」，先從 WinForms Form/Service/Core 原始碼開始。
+
+## OP102 企業邏輯設定（公司端 2026-11-18）
+
+- [x] 直接閱讀 frmBusinessRuleBasis/Def、wsOP、clsOpBasis、clsBasis_UPD；記錄三種 RuleMethod、plugin/interface/scenario options、四狀態 CRUD/簽核/刪除、DataStamp 與 Apply/Confirm。
+- [x] Windows PowerShell 5.1 + Oracle.ManagedDataAccess 受保護連線唯讀取得 MESTEST.TBLOPBUSINESSRULEBASIS 與 TBLOPSCENARIOBASIS DDL/index/constraint metadata；各表只有 PK index、無 FK/額外索引；未讀業務列、未執行 Oracle DDL。
+- [x] 建立 /YMES/OP/BusinessRules Vue DEV 假資料頁與 OP 設定三層選單、路由、狀態/查詢/多選/CRUD/核准、欄位條件、稽核展示。
+- [x] 建立 OP102 詳細規格、兩張 Oracle source DDL 與 PostgreSQL CREATE-only 參考、索引與資料庫連線 provenance、家用端 API/schema handoff；補上作業站主檔規格交互連結。
+- [ ] 按工作規則未執行 build、test 或 browser 驗收；Production API/schema 待家用端依 todolist_homepc.md 完成。家用端 push 後公司端 pull 對接。
+- [ ] 接續依 docs/MES_MENU_FUNCTION_INVENTORY.md，直接閱讀下一項尚未遷移 WinForms Form/Service/Core，查缺漏 Oracle DDL，完成 UI/spec/handoff 並 push。
