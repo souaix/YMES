@@ -14,13 +14,22 @@
 
 ## 目前停留點（2026-11-17）
 
+### QC102 抽樣計劃設定_1916（公司端 2026-11-17）
+
+- [x] 對照 `frmSampling1916`/`frmSampling1916Def`、wsQC、`clsQCBasis` 與 `clsBasis_UPD`：全表載入、Attributes/Variables 前端切換、欄位顯示、複合鍵、驗證、ADD/EDIT/DEL/Copy/Apply 與多筆刪除首錯停止行為。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 使用既有受保護連線，直連唯讀取得 `MESTEST.TBLQCSAMPLING1916` table/index DDL 與 ALL_CONSTRAINTS；確認四個 NOT NULL、唯一 index `(SamplingType,MinNum,MaxNum,SLevel)`，沒有 P constraint、FK 或其他 index。未讀業務列、未執行 Oracle DDL、未輸出憑證。
+- [x] 建立來源 DDL 與 PostgreSQL 空表 CREATE 參考；新增 `/YMES/QC/Sampling1916` DEV 頁、QC → 基本資料選單/路由、QC102 規格及家用 API/schema handoff。
+- [x] 更新規格索引、資料庫查詢來源紀錄及兩台電腦待辦。DEV 假資料限開發預覽 localStorage。
+- [ ] 未執行 build/test/瀏覽器驗收；公司端下一項按 QC 基本資料選單接續 QC103「抽樣計劃」。
+
+
 ### QC101 抽樣表格（公司端 2026-11-17）
 
 - [x] 對照 frmSamplingTable、frmSamplingTableDef、frmSamplingTableCopy、wsQC 與 clsQCBasis/clsBasis_UPD，整理查詢、複合鍵、範圍驗證、Apply、單列 Copy、整表 Copy 的部分成功行為。
 - [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 透過受保護設定唯讀查得 MESTEST.TBLQCSAMPLINGTABLE table/index DDL 及 ALL_CONSTRAINTS；確認複合 PK (SAMPLINGTABLE, MINNUM, MAXNUM)、唯一 PK index、四個 NOT NULL、無 FK/其他索引。未讀業務資料，未在 Oracle 執行 DDL，未輸出憑證。
 - [x] 新增 PostgreSQL 空表 CREATE 參考、/YMES/QC/SamplingTable Vue DEV 畫面、QC → 基本資料 → 抽樣表格 fallback 選單與 API/schema handoff 規格。
 - [x] 更新 QC 規格索引、資料庫來源紀錄與兩台電腦待辦；未執行 build/test/瀏覽器驗收。
-- [x] 下一個功能為 QC102「抽樣計劃設定_1916」，依 MES_MENU_FUNCTION_INVENTORY.md 檢查 WinForms Form/Service、資料表及邏輯。
+- [x] QC102 已於本次完成；公司端接續 QC103「抽樣計劃」，依 MES_MENU_FUNCTION_INVENTORY.md 檢查 WinForms Form/Service、資料表及邏輯。
 ### QC111 8D 原因基本資料（公司端 2026-11-17）
 
 - [x] 從 8D 原因基本資料 WinForms Form、兩個 Def Form、wsQC 與 clsQCBasis 整理雙 Grid、欄位、查詢、狀態、CRUD、複製、刪除、核准與 Issue/Job 流程。

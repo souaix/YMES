@@ -306,3 +306,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護連線唯讀取得 MESTEST.TBLQCSAMPLINGTABLE 的 DBMS_METADATA table/index DDL，並查 ALL_CONSTRAINTS。
 - 主鍵為 (SAMPLINGTABLE, MINNUM, MAXNUM)；只有 PK unique index；四個 NOT NULL 欄位約束；沒有 FK、其他 unique index 或額外索引。Oracle source DDL 與 PostgreSQL 空表 CREATE 參考為 database/reference/mestest_qc_sampling_table_source_ddl.sql、mestest_qc_sampling_table_create.sql。
 - 未讀取 MES 業務列、未在 Oracle 執行 DDL；連線字串、IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations，缺少時才建 migration。
+### 更新 2026-11-17：QC102 抽樣計劃設定_1916 來源表
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過公司端既有受保護連線直接唯讀取得 `MESTEST.TBLQCSAMPLING1916` 的 `DBMS_METADATA.GET_DDL` table/index DDL，並查詢 `ALL_CONSTRAINTS`；沒有讀取業務資料。
+- DDL 檔案：`database/reference/mestest_qc_sampling_1916_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_sampling_1916_create.sql`。
+- 唯一索引 `(SAMPLINGTYPE, MINNUM, MAXNUM, SLEVEL)` 是獨立 unique index，不是 PK constraint；四個 NOT NULL constraint，沒有 FK/其他 index。欄位 nullable/default 依 Oracle DDL 保留。
+- 未在 Oracle 執行 DDL；連線字串、IP、帳號、密碼、SID 未輸出或寫入 Git。家用端只核對 YMES PostgreSQL schema/migrations。

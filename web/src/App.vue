@@ -52,6 +52,7 @@ import QcHoldItemBasisMaster from './components/QcHoldItemBasisMaster.vue'
 import QcMClassBasisMaster from './components/QcMClassBasisMaster.vue'
 import QcSClassBasisMaster from './components/QcSClassBasisMaster.vue'
 import QcSamplingTableMaster from './components/QcSamplingTableMaster.vue'
+import QcSampling1916Master from './components/QcSampling1916Master.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -245,6 +246,7 @@ const fallbackMenuTree: MenuNode[] = [
     children: [{ id: 'quality-basic-settings', label: '基本資料', shortLabel: '基', children: [
       { id: 'function:QC:8D REASON BASIS', label: '8D 原因基本資料', shortLabel: '8', functionNo: '8D REASON BASIS', moduleNo: 'QC', tableName: 'tblqcreasonbasis_8d' },
       { id: 'function:QC:SAMPLING TABLE', label: '抽樣表格', shortLabel: '抽', functionNo: 'SAMPLING TABLE', moduleNo: 'QC', tableName: 'tblqcsamplingtable' },
+      { id: 'function:QC:SAMPLING 1916', label: '抽樣計劃設定_1916', shortLabel: '抽', functionNo: 'SAMPLING 1916', moduleNo: 'QC', tableName: 'tblqcsampling1916' },
     ] }, { id: 'quality-exception-settings', label: '異常設定', shortLabel: '異', children: [
       { id: 'function:QC:MCLASS BASIS', label: '主分類基本資料', shortLabel: '主', functionNo: 'MCLASS BASIS', moduleNo: 'QC', tableName: 'tblqcmclassbasis' },
       { id: 'function:QC:SCLASS BASIS', label: '次分類基本資料', shortLabel: '次', functionNo: 'SCLASS BASIS', moduleNo: 'QC', tableName: 'tblqcsclassbasis' },
@@ -294,6 +296,7 @@ const menuRoutes: Record<string, string> = {
   'function:EQP:B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
   'function:QC:8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'function:QC:SAMPLING TABLE': appBasePath + '/QC/SamplingTable',
+  'function:QC:SAMPLING 1916': appBasePath + '/QC/Sampling1916',
   'function:QC:FIRST GROUP': appBasePath + '/QC/FirstGroup',
   'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
@@ -357,6 +360,7 @@ const functionRoutes: Record<string, string> = {
   'SMD PDLINE BASIS': pdLineBasisRoute,
   '8D REASON BASIS': appBasePath + '/QC/8DReasonBasis',
   'SAMPLING TABLE': appBasePath + '/QC/SamplingTable',
+  'SAMPLING 1916': appBasePath + '/QC/Sampling1916',
   'FIRST GROUP': appBasePath + '/QC/FirstGroup',
   'FINAL GROUP': appBasePath + '/QC/FinalGroup',
   'HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
@@ -439,6 +443,7 @@ const isMaterialVendorAutoLoaderPage = computed(() => activeMasterKey.value === 
 const isEquipmentAutoLoaderPage = computed(() => activeMasterKey.value === 'function:EQP:B_EQP AUTOLOADER SETUP')
 const isQc8DReasonBasisPage = computed(() => activeMasterKey.value === 'function:QC:8D REASON BASIS')
 const isQcSamplingTablePage = computed(() => activeMasterKey.value === 'function:QC:SAMPLING TABLE')
+const isQcSampling1916Page = computed(() => activeMasterKey.value === 'function:QC:SAMPLING 1916')
 const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC:FIRST GROUP')
 const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
 const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DESCRIPTION')
@@ -1374,6 +1379,14 @@ async function signOut(): Promise<void> {
         />
         <QcSamplingTableMaster
           v-else-if="isQcSamplingTablePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcSampling1916Master
+          v-else-if="isQcSampling1916Page"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

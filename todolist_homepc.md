@@ -6,6 +6,18 @@
 
 ## 家用電腦現在接手
 
+### QC102 抽樣計劃設定_1916（公司端 2026-11-17 交接）
+
+- [ ] 閱讀 `docs/modules/QC/抽樣計劃設定_1916.md`、本檔 QC102 區段、公司端 QC102 區段及 `docs/DATABASE_CONNECTION.md`。
+- [ ] 比對 YMES PostgreSQL live schema/migrations。Oracle source DDL：`database/reference/mestest_qc_sampling_1916_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_sampling_1916_create.sql`。只在確認缺漏時新增 forward migration，保留 YMES 擴充欄位；不可在 MES Oracle 執行 CREATE。
+- [ ] 保留欄位 nullable/default：SamplingType varchar(25) NOT NULL；MinNum/MaxNum numeric(8,0) NOT NULL；SLevel varchar(6) NOT NULL；SampleNum/RejectNum numeric(6,0) nullable；KValue/FValue numeric(10,3) nullable；Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp nullable；DataStamp numeric(11,0) nullable DEFAULT 0。索引為獨立 unique index `(samplingtype,minnum,maxnum,slevel)`；來源沒有 PK constraint、FK 或其他 index。
+- [ ] 實作登入與 FunctionKey `QC102` 保護的 `GET /api/qc/sampling-1916`，回傳全表與 audit/DataStamp。UI 依 SamplingType 在前端切換，不帶搜尋條件。
+- [ ] 實作 `POST /api/qc/sampling-1916` body `{ samplingType, minNum, maxNum, sLevel, sampleNum, rejectNum, kValue, fValue }`；驗證 NOT NULL、區間、拒收數不得大於抽樣數、Variables 必填 K/F、複合鍵唯一。Creator/CreateDate 由登入者及伺服器時間維護。
+- [ ] 實作複合鍵 `PUT /api/qc/sampling-1916/{samplingType}/{minNum}/{maxNum}/{sLevel}?dataStampIsNull=&dataStamp=`，僅更新 SampleNum/RejectNum/KValue/FValue；Reviser/ReviseDate/DataStamp 由伺服器更新，nullable DataStamp 需以 CAS 區分 NULL 與 0，衝突回 409。實作相同複合鍵 DELETE；UI 多選時逐筆呼叫，首錯停止，保留已完成刪除。
+- [ ] 若此 API 要服務檢驗流程，實作並記錄 `ShowParameter_Sampling1916` 等價抽樣解析：Population=1 特例、SamplingType/SLevel、含端點區間查找、`SQtyCanBBiggerThenPQty` 上限，以及 Variables 的 K/F 回傳；找不到資料需有明確錯誤。
+- [ ] 使用參數化 SQL；完成後更新 API/schema 文件與本待辦、確認遷移/API 後 push GitHub，通知公司端 pull。此主檔沒有簽核/Issue Job。
+
+
 ### QC101 抽樣表格（公司端 2026-11-17 交接）
 
 - [ ] 閱讀 docs/modules/QC/抽樣表格.md、todolist_officepc.md 的 QC101 區段及資料庫連線紀錄。
