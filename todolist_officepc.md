@@ -12,7 +12,16 @@
 - Oracle 來源 DDL 用 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查詢；使用本機受保護連線設定，不必請使用者重貼，也不得把連線值寫進文件、SQL 或 Git。
 - 目前只查詢過 Oracle 結構與系統選單中繼資料，沒有匯出 MES 業務資料。不要把 DEV 假資料當成正式資料。
 
-## 最新公司端工作：QC303 品管項目規格（2026-11-17）
+## 最新公司端工作：QC304 物料規格設定（2026-11-17）
+
+- [x] 直接閱讀 `frmQCMaterialSpec` Designer/事件、wsQC、clsQCBasis；記錄 MaterialType/MaterialNo 查詢、Active 物料清單、SelectAll/UnSelectAll、SPEC 載入、QCItem FactorSpec 條件、ChartType/SPCID、CS/Tolerance、Paste、MEMO、完整數值/界限驗證與多物料套用。
+- [x] 確認此功能維護 QC302 的 Chart Basis/Detail/DetailLog 及既有 Material/QC Item/Group tables，沒有 QC304 專屬新表。Oracle/PG DDL 沿用 QC302、MTL、QC201/QC205/QC212 references，未重查 Oracle 業務資料，也沒有新增 CREATE SQL。
+- [x] 新增 `/YMES/QC/MaterialSpec` Vue DEV 頁與 QC304 三層選單/路由；完成查詢/選取假資料、點 SPEC 載入、圖表 filter、X-Rm mapping、CS±Tolerance、剪貼簿/文字框貼上、數值與界限驗證、MEMO、批次假資料保存。
+- [x] 建立 QC304 功能規格、更新規格索引與 Oracle DDL 查詢 provenance，並加入家用端 API/schema handoff。
+- [ ] 公司端未執行 build、test 或瀏覽器驗收。家用端完成 schema/API 後，pull 並對照不同 Material/QCItem 的 Chart Basis/Detail/DetailLog 與 group item 跳過結果。
+- [ ] 接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接對照下一項尚未遷移的 WinForms Form/Service/Core。
+
+## 前一項公司端工作：QC303 品管項目規格（2026-11-17）
 
 - [x] 直接對照 `frmQCSpecBasis`、`frmQCSpecBasisDef`、`frmQCSpecCopy`、wsQC 與 clsQCBasis；記錄 QC Item、FactorSpec、四狀態、Detail SPCID、規格界限、Above helper、MEMO、簽核、刪除與跨 QC Item 複製行為。
 - [x] 沿用先前已保存的 Oracle 直連唯讀 DDL `mestest_qc205_variable_dependencies_source_ddl.sql` 中 `TBLQCSPECBASIS`/`TBLQCSPECDETAIL`；本次沒有讀業務資料列，也沒有在 Oracle 執行 DDL。

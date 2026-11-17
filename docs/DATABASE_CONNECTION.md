@@ -476,3 +476,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - QC303 沿用已保存的 Oracle DDL：`database/reference/mestest_qc205_variable_dependencies_source_ddl.sql` 中 `TBLQCSPECDETAIL` 與 `TBLQCSPECBASIS` 區塊。該 DDL 是先前由公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得，本次沒有改用 DBeaver 螢幕操作，也沒有重新讀業務列或執行 Oracle DDL。
 - 本次建立 PostgreSQL 適配的 CREATE-only 對照 `database/reference/mestest_qc303_spec_basis_create.sql`；因子欄收納為 JSONB。家用端先比對 YMES live schema/migrations，確認缺漏後再新增 forward migration。公司端不連 YMES PostgreSQL。
 - 本次未輸出或寫入 Oracle IP、帳號、密碼、SID 或本機受保護連線設定。
+
+### 更新 2026-11-17：QC304 物料規格設定
+
+- QC304 的 Chart Basis/Detail/DetailLog Oracle DDL 沿用 QC302 既有 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀查詢 reference `mestest_qc302_spc_qc_chart_source_ddl.sql`；MTL/QC Item/Group DDL 沿用已保存 MTL、QC201、QC205、QC212 references。本次直接閱讀 WinForms Form、wsQC、clsQCBasis 原碼，未重新查 Oracle。
+- QC304 沒有新專屬資料表，重用 QC302 已建立的 chart schema/migration 0024 與既有物料/QC Item 關聯表；未新增 CREATE SQL。家用端先查 YMES live schema/migrations，只有確認相依物件缺漏才新增 forward migration。
+- 本次未查 MES 業務資料列，未在 Oracle 執行 DDL；未輸出或寫入 IP、帳號、密碼、SID 或本機受保護連線設定。

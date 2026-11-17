@@ -12,6 +12,17 @@
 - [ ] Copy 單筆產生新 serial、狀態 0、複製 Factor/Detail；Copy2 僅在來源/目標 Spec Factor 名稱集合相同時執行，CopyType 3=來源 0+2、0=只 0、2=只 2；目標已有相同 Factor 組合者略過，複製的資料都以新 serial、UNFROZEN 建立。跨 QC Item 的 wildcard `*` 是執行期通用規格匹配規則。
 - [ ] API 必須交易處理 Basis/Detail/狀態/複製與 audit；重新查狀態、DataStamp、重複條件，不信任 request 中的使用者、狀態或 audit。Oracle 來源由公司端先前直連唯讀取得，這次不必再向公司端索取 IP/帳密/SID。本段未執行 build、測試或瀏覽器驗收。
 
+## 下一個公司端 handoff：QC304 物料規格設定（2026-11-17）
+
+- [ ] 讀 `docs/modules/QC/物料規格設定.md`。FunctionNo=`MTLQCITEM`、FunctionKey=`QC304`；Vue DEV 頁 `/YMES/QC/MaterialSpec` 位於品質資料 → 計量規格設定 → 物料規格設定。
+- [ ] QC304 沒有專屬新表；先核對 YMES live schema/migrations。Chart Basis/Detail/DetailLog 已在 QC302 migration 0024；物料/QC Item/QC Group 使用既有 tables。Oracle/PG CREATE 參照沿用 `mestest_qc302_spc_qc_chart_source_ddl.sql`、`mestest_qc302_spc_qc_chart_create.sql`、MTL references、`mestest_qc_item_attributes_create.sql`、`mestest_qc212_item_group_create.sql`。不新增重複 schema；若 live schema 真的缺 group detail 或其他依賴，先以其既有 reference 做必要 forward migration。
+- [ ] 重用現有 `GET /api/materials/lookups/options` 供 MaterialType lookup。新增/沿用登入保護 QC304 API：`GET /api/qc/material-spec/materials?materialType&materialNoPrefix`、`GET /{materialNo}/qc-items`、`GET /{materialNo}/chart-details`、`POST /api/qc/material-spec/batch-update`；要求 QC304 FunctionKey，路由有變更時同步 Vue/spec。
+- [ ] 查詢限 Material IssueState=2，MaterialNo prefix；維持原 `QC_Count=1` 結果條件。物料的計量 QC Item 可由 direct binding/group 展開，但 Detail 只由 FactorSpec 恰為一個且 FactorNo=MATERIAL 的 QC Item 產生；QCItem ChartType=-1 不產 Detail。舊 Save 還會重查 direct `TBLMTLQCITEM`，未 direct 綁定的 group child 會被略過，API 必須明確回報每筆 Material/QCItem 的更新/略過結果。
+- [ ] SPCID：ChartType=0→0/1/2，=1→0/1/3，=2→1/4/5；X Chart SPCID=5 在既有 Chart Basis/Detail 存為 0，讀回時轉回 5。CheckBox 僅篩 Grid 顯示，Save 仍送全部明細。US/CS/LS/UCL/CL/LCL 驗數值與 US≥UCL≥CL≥LCL≥LS；SPCID0 按 SpecLineType 驗 US/LS 必填。CS/Tolerance Edit 算 CS±Tolerance；貼上只處理明確使用者資料。
+- [ ] `batch-update` 對每個 Material/QCItem transaction 中重查物料、直接綁定、FactorSpec 與現有 Chart Basis。Basis 不存在時以 Chart serial service 新增，SampleSize 取 QC Item、IssueState=0、Material 因子寫入 `factorvalues JSONB`（依現有 schema 同步 physical material 欄若需要）；存在時沿用 serial/IssueState，不重建 Basis。刪除該 serial 的舊 Detail、寫入完整新 Detail 並追加 DetailLog 界限快照。MEMO 必填；舊 Core 對既有 Basis 未保存 Memo/Revision，YMES 應將原因記入操作 audit，不要自動改其 IssueState。
+- [ ] 回傳 `{updatedCount,skippedCount,failedCount,results:[{materialNo,qcItemNo,status,message}]}` 給 Vue；逐項顯示直接綁定缺失的略過原因。真正資料庫失敗須在 transaction rollback，不能留下部分 Detail/DetailLog 並回報整批成功。
+- [ ] 保持跨多物料結果可見：來源一個更新 helper 接收整個 Material 清單與 Detail 集合；transaction 失敗不可假報整批成功。QC304 沒有新 Oracle DDL 或 CREATE SQL；公司端沿用先前唯讀取得的 reference，本回合未讀業務列、未執行 Oracle DDL，連線資訊未寫入 Git。
+
 ## 最新公司端 handoff：QC301 管制圖內容（2026-11-17）
 
 - [x] `git fetch origin` 後 `main` 與 `origin/main` 同為 `d763983`；已讀 `docs/modules/QC/管制圖內容.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`QC CHART BASIS`、FunctionKey=`QC301`；Vue DEV 頁 `/YMES/QC/ChartBasis` 位於品質資料 → 計量規格設定 → 管制圖內容。
