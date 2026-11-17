@@ -576,3 +576,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護連線直連 MESTEST 唯讀取得 `TBLPRSPRODUCTIONSEGMENT` 的 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`，並取得 PK index DDL。未讀業務列、未在 Oracle 執行 DDL/DML、未輸出或提交連線秘密。
 - Oracle source DDL：`database/reference/mestest_prs101_production_segment_source_ddl.sql`；PostgreSQL CREATE-only：`database/reference/mestest_prs101_production_segment_create.sql`。欄位 nullable/default 依 Oracle metadata；只有 `PSNO` 主鍵 unique index，沒有 FK 或其他 index。
 - `TBLPRSPRODUCTIONSEGMENT` 由 PS101 擁有；PS104 只重用此表，不另建同義表。MES Oracle 連線設定仍只留在本機受保護設定，不寫入文件或 Git。
+
+### 更新 2026-11-18：PRS PS102 製造層別設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護既有 `DatabaseConfigs.CS.Test.Mes` 連線設定直接唯讀查 MESTEST `TBL_FABPRSSTAGEBASIS` 的 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`，另外取得兩個 index DDL。
+- 表含 StageNo PK、Sequence UNIQUE；沒有 FK 或其他 index。`ISSUESTATE` nullable DEFAULT 0、`CREATEDATE` nullable DEFAULT SYSDATE、`DATASTAMP` nullable DEFAULT 0。
+- Oracle source DDL：`database/reference/mestest_ps102_stage_basis_source_ddl.sql`；YMES PostgreSQL CREATE-only：`database/reference/mestest_ps102_stage_basis_create.sql`。未讀業務列、未執行 Oracle DDL/DML、未輸出或提交連線秘密。Oracle 設定只保留在本機受保護檔案。

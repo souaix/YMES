@@ -1,3 +1,15 @@
+## 最新公司端交接：PS102 製造層別設定（2026-11-18）
+
+- [ ] Pull 最新 GitHub `main`，閱讀 `docs/modules/PRS/製造層別設定.md`、`docs/DATABASE_CONNECTION.md` PS102 段落，以及 `database/reference/mestest_ps102_stage_basis_source_ddl.sql` / `mestest_ps102_stage_basis_create.sql`。
+- [ ] 先比對 YMES PostgreSQL live schema/migrations 與資料。Oracle source 是 `MESTEST.TBL_FABPRSSTAGEBASIS`；PS102 owner 建議用 `YMES.tbl_fabprsstagebasis`。只有 StageNo PK 與 Sequence unique constraint；不可新增 FK/index 或重建有資料的表。
+- [ ] 欄位/nullable/default 照 Oracle：StageNo/StageName/StageType varchar(50) NOT NULL；Sequence numeric(4,0) NOT NULL；IssueState numeric(1,0) NULL DEFAULT 0；Creator/Reviser varchar(10) NULL；CreateDate timestamp NULL DEFAULT current timestamp；DataStamp numeric(11,0) NULL DEFAULT 0；ReviseDate timestamp NULL。`Sequence` 對全表唯一，包含所有 IssueState。
+- [ ] CREATE 檔只是參考，先查 live schema/migrations；缺表才新增 forward migration，既有表只針對核實缺少的 default 做 ALTER，不覆蓋資料。
+- [ ] 建登入保護 API，FunctionNo=`STAGE BASIS`、FunctionKey=`PS102`：GET `/api/fab-prs-stages?stageNo=`、POST、PUT/DELETE `/{stageNo}`、POST `/{stageNo}/approve`。DTO 和 DEV Vue 契約依模組規格。
+- [ ] StageNo/StageName/StageType 必填且最多 50；StageNo 正規化大寫。Sequence 為 1–9999 整數且全表唯一。WinForms Confirm 的 duplicate check 誤把 Edit 自身列算重複；Web UI 排除自身，但 DB unique constraint 仍是最後防線。新增 Creator/CreateDate/IssueState 由 server 設；Edit 只允許狀態 0；DataStamp nullable-safe CAS，衝突回 409。
+- [ ] Delete 依 DB 最新 IssueState：0/-1 實體刪除；2 CAS 軟停用為 -1；1 拒絕。舊 Core 沒子表刪除且 Oracle 無 FK，勿自行 cascade。Approve 僅狀態 0，重用 IssueManagement IssueNo=`STAGE BASIS`，無 Job/Detail 才直接核准；有 Detail 建簽核、設 1、通知第一關，由 callback 設 2/0。
+- [ ] PS104 `tblprsnodebasis.StageNo` 應重用此 API 的已核准層別查找，不建立重複表。完成 live schema/API/migration 後更新規格/TODO，commit/push `main`。
+- [ ] 公司端 PS102 已做 Vue DEV localStorage 假資料和 Oracle DDL 參考，未連 YMES PostgreSQL、未做正式 API/migration；未執行 build/test/browser。
+
 ## 最新公司端交接：PS101 生產區段資料（2026-11-18）
 
 - [ ] Pull GitHub `main`，閱讀 `docs/modules/PRS/生產區段資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS101 段落，以及 `database/reference/mestest_prs101_production_segment_source_ddl.sql` / `mestest_prs101_production_segment_create.sql`。

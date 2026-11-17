@@ -1,10 +1,17 @@
+## 2026-11-18 公司端進度：PS102 製造層別設定
+
+- [x] 閱讀 `frmFABPRSStageBasis`/Def Form 與 Designer、`wsPRS.Load/Add/Edit/Delete/ApproveFABPRSStageBasis`、`kcBasis_Query`、`kcPRS.clsProcess`、`kcBasis_UPD`；整理欄位、四狀態、Sequence 唯一、Apply/Confirm、刪除與 IssueManagement 流程。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護 Oracle 設定唯讀直連 MESTEST，查 `TBL_FABPRSSTAGEBASIS` 的 DBMS_METADATA DDL、欄位/default、constraints/indexes 和獨立 PK/Sequence index DDL。兩個唯一索引由 StageNo PK 與 Sequence unique constraint 建立；沒有 FK/額外 index。未讀業務列、未在 Oracle 執行 DDL/DML、未輸出連線秘密。
+- [x] 完成 `StageBasisMaster.vue`、PS102 規格、Oracle source DDL、PostgreSQL CREATE-only 參考、PRS 三層選單路由與家用端 schema/API handoff。DEV 假資料限 `ymes.dev.ps102-stage-basis.v1`。
+- [ ] 尚未連 YMES PostgreSQL，未實作 API/migration；未執行 build、test 或 browser 驗收。完成本次 PS102 commit/push 後，依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接續下一個尚未完成 FunctionNo。
+
 ## 2026-11-18 公司端進度：PS101 生產區段資料
 
 - [x] 直接閱讀 `frmProductionSegment`/Def Form 與 Designer、`wsPRS.Load/Add/Edit/Del/ApproveProductionSegment`、`clsProcess`、`clsBasis_UPD.SetProductionSegmentIssueState`、`wsSYS.LoadSerialRuleBasis`/Core；核對列表、四狀態、Copy/Apply/Confirm、刪除/簽核、Lot serial lookup 與隱藏欄位。
 - [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線直連 MESTEST，唯讀取得 `TBLPRSPRODUCTIONSEGMENT` 的 `DBMS_METADATA.GET_DDL`、欄位/default、constraint/index metadata，並另外取得 PK index DDL；未讀業務列、未在 Oracle 執行 DDL/DML、未輸出連線秘密。僅 PK unique index，無 FK/其他 index。
 - [x] 完成 `ProductionSegmentMaster.vue`、PS101 規格、Oracle source DDL、PostgreSQL CREATE-only 參考、PRS 三層選單路由及家用端 API/schema handoff。PS104 改為重用 PS101 的 `tblprsproductionsegment`，避免重複建立。
 - [x] DEV 假資料在專用 localStorage；有四狀態、假資料直接核准/送簽兩種分流、定義窗及 LOTNO 選擇視窗。無 MES/ YMES 寫入。
-- [ ] 尚未連 YMES PostgreSQL，未實作 Production API/migration；未執行 build、test 或 browser 驗收。按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 下一個 PRS 功能為 PS102「製造層別設定」。
+- [ ] 尚未連 YMES PostgreSQL，未實作 Production API/migration；未執行 build、test 或 browser 驗收。PS102 公司端 DEV 頁與 DDL/API handoff 已在本輪完成；接續依 inventory 排定下一個未完成 FunctionNo。
 
 ## 2026-11-18 公司端進度：PS103 流程類別資料
 
@@ -21,7 +28,7 @@
 - [x] 新增 Vue DEV 流程基本資料頁：狀態查詢、欄位 Grid、Add/Edit/Copy/Approve/Delete/Property/Version/Exclude OP、簡化節點/連線編輯及 Import 視窗。假資料存在獨立 localStorage。
 - [ ] 流程圖 XML serializer、群組/分支拖曳編輯與舊版格式相容待確認；Excel checker 外部 DLL 未找到原始碼，DEV 只保留選檔視窗，不宣稱匯入完成。
 - [ ] 未連 YMES PostgreSQL、未實作 API/migration；未執行 build/test/browser。
-- [ ] 家用端完成 API/schema 並 push 後，公司端 pull、對接 Production API。PS103 與 PS101 的公司端 DEV 頁及交接已完成；下一項依 Function inventory 為 PS102 製造層別設定。
+- [ ] 家用端完成 API/schema 並 push 後，公司端 pull、對接 Production API。PS103 與 PS101 的公司端 DEV 頁及交接已完成；PS102 公司端 DEV 頁與 DDL/API handoff 已於本輪完成；接續依 inventory 排定下一個未完成 FunctionNo。
 
 ## 2026-11-18 公司端進度：OPB02 ECN 作業站群組設定
 

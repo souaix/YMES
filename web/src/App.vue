@@ -6,6 +6,7 @@ import EquipmentMaster from './components/EquipmentMaster.vue'
 import ProcessBasisMaster from './components/ProcessBasisMaster.vue'
 import ProcessTypeMaster from './components/ProcessTypeMaster.vue'
 import ProductionSegmentMaster from './components/ProductionSegmentMaster.vue'
+import StageBasisMaster from './components/StageBasisMaster.vue'
 import EquipmentCarrierCategoryMaster from './components/EquipmentCarrierCategoryMaster.vue'
 import EquipmentCarrierTypeMaster from './components/EquipmentCarrierTypeMaster.vue'
 import EquipmentCarrierBasisMaster from './components/EquipmentCarrierBasisMaster.vue'
@@ -344,7 +345,7 @@ const fallbackMenuTree: MenuNode[] = [
     label: '流程資料',
     shortLabel: '流',
     moduleNo: 'PRS',
-    children: [{ id: 'process-settings', label: '流程設定', shortLabel: '設', children: [{ id: 'process-master', label: '流程主檔', tableName: 'tblprsprocessbasis', shortLabel: '主', functionNo: 'PRS BASIS', moduleNo: 'PRS' }, { id: 'function:PRS:PRS TYPE', label: '流程類別資料', tableName: 'tblprstype', shortLabel: '類', functionNo: 'PRS TYPE', moduleNo: 'PRS' }, { id: 'function:PRS:PS BASIS', label: '生產區段資料', tableName: 'tblprsproductionsegment', shortLabel: '區', functionNo: 'PS BASIS', moduleNo: 'PRS' }] }],
+    children: [{ id: 'process-settings', label: '流程設定', shortLabel: '設', children: [{ id: 'process-master', label: '流程主檔', tableName: 'tblprsprocessbasis', shortLabel: '主', functionNo: 'PRS BASIS', moduleNo: 'PRS' }, { id: 'function:PRS:PRS TYPE', label: '流程類別資料', tableName: 'tblprstype', shortLabel: '類', functionNo: 'PRS TYPE', moduleNo: 'PRS' }, { id: 'function:PRS:PS BASIS', label: '生產區段資料', tableName: 'tblprsproductionsegment', shortLabel: '區', functionNo: 'PS BASIS', moduleNo: 'PRS' }, { id: 'function:PRS:STAGE BASIS', label: '製造層別設定', tableName: 'tbl_fabprsstagebasis', shortLabel: '層', functionNo: 'STAGE BASIS', moduleNo: 'PRS' }] }],
   },
   {
     id: 'product-data',
@@ -456,6 +457,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRS:PRS BASIS': `${appBasePath}/PRS/ProcessBasis`,
   'function:PRS:PRS TYPE': `${appBasePath}/PRS/ProcessType`,
   'function:PRS:PS BASIS': `${appBasePath}/PRS/ProductionSegments`,
+  'function:PRS:STAGE BASIS': `${appBasePath}/PRS/FabPrsStageBasis`,
   'operation-master': `${appBasePath}/MasterData/Operations`,
   'function:OP:OP TYPE': appBasePath + '/MasterData/OperationTypes',
   'function:OP:OP RULE BASIS': appBasePath + '/OP/ControlRules',
@@ -541,6 +543,7 @@ const functionRoutes: Record<string, string> = {
   'PRS BASIS': `${appBasePath}/PRS/ProcessBasis`,
   'PRS TYPE': `${appBasePath}/PRS/ProcessType`,
   'PS BASIS': `${appBasePath}/PRS/ProductionSegments`,
+  'STAGE BASIS': `${appBasePath}/PRS/FabPrsStageBasis`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
@@ -588,6 +591,7 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
 const isPrsProcessBasisPage = computed(() => activeMasterKey.value === 'function:PRS:PRS BASIS')
 const isPrsProcessTypePage = computed(() => activeMasterKey.value === 'function:PRS:PRS TYPE')
 const isProductionSegmentPage = computed(() => activeMasterKey.value === 'function:PRS:PS BASIS')
+const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
 const isOperationControlRulePage = computed(() => activeMasterKey.value === 'function:OP:OP RULE BASIS')
@@ -1346,6 +1350,14 @@ async function signOut(): Promise<void> {
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
           :enterprise-no="currentUser?.enterpriseNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <StageBasisMaster
+          v-else-if="isFabPrsStageBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
