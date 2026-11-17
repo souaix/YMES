@@ -458,3 +458,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - QC215 沿用先前已保存的 QC201/QC205/QC213 Oracle 結構參照：`mestest_mtl_qc_item_tables_source_ddl.sql`、`mestest_qc_item_attributes_source_ddl.sql`、`mestest_qc213_attribute_item_group_detail_source_ddl.sql` 及 QC205 dependency DDL；PostgreSQL CREATE 參考沿用對應 QC201/QC205/QC213 reference。本次直接閱讀 WinForms Form、wsQC 與 clsQCBasis，沒有再次連 Oracle、沒有讀業務列、沒有執行 Oracle DDL。
 - QC215 是匯入既有 `TBLQCITEMFORATTRIBUTES` 計數品管資料的功能，沒有 QC215 專用資料表，不新增 CREATE SQL。範圍依賴 QC Item Parameter/Factor/Reason Map、抽樣計畫、作業站、群組及 SPC 既有資料表；不得重建共用表。家用端只比對 YMES PostgreSQL live schema/migrations，缺漏時建立 forward migration。
 - 連線 IP、帳號、密碼、SID 與受保護設定都未輸出或寫進 Git；公司端不連 YMES PostgreSQL。
+
+### 更新 2026-11-17：QC302 匯入管制圖內容
+
+- 公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，使用本機受保護的 MESTEST 唯讀設定，查詢 `TBLSPCQCCHARTBASIS`、`TBLSPCQCCHARTDETAIL`、`TBLSPCQCCHARTDETAILLOG`、`TBLSPCQCCHARTRULE` 的 DBMS_METADATA table/index DDL。沒有讀 MES 業務資料列，沒有在 Oracle 執行 DDL。
+- Oracle source DDL `mestest_qc302_spc_qc_chart_source_ddl.sql` 與 PostgreSQL 空表 CREATE-only 參考 `mestest_qc302_spc_qc_chart_create.sql` 已保存於 `database/reference/`。QC302 匯入不會新增/更新 `TBLSPCQCCHARTSAMPLANPARAMETER`，因此未納入此功能的 CREATE handoff。
+- Oracle 欄位中的 FactorNo 動態欄位在 YMES CREATE 參考採 `factorvalues JSONB`；家用端須核對 live schema/migrations 並檢查重複 QCItem/Factor 組合，才建立 forward migration。連線值未輸出或寫入 Git；公司端不連 YMES PostgreSQL。

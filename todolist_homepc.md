@@ -1,6 +1,16 @@
 # 家裡電腦接手清單
 
-## 最新公司端 handoff：QC215 計數品管項目匯入（2026-11-17）
+## 最新公司端 handoff：QC302 匯入管制圖內容（2026-11-17）
+
+- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/匯入管制圖內容.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`IMPORT QC CHART DATA`、FunctionKey=`QC302`；Vue DEV 頁 `/YMES/QC/ChartDataImport` 已掛在品質資料 → 計量規格設定。
+- [ ] 先查 YMES PostgreSQL live schema/migrations。公司端 PowerShell 5.1 已直連 Oracle 唯讀取得四張 QC302 表 DDL：`mestest_qc302_spc_qc_chart_source_ddl.sql`；空表 CREATE 參考 `mestest_qc302_spc_qc_chart_create.sql`。只有 live schema 確認缺漏才新增 forward migration；不要重建共用 QC Item/Factor/Rule/抽樣表。
+- [ ] 實作登入保護並要求 QC302 FunctionKey 的 API：`POST /api/qc/chart-data-import/preview`（multipart `.xls/.xlsx`、第一工作表、範本第 1 列標頭、第 2 列跳過、第 3 列起資料、空白列終止）、`POST /import`（全列匯入，不設 Check endpoint）及 `GET /template`。Production Vue 依此契約；路徑變更需同步修 Vue/spec。
+- [ ] Preview 回 `{columns,rows}`。Import 一次處理全部列並回 `{rows:[{rowNo,qcItemNo,succeeded,execute,factorSerial}]}`；rowNo 使用提交陣列序號。每列獨立交易並回列級結果；只依核准計量 QC Item 讀 FactorOnline，動態 FactorNo 用白名單條件與 JSONB，不可把上傳欄名插入 SQL。
+- [ ] 實作 Trend/Xbar/R/S/Rm 的數值欄、TUS/TLS 與 SpecLineType、上下界排序、Y 軸範圍、RuleNo/Action 格式與核准規則檢查。以 `QCItemNo + 全部線上因子值` 查唯一管制圖；0 筆新增、1 筆更新且設為核准、超過 1 筆拒絕。新增/更新 basis、5 種 detail、detail history、Rule 和新圖表預設 `TBLQCITEMRULE` 複製必須各在列交易內完成。
+- [ ] 主檔動態 Factor 值建議以 JSONB 儲存；CREATE-only 參考中的 `(qcitemno,factorvalues)` 唯一限制需先檢查既有重複組合再套用。Creator/CreateDate/FactorSerial/Execute 必須由伺服器管理；不執行 Excel 公式，限制檔案與資料量，使用參數化 SQL。範本沿用 FunctionNo=`IMPORT QC CHART DATA`。
+- [ ] Oracle source DDL 由公司端經 PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得，沒有讀業務列或執行 Oracle DDL，連線 IP/帳密/SID 未輸出。家用端完成 schema/API/FunctionKey/template 後 commit/push；公司端再 pull 對接。本段未執行 build、測試或瀏覽器驗收。
+
+## 前一項公司端 handoff：QC215 計數品管項目匯入（2026-11-17）
 
 - [ ] Pull 最新 `main`，先讀 `docs/modules/QC/計數品管項目匯入.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`IMPORT QCITEM ATTRIBUTES`、FunctionKey=`QC215`；Vue DEV 頁 `/YMES/QC/AttributeItemImport` 已掛在品質資料 → 品管設定。
 - [ ] QC215 匯入既有計數品管資料，沒有 QC215 專用表，也沒有新的 CREATE SQL。先核對 YMES PostgreSQL live schema/migrations；主檔沿用 `mestest_mtl_qc_item_tables_source_ddl.sql` / `mestest_mtl_qc_item_tables_create.sql`，Parameter/Factor/ReasonMap 等子表參考 `mestest_qc_item_attributes_source_ddl.sql` / `mestest_qc_item_attributes_create.sql`，群組與依賴表參考 QC205/QC213 既有 source/CREATE。不得複製重建共用表；只為 live schema 真正缺少的 YMES 結構新增 forward migration。
@@ -20,7 +30,7 @@
 - [ ] 依 QC214 規格實作驗證：QCItemNo/Name、LotIsVaild、PlanNo、SampleSize、SpecLineType、ComponentCollect、CalType、ChartType/X-Rm 關係、Min/Max、LimitLotNum、MClass、Roundoff_Num、已核准 Class 1 Factor 集合及 FactorOnline/FactorSpec 子集合、核准 OP/Inline/Offline 與 FAI/IPQC/PQC。舊 Core 的 ComponentCollect/LotIsVaild 限制已註解；不要自行阻擋。
 - [ ] Save 覆寫既有 QCItem 前交易內重查：無 Spec/Chart/量測資料、無 WIP 使用，無 Material/MaterialType/OP/Product/一般 Group/PMI Group 綁定。舊 Core 會清除主檔與多張子表再重建；列出的清除範圍要用 YMES 正規化關聯表和參數化 SQL 重現。Factor 欄不准由客戶端輸入觸發 `ALTER TABLE`；只有白名單核准 Factor 可套用，動態量測資料沿用 YMES 結構化儲存設計。確認 transaction 可回滾所有主/子資料寫入。
 - [ ] Creator/CreateDate 雖是舊匯入欄位，API 必須忽略檔案提供的稽核資料，改用登入身份與伺服器時間。限制工作簿大小/列數/欄數，不執行公式、不採信用戶端檔案路徑；範本沿用 FunctionNo=`IMPORT QCITEM VARIABLES` 的既有 template storage。
-- [ ] Oracle DDL references 已由公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得，本次沿用 QC205/QC210/QC201 結構參照，不需要再問公司端索取 IP/帳密/SID，也沒有新增 Oracle 查詢或業務列讀取。已存在的來源 DDL 有 SPC chart table 拼字差異，按 QC214 規格核對 YMES 正式名稱，不要臆造 CREATE。
+- [ ] Oracle DDL references 已由公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得，本次沿用 QC205/QC210/QC201 結構參照，不需要再問公司端索取 IP/帳密/SID，也沒有新增 Oracle 查詢或業務列讀取。後續 QC302 直接查得 MESTEST chart 主表為 `TBLSPCQCCHARTBASIS`；比對 YMES live schema 時依正式 PostgreSQL/API 物件名稱處理，不可因 Oracle 有表就推定 YMES 已建立。
 - [ ] 家用端完成 schema 比對、API、權限與 template 後 commit/push；公司端 pull 對接。公司端本段未執行 build、測試或瀏覽器驗收。
 
 ## 前一項公司端 handoff：QC218 計數品管項目產品原因對應設定（2026-11-17）

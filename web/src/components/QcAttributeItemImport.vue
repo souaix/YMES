@@ -108,7 +108,8 @@ function rowsFromMatrix(matrix: string[][], skipTemplateExample: boolean): Impor
 }
 function normalizeResults(payload: unknown, submitted: ImportRow[], onlyCheck: boolean): void {
   const items = Array.isArray(payload) ? payload : (payload as { rows?: unknown[]; items?: unknown[] } | null)?.rows ?? (payload as { items?: unknown[] } | null)?.items ?? []
-  const byIndex = new Map<number, ApiRowResult>(items.map((item, index) => [Number((item as ApiRowResult).rowNo ?? index + 1), item as ApiRowResult]))
+  const byIndex = new Map<number, ApiRowResult>()
+  items.forEach((item, index) => byIndex.set(Number((item as ApiRowResult).rowNo ?? index + 1), item as ApiRowResult))
   submitted.forEach((row, index) => {
     const result = byIndex.get(index + 1)
     const message = String(result?.execute ?? result?.message ?? '')
