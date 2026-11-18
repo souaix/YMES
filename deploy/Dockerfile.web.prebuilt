@@ -1,0 +1,6 @@
+# Runtime-only alternative for memory-constrained deployment hosts.
+# Build context must contain a locally validated dist/ and web/nginx.conf as nginx.conf.
+FROM nginxinc/nginx-unprivileged:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY dist/ /usr/share/nginx/html/
+EXPOSE 8080

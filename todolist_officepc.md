@@ -1,3 +1,9 @@
+## 家用端交付：QC503／PS102（2026-11-18）
+
+- [x] 家用端已部署並完成正式 app-browser 驗收；QC503 共用 Driver API 與 PS102 製造層別 API 可供 UI 呼叫。模組文件已補實作、migration、按鈕、版本與驗證紀錄。
+- [x] 核准／刪除共用站內確認窗；新增/複製 Apply 成功轉修改模式並使用 server DataStamp，避免重複新增。這是明確記錄的 YMES 互動改善。
+- [ ] 公司端 pull 後保留以上 API/互動契約，繼續依本檔未完成 UI/Oracle DDL 交接；資料庫、API 與正式驗收仍由家用端負責。
+
 ## 2026-11-18 家用端整合補正：PRD Vue 型別
 
 - [x] 修正 `ProductBasisMaster` 與 Parameter/Business Rule 子元件的結構型別；BOM lookup 使用共用 key/label/row；OPDescription 正規化 OPName/audit；Parameter draft 保存明確保留識別鍵並排除 recipeDetails；Property 在有效值驗證前初始化 draft。沒有新增 broad any cast，亦未新增正式 API/schema。
