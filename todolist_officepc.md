@@ -1034,3 +1034,12 @@
 - [x] 新增 docs/modules/PRD/產品作業區域設定.md，更新 PRD 主規格、規格索引、DB metadata provenance 及家用端 handoff。
 - [ ] wsPRD/wsOP Core/Service 的 transaction、空 multivalue、Delete 與 Copy/Version 邊界待家用端查核；Production API 尚未接線。
 - [ ] 未執行 build/test/browser，未連 YMES PostgreSQL或部署 SQL。接續 PD102 SubOP，再依側邊功能順序遷移。
+
+## PRD PD102 SubOP 公司端檢查點（2026-11-18）
+
+- [x] 讀取 PD102 `btnSubOP_Click`、`frmPRDSubOP` Form/Designer、`wsPRD`、`clsProduct` 與 `clsBasis_UPD`；核對視窗尺寸、IssueState 行為、OP PS lookup、ADD/INSERT/EDIT/多選 DEL、DataStamp、局部成功及排序。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護 MESTEST profile 唯讀取得 `TBLPRDOPSUBOP` DDL 與欄位/constraint/index metadata；未讀業務資料列、未執行 Oracle DDL/DML、未輸出連線秘密。
+- [x] 新增 `ProductSubOpSetup.vue` 並接至 PD102；DEV 假資料支援 OP lookup、新增/插入/修改/多選刪除與序號重排，寫入產品關聯 localStorage；正式模式唯讀。
+- [x] 建立 `docs/modules/PRD/產品子作業設定.md`、Oracle source DDL、PostgreSQL CREATE-only 參照，並更新產品主規格、模組索引及 DB metadata provenance。
+- [ ] 家用端仍須核對 live schema/migration 並實作 Production API/schema；詳見 `todolist_homepc.md` 的 SubOP handoff。
+- [ ] 未執行 build、test 或 browser 驗收，未連 YMES PostgreSQL，未部署 CREATE SQL。下一個 PD102 側邊功能依 WinForms 順序為 Program。

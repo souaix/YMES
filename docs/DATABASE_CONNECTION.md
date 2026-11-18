@@ -622,3 +622,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - Resource 子功能重用先前已取得的 TBLPRDOPAREA、TBLOPAREA、TBLSMDAREABASIS 字典與 DDL；本次未重新連 Oracle、未查業務資料列、未執行 DDL/DML。
 - TBLPRDOPAREA 的來源 DDL/PG CREATE 參照在 database/reference/mestest_prd_parameter_setup_source_ddl.sql、mestest_prd_parameter_setup_create.sql；TBLOPAREA 在 mestest_operation_and_system_source_ddl.sql、mestest_operation_and_system_create.sql；Area Basis 在 mestest_smd_area_basis_source_ddl.sql、mestest_smd_area_basis_create.sql。
 - 本功能不新增 Oracle 表或 CREATE SQL。Oracle profile 的 IP、帳號、密碼、SID 仍只存本機受保護設定，不寫入規格或 Git。
+
+### 更新 2026-11-18：PRD PD102 Product SubOP Oracle metadata
+
+- 公司電腦使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，讀取本機受保護的既有 Oracle profile，唯讀直連 MESTEST；取得 `TBLPRDOPSUBOP` 的 `DBMS_METADATA.GET_DDL` 與欄位、constraints、indexes dictionary。
+- 表 PK 為 `(PRODUCTNO, PRODUCTVERSION, OPNO, SUBOPSEQUENCE)`；6 個欄位 NOT NULL；只有 PK unique index，沒有 FK、trigger 或其他 index。Oracle source DDL 與 PostgreSQL CREATE-only 參照分別在 `database/reference/mestest_prd_subop_source_ddl.sql`、`mestest_prd_subop_create.sql`。
+- 僅讀結構 metadata，未讀 MES 業務資料列、未在 Oracle 執行 DDL/DML；Oracle IP、帳號、密碼、SID 未輸出或提交。家用端必須先核對 YMES live schema/migrations，不能直接部署 CREATE-only 參照。

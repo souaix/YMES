@@ -1630,3 +1630,13 @@ API 工作：
 - [ ] Server 從登入者權限決定 PSPrivilege；不接受 client 的 PSPrivilege、IssueState 或 audit identity。對產品當前 IssueState、OP/PS 權限、Area 存在及關聯範圍重新驗證。PUT 要拒絕重複 AreaNo，並要求恰一筆 DefaultArea=1；UI Delete 一次確認後逐 OP 呼叫，遇錯停止並保留先前已成功項目。
 - [ ] 查 LoadPRDOPArea 的 DefaultArea 篩選、LoadOPResourceDefine lookup 範圍、DelPRDOPArea 精確刪除條件及 CopyPRDOPArea 產品 Copy/Version 行為。規格記錄來源 client 無法證明之處；核對後更新模組規格。
 - [ ] 完成 YMES schema/API/DTO 與文件後 commit/push main，通知公司端接 Production API。公司端 Resource DEV 已完成；未執行 build/test/browser，未連 YMES PostgreSQL、未部署 SQL。
+
+## PRD PD102 SubOP API/schema handoff（2026-11-18 公司端更新）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/PRD/產品子作業設定.md`、`docs/modules/PRD/產品主檔.md` 與本檔 handoff。
+- [ ] Oracle source DDL：`database/reference/mestest_prd_subop_source_ddl.sql`；PostgreSQL CREATE-only 參照：`database/reference/mestest_prd_subop_create.sql`。先查 YMES live schema、migration、entity/repository；只在確認缺表或缺欄後新增 forward migration，不能直接執行參照 CREATE SQL。
+- [ ] 專用關聯表 `tblprdopsubop` 欄位：`productno varchar(50)`, `productversion varchar(5)`, `opno varchar(20)`, `subopsequence numeric(4,0)`, `subopno varchar(20)`, `subopname varchar(100)` 全為 NOT NULL；`creator varchar(10)`, `createdate timestamp`, `datastamp numeric(11,0) DEFAULT 0`, `reviser varchar(10)`, `revisedate timestamp` nullable。PK `(productno,productversion,opno,subopsequence)`；Oracle 無 FK、trigger 或非 PK index。不要與共用 OP 主檔 `tblopsubopbasis` 混用，也不要重建已存在的 OP 主檔表。
+- [ ] 提供產品/版次 SubOP 清單、尾端新增、指定序號插入、修改、多選/單列刪除與序號整理 API。Insert 的後續序號位移與新增需在同一 transaction；Delete 精確限定產品、版次、OP、Sequence。WinForms 多選是逐筆呼叫、遇錯停止且保留此前成功刪除；若改批次 API，要表達部分成功結果。
+- [ ] OP lookup 重用產品流程 OP 查詢及 `PSPrivilege=True` 範圍；由登入者權限在 server 計算 PSPrivilege，不信任 client 傳入的權限、Creator/Reviser、IssueState、OPNo 或 DataStamp 更新值。此子表單未按產品 IssueState 限制，資料表無 IssueState/Approval 欄，維持來源行為。
+- [ ] Edit 依舊以 DataStamp 做 optimistic concurrency；欄位 nullable/default 需保留，確認舊資料 DataStamp NULL 的更新語意。Sort 對各 OP 重新編成 1..N，只更新序號。
+- [ ] 完成 live schema/API/DTO/migration 與文件後 push `main`，通知公司端接正式 API；公司端目前只有 DEV 假資料，未執行 build/test/browser、未連 YMES PostgreSQL、未部署 SQL。

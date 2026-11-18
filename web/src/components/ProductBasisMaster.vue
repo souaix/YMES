@@ -6,6 +6,7 @@ import ProductOpDescriptionSetup from './ProductOpDescriptionSetup.vue'
 import ProductRecipeGroupSetup from './ProductRecipeGroupSetup.vue'
 import ProductAccessorySetup from './ProductAccessorySetup.vue'
 import ProductResourceSetup from './ProductResourceSetup.vue'
+import ProductSubOpSetup from './ProductSubOpSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -26,6 +27,7 @@ type ProductRelation = {
   recipeGroups?: ProductRow[]
   accessories?: ProductRow[]
   opAreas?: ProductRow[]
+  subOps?: ProductRow[]
   materialGroups?: ProductRow[]
 }
 type BomTreeLine = { id: string; label: string; kind: 'root' | 'material' | 'product' | 'group'; depth: number }
@@ -93,7 +95,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
   'recipe-group': { title: 'RecipeGroup', source: 'PD_ProductRecipe', description: '將已核准且目前版本的產品 Recipe Group 指派至產品與版本。' },
   accessory: { title: 'Accessory', source: 'frmPRDAccessory_THEIL_BU1', description: '維護產品版本使用的模治具/配件。' },
   resource: { title: 'Resource', source: 'PD_ProductOPArea', description: '設定產品流程作業區域；需要產品流程資料及 PS 權限。' },
-  'sub-op': { title: 'SubOP', source: 'PD_PRDSubOP', description: '由產品編號與版本開啟產品子作業設定。' },
+  'sub-op': { title: 'SubOP', source: 'PD_PRDSubOP', description: '依產品版次設定作業站子工序，支援尾端新增、序號插入、修改、多選刪除與排序。' },
   program: { title: 'Program', source: 'frmProductProgram_THEIL_BU1', description: '設定產品使用的程式與版本。' },
   default: { title: 'Default', source: 'PD_ProductLoadDefault', description: '設定產品流程的預設值。' },
   'run-time': { title: 'RunTime', source: 'PD_ProductRunTime', description: '設定產品各作業站的標準工時。' },
@@ -157,6 +159,11 @@ const seedRelations: Record<string, ProductRelation> = {
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', areaNo: 'DEV-AREA-01', defaultArea: 1, areaName: '點膠區', factoryNo: 'DEV-FAB-01' },
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', areaNo: 'DEV-AREA-04', defaultArea: 0, areaName: '待驗區', factoryNo: 'DEV-FAB-02' },
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-20', areaNo: 'DEV-AREA-02', defaultArea: 1, areaName: '組裝區', factoryNo: 'DEV-FAB-01' },
+    ],
+    subOps: [
+      { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', subOpSequence: 1, subOpNo: 'DEV-SUB-10-01', subOpName: '點膠前清潔', creator: 'DEV001', createDate: '2026-11-01T09:12:00', dataStamp: 1, reviser: 'DEV001', reviseDate: '2026-11-04T10:30:00' },
+      { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', subOpSequence: 2, subOpNo: 'DEV-SUB-10-02', subOpName: '塗佈膠材', creator: 'DEV001', createDate: '2026-11-01T09:15:00', dataStamp: 1, reviser: '', reviseDate: '' },
+      { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-20', subOpSequence: 1, subOpNo: 'DEV-SUB-20-01', subOpName: '外觀組裝確認', creator: 'DEV001', createDate: '2026-11-01T09:20:00', dataStamp: 0, reviser: '', reviseDate: '' },
     ],
     bom: [
       { nodeNo: 'DEV-MTL-001', nodeType: 0, nodeVersion: '001', opNo: 'DEV-OP-10', stdQty: 2, unitNo: 'EA', decreaseRate: 0, specified: 1, description: 'DEV 材料明細' },
@@ -330,6 +337,21 @@ const visibleRows = computed(() => rows.value
   .filter(row => !productQuery.value.trim() || text(row.productNo).toLocaleLowerCase().includes(productQuery.value.trim().replaceAll('%', '').replaceAll('*', '').toLocaleLowerCase())))
 const active = computed(() => rows.value.find(row => keyOf(row) === selectedKey.value) ?? null)
 const activeRelations = computed(() => relatedFor(active.value))
+const subOpOperationOptions = computed(() => {
+  const candidates: ProductRow[] = [
+    ...(activeRelations.value.parameters?.ops ?? []),
+    ...(activeRelations.value.businessRules?.operations ?? []),
+    ...(activeRelations.value.opDescriptions ?? []),
+    ...(activeRelations.value.accessories ?? []),
+    ...(activeRelations.value.opAreas ?? []),
+  ]
+  const operations = new Map<string, ProductRow>()
+  for (const row of candidates) {
+    const opNo = String(row.opNo ?? row.OPNo ?? '')
+    if (opNo && !operations.has(opNo)) operations.set(opNo, { opNo, opName: row.opName ?? row.OPName ?? '' })
+  }
+  return [...operations.values()]
+})
 const selectedProcess = computed(() => activeRelations.value.processes[selectedProcessIndex.value] ?? null)
 const bomTreeLines = computed(() => {
   if (!active.value) return []
@@ -384,6 +406,10 @@ function loadMock(): void {
       }
       if (existing && !existing.opAreas && seed.opAreas) {
         existing.opAreas = clone(seed.opAreas)
+        migrated = true
+      }
+      if (existing && !existing.subOps && seed.subOps) {
+        existing.subOps = clone(seed.subOps)
         migrated = true
       }
     }
@@ -743,6 +769,13 @@ function saveProductResource(opAreas: ProductRow[]): void {
   persistMock()
   notice.value = '產品作業區域假資料已儲存。'
 }
+function saveProductSubOps(subOps: ProductRow[]): void {
+  if (!active.value || !mock.value) return
+  const key = keyOf(active.value)
+  relations.value[key] = { ...relatedFor(active.value), subOps: clone(subOps) }
+  persistMock()
+  notice.value = '產品子工序假資料已儲存。'
+}
 function addEqpConstraint(): void {
   if (!active.value || !editable.value) return
   const rel = relatedFor(active.value)
@@ -901,7 +934,10 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'resource'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductResourceSetup :product="active ?? {}" :processes="activeRelations.processes" :op-areas="activeRelations.opAreas ?? null" :development-preview="mock" :can-edit="editable" @save="saveProductResource" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'sub-op'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductSubOpSetup :product="active ?? {}" :sub-ops="activeRelations.subOps ?? null" :operation-options="subOpOperationOptions" :development-preview="mock" :current-user-no="props.currentUserNo" @save="saveProductSubOps" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
