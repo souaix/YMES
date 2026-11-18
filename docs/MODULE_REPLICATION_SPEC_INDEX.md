@@ -9,7 +9,7 @@
 
 - PS103「流程類別資料」：[功能規格](modules/PRS/流程類別資料.md)。已直接對照主/Def Form、`wsPRS`、`clsProcess`、`clsBasis_UPD` 與共用 `PS_ProcessProperty`，並以受保護 Oracle 連線直查 `TBLPRSTYPE` DDL；新增 Vue DEV 頁、三層選單、Oracle/PG SQL 參考及家用端 API/schema handoff。PS104 ProcessType lookup 共用同一張表。
 - PS104「流程基本資料」：[功能規格](modules/PRS/流程基本資料.md)。已直接閱讀主/Def/Draw/Exclude OP、Property、Import WinForms 與 `wsPRS`/`clsProcess`，並直連查得九張 Oracle DDL，完成 Vue DEV 畫面、PRS 路由、Oracle source DDL/PG CREATE-only；家用端核對 live schema/default、補缺 migrations、完成流程 API/共用簽核及 XML 相容方案。
-- PS101「生產區段資料」：[功能規格](modules/PRS/生產區段資料.md)。已直接閱讀主/Def WinForms、wsPRS、clsProcess、clsBasis_UPD 與 SYS LOTNO 序號規則 lookup，並直連取得 Oracle table/index DDL；完成 Vue DEV 清單/定義/選擇器、三層路由與 Oracle/PG SQL/API handoff。Production API/live schema 比對交由家用端，PS104 重用此表。
+- PS101「生產區段資料」：[功能規格](modules/PRS/生產區段資料.md)。已直接閱讀主/Def WinForms、wsPRS、clsProcess、clsBasis_UPD 與 SYS LOTNO 序號規則 lookup，並直連取得 Oracle table/index DDL；完成 Vue DEV 清單/定義/選擇器、三層路由與 Oracle/PG SQL/API handoff。Production API/live schema 比對交由家用端，PS104 重用此表。 家用端2026-11-19：API/schema及上述模組文件所列正式頁面操作已驗證；具體未完成項以模組最新驗收紀錄為準。
 - PS102「製造層別設定」：[功能規格](modules/PRS/製造層別設定.md)。migration 0028 與登入保護 API/Web 已部署；正式 app-browser 驗證新增/套用/修改/複製防重、多選核准/停用/刪除、四狀態與 Close，測試資料已清空。共用簽核限制見規格。
 - OP101「作業站法則設定」：[功能規格](modules/OP/作業站法則設定.md)。已閱讀 WinForms Form/Def、wsOP、clsOpBasis、clsBasis_UPD，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBLOPCONTROLRULE DDL，完成作業站資料→作業站設定三層選單、Vue DEV CRUD/複製及 PostgreSQL CREATE handoff；Production API 與 OP_Script 完整編輯器待家用端。
 - OP102「企業邏輯設定」：[功能規格](modules/OP/企業邏輯設定.md)。已直接閱讀 WinForms 清單/定義 Form、wsOP、clsOpBasis、clsBasis_UPD，PowerShell 5.1/ODP.NET 唯讀取得主表與情境 lookup Oracle DDL，完成 OP 三層選單、Vue DEV CRUD/簽核/狀態頁及 PostgreSQL CREATE-only handoff；Production API 與 YMES live schema 比對待家用端。
@@ -58,14 +58,14 @@
 - QC103「抽樣計劃」：[功能規格](modules/QC/抽樣計劃.md)。公司端已對照 `frmSamplingPlan`/`frmSamplingPlanDef`、wsQC 與 Core，完成 `/YMES/QC/SamplingPlan` DEV 頁及 QC 基本資料選單。兩張 Oracle source DDL / PostgreSQL CREATE 參考已建立；來源各有 PK、沒有 FK/額外索引。家用端需實作交易式主檔/參數 API、`SAMPLING PLAN` Issue Job、DataStamp CAS、PlanType/參數選項及 Simulation。
 
 
-- QC102「抽樣計劃設定_1916」：[功能規格](modules/QC/抽樣計劃設定_1916.md)。公司端已對照 WinForms Form/Def、wsQC、`clsQCBasis`/`clsBasis_UPD`，完成 `/YMES/QC/Sampling1916` DEV 頁與 QC 基本資料選單。Oracle source DDL/PostgreSQL 空表 CREATE 參考已建立；唯一索引為 SamplingType/MinNum/MaxNum/SLevel，沒有宣告 PK constraint、FK 或簽核。家用端需核對 YMES schema 並實作 QC102 CRUD、DataStamp CAS 及抽樣解析規則。
+- QC102「抽樣計劃設定_1916」：[功能規格](modules/QC/抽樣計劃設定_1916.md)。公司端已對照 WinForms Form/Def、wsQC、`clsQCBasis`/`clsBasis_UPD`，完成 `/YMES/QC/Sampling1916` DEV 頁與 QC 基本資料選單。Oracle source DDL/PostgreSQL 空表 CREATE 參考已建立；唯一索引為 SamplingType/MinNum/MaxNum/SLevel，沒有宣告 PK constraint、FK 或簽核。家用端需核對 YMES schema 並實作 QC102 CRUD、DataStamp CAS 及抽樣解析規則。 家用端2026-11-19：API/schema及上述模組文件所列正式頁面操作已驗證；具體未完成項以模組最新驗收紀錄為準。
 
 
-- QC101「抽樣表格」：modules/QC/抽樣表格.md。公司端已完成 Vue DEV 頁 /YMES/QC/SamplingTable、三欄查詢、區間 CRUD、單列/整表複製及 QC 基本資料選單；PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 TBLQCSAMPLINGTABLE DDL/index/constraints，建立來源 DDL 與 PostgreSQL 空表 CREATE 參考。家用端需先比對 YMES schema/migrations，再實作 QC101 CRUD、DataStamp CAS 與 CopyTable 部分成功 API；沒有簽核或 lookup。
+- QC101「抽樣表格」：modules/QC/抽樣表格.md。公司端已完成 Vue DEV 頁 /YMES/QC/SamplingTable、三欄查詢、區間 CRUD、單列/整表複製及 QC 基本資料選單；PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 TBLQCSAMPLINGTABLE DDL/index/constraints，建立來源 DDL 與 PostgreSQL 空表 CREATE 參考。家用端需先比對 YMES schema/migrations，再實作 QC101 CRUD、DataStamp CAS 與 CopyTable 部分成功 API；沒有簽核或 lookup。 家用端2026-11-19：API/schema及上述模組文件所列正式頁面操作已驗證；具體未完成項以模組最新驗收紀錄為準。
 
 
-- QC401「主分類基本資料」：[功能規格](modules/QC/主分類基本資料.md)。公司端已完成 `/YMES/QC/MClassBasis` DEV 頁；重用 QC406 已查得的 `TBLQCMCLASSBASIS` DDL/CREATE。匯入器原碼已找到並記錄第一工作表/前兩欄/逐編號部分成功規則；官方 template binary 未找到，需由家用端接 YMES template storage。
-- QC402「次分類基本資料」：[功能規格](modules/QC/次分類基本資料.md)。公司端已完成 `/YMES/QC/SClassBasis` DEV 頁、QC402 路由/選單、已簽核主分類 lookup 及匯入器 UI。Oracle source DDL 和 PostgreSQL 空表 CREATE 參考已由公司端受保護 Oracle 連線直接查得；主鍵僅 SClassNo，沒有 FK。家用端需比對 live schema/migrations，實作 QC402 CRUD、`SCLASS BASIS` Issue Job 簽核、MClass lookup 與 `.xls/.xlsx` template/import API。
+- QC401「主分類基本資料」：[功能規格](modules/QC/主分類基本資料.md)。公司端已完成 `/YMES/QC/MClassBasis` DEV 頁；重用 QC406 已查得的 `TBLQCMCLASSBASIS` DDL/CREATE。匯入器原碼已找到並記錄第一工作表/前兩欄/逐編號部分成功規則；官方 template binary 未找到，需由家用端接 YMES template storage。 家用端2026-11-19：API/schema及上述模組文件所列正式頁面操作已驗證；具體未完成項以模組最新驗收紀錄為準。
+- QC402「次分類基本資料」：[功能規格](modules/QC/次分類基本資料.md)。公司端已完成 `/YMES/QC/SClassBasis` DEV 頁、QC402 路由/選單、已簽核主分類 lookup 及匯入器 UI。Oracle source DDL 和 PostgreSQL 空表 CREATE 參考已由公司端受保護 Oracle 連線直接查得；主鍵僅 SClassNo，沒有 FK。家用端需比對 live schema/migrations，實作 QC402 CRUD、`SCLASS BASIS` Issue Job 簽核、MClass lookup 與 `.xls/.xlsx` template/import API。 家用端2026-11-19：API/schema及上述模組文件所列正式頁面操作已驗證；具體未完成項以模組最新驗收紀錄為準。
 
 - QC403「異常原因基本資料」：[功能規格](modules/QC/異常原因基本資料.md)。公司端已完成 `/YMES/QC/HoldItemBasis` DEV 頁；Oracle source DDL 與 PostgreSQL 空表 CREATE 參考已建立。`TBLQCHOLDITEMBASIS` 以 HoldItemNo 為 PK，只有 PK unique index，無 FK/額外索引；家用端需比對 schema，實作 QC403 CRUD、HoldSystem/分類/群組/OCAP 查找、`HOLDITEM BASIS` Issue Job 與 Excel 匯入 API。
 

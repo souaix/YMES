@@ -35,6 +35,8 @@ YMES Vue Web 與 ASP.NET Core API 使用不同容器，部署在同一台主機�
 
 2026-11-18 完整 UI 擴充後，遠端 Node 建置約 1 GB heap 上限耗盡；本機同版 Web build 已成功，因此 QC503/PS102 發行改採此方式。發行時保留前版 image tag 與靜態產物，回復使用前版 image，不在運作中的容器直接覆蓋檔案。
 
+建置必須等待程序實際以 exit code 0 結束才可打包；工具回傳 session ID 代表仍在執行，不能當成成功。發行快照只包含本批已驗證內容，避免混入下一批草稿。打包前確認 `dist/index.html` 引用的 JS/CSS 存在且非空，封裝後再查 archive 大小與內容；不可將 Vite 建置期間已清空的 dist 部署上線。切換後檢查入口及同名 JS/CSS 的 HTTP 200 與實際下載大小，再做 app-browser 冒煙確認；失敗先切回保留的完整 image。
+
 - Ubuntu 遠端測試可透過 SSH 操作；IIS 依客戶核准的 Windows Server 管理/部署方式執行。
 - 測試、驗收和正式環境分開；未授權不得以正式資料做破壞性測試或 Migration。
 - 每次部署保留版本、設定差異、Migration 記錄、健康檢查和回復步驟。

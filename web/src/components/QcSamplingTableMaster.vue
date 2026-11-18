@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
+import { apiErrorMessage } from '../utils/apiError'
 
 type Mode = 'add' | 'edit' | 'copy' | null
 type SearchField = 'SamplingTable' | 'MinNum' | 'MaxNum'
@@ -18,6 +21,7 @@ interface Row {
 interface FormValues { samplingTable: string; minNum: string; maxNum: string; sampleNum: string; rejectNum: string }
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const storageKey = 'ymes-dev-mock:qc-sampling-tables:v1'
@@ -68,7 +72,7 @@ const nowText = ref(new Date().toLocaleString('zh-TW', { hour12: false }))
 function keyOf(row: Pick<Row, 'samplingTable' | 'minNum' | 'maxNum'>): string {
   return row.samplingTable + '|' + row.minNum + '|' + row.maxNum
 }
-function clone<T>(value: T): T { return structuredClone(value) }
+function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
 function nowIso(): string { return new Date().toISOString() }
 function readStore(): { rows: Row[] } {
   try {
@@ -97,9 +101,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error('登入狀態已逾期，請重新登入。')
   }
   if (!response.ok) {
-    const problem = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
-    if (response.status === 404) throw new Error('QC101 API 尚未建立；請依 todolist_homepc.md 完成資料表與 API。')
-    throw new Error(problem?.detail || problem?.message || problem?.title || 'API 回應錯誤（' + response.status + '）。')
+    throw new Error(await apiErrorMessage(response))
   }
   if (response.status === 204) return undefined as T
   return await response.json() as T
@@ -143,6 +145,7 @@ function selectAll(event: Event): void {
   selectedKeys.value = (event.target as HTMLInputElement).checked ? visibleRows.value.map(keyOf) : []
 }
 function openForm(next: Exclude<Mode, null>, row: Row | null = null): void {
+  if (saving.value || busy.value) return
   nowText.value = new Date().toLocaleString('zh-TW', { hour12: false })
   source.value = row ? clone(row) : null
   form.value = {
@@ -193,6 +196,7 @@ function normalizedNumber(value: string): number {
   return Number(value.trim())
 }
 async function save(keepOpen: boolean): Promise<void> {
+  if (saving.value) return
   formError.value = validate()
   if (formError.value || !mode.value) return
   const currentMode = mode.value
@@ -204,42 +208,53 @@ async function save(keepOpen: boolean): Promise<void> {
   const rejectNum = form.value.rejectNum.trim() ? normalizedNumber(form.value.rejectNum) : null
   saving.value = true
   try {
+    let saved: Row
     if (mock.value) {
       const data = readStore()
       if (currentMode === 'edit') {
         const index = data.rows.findIndex(row => original && keyOf(row) === keyOf(original))
         if (index < 0) throw new Error('資料已不存在，請重新查詢。')
         data.rows[index] = { ...data.rows[index], sampleNum, rejectNum, reviser: props.currentUserNo || 'DEV001', reviseDate: nowIso(), dataStamp: (data.rows[index].dataStamp ?? 0) + 1 }
-      } else data.rows.push({ samplingTable, minNum, maxNum, sampleNum, rejectNum, creator: props.currentUserNo || 'DEV001', createDate: formCreateDate.value, reviser: null, reviseDate: null, dataStamp: 0 })
+        saved = clone(data.rows[index])
+      } else {
+        saved = { samplingTable, minNum, maxNum, sampleNum, rejectNum, creator: props.currentUserNo || 'DEV001', createDate: formCreateDate.value, reviser: null, reviseDate: null, dataStamp: 0 }
+        data.rows.push(saved)
+      }
       writeStore(data)
     } else if (currentMode === 'edit') {
       const row = original!
       const query = new URLSearchParams()
       query.set('dataStampIsNull', row.dataStamp === null ? 'true' : 'false')
       if (row.dataStamp !== null) query.set('dataStamp', String(row.dataStamp))
-      await request('api/qc/sampling-tables/' + encodeURIComponent(row.samplingTable) + '/' + encodeURIComponent(String(row.minNum)) + '/' + encodeURIComponent(String(row.maxNum)) + (query.toString() ? '?' + query.toString() : ''), {
+      saved = await request<Row>('api/qc/sampling-tables/' + encodeURIComponent(row.samplingTable) + '/' + encodeURIComponent(String(row.minNum)) + '/' + encodeURIComponent(String(row.maxNum)) + (query.toString() ? '?' + query.toString() : ''), {
         method: 'PUT', body: JSON.stringify({ sampleNum, rejectNum }),
       })
-    } else await request('api/qc/sampling-tables', { method: 'POST', body: JSON.stringify({ samplingTable, minNum, maxNum, sampleNum, rejectNum }) })
-    await refresh(samplingTable + '|' + minNum + '|' + maxNum)
+    } else saved = await request<Row>('api/qc/sampling-tables', { method: 'POST', body: JSON.stringify({ samplingTable, minNum, maxNum, sampleNum, rejectNum }) })
+    await refresh(keyOf(saved))
     dirty.value = false
+    formCreateDate.value = saved.createDate ?? ''
     if (keepOpen && currentMode !== 'edit') {
-      const nextMin = maxNum + 1
-      form.value.samplingTable = samplingTable
+      const nextMin = saved.maxNum + 1
+      source.value = null
+      form.value.samplingTable = saved.samplingTable
       form.value.minNum = Number.isInteger(nextMin) ? String(nextMin) : String(Number(nextMin.toFixed(4)))
       form.value.maxNum = ''
+      form.value.sampleNum = String(saved.sampleNum)
+      form.value.rejectNum = saved.rejectNum === null ? '' : String(saved.rejectNum)
       notice.value = '資料已套用；可直接輸入下一個區間。'
     } else if (keepOpen) {
-      source.value = activeRow.value ? clone(activeRow.value) : null
+      source.value = clone(saved)
+      if (saved.reviseDate) nowText.value = formatDate(saved.reviseDate)
       notice.value = '資料已套用。'
     } else closeForm()
   } catch (reason) { formError.value = reason instanceof Error ? reason.message : '儲存抽樣表格失敗。' }
   finally { saving.value = false }
 }
 async function removeSelected(): Promise<void> {
+  if (busy.value || saving.value) return
   const items = [...selectedRows.value]
   if (!items.length) return
-  if (!window.confirm('確定刪除選取的 ' + items.length + ' 筆抽樣表格資料？')) return
+  if (!await requestConfirmation('確定刪除選取的 ' + items.length + ' 筆抽樣表格資料？')) return
   busy.value = true
   error.value = ''
   let removed = 0
@@ -272,6 +287,7 @@ function openTableCopy(): void {
   copyTableOpen.value = true
 }
 async function copyTable(): Promise<void> {
+  if (copyTableSaving.value) return
   const target = copyTableTarget.value.trim().toUpperCase()
   if (!target) { copyTableError.value = '請輸入目的 SamplingTable。'; return }
   if (target.length > 25) { copyTableError.value = '目的 SamplingTable 不可超過 25 個字元。'; return }
@@ -402,6 +418,7 @@ onMounted(async () => {
         </section>
       </div>
     </Teleport>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </section>
 </template>
 

@@ -1,10 +1,18 @@
 # 家裡電腦接手清單
 
+## 家用端交付與下一批（2026-11-19）
+
+- [x] QC101、QC102、QC401、QC402、PS101 API/Web 已部署；各頁 CRUD、適用的核准/停用/多選及版本操作已由正式 app-browser 驗證，精確測試鍵SQL計數皆0。完整範圍與限制見各模組MD。
+- [x] forward migrations 0029–0033 已套用，來源欄位／PK／nullable/default及ymes_app grants已核對；備份 `ymes_before_0029_0030_20261118.dump`、`ymes_before_0031_0033_20261118.dump` 已驗證可讀。
+- [ ] QC401/QC402 瀏覽器選檔工具停滯；真實 multipart預覽/匯入API及頁面重查已驗證，但完整選檔端到端、取消與匯入故障注入仍待處理。官方範本及共用Issue/Job待公司來源／共用服務，不冒充已完成。
+- [ ] 完成本輪同步後接 QC103、QC107、QC108：程式已準備並經交叉檢查，六張來源表live audit均缺少，下一輪備份後新增forward migration及正式驗收。QC301/QC302新增跨模組鎖定也須回歸驗證。
+- [ ] 單一模組完成不是停止點；同步公司端更新後繼續其餘可獨立主檔與共用依賴。
+
 ## 家用端持續開發進度（2026-11-18）
 
 - [x] QC503 Driver 與 PS102 製造層別 API/Web 已部署，正式 app-browser 操作驗證完成；測試資料 SQL 計數為 0，API/Web healthy、readiness=200。
 - [x] 本輪 Web 以本機 vue-tsc/Vite 驗證後產物建立 runtime image，解決遠端 Node heap OOM；作法見 `DEPLOYMENT_PROFILES.md`。
-- [ ] 同步本輪版本後繼續 QC401 主分類、QC102 抽樣計劃1916、PS101 生產區段；QC101/QC402 程式準備與驗收依各自段落追蹤。單一模組完成不是停止點。
+- [x] QC401/QC102/PS101/QC101/QC402 本輪主要功能已部署驗證；詳細限制與下一批見2026-11-19交付段落。
 
 
 ## 家用端接手摘要（2026-11-18）
@@ -21,19 +29,10 @@
 - [x] 正式 app-browser 驗證新增/套用後修改、相同 Sequence 編輯、複製防重、四狀態/查詢、多選核准取消/確定、多選停用/刪除與 Close；測試 A/B 已清空。規格及維護紀錄見 `docs/modules/PRS/製造層別設定.md`。
 - [ ] 共用簽核服務日後建立時接入完整 IssueManagement；正式 API 的功能角色 ACL 依使用者目前暫緩決策維持登入保護。
 
-## 最新公司端交接：PS101 生產區段資料（2026-11-18）
+## 已完成家用端：PS101 生產區段資料（2026-11-19）
 
-- [ ] Pull GitHub `main`，閱讀 `docs/modules/PRS/生產區段資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS101 段落，以及 `database/reference/mestest_prs101_production_segment_source_ddl.sql` / `mestest_prs101_production_segment_create.sql`。
-- [ ] 查 YMES PostgreSQL live schema/migrations 的 `YMES.tblprsproductionsegment`。PS101 是此表 owner；先核對欄位、PK、nullable/default 及現存資料。缺表才新增 forward migration；若已存在，保留資料，只補 live schema 明確缺少的 default，禁止重建。
-- [ ] 原始 Oracle DDL 由公司端以 PowerShell 5.1 + Oracle.ManagedDataAccess 直接連 MESTEST 唯讀取得。欄位及預設照 Oracle source：PSNo/PSName varchar(50) NOT NULL；PSOrder numeric(2,0) DEFAULT 0 NOT NULL；Description varchar(255) nullable；IssueState numeric(1,0) DEFAULT 0 NOT NULL；HaveComponent/HaveLevel numeric(1,0) DEFAULT 0 NOT NULL；SerialTypeNo_Lot/Comp varchar(50) nullable；IsPartial numeric(1,0) DEFAULT 0 NOT NULL；IsNetFlow numeric(1,0) DEFAULT 0 nullable；DataStamp numeric(11,0) DEFAULT 0 nullable；Creator/Reviser varchar(10) nullable；日期 timestamp nullable。只有 PSNo PK unique index；無 FK/其他 index。
-- [ ] `CREATE` 參考不是 migration。先比較 live PostgreSQL table 與 migrations，只新增缺表/必要 default forward migration，不覆蓋現有資料；若要使用 reference SQL，先確認 schema/table 名稱並做 migration review。
-- [ ] 實作登入保護 FunctionNo=`PS BASIS`、FunctionKey=`PS101` API：GET `/api/production-segments?psNo=`、POST、PUT/DELETE `/{psNo}`、POST `/{psNo}/approve`。請依 `docs/modules/PRS/生產區段資料.md` 保持 Vue 契約及 DTO。
-- [ ] 新增/編輯驗證：PSNo 必填、轉大寫、最多 50；PSName 必填最多 50；PSOrder 1–99；Description 最多 255；HaveComponent/HaveLevel 僅 0/1 且不可同時為 1。新增由 server 設 Creator/CreateDate、IssueState=0；DB 預設 IsPartial/IsNetFlow/DataStamp。Edit 僅 IssueState=0；DataStamp null-safe CAS、成功遞增，衝突回 409；Reviser/ReviseDate 由 server 設。
-- [ ] Delete 以資料庫目前狀態分流：0/-1 實體刪主表，2 CAS 改 -1，1 拒絕。舊 Core 沒有 cascade/reference cleanup，Oracle 無 FK；不要自行新增 cascade 或假定無引用。多選逐筆回報結果。
-- [ ] Approve 僅狀態 0，重用共用 IssueManagement IssueNo=`PS BASIS`：沒有 Job/Detail 才直接改 2；有簽核明細先建立簽核流程、改 1、通知第一關，callback 核准 2/退回 0。
-- [ ] 重用/建立共用 GET `/api/system/serial-rule-basis?serialType=LOTNO`，查既有 `TBLSYSSERIALRULEBASIS`。WinForms 沒傳 Enable 條件，因此 lookup 不要只傳啟用列。不要新建另一張序號類別表。Component 序號欄位在此畫面隱藏，編輯/Copy 要保存既有值。
-- [ ] WAHHONG 企業設定會強制 HaveComponent/HaveLevel=No 並停用 Radio；必須依可信任的登入企業資訊套用。PS104 流程主檔若需要 Production Segment lookup，重用 PS101 table/API，不要新增同義 table/controller。
-- [ ] 完成 schema/API、更新規格/TODO 後 commit/push `main`；公司端再 pull 對接。公司端 PS101 使用 DEV localStorage；未連 YMES PostgreSQL、未實作 Production API/migration、未執行 build/test/browser。
+- [x] migration0030、API/共用LOTNO查找、版本及正式頁面主要操作已部署驗證；細節及未測範圍見 `docs/modules/PRS/生產區段資料.md`。
+- [ ] 共用完整簽核與後續相關PS模組仍繼續接手。
 
 ## 最新公司端交接：PS103 流程類別資料（2026-11-18）
 
@@ -438,56 +437,25 @@
 - [ ] 使用參數化 SQL；完成後更新 API/schema 文件與本待辦並 push GitHub，通知公司端 pull。來源無 MES 業務資料，Oracle 只查 DDL。
 
 
-### QC102 抽樣計劃設定_1916（公司端 2026-11-17 交接）
+### QC102 家用端交付（2026-11-19）
 
-- [ ] 閱讀 `docs/modules/QC/抽樣計劃設定_1916.md`、本檔 QC102 區段、公司端 QC102 區段及 `docs/DATABASE_CONNECTION.md`。
-- [ ] 比對 YMES PostgreSQL live schema/migrations。Oracle source DDL：`database/reference/mestest_qc_sampling_1916_source_ddl.sql`；PostgreSQL 空表 CREATE 參考：`database/reference/mestest_qc_sampling_1916_create.sql`。只在確認缺漏時新增 forward migration，保留 YMES 擴充欄位；不可在 MES Oracle 執行 CREATE。
-- [ ] 保留欄位 nullable/default：SamplingType varchar(25) NOT NULL；MinNum/MaxNum numeric(8,0) NOT NULL；SLevel varchar(6) NOT NULL；SampleNum/RejectNum numeric(6,0) nullable；KValue/FValue numeric(10,3) nullable；Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp nullable；DataStamp numeric(11,0) nullable DEFAULT 0。索引為獨立 unique index `(samplingtype,minnum,maxnum,slevel)`；來源沒有 PK constraint、FK 或其他 index。
-- [ ] 實作登入與 FunctionKey `QC102` 保護的 `GET /api/qc/sampling-1916`，回傳全表與 audit/DataStamp。UI 依 SamplingType 在前端切換，不帶搜尋條件。
-- [ ] 實作 `POST /api/qc/sampling-1916` body `{ samplingType, minNum, maxNum, sLevel, sampleNum, rejectNum, kValue, fValue }`；驗證 NOT NULL、區間、拒收數不得大於抽樣數、Variables 必填 K/F、複合鍵唯一。Creator/CreateDate 由登入者及伺服器時間維護。
-- [ ] 實作複合鍵 `PUT /api/qc/sampling-1916/{samplingType}/{minNum}/{maxNum}/{sLevel}?dataStampIsNull=&dataStamp=`，僅更新 SampleNum/RejectNum/KValue/FValue；Reviser/ReviseDate/DataStamp 由伺服器更新，nullable DataStamp 需以 CAS 區分 NULL 與 0，衝突回 409。實作相同複合鍵 DELETE；UI 多選時逐筆呼叫，首錯停止，保留已完成刪除。
-- [ ] 若此 API 要服務檢驗流程，實作並記錄 `ShowParameter_Sampling1916` 等價抽樣解析：Population=1 特例、SamplingType/SLevel、含端點區間查找、`SQtyCanBBiggerThenPQty` 上限，以及 Variables 的 K/F 回傳；找不到資料需有明確錯誤。
-- [ ] 使用參數化 SQL；完成後更新 API/schema 文件與本待辦、確認遷移/API 後 push GitHub，通知公司端 pull。此主檔沒有簽核/Issue Job。
+- [x] schema/API與正式頁面主要操作已完成，驗證範圍見 `docs/modules/QC/抽樣計劃設定_1916.md` 最新紀錄。
+- [ ] 該文件明列的共用來源／引擎／範本／未測情境繼續追蹤；角色ACL依使用者決策暫緩。
 
+### QC101 家用端交付（2026-11-19）
 
-### QC101 抽樣表格（公司端 2026-11-17 交接）
+- [x] schema/API與正式頁面主要操作已完成，驗證範圍見 `docs/modules/QC/抽樣表格.md` 最新紀錄。
+- [ ] 該文件明列的共用來源／引擎／範本／未測情境繼續追蹤；角色ACL依使用者決策暫緩。
 
-- [ ] 閱讀 docs/modules/QC/抽樣表格.md、todolist_officepc.md 的 QC101 區段及資料庫連線紀錄。
-- [ ] 比對 YMES PostgreSQL live schema/migrations。Oracle 來源 DDL：database/reference/mestest_qc_sampling_table_source_ddl.sql；PostgreSQL 空表 CREATE 參考：database/reference/mestest_qc_sampling_table_create.sql。只有確認缺漏才建立 migration，不要在 Oracle 執行 CREATE，也不要刪除 YMES 擴充欄位。
-- [ ] 保留欄位與 NULL/default：SamplingTable varchar(25)、MinNum/MaxNum/SampleNum numeric(12,4) 必填、RejectNum numeric(12,4) 可空、Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp、DataStamp numeric(11,0) nullable DEFAULT 0。唯一索引只有複合 PK (SamplingTable, MinNum, MaxNum)，沒有 FK/其他索引。
-- [ ] 實作登入與 FunctionKey QC101 保護的 GET /api/qc/sampling-tables?searchFieldName=&searchFieldValue=，限定 SamplingTable/MinNum/MaxNum 搜尋、回傳全部區間與 audit/DataStamp；先核對舊系統共用 AdditionalXml helper 的實際比對方式，再與 DEV 搜尋及正式 API 對齊。
-- [ ] 實作 POST 與複合鍵 PUT/DELETE；沿用 UI required/numeric/integer/RejectNum 上限/MinNum≤MaxNum 驗證。Add 設 Creator/CreateDate，Edit 設 Reviser/ReviseDate 並 DataStamp + 1；PUT/DELETE 對 DataStamp nullable 做 CAS。此功能沒有 IssueState、簽核或 Issue Job API。
-- [ ] 實作 POST /api/qc/sampling-tables/copy：只複製 sourceSamplingTable 中目的表不存在的 MinNum/MaxNum 區間；逐筆插入，首錯停止但保留之前成功筆，回傳 insertedCount、skippedCount 與部分失敗資訊。前端已呼叫此端點。
-- [ ] 使用參數化 SQL、登入使用者 audit；先查現有 migration/API 是否已建置。完成後更新 API/schema 交接文件，推送 GitHub 並通知公司端 pull。
+### QC402 家用端交付（2026-11-19）
 
+- [x] schema/API與正式頁面主要操作已完成，驗證範圍見 `docs/modules/QC/次分類基本資料.md` 最新紀錄。
+- [ ] 該文件明列的共用來源／引擎／範本／未測情境繼續追蹤；角色ACL依使用者決策暫緩。
 
-### QC402 次分類基本資料（公司端 2026-11-17 交接）
+### QC401 家用端交付（2026-11-19）
 
-- [ ] 閱讀 `docs/modules/QC/次分類基本資料.md`、`todolist_officepc.md` 的 QC402 區段及 `docs/DATABASE_CONNECTION.md` 的 QC402 查詢紀錄。
-- [ ] 比對 YMES PostgreSQL live schema/migrations。Oracle source DDL：`database/reference/mestest_qc_s_class_basis_source_ddl.sql`；空表 PostgreSQL CREATE 參考：`database/reference/mestest_qc_s_class_basis_create.sql`。僅在缺漏時補 forward migration，保留 YMES 擴充欄位；不要在 MES Oracle 執行 CREATE。
-- [ ] 保留 `tblqcsclassbasis` 欄位與來源預設：`sclassno varchar(30) NOT NULL PK`、`description varchar(255)`、`creator/reviser varchar(10)`、`createdate/revisedate timestamp without time zone`、`issuestate numeric(1,0) NOT NULL DEFAULT 0`、`mclassno varchar(30) NULL`、`datastamp numeric(11,0) NULL DEFAULT 0`。只建立 PK unique index，不加 FK 或其他索引；UI/API 以規則檢查已簽核 MClass。
-- [ ] 實作 `GET /api/qc/s-class-basis?searchFieldName=SClassNo&searchFieldValue=`，只接受 SClassNo 搜尋，回傳所有狀態與 audit/DataStamp；登入與 FunctionKey QC402 權限必須檢查。
-- [ ] 實作 `GET /api/qc/s-class-basis/m-class-options`，依 QC402 權限只回傳 `TBLQCMCLASSBASIS.IssueState=2` 的 MClassNo/Description；靜態 lookup route 必須先於 `/{sClassNo}` route，避免要求使用者另有 QC401 權限。
-- [ ] 實作 POST body `{ sClassNo, mClassNo, description }`：兩編號必填且最多 30 字、Description 最多 255 字、SClassNo 大小寫不敏感唯一、MClassNo 必須存在且已簽核。伺服器設定 Creator/CreateDate、IssueState=0。
-- [ ] 實作 PUT `/api/qc/s-class-basis/{sClassNo}?issueState=&dataStamp=` body `{ mClassNo, description }`；SClassNo 唯讀，僅 IssueState 0/2 更新，MClassNo 僅能選已簽核資料，Reviser/ReviseDate/DataStamp 由伺服器更新並做 nullable DataStamp CAS，衝突回 409。
-- [ ] DELETE：狀態 0/-1 實體刪除；2 改為 -1 並更新 audit/DataStamp；1 拒絕。Approve 僅接受 0，Issue Job Map `SCLASS BASIS`；沒有 Job/Detail 時轉 2，有流程則建立 Issue、轉 1、通知第一簽核群組，核准轉 2、退回回 0。
-- [ ] 實作 `/import/preview`、`/import` multipart `.xls/.xlsx`：NPOI 第一工作表、略過首列，前三欄固定為 SClassNo/MClassNo/Description，不驗標題；兩編號必填、Description 可空；preview distinct `(SClassNo,MClassNo)`，匯入按 SClassNo 分組，同組超過一列整組重複失敗；逐組交易、部分成功、回傳每個預覽 pair 結果並可取消後續列。驗 MClass 已簽核、SClassNo case-insensitive unique；成功時兩編號轉大寫，IssueState=0、Creator=登入者。
-- [ ] 實作 `/import/template`，透過 YMES template storage 供應 FunctionNo `SCLASS BASIS` 的正式範本及副檔名；來源樹找不到範本 binary。DEV CSV 僅示範欄序，不可冒充正式範本。
-- [ ] 全部 API 使用參數化 SQL、QC402 登入/功能權限和版本檢查；更新 API 文件/migration 索引及本 TODO。不得連 MES Oracle。
-
-### QC401 主分類基本資料（公司端 2026-11-17 交接）
-
-- [ ] 閱讀 docs/modules/QC/主分類基本資料.md、todolist_officepc.md 的 QC401 區段，以及 docs/DATABASE_CONNECTION.md 的 QC401 查詢紀錄。
-- [ ] 比對 YMES PostgreSQL live schema 與 migrations。TBLQCMCLASSBASIS Oracle source DDL / PostgreSQL CREATE 已存在於 database/reference/mestest_qc_first_group_lookups_source_ddl.sql 和 _create.sql；只在 YMES 缺表或欄位時補 forward migration，勿在 MES Oracle 建表或重建既有 YMES 擴充欄位。
-- [ ] schema 欄位需保留 MClassNo varchar(30) NOT NULL PK、Description varchar(255)、Creator/Reviser varchar(10)、CreateDate/ReviseDate timestamp without time zone、IssueState numeric(1,0) NOT NULL DEFAULT 0、DataStamp numeric(11,0) NULL DEFAULT 0。只有 PK unique index，沒有 FK/其他 index。
-- [ ] 實作 GET /api/qc/m-class-basis?searchFieldName=MClassNo&searchFieldValue=，回傳所有 IssueState 與 audit/DataStamp；只接受 MClassNo 搜尋，QC401 FunctionKey 權限及登入必須檢查。
-- [ ] 實作 POST 建立，body 為 mClassNo、description；驗證 MClassNo 必填/長度 30/唯一及 Description 長度 255；伺服器設定 Creator/CreateDate、IssueState=0，DataStamp 使用 default。
-- [ ] 實作 PUT /api/qc/m-class-basis/{mClassNo}?issueState=&dataStamp=，僅更新 Description；只允許 IssueState 0/2；MClassNo 唯讀，Reviser/ReviseDate 由伺服器更新。使用 nullable DataStamp CAS，衝突回 409。
-- [ ] 實作 DELETE：狀態 0/-1 實體刪除；狀態 2 以 CAS 改 IssueState=-1 並更新 Reviser/ReviseDate/DataStamp；狀態 1 拒絕。
-- [ ] 實作 POST /api/qc/m-class-basis/{mClassNo}/approve：限 IssueState=0，Issue Job Map key 為 MCLASS BASIS。找不到 Job 或 Job Detail 時直接轉 2；有流程時建立 Issue、轉 1、通知第一簽核群組；核准轉 2，退回回 0。更新共用 Issue Job/API 規格。
-- [ ] WinForms 匯入器已找到：STD/MESWin/QC/QC_MClassDataImport/frmMClassDataImport.vb、STD/MEStc/DataImporter/MClassDataImporter.cs。實作 POST /api/qc/m-class-basis/import/preview 與 /import：NPOI 讀 .xls/.xlsx 第一工作表；跳過首列，固定用第 1 欄 MClassNo（必填）、第 2 欄 Description（可空），不驗標題；先 distinct (MClassNo, Description)，按 MClassNo 分組逐組檢查/插入；大小寫不敏感拒絕已存在鍵、編號轉大寫；同編號不同說明失敗；每組獨立 transaction，部分成功並回傳結果。
-- [ ] 實作 GET /api/qc/m-class-basis/import/template，透過 YMES template storage 提供舊 wsSYS.GetTemplateFile 的 MCLASS BASIS 範本與副檔名。來源樹找到 downloader/extension API 呼叫，但未找到範本 binary；部署前須接原始 template storage 或取得正式範本。DEV CSV 只演示相同欄序，不能冒充官方 Excel 範本。
-- [ ] API 使用參數化 SQL、登入與 QC401 功能權限；更新 API 文件、migration 索引與本 TODO。不得連 MES Oracle。
+- [x] schema/API與正式頁面主要操作已完成，驗證範圍見 `docs/modules/QC/主分類基本資料.md` 最新紀錄。
+- [ ] 該文件明列的共用來源／引擎／範本／未測情境繼續追蹤；角色ACL依使用者決策暫緩。
 
 ### QC403 異常原因基本資料（公司端 2026-11-17 交接）
 

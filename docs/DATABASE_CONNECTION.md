@@ -667,3 +667,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-18：PRD PD102 eSOP Oracle metadata
 
 - Windows PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDESOPBASIS` 與 SubOP lookup。`GET_DDL` 回 `ORA-03135`，主表 10 欄、五欄 PK，僅有 PK 唯一索引。[eSOP 規格](modules/PRD/產品電子作業指導書.md)
+
+### 家用端2026-11-19：QC101/QC102/QC401/QC402/PS101
+
+- 比對來源reference及live缺表後，已套用forward migrations0029–0033，明確授予ymes_app CRUD（PS101另SYS序號SELECT）；來源唯一鍵/nullable/default保留，無新增FK或額外index。
+- 備份 `/opt/ymes/backups/ymes_before_0029_0030_20261118.dump` 及 `ymes_before_0031_0033_20261118.dump` 已由pg_restore --list驗證；正式API/Web與精確測試鍵清空SQL核對完成。下一批QC103/QC107/QC108六表於2026-11-19 PPK SSH只讀audit全部缺少，尚未套migration。

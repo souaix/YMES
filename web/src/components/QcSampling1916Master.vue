@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
+import { apiErrorMessage } from '../utils/apiError'
 
 type SamplingType = '0' | '1'
 type FormMode = 'add' | 'edit' | 'copy' | null
@@ -8,7 +11,7 @@ interface SamplingRow {
   minNum: number
   maxNum: number
   sLevel: string
-  sampleNum: number
+  sampleNum: number | null
   rejectNum: number | null
   kValue: number | null
   fValue: number | null
@@ -30,6 +33,7 @@ interface SamplingForm {
 
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const isMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const storageKey = 'ymes-dev-mock:qc-sampling-1916:v1'
@@ -64,7 +68,7 @@ function emptyForm(): SamplingForm {
 function keyOf(row: Pick<SamplingRow, 'samplingType' | 'minNum' | 'maxNum' | 'sLevel'>): string {
   return [row.samplingType, row.minNum, row.maxNum, row.sLevel.toUpperCase()].join('|')
 }
-function clone<T>(value: T): T { return structuredClone(value) }
+function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
 function nowIso(): string { return new Date().toISOString() }
 function readStore(): { rows: SamplingRow[] } {
   try {
@@ -93,9 +97,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error('登入狀態已逾期，請重新登入。')
   }
   if (!response.ok) {
-    const problem = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
-    if (response.status === 404) throw new Error('QC102 API 尚未建立；請依 todolist_homepc.md 完成資料表與 API。')
-    throw new Error(problem?.detail || problem?.message || problem?.title || 'API 回應錯誤（' + response.status + '）。')
+    throw new Error(await apiErrorMessage(response))
   }
   if (response.status === 204) return undefined as T
   return await response.json() as T
@@ -133,12 +135,13 @@ function changeType(value: SamplingType): void {
   setActive()
 }
 function openForm(mode: Exclude<FormMode, null>, row: SamplingRow | null = null): void {
+  if (saving.value) return
   original.value = row ? clone(row) : null
   form.value = row ? {
     sLevel: row.sLevel,
     minNum: String(row.minNum),
     maxNum: String(row.maxNum),
-    sampleNum: String(row.sampleNum),
+    sampleNum: row.sampleNum == null ? '' : String(row.sampleNum),
     rejectNum: row.rejectNum == null ? '' : String(row.rejectNum),
     kValue: row.kValue == null ? '' : String(row.kValue),
     fValue: row.fValue == null ? '' : String(row.fValue),
@@ -185,6 +188,11 @@ function validate(): string {
 }
 function decimalPlaces(value: string): number { return value.trim().split('.')[1]?.length ?? 0 }
 function markDirty(): void { dirty.value = true; formError.value = '' }
+function stampQuery(row: SamplingRow): URLSearchParams {
+  const query = new URLSearchParams({ dataStampIsNull: row.dataStamp === null ? 'true' : 'false' })
+  if (row.dataStamp !== null) query.set('dataStamp', String(row.dataStamp))
+  return query
+}
 function formatDate(value: string | null): string {
   if (!value) return ''
   const date = new Date(value)
@@ -194,6 +202,7 @@ function formatDate(value: string | null): string {
   return `${part('year')}/${part('month')}/${part('day')} ${part('hour')}:${part('minute')}:${part('second')}`
 }
 async function save(keepOpen: boolean): Promise<void> {
+  if (saving.value) return
   formError.value = validate()
   if (formError.value || !formMode.value) return
   const mode = formMode.value
@@ -211,55 +220,59 @@ async function save(keepOpen: boolean): Promise<void> {
     createDate: createdAt.value || null,
     reviser: revisedBy.value || null,
     reviseDate: revisedAt.value || null,
-    dataStamp: source?.dataStamp ?? 0,
+    dataStamp: mode === 'edit' ? source?.dataStamp ?? null : 0,
   }
   saving.value = true
   try {
+    let saved: SamplingRow
     if (isMock.value) {
       const data = readStore()
       if (mode === 'edit') {
         const index = data.rows.findIndex(row => source && keyOf(row) === keyOf(source))
         if (index < 0) throw new Error('資料已不存在，請重新查詢。')
         data.rows[index] = { ...record, creator: data.rows[index].creator, createDate: data.rows[index].createDate, reviser: props.currentUserNo || 'DEV001', reviseDate: nowIso(), dataStamp: (data.rows[index].dataStamp ?? 0) + 1 }
-      } else data.rows.push({ ...record, creator: props.currentUserNo || 'DEV001', createDate: nowIso(), reviser: null, reviseDate: null, dataStamp: 0 })
+        saved = clone(data.rows[index])
+      } else {
+        saved = { ...record, creator: props.currentUserNo || 'DEV001', createDate: nowIso(), reviser: null, reviseDate: null, dataStamp: 0 }
+        data.rows.push(saved)
+      }
       writeStore(data)
     } else if (mode === 'edit') {
       const row = source!
-      const query = new URLSearchParams()
-      query.set('dataStampIsNull', row.dataStamp === null ? 'true' : 'false')
-      if (row.dataStamp !== null) query.set('dataStamp', String(row.dataStamp))
+      const query = stampQuery(row)
       const path = 'api/qc/sampling-1916/' + [row.samplingType, row.minNum, row.maxNum, row.sLevel].map(value => encodeURIComponent(String(value))).join('/') + '?' + query.toString()
-      await request(path, { method: 'PUT', body: JSON.stringify({ sampleNum: record.sampleNum, rejectNum: record.rejectNum, kValue: record.kValue, fValue: record.fValue }) })
+      saved = await request<SamplingRow>(path, { method: 'PUT', body: JSON.stringify({ sampleNum: record.sampleNum, rejectNum: record.rejectNum, kValue: record.kValue, fValue: record.fValue }) })
     } else {
-      await request('api/qc/sampling-1916', { method: 'POST', body: JSON.stringify({ samplingType: record.samplingType, minNum: record.minNum, maxNum: record.maxNum, sLevel: record.sLevel, sampleNum: record.sampleNum, rejectNum: record.rejectNum, kValue: record.kValue, fValue: record.fValue }) })
+      saved = await request<SamplingRow>('api/qc/sampling-1916', { method: 'POST', body: JSON.stringify({ samplingType: record.samplingType, minNum: record.minNum, maxNum: record.maxNum, sLevel: record.sLevel, sampleNum: record.sampleNum, rejectNum: record.rejectNum, kValue: record.kValue, fValue: record.fValue }) })
     }
-    await refresh(keyOf(record))
+    await refresh(keyOf(saved))
     dirty.value = false
+    createdBy.value = saved.creator ?? ''
+    createdAt.value = saved.createDate ?? ''
+    revisedBy.value = saved.reviser ?? ''
+    revisedAt.value = saved.reviseDate ?? ''
     if (keepOpen && mode !== 'edit') {
-      form.value.sLevel = record.sLevel
-      form.value.minNum = String(record.maxNum + 1)
+      original.value = null
+      form.value.sLevel = saved.sLevel
+      form.value.minNum = String(saved.maxNum + 1)
       form.value.maxNum = ''
-      form.value.sampleNum = String(record.sampleNum)
-      form.value.rejectNum = String(record.rejectNum)
-      form.value.kValue = record.kValue == null ? '' : String(record.kValue)
-      form.value.fValue = record.fValue == null ? '' : String(record.fValue)
+      form.value.sampleNum = saved.sampleNum == null ? '' : String(saved.sampleNum)
+      form.value.rejectNum = saved.rejectNum == null ? '' : String(saved.rejectNum)
+      form.value.kValue = saved.kValue == null ? '' : String(saved.kValue)
+      form.value.fValue = saved.fValue == null ? '' : String(saved.fValue)
       notice.value = '資料已套用；可接續輸入下一個區間。'
     } else if (keepOpen) {
-      const updated = activeRow.value
-      if (updated) {
-        original.value = clone(updated)
-        revisedBy.value = updated.reviser ?? ''
-        revisedAt.value = updated.reviseDate ?? ''
-      }
+      original.value = clone(saved)
       notice.value = '資料已套用。'
     } else closeForm()
   } catch (reason) { formError.value = reason instanceof Error ? reason.message : '儲存抽樣計劃失敗。' }
   finally { saving.value = false }
 }
 async function removeSelected(): Promise<void> {
+  if (loading.value || saving.value) return
   const items = [...selectedRows.value]
   if (!items.length) return
-  if (!window.confirm(`確定刪除選取的 ${items.length} 筆資料？`)) return
+  if (!await requestConfirmation(`確定刪除選取的 ${items.length} 筆資料？`)) return
   loading.value = true
   error.value = ''
   try {
@@ -269,13 +282,17 @@ async function removeSelected(): Promise<void> {
         data.rows = data.rows.filter(item => keyOf(item) !== keyOf(row))
         writeStore(data)
       } else {
-        const path = 'api/qc/sampling-1916/' + [row.samplingType, row.minNum, row.maxNum, row.sLevel].map(value => encodeURIComponent(String(value))).join('/')
+        const path = 'api/qc/sampling-1916/' + [row.samplingType, row.minNum, row.maxNum, row.sLevel].map(value => encodeURIComponent(String(value))).join('/') + '?' + stampQuery(row).toString()
         await request(path, { method: 'DELETE' })
       }
     }
     await refresh()
     notice.value = '刪除完成。'
-  } catch (reason) { error.value = reason instanceof Error ? reason.message : '刪除資料失敗。' }
+  } catch (reason) {
+    const message = reason instanceof Error ? reason.message : '刪除資料失敗。'
+    try { await refresh() } catch { /* Retain the original first-failure message. */ }
+    error.value = message
+  }
   finally { loading.value = false }
 }
 function closePage(): void { emit('close') }
@@ -351,6 +368,7 @@ onMounted(async () => {
       </section>
     </div>
   </section>
+  <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
 </template>
 
 <style scoped>

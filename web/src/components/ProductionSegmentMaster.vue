@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2
 type EditMode = '' | 'add' | 'edit' | 'copy'
@@ -55,6 +57,7 @@ const props = withDefaults(defineProps<{
   enterpriseNo?: string
 }>(), { currentUserNo: '', developmentPreview: false, enterpriseNo: '' })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const forceNoFlags = computed(() => props.enterpriseNo.trim().toLocaleUpperCase() === 'WAHHONG')
@@ -85,6 +88,7 @@ const selectedPSNos = ref<string[]>([])
 const editorOpen = ref(false)
 const mode = ref<EditMode>('')
 const sourcePSNo = ref('')
+const editorSource = ref<ProductionSegmentRow | null>(null)
 const draft = ref<SegmentDraft>(blankDraft())
 const draftDirty = ref(false)
 const serialPickerOpen = ref(false)
@@ -148,11 +152,16 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 const visibleRows = computed(() => rows.value.filter(row => row.issueState === issueState.value
   && (!searchText.value.trim() || row.psNo.toLocaleLowerCase().includes(searchText.value.trim().toLocaleLowerCase()))))
-const activeRow = computed(() => rows.value.find(row => row.psNo === activePSNo.value) ?? null)
-const selectedRows = computed(() => rows.value.filter(row => selectedPSNos.value.includes(row.psNo)))
+const activeRow = computed(() => visibleRows.value.find(row => row.psNo === activePSNo.value) ?? null)
+const selectedRows = computed(() => visibleRows.value.filter(row => selectedPSNos.value.includes(row.psNo)))
 const visibleSerialOptions = computed(() => serialOptions.value.filter(row => !serialSearch.value.trim()
   || row.serialTypeNo.toLocaleLowerCase().includes(serialSearch.value.trim().toLocaleLowerCase())
   || (row.description ?? '').toLocaleLowerCase().includes(serialSearch.value.trim().toLocaleLowerCase())))
+
+watch(issueState, () => {
+  selectedPSNos.value = []
+  activePSNo.value = visibleRows.value[0]?.psNo ?? ''
+})
 
 async function load(): Promise<void> {
   busy.value = true
@@ -186,6 +195,7 @@ function openEditor(next: Exclude<EditMode, ''>): void {
   if (next === 'edit' && row?.issueState !== 0) { error.value = '只有未核准資料可修改。'; return }
   mode.value = next
   sourcePSNo.value = row?.psNo ?? ''
+  editorSource.value = next === 'add' ? null : row
   if (next === 'add') draft.value = blankDraft()
   else draft.value = {
     psNo: row?.psNo ?? '', psName: row?.psName ?? '', psOrder: row?.psOrder ?? 1,
@@ -221,33 +231,48 @@ async function save(keepOpen: boolean): Promise<void> {
   const validation = validateDraft()
   if (validation) { error.value = validation; return }
   const payload = draftPayload()
-  const row = activeRow.value
+  const row = editorSource.value
+  const wasEdit = mode.value === 'edit'
   busy.value = true
   try {
+    let savedRow: ProductionSegmentRow
     if (mock.value) {
       const duplicate = rows.value.some(item => item.psNo.toLocaleUpperCase() === payload.psNo
         && !(mode.value === 'edit' && item.psNo === sourcePSNo.value))
       if (duplicate) throw new Error(`PS. No ${payload.psNo} 已存在。`)
       if (mode.value === 'edit' && row) {
         Object.assign(row, payload, { reviser: currentUserNo(), reviseDate: new Date().toISOString(), dataStamp: (row.dataStamp ?? 0) + 1 })
+        savedRow = normalizeRow(clone(row))
       } else {
-        rows.value.push({ ...payload, issueState: 0, dataStamp: 0, creator: currentUserNo(), createDate: new Date().toISOString(), reviser: '', reviseDate: '', ...(mode.value === 'copy' && row?.mockApprovalHasDetail ? { mockApprovalHasDetail: true } : {}) })
+        savedRow = { ...payload, issueState: 0, dataStamp: 0, creator: currentUserNo(), createDate: new Date().toISOString(), reviser: '', reviseDate: '', ...(mode.value === 'copy' && row?.mockApprovalHasDetail ? { mockApprovalHasDetail: true } : {}) }
+        rows.value.push(savedRow)
       }
       persistMock()
     } else if (mode.value === 'edit') {
       if (!row || row.issueState !== 0) throw new Error('只有未核准資料可修改。')
-      await api(`/api/production-segments/${encodeURIComponent(sourcePSNo.value)}`, {
+      savedRow = normalizeRow(await api<ProductionSegmentRow>(`/api/production-segments/${encodeURIComponent(sourcePSNo.value)}`, {
         method: 'PUT', body: JSON.stringify({ ...payload, dataStamp: row.dataStamp }),
-      })
+      }))
     } else {
-      await api('/api/production-segments', { method: 'POST', body: JSON.stringify(payload) })
+      savedRow = normalizeRow(await api<ProductionSegmentRow>('/api/production-segments', { method: 'POST', body: JSON.stringify(payload) }))
     }
-    const savedPSNo = payload.psNo
+    const savedPSNo = savedRow.psNo
+    if (!wasEdit) { issueState.value = 0; searchText.value = '' }
     await load()
     activePSNo.value = savedPSNo
     if (!keepOpen) editorOpen.value = false
-    notice.value = `生產區段 ${savedPSNo} 已${mode.value === 'edit' ? '修改' : '新增'}。`
-    if (keepOpen) draftDirty.value = false
+    else {
+      // Apply on Add/Copy continues editing the saved row, using the server's
+      // actual stamp and audit rather than submitting the same key again.
+      mode.value = 'edit'
+      sourcePSNo.value = savedPSNo
+      editorSource.value = rows.value.find(item => item.psNo === savedPSNo) ?? savedRow
+      const saved = editorSource.value
+      draft.value = { psNo: saved.psNo, psName: saved.psName, psOrder: saved.psOrder, description: saved.description,
+        haveComponent: saved.haveComponent, haveLevel: saved.haveLevel, serialTypeNoLot: saved.serialTypeNoLot, serialTypeNoComp: saved.serialTypeNoComp }
+      draftDirty.value = false
+    }
+    notice.value = `生產區段 ${savedPSNo} 已${keepOpen ? '套用' : wasEdit ? '修改' : '新增'}。`
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '儲存生產區段失敗。'
   } finally { busy.value = false }
@@ -273,7 +298,7 @@ function chooseSerialRule(option: SerialRuleOption): void {
 async function deleteSelected(): Promise<void> {
   const targets = selectedRows.value
   if (!targets.length) { error.value = '請先選取生產區段。'; return }
-  if (!window.confirm(`確定刪除／停用 ${targets.length} 筆選取資料？`)) return
+  if (!(await requestConfirmation(`確定刪除／停用 ${targets.length} 筆選取資料？`))) return
   error.value = ''
   busy.value = true
   let changed = false
@@ -293,13 +318,13 @@ async function deleteSelected(): Promise<void> {
     }
     notice.value = `已處理 ${targets.length} 筆生產區段。`
   } catch (cause) { error.value = cause instanceof Error ? cause.message : '刪除生產區段失敗。' }
-  finally { if (changed) await load(); busy.value = false }
+  finally { if (changed) await reloadKeepingFeedback(); busy.value = false }
 }
 async function approveSelected(): Promise<void> {
   const targets = selectedRows.value
   if (!targets.length) { error.value = '請先選取生產區段。'; return }
   if (targets.some(row => row.issueState !== 0)) { error.value = '只有未核准資料可送出核准。'; return }
-  if (!window.confirm(`確定送出 ${targets.length} 筆生產區段核准？`)) return
+  if (!(await requestConfirmation(`確定送出 ${targets.length} 筆生產區段核准？`))) return
   error.value = ''
   busy.value = true
   let changed = false
@@ -318,9 +343,16 @@ async function approveSelected(): Promise<void> {
       }
       changed = true
     }
-    notice.value = '核准要求已處理；正式簽核狀態依 IssueManagement 回呼更新。'
+    notice.value = '選取的生產區段已完成核准處理。'
   } catch (cause) { error.value = cause instanceof Error ? cause.message : '核准生產區段失敗。' }
-  finally { if (changed) await load(); busy.value = false }
+  finally { if (changed) await reloadKeepingFeedback(); busy.value = false }
+}
+
+async function reloadKeepingFeedback(): Promise<void> {
+  const failure = error.value, message = notice.value
+  await load()
+  if (failure) error.value = failure
+  if (message) notice.value = message
 }
 
 onMounted(load)
@@ -349,7 +381,7 @@ onMounted(load)
           <thead><tr><th class="select-cell"></th><th>PS. No</th><th>PS. Name</th><th>PS. Order</th><th>HaveComponent</th><th>HaveLevel</th><th>Description</th><th>SerialTypeNo Lot</th><th>Creator</th><th>CreateDate</th><th>Reviser</th><th>ReviseDate</th></tr></thead>
           <tbody>
             <tr v-for="row in visibleRows" :key="row.psNo" :class="{ selected: activePSNo === row.psNo }" @click="selectRow(row)">
-              <td class="select-cell"><input type="checkbox" :checked="selectedPSNos.includes(row.psNo)" @click.stop="toggleRow(row)"></td>
+              <td class="select-cell"><input type="checkbox" :aria-label="'選取 ' + row.psNo" :checked="selectedPSNos.includes(row.psNo)" @click.stop="toggleRow(row)"></td>
               <td>{{ row.psNo }}</td><td>{{ row.psName }}</td><td class="number-cell">{{ row.psOrder }}</td>
               <td>{{ serialLabel(row.haveComponent) }}</td><td>{{ serialLabel(row.haveLevel) }}</td><td class="description-cell">{{ row.description }}</td>
               <td>{{ row.serialTypeNoLot }}</td><td>{{ row.creator }}</td><td>{{ formatDate(row.createDate) }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.reviseDate) }}</td>
@@ -367,10 +399,10 @@ onMounted(load)
         <button type="button" class="close-bottom" @click="emit('close')">Close (X)</button>
       </aside>
     </section>
-    <footer class="grid-footer"><span>資料總筆數 {{ visibleRows.length }}<template v-if="activeRow">　{{ issueLabel(activeRow.issueState) }}　DataStamp {{ activeRow.dataStamp ?? 'NULL' }}</template></span><small>Find / Print：WinForms 原按鈕隱藏</small></footer>
+    <footer class="grid-footer"><span>資料總筆數 {{ visibleRows.length }}<template v-if="activeRow">　{{ issueLabel(activeRow.issueState) }}</template></span></footer>
 
     <div v-if="editorOpen" class="overlay" @click.self="editorOpen = false">
-      <section class="dialog definition-dialog">
+      <section class="dialog definition-dialog" role="dialog" aria-modal="true" aria-label="生產區段定義">
         <header class="dialog-title"><h3>Production Segment Define ({{ mode === 'add' ? 'ADD' : mode === 'edit' ? 'EDIT' : 'Copy' }})</h3><button type="button" class="x-button" @click="editorOpen = false">×</button></header>
         <fieldset class="segment-fields"><legend>Production Segment Data</legend>
           <div class="field-row"><label for="ps-no">PS. No</label><input id="ps-no" v-model.trim="draft.psNo" class="yellow" maxlength="50" :readonly="mode === 'edit'" @input="draftDirty = true" @blur="draft.psNo = draft.psNo.toLocaleUpperCase()"></div>
@@ -381,7 +413,7 @@ onMounted(load)
           <div class="field-row description-row"><label for="ps-description">Description</label><textarea id="ps-description" v-model="draft.description" maxlength="255" @input="draftDirty = true"></textarea></div>
           <fieldset class="serial-rule"><legend>Serial Rule Config</legend><div class="serial-row"><label for="lot-serial">SerialTypeNo_Lot</label><input id="lot-serial" :value="draft.serialTypeNoLot" readonly><button type="button" :disabled="busy" @click="loadSerialRules">...</button></div></fieldset>
         </fieldset>
-        <div class="audit-grid"><span>Creator</span><input :value="mode === 'edit' ? activeRow?.creator : currentUserNo()" disabled><span>CreateDate</span><input :value="formatDate(mode === 'edit' ? activeRow?.createDate ?? '' : new Date().toISOString())" disabled><span>Reviser</span><input :value="mode === 'edit' ? currentUserNo() : '—'" disabled><span>ReviseDate</span><input :value="mode === 'edit' ? formatDate(new Date().toISOString()) : '—'" disabled></div>
+        <div class="audit-grid"><span>Creator</span><input :value="mode === 'edit' ? editorSource?.creator : currentUserNo()" disabled><span>CreateDate</span><input :value="formatDate(mode === 'edit' ? editorSource?.createDate ?? '' : new Date().toISOString())" disabled><span>Reviser</span><input :value="mode === 'edit' ? editorSource?.reviser : '—'" disabled><span>ReviseDate</span><input :value="mode === 'edit' ? formatDate(editorSource?.reviseDate ?? '') : '—'" disabled></div>
         <p v-if="forceNoFlags" class="enterprise-note">WAHHONG 規則：Have Component 與 Have Level 固定為 No。</p>
         <p v-if="error" class="message error">{{ error }}</p>
         <footer class="dialog-actions"><button type="button" class="primary" :disabled="busy" @click="save(false)">確定</button><button type="button" :disabled="busy || !draftDirty" @click="save(true)">套用</button><button type="button" @click="editorOpen = false">關閉</button></footer>
@@ -389,7 +421,7 @@ onMounted(load)
     </div>
 
     <div v-if="serialPickerOpen" class="overlay picker-overlay" @click.self="serialPickerOpen = false">
-      <section class="dialog serial-dialog"><header class="dialog-title"><h3>LOTNO Serial Rule</h3><button type="button" class="x-button" @click="serialPickerOpen = false">×</button></header>
+      <section class="dialog serial-dialog" role="dialog" aria-modal="true" aria-label="LOTNO 序號規則"><header class="dialog-title"><h3>LOTNO Serial Rule</h3><button type="button" class="x-button" @click="serialPickerOpen = false">×</button></header>
         <label class="serial-search">SerialTypeNo <input v-model="serialSearch" maxlength="50" @keyup.enter="visibleSerialOptions.length && chooseSerialRule(visibleSerialOptions[0])"></label>
         <div class="grid-wrap serial-grid"><table><thead><tr><th>SerialTypeNo</th></tr></thead><tbody>
           <tr v-for="option in visibleSerialOptions" :key="option.serialTypeNo" @dblclick="chooseSerialRule(option)" @click="chooseSerialRule(option)"><td>{{ option.serialTypeNo }}</td></tr>
@@ -399,6 +431,7 @@ onMounted(load)
       </section>
     </div>
   </main>
+  <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
 </template>
 
 <style scoped>

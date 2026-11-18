@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
+import { apiErrorMessage as responseError } from '../utils/apiError'
 
 type State = -1 | 0 | 1 | 2
 type Mode = 'add' | 'edit' | 'copy' | null
@@ -8,6 +11,7 @@ interface ImportPair { mClassNo: string; description: string }
 interface ImportResult extends ImportPair { result: 'success' | 'fail'; message: string }
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const storageKey = 'ymes-dev-mock:qc-m-class-basis:v1'
@@ -47,7 +51,8 @@ const selectedRows = computed(() => visible.value.filter(r => selected.value.inc
 const activeRow = computed(() => rows.value.find(r => r.mClassNo === active.value) ?? null)
 const formTitle = computed(() => '主分類基本資料（' + (mode.value === 'add' ? '新增' : mode.value === 'copy' ? '複製' : '修改') + '）')
 const readOnly = computed(() => mode.value === 'edit' && (source.value?.issueState === 1 || source.value?.issueState === -1))
-function copy<T>(v: T): T { return structuredClone(v) }
+// These API DTOs contain only JSON values; this also unwraps Vue proxies.
+function copy<T>(v: T): T { return JSON.parse(JSON.stringify(v)) as T }
 function now(): string { return new Date().toISOString() }
 function readStore(): { rows: Row[] } {
   try { const value = window.localStorage.getItem(storageKey); if (value) { const data = JSON.parse(value); if (Array.isArray(data.rows)) return data } } catch { /* reset invalid dev data */ }
@@ -64,11 +69,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   const response = await fetch(apiUrl(path), { credentials: 'include', ...init, headers })
   if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
-  if (!response.ok) {
-    const problem = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
-    if (response.status === 404) throw new Error('QC401 API 尚未建立；請依 todolist_homepc.md 完成資料表與 API。')
-    throw new Error(problem?.detail || problem?.message || problem?.title || 'API 回應錯誤（' + response.status + '）。')
-  }
+  if (!response.ok) throw new Error(await responseError(response))
   if (response.status === 204) return undefined as T
   return await response.json() as T
 }
@@ -109,31 +110,42 @@ async function save(keepOpen: boolean): Promise<void> {
   const currentMode = mode.value; const original = source.value; const no = form.value.mClassNo.trim().toUpperCase(); const description = form.value.description.trim() || null
   saving.value = true
   try {
+    let saved: Row
     if (mock.value) {
       const data = readStore()
       if (currentMode === 'edit') {
         const i = data.rows.findIndex(r => r.mClassNo === original?.mClassNo)
         if (i < 0) throw new Error('資料已不存在，請重新查詢。')
         data.rows[i] = { ...data.rows[i], description, reviser: props.currentUserNo || 'DEV001', reviseDate: now(), dataStamp: (data.rows[i].dataStamp ?? 0) + 1 }
-      } else data.rows.push({ mClassNo: no, description, creator: props.currentUserNo || 'DEV001', createDate: formCreateDate.value, issueState: 0, dataStamp: 0, reviser: null, reviseDate: null })
+        saved = copy(data.rows[i])
+      } else {
+        saved = { mClassNo: no, description, creator: props.currentUserNo || 'DEV001', createDate: formCreateDate.value, issueState: 0, dataStamp: 0, reviser: null, reviseDate: null }
+        data.rows.push(saved)
+      }
       writeStore(data)
     } else if (currentMode === 'edit') {
       const row = original!
       const q = new URLSearchParams({ issueState: String(row.issueState) })
-      if (row.dataStamp !== null) q.set('dataStamp', String(row.dataStamp))
-      await request('api/qc/m-class-basis/' + encodeURIComponent(row.mClassNo) + '?' + q.toString(), { method: 'PUT', body: JSON.stringify({ description }) })
-    } else await request('api/qc/m-class-basis', { method: 'POST', body: JSON.stringify({ mClassNo: no, description }) })
-    await refresh(no)
-    if (keepOpen && currentMode !== 'edit') { notice.value = '資料已套用；再次新增前請輸入新的主分類編號。' }
-    else if (keepOpen) { source.value = activeRow.value ? copy(activeRow.value) : null; notice.value = '資料已套用。' }
-    else closeForm()
+      q.set('dataStamp', row.dataStamp === null ? '' : String(row.dataStamp))
+      saved = await request<Row>('api/qc/m-class-basis/' + encodeURIComponent(row.mClassNo) + '?' + q.toString(), { method: 'PUT', body: JSON.stringify({ description }) })
+    } else saved = await request<Row>('api/qc/m-class-basis', { method: 'POST', body: JSON.stringify({ mClassNo: no, description }) })
+    // Hold the committed server row/version even if the subsequent list reload
+    // fails, so Apply cannot retry a successful create as another POST.
+    source.value = copy(saved)
+    form.value = { mClassNo: saved.mClassNo, description: saved.description ?? '' }
+    formCreateDate.value = saved.createDate ?? formCreateDate.value
+    mode.value = 'edit'
+    state.value = saved.issueState
+    await refresh(saved.mClassNo)
+    if (keepOpen) notice.value = '資料已套用。'
+    else { closeForm(); notice.value = '資料已儲存。' }
   } catch (e) { formError.value = e instanceof Error ? e.message : '儲存主分類失敗。' } finally { saving.value = false }
 }
 async function removeSelected(): Promise<void> {
   if (!selectedRows.value.length) return
   if (selectedRows.value.some(r => r.issueState === 1)) { error.value = '簽核中的資料不可刪除。'; return }
-  if (!window.confirm('確定刪除或停用選取的 ' + selectedRows.value.length + ' 筆資料？')) return
-  busy.value = true; error.value = ''
+  if (!(await requestConfirmation('確定刪除或停用選取的 ' + selectedRows.value.length + ' 筆資料？'))) return
+  busy.value = true; error.value = ''; notice.value = ''
   try {
     for (const row of [...selectedRows.value]) {
       if (mock.value) {
@@ -142,25 +154,33 @@ async function removeSelected(): Promise<void> {
         else data.rows = data.rows.filter(r => r.mClassNo !== row.mClassNo)
         writeStore(data)
       } else {
-        const q = new URLSearchParams({ issueState: String(row.issueState) }); if (row.dataStamp !== null) q.set('dataStamp', String(row.dataStamp))
+        const q = new URLSearchParams({ issueState: String(row.issueState), dataStamp: row.dataStamp === null ? '' : String(row.dataStamp) })
         await request('api/qc/m-class-basis/' + encodeURIComponent(row.mClassNo) + '?' + q.toString(), { method: 'DELETE' })
       }
     }
     await refresh(); notice.value = '選取資料已完成刪除或停用。'
-  } catch (e) { error.value = e instanceof Error ? e.message : '刪除主分類失敗。' } finally { busy.value = false }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : '刪除主分類失敗。'
+    try { await refresh() } catch { /* Preserve the original first-failure message. */ }
+    error.value = message
+  } finally { busy.value = false }
 }
 async function approveSelected(): Promise<void> {
   if (!selectedRows.value.length) return
   if (selectedRows.value.some(r => r.issueState !== 0)) { error.value = '只有未簽核資料可以核准。'; return }
-  if (!window.confirm('確定核准選取的 ' + selectedRows.value.length + ' 筆主分類？')) return
-  busy.value = true; error.value = ''
+  if (!(await requestConfirmation('確定核准選取的 ' + selectedRows.value.length + ' 筆主分類？'))) return
+  busy.value = true; error.value = ''; notice.value = ''
   try {
     for (const row of [...selectedRows.value]) {
       if (mock.value) { const data = readStore(); const item = data.rows.find(r => r.mClassNo === row.mClassNo)!; item.issueState = 2; item.reviser = props.currentUserNo || 'DEV001'; item.reviseDate = now(); item.dataStamp = (item.dataStamp ?? 0) + 1; writeStore(data) }
-      else { const q = new URLSearchParams({ issueState: String(row.issueState) }); if (row.dataStamp !== null) q.set('dataStamp', String(row.dataStamp)); await request('api/qc/m-class-basis/' + encodeURIComponent(row.mClassNo) + '/approve?' + q.toString(), { method: 'POST' }) }
+      else { const q = new URLSearchParams({ issueState: String(row.issueState), dataStamp: row.dataStamp === null ? '' : String(row.dataStamp) }); await request('api/qc/m-class-basis/' + encodeURIComponent(row.mClassNo) + '/approve?' + q.toString(), { method: 'POST' }) }
     }
-    await refresh(); notice.value = '已送出核准；正式簽核結果依 Issue Job 流程更新。'
-  } catch (e) { error.value = e instanceof Error ? e.message : '核准主分類失敗。' } finally { busy.value = false }
+    await refresh(); notice.value = '核准處理完成，請依資料狀態檢視結果。'
+  } catch (e) {
+    const message = e instanceof Error ? e.message : '核准主分類失敗。'
+    try { await refresh() } catch { /* Preserve the original first-failure message. */ }
+    error.value = message
+  } finally { busy.value = false }
 }
 function openImport(): void { importOpen.value = true; importName.value = ''; importFile.value = null; importPairs.value = []; importResults.value = []; importError.value = ''; importProgress.value = 0 }
 function parseCsv(text: string): string[][] {
@@ -185,7 +205,7 @@ async function chooseFile(e: Event): Promise<void> {
     if (records.length < 2) { importError.value = '匯入檔沒有資料列。'; return }
     const pairs = records.slice(1).map(row => ({ mClassNo: (row[0] ?? '').trim(), description: (row[1] ?? '').trim() }))
     if (pairs.some(row => !row.mClassNo)) { importError.value = '主分類編號必填；檔案第一欄的空白編號會使匯入檔檢核失敗。'; return }
-    importPairs.value = pairs.filter((item, index) => pairs.findIndex(other => other.mClassNo.toLocaleUpperCase() === item.mClassNo.toLocaleUpperCase() && other.description.toLocaleUpperCase() === item.description.toLocaleUpperCase()) === index)
+    importPairs.value = pairs.filter((item, index) => pairs.findIndex(other => other.mClassNo.toUpperCase() === item.mClassNo.toUpperCase() && other.description === item.description) === index)
     return
   }
   try {
@@ -200,7 +220,7 @@ async function downloadTemplate(): Promise<void> {
     else {
       const response = await fetch(apiUrl('api/qc/m-class-basis/import/template'), { credentials: 'include' })
       if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
-      if (!response.ok) throw new Error('QC401 匯入範本 API 尚未建立。')
+      if (!response.ok) throw new Error(await responseError(response))
       blob = await response.blob()
       const disposition = response.headers.get('Content-Disposition') ?? ''
       filename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^\";]+)/i)?.[1] ?? 'MClassTemplate.xlsx'
@@ -210,7 +230,7 @@ async function downloadTemplate(): Promise<void> {
 }
 async function startImport(): Promise<void> {
   if (!importFile.value || !importPairs.value.length) return
-  if (!window.confirm('確定匯入 ' + importPairs.value.length + ' 筆主分類資料？')) return
+  if (!(await requestConfirmation('確定匯入 ' + importPairs.value.length + ' 筆主分類資料？'))) return
   importing.value = true; importError.value = ''; importResults.value = []; importProgress.value = 0
   try {
     if (!mock.value) {
@@ -219,8 +239,8 @@ async function startImport(): Promise<void> {
       importProgress.value = importResults.value.length
     } else {
       const store = readStore(); const groups = new Map<string, ImportPair[]>()
-      for (const pair of importPairs.value) { const key = pair.mClassNo.toLocaleUpperCase(); groups.set(key, [...(groups.get(key) ?? []), pair]) }
-  for (const [mClassNo, pairs] of groups) {
+      for (const pair of importPairs.value) { const key = pair.mClassNo.toUpperCase(); groups.set(key, [...(groups.get(key) ?? []), pair]) }
+      for (const [mClassNo, pairs] of groups) {
         const first = pairs[0]
         if (pairs.length > 1) importResults.value.push(...pairs.map(pair => ({ ...pair, result: 'fail' as const, message: '同一 MClassNo 有多筆不同資料。' })))
         else if (store.rows.some(row => row.mClassNo.toUpperCase() === mClassNo.toUpperCase())) importResults.value.push({ ...first, result: 'fail', message: '主分類編號已存在。' })
@@ -233,7 +253,10 @@ async function startImport(): Promise<void> {
       }
       writeStore(store)
     }
-    if (importResults.value.some(result => result.result === 'success')) { await refresh(); notice.value = '匯入完成，成功 ' + importResults.value.filter(result => result.result === 'success').length + ' 筆。' }
+    const successful = importResults.value.filter(result => result.result === 'success').length
+    if (successful) await refresh()
+    const failed = importResults.value.length - successful
+    notice.value = '匯入已結束，成功 ' + successful + ' 筆，失敗或未處理 ' + failed + ' 筆。'
   } catch (error) { importError.value = error instanceof Error ? error.message : '匯入主分類失敗。' }
   finally { importing.value = false }
 }
@@ -284,6 +307,7 @@ onMounted(() => { void (async () => { loading.value = true; try { await load(); 
       </tbody></table></div>
       <footer class="dialog-actions"><button class="button primary" :disabled="importing || !importFile || !importPairs.length" @click="startImport">{{ importing ? '匯入中…' : '匯入' }}</button><button class="button" :disabled="importing" @click="closeImport">關閉</button></footer>
     </section></div>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </main>
 </template>
 

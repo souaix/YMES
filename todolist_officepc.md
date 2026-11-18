@@ -1,3 +1,11 @@
+## 家用端交付及公司端待補來源（2026-11-19）
+
+- [x] QC101/QC102/QC401/QC402/PS101正式API及主要頁面操作已部署驗證，模組MD已補實作、版本與限制；公司端pull保留nullable版本條件與共用確認窗。QC101/QC102 Apply保持連續區間新增；QC401/QC402/PS101 Apply轉Edit，依各自來源／YMES明確決策保持一致。
+- [ ] 公司端補交 MCLASS BASIS／SCLASS BASIS 原始Excel範本binary和SYS template metadata，勿以DEV CSV代替。家用端正式匯入API已通，瀏覽器選檔驗收仍列家用端待辦。
+- [ ] 公司端補交 QC107 真實Action／ReasonType ValueList儲存值與標籤、對應來源schema/provider及SysInfo UserDefineAQL實際值；不要照舊註解硬編碼。QC108補交真實FUNQR函式catalog。來源空缺目前回明確503，不填入DEV函式名。
+- [ ] 公司端補交 QC103 PlanType6/4參數輸入輸出ShowFlag、sampling核心/Population flags、FUNSA catalog與AQL/SYS ValueList metadata。已知獨立CRUD由家用端接續，不要求公司端連YMES PostgreSQL或SSH。
+- [ ] 公司端確認QC101 legacy AdditionalXml helper數值/識別字查詢規則，以便比較目前已明確記錄的YMES literal contains搜尋契約。
+
 ## 家用端交付：QC503／PS102（2026-11-18）
 
 - [x] 家用端已部署並完成正式 app-browser 驗收；QC503 共用 Driver API 與 PS102 製造層別 API 可供 UI 呼叫。模組文件已補實作、migration、按鈕、版本與驗證紀錄。
