@@ -1487,3 +1487,22 @@ API 工作：
 - [ ] Manual RuleMethod 可用 FunctionName，或 InterfaceName/InterfaceURL；FunctionName 不可與 Interface/URL 同填。DT 的 ScenarioNo 持久化於 InterfaceName；API options 僅回核准情境。
 - [ ] Add/Edit 的 Apply 與 Confirm 使用相同業務欄位；Apply 保持視窗開啟，Confirm 關閉。服務端 audit 一律由登入身分建立。
 - [ ] 完成 API、schema、權限與簽核驗收後 commit/push，通知公司端 pull 並接正式 API。公司端本段尚未 build/test/browser 驗收。
+
+# 2026-11-18 公司電腦交接：PRD PD102 產品主檔
+
+先 git pull。詳細來源與欄位規則：docs/modules/PRD/產品主檔.md。Oracle 原始 DDL/字典證據：database/reference/mestest_prd_product_basis_source_ddl.sql；PostgreSQL CREATE-only 結構參照：database/reference/mestest_prd_product_basis_create.sql。ProductProperty DDL 因 DBMS_METADATA 連線 ORA-03135，依 Oracle 字典重建並已標示。Create 檔不是 migration。
+
+本 repo 已有 ProductDto、ProductWriteRequest、MasterDataController、PostgresMasterDataRepository.Products.cs 與 migration 0010 的 ym_product_process/ym_product_bom。這些是 YMES 自有簡化關聯；Oracle DDL 顯示 MES 原生 TBLPRDPRODUCTPROCESS、TBLPRDBOM、TBLPRDBOMMATERIALGROUP、TBLPRDEQPCONSTRAINT、TBLPRDPRODUCTPROPERTY、TBLPRDPRODUCT_PICTURE 也存在。先比對 live PostgreSQL schema/migrations，決定映射或擴充；不要再次建立已存在表，也不可照 CREATE-only 檔直接部署。
+
+待辦：
+1. 比對 Product DTO/Request 與 Oracle TBLPRDPRODUCTBASIS 欄位長度、SAP/SOP/ERP、序號、圖片欄位；維持 DataStamp CAS。
+2. 保留現有產品列表、CRUD、流程及 BOM API；列表 query keyword 與 ProductDto currentVersion/createdAt 命名需和 Vue 相容。
+3. 調整原生產品流程 mapping，核實 MOTypeNo、PSNo/PSOrder、ProcessVersion selector、DefaultProcess、HaveComponent/HaveLevel 與 * 目前版本語意。
+4. 實作 Oracle BOM 節點樹、材料群組、指定料、損耗率、遞迴最多五層、投入站及產品/材料節點；比對現有扁平 ym_product_bom，不可直接宣稱等價。
+5. 為 TBLPRDPRODUCTPROPERTY、TBLPRDEQPCONSTRAINT、TBLPRDPRODUCT_PICTURE 與圖片 BLOB 補必要 schema/API；先查是否已有 YMES 對應。
+6. 依 WinForms 實作 Controlled=1/2 屬性、RulePhase/AttribPhase 的 CPASS 檢查、共用 Issue/Job callback、IssueState/DataStamp；目前 API 的預設流程檢查不等價。
+7. 對照 Add/Edit/Copy/Version/Apply；WinForms 讓使用者輸入 ProductVersion，YMES 目前自動加一版，需協調 API 契約與子資料複製。補 ProductType/Unit/serial/SAP_PLNAL lookup 與 ProductMaterialcoexist 檢查。
+8. 比對後才新增 migration；執行 migration 前確認 home DB schema/data。正式 API 檢查 PRD BASIS/PD102 權限。
+9. API/schema 完成後回報辦公室端，串 integration profile；localStorage 假資料僅供 DEV preview。
+
+產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM 子表單及側邊 Property/Parameter/Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍依 WinForms 個別拆規格與實作。

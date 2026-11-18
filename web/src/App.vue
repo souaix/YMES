@@ -38,6 +38,7 @@ import LocatorBasisMaster from './components/LocatorBasisMaster.vue'
 import ProductionLineBasisMaster from './components/ProductionLineBasisMaster.vue'
 import PositionBasisMaster from './components/PositionBasisMaster.vue'
 import AreaShowMaster from './components/AreaShowMaster.vue'
+import ProductBasisMaster from './components/ProductBasisMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -2055,6 +2056,14 @@ async function signOut(): Promise<void> {
         />
         <OperationGroupAttribMaster
           v-else-if="isOperationGroupAttribPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductBasisMaster
+          v-else-if="activeMasterDataKey === 'product-master'"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

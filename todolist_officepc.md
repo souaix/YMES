@@ -943,3 +943,15 @@
 - [x] 新增 OP105 規格、Oracle source DDL、PG CREATE-only SQL、校正 first-phase 新庫 DEFAULT 0，更新 module index、資料庫 provenance 與 todolist_homepc.md。
 - [ ] 尚未連 YMES PostgreSQL、未實作 API/schema；未執行 build、test 或 browser 驗收。已列明 API 路徑與 live schema/defaults 核對項目給家用端。
 - [ ] 推送 OP105 後依 docs/MES_MENU_FUNCTION_INVENTORY.md 接續下一個尚未完成 WinForms 功能；家用端 API/schema push 後 pull 並整合。
+
+# 2026-11-18 辦公室端續作：產品主檔 PD102
+
+公司端依 frmProductBasis_THEIL_BU1 建立產品專用 Vue DEV 頁並接入 product-master 路由；整理主表單、IssueState、Add/Edit/Copy/Version/Approve/Delete、Process/BOM/EQPConstraint、WinForms 服務邏輯與七張 Oracle 主/關聯表 DDL/字典。規格為 docs/modules/PRD/產品主檔.md，Oracle/PG 參照為 database/reference/mestest_prd_product_basis_*。Oracle ProductProperty 的 DBMS_METADATA 發生 ORA-03135，欄位/約束依字典重建並已標註。家用端 API/schema 未完成。
+
+下一個公司端工作：
+1. 從 PD_ProductProcess、frmProductBOM_THEIL_BU1 原始 WinForms Form/Designer/Service 開始，補齊 Vue DEV 子功能和規格；不要用截圖代替原碼。
+2. 完成其餘按鈕子功能的 DEV 視窗/規格：Property、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。逐項記錄實際欄位、狀態規則、資料表和 service；DDL 缺漏時用本機 PowerShell 受保護 Oracle 連線查字典，不可猜。
+3. Product API/關聯 schema 由家用端接手後，回來核對 API contract 與 UI，避免公司端重複改 API。
+4. 依 MES 全功能目錄繼續下一個待遷 Function；每一段維護規格索引/TODO，假資料限定 DEV。
+
+頁面底部 Set ... 與 Expand All 帶入選取流程列上下文；BOM Set 開啟該產品 BOM 遷移入口。WinForms Designer 設 Visible=False 的 QTY Conversion 與 DisApprove 沒顯示。window.print() 只是產品包裝 BOM 報表的 DEV 簡化。正式模式目前能載現有產品/流程/BOM，其餘欄位與子功能仍待家用端補 API 契約。
