@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import ProductBomEditor from './ProductBomEditor.vue'
+import ProductBusinessRuleSetup from './ProductBusinessRuleSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -14,6 +15,7 @@ type ProductRelation = {
   constraints: ProductRow[]
   properties: ProductRow[]
   parameters?: ProductRow
+  businessRules?: ProductRow
   materialGroups?: ProductRow[]
 }
 type BomTreeLine = { id: string; label: string; kind: 'root' | 'material' | 'product' | 'group'; depth: number }
@@ -154,6 +156,16 @@ const seedRelations: Record<string, ProductRelation> = {
       rules: [{ serialNo: 'DEV-SER-OP-10', ruleNo: 'DEV-RULE-LOT-001', ruleSequence: 1, rulePhase: 2, ruleScript: 'return lot.QTY > 0;', ruleType: 0, ruleClass: 0 }],
       equipments: [{ serialNo: 'DEV-SER-OP-10', psNo: 'DEV-PS-10', opNo: 'DEV-OP-10', equipmentNo: 'DEV-EQP-01', recipeGroup: 'DEV-RECIPE-GROUP-A', recipes: [{ recipeNo: 'DEV-RECIPE-001', recipeValue: 'DEV-SET-01' }] }],
     },
+    businessRules: { operations: [{ opNo: 'DEV-OP-10', opName: '點膠作業', processNo: 'DEV-PROC-01', processVersion: '01', nodes: [
+      { id: 'DEV-BR-START', nodeNo: 'START', kind: 'start', x: 70, y: 155 },
+      { id: 'DEV-BR-001', nodeNo: 'DEV-BR-001', kind: 'rule', x: 270, y: 155, phaseNo: 1, phaseName: 'Before OP' },
+      { id: 'DEV-BR-002', nodeNo: 'DEV-BR-002', kind: 'rule', x: 500, y: 155, phaseNo: 2, phaseName: 'During OP' },
+      { id: 'DEV-BR-END', nodeNo: 'END', kind: 'end', x: 720, y: 155 },
+    ], links: [
+      { id: 'DEV-BRL-1', fromNode: 'DEV-BR-START', toNode: 'DEV-BR-001', linkName: 'pass', lineStyle: 'VH', phaseNo: 99 },
+      { id: 'DEV-BRL-2', fromNode: 'DEV-BR-001', toNode: 'DEV-BR-002', linkName: 'pass', lineStyle: 'HV', phaseNo: 1 },
+      { id: 'DEV-BRL-3', fromNode: 'DEV-BR-002', toNode: 'DEV-BR-END', linkName: 'pass', lineStyle: 'polyline', phaseNo: 2 },
+    ] }] },
     materialGroups: [{ nodeNo: 'DEV-MTL-001', opNo: 'DEV-OP-10', materialNo: 'DEV-MTL-GROUP-A' }, { nodeNo: 'DEV-MTL-001', opNo: 'DEV-OP-10', materialNo: 'DEV-MTL-GROUP-B' }],
   },
   'DEV-PRD-SUB|01': {
@@ -328,6 +340,10 @@ function loadMock(): void {
       const existing = relations.value[key]
       if (existing && !existing.parameters && seed.parameters) {
         existing.parameters = clone(seed.parameters)
+        migrated = true
+      }
+      if (existing && !existing.businessRules && seed.businessRules) {
+        existing.businessRules = clone(seed.businessRules)
         migrated = true
       }
     }
@@ -649,6 +665,13 @@ function saveProductParameters(parameters: ProductRow): void {
   persistMock()
   notice.value = '產品 Parameter 假資料已儲存。'
 }
+function saveProductBusinessRules(businessRules: ProductRow): void {
+  if (!active.value || !mock.value) return
+  const key = keyOf(active.value)
+  relations.value[key] = { ...relatedFor(active.value), businessRules: clone(businessRules) }
+  persistMock()
+  notice.value = '產品 Business Rule 假資料已儲存。'
+}
 function addEqpConstraint(): void {
   if (!active.value || !editable.value) return
   const rel = relatedFor(active.value)
@@ -792,7 +815,10 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'parameter'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductParameterSetup :product="active ?? {}" :processes="activeRelations.processes" :parameters="activeRelations.parameters ?? null" :development-preview="mock" :can-edit="editable" @save="saveProductParameters" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'business-rule'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductBusinessRuleSetup :product="active ?? {}" :processes="activeRelations.processes" :business-rules="activeRelations.businessRules ?? null" :development-preview="mock" :can-edit="editable" @save="saveProductBusinessRules" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>

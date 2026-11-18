@@ -589,3 +589,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 直接唯讀查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS`，只讀 schema metadata，沒有查業務資料列，也沒有在 Oracle 執行 DDL/DML。
 - 對 `TBLPRDOP`、`TBLPRDOPATTRIB`、`TBLPRDOPRULE`、`TBLPRDOPEQPRECIPE`、`TBLPRDOPRULEXML_CLOB`、`TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION`、`TBLPRDOPAREA` 呼叫 `DBMS_METADATA.GET_DDL` 遇到 SocketException；字典查詢仍成功。故 `mestest_prd_parameter_setup_source_ddl.sql` 由 Oracle 字典還原邏輯欄位、NULL、PK 與索引，不含 tablespace/storage。
 - PostgreSQL CREATE-only 對照是 `database/reference/mestest_prd_parameter_setup_create.sql`。先查 YMES live schema/migrations，只把實際缺少內容新增為 migration。來源 profile 留在本機受保護位置；此檔刻意不複製連線密碼或內網位址。
+
+
+### 更新 2026-11-18：PRD PD102 Business Rule 表沿用查證
+
+- Business Rule 使用的 `TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION`、`TBLPRDOPRULEXML_CLOB` 已包含在上方 Parameter Setup 對 MESTEST 的唯讀 Oracle dictionary query；不重複連 Oracle，也不新增 SQL 檔或同義表。
+- Oracle source DDL 與 PostgreSQL CREATE-only 參照仍為 `database/reference/mestest_prd_parameter_setup_source_ddl.sql`、`database/reference/mestest_prd_parameter_setup_create.sql`。欄位與 PK 取自受保護連線查出的 `ALL_TAB_COLUMNS`、constraints/index dictionary；`DBMS_METADATA.GET_DDL` 曾回 SocketException。未查業務列、未執行 Oracle DDL/DML，profile 內 IP/帳密/SID 未輸出或提交。
+- 家用端實作前仍需比對 YMES PostgreSQL live schema/migrations，只補現況確實缺漏的 migration；CREATE-only 檔不可直接在環境執行。

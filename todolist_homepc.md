@@ -1505,7 +1505,7 @@ API 工作：
 8. 比對後才新增 migration；執行 migration 前確認 home DB schema/data。正式 API 檢查 PRD BASIS/PD102 權限。
 9. API/schema 完成後回報辦公室端，串 integration profile；localStorage 假資料僅供 DEV preview。
 
-產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property 與 Parameter 子視窗已由公司端依 WinForms 原始碼完成 DEV 假資料互動；Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待逐項拆規格與實作。
+產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property、Parameter 與 Business Rule 子視窗已由公司端依 WinForms 原始碼完成 DEV 假資料互動；Business Rule 的 Production API/XML serializer 待家用端依本檔 handoff 完成。OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待公司端逐項拆規格與實作。
 
 ## PRD PD102 產品流程／BOM 子表單 API handoff（2026-11-18 公司端更新）
 
@@ -1520,7 +1520,7 @@ API 工作：
 - [ ] 服務端重驗已核准節點、LOTCREATE、企業 TS 批號規則及 BOM 複合鍵；不能只依賴 Vue 欄位檢查。
 - [ ] 比較現有 `ym_product_process`/`ym_product_bom` 與 Oracle 原生語意後才決定 mapping / migration；測試完成後回報公司端接正式 API。
 
-公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。產品側邊 Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍須依其 WinForms 原始碼逐項遷移；Parameter 的 API/schema handoff 見本檔後續段落。
+公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。Business Rule DEV 已完成、Production API/XML serializer 見本檔後續 handoff；OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍須依 WinForms 原始碼逐項遷移。Parameter 的 API/schema handoff 見本檔前段。
 
 ## PRD PD102 產品屬性子表單 API/schema handoff（2026-11-18）
 
@@ -1551,7 +1551,7 @@ API 工作：
 
 - [ ] 先核對 YMES PostgreSQL live schema、migration、repository/entity 是否已包含產品 OP/Attrib/Rule/Equipment Recipe；上述 CREATE-only 是結構參照，不是部署 migration。只對確實缺少的資料新增獨立 migration，勿照檔案一口氣建立 8 張 Oracle 原名表。
 - [ ] 主要 MES 結構為 `TBLPRDOP` (PK SerialNo)、`TBLPRDOPATTRIB` (PK SerialNo/AttribNo/ECNNo/EquipmentType)、`TBLPRDOPRULE` (PK SerialNo/RuleNo)、`TBLPRDOPEQPRECIPE` (無 PK/unique，僅 SerialNo/EquipmentNo/RecipeGroup 非唯一 index)。四表均無 DataStamp、IssueState、FK、Trigger。Oracle 設備關聯表允許資料重複，YMES API 應明確做 duplicate check/交易控制。
-- [ ] 另四張字典表 `TBLPRDOPRULEXML_CLOB`、`TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION`、`TBLPRDOPAREA` 是 Rule XML、Business Rule/OP Area 或 CP/FT 相鄰功能；先追該功能實際被呼叫的 service，再決定是否納入 schema，不要因同一參照 SQL 存在就一起建表。
+- [ ] `TBLPRDOPRULEXML_CLOB`、`TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION` 已由公司端依實際 service 查明分別供 Rule XML fallback 與 PD102 Business Rule 使用；請沿用該功能 handoff 並先比對 YMES schema。`TBLPRDOPAREA` 是相鄰功能，需追實際 service 後再決定是否納入；不可因參照 SQL 存在就一併建表。
 - [ ] 建議讀取產品版本的 Parameter tree；至少回傳 PS/OP、OP SerialNo/NodeID/OPScript、Attrib、Rule、EquipmentNo/RecipeGroup、Recipe Detail。實作 Add OP、Add Condition OP、Attrib/Rule/Equipment 關聯 CRUD；SerialNo 由 server 產生。產品 IssueState!=0 全部唯讀；Server 必須重查產品、PS/OP、權限及 Element/Phase/Rule/Equipment lookup。
 - [ ] Attrib API 必須保留 `AttribType` 0 Lot / 1 Component、`AttribSource` 0 KeyIn / 1 Calculate / 2 System / 3 Setup、AttribPhase/Sequence/Value/Script/SaveToLotPropertyNo/QCItemNo 等語意；重做 Element Value、Phase 99、Calculate Script、Setup Default、SaveToProperty/QC Item 驗證。EquipmentType/ECNNo 也是 Oracle Attrib NOT NULL 複合 PK 欄位。
 - [ ] **先釐清 Oracle/WinForms 欄位差異再實作 Attrib insert：** MESTEST 字典顯示 TBLPRDOPATTRIB.ECNNO、EQUIPMENTTYPE NOT NULL 且無 Trigger；可讀到的 `wsPRD.AddPRDOPAttrib`/`clsProduct.AddPRDOPAttrib` XML/SQL 路徑未明確帶這兩欄。檢查本機客製 wsPRD、執行時 AdditionalXml、資料庫是否有版本差異；不要塞空字串或假值。
@@ -1560,3 +1560,20 @@ API 工作：
 - [ ] 實作 API/schema 並 push 後回報公司端；公司端接 API 時保留 `ProductParameterSetup.vue` 的 DEV mode 與 API read-only 行為界線。
 
 公司端未執行 build、test 或 browser 驗收，未連 YMES PostgreSQL，也未部署上述 SQL。
+
+## PRD PD102 Business Rule API/schema handoff（2026-11-18）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/PRD/產品商業規則.md`、`docs/modules/PRD/產品參數設定.md` 及 `docs/DATABASE_CONNECTION.md` 的 PD102 metadata 紀錄。
+- [ ] 先比對 YMES live schema/migrations。重用 `database/reference/mestest_prd_parameter_setup_source_ddl.sql`、`mestest_prd_parameter_setup_create.sql` 中的 `tblprdopbusinessrule`、`tblprdopbusinessrulerelation`、`tblprdoprulexml_clob`；三張 Oracle source table 已由公司端直接查 MESTEST 字典，不能因 CREATE-only 檔再建第二份表或原樣執行 SQL。
+- [ ] 實作產品/版次/OP 範圍的 Business Rule 查詢與 ADD/EDIT/DEL/Default API。主表 RuleXmlString 是 Oracle LONG；relation 以 `(ProductNo,ProductVersion,OPNo,FromNode,ToNode,LinkName)` 為 PK；LONG provider fallback 使用既有 CLOB 表。XML 與 relations 同一交易更新/刪除。
+- [ ] 保留 `iMESXMLFlow.Serial.FlowToXML/XMLToFlow` 的舊版 XML round-trip，並把 Vue graph DTO 轉譯至 RuleXmlString；不能把 DEV localStorage JSON 直接當正式資料。實作 BR/Phase/Template/Process/OP lookup，NetFlow lookup 需帶 `IsNetFlow`。
+- [ ] Server 依登入者的 Function/PS 權限與 DB 當前產品 IssueState 驗證；不可接受 client 傳 `PSPrivilege`。依規格實作 Start/End、PASS、輸入/輸出連線與 Phase 驗證，Default 複製 `TBLOPBASIS` XML 及 `TBLOPBUSINESSRULERELATION`，回報錯誤不可吞例外。
+- [ ] 此功能不需要建立新的 Oracle 表；migration 僅在 YMES live schema 比對後確有缺漏才新增。完成 API/schema 後通知公司端 pull，接正式 API 與 serializer。
+
+## PRD PD102 Business Rule DEV UI（2026-11-18）
+
+- [x] 核對真實入口 `btnBusinessRule_Click`、`frmProductOPBusinessRule`/Draw、WinForms Designer、`wsPRD`、`clsProduct`、Service graph validation；排除名稱相近但不同的 `PD_PRDOPRule_THEIL_BU1`。
+- [x] 完成產品 OP 清單/圖形預覽及 Default/Close 版面、Add/Edit/多選 Del、圖形節點/連線/Phase 編輯、NetFlow readonly 的 DEV UI，接至 ProductBasisMaster 並只寫專用 localStorage。
+- [x] 新增 `docs/modules/PRD/產品商業規則.md`；重用 Parameter 階段已查到的三張 Oracle 表與既有 DDL/PG CREATE 參照，沒有重複 Oracle query、沒有新增表或 CREATE SQL。
+- [ ] Production API、OP/Phase/Business Rule/Template lookup、Lassalle XML serializer 尚待家用端完成；Default、樣板及 catalog 現在仍為 DEV 假資料。
+- [ ] 未執行 build/test/browser。完成同步 YMES 後 push，再依 PD102 側邊按鈕順序接續 `OPDescription` WinForms Form/Service/Core。

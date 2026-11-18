@@ -950,7 +950,7 @@
 
 下一個公司端工作：
 1. PD_ProductProcess、frmProductBOM_THEIL_BU1 的流程與 BOM DEV 子表單已完成；產品屬性 DEV 子表單也已完成，分別見 `產品主檔子表單.md`、`產品主檔產品屬性.md`。
-2. 依序完成尚未遷移的產品側按鈕：Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
+2. Business Rule DEV 已完成；依側邊按鈕順序接續 OPDescription，再處理 RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
 3. Product API/關聯 schema 由家用端接手後，回來核對 API contract 與 UI，避免公司端重複改 API。
 4. 依 MES 全功能目錄繼續下一個待遷 Function；每一段維護規格索引/TODO，假資料限定 DEV。
 
@@ -981,4 +981,14 @@
 - [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 對 MESTEST 直接查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS`。8 張表結構 metadata 已取得；沒有 FK/Trigger。`DBMS_METADATA.GET_DDL` 回 SocketException，故 Oracle source DDL 依 Oracle 字典欄位/約束/索引邏輯重建，不含實體 tablespace/storage。
 - [x] 新增 Oracle source DDL 與 PostgreSQL CREATE-only reference、`docs/modules/PRD/產品參數設定.md`，更新 PRD 主規格、索引、家用端 handoff 及 DB query provenance。
 - [ ] 未執行 build/test/browser；未連 YMES PostgreSQL，未部署 SQL，正式 API 模式仍唯讀。
-- [ ] 下一段接續 PD102 `Business Rule`：直接閱讀 `frmPRDOPRule_THEIL_BU1` 及其 Def/Designer、wsPRD/Core/Service，確認 Rule XML/樹編輯、資料表與權限；DDL 先查 Oracle 字典，完成 DEV、MD 與 homepc TODO。
+- [x] PD102 Business Rule 已依真實入口 `btnBusinessRule_Click`、`frmProductOPBusinessRule`/Draw、wsPRD/Core/Service 完成 WinForms 規格、DEV UI 與 homepc API/schema handoff；注意真正入口不是名稱相近的 `frmPRDOPRule_THEIL_BU1`。
+- [ ] 下一段接續 PD102 `OPDescription`：直接追 PD102 按鈕 handler 到 WinForms Form/Designer、wsPRD/Core/Service，確認資料表/DDL、欄位、狀態規則、lookup、DEV UI 與 homepc API handoff。
+
+
+## PRD PD102 Business Rule DEV UI（2026-11-18）
+
+- [x] 核對真實入口 `btnBusinessRule_Click`、`frmProductOPBusinessRule`/Draw、WinForms Designer、`wsPRD`、`clsProduct`、Service graph validation；排除名稱相近但不同的 `PD_PRDOPRule_THEIL_BU1`。
+- [x] 完成產品 OP 清單/圖形預覽及 Default/Close 版面、Add/Edit/多選 Del、圖形節點/連線/Phase 編輯、NetFlow readonly 的 DEV UI，接至 ProductBasisMaster 並只寫專用 localStorage。
+- [x] 新增 `docs/modules/PRD/產品商業規則.md`；重用 Parameter 階段已查到的三張 Oracle 表與既有 DDL/PG CREATE 參照，沒有重複 Oracle query、沒有新增表或 CREATE SQL。
+- [ ] Production API、OP/Phase/Business Rule/Template lookup、Lassalle XML serializer 尚待家用端完成；Default、樣板及 catalog 現在仍為 DEV 假資料。
+- [ ] 未執行 build/test/browser。完成同步 YMES 後 push，再依 PD102 側邊按鈕順序接續 `OPDescription` WinForms Form/Service/Core。
