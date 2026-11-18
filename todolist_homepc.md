@@ -1702,3 +1702,8 @@ API 工作：
 
 - [ ] 依 [產品 Bin 規格](docs/modules/PRD/產品Bin定義.md) 及兩張表的 [CREATE-only 參考](database/reference/mestest_prd_bin_create.sql) 核對 YMES live schema，確認是否需要 migration。
 - [ ] 實作依產品版本載入系統 Bin 目錄與整組定義，並提供交易式整批替換。確認 `IssueState`、空清單清除、Good／OS Bin 檢查與操作者稽核。
+
+## PRD PD102 GBOM 家用端 handoff（2026-11-19）
+
+- [ ] 依 [GBOM 規格](docs/modules/PRD/產品GBOM匯入匯出.md) 核對共用流程表、客製表 CREATE-only 參照與 PP02／PP05 資訊記錄來源。MESTEST 的 `XX_TBLWIPINFORECORD` 為 INVALID。
+- [ ] 實作 Excel 驗證、產品流程與 BOM 的交易、檔案備份與原始檔下載，定義備份失敗後的恢復流程。

@@ -1122,4 +1122,9 @@
 
 - [x] 核對 Form／Designer、Service 和 Core。完成 DEV Bin 勾選、Good/Fail、說明、OS Bin、版本狀態和本機儲存。
 - [x] 以 PowerShell 5.1 + ODP.NET 唯讀查兩張表，補 Oracle 邏輯 DDL 及 PostgreSQL CREATE-only 交接。`GET_DDL` 失敗碼已記錄。
-- [ ] 接續 PD102 `GBOMImport`／`GBOMExport`。
+
+## PRD PD102 GBOM 公司端檢查點（2026-11-19）
+
+- [x] 核對 GBOM WinForms／Designer、Service、Core，完成 DEV 依版次匯入檔案備份、檔名與標頭檢查、原檔下載。
+- [x] 用 PowerShell 5.1 + ODP.NET 確認兩張客製表及一個 INVALID view，補 Oracle 邏輯 DDL、CREATE-only 及 API 交接。
+- [ ] 工作簿解析、複合資料異動與正式備份下載待接續。下一項 PD102 產品 `Import`。

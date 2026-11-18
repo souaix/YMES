@@ -144,6 +144,8 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 
 PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主流程、Oracle metadata 和 CREATE SQL 交接。
 
+[產品 GBOM 匯入／匯出](modules/PRD/產品GBOM匯入匯出.md) 已完成 DEV 選檔與備份下載，工作簿解析和資料匯入待接入。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

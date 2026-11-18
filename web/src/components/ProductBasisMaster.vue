@@ -17,6 +17,7 @@ import ProductEsopSetup from './ProductEsopSetup.vue'
 import ProductEquipmentSpec from './ProductEquipmentSpec.vue'
 import ProductApsIntegration from './ProductApsIntegration.vue'
 import ProductBinSetup from './ProductBinSetup.vue'
+import ProductGbomFiles from './ProductGbomFiles.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -81,6 +82,7 @@ const emit = defineEmits<{ close: [] }>()
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const rowsKey = 'ymes.dev.prd-product-basis.v1'
 const relationKey = 'ymes.dev.prd-product-basis-relations.v1'
+const developmentGbomFiles = ref(new Map<string, File>())
 const states: Array<{ value: IssueState; label: string }> = [
   { value: 0, label: '未核准' }, { value: 1, label: '簽核中' },
   { value: 2, label: '已核准' }, { value: -1, label: '不使用' },
@@ -780,7 +782,10 @@ async function deleteSelected(): Promise<void> {
         if (Number(row.issueState) === 2) return [{ ...row, issueState: -1, reviser: currentUser(), reviseDate: new Date().toISOString(), dataStamp: Number(row.dataStamp ?? 0) + 1 }]
         removeKeys.add(keyOf(row)); return []
       })
-      for (const key of removeKeys) delete relations.value[key]
+      for (const key of removeKeys) {
+        delete relations.value[key]
+        developmentGbomFiles.value.delete(key)
+      }
       persistMock()
       notice.value = 'DEV 假資料：已按簽核狀態停用或刪除產品。'
     } else {
@@ -990,6 +995,12 @@ const saveProductBins: ProductBinProps['save'] = bins => {
   if (!product || !mock.value || !editable.value) return false
   if (!replaceMockRelation(keyOf(product), { ...relatedFor(product), bins })) return false
   notice.value = 'DEV 假資料：Bin 定義已儲存。'
+  return true
+}
+function saveDevelopmentGbom(file: File): boolean {
+  if (!mock.value || !editable.value || !active.value) return false
+  developmentGbomFiles.value.set(keyOf(active.value), file)
+  notice.value = 'DEV 假資料：可在本次頁面匯出 GBOM 備份。'
   return true
 }
 const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
@@ -1269,7 +1280,13 @@ onMounted(() => { void load() })
         :product-version="text(active?.productVersion)" :can-edit="editable" :development-preview="mock"
         :saved-bins="mock ? activeRelations.bins ?? [] : []" :save="saveProductBins" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec','aps','bin'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && active && (featureKey === 'gbom-import' || featureKey === 'gbom-export')" class="prd-overlay child-feature-overlay">
+      <ProductGbomFiles :key="`${featureKey}:${keyOf(active)}`" :mode="featureKey === 'gbom-import' ? 'import' : 'export'"
+        :product-no="text(active.productNo)" :product-version="text(active.productVersion)" :can-edit="editable"
+        :development-preview="mock" :saved-file="developmentGbomFiles.get(keyOf(active))" :save="saveDevelopmentGbom"
+        @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec','aps','bin','gbom-import','gbom-export'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
