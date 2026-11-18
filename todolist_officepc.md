@@ -1061,3 +1061,10 @@
 - [x] 新增 `docs/modules/PRD/產品預設設定.md`、APS Oracle source DDL、PostgreSQL CREATE-only 參照，更新產品主規格、規格索引、DB metadata provenance 及家用端 API handoff。
 - [ ] 未執行 build/test/browser，未連 YMES PostgreSQL，未部署 SQL。桌電 pull 此檢查點後先看 `git status` 和最新 commit，靜態檢閱 Default 變更，再做 PD102 `RunTime`。Vue UI 在 `web/`、API 在 `src/YMes.Api/`、共用 DTO 在 `src/YMes.Contracts/`。
 - [ ] 遇到 DBMS_METADATA ORA-03135 時，使用 Windows PowerShell 5.1 + ODP.NET 查 ALL_* dictionary；不要用 DBeaver GUI 抄 DDL。連線秘密不進 Git；桌電若沒有受保護 profile，要向使用者安全索取，不要猜連線資訊。
+
+## 公司桌機與筆電共同分工
+
+- 公司桌機和公司筆電都是公司端：用 DEV 假資料完成全部 Vue UI/互動邏輯，核對 WinForms 原始碼，唯讀查 Oracle MESTEST metadata，並提交模組規格及家用端 API/SQL handoff。
+- 公司端不連 YMES PostgreSQL、不設定 `ConnectionStrings__YMes`、不建立 PostgreSQL schema/migration、不實作或驗收家用端 API，也不 SSH/部署。這些工作只由家用電腦依 `todolist_homepc.md` 接手。
+- 桌機只需為 Vue DEV 配置 Node.js 22.x（22.12+）與 npm 並安裝 `web/` dependencies；.NET 9 SDK/API/PostgreSQL 連線不屬於公司端前置設定。
+- Oracle MESTEST 只可使用本機受保護設定唯讀查詢 DDL/metadata；如果桌機沒有該設定，安全重新設定後再查，不在 Git 或聊天輸出帳密。

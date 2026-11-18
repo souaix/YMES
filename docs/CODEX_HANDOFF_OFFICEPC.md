@@ -18,6 +18,13 @@
 - `src/YMes.Web/` 是既有 ASP.NET MVC 專案，不是目前 Vue UI。
 - 公司端以 DEV 假資料完成 Vue 畫面/互動並記錄規格；家用端負責 PostgreSQL schema、API、migration/Create SQL handoff。DEV localStorage 不送入正式 API。
 
+### 桌機與筆電的職責
+
+- 公司桌機和公司筆電屬於同一個「公司端」，工作範圍相同：讀 MES WinForms/Service/Core、只讀查 Oracle MESTEST DDL/metadata、以 DEV 假資料完成全部 Vue UI/互動邏輯、整理規格與 API/SQL handoff。
+- 公司端不連 YMES PostgreSQL、不設定 `ConnectionStrings__YMes`、不建 PostgreSQL schema/migration、不實作或驗收家用端 API、不 SSH 或遠端部署。這些全部由家用電腦接手，依 `todolist_homepc.md` 執行。
+- 公司桌機為 Vue DEV 安裝 Node.js 22.x（22.12+）與 npm，並安裝 `web/` 套件即可。桌機上的 .NET 9 SDK 和 API/PostgreSQL 連線不是公司端 UI 工作的前置條件；不要為了跑 API 在公司電腦設定 PostgreSQL 憑證。
+- 公司端允許使用的是 MES 原生 Oracle MESTEST 受保護唯讀連線，僅用於查 DDL/資料字典；不在 Oracle 寫入資料。
+
 ## 目前檢查點與下一步
 
 - 前一個已推送檢查點為 `45cddce`（PD102 Program）。此次 Default 檢查點以 GitHub `main` 最新狀態為準；先檢查 `git status`、`git log -1`，再決定是否尚需 commit/push，不要重做已提交的工作。
@@ -35,6 +42,8 @@
 ## Oracle 連線與安全
 
 - 查 DDL 固定使用 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，由本機受保護 profile 取得連線字串後直接讀 Oracle metadata；不用 DBeaver GUI 抄 DDL。
+- 公司筆電本次實際讀取的受保護設定檔是 `C:\Users\11019\.codex\attachments\14ce649b-edc6-4e1a-bfab-e971ae8a0cca\pasted-text.txt`（JSON），Oracle 測試連線欄位為 `DatabaseConfigs.CS.Test.Mes.ConnectionString`，類型欄位為 `DatabaseConfigs.CS.Test.Mes.DbType`。這是筆電上的 Codex attachment 路徑，不保證桌電存在；桌電先檢查此檔是否可用，不能因路徑不同就從文件猜密碼。
+- 該 JSON 還包含其他系統設定與機密。不可將檔案複製進 repo、提交 Git 或輸出內容；只在程式中讀取所需 Oracle key。若桌電不存在此受保護檔，請使用者安全地重新設定 Oracle profile。
 - IP、帳號、密碼、SID 不得寫入 GitHub Markdown、SQL、source code 或 console output。桌電若沒有受保護 profile，透過安全方式請使用者重新設定；不可猜連線資料或從舊電腦文件搜尋明碼。
 - 只讀 metadata，不查 MES 業務資料列、不執行 Oracle DDL/DML。PostgreSQL CREATE-only reference 不是 migration；家用端先查 YMES live schema 和 migration history。
 
