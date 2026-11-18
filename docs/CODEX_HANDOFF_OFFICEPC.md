@@ -29,7 +29,7 @@
 
 - PD102 DEV 子視窗已分段完成 Property、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item。各功能的 WinForms 證據、DDL 及 API handoff 在 `docs/modules/PRD/` 與兩份 TODO。
 - RunTime 已完成單列／表格編輯與套用。QC Item 已完成依 OP 指派與檢驗類型，QC Import／QC Chart 的 Excel 流程待接續。兩項 DDL 依 MESTEST 字典實查重建，Production API 由家用端接續。
-- Packing Set、EQPCapItem、eSOP、EquipmentSpec 和 APS Integration 已完成 DEV 設定與 Oracle 交接。PD102 `Bin` 已完成 DEV 設定，兩張來源表的 Oracle metadata 與 CREATE SQL 待補。依 WinForms toolbar 接續 `GBOMImport`／`GBOMExport`。
+- Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS Integration 和 Bin 已完成 DEV 設定與 Oracle 交接。依 WinForms toolbar 接續 `GBOMImport`／`GBOMExport`。
 
 ## Default 已核實事項
 

@@ -1700,5 +1700,5 @@ API 工作：
 
 ## PRD PD102 Bin 家用端 handoff（2026-11-19）
 
-- [ ] 依 [產品 Bin 規格](docs/modules/PRD/產品Bin定義.md) 核對 `TBLSYSBIN`、`TBLPRDFTPROGRAMBIN` 的 Oracle metadata 與 YMES live schema，再定稿 CREATE 參考。
+- [ ] 依 [產品 Bin 規格](docs/modules/PRD/產品Bin定義.md) 及兩張表的 [CREATE-only 參考](database/reference/mestest_prd_bin_create.sql) 核對 YMES live schema，確認是否需要 migration。
 - [ ] 實作依產品版本載入系統 Bin 目錄與整組定義，並提供交易式整批替換。確認 `IssueState`、空清單清除、Good／OS Bin 檢查與操作者稽核。

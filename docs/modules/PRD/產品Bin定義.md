@@ -17,4 +17,5 @@
 
 - 建議 `GET /api/prd/products/{productNo}/versions/{productVersion}/bins` 回傳 `issueState`、依 `binOrder` 排序的 `catalog`（`binNo`、`binOrder`）和 `assignments`（`binNo`、`binValue`、`dGrade`、`rank`、`osBin`、`description`）。維持 `BinNo` 字串，保留前導零。
 - 建議同路徑 `PUT` 接收 `assignments`，驗證產品狀態、權限、重複或未定義的 BinNo 和 Good/OS Bin 規則。以交易替換該版本全部設定，包含空清單；查驗及寫入須一起處理併發，成功後記錄產品鍵與操作者。
-- 2026-11-19 的 Oracle 查詢在 Codex 自動審查服務回傳 HTTP 503 時中止，未執行查詢。兩張表的欄位型別、長度、NULL/default、鍵、索引和 trigger 待查。上述欄位來自 Form 與 Core 的讀寫欄位，CREATE SQL 待 Oracle 字典確認後補齊。
+- 2026-11-19 使用 PowerShell 5.1 + ODP.NET 唯讀確認兩張表。`TBLSYSBIN` 有 7 欄，主鍵為 `BINNO`。`TBLPRDFTPROGRAMBIN` 有 8 欄，主鍵為 `PROGRAMNO, PROGRAMVERSION, BINNO`。兩表只有主鍵索引，無外鍵或 trigger。
+- `DBMS_METADATA.GET_DDL` 回 `ORA-03135`，同一連線第二次回 `ORA-12571`。依資料字典重建 [Oracle 邏輯 DDL](../../../database/reference/mestest_prd_bin_source_ddl.sql)，另附 [PostgreSQL CREATE-only 比對](../../../database/reference/mestest_prd_bin_create.sql)。家用端需核對 YMES 的產品版本欄位長度（Oracle `PROGRAMVERSION` 為 3 byte）及字串長度語意。

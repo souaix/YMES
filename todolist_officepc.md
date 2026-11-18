@@ -1121,5 +1121,5 @@
 ## PRD PD102 Bin 公司端檢查點（2026-11-19）
 
 - [x] 核對 Form／Designer、Service 和 Core。完成 DEV Bin 勾選、Good/Fail、說明、OS Bin、版本狀態和本機儲存。
-- [ ] Codex 自動審查服務回傳 HTTP 503；待 PowerShell 5.1 + ODP.NET 可執行後補查 `TBLSYSBIN`、`TBLPRDFTPROGRAMBIN` 並補 CREATE-only 交接。
+- [x] 以 PowerShell 5.1 + ODP.NET 唯讀查兩張表，補 Oracle 邏輯 DDL 及 PostgreSQL CREATE-only 交接。`GET_DDL` 失敗碼已記錄。
 - [ ] 接續 PD102 `GBOMImport`／`GBOMExport`。
