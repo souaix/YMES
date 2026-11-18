@@ -657,3 +657,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-18：PRD PD102 EQPCapItem Oracle metadata
 
 - Windows PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDOPCAPITEM` 和 `TBLEMSEQPCAPBASIS`。主表 `GET_DDL` 回 `ORA-03135`，兩表結構依字典重建。各表只有 PK 唯一索引。詳見 [設備能力項目規格](modules/PRD/產品設備能力項目.md)。
+
+### 更新 2026-11-18：PRD PD102 eSOP Oracle metadata
+
+- Windows PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDESOPBASIS` 與 SubOP lookup。`GET_DDL` 回 `ORA-03135`，主表 10 欄、五欄 PK，僅有 PK 唯一索引。[eSOP 規格](modules/PRD/產品電子作業指導書.md)

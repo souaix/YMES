@@ -1683,3 +1683,8 @@ API 工作：
 
 - [ ] 依 [設備能力項目規格](docs/modules/PRD/產品設備能力項目.md) 核對 `tblprdopcapitem`、共用 `tblemseqpcapbasis`、`tblopbasis` 與 live schema／migration history。只補缺漏的表或欄位。
 - [ ] 實作產品版次設備能力 CRUD、OP／CapItem lookup、同版次 Copy、新舊 DataStamp 衝突、稽核和多選刪除語意。伺服器驗證 IssueState、權限、主鍵及 CapValue 資料型別與長度。
+
+## PRD PD102 eSOP 家用端 handoff（2026-11-18）
+
+- [ ] 依 [產品電子作業指導書規格](docs/modules/PRD/產品電子作業指導書.md) 核對 `tblprdesopbasis`、first-phase 和 live schema。沿用 OP／SubOP 及參數，依需求補缺漏的 migration。
+- [ ] 實作產品版次的 eSOP CRUD、Position／SubOP／文件 lookup 與授權存取。正式 Position／文件模型對照 EAI 的 `station.get`、`sop.get`。DEV目前只用假資料或檔名，不讀檔案內容。
