@@ -460,4 +460,3 @@ function close(): void { emit('close') }
 .recipe-caption{display:block;margin-bottom:4px}
 @media(max-width:760px){.parameter-window{height:min(760px,calc(100vh - 16px));min-height:0}.parameter-body{grid-template-columns:minmax(185px,38%) minmax(0,1fr)}.parameter-scope{grid-template-columns:1fr;height:auto;min-height:64px}.parameter-scope strong{grid-row:auto}.parameter-tabs{overflow-x:auto}.parameter-tabs button{min-width:68px;padding:4px 6px}.parameter-form-grid{grid-template-columns:1fr}.parameter-form-grid label.wide,.parameter-form-grid .wide{grid-column:auto}}
 </style>
-
