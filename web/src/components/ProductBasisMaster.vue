@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import ProductBomEditor from './ProductBomEditor.vue'
 import ProductBusinessRuleSetup from './ProductBusinessRuleSetup.vue'
 import ProductOpDescriptionSetup from './ProductOpDescriptionSetup.vue'
+import ProductRecipeGroupSetup from './ProductRecipeGroupSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -18,6 +19,7 @@ type ProductRelation = {
   parameters?: ProductRow
   businessRules?: ProductRow
   opDescriptions?: ProductRow[]
+  recipeGroups?: ProductRow[]
   materialGroups?: ProductRow[]
 }
 type BomTreeLine = { id: string; label: string; kind: 'root' | 'material' | 'product' | 'group'; depth: number }
@@ -82,7 +84,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
   parameter: { title: 'Parameter', source: 'PD_ParameterSetup', description: '依產品、版本與流程設定製程參數；WinForms 會先確認已設定產品流程及 PS 權限。' },
   'business-rule': { title: 'Business Rule', source: 'PD_ProductOPBusinessRule', description: '維護產品流程作業站商業規則；需要產品流程資料及 PS 權限。' },
   'op-description': { title: 'OPDescription', source: 'PD_ProductOPDescription', description: '設定產品流程作業站說明，帶入產品目前流程與流程版本。' },
-  'recipe-group': { title: 'RecipeGroup', source: 'PD_ProductRecipe', description: '維護產品流程 Recipe Group。' },
+  'recipe-group': { title: 'RecipeGroup', source: 'PD_ProductRecipe', description: '將已核准且目前版本的產品 Recipe Group 指派至產品與版本。' },
   accessory: { title: 'Accessory', source: 'frmPRDAccessory_THEIL_BU1', description: '維護產品版本使用的模治具/配件。' },
   resource: { title: 'Resource', source: 'PD_ProductOPArea', description: '設定產品流程作業區域；需要產品流程資料及 PS 權限。' },
   'sub-op': { title: 'SubOP', source: 'PD_PRDSubOP', description: '由產品編號與版本開啟產品子作業設定。' },
@@ -139,6 +141,7 @@ const seedRelations: Record<string, ProductRelation> = {
     opDescriptions: [
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', opName: '點膠作業', description: 'DEV 產品版本作業說明範例。', dataStamp: 2, creator: 'DEV001', createDate: '2026-11-01T09:10:00', reviser: 'DEV001', reviseDate: '2026-11-04T10:30:00' },
     ],
+    recipeGroups: [{ productNo: 'DEV-PRD-1001', productVersion: '01', recipeGroup: 'DEV-RG-01' }],
     bom: [
       { nodeNo: 'DEV-MTL-001', nodeType: 0, nodeVersion: '001', opNo: 'DEV-OP-10', stdQty: 2, unitNo: 'EA', decreaseRate: 0, specified: 1, description: 'DEV 材料明細' },
       { nodeNo: 'DEV-PRD-SUB', nodeType: 1, nodeVersion: '01', opNo: 'DEV-OP-20', stdQty: 1, unitNo: 'EA', decreaseRate: 0.02, specified: 0, description: 'DEV 子產品節點' },
@@ -303,8 +306,8 @@ function appendBomChildren(productNo: string, productVersion: string, depth: num
 }
 function currentUser(): string { return props.currentUserNo || (mock.value ? 'DEV001' : '') }
 function relatedFor(row: ProductRow | null): ProductRelation {
-  if (!row) return { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [] }
-  return relations.value[keyOf(row)] ?? { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [] }
+  if (!row) return { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [], recipeGroups: [] }
+  return relations.value[keyOf(row)] ?? { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [], recipeGroups: [] }
 }
 const visibleRows = computed(() => rows.value
   .filter(row => Number(row.issueState) === issueState.value)
@@ -353,6 +356,10 @@ function loadMock(): void {
       }
       if (existing && !existing.opDescriptions && seed.opDescriptions) {
         existing.opDescriptions = clone(seed.opDescriptions)
+        migrated = true
+      }
+      if (existing && !existing.recipeGroups && seed.recipeGroups) {
+        existing.recipeGroups = clone(seed.recipeGroups)
         migrated = true
       }
     }
@@ -434,6 +441,7 @@ async function loadRelations(row: ProductRow): Promise<void> {
         constraints: relations.value[key]?.constraints ?? [],
         properties: relations.value[key]?.properties ?? [],
         opDescriptions: relations.value[key]?.opDescriptions ?? [],
+        recipeGroups: relations.value[key]?.recipeGroups ?? [],
       },
     }
   } catch (cause) {
@@ -530,7 +538,7 @@ async function saveForm(closeAfter = true): Promise<void> {
       const sourceRelations = relations.value[sourceProductKey.value]
       relations.value[savedKey] = detailSource.value === 'otherProduct' && sourceRelations
         ? clone(sourceRelations)
-        : { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [] }
+        : { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [], recipeGroups: [] }
     }
     persistMock()
     issueState.value = Number(saved.issueState ?? 0) as IssueState
@@ -689,6 +697,13 @@ function saveProductOpDescriptions(opDescriptions: ProductRow[]): void {
   persistMock()
   notice.value = '產品 OP 說明假資料已儲存。'
 }
+function saveProductRecipeGroups(recipeGroups: ProductRow[]): void {
+  if (!active.value || !mock.value) return
+  const key = keyOf(active.value)
+  relations.value[key] = { ...relatedFor(active.value), recipeGroups: clone(recipeGroups) }
+  persistMock()
+  notice.value = '產品 RecipeGroup 假資料已儲存。'
+}
 function addEqpConstraint(): void {
   if (!active.value || !editable.value) return
   const rel = relatedFor(active.value)
@@ -838,7 +853,10 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'op-description'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductOpDescriptionSetup :product="active ?? {}" :processes="activeRelations.processes" :op-descriptions="activeRelations.opDescriptions ?? null" :development-preview="mock" :can-edit="editable" @save="saveProductOpDescriptions" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'recipe-group'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductRecipeGroupSetup :product="active ?? {}" :recipe-groups="activeRelations.recipeGroups ?? null" :development-preview="mock" @save="saveProductRecipeGroups" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>

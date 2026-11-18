@@ -950,7 +950,7 @@
 
 下一個公司端工作：
 1. PD_ProductProcess、frmProductBOM_THEIL_BU1 的流程與 BOM DEV 子表單已完成；產品屬性 DEV 子表單也已完成，分別見 `產品主檔子表單.md`、`產品主檔產品屬性.md`。
-2. Business Rule DEV 已完成；OPDescription DEV／DDL 檢查點見本檔末尾，重開後先靜態複核；完成交接後再處理 RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
+2. Business Rule、OPDescription、RecipeGroup DEV 已完成並有家用端 API/schema handoff；接續 Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
 3. Product API/關聯 schema 由家用端接手後，回來核對 API contract 與 UI，避免公司端重複改 API。
 4. 依 MES 全功能目錄繼續下一個待遷 Function；每一段維護規格索引/TODO，假資料限定 DEV。
 
@@ -1000,4 +1000,12 @@
 - [x] 直接讀取 WinForms、wsPRD、Core，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 取得 `TBLPRDOPDESCRIPTION` DDL/字典；只讀 metadata，未讀業務列或執行 Oracle DDL/DML。
 - [x] 已在公司端工作區建立 `ProductOpDescriptionSetup.vue` 並接至 PD102；DEV 支援清單、流程/OP 假查找、Add/Edit/多選 Delete、audit/DataStamp 與狀態唯讀，只寫 localStorage。Oracle source DDL、PostgreSQL CREATE-only 與規格文件已建立。
 - [x] 已靜態複核元件、WinForms 操作流程與資料欄位；修正輸入欄位字型宣告。未執行 build/test/browser，未連 YMES PostgreSQL；Production API/schema/lookup 尚待家用端。
-- [ ] OPDescription 複核完成並交接後，接續 PD102 側邊按鈕 `RecipeGroup`，直接追 Form/Designer/Core/Service 與所需 Oracle metadata。
+- [x] OPDescription 已完成靜態複核並建立 homepc handoff；RecipeGroup WinForms/Service/Core/Oracle metadata、DEV UI 與 handoff 已於本次段落完成。
+
+## PRD PD102 RecipeGroup 指派公司端檢查點（2026-11-18）
+
+- [x] 依 `btnRecipeGroup_Click` 追至 `PD_ProductRecipe`、`frmProductRecipe`/Def、`wsPRD.Load/Add/Edit/DelPRDRecipe`、`clsProduct`；確認 ProductNo/Version 關聯、hidden Edit/Find、Apply/Confirm/Delete、IssueState 未被子視窗使用及刪除省略 RecipeGroup 會刪整個產品版本的邊界。
+- [x] Windows PowerShell 5.1 + 受保護 Oracle profile 直連 MESTEST，只讀取得 `TBLPRDRECIPE`、`TBLPRDRECIPEBASIS` DDL/字典；無業務資料列，未執行 Oracle DDL/DML。
+- [x] 新增 `ProductRecipeGroupSetup.vue` 並接到 PD102，DEV 依產品版本保存關聯 localStorage，含多選刪除、已核准目前版查找、Add/Apply/Confirm/Close；Production API 未接線時唯讀。
+- [x] 新增 `docs/modules/PRD/產品RecipeGroup.md`、Oracle source DDL、PostgreSQL CREATE-only 參照，更新主檔規格、DB connection provenance、兩個規格索引及 homepc API/schema handoff。
+- [ ] 未執行 build/test/browser，未連 YMES PostgreSQL，未部署 SQL。下一個 PD102 側邊功能為 `Accessory`。

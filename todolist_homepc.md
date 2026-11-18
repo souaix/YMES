@@ -1505,7 +1505,7 @@ API 工作：
 8. 比對後才新增 migration；執行 migration 前確認 home DB schema/data。正式 API 檢查 PRD BASIS/PD102 權限。
 9. API/schema 完成後回報辦公室端，串 integration profile；localStorage 假資料僅供 DEV preview。
 
-產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property、Parameter 與 Business Rule DEV 子視窗已完成；OPDescription 公司端已建立 DEV 畫面／Oracle DDL handoff 檢查點，靜態複核尚待重開後完成，Production API/schema 依本檔 handoff 由家用端處理。RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待公司端逐項遷移。
+產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property、Parameter、Business Rule、OPDescription 與 RecipeGroup DEV 子視窗已完成；OPDescription/RecipeGroup 的 Production API/schema 依本檔 handoff 由家用端處理。Accessory、Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待公司端逐項遷移。
 
 ## PRD PD102 產品流程／BOM 子表單 API handoff（2026-11-18 公司端更新）
 
@@ -1576,7 +1576,7 @@ API 工作：
 - [x] 完成產品 OP 清單/圖形預覽及 Default/Close 版面、Add/Edit/多選 Del、圖形節點/連線/Phase 編輯、NetFlow readonly 的 DEV UI，接至 ProductBasisMaster 並只寫專用 localStorage。
 - [x] 新增 `docs/modules/PRD/產品商業規則.md`；重用 Parameter 階段已查到的三張 Oracle 表與既有 DDL/PG CREATE 參照，沒有重複 Oracle query、沒有新增表或 CREATE SQL。
 - [ ] Production API、OP/Phase/Business Rule/Template lookup、Lassalle XML serializer 尚待家用端完成；Default、樣板及 catalog 現在仍為 DEV 假資料。
-- [ ] 未執行 build/test/browser。完成同步 YMES 後 push，再依 PD102 側邊按鈕順序接續 `OPDescription` WinForms Form/Service/Core。
+- [ ] 公司端未執行 build/test/browser。OPDescription 與 RecipeGroup DEV/DDL handoff 已分別記於本檔後續段落；辦公室端接續 Accessory。
 
 
 ## PRD PD102 OPDescription API/schema handoff（2026-11-18 公司端更新）
@@ -1588,3 +1588,15 @@ API 工作：
 - [ ] 提供同等 WinForms 查找：產品流程 lookup、指定流程的 Expand Process OP lookup；server 依 session 決定 PS 權限，排除已存在於目前產品/版本的 OPNo，OP 說明初值取 `TBLOPBASIS.Description`。不可信任 client 傳入 PSPrivilege、IssueState 或 audit 欄位。
 - [ ] UI 多選 DEL 是逐筆呼叫、遇錯停止且保留前面成功刪除；API 若提供批次 endpoint，需定義並回傳部分成功結果。產品 Copy/Version 需保留 Core `CopyPRDOPDescription` 行為；Product Load Default 的 Description 是另一個功能，不要塞進此子視窗 CRUD。
 - [ ] 完成後同步 API contract/schema migration 與文件、push main，通知公司端接正式 API。DEV localStorage 不能寫入正式 DB。
+
+## PRD PD102 RecipeGroup API/schema handoff（2026-11-18 公司端更新）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/PRD/產品RecipeGroup.md`、`docs/modules/PRD/產品主檔.md` 與 `docs/DATABASE_CONNECTION.md` metadata provenance。
+- [ ] Oracle source DDL 與 PostgreSQL CREATE-only 參照為 `database/reference/mestest_prd_recipe_group_source_ddl.sql`、`mestest_prd_recipe_group_create.sql`。先查 YMES live schema、migration、entity/repository；僅當 assignment relation 或必要 lookup 確實不存在時新增 forward migration。`TBLPRDRECIPEBASIS` 是共用 Recipe 主檔，不能重複建表。
+- [ ] Oracle `TBLPRDRECIPE` 為 `(ProductNo varchar(50), ProductVersion varchar(5), RecipeGroup varchar(50))` 必填複合 PK，無 audit 欄、無 FK/index/trigger（PK unique index 除外）。`TBLPRDRECIPEBASIS` 為 `(RecipeGroup varchar(50), RecipeVersion numeric(2,0))` 複合 PK；RecipeVersion default 0 NOT NULL、IssueState default 0 nullable、CurVersion default 0 NOT NULL、DataStamp default 0 nullable，其餘 Description/Audit nullable；無 FK/trigger/額外 index。
+- [ ] 提供產品版本 RecipeGroup GET、已核准目前版 RecipeGroup lookup、單筆 POST 指派與要求明確 RecipeGroup 的 DELETE；不提供 Edit（WinForms EDIT 隱藏，service 也沒有實際更新）。Lookup 對應 `TBLPRDRECIPEBASIS` 的 `CurVersion=1 AND IssueState=2`，新增時 server 重新檢查，不信任 client。
+- [ ] 入口傳入 IssueState，但 `frmProductRecipe` 不用狀態限制 ADD/DEL；新 API 先保留這項 legacy 行為並檢查登入者對產品的權限。若要加狀態限制，需另有業務規則依據。
+- [ ] WinForms 多列刪除逐筆呼叫、遇錯停止且保留先前成功結果。API 若做批次需定義 partial result；單筆 DELETE 不可省略 RecipeGroup，避免 Core 預設刪除產品版本全部關聯。
+- [ ] 產品 Copy/Version 需保留 `CopyPRDRecipe`：先清除目標版本 RecipeGroup 關聯，再複製來源關聯。Product Recipe Apply/Confirm/Close 綁定原生指派語意；完成 schema/API/文件後 push main，通知公司端接正式 API。DEV localStorage 不寫正式 DB。
+
+公司端此段未執行 build/test/browser、未連 YMES PostgreSQL、未部署 SQL。

@@ -602,3 +602,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司電腦以 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 讀取本機受保護的既有 Oracle profile，唯讀直連 MESTEST。直接取得 `DBMS_METADATA.GET_DDL('TABLE','TBLPRDOPDESCRIPTION','MESTEST')`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS`。
 - 結構為 9 欄，PK `(PRODUCTNO,PRODUCTVERSION,OPNO)`；只有對應 unique PK index，沒有 FK、Trigger 或其他 index。Oracle source DDL 與 PostgreSQL CREATE-only 參照分別為 `database/reference/mestest_prd_op_description_source_ddl.sql`、`mestest_prd_op_description_create.sql`。
 - 只查資料字典與 DDL，沒有讀業務資料列、沒有在 Oracle 執行 DDL/DML。連線 profile 的 IP/帳號/密碼/SID 未輸出或提交；家用端仍須先核對 YMES live schema/migrations，CREATE-only 參照不可直接部署。
+
+### 更新 2026-11-18：PD102 RecipeGroup 指派 Oracle metadata
+
+- 公司端以 Windows PowerShell 5.1、Oracle.ManagedDataAccess 與本機受保護 MESTEST profile 唯讀查 `TBLPRDRECIPE`、`TBLPRDRECIPEBASIS` 的 `DBMS_METADATA.GET_DDL`、欄位、約束、index、trigger dictionary。沒有讀 MES 業務列，沒有執行 Oracle DDL/DML。
+- `TBLPRDRECIPE` 複合 PK `(PRODUCTNO,PRODUCTVERSION,RECIPEGROUP)`；`TBLPRDRECIPEBASIS` 複合 PK `(RECIPEGROUP,RECIPEVERSION)`。兩表只有 PK unique index，沒有 FK、trigger 或其他 index。DDL/CREATE-only 路徑見 `database/reference/mestest_prd_recipe_group_source_ddl.sql`、`mestest_prd_recipe_group_create.sql`。
+- 連線 IP/帳號/密碼/SID 未輸出或提交。家用端先比對 YMES live schema/migrations；lookup basis 是其他 Recipe 主檔共用表，不要重複建立。
