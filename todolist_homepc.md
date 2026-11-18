@@ -1505,7 +1505,7 @@ API 工作：
 8. 比對後才新增 migration；執行 migration 前確認 home DB schema/data。正式 API 檢查 PRD BASIS/PD102 權限。
 9. API/schema 完成後回報辦公室端，串 integration profile；localStorage 假資料僅供 DEV preview。
 
-產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM 子表單已由公司端依 WinForms 原始碼完成 DEV 假資料互動；側邊 Property/Parameter/Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 仍待逐項拆規格與實作。
+產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property 與 Parameter 子視窗已由公司端依 WinForms 原始碼完成 DEV 假資料互動；Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待逐項拆規格與實作。
 
 ## PRD PD102 產品流程／BOM 子表單 API handoff（2026-11-18 公司端更新）
 
@@ -1520,7 +1520,7 @@ API 工作：
 - [ ] 服務端重驗已核准節點、LOTCREATE、企業 TS 批號規則及 BOM 複合鍵；不能只依賴 Vue 欄位檢查。
 - [ ] 比較現有 `ym_product_process`/`ym_product_bom` 與 Oracle 原生語意後才決定 mapping / migration；測試完成後回報公司端接正式 API。
 
-公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。產品側邊 Parameter/Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍須依其 WinForms 原始碼逐項遷移。
+公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。產品側邊 Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍須依其 WinForms 原始碼逐項遷移；Parameter 的 API/schema handoff 見本檔後續段落。
 
 ## PRD PD102 產品屬性子表單 API/schema handoff（2026-11-18）
 
@@ -1538,4 +1538,25 @@ API 工作：
 - [ ] 產品主檔核准由 server 重查 SYS Controlled=1 必填、Controlled=2 空值確認及流程 RulePhase/AttribPhase/CPASS 規則，不接受 Vue 送入的 Controlled 作安全依據。
 - [ ] 明確對應 ProductType/無版次屬性的 PRODUCTVERSION sentinel；Oracle 空字串與空白語意需以現有資料/應用層規則定義，避免將 `-1`、`''`、`' '` 混為一談。
 
-公司端未執行 build/test/browser 驗收；Property 的選項只有 DEV 假資料，不連 Oracle/YMES API。API/schema 完成後請回報公司端對接。
+公司端未執行 build/test/browser 驗收；Property 的選項只有 DEV 假資料，不連 Oracle/YMES API。Parameter API/schema handoff 見本檔新段落。
+
+## PRD PD102 產品 Parameter Setup API/schema handoff（公司端 2026-11-18）
+
+公司端已依 WinForms `PD_ParameterSetup` Form/Designer、`wsPRD`、`clsProduct` 完成 DEV 樹狀子視窗。請先 pull 最新 `main`。詳細畫面、ContextMenu 權限、欄位、驗證、來源服務與資料表見 `docs/modules/PRD/產品參數設定.md`。Oracle source 結構與 PostgreSQL CREATE-only 參考：
+
+- `database/reference/mestest_prd_parameter_setup_source_ddl.sql`
+- `database/reference/mestest_prd_parameter_setup_create.sql`
+
+### 家用端待辦
+
+- [ ] 先核對 YMES PostgreSQL live schema、migration、repository/entity 是否已包含產品 OP/Attrib/Rule/Equipment Recipe；上述 CREATE-only 是結構參照，不是部署 migration。只對確實缺少的資料新增獨立 migration，勿照檔案一口氣建立 8 張 Oracle 原名表。
+- [ ] 主要 MES 結構為 `TBLPRDOP` (PK SerialNo)、`TBLPRDOPATTRIB` (PK SerialNo/AttribNo/ECNNo/EquipmentType)、`TBLPRDOPRULE` (PK SerialNo/RuleNo)、`TBLPRDOPEQPRECIPE` (無 PK/unique，僅 SerialNo/EquipmentNo/RecipeGroup 非唯一 index)。四表均無 DataStamp、IssueState、FK、Trigger。Oracle 設備關聯表允許資料重複，YMES API 應明確做 duplicate check/交易控制。
+- [ ] 另四張字典表 `TBLPRDOPRULEXML_CLOB`、`TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION`、`TBLPRDOPAREA` 是 Rule XML、Business Rule/OP Area 或 CP/FT 相鄰功能；先追該功能實際被呼叫的 service，再決定是否納入 schema，不要因同一參照 SQL 存在就一起建表。
+- [ ] 建議讀取產品版本的 Parameter tree；至少回傳 PS/OP、OP SerialNo/NodeID/OPScript、Attrib、Rule、EquipmentNo/RecipeGroup、Recipe Detail。實作 Add OP、Add Condition OP、Attrib/Rule/Equipment 關聯 CRUD；SerialNo 由 server 產生。產品 IssueState!=0 全部唯讀；Server 必須重查產品、PS/OP、權限及 Element/Phase/Rule/Equipment lookup。
+- [ ] Attrib API 必須保留 `AttribType` 0 Lot / 1 Component、`AttribSource` 0 KeyIn / 1 Calculate / 2 System / 3 Setup、AttribPhase/Sequence/Value/Script/SaveToLotPropertyNo/QCItemNo 等語意；重做 Element Value、Phase 99、Calculate Script、Setup Default、SaveToProperty/QC Item 驗證。EquipmentType/ECNNo 也是 Oracle Attrib NOT NULL 複合 PK 欄位。
+- [ ] **先釐清 Oracle/WinForms 欄位差異再實作 Attrib insert：** MESTEST 字典顯示 TBLPRDOPATTRIB.ECNNO、EQUIPMENTTYPE NOT NULL 且無 Trigger；可讀到的 `wsPRD.AddPRDOPAttrib`/`clsProduct.AddPRDOPAttrib` XML/SQL 路徑未明確帶這兩欄。檢查本機客製 wsPRD、執行時 AdditionalXml、資料庫是否有版本差異；不要塞空字串或假值。
+- [ ] 一般 Rule 的 RuleNo/Phase/Script/Type required；CP/FT 專用 Rule 使用不同 service/資料結構，須另核對 RuleClass/CP/FT package API 後再承諾支援。設備候選由產品/OP 可用設備 lookup，Recipe Detail 僅由 RecipeGroup 主檔讀取，產品 OP 只存 RecipeGroup。
+- [ ] `DBMS_METADATA.GET_DDL` 本次從 Oracle 連線回 SocketException，但 Windows PowerShell 5.1/ODP.NET 對 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_CONS_COLUMNS、ALL_INDEXES、ALL_IND_COLUMNS 的唯讀查詢成功；source DDL 因此是 Oracle 字典重建邏輯 CREATE，不含 tablespace/storage。未讀業務資料、未在 Oracle 執行 DDL/DML。連線方式/秘密處理見 `docs/DATABASE_CONNECTION.md`，密碼只留本機受保護設定，不寫入 Git。
+- [ ] 實作 API/schema 並 push 後回報公司端；公司端接 API 時保留 `ProductParameterSetup.vue` 的 DEV mode 與 API read-only 行為界線。
+
+公司端未執行 build、test 或 browser 驗收，未連 YMES PostgreSQL，也未部署上述 SQL。

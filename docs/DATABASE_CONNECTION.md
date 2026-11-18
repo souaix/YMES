@@ -582,3 +582,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護既有 `DatabaseConfigs.CS.Test.Mes` 連線設定直接唯讀查 MESTEST `TBL_FABPRSSTAGEBASIS` 的 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`，另外取得兩個 index DDL。
 - 表含 StageNo PK、Sequence UNIQUE；沒有 FK 或其他 index。`ISSUESTATE` nullable DEFAULT 0、`CREATEDATE` nullable DEFAULT SYSDATE、`DATASTAMP` nullable DEFAULT 0。
 - Oracle source DDL：`database/reference/mestest_ps102_stage_basis_source_ddl.sql`；YMES PostgreSQL CREATE-only：`database/reference/mestest_ps102_stage_basis_create.sql`。未讀業務列、未執行 Oracle DDL/DML、未輸出或提交連線秘密。Oracle 設定只保留在本機受保護檔案。
+
+### 更新 2026-11-18：PRD PD102 Parameter Setup Oracle 字典查詢
+
+- 公司電腦使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，讀取本機受保護的既有 `DatabaseConfigs.CS.Test.Mes` Oracle profile，schema 為 MESTEST。Profile 內存 IP/帳號/密碼/SID；這些值不能放入 repo、SQL、Markdown 或 shell 輸出。
+- 直接唯讀查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS`，只讀 schema metadata，沒有查業務資料列，也沒有在 Oracle 執行 DDL/DML。
+- 對 `TBLPRDOP`、`TBLPRDOPATTRIB`、`TBLPRDOPRULE`、`TBLPRDOPEQPRECIPE`、`TBLPRDOPRULEXML_CLOB`、`TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION`、`TBLPRDOPAREA` 呼叫 `DBMS_METADATA.GET_DDL` 遇到 SocketException；字典查詢仍成功。故 `mestest_prd_parameter_setup_source_ddl.sql` 由 Oracle 字典還原邏輯欄位、NULL、PK 與索引，不含 tablespace/storage。
+- PostgreSQL CREATE-only 對照是 `database/reference/mestest_prd_parameter_setup_create.sql`。先查 YMES live schema/migrations，只把實際缺少內容新增為 migration。來源 profile 留在本機受保護位置；此檔刻意不複製連線密碼或內網位址。

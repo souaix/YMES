@@ -950,7 +950,7 @@
 
 下一個公司端工作：
 1. PD_ProductProcess、frmProductBOM_THEIL_BU1 的流程與 BOM DEV 子表單已完成；產品屬性 DEV 子表單也已完成，分別見 `產品主檔子表單.md`、`產品主檔產品屬性.md`。
-2. 依序完成尚未遷移的產品側按鈕：Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
+2. 依序完成尚未遷移的產品側按鈕：Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
 3. Product API/關聯 schema 由家用端接手後，回來核對 API contract 與 UI，避免公司端重複改 API。
 4. 依 MES 全功能目錄繼續下一個待遷 Function；每一段維護規格索引/TODO，假資料限定 DEV。
 
@@ -972,4 +972,13 @@
 - [x] 正式 API 模式唯讀；DEV 假核准採未配置簽核 Job 的直接 ACTIVE 情境。Controlled 僅為 SYS Element Basis 資訊，產品表不存 Controlled。
 - [x] 新增 `docs/modules/PRD/產品主檔產品屬性.md`，更新 PRD 主規格/索引、`todolist_homepc.md` API/schema handoff。
 - [ ] 未執行 build/test/browser；按工作規則僅做靜態檢閱。現有 TBLPRDPRODUCTPROPERTY Oracle DDL 由字典重建且已存在，家用端先查 YMES schema/migration，再決定 API mapping/migration。
-- [ ] push 後接續 PD102 側功能 `Parameter`：直接從 WinForms Form/Designer/Core/Service 開始，確認所用 MES Parameter/產品參數表及核准/刪除規則，缺 DDL 時用受保護 PowerShell Oracle 連線查詢；完成 Vue DEV、規格與家用端 handoff。
+- [x] PD102 `Parameter` 已依 WinForms Form/Designer、wsPRD、clsProduct 完成 DEV 子視窗及 Oracle 字典/SQL handoff，詳見本檔新增段落。
+
+## PRD PD102 產品 Parameter Setup（公司端 2026-11-18）
+
+- [x] 直接閱讀 `PD_ParameterSetup/frmParameterSetup.vb`、Designer、`wsPRD`、`clsProduct`。依實際右鍵旗標復刻 Product Process OP/All PS OP、PS/OP/Attrib/Rule/Equipment/Recipe 階層，Condition OP，右側 OP/Attrib/Rule/Equipment/Condition OP tabs；QCItem Tab 在 WinForms Load 時移除。
+- [x] 新增 `web/src/components/ProductParameterSetup.vue` 並接到 PD102 Parameter；DEV 支援 OP 多選、Condition OP、Lot/Component Attrib、一般 Rule、設備多選、RecipeGroup 及唯讀 Recipe Detail；DEV localStorage；正式 API 模式唯讀。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 對 MESTEST 直接查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS`。8 張表結構 metadata 已取得；沒有 FK/Trigger。`DBMS_METADATA.GET_DDL` 回 SocketException，故 Oracle source DDL 依 Oracle 字典欄位/約束/索引邏輯重建，不含實體 tablespace/storage。
+- [x] 新增 Oracle source DDL 與 PostgreSQL CREATE-only reference、`docs/modules/PRD/產品參數設定.md`，更新 PRD 主規格、索引、家用端 handoff 及 DB query provenance。
+- [ ] 未執行 build/test/browser；未連 YMES PostgreSQL，未部署 SQL，正式 API 模式仍唯讀。
+- [ ] 下一段接續 PD102 `Business Rule`：直接閱讀 `frmPRDOPRule_THEIL_BU1` 及其 Def/Designer、wsPRD/Core/Service，確認 Rule XML/樹編輯、資料表與權限；DDL 先查 Oracle 字典，完成 DEV、MD 與 homepc TODO。

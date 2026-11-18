@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import ProductBomEditor from './ProductBomEditor.vue'
+import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
 
@@ -12,6 +13,7 @@ type ProductRelation = {
   bom: ProductRow[]
   constraints: ProductRow[]
   properties: ProductRow[]
+  parameters?: ProductRow
   materialGroups?: ProductRow[]
 }
 type BomTreeLine = { id: string; label: string; kind: 'root' | 'material' | 'product' | 'group'; depth: number }
@@ -139,6 +141,19 @@ const seedRelations: Record<string, ProductRelation> = {
       { productNo: 'DEV-PRD-1001', productVersion: '01', propertyNo: 'DEV-MODEL', controlled: 1, defaultValue: 'CTRL-A', propertySequence: 1, description: 'DEV 型號屬性', issueState: 0, dataStamp: 1, creator: 'DEV001', createDate: '2026-10-01T08:30:00', reviser: '', reviseDate: '' },
       { productNo: 'DEV-PRD-1001', productVersion: '01', propertyNo: 'DEV-COLOR', controlled: 2, defaultValue: '', propertySequence: 2, description: 'DEV 顏色提示屬性', issueState: 0, dataStamp: 0, creator: 'DEV001', createDate: '2026-10-01T08:31:00', reviser: '', reviseDate: '' },
     ],
+    parameters: {
+      ops: [
+        { serialNo: 'DEV-SER-OP-10', psNo: 'DEV-PS-10', opNo: 'DEV-OP-10', opName: '點膠作業', opOrder: 10, haveComponent: 1, nodeId: '', opScript: '', dataStamp: 1 },
+        { serialNo: 'DEV-SER-OP-20', psNo: 'DEV-PS-10', opNo: 'DEV-OP-20', opName: '組裝作業', opOrder: 20, haveComponent: 1, nodeId: '', opScript: '', dataStamp: 1 },
+      ],
+      attributes: [
+        { serialNo: 'DEV-SER-OP-10', attribType: 0, attribNo: 'DEV-LOT-QTY', attribValue: '24', attribSequence: 1, attribSource: 3, attribPhase: 1, attribScript: '', saveToLotPropertyNo: '', qcItemNo: '' },
+        { serialNo: 'DEV-SER-OP-10', attribType: 0, attribNo: 'DEV-LOT-TEMP', attribValue: '', attribSequence: 2, attribSource: 0, attribPhase: 2, attribScript: '', saveToLotPropertyNo: '', qcItemNo: '' },
+        { serialNo: 'DEV-SER-OP-10', attribType: 1, attribNo: 'DEV-COMP-LOT', attribValue: '', attribSequence: 1, attribSource: 0, attribPhase: 1, attribScript: '', saveToLotPropertyNo: '', qcItemNo: '' },
+      ],
+      rules: [{ serialNo: 'DEV-SER-OP-10', ruleNo: 'DEV-RULE-LOT-001', ruleSequence: 1, rulePhase: 2, ruleScript: 'return lot.QTY > 0;', ruleType: 0, ruleClass: 0 }],
+      equipments: [{ serialNo: 'DEV-SER-OP-10', psNo: 'DEV-PS-10', opNo: 'DEV-OP-10', equipmentNo: 'DEV-EQP-01', recipeGroup: 'DEV-RECIPE-GROUP-A', recipes: [{ recipeNo: 'DEV-RECIPE-001', recipeValue: 'DEV-SET-01' }] }],
+    },
     materialGroups: [{ nodeNo: 'DEV-MTL-001', opNo: 'DEV-OP-10', materialNo: 'DEV-MTL-GROUP-A' }, { nodeNo: 'DEV-MTL-001', opNo: 'DEV-OP-10', materialNo: 'DEV-MTL-GROUP-B' }],
   },
   'DEV-PRD-SUB|01': {
@@ -308,7 +323,15 @@ function loadMock(): void {
     const savedRelations = localStorage.getItem(relationKey)
     rows.value = savedRows ? JSON.parse(savedRows) as ProductRow[] : clone(seedRows)
     relations.value = savedRelations ? JSON.parse(savedRelations) as Record<string, ProductRelation> : clone(seedRelations)
-    if (!savedRows || !savedRelations) persistMock()
+    let migrated = !savedRows || !savedRelations
+    for (const [key, seed] of Object.entries(seedRelations)) {
+      const existing = relations.value[key]
+      if (existing && !existing.parameters && seed.parameters) {
+        existing.parameters = clone(seed.parameters)
+        migrated = true
+      }
+    }
+    if (migrated) persistMock()
   } catch {
     rows.value = clone(seedRows)
     relations.value = clone(seedRelations)
@@ -619,6 +642,13 @@ function saveProductProperties(properties: ProductRow[]): void {
   persistMock()
   notice.value = '產品屬性假資料已儲存。'
 }
+function saveProductParameters(parameters: ProductRow): void {
+  if (!active.value || !mock.value) return
+  const key = keyOf(active.value)
+  relations.value[key] = { ...relatedFor(active.value), parameters: clone(parameters) }
+  persistMock()
+  notice.value = '產品 Parameter 假資料已儲存。'
+}
 function addEqpConstraint(): void {
   if (!active.value || !editable.value) return
   const rel = relatedFor(active.value)
@@ -759,7 +789,10 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'property'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductPropertyMaster :product="active ?? {}" :properties="activeRelations.properties" :development-preview="mock" :can-edit="editable" @save="saveProductProperties" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'parameter'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductParameterSetup :product="active ?? {}" :processes="activeRelations.processes" :parameters="activeRelations.parameters ?? null" :development-preview="mock" :can-edit="editable" @save="saveProductParameters" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
