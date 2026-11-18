@@ -1,5 +1,156 @@
 # 家裡電腦接手清單
 
+## 家用端接手摘要（2026-11-18）
+
+- [x] QC501/QC502 已部署並完成本輪正式 app-browser 操作驗收，測試資料清空；細節見本檔 QC501/QC502 完成紀錄與各模組文件。
+- [x] 已整合公司端 `28bc913` 及其前 23 筆新增提交，保留全部 DDL、規格與 UI；處理雙方文件衝突，補正 PRD/PRS 的 TypeScript/初始化/換版格式錯誤。完整 .NET Release 與 Web Vite build 成功。
+- [x] 合併新增頁在本機 Development 完成相關修正的基本操作檢查；PRD/PRS 正式 API 與完整 CRUD 驗收仍依下方交接，未標成正式可用。正式站本輪發行範圍為 QC501/QC502。
+- [ ] 完成 GitHub 同步並檢查是否有更新。下一個家用端功能先接 QC503「檢測設備連線程式」；沿用 migration 0027 的 Driver 表及 QC501/QC502 共用查找。
+
+## 最新公司端交接：PS102 製造層別設定（2026-11-18）
+
+- [ ] Pull 最新 GitHub `main`，閱讀 `docs/modules/PRS/製造層別設定.md`、`docs/DATABASE_CONNECTION.md` PS102 段落，以及 `database/reference/mestest_ps102_stage_basis_source_ddl.sql` / `mestest_ps102_stage_basis_create.sql`。
+- [ ] 先比對 YMES PostgreSQL live schema/migrations 與資料。Oracle source 是 `MESTEST.TBL_FABPRSSTAGEBASIS`；PS102 owner 建議用 `YMES.tbl_fabprsstagebasis`。只有 StageNo PK 與 Sequence unique constraint；不可新增 FK/index 或重建有資料的表。
+- [ ] 欄位/nullable/default 照 Oracle：StageNo/StageName/StageType varchar(50) NOT NULL；Sequence numeric(4,0) NOT NULL；IssueState numeric(1,0) NULL DEFAULT 0；Creator/Reviser varchar(10) NULL；CreateDate timestamp NULL DEFAULT current timestamp；DataStamp numeric(11,0) NULL DEFAULT 0；ReviseDate timestamp NULL。`Sequence` 對全表唯一，包含所有 IssueState。
+- [ ] CREATE 檔只是參考，先查 live schema/migrations；缺表才新增 forward migration，既有表只針對核實缺少的 default 做 ALTER，不覆蓋資料。
+- [ ] 建登入保護 API，FunctionNo=`STAGE BASIS`、FunctionKey=`PS102`：GET `/api/fab-prs-stages?stageNo=`、POST、PUT/DELETE `/{stageNo}`、POST `/{stageNo}/approve`。DTO 和 DEV Vue 契約依模組規格。
+- [ ] StageNo/StageName/StageType 必填且最多 50；StageNo 正規化大寫。Sequence 為 1–9999 整數且全表唯一。WinForms Confirm 的 duplicate check 誤把 Edit 自身列算重複；Web UI 排除自身，但 DB unique constraint 仍是最後防線。新增 Creator/CreateDate/IssueState 由 server 設；Edit 只允許狀態 0；DataStamp nullable-safe CAS，衝突回 409。
+- [ ] Delete 依 DB 最新 IssueState：0/-1 實體刪除；2 CAS 軟停用為 -1；1 拒絕。舊 Core 沒子表刪除且 Oracle 無 FK，勿自行 cascade。Approve 僅狀態 0，重用 IssueManagement IssueNo=`STAGE BASIS`，無 Job/Detail 才直接核准；有 Detail 建簽核、設 1、通知第一關，由 callback 設 2/0。
+- [ ] PS104 `tblprsnodebasis.StageNo` 應重用此 API 的已核准層別查找，不建立重複表。完成 live schema/API/migration 後更新規格/TODO，commit/push `main`。
+- [ ] 公司端 PS102 已做 Vue DEV localStorage 假資料和 Oracle DDL 參考，未連 YMES PostgreSQL、未做正式 API/migration；未執行 build/test/browser。
+
+## 最新公司端交接：PS101 生產區段資料（2026-11-18）
+
+- [ ] Pull GitHub `main`，閱讀 `docs/modules/PRS/生產區段資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS101 段落，以及 `database/reference/mestest_prs101_production_segment_source_ddl.sql` / `mestest_prs101_production_segment_create.sql`。
+- [ ] 查 YMES PostgreSQL live schema/migrations 的 `YMES.tblprsproductionsegment`。PS101 是此表 owner；先核對欄位、PK、nullable/default 及現存資料。缺表才新增 forward migration；若已存在，保留資料，只補 live schema 明確缺少的 default，禁止重建。
+- [ ] 原始 Oracle DDL 由公司端以 PowerShell 5.1 + Oracle.ManagedDataAccess 直接連 MESTEST 唯讀取得。欄位及預設照 Oracle source：PSNo/PSName varchar(50) NOT NULL；PSOrder numeric(2,0) DEFAULT 0 NOT NULL；Description varchar(255) nullable；IssueState numeric(1,0) DEFAULT 0 NOT NULL；HaveComponent/HaveLevel numeric(1,0) DEFAULT 0 NOT NULL；SerialTypeNo_Lot/Comp varchar(50) nullable；IsPartial numeric(1,0) DEFAULT 0 NOT NULL；IsNetFlow numeric(1,0) DEFAULT 0 nullable；DataStamp numeric(11,0) DEFAULT 0 nullable；Creator/Reviser varchar(10) nullable；日期 timestamp nullable。只有 PSNo PK unique index；無 FK/其他 index。
+- [ ] `CREATE` 參考不是 migration。先比較 live PostgreSQL table 與 migrations，只新增缺表/必要 default forward migration，不覆蓋現有資料；若要使用 reference SQL，先確認 schema/table 名稱並做 migration review。
+- [ ] 實作登入保護 FunctionNo=`PS BASIS`、FunctionKey=`PS101` API：GET `/api/production-segments?psNo=`、POST、PUT/DELETE `/{psNo}`、POST `/{psNo}/approve`。請依 `docs/modules/PRS/生產區段資料.md` 保持 Vue 契約及 DTO。
+- [ ] 新增/編輯驗證：PSNo 必填、轉大寫、最多 50；PSName 必填最多 50；PSOrder 1–99；Description 最多 255；HaveComponent/HaveLevel 僅 0/1 且不可同時為 1。新增由 server 設 Creator/CreateDate、IssueState=0；DB 預設 IsPartial/IsNetFlow/DataStamp。Edit 僅 IssueState=0；DataStamp null-safe CAS、成功遞增，衝突回 409；Reviser/ReviseDate 由 server 設。
+- [ ] Delete 以資料庫目前狀態分流：0/-1 實體刪主表，2 CAS 改 -1，1 拒絕。舊 Core 沒有 cascade/reference cleanup，Oracle 無 FK；不要自行新增 cascade 或假定無引用。多選逐筆回報結果。
+- [ ] Approve 僅狀態 0，重用共用 IssueManagement IssueNo=`PS BASIS`：沒有 Job/Detail 才直接改 2；有簽核明細先建立簽核流程、改 1、通知第一關，callback 核准 2/退回 0。
+- [ ] 重用/建立共用 GET `/api/system/serial-rule-basis?serialType=LOTNO`，查既有 `TBLSYSSERIALRULEBASIS`。WinForms 沒傳 Enable 條件，因此 lookup 不要只傳啟用列。不要新建另一張序號類別表。Component 序號欄位在此畫面隱藏，編輯/Copy 要保存既有值。
+- [ ] WAHHONG 企業設定會強制 HaveComponent/HaveLevel=No 並停用 Radio；必須依可信任的登入企業資訊套用。PS104 流程主檔若需要 Production Segment lookup，重用 PS101 table/API，不要新增同義 table/controller。
+- [ ] 完成 schema/API、更新規格/TODO 後 commit/push `main`；公司端再 pull 對接。公司端 PS101 使用 DEV localStorage；未連 YMES PostgreSQL、未實作 Production API/migration、未執行 build/test/browser。
+
+## 最新公司端交接：PS103 流程類別資料（2026-11-18）
+
+- [ ] Pull 最新 GitHub `main`，讀 `docs/modules/PRS/流程類別資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS103 段落，以及 `database/reference/mestest_prs103_process_type_source_ddl.sql` / `mestest_prs103_process_type_create.sql`。
+- [ ] 查 YMES PostgreSQL live schema/migrations 的 `YMES.tblprstype`。PS103 是此表的 owner；先核對欄位、PK、nullable/default 和現存資料。缺表才新增 forward migration；若已存在，保留資料，只補 live schema 確認缺少的 default，禁止重建。
+- [ ] Oracle 結構：`processtype varchar(20) NOT NULL` PK；`description varchar(255) NULL`；creator/reviser varchar(10) nullable；create/revise date nullable；`issuestate numeric(1,0) DEFAULT 0 NOT NULL`；`datastamp numeric(11,0) DEFAULT 0 NULL`。來源僅 PK unique index，無 FK/額外 index。PostgreSQL CREATE 檔是參考，不是直接部署 migration。
+- [ ] 實作登入保護 FunctionNo=`PRS TYPE`、FunctionKey=`PS103` API：GET `/api/process-types?issueState=&processType=`、POST、PUT `/{processType}`、DELETE `/{processType}`、POST `/{processType}/approve`。Vue DEV 頁 `/YMES/PRS/ProcessType` 已固定此契約。
+- [ ] Add/Copy 共用新增流程：ProcessType 必填、正規化大寫、最多 20；Description 最多 255；server 設 Creator/CreateDate。除 PK unique 外，新增時還要以不分大小寫檢查 `TBLPRSProcessBasis.ProcessNo` 衝突，來源 clsProcess 明確禁止兩種識別碼相同。
+- [ ] Edit 僅允許 IssueState=0、ProcessType PK 不可改，只更新 Description、Reviser/ReviseDate，DataStamp null-safe CAS 並遞增，競爭回 409。IssueState 0/-1 刪除時同一 transaction 先清 `tblprsprocessproperty` 中 `processno=ProcessType` 的列再刪 `tblprstype`；狀態 2 CAS 改 -1，狀態 1 禁止。多選 UI 是逐筆處理，回報每筆成功/失敗。
+- [ ] Approve 只允許狀態 0，重用共用 IssueManagement IssueNo=`PRS TYPE`。無 Job/Detail 直升 2；有簽核設定先轉 1、發第一關通知，callback 核准 2/退回 0；API 不得略過簽核流程。
+- [ ] Property 按鈕重用 shared `TBLPRSProcessProperty` API。legacy 以 ProcessNo=ProcessType 開啟且 ProcessVersion 未指定，列表查詢省略版本以載入該 ProcessNo 的所有版本；Property 編輯畫面空白 ProcessVersion 對應資料庫鍵值 -1，新增、修改、刪除均須以 -1 傳送而 UI 顯示空白；default value 需重用 Element 驗證，新增檢查 ProcessNo/version，核准 IssueNo=`PRS PROPERTY`。勿將屬性列複製到新 ProcessType。協調 PS104，避免複製兩套 property controller。
+- [ ] PS104 `GET /api/process-basis/lookups/process-types?issueState=2` 應查同一張 `tblprstype`，重用 PS103 schema/lookup，不另建 lookup 表。完成 schema/API 後更新規格和 TODO、commit/push `main`；公司端再 pull 對接。公司端 PS103 使用 DEV localStorage，未連 YMES PostgreSQL，也未執行 build/test/browser。
+
+## 最新公司端交接：PS104 流程基本資料（2026-11-18）
+
+- [ ] Pull GitHub `main`，先讀 `docs/modules/PRS/流程基本資料.md`、`docs/DATABASE_CONNECTION.md` 的 PS104 段落，以及 `database/reference/mestest_prs104_process_basis_source_ddl.sql` / `mestest_prs104_process_basis_create.sql`。
+- [ ] 比對 YMES PostgreSQL live schema、migration 和欄位 defaults。Create SQL 是對照，不可直接整份執行、不可重建既有表。First-phase 有 `tblprsprocessbasis`、`tblprsnodebasis`、`tblprsopapsdetail` 三表；確認 live objects 後，只為缺失建立 migration。
+- [ ] Oracle DDL 中三個 `VARCHAR2(n CHAR)` 長度與 PostgreSQL varchar(n) 相同；`ALL_TAB_COLUMNS.DATA_LENGTH` 是 bytes，不是來源字元數，不要用 byte 數誤改欄寬。
+- [ ] Source defaults 與 first-phase Create 目前可見差異：ProcessBasis 的 IssueState/TuningProcess/CurVersion/PartialType/DataStamp = 0；NodeBasis 的 NodeType=0、NodeVersion='N/A'；OPAPSDetail 的 ApsFixEqpTime/ApsVarEqpTime/BatchOP=0、BatchMaxQty=999999。先查 live `pg_attrdef`，只對 live 缺少的 default 加 forward `ALTER COLUMN SET DEFAULT`；保留 nullable/原資料。
+- [ ] 首次新增 PS104 專屬的四張缺表：`tblprsnoderelation`、`tblprsnodexml_clob`、`tblprsprocessproperty`、`tblprsopapsbase`。`tblprstype` 由 PS103 建立、`tblprsproductionsegment` 由 PS101 建立；PS104 重用兩張共用表及其 API/lookup，不另建重複表。欄位、PK、NULL/default 依 Oracle DDL/CREATE 參照，Oracle source 僅 PK unique index，無 FK/額外 index。不要自行新增索引/FK。
+- [ ] 完成登入保護 PS104 API，路徑、DTO 和 DEV Vue 實際呼叫見功能規格：process basis list/Add/Edit/Delete/Approve/Copy/Version、Property CRUD/Issue、Exclude OP、已核准 PS/ProcessType lookup 及 Excel import。
+- [ ] IssueState 語意：0 未核准、1 簽核中、2 已核准、-1 不使用。Edit/Draw 只允許 0；Version 只允許 Active/current；刪除 0/-1 實體清理子表，2 用 DataStamp CAS 標成 -1，1 禁止。多表 delete/copy 使用單一 transaction。Creator/Reviser/時間由 API principal/server 設定；DataStamp null-safe CAS，衝突回 409。
+- [ ] 核准不能由 API 直接改狀態：核對非空流程圖、Exclude OP；無 Issue Job/Detail 才可 direct Active，有設定則走共用 IssueManagement IssueNo=`PRS BASIS`，維持 Pending、簽核 callback、第一關通知與 CurVersion 前版切換。
+- [ ] Flow Form 依節點/連線表和 `NodeXmlString`/CLOB snapshot。舊 XML 由外部 iMESXMLFlow.dll 序列化；未證明相容前不要把 Vue JSON 寫入 XML 欄位，也不可對外宣稱 Web 流程圖可和舊 WinForms 互通。決定 serializer 方案後才開放 Production graph write。
+- [ ] 流程匯入舊程式只讀 xls/xlsx 第一個工作表、逐 ProcessNo/Version 呼叫外部 `DataImporter.DataImport.ProcessDataChecker`；程式碼不在來源樹。檢查部署是否可取得該 DLL/規則，否則以 API 實作核准作業站、同一區段、類別、重複主鍵、逐筆結果及取消/背景作業，不可回傳假成功。
+- [ ] 完成 schema/API 後更新規格與 TODO、commit/push `main`，公司端再 pull 對接。公司端 PS104 Vue DEV 使用 localStorage，未連 YMES PostgreSQL；未執行 build/test/browser。
+
+## 最新公司端交接：OPB01 作業站參數群組設定（2026-11-18）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/OP/作業站參數群組設定.md`、`docs/DATABASE_CONNECTION.md` OPB01 段落，以及 Oracle source DDL / PostgreSQL CREATE-only 對照。
+- [ ] 先比對 YMES live schema/migrations 的 `YMES.tblopgroupattrib`。Oracle DDL 在 `database/reference/mestest_opb01_operation_group_attribute_source_ddl.sql`；空表 CREATE 參考在 `database/reference/mestest_opb01_operation_group_attribute_create.sql`。只缺表才新增 forward migration；既有表只做必要 ALTER，不重建、不覆蓋資料。
+- [ ] `TBLSYSELEMENTBASIS` 已由 first-phase schema 提供，不要建立重複 Element 表；重用客戶基本資料與 OPB02 ECN 群組 lookup。
+- [ ] 實作登入保護的 OPB01 API，FunctionNo=`B_OP GROUP ATTRIB`、FunctionKey=`OPB01`。Vue `OperationGroupAttribMaster.vue` 已固定 `GET /api/operation-group-attributes`、`GET .../editor`、`POST .../batch-save`、`DELETE ...`、三種 lookup、Element values/validation 及 `GET /api/system/parameters/InputAbortLog` 路徑；DTO 見模組規格。
+- [ ] 主表複合 PK `(CUSTOMERNO, OPGROUPNO, ELEMENTNO)`；來源 NOT NULL、欄長、nullable/default 照 Oracle DDL。`BYSECONDCLASS`、`DATASTAMP` nullable DEFAULT 0。Oracle 只有 PK unique index，無 FK/其他 index；不要自行加 FK/index。
+- [ ] 查找僅用已核准客戶、`TBLOPECNGROUPBASIS.ISSUESTATE=2` ECN 群組、`TBLSYSELEMENTBASIS.ISSUESTATE=2 AND ELEMENTTYPE=5` 產品 Element。CustomerNo=`*` 表共用。Select List values 重用 `wsSYS.LoadElementValue`；Key In 驗證重用 `wsSYS.ChkElementValueValid`/SYS Core，不能只檢查前端清單。
+- [ ] Batch Save 使用單一 transaction，依新增/修改/刪除旗標處理所有列；任一筆失敗整批 rollback。修改用 DataStamp null-safe CAS，舊值 NULL 以 `IS NULL` 比對，成功遞增；未命中回 HTTP 409。Audit 僅由 API principal/server 設定。
+- [ ] 複製改變 CustomerNo 或 OPGroupNo 時，對目的複合鍵新增存活明細，原群組不變；目的 PK 已存在則沿用舊 Copy Core 的略過語義。DataFlag=2 的刪除列不可複製。
+- [ ] 多選主 Grid 刪除依舊 WinForms 逐筆呼叫；每筆處理 optional `InputAbortLog`，不得把 UI request 當成批次原子交易。Element editor 的多列 Apply/Confirm 則必須是原子 batch transaction。
+- [ ] 檢查 YMES 權限、既有客戶/ECN/System Element API，並更新 API/schema 規格與 TODOLIST。完成後 commit/push `main`，公司端再 pull 對接 Production API。DEV localStorage 假資料不可寫正式資料庫。
+
+## 最新公司端交接：OPB02 ECN 作業站群組設定（2026-11-18）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/OP/ECN作業站群組設定.md`、`docs/DATABASE_CONNECTION.md` OPB02 段落，以及 Oracle source DDL / PostgreSQL CREATE 對照。
+- [ ] 比對 YMES PostgreSQL live schema/migrations：`YMES.tblopecngroupbasis`、`YMES.tblopecngroupdetail`。Oracle source DDL 在 `database/reference/mestest_opb02_ecn_operation_group_source_ddl.sql`；CREATE-only 參考在 `database/reference/mestest_opb02_ecn_operation_group_create.sql`。只補缺表的 forward migration；既有表只做必要 alter migration，不重建、不覆蓋資料。
+- [ ] 實作 FunctionNo=`B_ECN OP GROUP BASIS`、FunctionKey=`OPB02` 的登入/API 權限及規格所列 endpoints。Vue 固定使用 `/api/ecn-operation-groups`、`/{opGroupNo}/operations`、`/lookups/production-segments`、`/lookups/operations`、POST/PUT/DELETE、`/{opGroupNo}/approve`。
+- [ ] 主表 `OPGROUPNO VARCHAR2(20)` PK；GroupName 50、PSNo 50、Description 255；OPGroupOrder NUMBER(6,0) nullable；IssueState NUMBER(1,0) NOT NULL 且 Oracle 無 default；DataStamp NUMBER(11,0) nullable DEFAULT 0。保留來源 NULL/default，DataStamp 用 null-safe CAS，衝突回 409；audit 僅由 API principal/server 設定。
+- [ ] Detail PK 是 `OPNO` 單欄全表唯一（不是 `(OPGROUPNO, OPNO)`），OPGroupNo/OPNo 都必填 20 字元。新增只能選 `TBLOPBASIS.IssueState=2`、`PSNo` 與所屬群組完全相等，且目前未出現在任何 `TBLOPECNGROUPDETAIL` 的 OP；這是全域排除。不要把 `PSNo='*'` 當萬用值。
+- [ ] 主檔修改僅狀態 0；刪除時 DB 狀態 0/-1 在單一 transaction 先刪 detail 再刪 basis，狀態 2 採 DataStamp CAS 改 -1 並保留 details，狀態 1 禁止。不可相信 request body 的 IssueState 作為授權依據。來源沒有 FK 或 PK 以外的 index，不要自行新增。
+- [ ] 核准使用 IssueNo=`OP ECN GROUP BASIS`：重用共用 IssueManagement。無 Job 或 Job 無 Detail 時直接 0→2；否則建立 Job/Detail、設定 1，核准 SQL 更新 2、退回 SQL 還原 0，通知第一關。不要在 Vue/API 繞過既有簽核服務或遺漏通知。
+- [ ] 明細新增/刪除為逐筆操作、沒有明細 Edit；明細可在任何群組狀態操作（WinForms 沒有狀態限制）。明細新增需重驗群組、OP 核准狀態、PS 相同及全表 OPNo 唯一，刪除實體資料。
+- [ ] API/schema 完成後更新模組規格與 TODO、提交並 push `main`，供公司端 pull。DEV localStorage 假資料不得寫入正式資料庫。
+
+## 最新公司端交接：OPB03 客戶站點對應設定（2026-11-18）
+
+- [ ] Pull 最新 main；閱讀 docs/modules/OP/客戶站點對應設定.md、OP101–OP105 規格，以及 database/reference/mestest_opb03_customer_op_mapping_source_ddl.sql 和 mestest_opb03_customer_op_mapping_create.sql。
+- [ ] 先核對 YMES PostgreSQL live schema/migrations 的 tbl_bopcustopmapbasis、tbl_bopcustopmapdetail。Oracle DDL 已由公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查證；source 只有兩表 PK、無 FK/額外索引。CREATE-only 檔不是直接部署指令；僅缺表才新增 forward migration，既有表先比欄位與資料。
+- [ ] 實作登入保護 FunctionNo=B_CUSTOMER OP MAPPING API。Vue CustomerOPMappingMaster.vue 頁面 /YMES/OP/CustomerOPMapping 已固定主/明細 CRUD 路徑及 lookup 路徑，細節見規格。
+- [ ] lookup 重用既有 Customer Basis、Production Segment、OP Basis API/資料；客戶與區段、作業站都只提供 IssueState=2。作業站需依主檔 PSNo 過濾，不新增相同主檔 lookup tables。
+- [ ] Basis PK (CustomerNo, CustomerOPNo)；Detail PK (CustomerNo, CustomerOPNo, OPNo)。必填及字數依 Oracle source DDL；TransactionFlag 僅 0/1。來源 CustomerOPSeq NUMBER(3,0)，但 WinForms NumericUpDown 範圍 0–999999；UI 保留原範圍，API 回清楚 DB 欄寬驗證錯誤，除非查 live schema/現存資料後另有遷移決定。
+- [ ] Edit 主檔 PK 不可變；已有明細時 PSNo 不可改。明細可修改 OPNo，路由用舊 OPNo 對應、body 帶新 OPNo，需驗複合 PK 唯一。
+- [ ] DataStamp nullable + DEFAULT 0；Basis/Detail edit 都要 null-safe CAS，衝突回 409；Creator/CreateDate/Reviser/ReviseDate 只由 API principal/server 產生，忽略 request audit 欄位。
+- [ ] 主檔刪除在單一 DB transaction 先刪全部 Detail 再刪 Basis；Oracle 無 FK，不要假定 DB cascade。Detail delete 為實體刪除。
+- [ ] Production API/schema 完成後更新規格與交接、提交並 push main，供公司端 pull 整合。公司端尚未接 YMES PostgreSQL；未執行 build/test/browser。
+## 最新公司端交接：OP105 作業站群組資料（2026-11-18）
+
+- [ ] Pull 最新 main；閱讀 docs/modules/OP/作業站群組資料.md、docs/DATABASE_CONNECTION.md 的 OP105 段落、OP101–OP104 規格，以及 database/reference/mestest_op105_group_basis_source_ddl.sql 與 mestest_op105_group_basis_create.sql。
+- [ ] 先核對 YMES live schema/migrations 的 tblopgroupbasis、tblopgroupdetail。Oracle 原始欄位、PK/NULL/default 已直接查證。database/reference/mestest_first_phase_create_tables.sql 已校正新庫預設值；CREATE TABLE IF NOT EXISTS 不會更新既有表。若 live schema 缺 DEFAULT 0，依現有 migration 慣例只補必要 forward migration，不重建表、不覆蓋資料。
+- [ ] 實作 FunctionNo=OP GROUP BASIS 登入/API 權限。Vue OperationGroupMaster.vue Production 路徑：GET /api/operation-groups?opGroupNo=&psNo=、GET /{opGroupNo}/members、POST/PUT/DELETE 群組、POST/PUT/DELETE 群組成員；路徑與 DTO 見功能規格。
+- [ ] 實作 GET /api/operation-groups/lookups/production-segments，重用既有 PS lookup；另實作/映射 GET /api/operation-groups/lookups/operations?psNo=&issueState=2，只回 IssueState=2 的已核准 OP。PSNo='*' 時不限制區段。不要建重複作業站或生產區段表。
+- [ ] 主檔驗證：OPGroupNo 必填、大寫、最多 20；OPGroupName 必填、最多 50；PSNo 必填、最多 50；OPGroupOrder 0–999999 整數；Description 最多 255。編輯以 DataStamp CAS，衝突回 409；Oracle DataStamp nullable + DEFAULT 0，舊值為 NULL 時須用 null-safe CAS 條件，不能把 NULL 靜默當成 0。Creator/CreateDate/Reviser/ReviseDate 由 API principal/server 寫入。
+- [ ] 成員驗證：複合 PK (OPGroupNo, OPNo)；OPRoleFlag 僅 0/1/2；WeightRate 必填且 0–100、最多兩位小數；新成員必須是此群組區段中的已核准 OP；修改只能變更角色/權重並採 DataStamp CAS；DataStamp nullable + DEFAULT 0，舊值為 NULL 時須用 null-safe CAS。audit 不信任 body。
+- [ ] 主檔刪除必須在單一 DB transaction 內先刪 TBLOPGROUPDETAIL 再刪 TBLOPGROUPBASIS。成員刪除為實體刪除。不得加 Oracle 未定義的 FK/index；依 YMES 的 schema extension 習慣處理參照完整性。
+- [ ] Check 是 WinForms 清單端即時檢核，不需 API 寫入：同一群組 Entry 最多 1、Exit 最多 1、WeightRate 合計 100；不要求 Entry/Exit 各至少一筆。不要讓合計規則阻止使用者逐筆編輯中間狀態的明細。
+- [ ] OP Basis 刪除會以 TBLOPGROUPDETAIL 引用阻擋；確認 OP104 API 保持此保護。
+- [ ] 完成 API/schema 後更新規格、migration/API handoff，提交並 push GitHub main。公司端尚未連 YMES PostgreSQL，未執行 build/test/browser 驗收；API/schema 完成後通知公司端 pull 整合。
+
+## 最新公司端交接：OP103 作業站類別資料（2026-11-18）
+
+- [ ] Pull 最新 main；閱讀 docs/modules/OP/作業站類別資料.md、docs/DATABASE_CONNECTION.md OP103 段落與 WinForms frmOPType/Def、wsOP、clsOpBasis 規則摘要。
+- [ ] 先查 YMES PostgreSQL live schema/migrations 的 YMES.tbloptype、tblopbasis 與 Property 表。原生 MES Oracle DDL 在 database/reference/mestest_op103_optype_source_ddl.sql；空表 CREATE 對照在 database/reference/mestest_op103_optype_create.sql。CREATE 只是參考；只對實際缺表建立 forward migration，保留既有 YMES 資料/擴充欄，不重建 tblopbasis、Property 或 Issue/Job 共用表。
+- [ ] API：登入保護 GET /api/operation-types?issueState=-1&opType=、POST、PUT /{opType}、DELETE /{opType}、POST /{opType}/approve。Vue OperationTypeMaster.vue 已固定以上路徑/body；如需改路由，前後端與此 spec 一起更新。
+- [ ] 新增驗證 Oracle 欄位長度（OPType 20、Description 255）、Trim/大寫 OPType、PK 唯一；另檢查 TBLOPBASIS.OPNO 大小寫不敏感衝突，因舊 Core 把 OPType/OPNo 視為同一 Property namespace。
+- [ ] 修改只允許 IssueState=0，僅更新 Description；DATASTAMP 在 Oracle 可 NULL、預設 0，確認現有 YMES 型別/live NULL 語義後採 CAS 並回 409；Creator/日期、Reviser/日期與狀態不信任前端，由 API 管理。
+- [ ] Delete 0/-1 硬刪、2 改 -1、1 禁止。舊 clsOpBasis.DelOPType 先刪 TBLOPPROPERTY 中相同 OPNo 屬性再刪類別；確認 YMES 的共享屬性資料讀寫策略、OPType/OPBasis 碰撞與實際 FK/引用，使用單一 transaction，不要在 schema reference 臆造 FK。
+- [ ] Approve 只允許 0，IssueNo=OP TYPE；共用 Issue Job/Detail 不存在才 direct Active(2)，有流程則 Pending(1)、通過 2、退回 0，第一關通知由共用簽核服務處理。不要在 API/前端自行猜狀態或重建 Issue 表。
+- [ ] Property WinForms 呼叫 OP_OPProperty 並以 OPType 當 OPNo。先核對 OP BASIS 共用 Property API/表，不要為 OP103 重複建 Property table。完成 API/schema 後提交並 push；公司端 DEV mock 不會寫入正式 DB。
+- [ ] OP103 本回合僅新增 Oracle source DDL、PG CREATE-only 參考、Vue DEV UI、規格及 handoff；未連 YMES PG、未實作 API/migration，未執行 build/test/browser 驗收。
+## 最新公司端 handoff：QC409 OCAP異常單處置調整（2026-11-18）
+
+- [ ] Pull 最新 main，閱讀 docs/modules/QC/OCAP異常單處置調整.md、QC408 OCAP流程規格與本檔下方 QC408 handoff、docs/DATABASE_CONNECTION.md QC409 段落。
+- [ ] Schema 核對：三張專用表 DDL 在 database/reference/mestest_qc409_wip_ocap_source_ddl.sql，PG CREATE-only 參考在 database/reference/mestest_qc409_wip_ocap_create.sql。先比對 YMES live schema/migrations；只補缺的 forward migration。不要重建或覆蓋共用 WIP 表。
+- [ ] 11 張 WIP/ERF/通知依賴的 MESTEST source DDL/index 在 database/reference/mestest_qc409_wip_disposition_dependencies_source_ddl.sql。逐張比對 YMES 現有 WIP/ENT/USR schema 和 API；表已存在時重用既有 mapping，不另建同義表。若有必要 mapping 缺表，先由來源 DDL 設計適配 migration，保留舊 schema/資料。
+- [ ] 完成 /api/qc/ocap-dispositions 查詢及 route-options、POST .../{erfNo}/{holdItemNo}/adjust；授權 FunctionNo=OCAP DISPOSITION ADJUST / FunctionKey=QC409。
+- [ ] 這不是只寫三張 OCAP history/state 表的 CRUD。依規格復刻 wsWIP.Exe_ERF_Disposition → clsLot.UpdOCAPAndERF_Disposition：ERF history/status、Lot Hold/LotStamp、WIP LotLog/GoodBin、OCAP current/group state、DispOrder、批次 ERF 分支、使用者定義 hook 及通知。
+- [ ] Finish 必須在 transaction 中重新計算同 ERF 的剩餘 Hold Item：最後一項採 DispType=2/Final；仍有其他項目則 DispType=0 但本筆 OCAPStatus=11。避免同時操作導致錯誤結案；系統 ERF 必須驗證新鮮 LotStamp，衝突回 409。
+- [ ] Change Group 只接受 server 從 OCAP graph/version/relation 驗證的可達節點；不可接受任意 GroupNo/NodeId/LinkName。附件和 mail 使用 YMES 現有 extension/outbox；確認不重複呼叫舊 side effect。
+- [ ] 完成後更新 migration/API 規格與 TODO，push GitHub main。公司端 pull 後以 Vue DEV UI 整合驗收；公司端尚未做 build、測試或瀏覽器驗收。
+
+## 最新公司端 handoff：QC408 OCAP基本資料（2026-11-18）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/QC/OCAP基本資料.md`、`docs/DATABASE_CONNECTION.md` QC408 段落，以及 Oracle source DDL / PostgreSQL CREATE 對照。
+- [ ] 比對 YMES live schema 與 migrations：`tblqcocapbasis`、`tblqcocapnodebasis`、`tblqcocapnoderelation`。只為缺表補 forward migration，維持來源 PK、NULL/default 和 `OCAPLINKNAME` PK 隱含 NOT NULL；不新增 Oracle 未定義的 FK/index、不重建既有資料。
+- [ ] 原始 Oracle DDL 在 `database/reference/mestest_qc408_ocap_source_ddl.sql`；PG 空表 CREATE 參考在 `database/reference/mestest_qc408_ocap_create.sql`。公司端已用 PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取 DDL；不要在 Oracle 執行 CREATE。
+- [ ] 先確認 `OCAPXMLSTRING` 相容策略：WinForms 呼叫二進位 `iMESXMLFlow.dll` 的 `FlowToXML/XMLToFlow`，目前舊源碼庫沒有 serializer source。決定反編譯/相容轉換，或明確採 YMES 自有格式；不可把 Vue nodes/links JSON 直接寫成舊 AddFlow XML 並宣稱可相容 MES。
+- [ ] 實作登入/`OCAP BASIS`/QC408 權限保護 API：GET 清單及已簽核 HoldDispGroup lookup、POST 新增、PUT 說明、POST copy、PUT flow、POST approve、DELETE。細節以功能規格的 API 表為準，SQL 參數化，audit 和時間由 server 管理。
+- [ ] Flow 儲存/複製需同交易更新主 CLOB、NodeBasis、NodeRelation；保持 NodeID 和 relation 端點一致。實作 DataStamp CAS；舊 DataStamp NULL 要定義明確處理。流程狀態及刪除：未簽核 0 與停用 -1 硬刪三表；已核准 2 軟停用為 -1 並清 CurVersion；簽核中 1 禁刪；核准 0→2 並同 OCAPNo 只留一個 CurVersion=1。
+- [ ] 補 `FunctionNo=OCAP BASIS`、`FunctionKey=QC408` 授權；驗證 OCAP No/Version 組合唯一、版本長度 5、No 長度 50、Description 長度 255、節點和 relation 主鍵、GroupNo 已簽核、DataStamp 衝突回 409。
+- [ ] 完成 API/schema 後推到 GitHub，通知公司端 pull。不要將 DEV localStorage 假資料灌入資料庫。
+
+## 最新公司端 handoff：QC503 檢測設備連線程式（2026-11-18）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/QC/檢測設備連線程式.md`、QC501/QC502 規格與 `docs/DATABASE_CONNECTION.md`。
+- [ ] 主表沿用 `TBLQCINSPDRIVER`，比較 YMES live schema/migrations 與 `database/reference/mestest_qc501_inspection_machine_create.sql`；確認缺表才建 migration，不重建既有資料。QC503 不需要新增 Oracle DDL 或重複 CREATE SQL。
+- [ ] 實作登入保護 API：GET `/api/qc/inspection-drivers?issueState&inspDriverNo`、GET `/api/qc/inspection-drivers/functions`、POST/PUT/DELETE/approve，授權 FunctionNo=`INSPMACHINE DRIVER`/FunctionKey=`QC503`。DriverNo PK 上限25、FunctionName 50、Description 255；DataStamp nullable+default、IssueState/DataStamp CAS、server audit、參數化 SQL。遇舊 NULL DataStamp 要按 live data/legacy 語義處理，不能跳過版本檢查。
+- [ ] Function options 必須由允許清單提供；本分支 WinForms reflection 只列出 `funDrv_Thick`、`funDrv_Channel`、`funDrFunctionC`，目前三個 legacy method 都回傳 default string。不要把任意用戶端字串反射執行。
+- [ ] 核准使用 IssueNo=`INSPMACHINE DRIVER`：依 Issue Job/Detail 決定直接 Active(2)或 Pending(1)，Issue Process 退回時回 0；前端不自行決定結果狀態。Edit 依共用 Issue Control，Pending 不可修改。
+- [ ] 刪除狀態 0/-1 硬刪、狀態2 改 -1 並遞增 DataStamp；1 禁止。舊 MES 沒明確檢查 QC502 儀器的 Driver 引用且 Oracle 無 FK；先查 YMES live schema/既有規則，再決定參照中 Driver 的防刪策略，記錄差異。
+- [ ] Driver GET 在不帶狀態條件時仍需回傳所有狀態，因 QC502 共用 Driver lookup 未限制 IssueState。逐筆動作遇首個失敗就停止的 WinForms 行為需保留。API/schema 完成後推送，供公司端 pull 整合。
+
 ## 家用端進度：QC501/QC502 檢測儀器（2026-11-18）
 
 - [x] QC501–QC503 六張共用表 live schema audit 確認缺表；先備份並驗證 `/opt/ymes/backups/ymes_before_0027_qc501_20261118.dump`，再套用 migration `0027_qc501_qc502_inspection_machines.sql`，授予 `ymes_app` 表級 CRUD。
@@ -18,7 +169,7 @@
 - [ ] 公司端 pull 家用端同步後，確認 Vue DTO/API contract 與正式 route；不要把 DEV mock 資料送至正式 DB。
 - [ ] 公司端已提交 QC503 UI（`b572f3b`）；家用端 merge 後讀規格並接手 API，沿用 0027 六表與 CREATE/source DDL。
 
-## 公司端交接：QC502 檢測儀器基本資料（2026-11-18）
+## 前次公司端交接：QC502 檢測儀器基本資料（2026-11-18）
 
 - [x] 家用端已建立 QC502 GET/POST/PUT/DELETE/approve API，沿用 0027 六表 migration 與 QC501 class/Driver lookup；規則見 `docs/modules/QC/檢測儀器基本資料.md`。
 - [x] app-browser 已驗證新增/套用/修改、跨通訊型別類別帶入、複製/Driver lookup、核准、取消/確定刪除、nullable DataStamp 409 與重查後保存、四狀態/Close、最終錯誤文字及 Demo 登入；本輪 fixture 已清空。
@@ -1305,3 +1456,156 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 4. 管制界限及違規內容的 SPCSerial 需從尚未刪除的 TBLSPCVARDETAILLOG 取出。先刪兩類 content，再刪 detail log。整個單一項目刪除應可 rollback；勿照抄 Core 在刪除成功後拋出成功例外，應回傳正常成功 JSON，含 QCItemNo 與各表刪除筆數。
 5. Vue 多選時逐筆呼叫上述 API；一項失敗不阻止其他項目，結果需回報成功/失敗 QCItemNo，並寫入 YMES 操作稽核。遵循專案既有登入、錯誤、權限與參數化 SQL 規約。
 6. 加上缺少的 forward migration 與 rollback、更新 schema/API 規格與 TODO；commit/push 後通知公司端 pull，等待 QC210 Production API 驗收。公司端尚未執行 build、測試或瀏覽器驗收。
+
+## OP101 作業站法則設定（公司端 UI / API handoff，2026-11-18）
+
+請 pull 最新 `main` 後先閱讀 `docs/modules/OP/作業站法則設定.md`、本段及 `docs/DATABASE_CONNECTION.md`。公司端完成 Vue DEV 頁 `/YMES/OP/ControlRules`；Production API、YMES live schema 比對與正式部署尚未完成。資料結構參考：`database/reference/mestest_op101_control_rule_source_ddl.sql`（Oracle 原始 DDL）及 `database/reference/mestest_op101_control_rule_create.sql`（PostgreSQL CREATE-only，禁止未比對就直接當 migration 套用）。
+
+- [ ] 先比對 YMES live schema/既有 migration 的 `tblopcontrolrule`；若已存在就沿用，若缺表才新增 migration，欄位必須遵循 CREATE 參考中的 NULL/default/主鍵。不要在 MES Oracle 執行 CREATE。
+- [ ] 實作登入保護、檢查 OP101 FunctionKey/權限的 API：`GET /api/operation-control-rules?ruleClass=0&ruleNo=`、`POST /api/operation-control-rules`、`PUT /api/operation-control-rules/{ruleNo}`、`DELETE /api/operation-control-rules/{ruleNo}`。
+- [ ] GET 僅回標準版 RuleClass=0；包含 UI Grid 欄及 DataStamp。保持 `RuleMode`、`RuleModeQty` 和未暴露欄位；RuleClass 1/2 不要出現在 OP101 清單。
+- [ ] POST 大小寫正規化 RuleNo、驗證 RuleNo/RuleName/RuleScript 必填與長度（20/50/3000）、RuleType 0 Lot/1 Component；server 設 Creator/CreateDate、RuleClass=0、DataStamp 初值，處理 RuleNo PK 重複。
+- [ ] PUT 僅修改允許的定義欄位，使用舊 DataStamp CAS，成功遞增 DataStamp 並由 server 設 Reviser/ReviseDate；不可重設 RuleMode/RuleModeQty。DataStamp 可為 NULL，實作 null-safe version check。
+- [ ] 相容 WinForms 儲存 payload：Apply 不帶 SendMail/HoldDispGroup，缺少欄位代表「保持現值」（新增採 DB/legacy 預設）；Confirm 才帶兩欄。不得把省略欄位轉成 null 清空。Legacy 另有新增 Apply 後仍留在新增模式的行為，詳規格。
+- [ ] DELETE 沿用 RuleNo 實體刪除；前端多選逐筆 DELETE，部分成功時回報成功/失敗項目。不連帶刪除 `TBLOPRULE`、`TBL_CPOPRULE` 等其他流程法則。
+- [ ] Hold Disp Group 選擇器重用 QC405 handoff 的 `GET /api/qc/hold-disposition-groups?searchFieldName=GroupNo&searchFieldValue=`，資料來源 `TBLQCHOLDDISPGROUPBASIS`，相容 WinForms 未傳 IssueState、載入全狀態的行為；不要另建 lookup table/API。SendMail=Yes 必須有群組。
+- [ ] 核對 `RuleScript` 僅當字串儲存，不在 API 執行腳本。原生 `OP_Script` 動態編輯器尚未移植，先用公司端純文字編輯器。
+- [ ] 先完成 YMES schema/API 實作，補 API 層驗證及 concurrency 驗收後再提交並 push；公司端 DEV localStorage 假資料不能作為正式資料寫入。
+
+## OP102 企業邏輯設定（公司端 Vue / API handoff，2026-11-18）
+
+請 pull 最新 main，先讀 docs/modules/OP/企業邏輯設定.md、docs/DATABASE_CONNECTION.md 與本段。公司端已完成 /YMES/OP/BusinessRules Vue DEV 頁；Production API/schema 尚未實作。Oracle source DDL 與 PostgreSQL CREATE-only 參考：
+- database/reference/mestest_op102_business_rule_basis_source_ddl.sql
+- database/reference/mestest_op102_business_rule_basis_create.sql
+- database/reference/mestest_op102_scenario_basis_lookup_source_ddl.sql
+- database/reference/mestest_op102_scenario_basis_lookup_create.sql
+
+資料庫工作：
+- [ ] 先查 YMES live schema/migrations 的 tblopbusinessrulebasis 和 tblopscenariobasis。已存在的表不得重建；只在確認缺表後新增 forward migration，對照 Oracle 欄位 nullability/default/PK。CREATE-only reference 不是 migration，也不要在 MES Oracle 執行 PostgreSQL SQL。
+- [ ] 情境表是 OP102 DT 下拉的共享 lookup。若 YMES 已有則重用；若沒有，評估新增其 schema dependency；OP102 handoff 不要求另外建立情境 CRUD。
+- [ ] 企業邏輯主表 Oracle 只有 BRNO PK unique index，無 FK/額外 index；情境表只有 SCENARIONO PK unique index，無 FK/額外 index。
+
+API 工作：
+- [ ] 實作登入保護及 OP102 FunctionKey/權限驗證。路由需求：GET /api/operation-business-rules?issueState=all&brNo=、GET /api/operation-business-rules/options、POST /api/operation-business-rules、PUT /api/operation-business-rules/{brNo}、DELETE /api/operation-business-rules/{brNo}、POST /api/operation-business-rules/{brNo}/approve。
+- [ ] List 回傳 UI 14 個 Grid 欄位及隱藏 IssueState/DataStamp。Options 回傳已允許的 plugin function/ExecutionFile、FRMBR interface/ExecutionFile、核准 ScenarioNo/Name、BRProdType 與 AllowTimeLimitControl ValueList。前端傳入的 DLL/function 名稱不得被服務端任意載入或執行。
+- [ ] POST/PUT 只接受 OP102 畫面欄位，Creator/CreateDate/Reviser/ReviseDate/IssueState/DataStamp 與 Issue Job 權限由 server 控制。修改時保留 KernelModule、KernelFunctionName、ActiveModule 與所有產品線旗標欄位，不得以空 DTO 清空。
+- [ ] PUT、已簽核停用、Approve 使用 BRNO + 舊 DataStamp compare-and-swap，成功才遞增 DataStamp；Oracle DataStamp nullable/default 0，實作需有 null-safe CAS 並檢查受影響列數，零列回傳 concurrency conflict。
+- [ ] 刪除規則：IssueState 0/-1 實體刪除；2 以 DataStamp CAS 改成 -1 並寫 audit；1 拒絕。多筆刪除是逐筆操作，需回報成功/失敗 BRNo。
+- [ ] 核准只接受 IssueState=0，沿用 IssueNo BR BASIS 與共用 Issue Job/Issue Control：沒有簽核設定時直接到 2，有設定則先到 1，callback 核准到 2、退回到 0。多筆需回報逐筆結果與 server EventLog。
+- [ ] BRProdType ValueList 來源為 TBLOPBUSINESSRULEBASIS/BRPRODTYPE；AllowTimeLimitControl 清單來源鍵是 TBLOPBUSINESSRULEBASIS/TIMELIMITCONTROL。定義窗會停用兩欄；更新時保留已載入值，沒有提交 null。
+- [ ] Manual RuleMethod 可用 FunctionName，或 InterfaceName/InterfaceURL；FunctionName 不可與 Interface/URL 同填。DT 的 ScenarioNo 持久化於 InterfaceName；API options 僅回核准情境。
+- [ ] Add/Edit 的 Apply 與 Confirm 使用相同業務欄位；Apply 保持視窗開啟，Confirm 關閉。服務端 audit 一律由登入身分建立。
+- [ ] 完成 API、schema、權限與簽核驗收後 commit/push，通知公司端 pull 並接正式 API。公司端本段尚未 build/test/browser 驗收。
+
+# 2026-11-18 公司電腦交接：PRD PD102 產品主檔
+
+先 git pull。詳細來源與欄位規則：docs/modules/PRD/產品主檔.md。Oracle 原始 DDL/字典證據：database/reference/mestest_prd_product_basis_source_ddl.sql；PostgreSQL CREATE-only 結構參照：database/reference/mestest_prd_product_basis_create.sql。ProductProperty DDL 因 DBMS_METADATA 連線 ORA-03135，依 Oracle 字典重建並已標示。Create 檔不是 migration。
+
+本 repo 已有 ProductDto、ProductWriteRequest、MasterDataController、PostgresMasterDataRepository.Products.cs 與 migration 0010 的 ym_product_process/ym_product_bom。這些是 YMES 自有簡化關聯；Oracle DDL 顯示 MES 原生 TBLPRDPRODUCTPROCESS、TBLPRDBOM、TBLPRDBOMMATERIALGROUP、TBLPRDEQPCONSTRAINT、TBLPRDPRODUCTPROPERTY、TBLPRDPRODUCT_PICTURE 也存在。先比對 live PostgreSQL schema/migrations，決定映射或擴充；不要再次建立已存在表，也不可照 CREATE-only 檔直接部署。
+
+待辦：
+1. 比對 Product DTO/Request 與 Oracle TBLPRDPRODUCTBASIS 欄位長度、SAP/SOP/ERP、序號、圖片欄位；維持 DataStamp CAS。
+2. 保留現有產品列表、CRUD、流程及 BOM API；列表 query keyword 與 ProductDto currentVersion/createdAt 命名需和 Vue 相容。
+3. 調整原生產品流程 mapping，核實 MOTypeNo、PSNo/PSOrder、ProcessVersion selector、DefaultProcess、HaveComponent/HaveLevel 與 * 目前版本語意。
+4. 實作 Oracle BOM 節點樹、材料群組、指定料、損耗率、遞迴最多五層、投入站及產品/材料節點；比對現有扁平 ym_product_bom，不可直接宣稱等價。
+5. 為 TBLPRDPRODUCTPROPERTY、TBLPRDEQPCONSTRAINT、TBLPRDPRODUCT_PICTURE 與圖片 BLOB 補必要 schema/API；先查是否已有 YMES 對應。
+6. 依 WinForms 實作 Controlled=1/2 屬性、RulePhase/AttribPhase 的 CPASS 檢查、共用 Issue/Job callback、IssueState/DataStamp；目前 API 的預設流程檢查不等價。
+7. 對照 Add/Edit/Copy/Version/Apply；WinForms 讓使用者輸入 ProductVersion，YMES 目前自動加一版，需協調 API 契約與子資料複製。補 ProductType/Unit/serial/SAP_PLNAL lookup 與 ProductMaterialcoexist 檢查。
+8. 比對後才新增 migration；執行 migration 前確認 home DB schema/data。正式 API 檢查 PRD BASIS/PD102 權限。
+9. API/schema 完成後回報辦公室端，串 integration profile；localStorage 假資料僅供 DEV preview。
+
+產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property、Parameter、Business Rule、OPDescription 與 RecipeGroup DEV 子視窗已完成；OPDescription/RecipeGroup 的 Production API/schema 依本檔 handoff 由家用端處理。Accessory、Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待公司端逐項遷移。
+
+## PRD PD102 產品流程／BOM 子表單 API handoff（2026-11-18 公司端更新）
+
+公司端已依 WinForms 原始碼補上 `ProductProcessEditor.vue` 與 `ProductBomEditor.vue`，並接入產品專用頁。DEV 預覽支援產品流程 ADD/DEL/Apply/Confirm、重複與 Default Process 檢查、Net Flow 檢查；BOM 支援右鍵樹選單、已核准產品查找、假材料查找、節點 Add/Edit/View/Del、Specified、投入點、用量、損耗率、LOTCREATE 限制、替代料群組與五層遞迴樹。所有 DEV 寫入只更新產品專用 localStorage。正式 API 模式兩個子視窗唯讀。
+
+詳細 WinForms 欄位、事件、規則與來源路徑：`docs/modules/PRD/產品主檔子表單.md`。表結構參照仍以 `database/reference/mestest_prd_product_basis_source_ddl.sql` 為準；先核對 YMES migrations/live schema，不可重複建表或直接執行 CREATE-only 參照 SQL。
+
+### 家用端接手
+
+- [ ] 對照 Oracle `TBLPRDPRODUCTPROCESS`，補產品流程查詢/批次儲存契約：MOTypeNo、PSNo、PSOrder、ProcessNo、ProcessVersion (`*` current)、DefaultProcess、HaveComponent、HaveLevel；服務端驗證複合鍵、每一 MOType/PS 唯一 Default 與 Net Flow 單一區段。
+- [ ] 對照 `TBLPRDBOM` 及 `TBLPRDBOMMATERIALGROUP`，提供產品/材料/投入 OP lookup、節點新增修改刪除、指定料、投料點 2/3/4、數量、損耗率、材料群組/替代料與最多五層遞迴查詢。
+- [ ] 服務端重驗已核准節點、LOTCREATE、企業 TS 批號規則及 BOM 複合鍵；不能只依賴 Vue 欄位檢查。
+- [ ] 比較現有 `ym_product_process`/`ym_product_bom` 與 Oracle 原生語意後才決定 mapping / migration；測試完成後回報公司端接正式 API。
+
+公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。Business Rule DEV 已完成，Production API/XML serializer 見本檔後續 handoff；OPDescription DEV 已接入但仍待靜態複核，API/schema 見本檔 OPDescription handoff。RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 仍須依 WinForms 原始碼逐項遷移。Parameter handoff 見本檔前段。
+
+## PRD PD102 產品屬性子表單 API/schema handoff（2026-11-18）
+
+公司端已依 `frmProductProperty.vb`、`frmProductPropertyDef.vb`、`wsPRD`、`clsProduct` 完成 `ProductPropertyMaster.vue` DEV 假資料視窗；正式 API 模式唯讀。詳細欄位、狀態轉移、來源路徑與 API 規格：`docs/modules/PRD/產品主檔產品屬性.md`。既有 Oracle 字典證據在 `database/reference/mestest_prd_product_basis_source_ddl.sql` 的 `TBLPRDPRODUCTPROPERTY`；此表已存在，ProductProperty DDL 為 Oracle 字典重建，勿重建同一表或把 CREATE-only 參照 SQL 當 migration。
+
+### 家用端待辦
+
+- [ ] git pull 後先比對 YMES live PostgreSQL schema/migrations，確認產品屬性表是否已存在及其欄位/PK，避免重複建表。尚缺欄位才新增 migration；Create SQL 僅供 review。
+- [ ] 提供 `GET/POST/PUT/DELETE /api/products/{productNo}/versions/{version}/properties`、`POST /api/products/{productNo}/versions/{version}/properties/{propertyNo}/approve`；List 回傳 PK、DefaultValue、PropertySequence、Description、IssueState、DataStamp、Creator/CreateDate/Reviser/ReviseDate。
+- [ ] Add/Edit 只接收 ProductNo、Version、PropertyNo、DefaultValue、PropertySequence、Description。Creator/日期/IssueState/DataStamp 由 server 控制；Edit 僅狀態 0，PropertyNo 不可改；Update 用複合鍵+舊 DataStamp CAS。Sequence 限 0..99。
+- [ ] SYS Property Basis options 對應 `LoadProductPropertyDefine(PropertyType=5, IssueState=2)`；欄位至少 ElementNo、名稱、DefaultValue、ElementSequence、Controlled。PropertyValue options 對應 `wsSYS.LoadElementValue(ElementNo)`。API 端重用/建立適當 SYS lookup API，不能讓前端提供 Controlled 或有效值清單作為信任資料。
+- [ ] Add 與 DefaultValue 更新需服務端驗證 PropertyNo 已核准且值符合 SYS Element/MES Parameter (`ChkElementValueValid`)。
+- [ ] Delete：IssueState 0/-1 實體刪除；2 以 DataStamp CAS 設 -1；1 拒絕。多筆逐筆處理，回傳各筆結果，碰到第一筆錯誤即停止後續。
+- [ ] Approve 僅接受狀態 0。IssueNo=`PRD PROPERTY` 沒有 Job/Detail 時直接設 2；有簽核 Job 時建 Issue Master、設 1、送第一關通知，callback 再核准/退回。保留 audit/EventLog 並使用 DataStamp。
+- [ ] 產品主檔核准由 server 重查 SYS Controlled=1 必填、Controlled=2 空值確認及流程 RulePhase/AttribPhase/CPASS 規則，不接受 Vue 送入的 Controlled 作安全依據。
+- [ ] 明確對應 ProductType/無版次屬性的 PRODUCTVERSION sentinel；Oracle 空字串與空白語意需以現有資料/應用層規則定義，避免將 `-1`、`''`、`' '` 混為一談。
+
+公司端未執行 build/test/browser 驗收；Property 的選項只有 DEV 假資料，不連 Oracle/YMES API。Parameter API/schema handoff 見本檔新段落。
+
+## PRD PD102 產品 Parameter Setup API/schema handoff（公司端 2026-11-18）
+
+公司端已依 WinForms `PD_ParameterSetup` Form/Designer、`wsPRD`、`clsProduct` 完成 DEV 樹狀子視窗。請先 pull 最新 `main`。詳細畫面、ContextMenu 權限、欄位、驗證、來源服務與資料表見 `docs/modules/PRD/產品參數設定.md`。Oracle source 結構與 PostgreSQL CREATE-only 參考：
+
+- `database/reference/mestest_prd_parameter_setup_source_ddl.sql`
+- `database/reference/mestest_prd_parameter_setup_create.sql`
+
+### 家用端待辦
+
+- [ ] 先核對 YMES PostgreSQL live schema、migration、repository/entity 是否已包含產品 OP/Attrib/Rule/Equipment Recipe；上述 CREATE-only 是結構參照，不是部署 migration。只對確實缺少的資料新增獨立 migration，勿照檔案一口氣建立 8 張 Oracle 原名表。
+- [ ] 主要 MES 結構為 `TBLPRDOP` (PK SerialNo)、`TBLPRDOPATTRIB` (PK SerialNo/AttribNo/ECNNo/EquipmentType)、`TBLPRDOPRULE` (PK SerialNo/RuleNo)、`TBLPRDOPEQPRECIPE` (無 PK/unique，僅 SerialNo/EquipmentNo/RecipeGroup 非唯一 index)。四表均無 DataStamp、IssueState、FK、Trigger。Oracle 設備關聯表允許資料重複，YMES API 應明確做 duplicate check/交易控制。
+- [ ] `TBLPRDOPRULEXML_CLOB`、`TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION` 已由公司端依實際 service 查明分別供 Rule XML fallback 與 PD102 Business Rule 使用；請沿用該功能 handoff 並先比對 YMES schema。`TBLPRDOPAREA` 是相鄰功能，需追實際 service 後再決定是否納入；不可因參照 SQL 存在就一併建表。
+- [ ] 建議讀取產品版本的 Parameter tree；至少回傳 PS/OP、OP SerialNo/NodeID/OPScript、Attrib、Rule、EquipmentNo/RecipeGroup、Recipe Detail。實作 Add OP、Add Condition OP、Attrib/Rule/Equipment 關聯 CRUD；SerialNo 由 server 產生。產品 IssueState!=0 全部唯讀；Server 必須重查產品、PS/OP、權限及 Element/Phase/Rule/Equipment lookup。
+- [ ] Attrib API 必須保留 `AttribType` 0 Lot / 1 Component、`AttribSource` 0 KeyIn / 1 Calculate / 2 System / 3 Setup、AttribPhase/Sequence/Value/Script/SaveToLotPropertyNo/QCItemNo 等語意；重做 Element Value、Phase 99、Calculate Script、Setup Default、SaveToProperty/QC Item 驗證。EquipmentType/ECNNo 也是 Oracle Attrib NOT NULL 複合 PK 欄位。
+- [ ] **先釐清 Oracle/WinForms 欄位差異再實作 Attrib insert：** MESTEST 字典顯示 TBLPRDOPATTRIB.ECNNO、EQUIPMENTTYPE NOT NULL 且無 Trigger；可讀到的 `wsPRD.AddPRDOPAttrib`/`clsProduct.AddPRDOPAttrib` XML/SQL 路徑未明確帶這兩欄。檢查本機客製 wsPRD、執行時 AdditionalXml、資料庫是否有版本差異；不要塞空字串或假值。
+- [ ] 一般 Rule 的 RuleNo/Phase/Script/Type required；CP/FT 專用 Rule 使用不同 service/資料結構，須另核對 RuleClass/CP/FT package API 後再承諾支援。設備候選由產品/OP 可用設備 lookup，Recipe Detail 僅由 RecipeGroup 主檔讀取，產品 OP 只存 RecipeGroup。
+- [ ] `DBMS_METADATA.GET_DDL` 本次從 Oracle 連線回 SocketException，但 Windows PowerShell 5.1/ODP.NET 對 ALL_TAB_COLUMNS、ALL_CONSTRAINTS、ALL_CONS_COLUMNS、ALL_INDEXES、ALL_IND_COLUMNS 的唯讀查詢成功；source DDL 因此是 Oracle 字典重建邏輯 CREATE，不含 tablespace/storage。未讀業務資料、未在 Oracle 執行 DDL/DML。連線方式/秘密處理見 `docs/DATABASE_CONNECTION.md`，密碼只留本機受保護設定，不寫入 Git。
+- [ ] 實作 API/schema 並 push 後回報公司端；公司端接 API 時保留 `ProductParameterSetup.vue` 的 DEV mode 與 API read-only 行為界線。
+
+公司端未執行 build、test 或 browser 驗收，未連 YMES PostgreSQL，也未部署上述 SQL。
+
+## PRD PD102 Business Rule API/schema handoff（2026-11-18）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/PRD/產品商業規則.md`、`docs/modules/PRD/產品參數設定.md` 及 `docs/DATABASE_CONNECTION.md` 的 PD102 metadata 紀錄。
+- [ ] 先比對 YMES live schema/migrations。重用 `database/reference/mestest_prd_parameter_setup_source_ddl.sql`、`mestest_prd_parameter_setup_create.sql` 中的 `tblprdopbusinessrule`、`tblprdopbusinessrulerelation`、`tblprdoprulexml_clob`；三張 Oracle source table 已由公司端直接查 MESTEST 字典，不能因 CREATE-only 檔再建第二份表或原樣執行 SQL。
+- [ ] 實作產品/版次/OP 範圍的 Business Rule 查詢與 ADD/EDIT/DEL/Default API。主表 RuleXmlString 是 Oracle LONG；relation 以 `(ProductNo,ProductVersion,OPNo,FromNode,ToNode,LinkName)` 為 PK；LONG provider fallback 使用既有 CLOB 表。XML 與 relations 同一交易更新/刪除。
+- [ ] 保留 `iMESXMLFlow.Serial.FlowToXML/XMLToFlow` 的舊版 XML round-trip，並把 Vue graph DTO 轉譯至 RuleXmlString；不能把 DEV localStorage JSON 直接當正式資料。實作 BR/Phase/Template/Process/OP lookup，NetFlow lookup 需帶 `IsNetFlow`。
+- [ ] Server 依登入者的 Function/PS 權限與 DB 當前產品 IssueState 驗證；不可接受 client 傳 `PSPrivilege`。依規格實作 Start/End、PASS、輸入/輸出連線與 Phase 驗證，Default 複製 `TBLOPBASIS` XML 及 `TBLOPBUSINESSRULERELATION`，回報錯誤不可吞例外。
+- [ ] 此功能不需要建立新的 Oracle 表；migration 僅在 YMES live schema 比對後確有缺漏才新增。完成 API/schema 後通知公司端 pull，接正式 API 與 serializer。
+
+## PRD PD102 Business Rule DEV UI（2026-11-18）
+
+- [x] 核對真實入口 `btnBusinessRule_Click`、`frmProductOPBusinessRule`/Draw、WinForms Designer、`wsPRD`、`clsProduct`、Service graph validation；排除名稱相近但不同的 `PD_PRDOPRule_THEIL_BU1`。
+- [x] 完成產品 OP 清單/圖形預覽及 Default/Close 版面、Add/Edit/多選 Del、圖形節點/連線/Phase 編輯、NetFlow readonly 的 DEV UI，接至 ProductBasisMaster 並只寫專用 localStorage。
+- [x] 新增 `docs/modules/PRD/產品商業規則.md`；重用 Parameter 階段已查到的三張 Oracle 表與既有 DDL/PG CREATE 參照，沒有重複 Oracle query、沒有新增表或 CREATE SQL。
+- [ ] Production API、OP/Phase/Business Rule/Template lookup、Lassalle XML serializer 尚待家用端完成；Default、樣板及 catalog 現在仍為 DEV 假資料。
+- [ ] 公司端未執行 build/test/browser。OPDescription 與 RecipeGroup DEV/DDL handoff 已分別記於本檔後續段落；辦公室端接續 Accessory。
+
+
+## PRD PD102 OPDescription API/schema handoff（2026-11-18 公司端更新）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/PRD/產品作業站說明.md`、`docs/modules/PRD/產品主檔.md` 及 `docs/DATABASE_CONNECTION.md` 的 OPDescription 查詢紀錄。
+- [ ] 比對 YMES PostgreSQL live schema、migration、entity/repository；公司端搜尋目前未找到 OPDescription 專用 API/schema。Oracle source DDL 與 PG CREATE-only 參照為 `database/reference/mestest_prd_op_description_source_ddl.sql`、`mestest_prd_op_description_create.sql`。只在 live schema 確認缺少時建立 forward migration，不照 CREATE-only 直接部署。
+- [ ] 表欄位：ProductNo varchar(50)、ProductVersion varchar(5)、OPNo varchar(20) 必填複合 PK；Description varchar(255) nullable；DataStamp numeric(11,0) nullable default 0；Creator/Reviser varchar(10)、CreateDate/ReviseDate nullable。無 FK、trigger、其他 index。
+- [ ] 實作產品/版本範圍 OPDescription GET/POST/PUT/DELETE。GET 依登入者 PS 權限過濾並 join OP lookup；POST 驗證產品 IssueState=0、OP 在產品已設定且有權限的流程範圍、同產品版本 OPNo 唯一；PUT 以複合鍵 + DataStamp CAS 原子更新 Description、Reviser/ReviseDate，衝突回 409；DELETE 要求明確 OPNo 並實體刪除。
+- [ ] 提供同等 WinForms 查找：產品流程 lookup、指定流程的 Expand Process OP lookup；server 依 session 決定 PS 權限，排除已存在於目前產品/版本的 OPNo，OP 說明初值取 `TBLOPBASIS.Description`。不可信任 client 傳入 PSPrivilege、IssueState 或 audit 欄位。
+- [ ] UI 多選 DEL 是逐筆呼叫、遇錯停止且保留前面成功刪除；API 若提供批次 endpoint，需定義並回傳部分成功結果。產品 Copy/Version 需保留 Core `CopyPRDOPDescription` 行為；Product Load Default 的 Description 是另一個功能，不要塞進此子視窗 CRUD。
+- [ ] 完成後同步 API contract/schema migration 與文件、push main，通知公司端接正式 API。DEV localStorage 不能寫入正式 DB。
+
+## PRD PD102 RecipeGroup API/schema handoff（2026-11-18 公司端更新）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/PRD/產品RecipeGroup.md`、`docs/modules/PRD/產品主檔.md` 與 `docs/DATABASE_CONNECTION.md` metadata provenance。
+- [ ] Oracle source DDL 與 PostgreSQL CREATE-only 參照為 `database/reference/mestest_prd_recipe_group_source_ddl.sql`、`mestest_prd_recipe_group_create.sql`。先查 YMES live schema、migration、entity/repository；僅當 assignment relation 或必要 lookup 確實不存在時新增 forward migration。`TBLPRDRECIPEBASIS` 是共用 Recipe 主檔，不能重複建表。
+- [ ] Oracle `TBLPRDRECIPE` 為 `(ProductNo varchar(50), ProductVersion varchar(5), RecipeGroup varchar(50))` 必填複合 PK，無 audit 欄、無 FK/index/trigger（PK unique index 除外）。`TBLPRDRECIPEBASIS` 為 `(RecipeGroup varchar(50), RecipeVersion numeric(2,0))` 複合 PK；RecipeVersion default 0 NOT NULL、IssueState default 0 nullable、CurVersion default 0 NOT NULL、DataStamp default 0 nullable，其餘 Description/Audit nullable；無 FK/trigger/額外 index。
+- [ ] 提供產品版本 RecipeGroup GET、已核准目前版 RecipeGroup lookup、單筆 POST 指派與要求明確 RecipeGroup 的 DELETE；不提供 Edit（WinForms EDIT 隱藏，service 也沒有實際更新）。Lookup 對應 `TBLPRDRECIPEBASIS` 的 `CurVersion=1 AND IssueState=2`，新增時 server 重新檢查，不信任 client。
+- [ ] 入口傳入 IssueState，但 `frmProductRecipe` 不用狀態限制 ADD/DEL；新 API 先保留這項 legacy 行為並檢查登入者對產品的權限。若要加狀態限制，需另有業務規則依據。
+- [ ] WinForms 多列刪除逐筆呼叫、遇錯停止且保留先前成功結果。API 若做批次需定義 partial result；單筆 DELETE 不可省略 RecipeGroup，避免 Core 預設刪除產品版本全部關聯。
+- [ ] 產品 Copy/Version 需保留 `CopyPRDRecipe`：先清除目標版本 RecipeGroup 關聯，再複製來源關聯。Product Recipe Apply/Confirm/Close 綁定原生指派語意；完成 schema/API/文件後 push main，通知公司端接正式 API。DEV localStorage 不寫正式 DB。
+
+公司端此段未執行 build/test/browser、未連 YMES PostgreSQL、未部署 SQL。

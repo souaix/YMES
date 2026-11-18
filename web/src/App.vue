@@ -3,6 +3,10 @@ import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import MenuTree from './components/MenuTree.vue'
 import MenuIcon from './components/MenuIcon.vue'
 import EquipmentMaster from './components/EquipmentMaster.vue'
+import ProcessBasisMaster from './components/ProcessBasisMaster.vue'
+import ProcessTypeMaster from './components/ProcessTypeMaster.vue'
+import ProductionSegmentMaster from './components/ProductionSegmentMaster.vue'
+import StageBasisMaster from './components/StageBasisMaster.vue'
 import EquipmentCarrierCategoryMaster from './components/EquipmentCarrierCategoryMaster.vue'
 import EquipmentCarrierTypeMaster from './components/EquipmentCarrierTypeMaster.vue'
 import EquipmentCarrierBasisMaster from './components/EquipmentCarrierBasisMaster.vue'
@@ -34,7 +38,15 @@ import LocatorBasisMaster from './components/LocatorBasisMaster.vue'
 import ProductionLineBasisMaster from './components/ProductionLineBasisMaster.vue'
 import PositionBasisMaster from './components/PositionBasisMaster.vue'
 import AreaShowMaster from './components/AreaShowMaster.vue'
+import ProductBasisMaster from './components/ProductBasisMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
+import OperationTypeMaster from './components/OperationTypeMaster.vue'
+import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
+import BusinessRuleBasisMaster from './components/BusinessRuleBasisMaster.vue'
+import OperationGroupMaster from './components/OperationGroupMaster.vue'
+import CustomerOPMappingMaster from './components/CustomerOPMappingMaster.vue'
+import EcnOperationGroupMaster from './components/EcnOperationGroupMaster.vue'
+import OperationGroupAttribMaster from './components/OperationGroupAttribMaster.vue'
 import MaterialVendorMaster from './components/MaterialVendorMaster.vue'
 import MaterialTypeMaster from './components/MaterialTypeMaster.vue'
 import MaterialTypeQCItemMaster from './components/MaterialTypeQCItemMaster.vue'
@@ -84,6 +96,9 @@ import QcMaterialSpecMaster from './components/QcMaterialSpecMaster.vue'
 import QcProductSpecMaster from './components/QcProductSpecMaster.vue'
 import QcInspMachineParameterTypeMaster from './components/QcInspMachineParameterTypeMaster.vue'
 import QcInspectionMachineMaster from './components/QcInspectionMachineMaster.vue'
+import QcInspDriverMaster from './components/QcInspDriverMaster.vue'
+import QcOcapBasisMaster from './components/QcOcapBasisMaster.vue'
+import QcOcapDispositionAdjust from './components/QcOcapDispositionAdjust.vue'
 import FunctionPending from './components/FunctionPending.vue'
 const brandLogoUrl = `${import.meta.env.BASE_URL}kd-logo.png`
 const appHomeRoute = import.meta.env.BASE_URL
@@ -148,6 +163,7 @@ interface RuntimeConfig {
 interface AuthResponse {
   userNo: string
   displayName: string
+  enterpriseNo?: string
   mustChangePassword: boolean
   message?: string
 }
@@ -250,7 +266,7 @@ const fallbackMenuTree: MenuNode[] = [
     label: '作業站資料',
     shortLabel: '站',
     moduleNo: 'OP',
-    children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }] }],
+    children: [{ id: 'operation-settings', label: '作業站設定', shortLabel: '設', children: [{ id: 'operation-master', label: '作業站主檔', tableName: 'tblopbasis', shortLabel: '主', functionNo: 'OP BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP TYPE', label: '作業站類別資料', tableName: 'tbloptype', shortLabel: '類', functionNo: 'OP TYPE', moduleNo: 'OP' }, { id: 'function:OP:OP RULE BASIS', label: '作業站法則設定', tableName: 'tblopcontrolrule', shortLabel: '則', functionNo: 'OP RULE BASIS', moduleNo: 'OP' }, { id: 'function:OP:BR BASIS', label: '企業邏輯設定', tableName: 'tblopbusinessrulebasis', shortLabel: '企', functionNo: 'BR BASIS', moduleNo: 'OP' }, { id: 'function:OP:OP GROUP BASIS', label: '作業站群組資料', tableName: 'tblopgroupbasis', shortLabel: '群', functionNo: 'OP GROUP BASIS', moduleNo: 'OP' }] }, { id: 'operation-industry-package', label: '行業包', shortLabel: '行', children: [{ id: 'function:OP:B_CUSTOMER OP MAPPING', label: '客戶站點對應設定', tableName: 'tbl_bopcustopmapbasis', shortLabel: '客', functionNo: 'B_CUSTOMER OP MAPPING', moduleNo: 'OP' }, { id: 'function:OP:B_ECN OP GROUP BASIS', label: 'ECN 作業站群組設定', tableName: 'tblopecngroupbasis', shortLabel: 'E', functionNo: 'B_ECN OP GROUP BASIS', moduleNo: 'OP' }] }],
   },
   {
     id: 'material-data',
@@ -277,6 +293,7 @@ const fallbackMenuTree: MenuNode[] = [
     children: [{ id: 'quality-inspection-machine', label: '檢測儀器', shortLabel: '儀', children: [
       { id: 'function:QC:INSPMACHINE PARAMETER TYPE', label: '檢測儀器類別', shortLabel: '類', functionNo: 'INSPMACHINE PARAMETER TYPE', moduleNo: 'QC', tableName: 'tblqcinspmachineparametertype' },
       { id: 'function:QC:INSPMACHINE PARAMETER', label: '檢測儀器基本資料', shortLabel: '機', functionNo: 'INSPMACHINE PARAMETER', moduleNo: 'QC', tableName: 'tblqcinspmachineparameter' },
+      { id: 'function:QC:INSPMACHINE DRIVER', label: '檢測設備連線程式', shortLabel: '連', functionNo: 'INSPMACHINE DRIVER', moduleNo: 'QC', tableName: 'tblqcinspdriver' },
     ] }, { id: 'quality-qc-settings', label: '品管設定', shortLabel: '管', children: [
       { id: 'function:QC:QCITEM_A', label: '計數品管項目', shortLabel: '數', functionNo: 'QCITEM_A', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
       { id: 'function:QC:IMPORT QCITEM ATTRIBUTES', label: '計數品管項目匯入', shortLabel: '匯', functionNo: 'IMPORT QCITEM ATTRIBUTES', moduleNo: 'QC', tableName: 'tblqcitemforattributes' },
@@ -318,6 +335,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:HOLDITEM BASIS', label: '異常原因基本資料', shortLabel: '因', functionNo: 'HOLDITEM BASIS', moduleNo: 'QC', tableName: 'tblqcholditembasis' },
       { id: 'function:QC:HOLD DESCRIPTION', label: '異常說明', shortLabel: '說', functionNo: 'HOLD DESCRIPTION', moduleNo: 'QC', tableName: 'tblqcholddescription' },
       { id: 'function:QC:HOLD DISP GROUP', label: '異常處理群組', shortLabel: '群', functionNo: 'HOLD DISP GROUP', moduleNo: 'QC', tableName: 'tblqcholddispgroupbasis' },
+      { id: 'function:QC:OCAP BASIS', label: 'OCAP基本資料', shortLabel: 'O', functionNo: 'OCAP BASIS', moduleNo: 'QC', tableName: 'tblqcocapbasis' },
+      { id: 'function:QC:OCAP DISPOSITION ADJUST', label: 'OCAP異常單處置調整', shortLabel: '處', functionNo: 'OCAP DISPOSITION ADJUST', moduleNo: 'QC', tableName: 'tblwiperfocapdisposition' },
       { id: 'function:QC:FIRST GROUP', label: '第一處理群組', shortLabel: '一', functionNo: 'FIRST GROUP', moduleNo: 'QC', tableName: 'tblqcfirstgroup' },
       { id: 'function:QC:FINAL GROUP', label: '最後處理群組', shortLabel: '末', functionNo: 'FINAL GROUP', moduleNo: 'QC', tableName: 'tblqcfinalgroup' },
     ] }],
@@ -327,7 +346,7 @@ const fallbackMenuTree: MenuNode[] = [
     label: '流程資料',
     shortLabel: '流',
     moduleNo: 'PRS',
-    children: [{ id: 'process-settings', label: '流程設定', shortLabel: '設', children: [{ id: 'process-master', label: '流程主檔', tableName: 'tblprsprocessbasis', shortLabel: '主', functionNo: 'PRS BASIS', moduleNo: 'PRS' }] }],
+    children: [{ id: 'process-settings', label: '流程設定', shortLabel: '設', children: [{ id: 'process-master', label: '流程主檔', tableName: 'tblprsprocessbasis', shortLabel: '主', functionNo: 'PRS BASIS', moduleNo: 'PRS' }, { id: 'function:PRS:PRS TYPE', label: '流程類別資料', tableName: 'tblprstype', shortLabel: '類', functionNo: 'PRS TYPE', moduleNo: 'PRS' }, { id: 'function:PRS:PS BASIS', label: '生產區段資料', tableName: 'tblprsproductionsegment', shortLabel: '區', functionNo: 'PS BASIS', moduleNo: 'PRS' }, { id: 'function:PRS:STAGE BASIS', label: '製造層別設定', tableName: 'tbl_fabprsstagebasis', shortLabel: '層', functionNo: 'STAGE BASIS', moduleNo: 'PRS' }] }],
   },
   {
     id: 'product-data',
@@ -371,6 +390,9 @@ const menuRoutes: Record<string, string> = {
   'function:QC:PRDQCITEM': appBasePath + '/QC/ProductSpec',
   'function:QC:INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'function:QC:INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
+  'function:QC:INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
+  'function:QC:OCAP BASIS': appBasePath + '/QC/OCAPBasis',
+  'function:QC:OCAP DISPOSITION ADJUST': appBasePath + '/QC/OCAPDispositionAdjust',
   'function:QC:QCITEM_V': appBasePath + '/QC/VariableQcItem',
   'function:QC:IMPORT QCITEM VARIABLES': appBasePath + '/QC/VariableItemImport',
   'function:QC:QCITEM RULE MAP': appBasePath + '/QC/VariableItemRuleMap',
@@ -433,9 +455,19 @@ const menuRoutes: Record<string, string> = {
   'function:EQP:ACC CATEGORY': equipmentAccessoryCategoryRoute,
   'function:EQP:ACC CATEGORY STATE': equipmentAccessoryCategoryStateRoute,
   'function:EQP:ACC TYPE': equipmentAccessoryTypeRoute,
+  'function:PRS:PRS BASIS': `${appBasePath}/PRS/ProcessBasis`,
+  'function:PRS:PRS TYPE': `${appBasePath}/PRS/ProcessType`,
+  'function:PRS:PS BASIS': `${appBasePath}/PRS/ProductionSegments`,
+  'function:PRS:STAGE BASIS': `${appBasePath}/PRS/FabPrsStageBasis`,
   'operation-master': `${appBasePath}/MasterData/Operations`,
+  'function:OP:OP TYPE': appBasePath + '/MasterData/OperationTypes',
+  'function:OP:OP RULE BASIS': appBasePath + '/OP/ControlRules',
+  'function:OP:BR BASIS': appBasePath + '/OP/BusinessRules',
+  'function:OP:OP GROUP BASIS': appBasePath + '/OP/Groups',
+  'function:OP:B_CUSTOMER OP MAPPING': appBasePath + '/OP/CustomerOPMapping',
+  'function:OP:B_ECN OP GROUP BASIS': appBasePath + '/OP/ECNOperationGroups',
+  'function:OP:B_OP GROUP ATTRIB': appBasePath + '/OP/OperationGroupAttributes',
   'material-master': `${appBasePath}/MasterData/Materials`,
-  'process-master': `${appBasePath}/MasterData/Processes`,
   'product-master': `${appBasePath}/MasterData/Products`,
 }
 
@@ -478,6 +510,7 @@ const functionRoutes: Record<string, string> = {
   'HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'MCLASS BASIS': appBasePath + '/QC/MClassBasis',
   'HOLDITEM BASIS': appBasePath + '/QC/HoldItemBasis',
+  'OCAP DISPOSITION ADJUST': appBasePath + '/QC/OCAPDispositionAdjust',
   'POSITION BASIS': positionBasisRoute,
   'PRODUCTION CONFIG': areaShowRoute,
   'EQP BASIS': equipmentRoute,
@@ -492,6 +525,13 @@ const functionRoutes: Record<string, string> = {
   'ACC BASIS': equipmentAccessoryBasisRoute,
   'EQP ACC STATE': equipmentAccessoryStateBasisRoute,
   'OP BASIS': `${appBasePath}/MasterData/Operations`,
+  'OP TYPE': appBasePath + '/MasterData/OperationTypes',
+  'OP RULE BASIS': appBasePath + '/OP/ControlRules',
+  'BR BASIS': appBasePath + '/OP/BusinessRules',
+  'OP GROUP BASIS': appBasePath + '/OP/Groups',
+  'B_CUSTOMER OP MAPPING': appBasePath + '/OP/CustomerOPMapping',
+  'B_ECN OP GROUP BASIS': appBasePath + '/OP/ECNOperationGroups',
+  'B_OP GROUP ATTRIB': appBasePath + '/OP/OperationGroupAttributes',
   'MTL BASIS': `${appBasePath}/MasterData/Materials`,
   'MTL VENDOR': materialVendorRoute,
   'MTL TYPE': materialTypeRoute,
@@ -501,10 +541,14 @@ const functionRoutes: Record<string, string> = {
   'MTL LABEL MAP BASIS': materialLabelMapRoute,
   'B_MTL AUTOLOADER SETUP': materialVendorAutoLoaderRoute,
   'B_EQP AUTOLOADER SETUP': equipmentAutoLoaderRoute,
-  'PRS BASIS': `${appBasePath}/MasterData/Processes`,
+  'PRS BASIS': `${appBasePath}/PRS/ProcessBasis`,
+  'PRS TYPE': `${appBasePath}/PRS/ProcessType`,
+  'PS BASIS': `${appBasePath}/PRS/ProductionSegments`,
+  'STAGE BASIS': `${appBasePath}/PRS/FabPrsStageBasis`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
+  'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
 }
 
 const runtimeConfig = ref<RuntimeConfig>({
@@ -545,7 +589,18 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
   const key = activeMasterKey.value
   return key === 'operation-master' || key === 'material-master' || key === 'process-master' || key === 'product-master' ? key : null
 })
+const isPrsProcessBasisPage = computed(() => activeMasterKey.value === 'function:PRS:PRS BASIS')
+const isPrsProcessTypePage = computed(() => activeMasterKey.value === 'function:PRS:PRS TYPE')
+const isProductionSegmentPage = computed(() => activeMasterKey.value === 'function:PRS:PS BASIS')
+const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
+const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
+const isOperationControlRulePage = computed(() => activeMasterKey.value === 'function:OP:OP RULE BASIS')
+const isBusinessRuleBasisPage = computed(() => activeMasterKey.value === 'function:OP:BR BASIS')
+const isOperationGroupPage = computed(() => activeMasterKey.value === 'function:OP:OP GROUP BASIS')
+const isCustomerOPMappingPage = computed(() => activeMasterKey.value === 'function:OP:B_CUSTOMER OP MAPPING')
+const isEcnOperationGroupPage = computed(() => activeMasterKey.value === 'function:OP:B_ECN OP GROUP BASIS')
+const isOperationGroupAttribPage = computed(() => activeMasterKey.value === 'function:OP:B_OP GROUP ATTRIB')
 const isMaterialVendorPage = computed(() => activeMasterKey.value === 'function:MTL:MTL VENDOR')
 const isMaterialTypePage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE')
 const isMaterialTypeQCItemPage = computed(() => activeMasterKey.value === 'function:MTL:MTL TYPE QCITEM')
@@ -566,6 +621,9 @@ const isQcMaterialSpecPage = computed(() => activeMasterKey.value === 'function:
 const isQcProductSpecPage = computed(() => activeMasterKey.value === 'function:QC:PRDQCITEM')
 const isQcInspMachineParameterTypePage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE PARAMETER TYPE')
 const isQcInspectionMachinePage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE PARAMETER')
+const isQcInspDriverPage = computed(() => activeMasterKey.value === 'function:QC:INSPMACHINE DRIVER')
+const isQcOcapBasisPage = computed(() => activeMasterKey.value === 'function:QC:OCAP BASIS')
+const isQcOcapDispositionAdjustPage = computed(() => activeMasterKey.value === 'function:QC:OCAP DISPOSITION ADJUST')
 const isQcVariableQcItemPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM_V')
 const isQcVariableItemImportPage = computed(() => activeMasterKey.value === 'function:QC:IMPORT QCITEM VARIABLES')
 const isQcVariableItemRuleMapPage = computed(() => activeMasterKey.value === 'function:QC:QCITEM RULE MAP')
@@ -716,6 +774,26 @@ function addDevelopmentEquipmentFunctions(items: MenuNode[]): MenuNode[] {
   return result
 }
 
+function addDevelopmentOperationIndustryFunctions(items: MenuNode[]): MenuNode[] {
+  const cloneTree = (nodes: MenuNode[]): MenuNode[] => nodes.map((item) => ({ ...item, children: item.children ? cloneTree(item.children) : undefined }))
+  const result = cloneTree(items)
+  const fallbackOperation = fallbackMenuTree.find((item) => item.moduleNo?.toUpperCase() === 'OP')
+  const fallbackIndustry = fallbackOperation?.children?.find((item) => item.label.trim() === '行業包')
+  if (!fallbackOperation || !fallbackIndustry) return result
+  let operation = result.find((item) => item.moduleNo?.toUpperCase() === 'OP')
+  if (!operation) { result.push(cloneTree([fallbackOperation])[0]); return result }
+  let industry = operation.children?.find((item) => item.label.trim() === '行業包')
+  if (!industry) {
+    industry = { id: 'development:OP:industry', label: '行業包', shortLabel: '行', moduleNo: 'OP', children: [] }
+    operation.children = [...(operation.children ?? []), industry]
+  }
+  const existing = new Set((industry.children ?? []).map((item) => item.functionNo?.toUpperCase() || item.id))
+  const fallbackFeatures = fallbackIndustry.children ?? []
+  industry.children = [...(industry.children ?? []), ...fallbackFeatures
+    .filter((item) => !existing.has(item.functionNo?.toUpperCase() || item.id))
+    .map((item) => cloneTree([item])[0])]
+  return result
+}
 function addDevelopmentInspectionMachineFunctions(items: MenuNode[]): MenuNode[] {
   const cloneTree = (nodes: MenuNode[]): MenuNode[] => nodes.map((item) => ({ ...item, children: item.children ? cloneTree(item.children) : undefined }))
   const result = cloneTree(items)
@@ -781,7 +859,7 @@ async function loadMenuTree(): Promise<void> {
     const response = await fetch(url, { credentials: 'include', cache: 'no-store' })
     if (!response.ok) throw new Error(`主選單 API 回應錯誤 (${response.status})。`)
     const apiMenuTree = mapMenuTree(await response.json() as MenuTreeApiResponse)
-    menuTree.value = import.meta.env.DEV ? addDevelopmentInspectionMachineFunctions(addDevelopmentEquipmentFunctions(apiMenuTree)) : apiMenuTree
+    menuTree.value = import.meta.env.DEV ? addDevelopmentOperationIndustryFunctions(addDevelopmentInspectionMachineFunctions(addDevelopmentEquipmentFunctions(apiMenuTree))) : apiMenuTree
     menuSource.value = 'api'
   } catch (error) {
     menuError.value = error instanceof Error ? error.message : '主選單載入失敗。'
@@ -1251,8 +1329,41 @@ async function signOut(): Promise<void> {
         <div v-else-if="menuSource === 'error'" class="framework-menu-note error" role="alert">
           主選單載入失敗：{{ menuError }}
         </div>
+        <ProcessBasisMaster
+          v-if="isPrsProcessBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProcessTypeMaster
+          v-else-if="isPrsProcessTypePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductionSegmentMaster
+          v-else-if="isProductionSegmentPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :enterprise-no="currentUser?.enterpriseNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <StageBasisMaster
+          v-else-if="isFabPrsStageBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
         <EquipmentMaster
-          v-if="isEquipmentPage"
+          v-else-if="isEquipmentPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
@@ -1665,7 +1776,31 @@ async function signOut(): Promise<void> {
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
+        <QcInspDriverMaster
+          v-else-if="isQcInspDriverPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcOcapBasisMaster
+          v-else-if="isQcOcapBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
 
+        <QcOcapDispositionAdjust
+          v-else-if="isQcOcapDispositionAdjustPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
         <QcVariableQcItemMaster
           v-else-if="isQcVariableQcItemPage"
           class="framework-content"
@@ -1865,6 +2000,70 @@ async function signOut(): Promise<void> {
         />
         <QcHoldDescriptionMaster
           v-else-if="isQcHoldDescriptionPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OperationTypeMaster
+          v-else-if="isOperationTypePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OperationControlRuleMaster
+          v-else-if="isOperationControlRulePage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <BusinessRuleBasisMaster
+          v-else-if="isBusinessRuleBasisPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OperationGroupMaster
+          v-else-if="isOperationGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <CustomerOPMappingMaster
+          v-else-if="isCustomerOPMappingPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <EcnOperationGroupMaster
+          v-else-if="isEcnOperationGroupPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OperationGroupAttribMaster
+          v-else-if="isOperationGroupAttribPage"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductBasisMaster
+          v-else-if="activeMasterDataKey === 'product-master'"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"

@@ -1,5 +1,29 @@
 # YMES / MES 資料庫連線與憑證處理
 
+### 更新 2026-11-18：PRS PS103 流程類別資料
+
+- 使用本機受保護 Oracle 設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查 `MESTEST.TBLPRSTYPE` 的 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`。只有 `PROCESSTYPE` PK unique index，沒有 FK/其他 index。
+- Oracle source DDL：`database/reference/mestest_prs103_process_type_source_ddl.sql`；YMES PostgreSQL CREATE-only 對照：`database/reference/mestest_prs103_process_type_create.sql`。只查結構 metadata，未讀業務列、未在 Oracle 執行 DDL/DML、未輸出/提交連線秘密。
+- `ISSUESTATE NUMBER(1,0) DEFAULT 0 NOT NULL`；`DATASTAMP NUMBER(11,0) DEFAULT 0` nullable。PS103 是 `TBLPRSTYPE` owner，供 PS104 流程類別 lookup 重用；若 YMES 已有表不重建，先比較 live defaults。
+- ProcessType 新增另有程式檢查：不可與 `TBLPRSProcessBasis.PROCESSNO` 大小寫不敏感重複。刪除 0/-1 要在同一交易清 `TBLPRSProcessProperty` 的同 ProcessNo 資料，再刪主檔；Oracle 無 FK。
+- Property 由 `PS_ProcessProperty` 共用模組管理，傳入 ProcessNo=ProcessType、ProcessVersion 未指定；核准 IssueNo=`PRS PROPERTY`。Oracle 連線秘密仍只保留本機受保護設定，不寫入 Git 文件或腳本。
+
+### 更新 2026-11-18：PRS PS104 流程基本資料九表
+
+- 使用本機受保護既有 Oracle 設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接連 MESTEST 唯讀取得 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`：`TBLPRSPROCESSBASIS`、`TBLPRSNODEBASIS`、`TBLPRSNODERELATION`、`TBLPRSNODEXML_CLOB`、`TBLPRSPROCESSPROPERTY`、`TBLPRSOPAPSBASE`、`TBLPRSOPAPSDETAIL`、`TBLPRSPRODUCTIONSEGMENT`、`TBLPRSTYPE`。
+- Oracle 原始 DDL 在 `database/reference/mestest_prs104_process_basis_source_ddl.sql`；PostgreSQL CREATE-only 對照在 `database/reference/mestest_prs104_process_basis_create.sql`。每表僅 PK unique index，無 FK 或其他 index。
+- 只查資料字典與 DDL，未讀 MES 業務列、未在 Oracle 執行 DDL/DML、未輸出/提交連線秘密。Oracle 來源連線值仍只保留在本機受保護設定，不寫進 Git 文件或腳本。
+- 第一階段已包含 ProcessBasis、NodeBasis、OPAPSDetail 三表；CREATE IF NOT EXISTS 不會更動已存在表。家用端需先比對 live defaults，再對實際缺 default 的欄位做 forward migration；新增 PS104 專屬 NodeRelation、NodeXML CLOB、ProcessProperty、OPAPSBase 四表；ProductionSegment 由 PS101 建立，ProcessType 由 PS103 建立，PS104 重用。
+- NodeBasis SAP/客製欄位為 `VARCHAR2(4 CHAR/10 CHAR/3000 CHAR/10 CHAR)`；資料字典的 DATA_LENGTH 以 bytes 呈現（例如 4 CHAR 對應 16 bytes），不能當字元欄寬並據此擴欄。
+- 舊流程圖序列化依賴外部 `iMESXMLFlow.dll`；Excel checker 依賴外部 DataImporter DLL。相容性/部署方式見 `docs/modules/PRS/流程基本資料.md`。
+
+### 更新 2026-11-18：QC408 OCAP 流程三表
+
+- 使用本機受保護的既有連線設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 `MESTEST.TBLQCOCAPBASIS`、`TBLQCOCAPNODEBASIS`、`TBLQCOCAPNODERELATION` 的 `DBMS_METADATA.GET_DDL` 與 PK/index/FK metadata。未讀 MES 業務列，未在 Oracle 執行 DDL，沒有輸出/提交連線秘密。
+- Oracle DDL 保存於 `database/reference/mestest_qc408_ocap_source_ddl.sql`；YMES PostgreSQL CREATE-only 對照為 `database/reference/mestest_qc408_ocap_create.sql`。三表只有 PK unique index，沒有 FK/額外索引。Relation 的 `OCAPLINKNAME` 由複合 PK 實際要求 NOT NULL；OCAP Basis 的 DataStamp nullable 且 DEFAULT 0。
+- `OCAPXMLSTRING` 是舊 AddFlow serializer CLOB；Flow Form 呼叫 `iMESXMLFlow.dll` 的 `FlowToXML/XMLToFlow`，來源 repository 未含該 serializer 原始碼。家用端需在 API 儲存前確認相容格式，不能直接把 Vue 結構化 payload 當成舊 XML。
+- WinForms/UI、刪除/簽核、三表交易及 API handoff 見 `docs/modules/QC/OCAP基本資料.md`。
+
 ### 更新 2026-11-18：QC501–QC503 檢測儀器共用資料表
 
 - 使用已保存的本機受保護連線設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 MESTEST 六張表的 CREATE TABLE/PK unique index DDL：`TBLQCINSPMACHINEPARAMETERTYPE`、`TBLQCINSPMACHINETYPE`、`TBLQCINSPMACHINEBASIS`、`TBLQCINSPMACHINEPARAMETER`、`TBLQCINSPMACHINEPROPERTY`、`TBLQCINSPDRIVER`。
@@ -8,6 +32,7 @@
 - QC501 表主鍵實際是 InspMachineType 單欄；來源 `IssueState`/`DataStamp` 可 NULL 且有 DEFAULT，CREATE reference 保留 nullable；`ChNo` 欄位長度為 3，但 WinForms TextBox MaxLength=10，API 需回報超長值錯誤，不得靜默截斷。
 - QC502「檢測儀器基本資料」沿用同一批 Oracle source DDL 與 PostgreSQL CREATE 對照；其主要寫入表 `TBLQCINSPMACHINEPARAMETER` 在 QC501 六表清單中已直接查得。本次未重查 Oracle，沒有讀業務列或執行 Oracle DDL。`TBLQCINSPMACHINEBASIS` 不在 QC502 Form/Core 的 Add/Edit/Delete 呼叫內，不要當成 QC502 主表。
 - 家用端 2026-11-18 live schema audit 確認六張 `tblqcinsp*` 表皆缺少；先以遠端 `postgres` 維護角色備份 YMES，`/opt/ymes/backups/ymes_before_0027_qc501_20261118.dump` 通過 `pg_restore --list`，再套用 `database/migrations/0027_qc501_qc502_inspection_machines.sql`。六張表已建立並授予 `ymes_app` 表級 CRUD；API 角色本身無 schema CREATE 權限。此 migration 沒有建立額外 FK/index、沒有複製來源業務資料。
+- QC503「檢測設備連線程式」主表 `TBLQCINSPDRIVER` 沿用上述已取得的 Oracle source DDL 與 PostgreSQL CREATE 參考；本功能不需另查 Oracle 或新增 CREATE SQL。此回合依 WinForms/wsQC/Core/Driver Function 原始碼核對行為；沒有讀取 MES 業務資料列、連 YMES PostgreSQL、執行 Oracle DDL 或輸出連線秘密。
 
 ## 連線用途與邊界
 
@@ -499,3 +524,89 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - QC305 不新增表；重用 YMES Chart Basis/Detail/DetailLog、產品、PRDQCITEM、QC Item/Factor/Group schema。`TBLPRDTYPE` 是舊產品類別 lookup 依賴，但 repo 沒有獨立 Oracle DDL reference；家用端先核對 live schema/API，若確認 YMES 缺少對應物件，再由公司端透過 PowerShell + Oracle.ManagedDataAccess 取得原始 DDL。
 - 產品 Basis 的動態 PRODUCT 因子在 YMES 使用 `factorvalues JSONB`；家用端需按 QC302 實際資料存取方式核對舊 physical `product` 欄的相容性。QC305 Core 以 ProductNo 而非 ProductVersion/OPNo 讀寫 chart basis，規格已記錄此舊行為。
 - 本回合未在 Oracle 執行 DDL、未查 YMES PostgreSQL、未輸出或寫入 IP、帳號、密碼、SID 或受保護連線設定。
+
+### 更新 2026-11-18：QC409 OCAP 異常單處置調整
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，讀取既有受保護 DatabaseConfigs.CS.Test.Mes.ConnectionString，直連 MESTEST 查 DBMS_METADATA.GET_DDL 及 index metadata。查詢只讀結構，不讀 WIP 業務列；未在 Oracle 執行 DDL/DML，連線值未輸出或寫入 Git。
+- 專用表 DDL：mestest_qc409_wip_ocap_source_ddl.sql，涵蓋 TBLWIPERFOCAPDISPOSITION、TBLWIPERFOCAPSTATE、TBLWIPERFOCAPGROUPSTATE。
+- 核心 ERF/WIP/通知依賴 DDL：mestest_qc409_wip_disposition_dependencies_source_ddl.sql，涵蓋 TBLWIPERFBASIS、TBLWIPERFBATCHLOT、TBLWIPERFDISPOSITION、TBLWIPERFHOLDREASONDISP、TBLWIPLOTSTATE、TBLWIPLOTLOG、TBLWIPGOODBINSTATE、TBLWIPERF_ATTACHFILE、TBLWIPERFOCAP_ATTACHFILE、TBLUSRUSERBASIS、TBLENTCUSTOMERCONTACTOR，以及來源索引。
+- mestest_qc409_wip_ocap_create.sql 僅為三張 OCAP 專用表提供 YMES PostgreSQL schema-only Create 對照；其他表為共用 WIP/ENT/USR schema，家用端需查 live schema/migrations 再適配，勿重建或盲目套用 Oracle DDL。
+### 更新 2026-11-18：OP103 作業站類別 TBLOPTYPE
+
+- 以公司端既有受保護 Oracle 設定，透過 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 MESTEST.TBLOPTYPE 的 DBMS_METADATA.GET_DDL 與索引資訊；DDL 保存為 database/reference/mestest_op103_optype_source_ddl.sql。只讀 metadata，沒有讀 MES 業務資料列或執行 Oracle DDL；連線秘密沒有寫入 Git。
+- 確認主鍵只有 OPTYPE；無 FK/額外 index。DATASTAMP nullable + DEFAULT 0；ISSUESTATE NOT NULL + DEFAULT 0。PostgreSQL CREATE-only 對照為 database/reference/mestest_op103_optype_create.sql，不等於 migration。
+- WinForms 舊 Core 新增作業站類別前，會檢查 TBLOPBASIS.OPNO 是否已存在同名 OP；刪除會先清除 TBLOPPROPERTY 中對應 OPNo。家用端須先比 live schema 與 YMES OP Property API，再實作交易及 namespace 保護，詳見 docs/modules/OP/作業站類別資料.md。
+
+### 更新 2026-11-18：OP101 作業站法則設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護連線唯讀取得 `MESTEST.TBLOPCONTROLRULE` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_CONSTRAINTS`/`ALL_INDEXES`；確認僅有 RuleNo 主鍵唯一索引，無 FK 或其他索引。
+- Oracle source DDL 與 PostgreSQL CREATE-only 參考：`database/reference/mestest_op101_control_rule_source_ddl.sql`、`mestest_op101_control_rule_create.sql`。未讀 MES 業務列，沒有在 Oracle 執行 DDL；憑證未輸出或保存到 Git。
+
+### 更新 2026-11-18：OP102 企業邏輯設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護 DatabaseConfigs.CS.Test.Mes.ConnectionString 直連 MESTEST，唯讀取得 TBLOPBUSINESSRULEBASIS、TBLOPSCENARIOBASIS 的 DBMS_METADATA.GET_DDL，並查 ALL_INDEXES/ALL_CONSTRAINTS。
+- 兩表各只有主鍵 unique index、沒有外鍵或額外索引。Oracle source DDL 與 PostgreSQL CREATE-only 對照分別保存於 OP102 reference 檔案；情境表僅為 DT 選項 lookup。
+- 僅查結構 metadata，沒有查詢 MES 業務資料列、沒有在 Oracle 執行 DDL；連線值未輸出或放入 Git。
+
+### 更新 2026-11-18：OP105 作業站群組資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護的 MESTEST 設定直連唯讀取得 TBLOPGROUPBASIS、TBLOPGROUPDETAIL 的 DBMS_METADATA.GET_DDL，並查 ALL_TABLES、ALL_INDEXES、ALL_CONSTRAINTS。
+- 兩表只有主鍵唯一索引，沒有 FK/額外 index。來源 DDL 與 PostgreSQL CREATE-only 對照分別保存於 database/reference/mestest_op105_group_basis_source_ddl.sql、mestest_op105_group_basis_create.sql；first-phase bootstrap 也已同步 Oracle DEFAULT 0。
+- 只讀結構 metadata，未讀 MES 業務資料列、未在 Oracle 執行 DDL/DML；連線秘密未輸出或提交。家用端需先查 YMES live schema/migrations，已存在的表只補必要 defaults migration。
+
+### 更新 2026-11-18：OPB03 客戶站點對應設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從受保護的 MESTEST 連線唯讀執行 DBMS_METADATA.GET_DDL，並查 ALL_CONSTRAINTS、ALL_INDEXES。
+- 取得 TBL_BOPCUSTOPMAPBASIS、TBL_BOPCUSTOPMAPDETAIL DDL；兩表只有欄位 NOT NULL checks 與 PK，只有 PK unique index，沒有 FK/額外索引。
+- Oracle DDL 與 PostgreSQL CREATE-only 參照分別保存於 database/reference/mestest_opb03_customer_op_mapping_source_ddl.sql、database/reference/mestest_opb03_customer_op_mapping_create.sql。
+- 只讀結構 metadata，未查 MES 業務資料列、未執行 Oracle DDL/DML；連線秘密未輸出或寫入 Git。家用端先查 live schema/migrations，確定缺表才加 forward migration。
+
+### 更新 2026-11-18：OPB02 ECN 作業站群組設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護的 `DatabaseConfigs.CS.Test.Mes` MESTEST 設定唯讀取得 `TBLOPECNGROUPBASIS`、`TBLOPECNGROUPDETAIL` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。
+- Basis PK 為 `OPGROUPNO`；Detail PK 為單欄 `OPNO`。兩張表僅有 PK unique index 與 NOT NULL check，沒有 FK 或其他獨立 index。Basis `ISSUESTATE` 必填但無 Oracle default；`DATASTAMP` nullable DEFAULT 0。
+- Oracle source DDL 與 PostgreSQL CREATE-only 參照為 `database/reference/mestest_opb02_ecn_operation_group_source_ddl.sql`、`database/reference/mestest_opb02_ecn_operation_group_create.sql`。只查 metadata，未讀業務列、未執行 Oracle DDL/DML，連線秘密未輸出或提交；家用端先核對 live schema 再補 forward migration。
+
+### 更新 2026-11-18：OPB01 作業站參數群組設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護的 `DatabaseConfigs.CS.Test.Mes` 設定唯讀取得 `TBLOPGROUPATTRIB`、共用查找表 `TBLSYSELEMENTBASIS` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。
+- `TBLOPGROUPATTRIB` PK 為 `(CUSTOMERNO, OPGROUPNO, ELEMENTNO)`；只有 PK unique index 與 NOT NULL checks，沒有 FK/額外 index。`BYSECONDCLASS`、`DATASTAMP` nullable DEFAULT 0。`TBLSYSELEMENTBASIS` 是 first-phase 已存在共用表，本功能不重建。
+- Oracle source DDL 與 PostgreSQL CREATE-only 參考為 `database/reference/mestest_opb01_operation_group_attribute_source_ddl.sql`、`database/reference/mestest_opb01_operation_group_attribute_create.sql`。metadata-only；未讀業務列、未執行 Oracle DDL/DML，連線秘密未輸出或提交。家用端先核對 live schema 後，只對實際缺表新增 forward migration。
+
+### 更新 2026-11-18：PRS PS101 生產區段資料
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護連線直連 MESTEST 唯讀取得 `TBLPRSPRODUCTIONSEGMENT` 的 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`，並取得 PK index DDL。未讀業務列、未在 Oracle 執行 DDL/DML、未輸出或提交連線秘密。
+- Oracle source DDL：`database/reference/mestest_prs101_production_segment_source_ddl.sql`；PostgreSQL CREATE-only：`database/reference/mestest_prs101_production_segment_create.sql`。欄位 nullable/default 依 Oracle metadata；只有 `PSNO` 主鍵 unique index，沒有 FK 或其他 index。
+- `TBLPRSPRODUCTIONSEGMENT` 由 PS101 擁有；PS104 只重用此表，不另建同義表。MES Oracle 連線設定仍只留在本機受保護設定，不寫入文件或 Git。
+
+### 更新 2026-11-18：PRS PS102 製造層別設定
+
+- 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護既有 `DatabaseConfigs.CS.Test.Mes` 連線設定直接唯讀查 MESTEST `TBL_FABPRSSTAGEBASIS` 的 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`，另外取得兩個 index DDL。
+- 表含 StageNo PK、Sequence UNIQUE；沒有 FK 或其他 index。`ISSUESTATE` nullable DEFAULT 0、`CREATEDATE` nullable DEFAULT SYSDATE、`DATASTAMP` nullable DEFAULT 0。
+- Oracle source DDL：`database/reference/mestest_ps102_stage_basis_source_ddl.sql`；YMES PostgreSQL CREATE-only：`database/reference/mestest_ps102_stage_basis_create.sql`。未讀業務列、未執行 Oracle DDL/DML、未輸出或提交連線秘密。Oracle 設定只保留在本機受保護檔案。
+
+### 更新 2026-11-18：PRD PD102 Parameter Setup Oracle 字典查詢
+
+- 公司電腦使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，讀取本機受保護的既有 `DatabaseConfigs.CS.Test.Mes` Oracle profile，schema 為 MESTEST。Profile 內存 IP/帳號/密碼/SID；這些值不能放入 repo、SQL、Markdown 或 shell 輸出。
+- 直接唯讀查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS`，只讀 schema metadata，沒有查業務資料列，也沒有在 Oracle 執行 DDL/DML。
+- 對 `TBLPRDOP`、`TBLPRDOPATTRIB`、`TBLPRDOPRULE`、`TBLPRDOPEQPRECIPE`、`TBLPRDOPRULEXML_CLOB`、`TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION`、`TBLPRDOPAREA` 呼叫 `DBMS_METADATA.GET_DDL` 遇到 SocketException；字典查詢仍成功。故 `mestest_prd_parameter_setup_source_ddl.sql` 由 Oracle 字典還原邏輯欄位、NULL、PK 與索引，不含 tablespace/storage。
+- PostgreSQL CREATE-only 對照是 `database/reference/mestest_prd_parameter_setup_create.sql`。先查 YMES live schema/migrations，只把實際缺少內容新增為 migration。來源 profile 留在本機受保護位置；此檔刻意不複製連線密碼或內網位址。
+
+
+### 更新 2026-11-18：PRD PD102 Business Rule 表沿用查證
+
+- Business Rule 使用的 `TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION`、`TBLPRDOPRULEXML_CLOB` 已包含在上方 Parameter Setup 對 MESTEST 的唯讀 Oracle dictionary query；不重複連 Oracle，也不新增 SQL 檔或同義表。
+- Oracle source DDL 與 PostgreSQL CREATE-only 參照仍為 `database/reference/mestest_prd_parameter_setup_source_ddl.sql`、`database/reference/mestest_prd_parameter_setup_create.sql`。欄位與 PK 取自受保護連線查出的 `ALL_TAB_COLUMNS`、constraints/index dictionary；`DBMS_METADATA.GET_DDL` 曾回 SocketException。未查業務列、未執行 Oracle DDL/DML，profile 內 IP/帳密/SID 未輸出或提交。
+- 家用端實作前仍需比對 YMES PostgreSQL live schema/migrations，只補現況確實缺漏的 migration；CREATE-only 檔不可直接在環境執行。
+
+### 更新 2026-11-18：PRD PD102 OPDescription Oracle 字典查詢
+
+- 公司電腦以 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 讀取本機受保護的既有 Oracle profile，唯讀直連 MESTEST。直接取得 `DBMS_METADATA.GET_DDL('TABLE','TBLPRDOPDESCRIPTION','MESTEST')`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS`。
+- 結構為 9 欄，PK `(PRODUCTNO,PRODUCTVERSION,OPNO)`；只有對應 unique PK index，沒有 FK、Trigger 或其他 index。Oracle source DDL 與 PostgreSQL CREATE-only 參照分別為 `database/reference/mestest_prd_op_description_source_ddl.sql`、`mestest_prd_op_description_create.sql`。
+- 只查資料字典與 DDL，沒有讀業務資料列、沒有在 Oracle 執行 DDL/DML。連線 profile 的 IP/帳號/密碼/SID 未輸出或提交；家用端仍須先核對 YMES live schema/migrations，CREATE-only 參照不可直接部署。
+
+### 更新 2026-11-18：PD102 RecipeGroup 指派 Oracle metadata
+
+- 公司端以 Windows PowerShell 5.1、Oracle.ManagedDataAccess 與本機受保護 MESTEST profile 唯讀查 `TBLPRDRECIPE`、`TBLPRDRECIPEBASIS` 的 `DBMS_METADATA.GET_DDL`、欄位、約束、index、trigger dictionary。沒有讀 MES 業務列，沒有執行 Oracle DDL/DML。
+- `TBLPRDRECIPE` 複合 PK `(PRODUCTNO,PRODUCTVERSION,RECIPEGROUP)`；`TBLPRDRECIPEBASIS` 複合 PK `(RECIPEGROUP,RECIPEVERSION)`。兩表只有 PK unique index，沒有 FK、trigger 或其他 index。DDL/CREATE-only 路徑見 `database/reference/mestest_prd_recipe_group_source_ddl.sql`、`mestest_prd_recipe_group_create.sql`。
+- 連線 IP/帳號/密碼/SID 未輸出或提交。家用端先比對 YMES live schema/migrations；lookup basis 是其他 Recipe 主檔共用表，不要重複建立。

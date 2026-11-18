@@ -4,6 +4,21 @@
 
 - QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。共用六表 migration 0027、登入保護 API 已部署；app-browser 已驗證新增/套用/修改、複製/Driver lookup、取消/確定核准、引用刪除防護、狀態 1 唯讀、-1/2 刪除、四狀態/Close、錯誤文字與 Demo 登入。本輪測試資料已清空；共用簽核/Issue Control 限制見規格。公司端 QC503 UI 已於 `b572f3b` 提交，下一步為家用端 API handoff。
 - QC502「檢測儀器基本資料」：[功能規格](modules/QC/檢測儀器基本資料.md)。主表 `TBLQCINSPMACHINEPARAMETER`；CRUD/lookup API 已部署，類別通訊參數以交易內鎖定重讀為準、DataStamp 保留 NULL 並精確 CAS。app-browser 已驗證新增/套用/修改、RS232→UserDefine 類別更換、複製/Driver lookup、核准、取消/確定刪除、舊版本衝突、四狀態/Close、錯誤文字與 Demo 登入。本輪測試資料已清空，共用資源限制依規格追蹤。
+- QC503「檢測設備連線程式」：[功能規格](modules/QC/檢測設備連線程式.md)。已直接對照 WinForms 主/Def Form、`wsQC`、`clsInspMachine`、`clsBasis_UPD` 與 Driver Function assembly，完成 DEV Vue 頁/三層選單/API handoff；主表 `TBLQCINSPDRIVER` 沿用 QC501 已取得的共用 Oracle DDL/PostgreSQL CREATE，不新增表。家用端待核對 live schema、共享 Driver API 與簽核 Issue Job。
+- QC408「OCAP基本資料」：[功能規格](modules/QC/OCAP基本資料.md)。已對照四個 WinForms Form、`wsQC`、`clsQCBasis`，以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查得三張 OCAP 表 DDL，新增 Oracle source DDL/PG CREATE-only 參考及 QC → 異常設定三層選單、Vue DEV 清單/CRUD/核准/刪除/流程預覽與簡化節點繪製器。家用端待比對 YMES live schema、實作三表交易與 API，並先釐清 binary `iMESXMLFlow.dll` 的 XML 相容策略。
+
+- PS103「流程類別資料」：[功能規格](modules/PRS/流程類別資料.md)。已直接對照主/Def Form、`wsPRS`、`clsProcess`、`clsBasis_UPD` 與共用 `PS_ProcessProperty`，並以受保護 Oracle 連線直查 `TBLPRSTYPE` DDL；新增 Vue DEV 頁、三層選單、Oracle/PG SQL 參考及家用端 API/schema handoff。PS104 ProcessType lookup 共用同一張表。
+- PS104「流程基本資料」：[功能規格](modules/PRS/流程基本資料.md)。已直接閱讀主/Def/Draw/Exclude OP、Property、Import WinForms 與 `wsPRS`/`clsProcess`，並直連查得九張 Oracle DDL，完成 Vue DEV 畫面、PRS 路由、Oracle source DDL/PG CREATE-only；家用端核對 live schema/default、補缺 migrations、完成流程 API/共用簽核及 XML 相容方案。
+- PS101「生產區段資料」：[功能規格](modules/PRS/生產區段資料.md)。已直接閱讀主/Def WinForms、wsPRS、clsProcess、clsBasis_UPD 與 SYS LOTNO 序號規則 lookup，並直連取得 Oracle table/index DDL；完成 Vue DEV 清單/定義/選擇器、三層路由與 Oracle/PG SQL/API handoff。Production API/live schema 比對交由家用端，PS104 重用此表。
+- PS102「製造層別設定」：[功能規格](modules/PRS/製造層別設定.md)。已直接閱讀 WinForms/服務/Core 並以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得 `TBL_FABPRSSTAGEBASIS` DDL；新增 Vue DEV 頁、三層選單、Oracle/PG SQL 參考及家用端 API/schema handoff。PS104 NodeBasis.StageNo 重用此表。
+- OP101「作業站法則設定」：[功能規格](modules/OP/作業站法則設定.md)。已閱讀 WinForms Form/Def、wsOP、clsOpBasis、clsBasis_UPD，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBLOPCONTROLRULE DDL，完成作業站資料→作業站設定三層選單、Vue DEV CRUD/複製及 PostgreSQL CREATE handoff；Production API 與 OP_Script 完整編輯器待家用端。
+- OP102「企業邏輯設定」：[功能規格](modules/OP/企業邏輯設定.md)。已直接閱讀 WinForms 清單/定義 Form、wsOP、clsOpBasis、clsBasis_UPD，PowerShell 5.1/ODP.NET 唯讀取得主表與情境 lookup Oracle DDL，完成 OP 三層選單、Vue DEV CRUD/簽核/狀態頁及 PostgreSQL CREATE-only handoff；Production API 與 YMES live schema 比對待家用端。
+- OP103「作業站類別資料」：[功能規格](modules/OP/作業站類別資料.md)。已直接對照 frmOPType/Def、wsOP 與 clsOpBasis，完成 /YMES/MasterData/OperationTypes Vue DEV 清單/新增/修改/複製/刪除/核准及 Property 假資料視窗。Oracle TBLOPTYPE DDL 與 PostgreSQL CREATE-only 參考已保存；Production schema/API 與共享簽核待家用端實作。
+
+- OP105「作業站群組資料」：[功能規格](modules/OP/作業站群組資料.md)。已直接對照 WinForms 主/明細 Form、wsOP、clsOpBasis、clsBasis_UPD，並用 PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBLOPGROUPBASIS/TBLOPGROUPDETAIL DDL、PK/index/constraint；完成 OP 三層選單與 Vue DEV 雙 Grid/主明細 CRUD/Check。Oracle source DDL 與 PG CREATE-only 已保存；家用端待核對 live schema、補缺 defaults migration，實作 group/member API 與交易刪除。
+- OPB01「作業站參數群組設定」：[功能規格](modules/OP/作業站參數群組設定.md)。已直接閱讀主/Def WinForms、Designer、wsOP、clsOpBasis、更新 Core 及 SYS Element 驗證；PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBLOPGROUPATTRIB/TBLSYSELEMENTBASIS DDL，完成行業包三層選單、Vue DEV 主 Grid/多列 Element 編輯、CRUD/Copy、lookup 與 API handoff。主表 Oracle 只有複合 PK；共用 Element 表沿用既有 schema。家用端待核對 YMES live schema並實作 batch/DataStamp/Element values API。
+- OPB02「ECN 作業站群組設定」：[功能規格](modules/OP/ECN作業站群組設定.md)。已直接閱讀主/Def WinForms、`wsOP`、`clsOpBasis`、DataStamp update 並以 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查得兩表 DDL/constraints/indexes；公司端完成行業包三層選單、Vue DEV 主/明細 Grid、CRUD/Copy/核准、狀態刪除與 lookup。Detail 的 PK 是全表唯一 OPNo；Oracle source DDL/PG CREATE handoff 已保存，家用端待核對 YMES live schema 並實作共享簽核與 API。
+- OPB03「客戶站點對應設定」：[功能規格](modules/OP/客戶站點對應設定.md)。已逐段閱讀三個 WinForms Form/Designer、wsOP、clsOpBasis、clsB_Basis_UPD；PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得兩表 DDL 並查 PK/index/constraint；完成行業包三層選單與 Vue DEV 雙 Grid、主/明細編輯/lookup/CRUD。Oracle source DDL 與 PostgreSQL CREATE-only handoff 已保存；家用端待比對 live schema 並實作 lookup/API/交易刪除。
 
 ## 規格產出原則
 
@@ -125,7 +140,7 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | OP | 作業站主檔及簡化 DEV 子功能 | [作業站主檔規格](modules/OP/作業站主檔.md)；18 張作業站相關表來源 DDL/CREATE SQL 已交付 | 待補子功能 API |
 | MTL | 物料主檔與 DEV 子功能；ML101、ML102、ML104、ML105、ML106、ML107、MLB01 畫面/規格已建立 | [物料主檔](modules/MTL/物料主檔.md)、[ML101](modules/MTL/物料供應商基本資料.md)、[ML102](modules/MTL/物料類別資料.md)、[ML104](modules/MTL/物料群組資料.md)、[ML105](modules/MTL/物料類別品管項目設定.md)、[ML106](modules/MTL/物料品管項目設定.md)、[ML107](modules/MTL/物料標籤對應設定.md)、[MLB01](modules/MTL/來料AutoLoader格式檔設定.md)；MLB01 Oracle DDL/PG CREATE 已交付 | MTL API 部分部署；ML101、102、104、105、106、107、MLB01 Production API/schema 依 `todolist_homepc.md` 待家用端完成 |
 | PRS | 流程主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
-| PRD | 產品主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
+| PRD | [產品主檔](modules/PRD/產品主檔.md)、[RecipeGroup 指派](modules/PRD/產品RecipeGroup.md) | 基本表單及流程、BOM、產品屬性、Parameter、Business Rule、OPDescription、RecipeGroup DEV 子視窗已依 WinForms 部分完成；Accessory 等其他側功能逐項遷移中 | Production API/schema、XML serializer 與簽核仍待家用端補足；含 RecipeGroup API/schema handoff |
 
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
@@ -180,3 +195,5 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 
 - QC205「計量品管項目」：[功能規格](modules/QC/計量品管項目.md)。THEIL BU1 WinForms 主/Define/Memo Form、wsQC/Core 已核對；已接入 /YMES/QC/VariableQcItem Vue DEV 頁及三層選單。Memo 的 Oracle 表與變數量測依賴 DDL 已由 PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得，並提供 Memo PG Create 參考；家用端待核 live schema、建置主/子資源/Issue Job API 與參數 JSONB 適配。
 - QC209「計量品管項目管制法則對應」：[功能規格](modules/QC/計量品管項目管制法則對應.md)。標準 QC_ItemRule Form/Service/Core 已核對；Vue DEV 頁已接三層選單。Oracle `TBLQCITEMRULE` DDL 沿用 QC205 前次 PowerShell/ODP.NET 直連擷取，QCRuleBasis 沿用 QC108；新增 QC209 PostgreSQL CREATE 參考與整組替換 API handoff，家用端待核 live schema/實作 API。
+
+- QC409「OCAP異常單處置調整」：[功能規格](modules/QC/OCAP異常單處置調整.md)。直接核對 WinForms Form/流程圖選擇 Form、wsWIP/clsLot 業務交易，取得 3 張 OCAP WIP 表及 11 張共用 ERF/WIP side-effect Oracle DDL；Vue DEV 頁與專用表 PG CREATE/API handoff 已完成。此頁是生產異常單處置交易，不是三表 CRUD；Production API 需保留 LotStamp、ERF final disposition、WIP 狀態及 extension/通知副作用。

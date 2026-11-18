@@ -1,4 +1,79 @@
+## 2026-11-18 家用端整合補正：PRD Vue 型別
+
+- [x] 修正 `ProductBasisMaster` 與 Parameter/Business Rule 子元件的結構型別；BOM lookup 使用共用 key/label/row；OPDescription 正規化 OPName/audit；Parameter draft 保存明確保留識別鍵並排除 recipeDetails；Property 在有效值驗證前初始化 draft。沒有新增 broad any cast，亦未新增正式 API/schema。
+- [x] 本輪 `npx.cmd vue-tsc --noEmit` 與完整 `npm.cmd run build` 均通過；維護細節已補至 PRD 對應五份模組文件。
+- [x] 本機 DEV app-browser PRD 冒煙檢查通過：產品主檔、Property 清單/新增視窗、Parameter 樹、Business Rule 圖、OPDescription 稽核欄位可載入；BOM 右鍵 Add→Product→lookup→選取 `DEV-PRD-1002` 及 Cancel/Close 正常。所有相關視窗可關閉，未出現 TypeError/ReferenceError/Unhandled 紀錄。
+- [ ] 本輪不是完整 CRUD/正式 API 驗收；公司端 pull 後沿用既有正式唯讀/DEV 假資料邊界，後續正式 API/schema 與完整 CRUD 仍依模組文件 handoff 接續。
+
+## 2026-11-18 公司端進度：PS102 製造層別設定
+
+- [x] 閱讀 `frmFABPRSStageBasis`/Def Form 與 Designer、`wsPRS.Load/Add/Edit/Delete/ApproveFABPRSStageBasis`、`kcBasis_Query`、`kcPRS.clsProcess`、`kcBasis_UPD`；整理欄位、四狀態、Sequence 唯一、Apply/Confirm、刪除與 IssueManagement 流程。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護 Oracle 設定唯讀直連 MESTEST，查 `TBL_FABPRSSTAGEBASIS` 的 DBMS_METADATA DDL、欄位/default、constraints/indexes 和獨立 PK/Sequence index DDL。兩個唯一索引由 StageNo PK 與 Sequence unique constraint 建立；沒有 FK/額外 index。未讀業務列、未在 Oracle 執行 DDL/DML、未輸出連線秘密。
+- [x] 完成 `StageBasisMaster.vue`、PS102 規格、Oracle source DDL、PostgreSQL CREATE-only 參考、PRS 三層選單路由與家用端 schema/API handoff。DEV 假資料限 `ymes.dev.ps102-stage-basis.v1`。
+- [ ] 尚未連 YMES PostgreSQL，未實作 API/migration；未執行 build、test 或 browser 驗收。完成本次 PS102 commit/push 後，依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接續下一個尚未完成 FunctionNo。
+
+## 2026-11-18 公司端進度：PS101 生產區段資料
+
+- [x] 直接閱讀 `frmProductionSegment`/Def Form 與 Designer、`wsPRS.Load/Add/Edit/Del/ApproveProductionSegment`、`clsProcess`、`clsBasis_UPD.SetProductionSegmentIssueState`、`wsSYS.LoadSerialRuleBasis`/Core；核對列表、四狀態、Copy/Apply/Confirm、刪除/簽核、Lot serial lookup 與隱藏欄位。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線直連 MESTEST，唯讀取得 `TBLPRSPRODUCTIONSEGMENT` 的 `DBMS_METADATA.GET_DDL`、欄位/default、constraint/index metadata，並另外取得 PK index DDL；未讀業務列、未在 Oracle 執行 DDL/DML、未輸出連線秘密。僅 PK unique index，無 FK/其他 index。
+- [x] 完成 `ProductionSegmentMaster.vue`、PS101 規格、Oracle source DDL、PostgreSQL CREATE-only 參考、PRS 三層選單路由及家用端 API/schema handoff。PS104 改為重用 PS101 的 `tblprsproductionsegment`，避免重複建立。
+- [x] DEV 假資料在專用 localStorage；有四狀態、假資料直接核准/送簽兩種分流、定義窗及 LOTNO 選擇視窗。無 MES/ YMES 寫入。
+- [ ] 尚未連 YMES PostgreSQL，未實作 Production API/migration；未執行 build、test 或 browser 驗收。PS102 公司端 DEV 頁與 DDL/API handoff 已在本輪完成；接續依 inventory 排定下一個未完成 FunctionNo。
+
+## 2026-11-18 公司端進度：PS103 流程類別資料
+
+- [x] 直接閱讀 `frmProcessType`/Def、Designer、`wsPRS.Load/Add/Edit/Del/ApproveProcessType`、`clsProcess`、`clsBasis_UPD`，以及共用 `PS_ProcessProperty` 子功能；確認列表欄位、四狀態、Apply/Confirm、ProcessNo 衝突、子資料刪除、簽核 IssueNo 和 DataStamp。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護 Oracle 設定唯讀取得 `MESTEST.TBLPRSTYPE` DBMS_METADATA DDL、欄位/default、constraint/index；未讀業務資料、未執行 Oracle DDL/DML、未輸出連線秘密。來源僅有 PK unique index。
+- [x] 新增 `ProcessTypeMaster.vue`、PS103 規格、Oracle source DDL、PostgreSQL CREATE-only 參考、三層選單路由與家用端 schema/API handoff；Property 共用 API 和 PS104 ProcessType lookup 相依已註明。
+- [ ] 尚未連 YMES PostgreSQL，未實作 Production API/migration；依規則未執行 build、test 或 browser 驗收。推送完成後依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 接續下一個未遷移功能。
+
+## 2026-11-18 公司端進度：PS104 流程基本資料
+
+- [x] 直接閱讀主/Def/Draw/Exclude OP WinForms、Property 子功能、Data Import Form、wsPRS 和 clsProcess，整理欄位、狀態、核准、版本、複製、刪除、流程圖及匯入行為。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 經本機受保護連線直連 MESTEST，只讀查九張表的 DBMS_METADATA DDL、欄位、constraints/indexes；未查業務列、未在 Oracle 執行 DDL/DML、未輸出連線秘密。
+- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 參照、PS104 規格和家用端 handoff。九張表只有 PK unique index，沒有 FK/額外索引。first-phase 三表 default 差異及新增表責任已依 PS103/PS101/PS104 分拆寫入交接。
+- [x] 新增 Vue DEV 流程基本資料頁：狀態查詢、欄位 Grid、Add/Edit/Copy/Approve/Delete/Property/Version/Exclude OP、簡化節點/連線編輯及 Import 視窗。假資料存在獨立 localStorage。
+- [ ] 流程圖 XML serializer、群組/分支拖曳編輯與舊版格式相容待確認；Excel checker 外部 DLL 未找到原始碼，DEV 只保留選檔視窗，不宣稱匯入完成。
+- [ ] 未連 YMES PostgreSQL、未實作 API/migration；未執行 build/test/browser。
+- [ ] 家用端完成 API/schema 並 push 後，公司端 pull、對接 Production API。PS103 與 PS101 的公司端 DEV 頁及交接已完成；PS102 公司端 DEV 頁與 DDL/API handoff 已於本輪完成；接續依 inventory 排定下一個未完成 FunctionNo。
+
+## 2026-11-18 公司端進度：OPB02 ECN 作業站群組設定
+
+- [x] 直接閱讀 `frmOP_B_ECNOPGroupBasis`/Def、Designer、`wsOP.Load/Add/Edit/Del/ApproveOPECNGroupBasis`、`clsOpBasis` 與 DataStamp update；確認主/明細雙 Grid、狀態篩選、Copy 僅複製主檔、OP lookup 限制、逐筆多選與簽核 Job 分流。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連受保護 MESTEST 連線唯讀取得 `TBLOPECNGROUPBASIS`、`TBLOPECNGROUPDETAIL` 的 `DBMS_METADATA.GET_DDL`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`。主鍵分別是 `OPGROUPNO` 與單欄 `OPNO`；只有 PK unique index，沒有 FK/額外索引；未讀業務列、未執行 Oracle DDL/DML、未輸出連線秘密。
+- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 參照、`docs/modules/OP/ECN作業站群組設定.md`；更新規格索引、資料庫連線紀錄及家用端 API/schema handoff。
+- [x] 完成作業站資料 → 行業包 → ECN 作業站群組設定 Vue DEV 頁 `/YMES/OP/ECNOperationGroups`：四狀態篩選、主/明細 Grid、CRUD/Copy/核准/刪除、PS/OP 選擇、稽核欄、DataStamp 欄位及 KD 黃色輸入欄；假資料僅 DEV localStorage。
+- [ ] 家用端尚未比對 YMES live schema、實作 Production API/migration；公司端未連 YMES PostgreSQL，未執行 build、test、browser。
+- [ ] 接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 的下一個尚未完成 FunctionNo，不要重做已交接功能。
+
+## 2026-11-18 公司端進度：OPB03 客戶站點對應設定
+
+- [x] 直接閱讀 frmB_OPCustomerOPMapping、主檔/明細 Def Forms 與 Designer、wsOP、clsOpBasis、clsB_Basis_UPD；確認雙 Grid、lookup 狀態、Add/Edit/Copy/刪除、DataStamp、Audit 與批次刪除行為。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連唯讀取得 TBL_BOPCUSTOPMAPBASIS、TBL_BOPCUSTOPMAPDETAIL DDL，並查 ALL_CONSTRAINTS/ALL_INDEXES；兩表只有 PK、沒有 FK/額外索引。未讀 MES 業務資料、未執行 Oracle DDL、未輸出連線秘密。
+- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 參照與 docs/modules/OP/客戶站點對應設定.md，更新規格索引、Oracle 查詢紀錄與家用端 API/schema handoff。
+- [x] 完成「作業站資料 → 行業包 → 客戶站點對應設定」Vue DEV 頁 /YMES/OP/CustomerOPMapping：上下雙 Grid、查詢、多選刪除、主檔 ADD/EDIT/DEL/Copy、明細 ADD/EDIT/DEL、Customer/PS/OP lookup、Audit 顯示與 KD 黃色欄位；假資料限 DEV localStorage。
+- [ ] Oracle CustomerOPSeq NUMBER(3,0) 與舊 NumericUpDown 最大 999999 不一致，已於規格和家用端 handoff 標明；Production API 依 live schema 驗證，沒有擴欄或截斷。
+- [ ] 未連 YMES PostgreSQL、未實作 Production API/migration，未執行 build、test、browser。OPB03 已交家用端 API/schema；公司端接續功能依 docs/MES_MENU_FUNCTION_INVENTORY.md，下一項 OPB02 ECN 作業站群組設定。
 # 公司電腦續作清單
+
+## 2026-11-18 公司端進度：OPB01 作業站參數群組設定
+
+- [x] 直接閱讀 `frmOPGroupAttrib`/Designer、`frmOPGroupAttribDef`/Designer、`wsOP.Load/JoinElement/Save/DelOPGroupAttrib`、`clsOpBasis`、`clsB_Basis_UPD.SaveOPGroupAttrib` 與 `wsSYS.ChkElementValueValid`；確認三欄精確查詢、整組多列編輯、DataFlag、Copy、InputType、Sequence、BYSECONDCLASS 對應與 DataStamp。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護 MESTEST 連線唯讀取得 `TBLOPGROUPATTRIB`、`TBLSYSELEMENTBASIS` 的 `DBMS_METADATA.GET_DDL`、ALL_TAB_COLUMNS/CONSTRAINTS/INDEXES/IND_COLUMNS；OP 主表僅複合 PK，無 FK/額外索引。未讀業務列、未執行 Oracle DDL/DML、未輸出連線秘密。
+- [x] 新增 OPB01 Oracle source DDL、PG CREATE-only 參考、功能規格及本段家用端 API/schema handoff。`TBLSYSELEMENTBASIS` 是既有共用表，本功能不重建。
+- [x] 完成「作業站資料 → 行業包 → 作業站參數群組設定」Vue DEV 頁 `/YMES/OP/OperationGroupAttributes`：三條勾選精確查詢、Grid 多選刪除、Add/Edit/Copy，整組 Element 批次編輯、多選新增、InputType 下拉/Key In、AllowNull、Sequence、BYEQUIPMENT_TYPE、Apply/Confirm/Close、客戶/ECN 群組/Element lookup；localStorage 假資料限 DEV。
+- [ ] 家用端依 `todolist_homepc.md` 核對 YMES live schema、接登入/權限及 lookup，實作 batch transaction、DataStamp CAS、InputAbortLog 和 SYS Element value validation API；完成後公司端 pull 對接。
+- [ ] 未連 YMES PostgreSQL，未實作 Production API/migration，未執行 build、test、browser 或 CRUD 驗收。
+- [ ] OPB01 完成此 UI/spec handoff 後，繼續從 `docs/MES_MENU_FUNCTION_INVENTORY.md` 選下一個未完成 Function；整套 MES 遷移尚未完成。
+
+## 2026-11-18 公司端進度：QC408 OCAP基本資料
+
+- [x] 直接閱讀 QC408 主/Def/流程繪製/節點 Form 與 Designer、`wsQC`、`clsQCBasis`，整理畫面、CRUD、核准、刪除、Copy、DataStamp、NodeType、群組 lookup、XML/節點/連線儲存規則。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀取得 `TBLQCOCAPBASIS`、`TBLQCOCAPNODEBASIS`、`TBLQCOCAPNODERELATION` 原始 DDL；確認 PK、欄位空值/預設值，只有 PK index、未見 FK 或額外 index。未讀 MES 業務資料、未執行 Oracle DDL、未輸出連線秘密。
+- [x] 新增 Oracle source DDL、PostgreSQL CREATE-only 對照，並新增 `docs/modules/QC/OCAP基本資料.md`、索引、資料庫連線紀錄與家用端 API/schema handoff。
+- [x] 完成 QC → 異常設定 → OCAP基本資料 Vue DEV 頁：四狀態清單、查詢、多選 CRUD/Copy/Approve/Delete、稽核列、流程預覽與簡化節點/連線繪製器，KD 黃色輸入欄；路徑 `/YMES/QC/OCAPBasis`。
+- [ ] 流程編輯器是 AddFlow web 簡化版；舊 `iMESXMLFlow.dll` serializer 只有 binary，未完成 XML 格式相容與 nested group/Stage validation。Production API 前需由家用端決定相容策略。
+- [ ] 未連 YMES PostgreSQL，未實作 API/migration，未執行 build、測試或瀏覽器驗收。家用端完成 API/schema 並 push 後，公司端 pull 再整合驗收。
 
 ## 2026-11-18 公司端進度：QC501 檢測儀器類別
 
@@ -15,6 +90,13 @@
 - [x] 新增 `/YMES/QC/InspectionMachine` Vue DEV 頁與品質資料→檢測儀器→檢測儀器基本資料路由；包含 IssueState/識別碼查詢、主 Grid、Add/Edit/Copy/Approve/Delete、類別帶入/本機 RS232/UserDefine Driver 表單、lookup modal、audit 與獨立假資料。
 - [x] 新增 `docs/modules/QC/檢測儀器基本資料.md`，更新 module index、資料庫紀錄與家用端共用 API/schema handoff。
 - [x] 家用端已部署 QC502 API，app-browser 已驗證新增/套用/修改、RS232→UserDefine 類別更換、複製/Driver lookup、核准、取消/確定刪除、nullable DataStamp 衝突與重查保存、四狀態/Close、錯誤文字及 Demo 登入；fixture 已清空。類別參數由 API 鎖定重讀，Apply 使用 server DTO。公司端待家用端 GitHub 同步後 pull 並確認 DTO/API 對接；QC503「檢測設備連線程式」UI 已於 `b572f3b` 提交，家用端接續 API。
+
+## 2026-11-18 公司端進度：QC503 檢測設備連線程式
+
+- [x] 直接閱讀 `frmInspDriver`/Def、Designer、`wsQC.Load/Add/Edit/Del/ApproveInspDriver`、`clsInspMachine`、`clsBasis_UPD` 與 `udDriverFunction.clsDriverFunction`；確認 Driver CRUD 的狀態/DataStamp、Issue Job 簽核、核准/刪除行為及三個可選函式名稱。
+- [x] 新增 `/YMES/QC/InspectionDrivers` Vue DEV 頁及品質資料→檢測儀器→檢測設備連線程式路由。完成四狀態/DriverNo 查詢、Grid、Add/Edit/Copy/Delete/Approve、FunctionName 下拉、Description、Audit、多選與 localStorage 假資料。
+- [x] 新增 `docs/modules/QC/檢測設備連線程式.md`、索引與資料庫紀錄，並更新 `todolist_homepc.md` API/schema handoff。主表 `TBLQCINSPDRIVER` 的 Oracle DDL/PG CREATE 已含在 QC501 共用六表 reference，本功能不需再查 Oracle或另建 SQL。
+- [ ] 公司端未連 YMES PostgreSQL、未實作 API/migration，未執行 build、測試或瀏覽器驗收；家用端完成 API/schema 後再 pull 整合。接續功能依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 選下一個尚未完成項目。
 
 > 目的：記錄家用電腦完成資料庫/API交接後，公司電腦接著要做的 WinForms UI、互動邏輯與規格文件。公司電腦先讀本檔；家用電腦先讀 `todolist_homepc.md`。
 
@@ -826,3 +908,111 @@
 - [x] 新增 Oracle source DDL reference、含 WIP/OP/PRD 關聯表的 PostgreSQL schema-only CREATE 參考、QC213 功能規格、DATABASE_CONNECTION.md 與 MODULE_REPLICATION_SPEC_INDEX.md 更新。
 - [x] 更新 todolist_homepc.md：先完成既有 QC212 API/schema，再依 QC213 handoff 比對所有主/明細/硬刪依賴及 YMES live schema，僅補缺 migration，實作 QC213 API/Issue Job/共用 QCType=3 operation。
 - [ ] 公司端未連 YMES PostgreSQL，也未執行 build、測試或瀏覽器驗收。家用端完成 migration/API 後 pull 再做整合驗收；之後依 MES_MENU_FUNCTION_INVENTORY.md 接下一個未遷移功能。
+
+## 2026-11-18 QC409 OCAP異常單處置調整公司端進度
+
+- [x] 已直接閱讀 STD/MESWin/QC/QC_OCAPDispositionAdjust/frmOCAPDispositionAdjust.vb、Designer、frmOCAPProcessDraw.vb、wsQC.LoadERFJoinOCAPDisposition、wsWIP.Exe_ERF_Disposition 與 clsLot.UpdOCAPAndERF_Disposition/OCAP helper。已記錄兩種動作、查詢條件、單筆作用列、同 ERF 多 Hold Item 的最終結案差異、LotStamp、WIP/OCAP side effects。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 使用既有受保護 MESTEST 設定，唯讀取得三張 OCAP 專用表 DDL 與 11 張共用 ERF/WIP/通知相依表 DDL/索引；未讀業務資料、未在 Oracle 執行 DDL，未輸出或提交連線秘密。
+- [x] 已建立 /YMES/QC/OCAPDispositionAdjust Vue DEV 頁、QC409 menu/route/元件掛載、功能規格、Oracle DDL reference、三張專用表 PG CREATE-only handoff，更新 module index、DATABASE_CONNECTION.md 及家用端 API/schema TODO。
+- [ ] Production API/schema 尚未實作；公司端未連 YMES PostgreSQL，未執行 build、測試或瀏覽器驗收。家用端完成 QC409 API/schema 後 pull，對照真 API/錯誤與交易行為整合驗收。
+- [ ] 接續依 docs/MES_MENU_FUNCTION_INVENTORY.md 遷移下一個尚未完成的 Function；各功能先追 WinForms Form/Service/Core，再查缺的 Oracle DDL，完成 DEV UI/規格/API handoff 並 push。
+
+## 2026-11-18 公司端進度：OP103 作業站類別資料
+
+- [x] 直接對照 frmOPType/Designer、frmOPTypeDef/Designer、wsOP.Load/Add/Edit/Delete/ApproveOPType 與 clsOpBasis；記錄四狀態查詢、Grid 隱藏狀態/DataStamp、定義窗欄位、OP namespace 衝突、Property cascade、IssueNo 與狀態轉移。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 直連受保護連線唯讀取得 MESTEST.TBLOPTYPE 原始 DDL/index；沒有讀業務資料、沒有在 Oracle 執行 DDL、未輸出連線秘密。完成 Oracle source DDL 和 PostgreSQL CREATE-only 參考。
+- [x] 新增 /YMES/MasterData/OperationTypes Vue DEV mock UI 與 OP → 作業站設定 → 作業站類別資料路由、四狀態/查詢/清單/新增/修改/複製/刪除/核准/Property，KD 黃色欄位與 WinForms 版型。
+- [x] 新增 OP103 規格、模組索引、資料庫連線 provenance、家用端 live schema/API handoff，並在 OP Basis 規格互連。
+- [ ] Production API/schema 由家用端按 todolist_homepc.md 實作；未連 YMES PostgreSQL，未執行 build、test 或 browser 驗收。公司端持續依 docs/MES_MENU_FUNCTION_INVENTORY.md 下一個未遷移 WinForms 功能直接閱讀程式碼。
+
+## OP101 作業站法則設定（公司端 2026-11-18）
+
+- [x] 直接閱讀 `frmOPControlRule`/Def、`wsOP.Load/Add/Edit/DeleteOPControlRule`、`clsOpBasis` 與 `clsBasis_UPD.EditOPControlRule`；確認查詢 RuleNo、只顯示 RuleClass=0、無 IssueState/Approve、實體刪除及 DataStamp CAS。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連受保護設定，只讀取得 `MESTEST.TBLOPCONTROLRULE` Oracle DDL、constraint/index metadata；僅 RuleNo PK unique index，無 FK/額外 index。存 Oracle source DDL 與 PostgreSQL CREATE-only 對照。
+- [x] 新增 `/YMES/OP/ControlRules` Vue DEV 頁和 OP 三層選單。清單欄位、Add/Edit/Copy/Delete、定義欄位、Send Mail 群組 lookup、DataStamp/audit、legacy Apply payload 差異均已整理。
+- [x] 新增 `docs/modules/OP/作業站法則設定.md`、模組索引、Oracle 連線查詢紀錄，以及本段家用端 API/schema handoff。
+- [ ] 本段依工作規則未執行 build、test 或瀏覽器驗收；推送後下一項接續 OP102「企業邏輯設定」，先從 WinForms Form/Service/Core 原始碼開始。
+
+## OP102 企業邏輯設定（公司端 2026-11-18）
+
+- [x] 直接閱讀 frmBusinessRuleBasis/Def、wsOP、clsOpBasis、clsBasis_UPD；記錄三種 RuleMethod、plugin/interface/scenario options、四狀態 CRUD/簽核/刪除、DataStamp 與 Apply/Confirm。
+- [x] Windows PowerShell 5.1 + Oracle.ManagedDataAccess 受保護連線唯讀取得 MESTEST.TBLOPBUSINESSRULEBASIS 與 TBLOPSCENARIOBASIS DDL/index/constraint metadata；各表只有 PK index、無 FK/額外索引；未讀業務列、未執行 Oracle DDL。
+- [x] 建立 /YMES/OP/BusinessRules Vue DEV 假資料頁與 OP 設定三層選單、路由、狀態/查詢/多選/CRUD/核准、欄位條件、稽核展示。
+- [x] 建立 OP102 詳細規格、兩張 Oracle source DDL 與 PostgreSQL CREATE-only 參考、索引與資料庫連線 provenance、家用端 API/schema handoff；補上作業站主檔規格交互連結。
+- [ ] 按工作規則未執行 build、test 或 browser 驗收；Production API/schema 待家用端依 todolist_homepc.md 完成。家用端 push 後公司端 pull 對接。
+- [ ] 接續依 docs/MES_MENU_FUNCTION_INVENTORY.md，直接閱讀下一項尚未遷移 WinForms Form/Service/Core，查缺漏 Oracle DDL，完成 UI/spec/handoff 並 push。
+
+## 2026-11-18 公司端進度：OP105 作業站群組資料
+
+- [x] 直接讀取 frmOPGroupBasis / frmOPGroupBasisDef / frmOPGroupDetailDef、wsOP、clsOpBasis、clsBasis_UPD；整理主檔/明細欄位、雙 Grid、ADD/EDIT/DEL/Copy/Check、DataStamp、已核准作業站與區段 lookup。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 MESTEST.TBLOPGROUPBASIS、TBLOPGROUPDETAIL DDL 與 ALL_TABLES/ALL_INDEXES/ALL_CONSTRAINTS；兩表僅 PK unique index，無 FK/額外 index。未查業務列、未在 Oracle 執行 DDL/DML。
+- [x] 新增 /YMES/OP/Groups Vue DEV 假資料雙 Grid/表單/lookup/檢核並接上作業站資料→作業站設定→作業站群組資料選單。
+- [x] 新增 OP105 規格、Oracle source DDL、PG CREATE-only SQL、校正 first-phase 新庫 DEFAULT 0，更新 module index、資料庫 provenance 與 todolist_homepc.md。
+- [ ] 尚未連 YMES PostgreSQL、未實作 API/schema；未執行 build、test 或 browser 驗收。已列明 API 路徑與 live schema/defaults 核對項目給家用端。
+- [ ] 推送 OP105 後依 docs/MES_MENU_FUNCTION_INVENTORY.md 接續下一個尚未完成 WinForms 功能；家用端 API/schema push 後 pull 並整合。
+
+# 2026-11-18 辦公室端續作：產品主檔 PD102
+
+公司端依 frmProductBasis_THEIL_BU1 建立產品專用 Vue DEV 頁並接入 product-master 路由；整理主表單、IssueState、Add/Edit/Copy/Version/Approve/Delete、Process/BOM/EQPConstraint、WinForms 服務邏輯與七張 Oracle 主/關聯表 DDL/字典。規格為 docs/modules/PRD/產品主檔.md，Oracle/PG 參照為 database/reference/mestest_prd_product_basis_*。Oracle ProductProperty 的 DBMS_METADATA 發生 ORA-03135，欄位/約束依字典重建並已標註。家用端 API/schema 未完成。
+
+下一個公司端工作：
+1. PD_ProductProcess、frmProductBOM_THEIL_BU1 的流程與 BOM DEV 子表單已完成；產品屬性 DEV 子表單也已完成，分別見 `產品主檔子表單.md`、`產品主檔產品屬性.md`。
+2. Business Rule、OPDescription、RecipeGroup DEV 已完成並有家用端 API/schema handoff；接續 Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
+3. Product API/關聯 schema 由家用端接手後，回來核對 API contract 與 UI，避免公司端重複改 API。
+4. 依 MES 全功能目錄繼續下一個待遷 Function；每一段維護規格索引/TODO，假資料限定 DEV。
+
+頁面底部 Set ... 與 Expand All 帶入選取流程列上下文；BOM Set 開啟該產品 BOM 遷移入口。WinForms Designer 設 Visible=False 的 QTY Conversion 與 DisApprove 沒顯示。window.print() 只是產品包裝 BOM 報表的 DEV 簡化。正式模式目前能載現有產品/流程/BOM，其餘欄位與子功能仍待家用端補 API 契約。
+
+## PRD PD102 產品流程／BOM 子表單續作（2026-11-18）
+
+- [x] 直接對照 `STD/MESWin/PRD/PD_ProductProcess/frmProductProcess.vb`：544×462 視窗、MOType/PS/Process 查找、Current/Specified、Default 唯一、暫存 Add/Del、Apply/Confirm/Close 與 Net Flow 檢查。
+- [x] 直接對照客製 `Customer/Production/MESWin/PRD/PD_ProductBasis_THEIL_BU1/frmProductBOM_THEIL_BU1.vb`：719×516 Tree/Node Define、右鍵節點權限、產品/材料版本、投入點、數量、損耗率、Specified、LOTCREATE、材料群組/替代料與遞迴樹。
+- [x] 新增 `ProductProcessEditor.vue`、`ProductBomEditor.vue` 並接入 `ProductBasisMaster.vue`。DEV 假資料的流程與 BOM 可新增/刪除/修改/檢視並保存至產品專用 localStorage；正式 API 模式唯讀。LOOKUP 只用 DEV 假資料，不能當正式選項。
+- [x] 新增 `docs/modules/PRD/產品主檔子表單.md`，更新家用端 API/schema 待辦。
+- [ ] 產品主檔其他側邊子功能仍待閱讀各自 WinForms Form/Core/Service 後實作；不可用本次子表單完成狀態代表 PD102 所有側功能已完成。
+- [ ] 未執行 build/test/browser 驗收。完成同步 YMES 後 commit/push，再依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 排定下一個未完成 FunctionNo。
+
+## PRD PD102 產品屬性子表單續作（2026-11-18）
+
+- [x] 直接閱讀 `frmProductProperty`/Designer、`frmProductPropertyDef`/Designer、`wsPRD` 及 `clsProduct`：四狀態、清單欄位與隱藏 DataStamp、ADD/EDIT/DEL/Copy/Approve、PropertyType=5 已核准 SYS Element 查找、MES Parameter 值選取、Apply/Confirm/Close、`PRD PROPERTY` 簽核 Job 分流。
+- [x] 新增 `ProductPropertyMaster.vue`：684×486 清單、496×276 定義窗、MES/KD 黃色輸入、狀態篩選、多選/逐筆刪除、ACTIVE 標 UNUSED、Apply/Confirm、Property 與 Parameter DEV lookup、DEV localStorage。
+- [x] 正式 API 模式唯讀；DEV 假核准採未配置簽核 Job 的直接 ACTIVE 情境。Controlled 僅為 SYS Element Basis 資訊，產品表不存 Controlled。
+- [x] 新增 `docs/modules/PRD/產品主檔產品屬性.md`，更新 PRD 主規格/索引、`todolist_homepc.md` API/schema handoff。
+- [ ] 未執行 build/test/browser；按工作規則僅做靜態檢閱。現有 TBLPRDPRODUCTPROPERTY Oracle DDL 由字典重建且已存在，家用端先查 YMES schema/migration，再決定 API mapping/migration。
+- [x] PD102 `Parameter` 已依 WinForms Form/Designer、wsPRD、clsProduct 完成 DEV 子視窗及 Oracle 字典/SQL handoff，詳見本檔新增段落。
+
+## PRD PD102 產品 Parameter Setup（公司端 2026-11-18）
+
+- [x] 直接閱讀 `PD_ParameterSetup/frmParameterSetup.vb`、Designer、`wsPRD`、`clsProduct`。依實際右鍵旗標復刻 Product Process OP/All PS OP、PS/OP/Attrib/Rule/Equipment/Recipe 階層，Condition OP，右側 OP/Attrib/Rule/Equipment/Condition OP tabs；QCItem Tab 在 WinForms Load 時移除。
+- [x] 新增 `web/src/components/ProductParameterSetup.vue` 並接到 PD102 Parameter；DEV 支援 OP 多選、Condition OP、Lot/Component Attrib、一般 Rule、設備多選、RecipeGroup 及唯讀 Recipe Detail；DEV localStorage；正式 API 模式唯讀。
+- [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 對 MESTEST 直接查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS`。8 張表結構 metadata 已取得；沒有 FK/Trigger。`DBMS_METADATA.GET_DDL` 回 SocketException，故 Oracle source DDL 依 Oracle 字典欄位/約束/索引邏輯重建，不含實體 tablespace/storage。
+- [x] 新增 Oracle source DDL 與 PostgreSQL CREATE-only reference、`docs/modules/PRD/產品參數設定.md`，更新 PRD 主規格、索引、家用端 handoff 及 DB query provenance。
+- [ ] 未執行 build/test/browser；未連 YMES PostgreSQL，未部署 SQL，正式 API 模式仍唯讀。
+- [x] PD102 Business Rule 已依真實入口 `btnBusinessRule_Click`、`frmProductOPBusinessRule`/Draw、wsPRD/Core/Service 完成 WinForms 規格、DEV UI 與 homepc API/schema handoff；注意真正入口不是名稱相近的 `frmPRDOPRule_THEIL_BU1`。
+- [x] PD102 OPDescription DEV/Oracle DDL 已由 commit `dde7973` checkpoint，完成靜態 code review；此段未執行 build/test/browser，Production API/schema 由家用端依 handoff 完成。
+
+
+## PRD PD102 Business Rule DEV UI（2026-11-18）
+
+- [x] 核對真實入口 `btnBusinessRule_Click`、`frmProductOPBusinessRule`/Draw、WinForms Designer、`wsPRD`、`clsProduct`、Service graph validation；排除名稱相近但不同的 `PD_PRDOPRule_THEIL_BU1`。
+- [x] 完成產品 OP 清單/圖形預覽及 Default/Close 版面、Add/Edit/多選 Del、圖形節點/連線/Phase 編輯、NetFlow readonly 的 DEV UI，接至 ProductBasisMaster 並只寫專用 localStorage。
+- [x] 新增 `docs/modules/PRD/產品商業規則.md`；重用 Parameter 階段已查到的三張 Oracle 表與既有 DDL/PG CREATE 參照，沒有重複 Oracle query、沒有新增表或 CREATE SQL。
+- [ ] Production API、OP/Phase/Business Rule/Template lookup、Lassalle XML serializer 尚待家用端完成；Default、樣板及 catalog 現在仍為 DEV 假資料。
+- [x] OPDescription DEV UI/DDL/規格 checkpoint 已提交為 `dde7973`；靜態檢閱已完成，未執行 build/test/browser。Production API/schema handoff 見本檔末尾。
+
+## PRD PD102 OPDescription 公司端檢查點（2026-11-18）
+
+- [x] 依 PD102 真實 `btnDescription_Click` 入口，閱讀 `frmProductOPDescription`/Def/Designer、`wsPRD.Load/Add/Edit/DelPRDOPDescription`、`clsProduct`/`clsBasis_UPD`，確認 Add/Apply/Confirm/多選 Delete、PS lookup、IssueState、DataStamp 與產品 Default/Copy 的邊界。
+- [x] 以 Windows PowerShell 5.1 + 受保護 Oracle 設定直連 MESTEST，唯讀取得 `TBLPRDOPDESCRIPTION` DBMS_METADATA DDL、欄位、PK/index、FK/trigger metadata；無業務資料列，未執行 Oracle DDL/DML。
+- [x] 直接讀取 WinForms、wsPRD、Core，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 取得 `TBLPRDOPDESCRIPTION` DDL/字典；只讀 metadata，未讀業務列或執行 Oracle DDL/DML。
+- [x] 已在公司端工作區建立 `ProductOpDescriptionSetup.vue` 並接至 PD102；DEV 支援清單、流程/OP 假查找、Add/Edit/多選 Delete、audit/DataStamp 與狀態唯讀，只寫 localStorage。Oracle source DDL、PostgreSQL CREATE-only 與規格文件已建立。
+- [x] 已靜態複核元件、WinForms 操作流程與資料欄位；修正輸入欄位字型宣告。未執行 build/test/browser，未連 YMES PostgreSQL；Production API/schema/lookup 尚待家用端。
+- [x] OPDescription 已完成靜態複核並建立 homepc handoff；RecipeGroup WinForms/Service/Core/Oracle metadata、DEV UI 與 handoff 已於本次段落完成。
+
+## PRD PD102 RecipeGroup 指派公司端檢查點（2026-11-18）
+
+- [x] 依 `btnRecipeGroup_Click` 追至 `PD_ProductRecipe`、`frmProductRecipe`/Def、`wsPRD.Load/Add/Edit/DelPRDRecipe`、`clsProduct`；確認 ProductNo/Version 關聯、hidden Edit/Find、Apply/Confirm/Delete、IssueState 未被子視窗使用及刪除省略 RecipeGroup 會刪整個產品版本的邊界。
+- [x] Windows PowerShell 5.1 + 受保護 Oracle profile 直連 MESTEST，只讀取得 `TBLPRDRECIPE`、`TBLPRDRECIPEBASIS` DDL/字典；無業務資料列，未執行 Oracle DDL/DML。
+- [x] 新增 `ProductRecipeGroupSetup.vue` 並接到 PD102，DEV 依產品版本保存關聯 localStorage，含多選刪除、已核准目前版查找、Add/Apply/Confirm/Close；Production API 未接線時唯讀。
+- [x] 新增 `docs/modules/PRD/產品RecipeGroup.md`、Oracle source DDL、PostgreSQL CREATE-only 參照，更新主檔規格、DB connection provenance、兩個規格索引及 homepc API/schema handoff。
+- [ ] 未執行 build/test/browser，未連 YMES PostgreSQL，未部署 SQL。下一個 PD102 側邊功能為 `Accessory`。
