@@ -1098,4 +1098,10 @@
 
 - [x] 核對主／Def Form、Designer、`wsPRD`、Core 與 eSOP EAI 呼叫。完成 DEV Position／Sub OP、文件選擇、Add／Edit／Copy、Delete 及 Apply／Confirm。
 - [x] 以 PowerShell 5.1 + ODP.NET 唯讀核對 `TBLPRDESOPBASIS`，依資料字典重建 DDL 參照並交接家用端。
-- [ ] 正式 eSOP、文件存取、API 與瀏覽器驗收待接續；下一項 PD102 `EquipmentSpec`。
+- [ ] 正式 eSOP、文件存取、API 與瀏覽器驗收待接續。
+
+## PRD PD102 EquipmentSpec 公司端檢查點（2026-11-18）
+
+- [x] 核對 EquipmentSpec 入口、Form／Designer、Service、Core，完成 DEV 流程／設備查找、規格明細、四欄順序／精度檢查和 Confirm。
+- [x] 以 PowerShell 5.1 + ODP.NET 唯讀核對 `TBLPRDEQUIPMENTSPEC`，補 Oracle DDL、CREATE-only 和家用端 API/schema handoff。
+- [ ] 正式流程展開、設備權限、API 與瀏覽器驗收待接續；下一項 PD102 `APS Integration`。

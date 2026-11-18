@@ -14,6 +14,7 @@ import ProductQCItemSetup from './ProductQCItemSetup.vue'
 import ProductPackingSet from './ProductPackingSet.vue'
 import ProductEquipmentCapItems from './ProductEquipmentCapItems.vue'
 import ProductEsopSetup from './ProductEsopSetup.vue'
+import ProductEquipmentSpec from './ProductEquipmentSpec.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -30,6 +31,7 @@ type ProductQCAssignment = Parameters<InstanceType<typeof ProductQCItemSetup>['$
 type ProductPackingProps = InstanceType<typeof ProductPackingSet>['$props']
 type EquipmentCapRows = InstanceType<typeof ProductEquipmentCapItems>['$props']['rows']
 type ProductEsopRows = InstanceType<typeof ProductEsopSetup>['$props']['rows']
+type ProductEquipmentSpecProps = InstanceType<typeof ProductEquipmentSpec>['$props']
 type ProductRelation = ProductPackingProps['relations'][string] & {
   processes: ProductRow[]
   bom: ProductRow[]
@@ -47,6 +49,7 @@ type ProductRelation = ProductPackingProps['relations'][string] & {
   qcItems?: ProductRow[]
   equipmentCapItems?: EquipmentCapRows
   esopRows?: ProductEsopRows
+  equipmentSpecs?: ProductEquipmentSpecProps['savedSpecs']
   apsSetups?: ProductRow[]
   apsSetupDetails?: ProductRow[]
   materialGroups?: ProductRow[]
@@ -449,6 +452,15 @@ const subOpOperationOptions = computed(() => {
   return [...operations.values()]
 })
 const selectedProcess = computed(() => activeRelations.value.processes[selectedProcessIndex.value] ?? null)
+const equipmentSpecOptions = computed(() => {
+  if (!mock.value || !selectedProcess.value) return []
+  const psNo = text(selectedProcess.value.psNo)
+  const operations = new Set((activeRelations.value.parameters?.ops ?? [])
+    .filter(row => text(row.psNo) === psNo).map(row => text(row.opNo)))
+  return [...new Map(developmentRunTimeRows.value
+    .filter(row => row.equipmentNo !== 'N/A' && operations.has(row.opNo))
+    .map(({ equipmentNo, equipmentType }) => [equipmentNo, { equipmentNo, equipmentType }])).values()]
+})
 const bomTreeLines = computed(() => {
   if (!active.value) return []
   const result: BomTreeLine[] = [{ id: keyOf(active.value), label: keyOf(active.value).replace('|', ':'), kind: 'root', depth: 0 }]
@@ -822,7 +834,7 @@ function runAction(action: string): void {
   if (action === 'approve') return void approveSelected()
   if (action === 'close') return emit('close')
   if (featureInfo[action]) {
-    if (action === 'process-expand' && !selectedProcess.value) {
+    if (['process-expand', 'equipment-spec'].includes(action) && !selectedProcess.value) {
       error.value = '請先選取產品流程列。'
       return
     }
@@ -938,6 +950,12 @@ function saveProductEsopRows(items: ProductEsopRows): boolean {
   const product = active.value
   if (!product || !mock.value) return false
   return replaceMockRelation(keyOf(product), { ...relatedFor(product), esopRows: items })
+}
+const saveProductEquipmentSpecs: ProductEquipmentSpecProps['save'] = (equipmentNo, specs) => {
+  const product = active.value
+  if (!product || !mock.value || !equipmentSpecOptions.value.some(row => row.equipmentNo === equipmentNo)) return false
+  const relation = relatedFor(product)
+  return replaceMockRelation(keyOf(product), { ...relation, equipmentSpecs: { ...relation.equipmentSpecs, [equipmentNo]: specs } })
 }
 const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
   if (!mock.value || !keys.length) return false
@@ -1198,16 +1216,19 @@ onMounted(() => { void load() })
         :sub-ops="(activeRelations.subOps ?? []).map(row => ({ opNo: text(row.opNo), subOpNo: text(row.subOpNo), subOpName: text(row.subOpName) }))"
         @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'equipment-spec'" class="prd-overlay child-feature-overlay">
+      <ProductEquipmentSpec :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :process-no="text(selectedProcess?.processNo)" :process-version="text(selectedProcess?.processVersion)"
+        :equipment-options="equipmentSpecOptions" :saved-specs="mock ? activeRelations.equipmentSpecs ?? {} : {}"
+        :development-preview="mock" :current-user="currentUser()" :save="saveProductEquipmentSpecs" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
         <p>{{ feature.description }}</p>
         <p v-if="featureKey === 'process-setup' || featureKey === 'process-expand'" class="prd-context">流程 {{ selectedProcess?.psNo || '—' }} / MOType {{ selectedProcess?.moTypeNo ?? '—' }} / {{ selectedProcess?.processNo || '—' }} / {{ selectedProcess?.processVersion || '—' }}</p>
-        <template v-if="featureKey === 'equipment-spec'">
-          <div class="prd-detail-grid"><table><thead><tr><th>OPNo</th><th>EquipmentNo</th><th>Description</th></tr></thead><tbody><tr v-for="(item,index) in activeRelations.constraints" :key="index"><td>{{ item.opNo }}</td><td>{{ item.equipmentNo }}</td><td>{{ item.description }}</td></tr><tr v-if="!activeRelations.constraints.length"><td colspan="3" class="empty">尚無設備資料。</td></tr></tbody></table></div>
-        </template>
-        <div v-else class="prd-feature-placeholder"><strong>WinForms 功能入口已依原功能名稱保留。</strong><p>此子功能由另一個 ObjectFileHandler/WinForms Form 載入；其專屬欄位、資料表與操作會在對應功能規格中拆分，API 尚待家用端實作。</p><p>Development 目前只展示產品上下文，不會寫入 MES 或 YMES 正式資料。</p></div>
+        <div class="prd-feature-placeholder"><strong>WinForms 功能入口已依原功能名稱保留。</strong><p>此子功能的專屬欄位、資料表與操作會在對應功能規格中拆分，API 尚待家用端實作。</p><p>Development 目前只展示產品上下文，不會寫入 MES 或 YMES 正式資料。</p></div>
         <footer><button class="prd-button" type="button" @click="closeFeature">關閉</button></footer>
       </section>
     </div>

@@ -1687,4 +1687,9 @@ API 工作：
 ## PRD PD102 eSOP 家用端 handoff（2026-11-18）
 
 - [ ] 依 [產品電子作業指導書規格](docs/modules/PRD/產品電子作業指導書.md) 核對 `tblprdesopbasis`、first-phase 和 live schema。沿用 OP／SubOP 及參數，依需求補缺漏的 migration。
-- [ ] 實作產品版次的 eSOP CRUD、Position／SubOP／文件 lookup 與授權存取。正式 Position／文件模型對照 EAI 的 `station.get`、`sop.get`。DEV目前只用假資料或檔名，不讀檔案內容。
+- [ ] 實作產品版次的 eSOP CRUD、Position／SubOP／文件 lookup 與授權存取。正式 Position／文件模型對照 EAI 的 `station.get`、`sop.get`。DEV 目前只用假資料或檔名，不讀檔案內容。
+
+## PRD PD102 EquipmentSpec 家用端 handoff（2026-11-18）
+
+- [ ] 依 [產品設備參數規格](docs/modules/PRD/產品設備參數規格.md) 核對 `tblprdequipmentspec`、`tbleqpparameterbasis`、live schema 和既有 migrations。
+- [ ] 實作依流程與 PS 權限找設備、設備參數目錄與產品規格合併查詢、整批 PUT。驗證四欄順序、精度、可用參數與稽核來源，固化整批交易及並發語意。
