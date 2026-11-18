@@ -1505,7 +1505,7 @@ API 工作：
 8. 比對後才新增 migration；執行 migration 前確認 home DB schema/data。正式 API 檢查 PRD BASIS/PD102 權限。
 9. API/schema 完成後回報辦公室端，串 integration profile；localStorage 假資料僅供 DEV preview。
 
-產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property、Parameter 與 Business Rule 子視窗已由公司端依 WinForms 原始碼完成 DEV 假資料互動；Business Rule 的 Production API/XML serializer 待家用端依本檔 handoff 完成。OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待公司端逐項拆規格與實作。
+產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property、Parameter 與 Business Rule DEV 子視窗已完成；OPDescription 公司端已建立 DEV 畫面／Oracle DDL handoff 檢查點，靜態複核尚待重開後完成，Production API/schema 依本檔 handoff 由家用端處理。RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待公司端逐項遷移。
 
 ## PRD PD102 產品流程／BOM 子表單 API handoff（2026-11-18 公司端更新）
 
@@ -1520,7 +1520,7 @@ API 工作：
 - [ ] 服務端重驗已核准節點、LOTCREATE、企業 TS 批號規則及 BOM 複合鍵；不能只依賴 Vue 欄位檢查。
 - [ ] 比較現有 `ym_product_process`/`ym_product_bom` 與 Oracle 原生語意後才決定 mapping / migration；測試完成後回報公司端接正式 API。
 
-公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。Business Rule DEV 已完成、Production API/XML serializer 見本檔後續 handoff；OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍須依 WinForms 原始碼逐項遷移。Parameter 的 API/schema handoff 見本檔前段。
+公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。Business Rule DEV 已完成，Production API/XML serializer 見本檔後續 handoff；OPDescription DEV 已接入但仍待靜態複核，API/schema 見本檔 OPDescription handoff。RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 仍須依 WinForms 原始碼逐項遷移。Parameter handoff 見本檔前段。
 
 ## PRD PD102 產品屬性子表單 API/schema handoff（2026-11-18）
 
@@ -1577,3 +1577,14 @@ API 工作：
 - [x] 新增 `docs/modules/PRD/產品商業規則.md`；重用 Parameter 階段已查到的三張 Oracle 表與既有 DDL/PG CREATE 參照，沒有重複 Oracle query、沒有新增表或 CREATE SQL。
 - [ ] Production API、OP/Phase/Business Rule/Template lookup、Lassalle XML serializer 尚待家用端完成；Default、樣板及 catalog 現在仍為 DEV 假資料。
 - [ ] 未執行 build/test/browser。完成同步 YMES 後 push，再依 PD102 側邊按鈕順序接續 `OPDescription` WinForms Form/Service/Core。
+
+
+## PRD PD102 OPDescription API/schema handoff（2026-11-18 公司端更新）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/PRD/產品作業站說明.md`、`docs/modules/PRD/產品主檔.md` 及 `docs/DATABASE_CONNECTION.md` 的 OPDescription 查詢紀錄。
+- [ ] 比對 YMES PostgreSQL live schema、migration、entity/repository；公司端搜尋目前未找到 OPDescription 專用 API/schema。Oracle source DDL 與 PG CREATE-only 參照為 `database/reference/mestest_prd_op_description_source_ddl.sql`、`mestest_prd_op_description_create.sql`。只在 live schema 確認缺少時建立 forward migration，不照 CREATE-only 直接部署。
+- [ ] 表欄位：ProductNo varchar(50)、ProductVersion varchar(5)、OPNo varchar(20) 必填複合 PK；Description varchar(255) nullable；DataStamp numeric(11,0) nullable default 0；Creator/Reviser varchar(10)、CreateDate/ReviseDate nullable。無 FK、trigger、其他 index。
+- [ ] 實作產品/版本範圍 OPDescription GET/POST/PUT/DELETE。GET 依登入者 PS 權限過濾並 join OP lookup；POST 驗證產品 IssueState=0、OP 在產品已設定且有權限的流程範圍、同產品版本 OPNo 唯一；PUT 以複合鍵 + DataStamp CAS 原子更新 Description、Reviser/ReviseDate，衝突回 409；DELETE 要求明確 OPNo 並實體刪除。
+- [ ] 提供同等 WinForms 查找：產品流程 lookup、指定流程的 Expand Process OP lookup；server 依 session 決定 PS 權限，排除已存在於目前產品/版本的 OPNo，OP 說明初值取 `TBLOPBASIS.Description`。不可信任 client 傳入 PSPrivilege、IssueState 或 audit 欄位。
+- [ ] UI 多選 DEL 是逐筆呼叫、遇錯停止且保留前面成功刪除；API 若提供批次 endpoint，需定義並回傳部分成功結果。產品 Copy/Version 需保留 Core `CopyPRDOPDescription` 行為；Product Load Default 的 Description 是另一個功能，不要塞進此子視窗 CRUD。
+- [ ] 完成後同步 API contract/schema migration 與文件、push main，通知公司端接正式 API。DEV localStorage 不能寫入正式 DB。

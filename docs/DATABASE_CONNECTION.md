@@ -596,3 +596,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - Business Rule 使用的 `TBLPRDOPBUSINESSRULE`、`TBLPRDOPBUSINESSRULERELATION`、`TBLPRDOPRULEXML_CLOB` 已包含在上方 Parameter Setup 對 MESTEST 的唯讀 Oracle dictionary query；不重複連 Oracle，也不新增 SQL 檔或同義表。
 - Oracle source DDL 與 PostgreSQL CREATE-only 參照仍為 `database/reference/mestest_prd_parameter_setup_source_ddl.sql`、`database/reference/mestest_prd_parameter_setup_create.sql`。欄位與 PK 取自受保護連線查出的 `ALL_TAB_COLUMNS`、constraints/index dictionary；`DBMS_METADATA.GET_DDL` 曾回 SocketException。未查業務列、未執行 Oracle DDL/DML，profile 內 IP/帳密/SID 未輸出或提交。
 - 家用端實作前仍需比對 YMES PostgreSQL live schema/migrations，只補現況確實缺漏的 migration；CREATE-only 檔不可直接在環境執行。
+
+### 更新 2026-11-18：PRD PD102 OPDescription Oracle 字典查詢
+
+- 公司電腦以 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 讀取本機受保護的既有 Oracle profile，唯讀直連 MESTEST。直接取得 `DBMS_METADATA.GET_DDL('TABLE','TBLPRDOPDESCRIPTION','MESTEST')`，並查 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS`。
+- 結構為 9 欄，PK `(PRODUCTNO,PRODUCTVERSION,OPNO)`；只有對應 unique PK index，沒有 FK、Trigger 或其他 index。Oracle source DDL 與 PostgreSQL CREATE-only 參照分別為 `database/reference/mestest_prd_op_description_source_ddl.sql`、`mestest_prd_op_description_create.sql`。
+- 只查資料字典與 DDL，沒有讀業務資料列、沒有在 Oracle 執行 DDL/DML。連線 profile 的 IP/帳號/密碼/SID 未輸出或提交；家用端仍須先核對 YMES live schema/migrations，CREATE-only 參照不可直接部署。
