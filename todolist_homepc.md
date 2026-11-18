@@ -1693,3 +1693,8 @@ API 工作：
 
 - [ ] 依 [產品設備參數規格](docs/modules/PRD/產品設備參數規格.md) 核對 `tblprdequipmentspec`、`tbleqpparameterbasis`、live schema 和既有 migrations。
 - [ ] 實作依流程與 PS 權限找設備、設備參數目錄與產品規格合併查詢、整批 PUT。驗證四欄順序、精度、可用參數與稽核來源，固化整批交易及並發語意。
+
+## PRD PD102 APS Integration 家用端 handoff（2026-11-18）
+
+- [ ] 依 [產品 APS 規格](docs/modules/PRD/產品APS整合.md)，對照 Default／PS104 的四張既有 APS 表 DDL 與 live schema，沿用共用結構。
+- [ ] 實作產品版次／MOType／Node 主設定與設備明細 API。伺服器重新驗證流程、設備、群組與權限，主設定 Update／Delete 及設備明細重建保持同一交易。

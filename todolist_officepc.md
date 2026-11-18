@@ -1104,4 +1104,10 @@
 
 - [x] 核對 EquipmentSpec 入口、Form／Designer、Service、Core，完成 DEV 流程／設備查找、規格明細、四欄順序／精度檢查和 Confirm。
 - [x] 以 PowerShell 5.1 + ODP.NET 唯讀核對 `TBLPRDEQUIPMENTSPEC`，補 Oracle DDL、CREATE-only 和家用端 API/schema handoff。
-- [ ] 正式流程展開、設備權限、API 與瀏覽器驗收待接續；下一項 PD102 `APS Integration`。
+- [ ] 正式流程展開、設備權限、API 與瀏覽器驗收待接續。
+
+## PRD PD102 APS Integration 公司端檢查點（2026-11-18）
+
+- [x] 核對 APS 主窗／EQPTIME 的 Form／Designer、Service、Core。完成 DEV Node、主／設備明細、Update／Delete、明細重建與數值驗證。
+- [x] 以 PowerShell 5.1 + ODP.NET 唯讀核對四張 APS 表欄數與鍵，沿用 Default／PS104 的 DDL 參照並補 API 交接。
+- [ ] 正式流程、群組展開、API 與瀏覽器驗收待接續；下一項 PD102 `Bin`。

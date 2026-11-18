@@ -15,6 +15,7 @@ import ProductPackingSet from './ProductPackingSet.vue'
 import ProductEquipmentCapItems from './ProductEquipmentCapItems.vue'
 import ProductEsopSetup from './ProductEsopSetup.vue'
 import ProductEquipmentSpec from './ProductEquipmentSpec.vue'
+import ProductApsIntegration from './ProductApsIntegration.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -32,6 +33,7 @@ type ProductPackingProps = InstanceType<typeof ProductPackingSet>['$props']
 type EquipmentCapRows = InstanceType<typeof ProductEquipmentCapItems>['$props']['rows']
 type ProductEsopRows = InstanceType<typeof ProductEsopSetup>['$props']['rows']
 type ProductEquipmentSpecProps = InstanceType<typeof ProductEquipmentSpec>['$props']
+type ProductApsProps = InstanceType<typeof ProductApsIntegration>['$props']
 type ProductRelation = ProductPackingProps['relations'][string] & {
   processes: ProductRow[]
   bom: ProductRow[]
@@ -144,7 +146,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
   'eqp-cap-item': { title: 'EQPCapItem', source: 'PD_OPCapItem', description: '設定產品版次各作業站的設備能力項目。' },
   esop: { title: 'eSOP', source: 'PD_eSOPBasis', description: '設定產品版次與作業站的 SOP 文件。' },
   'equipment-spec': { title: 'EquipmentSpec', source: 'frmPRDEquipmentSpec_THEIL_BU1', description: '維護產品版本的設備規格。' },
-  aps: { title: 'APS Integration', source: 'frmPRDAPSIntegration_THEIL_BU1', description: '維護產品流程與 APS 整合資料；按鈕受 ExecuteAPS 參數控制。' },
+  aps: { title: 'APS Integration', source: 'frmPRSAPSIntegration_THEIL_BU1', description: '維護產品流程節點的 APS 設定及設備明細。' },
   bin: { title: 'Bin', source: 'PRD bin function', description: '維護產品程式使用的 Bin 資料。' },
   'gbom-import': { title: 'GBOMImport', source: 'wsPRD.UpdGBOMExcelFile', description: '僅允許未核准產品；Excel 檔名須為 ProductNo-ProductVersion，讀取內容後上傳檔案位元組。' },
   'gbom-export': { title: 'GBOMExport', source: 'Product GBOM export', description: '匯出已匯入的 ProductNo-ProductVersion GBOM Excel。' },
@@ -460,6 +462,24 @@ const equipmentSpecOptions = computed(() => {
   return [...new Map(developmentRunTimeRows.value
     .filter(row => row.equipmentNo !== 'N/A' && operations.has(row.opNo))
     .map(({ equipmentNo, equipmentType }) => [equipmentNo, { equipmentNo, equipmentType }])).values()]
+})
+const developmentApsNodes = computed<ProductApsProps['nodeOptions']>(() => {
+  if (!mock.value || !selectedProcess.value) return []
+  const process = selectedProcess.value
+  const nodes = new Map<string, string>()
+  for (const row of activeRelations.value.parameters?.ops ?? []) {
+    if (text(row.psNo) !== text(process.psNo) || !row.opNo) continue
+    const opNo = text(row.opNo)
+    nodes.set(text(row.nodeId) || 'DEV-NODE-' + opNo.replace(/^DEV-OP-/, ''), opNo)
+  }
+  for (const row of activeRelations.value.apsSetups ?? []) {
+    if (text(row.processNo) === text(process.processNo) && text(row.processVersion) === text(process.processVersion)
+      && Number(row.moTypeNo) === Number(process.moTypeNo) && row.nodeId) nodes.set(text(row.nodeId), text(row.opNo))
+  }
+  return [...nodes].map(([nodeId, opNo]) => ({
+    nodeId, opNo, equipmentNos: [...new Set(developmentRunTimeRows.value
+      .filter(row => row.opNo === opNo && row.equipmentNo !== 'N/A').map(row => row.equipmentNo))],
+  }))
 })
 const bomTreeLines = computed(() => {
   if (!active.value) return []
@@ -834,7 +854,7 @@ function runAction(action: string): void {
   if (action === 'approve') return void approveSelected()
   if (action === 'close') return emit('close')
   if (featureInfo[action]) {
-    if (['process-expand', 'equipment-spec'].includes(action) && !selectedProcess.value) {
+    if (['process-expand', 'equipment-spec', 'aps'].includes(action) && !selectedProcess.value) {
       error.value = '請先選取產品流程列。'
       return
     }
@@ -956,6 +976,11 @@ const saveProductEquipmentSpecs: ProductEquipmentSpecProps['save'] = (equipmentN
   if (!product || !mock.value || !equipmentSpecOptions.value.some(row => row.equipmentNo === equipmentNo)) return false
   const relation = relatedFor(product)
   return replaceMockRelation(keyOf(product), { ...relation, equipmentSpecs: { ...relation.equipmentSpecs, [equipmentNo]: specs } })
+}
+const saveProductAps: ProductApsProps['save'] = (apsSetups, apsSetupDetails) => {
+  const product = active.value
+  if (!product || !mock.value || !selectedProcess.value) return false
+  return replaceMockRelation(keyOf(product), { ...relatedFor(product), apsSetups, apsSetupDetails })
 }
 const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
   if (!mock.value || !keys.length) return false
@@ -1222,7 +1247,14 @@ onMounted(() => { void load() })
         :equipment-options="equipmentSpecOptions" :saved-specs="mock ? activeRelations.equipmentSpecs ?? {} : {}"
         :development-preview="mock" :current-user="currentUser()" :save="saveProductEquipmentSpecs" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'aps'" class="prd-overlay child-feature-overlay">
+      <ProductApsIntegration :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :process-no="text(selectedProcess?.processNo)" :process-version="text(selectedProcess?.processVersion)"
+        :mo-type-no="Number(selectedProcess?.moTypeNo ?? 0)" :node-options="developmentApsNodes"
+        :setups="mock ? activeRelations.apsSetups ?? [] : []" :details="mock ? activeRelations.apsSetupDetails ?? [] : []"
+        :current-user="currentUser()" :development-preview="mock" :save="saveProductAps" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec','aps'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
