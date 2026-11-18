@@ -13,6 +13,7 @@ import ProductRunTimeSetup from './ProductRunTimeSetup.vue'
 import ProductQCItemSetup from './ProductQCItemSetup.vue'
 import ProductPackingSet from './ProductPackingSet.vue'
 import ProductEquipmentCapItems from './ProductEquipmentCapItems.vue'
+import ProductEsopSetup from './ProductEsopSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -28,6 +29,7 @@ type ProductRunTimeRow = ProductRunTimeProps['defaultRows'][number]
 type ProductQCAssignment = Parameters<InstanceType<typeof ProductQCItemSetup>['$props']['saveAssignments']>[1][number]
 type ProductPackingProps = InstanceType<typeof ProductPackingSet>['$props']
 type EquipmentCapRows = InstanceType<typeof ProductEquipmentCapItems>['$props']['rows']
+type ProductEsopRows = InstanceType<typeof ProductEsopSetup>['$props']['rows']
 type ProductRelation = ProductPackingProps['relations'][string] & {
   processes: ProductRow[]
   bom: ProductRow[]
@@ -44,6 +46,7 @@ type ProductRelation = ProductPackingProps['relations'][string] & {
   runTime?: ProductRunTimeData
   qcItems?: ProductRow[]
   equipmentCapItems?: EquipmentCapRows
+  esopRows?: ProductEsopRows
   apsSetups?: ProductRow[]
   apsSetupDetails?: ProductRow[]
   materialGroups?: ProductRow[]
@@ -136,7 +139,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
   'qc-item': { title: 'QC Item', source: 'PD_ProductQCItem', description: '設定產品對應的品管項目。' },
   'packing-set': { title: 'Packing Set', source: 'PD_ProductPackingSet', description: '設定產品包裝規則與包裝配件。' },
   'eqp-cap-item': { title: 'EQPCapItem', source: 'PD_OPCapItem', description: '設定產品版次各作業站的設備能力項目。' },
-  esop: { title: 'eSOP', source: 'eSOP product function', description: '依產品編號、版本開啟 eSOP 內容。' },
+  esop: { title: 'eSOP', source: 'PD_eSOPBasis', description: '設定產品版次與作業站的 SOP 文件。' },
   'equipment-spec': { title: 'EquipmentSpec', source: 'frmPRDEquipmentSpec_THEIL_BU1', description: '維護產品版本的設備規格。' },
   aps: { title: 'APS Integration', source: 'frmPRDAPSIntegration_THEIL_BU1', description: '維護產品流程與 APS 整合資料；按鈕受 ExecuteAPS 參數控制。' },
   bin: { title: 'Bin', source: 'PRD bin function', description: '維護產品程式使用的 Bin 資料。' },
@@ -931,6 +934,11 @@ function saveProductEquipmentCapItems(items: EquipmentCapRows): boolean {
   if (!product || !mock.value || Number(product.issueState) !== 0) return false
   return replaceMockRelation(keyOf(product), { ...relatedFor(product), equipmentCapItems: items })
 }
+function saveProductEsopRows(items: ProductEsopRows): boolean {
+  const product = active.value
+  if (!product || !mock.value) return false
+  return replaceMockRelation(keyOf(product), { ...relatedFor(product), esopRows: items })
+}
 const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
   if (!mock.value || !keys.length) return false
   const targetKeys = new Set(keys)
@@ -1183,7 +1191,14 @@ onMounted(() => { void load() })
         :issue-state="Number(active?.issueState ?? -1)" :current-user="currentUser()" :development-preview="mock"
         :rows="mock ? activeRelations.equipmentCapItems ?? [] : []" :save="saveProductEquipmentCapItems" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'esop'" class="prd-overlay child-feature-overlay">
+      <ProductEsopSetup :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :current-user="currentUser()" :development-preview="mock" :save="saveProductEsopRows" :rows="mock ? activeRelations.esopRows ?? [] : []"
+        :operation-options="subOpOperationOptions.map(row => ({ opNo: text(row.opNo), opName: text(row.opName) }))"
+        :sub-ops="(activeRelations.subOps ?? []).map(row => ({ opNo: text(row.opNo), subOpNo: text(row.subOpNo), subOpName: text(row.subOpName) }))"
+        @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>

@@ -1098,4 +1098,10 @@
 
 - [x] 核對 `btnEQPCapItem_Click`、`frmPRDOPCapItem`、Def／Designer、`wsPRD`／`wsEMS`／`wsOP` 及 Core。完成 DEV 清單、選擇 OP／CapItem、Add／Edit／Copy／Delete、Apply／Confirm 與 IssueState 限制。
 - [x] 使用 PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDOPCAPITEM` 與 `TBLEMSEQPCAPBASIS`。依字典建立 Oracle／PostgreSQL CREATE-only 參照，已補家用端交接。
-- [ ] 瀏覽器與正式 API 待家用端驗收；下一項 PD102 `eSOP`。
+- [ ] 瀏覽器與正式 API 待家用端驗收。
+
+## PRD PD102 eSOP 公司端檢查點（2026-11-18）
+
+- [x] 核對主／Def Form、Designer、`wsPRD`、Core 與 eSOP EAI 呼叫。完成 DEV Position／Sub OP、文件選擇、Add／Edit／Copy、Delete 及 Apply／Confirm。
+- [x] 以 PowerShell 5.1 + ODP.NET 唯讀核對 `TBLPRDESOPBASIS`，依資料字典重建 DDL 參照並交接家用端。
+- [ ] 正式 eSOP、文件存取、API 與瀏覽器驗收待接續；下一項 PD102 `EquipmentSpec`。
