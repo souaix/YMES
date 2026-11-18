@@ -31,6 +31,7 @@
 - 只讀資料字典/DDL，未讀業務資料列，未在 Oracle 執行 DDL；連線秘密未輸出/提交。PS7 載入此舊版 Oracle provider 時遇 BinaryFormatter 平台例外；改用 Windows PowerShell 5.1 後查詢成功。
 - QC501 表主鍵實際是 InspMachineType 單欄；來源 `IssueState`/`DataStamp` 可 NULL 且有 DEFAULT，CREATE reference 保留 nullable；`ChNo` 欄位長度為 3，但 WinForms TextBox MaxLength=10，API 需回報超長值錯誤，不得靜默截斷。
 - QC502「檢測儀器基本資料」沿用同一批 Oracle source DDL 與 PostgreSQL CREATE 對照；其主要寫入表 `TBLQCINSPMACHINEPARAMETER` 在 QC501 六表清單中已直接查得。本次未重查 Oracle，沒有讀業務列或執行 Oracle DDL。`TBLQCINSPMACHINEBASIS` 不在 QC502 Form/Core 的 Add/Edit/Delete 呼叫內，不要當成 QC502 主表。
+- 家用端 2026-11-18 live schema audit 確認六張 `tblqcinsp*` 表皆缺少；先以遠端 `postgres` 維護角色備份 YMES，`/opt/ymes/backups/ymes_before_0027_qc501_20261118.dump` 通過 `pg_restore --list`，再套用 `database/migrations/0027_qc501_qc502_inspection_machines.sql`。六張表已建立並授予 `ymes_app` 表級 CRUD；API 角色本身無 schema CREATE 權限。此 migration 沒有建立額外 FK/index、沒有複製來源業務資料。
 - QC503「檢測設備連線程式」主表 `TBLQCINSPDRIVER` 沿用上述已取得的 Oracle source DDL 與 PostgreSQL CREATE 參考；本功能不需另查 Oracle 或新增 CREATE SQL。此回合依 WinForms/wsQC/Core/Driver Function 原始碼核對行為；沒有讀取 MES 業務資料列、連 YMES PostgreSQL、執行 Oracle DDL 或輸出連線秘密。
 
 ## 連線用途與邊界
@@ -504,10 +505,11 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 新增 Oracle DDL reference `mestest_qc301_chart_sampling_parameter_source_ddl.sql` 和 PostgreSQL 空表 CREATE-only 對照 `mestest_qc301_chart_sampling_parameter_create.sql`。參數表 PK=(FactorSerial,ParameterNo)，未查到 FK 或額外索引。
 - 僅查 Oracle 結構 metadata，未讀業務資料列、未在 Oracle 執行 DDL。公司端未連 YMES PostgreSQL；家用端須先核對 live schema/migrations，缺少時才新增 forward migration。IP、帳號、密碼、SID 與受保護設定未輸出或寫入 Git。
 
-### 更新 2026-11-17：QC303 品管項目規格
+### 更新 2026-11-18：QC303 品管項目規格
 
 - QC303 沿用已保存的 Oracle DDL：`database/reference/mestest_qc205_variable_dependencies_source_ddl.sql` 中 `TBLQCSPECDETAIL` 與 `TBLQCSPECBASIS` 區塊。該 DDL 是先前由公司端 PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得，本次沒有改用 DBeaver 螢幕操作，也沒有重新讀業務列或執行 Oracle DDL。
-- 本次建立 PostgreSQL 適配的 CREATE-only 對照 `database/reference/mestest_qc303_spec_basis_create.sql`；因子欄收納為 JSONB。家用端先比對 YMES live schema/migrations，確認缺漏後再新增 forward migration。公司端不連 YMES PostgreSQL。
+- PostgreSQL 適配的 CREATE-only 對照 `database/reference/mestest_qc303_spec_basis_create.sql` 將因子欄收納為 JSONB。家用端查 live schema 後確認 QC303 Basis/Detail 缺少，套用 migration `database/migrations/0026_qc303_spec_basis.sql`；套用前備份 `/opt/ymes/backups/ymes_before_0026_qc303_20261118.dump` 通過 `pg_restore --list`。Migration 只建 QC303 結構與 `ymes_app` 權限；共用 QC Item/Factor/Parameter/Issue/Job/QCSN 資源未建立。
+- 遠端 `ymes-web` 已更新 QC303 App.vue 路由並單獨重建，healthy；API readiness=200、未登入 QC303 API=401、Web QC303 route=200。app-browser 已登入核對正式選單、頁面、四種狀態切換及 Close。正式 QC Item 清單為空，業務 CRUD 暫無資料可端到端驗收。詳細 API 限制與下一步記於 `docs/modules/QC/品管項目規格.md`。
 - 本次未輸出或寫入 Oracle IP、帳號、密碼、SID 或本機受保護連線設定。
 
 ### 更新 2026-11-17：QC304 物料規格設定

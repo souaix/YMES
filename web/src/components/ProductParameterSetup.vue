@@ -316,19 +316,19 @@ function applyEditor(closeAfter: boolean): void {
     const source = mockOpCatalog.find(item => item.psNo === draft.value.psNo && item.opNo === draft.value.opNo)
     data.value.ops.push({ ...source, ...clone(draft.value), serialNo: nextSerial(), opOrder: Number(source?.opOrder ?? 0) + 1, haveComponent: Number(source?.haveComponent ?? 0), dataStamp: 0, creator: currentUser })
   } else if (editorKind.value === 'attrib') {
-    const row = { ...clone(draft.value), serialNo: String(draft.value.serialNo), attribType: Number(draft.value.attribType), attribSource: Number(draft.value.attribSource), attribSequence: Number(draft.value.attribSequence ?? 0), attribPhase: Number(draft.value.attribPhase), reviser: currentUser, reviseDate: new Date().toISOString() }
+    const row = { ...clone(draft.value), serialNo: String(draft.value.serialNo), attribNo: String(draft.value.attribNo), attribType: Number(draft.value.attribType), attribSource: Number(draft.value.attribSource), attribSequence: Number(draft.value.attribSequence ?? 0), attribPhase: Number(draft.value.attribPhase), reviser: currentUser, reviseDate: new Date().toISOString() }
     if (editorMode.value === 'add') data.value.attributes.push(row)
     else data.value.attributes = data.value.attributes.map(item => item.serialNo === row.serialNo && item.attribType === row.attribType && item.attribNo === row.attribNo ? row : item)
   } else if (editorKind.value === 'rule') {
-    const row = { ...clone(draft.value), ruleSequence: Number(draft.value.ruleSequence ?? 0), rulePhase: Number(draft.value.rulePhase), ruleType: Number(draft.value.ruleType), reviser: currentUser, reviseDate: new Date().toISOString() }
+    const row = { ...clone(draft.value), serialNo: String(draft.value.serialNo), ruleNo: String(draft.value.ruleNo), ruleSequence: Number(draft.value.ruleSequence ?? 0), rulePhase: Number(draft.value.rulePhase), ruleType: Number(draft.value.ruleType), reviser: currentUser, reviseDate: new Date().toISOString() }
     if (editorMode.value === 'add') data.value.rules.push(row)
     else data.value.rules = data.value.rules.map(item => item.serialNo === row.serialNo && item.ruleNo === row.ruleNo ? row : item)
   } else if (editorKind.value === 'equipment') {
     if (editorMode.value === 'add') {
       for (const equipmentNo of draft.value.equipmentNos as string[]) data.value.equipments.push({ serialNo: draft.value.serialNo, equipmentNo, recipeGroup: draft.value.recipeGroup, reviser: currentUser, reviseDate: new Date().toISOString() })
     } else {
-      const row = { ...clone(draft.value), reviser: currentUser, reviseDate: new Date().toISOString() }
-      delete row.recipeDetails
+      const { recipeDetails: _recipeDetails, ...equipmentDraft } = clone(draft.value)
+      const row = { ...equipmentDraft, serialNo: String(draft.value.serialNo), equipmentNo: String(draft.value.equipmentNo), reviser: currentUser, reviseDate: new Date().toISOString() }
       data.value.equipments = data.value.equipments.map(item => item.serialNo === row.serialNo && item.equipmentNo === row.equipmentNo ? row : item)
     }
   } else if (editorKind.value === 'condition' && editorMode.value === 'edit') {

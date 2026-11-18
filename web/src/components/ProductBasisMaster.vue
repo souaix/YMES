@@ -13,13 +13,15 @@ import ProductPropertyMaster from './ProductPropertyMaster.vue'
 const window = globalThis.window
 type IssueState = -1 | 0 | 1 | 2
 type ProductRow = Record<string, any>
+type ProductParameterData = NonNullable<InstanceType<typeof ProductParameterSetup>['$props']['parameters']>
+type ProductBusinessRuleData = NonNullable<InstanceType<typeof ProductBusinessRuleSetup>['$props']['businessRules']>
 type ProductRelation = {
   processes: ProductRow[]
   bom: ProductRow[]
   constraints: ProductRow[]
   properties: ProductRow[]
-  parameters?: ProductRow
-  businessRules?: ProductRow
+  parameters?: ProductParameterData
+  businessRules?: ProductBusinessRuleData
   opDescriptions?: ProductRow[]
   recipeGroups?: ProductRow[]
   accessories?: ProductRow[]
@@ -699,14 +701,14 @@ function saveProductProperties(properties: ProductRow[]): void {
   persistMock()
   notice.value = '產品屬性假資料已儲存。'
 }
-function saveProductParameters(parameters: ProductRow): void {
+function saveProductParameters(parameters: ProductParameterData): void {
   if (!active.value || !mock.value) return
   const key = keyOf(active.value)
   relations.value[key] = { ...relatedFor(active.value), parameters: clone(parameters) }
   persistMock()
   notice.value = '產品 Parameter 假資料已儲存。'
 }
-function saveProductBusinessRules(businessRules: ProductRow): void {
+function saveProductBusinessRules(businessRules: ProductBusinessRuleData): void {
   if (!active.value || !mock.value) return
   const key = keyOf(active.value)
   relations.value[key] = { ...relatedFor(active.value), businessRules: clone(businessRules) }

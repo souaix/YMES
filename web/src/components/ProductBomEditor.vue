@@ -128,7 +128,9 @@ const treeLines = computed<TreeLine[]>(() => {
 })
 const approvedProducts = computed(() => props.products.filter(row => Number(row.issueState) === 2))
 const productVersions = computed(() => approvedProducts.value.filter(row => row.productNo === draft.value.nodeNo))
-const lookupOptions = computed(() => lookupField.value === 'ProductNo' ? approvedProducts.value : materials)
+const lookupOptions = computed(() => lookupField.value === 'ProductNo'
+  ? approvedProducts.value.map(item => ({ key: `${item.productNo}|${item.productVersion}`, label: `${item.productNo} / ${item.productVersion} / ${item.productName}`, row: item }))
+  : materials.map(item => ({ key: item.materialNo, label: `${item.materialNo} / ${item.unitNo} / ${item.description}`, row: item })))
 const operationOptions = computed(() => [...new Set(['DEV-OP-10', 'DEV-OP-20', 'DEV-OP-30', 'DEV-OP-40', 'DEV-OP-50', ...workingBom.value.map(row => String(row.opNo)), 'LOTCREATE'])])
 const currentMaterial = computed(() => materials.find(row => row.materialNo === draft.value.nodeNo))
 const canSubstitute = computed(() => Boolean(context.value.line?.directIndex !== undefined && Number(context.value.line.node?.nodeType) === 0 && Number(context.value.line.node?.specified) === 0))
@@ -341,7 +343,7 @@ function saveSubstitutes(): void {
       <span v-else class="menu-disabled">此階層僅供檢視</span>
     </div>
 
-    <div v-if="lookupField" class="bom-sub-overlay" @click.self="lookupField=''"><section class="bom-pick-dialog"><header><strong>選擇 {{ lookupField }}</strong><button type="button" @click="lookupField=''">×</button></header><div class="bom-pick-list"><button v-for="item in lookupOptions" :key="lookupField === 'ProductNo' ? `${item.productNo}|${item.productVersion}` : item.materialNo" type="button" @click="chooseLookup(item)">{{ lookupField === 'ProductNo' ? `${item.productNo} / ${item.productVersion} / ${item.productName}` : `${item.materialNo} / ${item.unitNo} / ${item.description}` }}</button><p v-if="!lookupOptions.length">沒有已核准的可選資料。</p></div></section></div>
+    <div v-if="lookupField" class="bom-sub-overlay" @click.self="lookupField=''"><section class="bom-pick-dialog"><header><strong>選擇 {{ lookupField }}</strong><button type="button" @click="lookupField=''">×</button></header><div class="bom-pick-list"><button v-for="item in lookupOptions" :key="item.key" type="button" @click="chooseLookup(item.row)">{{ item.label }}</button><p v-if="!lookupOptions.length">沒有已核准的可選資料。</p></div></section></div>
 
     <div v-if="substituteOpen" class="bom-sub-overlay" @click.self="substituteOpen=false"><section class="bom-pick-dialog"><header><strong>Set Substitute MTL</strong><button type="button" @click="substituteOpen=false">×</button></header><p class="substitute-note">未指定用料可以維護替代料群組。</p><label v-for="item in materials.filter(row => row.materialNo !== context.line?.node?.nodeNo)" :key="item.materialNo" class="substitute-choice"><input v-model="substituteSelection" type="checkbox" :value="item.materialNo" />{{ item.materialNo }}　{{ item.description }}</label><footer><button class="prd-button" type="button" @click="substituteOpen=false">Cancel</button><button class="prd-button confirm" type="button" @click="saveSubstitutes">OK</button></footer></section></div>
   </section>

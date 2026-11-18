@@ -1,3 +1,12 @@
+# 家裡電腦接手清單
+
+## 家用端接手摘要（2026-11-18）
+
+- [x] QC501/QC502 已部署並完成本輪正式 app-browser 操作驗收，測試資料清空；細節見本檔 QC501/QC502 完成紀錄與各模組文件。
+- [x] 已整合公司端 `28bc913` 及其前 23 筆新增提交，保留全部 DDL、規格與 UI；處理雙方文件衝突，補正 PRD/PRS 的 TypeScript/初始化/換版格式錯誤。完整 .NET Release 與 Web Vite build 成功。
+- [x] 合併新增頁在本機 Development 完成相關修正的基本操作檢查；PRD/PRS 正式 API 與完整 CRUD 驗收仍依下方交接，未標成正式可用。正式站本輪發行範圍為 QC501/QC502。
+- [x] GitHub main 已同步整合提交 `340db5f`，包含公司端 `7125143`，未使用 force push。下一個家用端功能先接 QC503「檢測設備連線程式」；沿用 migration 0027 的 Driver 表及 QC501/QC502 共用查找。
+
 ## 最新公司端交接：PS102 製造層別設定（2026-11-18）
 
 - [ ] Pull 最新 GitHub `main`，閱讀 `docs/modules/PRS/製造層別設定.md`、`docs/DATABASE_CONNECTION.md` PS102 段落，以及 `database/reference/mestest_ps102_stage_basis_source_ddl.sql` / `mestest_ps102_stage_basis_create.sql`。
@@ -120,7 +129,6 @@
 - [ ] Finish 必須在 transaction 中重新計算同 ERF 的剩餘 Hold Item：最後一項採 DispType=2/Final；仍有其他項目則 DispType=0 但本筆 OCAPStatus=11。避免同時操作導致錯誤結案；系統 ERF 必須驗證新鮮 LotStamp，衝突回 409。
 - [ ] Change Group 只接受 server 從 OCAP graph/version/relation 驗證的可達節點；不可接受任意 GroupNo/NodeId/LinkName。附件和 mail 使用 YMES 現有 extension/outbox；確認不重複呼叫舊 side effect。
 - [ ] 完成後更新 migration/API 規格與 TODO，push GitHub main。公司端 pull 後以 Vue DEV UI 整合驗收；公司端尚未做 build、測試或瀏覽器驗收。
-# 家裡電腦接手清單
 
 ## 最新公司端 handoff：QC408 OCAP基本資料（2026-11-18）
 
@@ -143,23 +151,29 @@
 - [ ] 刪除狀態 0/-1 硬刪、狀態2 改 -1 並遞增 DataStamp；1 禁止。舊 MES 沒明確檢查 QC502 儀器的 Driver 引用且 Oracle 無 FK；先查 YMES live schema/既有規則，再決定參照中 Driver 的防刪策略，記錄差異。
 - [ ] Driver GET 在不帶狀態條件時仍需回傳所有狀態，因 QC502 共用 Driver lookup 未限制 IssueState。逐筆動作遇首個失敗就停止的 WinForms 行為需保留。API/schema 完成後推送，供公司端 pull 整合。
 
-## 前次公司端交接：QC501 檢測儀器類別（2026-11-18）
+## 家用端進度：QC501/QC502 檢測儀器（2026-11-18）
 
-- [ ] 先 pull 最新 `main`，閱讀 `docs/modules/QC/檢測儀器類別.md` 與 `docs/DATABASE_CONNECTION.md` QC501 段落。
-- [ ] 查 YMES PostgreSQL live schema/migrations 中 QC501–QC503 共用六表：`tblqcinspmachineparametertype`、`tblqcinspmachinetype`、`tblqcinspmachinebasis`、`tblqcinspmachineparameter`、`tblqcinspmachineproperty`、`tblqcinspdriver`。對照 `database/reference/mestest_qc501_inspection_machine_create.sql` 及 Oracle source DDL；只為缺表新增 forward migration，不要執行 Oracle source DDL、重建既有表或新增不符來源的 PK/FK。
-- [ ] 實作 QC501 API contract：GET 類別清單（IssueState/識別碼）、GET Driver lookup（舊服務未限制狀態）、POST/PUT/DELETE/approve。逐筆 CRUD 要驗證狀態與 DataStamp、參數化 SQL、由 server 管理 Creator/CreateDate/Reviser/ReviseDate/DataStamp，核准接既有 Issue Job。QC501 主鍵是 InspMachineType 單欄；不要改為複合鍵。IssueState/DataStamp 在 Oracle 可 NULL；`ChNo` 欄位 DB 長度 3，WinForms MaxLength=10，API 必須回明確驗證錯誤。
-- [ ] 編輯 API 依共用 `ExeIssueControl`/表單設定限制 IssueState=1 唯讀，IssueState=2/-1 按控制項配置；核准狀態由 Issue Job 回傳，不得由前端硬設。硬刪前查 QC502 儀器、QC503 Driver/屬性等引用並採一致交易策略；現有 Core 裸刪除缺少完整引用檢查。
-- [ ] 公司端 Vue 頁 `web/src/components/QcInspMachineParameterTypeMaster.vue` 使用上述路由；請將真 API 的回應 DTO、錯誤格式、route ACL、簽核服務與實際表名接起來。DEV mock 不寫正式資料庫。
-- [ ] API/schema 完成後回報或推送，供公司端 pull 後對接和驗收；QC502/QC503 handoff 已列於本檔下方及開頭，沿用同一批六表與 CREATE/source DDL。
+- [x] QC501–QC503 六張共用表 live schema audit 確認缺表；先備份並驗證 `/opt/ymes/backups/ymes_before_0027_qc501_20261118.dump`，再套用 migration `0027_qc501_qc502_inspection_machines.sql`，授予 `ymes_app` 表級 CRUD。
+- [x] 實作並部署 QC501/QC502 登入保護 API、參數化 SQL、DataStamp/IssueState CAS、audit、欄位檢查、類別/Driver lookup、刪除引用檢查；Release build 0 warning/0 error，API readiness=200，未登入 API=401。
+- [x] Production app-browser 已驗證 QC501 新增/套用/修改、複製 UserDefine/Driver lookup、核准取消不改資料後確定轉 2，以及被儀器引用的類別刪除回 409 且保留資料。
+- [x] QC502 新增/套用/修改、類別 A RS232→類別 B UserDefine 更換、無類別複製/Driver lookup、核准轉 2 與刪除儀器 B 均經 app-browser 驗證；舊 DataStamp 在 DB 改成 NULL 後保存回 409，重查 NULL 後保存成功。
+- [x] 精確 nullable DataStamp CAS、交易內鎖定權威類別/Driver、Apply 使用 server DTO 與新增轉修改模式已實作。.NET 9 Release build 0 warning/0 error；頁內確認框已取代 `window.confirm`。最終部署後 app-browser 確認 ProblemDetails 顯示清楚中文 detail，不顯示 JSON。
+- [x] 本輪與先前測試儀器/類別均已清理；暫存 Driver 以交易清理，遠端精確 fixture 計數為 0。
+- [x] 收尾驗證通過：QC501 狀態 1 編輯欄位/保存停用、-1 與 2 類別刪除成功；QC502 狀態 0 刪除先取消保留再確定刪除，狀態 2 刪除成功。兩頁四狀態篩選、Close 回空白首頁及登出/Demo 登入均通過；API/Web healthy、readiness=200。
+- [x] 本次家用端變更已隨 `340db5f` 同步 GitHub main，保留公司端 `7125143` 與 QC503 UI 提交 `b572f3b`；已讀新版待辦，下一步為 QC503 家用端 API。
+
+## 最新公司端交接：QC501 檢測儀器類別（2026-11-18；家用端已接手）
+
+- [x] 家用端已完成 live schema audit、備份、0027 migration 與 QC501 API；細節見 `docs/modules/QC/檢測儀器類別.md`。主鍵 InspMachineType 單欄，IssueState/DataStamp nullable，ChNo 長度 3。
+- [x] app-browser 已驗證新增/套用/修改、複製/Driver lookup、核准取消/確定、引用刪除防護、狀態 1 唯讀、-1/2 成功刪除、四狀態/Close 與最終錯誤文字。共用 Issue/Job 表不存在時核准轉 ACTIVE，若表出現則 API fail closed；Issue Control 尚未接入。
+- [ ] 公司端 pull 家用端同步後，確認 Vue DTO/API contract 與正式 route；不要把 DEV mock 資料送至正式 DB。
+- [ ] 公司端已提交 QC503 UI（`b572f3b`）；家用端 merge 後讀規格並接手 API，沿用 0027 六表與 CREATE/source DDL。
 
 ## 前次公司端交接：QC502 檢測儀器基本資料（2026-11-18）
 
-- [ ] 閱讀 `docs/modules/QC/檢測儀器基本資料.md`。Vue 頁 `/YMES/QC/InspectionMachine`；QC502 主表是 `TBLQCINSPMACHINEPARAMETER`。它與 QC501 共用類別、Driver lookup 與六表 Oracle DDL/PG CREATE 參考，沒有新增 CREATE SQL。
-- [ ] 先查 YMES live schema/migrations 的 `tblqcinspmachineparameter`，比較 `database/reference/mestest_qc501_inspection_machine_create.sql`；只在確定缺表時新增 forward migration。主鍵 `InspMachineNo`；InspMachineType 可 NULL；來源 IssueState/DataStamp nullable+default。
-- [ ] 實作 QC502 GET/POST/PUT/DELETE/approve API，與 QC501 共用類別/Driver API。POST/PUT 欄位、RS232 必填、Format2/ChNo 空值寫 `NA`、可選類別帶入、audit/DataStamp/IssueState 依規格；`ChNo` Oracle 長度3但 WinForms MaxLength10，API 回清楚欄位錯誤。Edit 不能假裝清除空白類別已成功，需忠實處理舊 service 對空字串的語義。
-- [ ] Approval 連共用 IssueManagement：沒有 Job 時直接轉 IssueState=2，有 Job 時啟動簽核轉 1；前端只送簽，不指定結果狀態。Edit 要接 `ExeIssueControl`，Delete 檢查 live schema 與相關資料使用情況並以 DataStamp/IssueState CAS。
-- [ ] QC502 Property 按鈕在 WinForms 預設隱藏；不需要因此建 UI/API。`TBLQCINSPMACHINEBASIS` 雖在來源 DDL 內，QC502 主畫面 Add/Edit/Delete 沒有使用，勿誤作本頁主表。
-- [ ] QC501–QC503 API/schema 完成後回公司端 pull 整合；QC503 Driver 頁及其規格已完成並沿用 QC501 已查 DDL。
+- [x] 家用端已建立 QC502 GET/POST/PUT/DELETE/approve API，沿用 0027 六表 migration 與 QC501 class/Driver lookup；規則見 `docs/modules/QC/檢測儀器基本資料.md`。
+- [x] app-browser 已驗證新增/套用/修改、跨通訊型別類別帶入、複製/Driver lookup、核准、取消/確定刪除、nullable DataStamp 409 與重查後保存、四狀態/Close、最終錯誤文字及 Demo 登入；本輪 fixture 已清空。
+- [ ] 公司端 pull 家用端同步並確認正式 API/DTO；QC503 UI 已提交，下一項由家用端接手 API，沿用 QC501 已查 DDL。
 
 ## 最新公司端 handoff：QC305 產品規格設定（2026-11-17）
 
@@ -171,17 +185,12 @@
 - [ ] 舊 Core 的產品綁定和 chart 查詢只用 ProductNo，沒有 ProductVersion/OPNo 條件；API 應在規格中保留此相容行為及版本/多 OP 歧義，不要自行切換 key。對同一產品/QCItem 去重，避免不同 GroupNo 對同一 Basis 重複覆寫。
 - [ ] 公司端本次未執行 build、測試或瀏覽器驗收；QC305 沒有新增表，沒有額外 CREATE SQL。本 handoff 之外，QC303、QC304 API/schema 工作仍依各自段落追蹤。
 
-## 最新公司端 handoff：QC303 品管項目規格（2026-11-17）
+## 已完成家用端 handoff：QC303 品管項目規格（2026-11-18）
 
-- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/品管項目規格.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`QC SPEC BASIS`、FunctionKey=`QC303`；Vue DEV 頁 `/YMES/QC/SpecBasis` 位於品質資料 → 計量規格設定 → 品管項目規格。
-- [ ] 先查 YMES PostgreSQL live schema、migrations 和既有 QC API。QC303 Oracle Basis/Detail DDL 沿用 `database/reference/mestest_qc205_variable_dependencies_source_ddl.sql` 的 `TBLQCSPECBASIS`、`TBLQCSPECDETAIL` 區塊；PG CREATE-only 參考為 `database/reference/mestest_qc303_spec_basis_create.sql`。只在 live schema 確認缺漏後新增 forward migration；不要重建 QC Item、Factor、MES Parameter、Issue/Job 或 `QCSN` 共用服務/資料表。
-- [ ] 實作登入保護、要求 QC303 FunctionKey 的 API：`GET /api/qc/spec-bases/qc-items`、`GET /api/qc/spec-bases?qcItemNo&issueState`、`GET /{serial}/details`、`GET /factors/{factorNo}/options`、`POST /api/qc/spec-bases`、`PUT/DELETE /{serial}`、`POST /{serial}/approve`、`POST /{serial}/disapprove`、`POST /api/qc/spec-bases/copy`。若既有 API 有相同職責，沿用現有路由並同步 Vue/spec。
-- [ ] Basis 的 Oracle 動態欄 MO/PRODUCT/EQUIPMENT/CUSTOMER/OP/PROCESS/EQPTYPE/MATERIAL/POSION/EMPLOYEE/THINKNESS/THICKNESS/VERSION/DEVICE 在 YMES 用 `factorvalues JSONB`；key 只允許該 QC Item 的 FactorSpec 白名單。不可拼動態 SQL identifier。Factor 值可空或 `*`；不得自行新增全因子必填規則。新 serial 沿用共用 QCSN 服務；Creator/Reviser、時間、IssueState、DataStamp 由服務端管理。
-- [ ] 新增依 QC Item+全部 FactorSpec 值檢查重複（不因 IssueState 排除既有 Basis），並 transaction 寫 Basis+Details。修改僅允許 IssueState=0，執行 DataStamp CAS、更新 audit 並交易式替換 Detail；UI 的 Confirm 修改必填 MEMO、Apply 可留白。
-- [ ] Detail ChartType/SPCID：-1→0；0→0/1/2；1→0/1/3；2→資料 SPCID 0/4（讀取時有 4 才將 0 顯示 X Chart）；UI 的 Above 只作 CS±Above helper，不落庫。維持 SpecLineType 0/1/2/3、數值與 US≥UCL≥CL≥LCL≥LS 驗證及 UCL/CL/LCL 原字串來源語意。
-- [ ] 刪除 0/-1 實體刪除 Basis+Detail、2 改 UNUSED(-1)、1 拒絕；核准只接受 0，沿用 Issue Job（無 Detail 可直接 ACTIVE，有流程先 PENDING）；取消核准只接受 ACTIVE(2) 回 0。舊 Core 沒有量測引用檢查；若 YMES 需保護，先確認現有量測/API 真實引用，不要刪除或建立虛構的 log table。
-- [ ] Copy 單筆產生新 serial、狀態 0、複製 Factor/Detail；Copy2 僅在來源/目標 Spec Factor 名稱集合相同時執行，CopyType 3=來源 0+2、0=只 0、2=只 2；目標已有相同 Factor 組合者略過，複製的資料都以新 serial、UNFROZEN 建立。跨 QC Item 的 wildcard `*` 是執行期通用規格匹配規則。
-- [ ] API 必須交易處理 Basis/Detail/狀態/複製與 audit；重新查狀態、DataStamp、重複條件，不信任 request 中的使用者、狀態或 audit。Oracle 來源由公司端先前直連唯讀取得，這次不必再向公司端索取 IP/帳密/SID。本段未執行 build、測試或瀏覽器驗收。
+- [x] YMES live schema 原先缺 Basis/Detail；新增並套用 `0026_qc303_spec_basis.sql`。套用前備份 `/opt/ymes/backups/ymes_before_0026_qc303_20261118.dump` 已通過 `pg_restore --list`；只建 QC303 兩表及 `ymes_app` CRUD 權限，不重建共用 QC Item/Factor/Parameter/Issue/Job/QCSN。
+- [x] 完成登入保護 API（QC Item/Factor、List/Detail/Options、CRUD、Approve/Disapprove、Copy2）、FactorSpec 白名單、JSONB/參數化 SQL、交易、重複檢查、DataStamp 與服務端 audit。依使用者指示暫不做角色／FunctionKey ACL。
+- [x] .NET 9 Release build 0 warnings/0 errors；正式 API/Web 已部署。正式 menu 路由更新後只重建 `ymes-web`；容器 healthy，API readiness=200、未登入 QC303 API=401、Web route=200。App-browser 驗證三層選單、正式頁、四個狀態篩選與 Close。
+- [ ] Live 計量 QC Item 清單為空，新增/修改/刪除/Copy/簽核/Detail 等依賴業務列的流程尚無對象可做端到端驗收。`tblsysmesparameter`、Issue/Job、共用 QCSN 序號服務亦不存在；現階段 serial 使用服務端 35 字元 GUID fallback。待共用資料、參數與簽核資源可用後補驗；詳見 `docs/modules/QC/品管項目規格.md`。
 
 ## 下一個公司端 handoff：QC304 物料規格設定（2026-11-17）
 

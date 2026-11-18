@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2
 type EditMode = 'add' | 'edit' | 'copy' | null
@@ -20,6 +22,7 @@ interface EditorValue {
 
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { currentUserNo: '', developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const storageKey = 'ymes-dev-mock:qc-insp-machine-parameter-type:v1'
 const statuses: { value: IssueState; label: string }[] = [
@@ -85,7 +88,18 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(apiUrl(path), { credentials: 'include', ...init })
   if (response.status === 401) { window.location.assign(import.meta.env.BASE_URL + 'login'); throw new Error('登入已逾期，請重新登入。') }
   const body = await response.text()
-  if (!response.ok) throw new Error(body || 'API 請求失敗 (' + response.status + ')')
+  if (!response.ok) {
+    let message = body
+    try {
+      const problem: unknown = JSON.parse(body)
+      if (problem && typeof problem === 'object') {
+        const fields = problem as Record<string, unknown>
+        if (typeof fields.detail === 'string' && fields.detail.trim()) message = fields.detail.trim()
+        else if (typeof fields.title === 'string' && fields.title.trim()) message = fields.title.trim()
+      }
+    } catch { /* Keep plain-text errors when the API response is not JSON. */ }
+    throw new Error(message || 'API 請求失敗 (' + response.status + ')')
+  }
   return (body ? JSON.parse(body) : undefined) as T
 }
 function searchMatches(value: string, query: string): boolean { return value.toLocaleLowerCase().includes(query.toLocaleLowerCase()) }
@@ -182,15 +196,13 @@ async function saveEditor(keepOpen = false): Promise<void> {
       rows.value = mode.value === 'edit' ? rows.value.map(row => row.inspMachineType === source.value?.inspMachineType ? next : row) : [...rows.value, next]
       persistDemo()
     } else if (mode.value === 'edit' && source.value) {
-      await request('/api/qc/inspection-machine-parameter-types/' + encodeURIComponent(source.value.inspMachineType), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, issueState: source.value.issueState, dataStamp: source.value.dataStamp }) })
-      savedRow = normalizeRow({ ...source.value, ...payload, reviser: currentUser.value, reviseDate: now, dataStamp: (source.value.dataStamp ?? 0) + 1 })
+      savedRow = normalizeRow(await request<Record<string, unknown>>('/api/qc/inspection-machine-parameter-types/' + encodeURIComponent(source.value.inspMachineType), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, issueState: source.value.issueState, dataStamp: source.value.dataStamp }) }))
     } else {
-      await request('/api/qc/inspection-machine-parameter-types', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      savedRow = normalizeRow({ ...payload, creator: currentUser.value, createDate: now, issueState: 0, dataStamp: 0, reviser: null, reviseDate: null })
+      savedRow = normalizeRow(await request<Record<string, unknown>>('/api/qc/inspection-machine-parameter-types', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }))
     }
-    if (keepOpen) { if (mode.value === 'edit') source.value = savedRow }
+    if (keepOpen) { source.value = savedRow; editor.value.inspMachineType = savedRow.inspMachineType; mode.value = 'edit' }
     else mode.value = null
-    await loadRows(); notice.value = keepOpen ? '資料已套用。' : '資料已儲存。'
+    await loadRows(); activeKey.value = savedRow.inspMachineType; notice.value = keepOpen ? '資料已套用。' : '資料已儲存。'
   } catch (reason) { editorError.value = reason instanceof Error ? reason.message : '儲存檢測儀器類別失敗。' }
   finally { busy.value = false }
 }
@@ -198,7 +210,7 @@ async function deleteSelected(): Promise<void> {
   const actionRows = selectedRows.value.length ? selectedRows.value : activeRow.value ? [activeRow.value] : []
   const eligible = actionRows.filter(row => row.issueState === 0 || row.issueState === 2 || row.issueState === -1)
   if (!eligible.length) { notice.value = '請選取未簽核、已簽核或不使用狀態的資料。'; return }
-  if (!window.confirm(`確定刪除選取的 ${eligible.length} 筆檢測儀器類別？`)) return
+  if (!(await requestConfirmation(`確定刪除選取的 ${eligible.length} 筆檢測儀器類別？`))) return
   busy.value = true; error.value = ''; notice.value = ''
   try {
     for (const row of eligible) {
@@ -206,7 +218,7 @@ async function deleteSelected(): Promise<void> {
       else await request('/api/qc/inspection-machine-parameter-types/' + encodeURIComponent(row.inspMachineType) + '?issueState=' + row.issueState + '&dataStamp=' + (row.dataStamp ?? ''), { method: 'DELETE' })
     }
     if (mock.value) persistDemo()
-    notice.value = `已刪除 ${eligible.length} 筆資料。`; await loadRows()
+    await loadRows(); notice.value = `已刪除 ${eligible.length} 筆資料。`
   } catch (reason) { const message = reason instanceof Error ? reason.message : '刪除檢測儀器類別失敗。'; await loadRows(); error.value = message }
   finally { busy.value = false }
 }
@@ -214,7 +226,7 @@ async function approveSelected(): Promise<void> {
   const actionRows = selectedRows.value.length ? selectedRows.value : activeRow.value ? [activeRow.value] : []
   const eligible = actionRows.filter(row => row.issueState === 0)
   if (!eligible.length) { notice.value = '核准作業只允許選取未簽核資料。'; return }
-  if (!window.confirm(`確定送出 ${eligible.length} 筆檢測儀器類別核准？`)) return
+  if (!(await requestConfirmation(`確定送出 ${eligible.length} 筆檢測儀器類別核准？`))) return
   busy.value = true; error.value = ''; notice.value = ''
   try {
     for (const row of eligible) {
@@ -222,7 +234,7 @@ async function approveSelected(): Promise<void> {
       else await request('/api/qc/inspection-machine-parameter-types/' + encodeURIComponent(row.inspMachineType) + '/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ issueState: row.issueState, dataStamp: row.dataStamp, creator: currentUser.value }) })
     }
     if (mock.value) persistDemo()
-    notice.value = `已送出 ${eligible.length} 筆核准。`; await loadRows()
+    await loadRows(); notice.value = `已送出 ${eligible.length} 筆核准。`
   } catch (reason) { const message = reason instanceof Error ? reason.message : '核准作業失敗。'; await loadRows(); error.value = message }
   finally { busy.value = false }
 }
@@ -252,7 +264,7 @@ onMounted(() => { void loadRows() })
 
     <div v-if="mode" class="backdrop" @click.self="mode = null"><section class="dialog" role="dialog" aria-modal="true" :aria-label="modeTitle + '檢測儀器類別'">
       <header class="titlebar"><h2>檢測儀器類別基本資料（{{ modeTitle }}）</h2><button class="x" aria-label="關閉" @click="mode = null">×</button></header>
-      <form class="editor-form" @submit.prevent="saveEditor">
+      <form class="editor-form" @submit.prevent="saveEditor()">
         <fieldset class="basis-fields" :disabled="editorLocked"><legend>檢測儀器類別資料</legend>
           <label class="field"><span>InspMachineType</span><input v-model="editor.inspMachineType" maxlength="50" :readonly="mode === 'edit'" required></label>
           <label class="field"><span>InspMachineTypeName</span><input v-model="editor.inspMachineTypeName" maxlength="50"></label>
@@ -276,6 +288,7 @@ onMounted(() => { void loadRows() })
     </section></div>
     <div v-if="driverPicker" class="backdrop" @click.self="driverPicker = false"><section class="dialog driver-dialog" role="dialog" aria-modal="true" aria-label="選取 InspDriverNo"><header class="titlebar"><h2>選取檢測 Driver</h2><button class="x" aria-label="關閉" @click="driverPicker = false">×</button></header><label class="driver-search">搜尋 Driver<input v-model="driverSearch" autofocus></label><div class="driver-grid"><table class="data-grid"><thead><tr><th>InspDriverNo</th><th>FunctionName</th><th>Description</th><th></th></tr></thead><tbody><tr v-for="row in filteredDrivers" :key="row.inspDriverNo"><td>{{ row.inspDriverNo }}</td><td>{{ row.functionName }}</td><td>{{ row.description }}</td><td><button class="button" @click="editor.inspDriverNo = row.inspDriverNo; driverPicker = false">選取</button></td></tr><tr v-if="!filteredDrivers.length"><td colspan="4" class="empty-cell">沒有可選 Driver</td></tr></tbody></table></div></section></div>
   </main>
+  <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
 </template>
 
 <style scoped>

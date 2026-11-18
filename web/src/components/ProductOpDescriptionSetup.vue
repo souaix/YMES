@@ -55,6 +55,11 @@ const displayRows = computed(() => working.value.map(row => ({
   key: String(row.opNo ?? row.OPNo ?? ''),
   opNo: String(row.opNo ?? row.OPNo ?? ''),
   description: String(row.description ?? row.Description ?? ''),
+  opName: String(row.opName ?? row.OPName ?? ''),
+  creator: row.creator ?? row.Creator,
+  createDate: row.createDate ?? row.CreateDate,
+  reviser: row.reviser ?? row.Reviser,
+  reviseDate: row.reviseDate ?? row.ReviseDate,
 })))
 const selectedRows = computed(() => displayRows.value.filter(row => selectedKeys.value.includes(row.key)))
 const canEditRow = computed(() => !readOnly.value && Boolean(activeKey.value))
@@ -195,7 +200,7 @@ function closeDefinition(): void {
           <thead><tr><th>OP No</th><th>Description</th><th>Creator</th><th>CreateDate</th><th>Reviser</th><th>ReviseDate</th></tr></thead>
           <tbody>
             <tr v-for="row in displayRows" :key="row.key" :class="{ selected: selectedKeys.includes(row.key), active: activeKey === row.key }" @click="selectRow(row, $event)">
-              <td>{{ row.opNo }}</td><td class="description-cell">{{ row.description }}</td><td>{{ row.creator ?? row.Creator }}</td><td>{{ formatDate(row.createDate ?? row.CreateDate) }}</td><td>{{ row.reviser ?? row.Reviser }}</td><td>{{ formatDate(row.reviseDate ?? row.ReviseDate) }}</td>
+              <td>{{ row.opNo }}</td><td class="description-cell">{{ row.description }}</td><td>{{ row.creator }}</td><td>{{ formatDate(row.createDate) }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.reviseDate) }}</td>
             </tr>
             <tr v-if="!displayRows.length"><td colspan="6" class="opd-empty">目前產品版本尚無 OP 說明。</td></tr>
           </tbody>

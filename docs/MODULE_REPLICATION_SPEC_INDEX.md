@@ -2,8 +2,8 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
-- QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。已依 WinForms 主/編輯 Form、`clsInspMachine` 與直接唯讀 Oracle DDL 完成 Vue DEV 清單/編輯/Driver 選擇、三層選單及 API handoff；QC501–QC503 共用六表 Oracle source DDL 與 PostgreSQL CREATE 參考已建立。家用端需核對 YMES live schema、接上共用 Issue Job/Issue Control，再實作 QC501 API；QC502、QC503 handoff 已列於下方。
-- QC502「檢測儀器基本資料」：[功能規格](modules/QC/檢測儀器基本資料.md)。已依 `frmInspMachineParameter`/Def、`wsQC`、`clsInspMachine` 完成類別帶入/本機 RS232/Driver 流程、Vue DEV 清單/編輯及 API handoff；主表是 QC501 已查的 `TBLQCINSPMACHINEPARAMETER`，沿用既有六表 DDL，不新增 CREATE SQL。家用端需與 QC501 共用 lookup、Issue Control、Issue Job/DataStamp，並檢查 YMES live schema。
+- QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。共用六表 migration 0027、登入保護 API 已部署；app-browser 已驗證新增/套用/修改、複製/Driver lookup、取消/確定核准、引用刪除防護、狀態 1 唯讀、-1/2 刪除、四狀態/Close、錯誤文字與 Demo 登入。本輪測試資料已清空；共用簽核/Issue Control 限制見規格。公司端 QC503 UI 已於 `b572f3b` 提交，下一步為家用端 API handoff。
+- QC502「檢測儀器基本資料」：[功能規格](modules/QC/檢測儀器基本資料.md)。主表 `TBLQCINSPMACHINEPARAMETER`；CRUD/lookup API 已部署，類別通訊參數以交易內鎖定重讀為準、DataStamp 保留 NULL 並精確 CAS。app-browser 已驗證新增/套用/修改、RS232→UserDefine 類別更換、複製/Driver lookup、核准、取消/確定刪除、舊版本衝突、四狀態/Close、錯誤文字與 Demo 登入。本輪測試資料已清空，共用資源限制依規格追蹤。
 - QC503「檢測設備連線程式」：[功能規格](modules/QC/檢測設備連線程式.md)。已直接對照 WinForms 主/Def Form、`wsQC`、`clsInspMachine`、`clsBasis_UPD` 與 Driver Function assembly，完成 DEV Vue 頁/三層選單/API handoff；主表 `TBLQCINSPDRIVER` 沿用 QC501 已取得的共用 Oracle DDL/PostgreSQL CREATE，不新增表。家用端待核對 live schema、共享 Driver API 與簽核 Issue Job。
 - QC408「OCAP基本資料」：[功能規格](modules/QC/OCAP基本資料.md)。已對照四個 WinForms Form、`wsQC`、`clsQCBasis`，以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連查得三張 OCAP 表 DDL，新增 Oracle source DDL/PG CREATE-only 參考及 QC → 異常設定三層選單、Vue DEV 清單/CRUD/核准/刪除/流程預覽與簡化節點繪製器。家用端待比對 YMES live schema、實作三表交易與 API，並先釐清 binary `iMESXMLFlow.dll` 的 XML 相容策略。
 
@@ -30,7 +30,7 @@
 ## 2026-11-17 品管項目匯入規格
 
 - QC301「管制圖內容」：[功能規格](modules/QC/管制圖內容.md)。已直接閱讀 QC301 Form/Define/Copy Form、QC Rule Form、wsQC 與 clsQCBasis；透過 PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得抽樣參數表 DDL，沿用 QC302 四張 chart DDL，完成三區 Vue DEV 頁與 API handoff。家用端待查 live schema/migrations、確認 Issue/Job、刪除引用與 factor JSONB，並建置登入保護 API。
-- QC303「品管項目規格」：[功能規格](modules/QC/品管項目規格.md)。已依 `frmQCSpecBasis`/Define/Copy、wsQC、clsQCBasis 記錄畫面、Detail SPCID、狀態、因子、規格驗證與簽核/複製；Oracle Basis/Detail DDL 沿用先前 PowerShell + Oracle.ManagedDataAccess 直連取得的 QC205 dependency reference，建立 PostgreSQL CREATE-only 對照及 Vue DEV 頁。家用端待比對 live schema/migrations 並建置 QC303 API。
+- QC303「品管項目規格」：[功能規格](modules/QC/品管項目規格.md)。已完成 Vue 正式頁、登入保護 API、QC303 PostgreSQL migration 並部署 YMES；依使用者指示只要求登入、不實作 FunctionKey/角色 ACL。正式頁及狀態篩選已驗收；live QC Item 為空，CRUD 無業務資料可端到端驗收；QCSN、參數目錄、Issue/Job 共用資源未建立，限制詳見模組文件。
 - QC304「物料規格設定」：[功能規格](modules/QC/物料規格設定.md)。已直接讀 `frmQCMaterialSpec`、wsQC 與 clsQCBasis，完成 Material search、SPEC detail editor、批次套用/貼上/驗證的 Vue DEV 頁；沿用 QC302 的 Chart Basis/Detail/DetailLog 表與既有 MTL/QC Item/Group references，無 QC304 專屬新表或 CREATE SQL。家用端待比對 live schema 並實作批次 API。
 - QC305「產品規格設定」：[功能規格](modules/QC/產品規格設定.md)。公司端依 `frmQCProductSpec` 與 `clsQCBasis` 完成產品類別/編號查詢、ProductData、SPEC 編輯與多產品套用 Vue DEV 頁；規格記錄 Product 因子、GroupNo、QC_Count、SPCID 映射及舊 Core 的 ProductNo-only 行為。沿用 QC302 圖表表與既有產品/QC Item 表，無 QC305 專屬新表或 CREATE SQL；家用端待核對 live schema 並實作批次 API。
 - QC302「匯入管制圖內容」：[功能規格](modules/QC/匯入管制圖內容.md)。已直接閱讀 WinForms Form、wsQC、clsQCBasis，透過 PowerShell 5.1 唯讀取得四張 SPC QC Chart Oracle DDL，並完成 Vue DEV 頁與 PostgreSQL CREATE-only 參考；家用端待比對 live schema、建立缺漏 migration/API。

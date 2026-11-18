@@ -1,3 +1,10 @@
+## 2026-11-18 家用端整合補正：PRD Vue 型別
+
+- [x] 修正 `ProductBasisMaster` 與 Parameter/Business Rule 子元件的結構型別；BOM lookup 使用共用 key/label/row；OPDescription 正規化 OPName/audit；Parameter draft 保存明確保留識別鍵並排除 recipeDetails；Property 在有效值驗證前初始化 draft。沒有新增 broad any cast，亦未新增正式 API/schema。
+- [x] 本輪 `npx.cmd vue-tsc --noEmit` 與完整 `npm.cmd run build` 均通過；維護細節已補至 PRD 對應五份模組文件。
+- [x] 本機 DEV app-browser PRD 冒煙檢查通過：產品主檔、Property 清單/新增視窗、Parameter 樹、Business Rule 圖、OPDescription 稽核欄位可載入；BOM 右鍵 Add→Product→lookup→選取 `DEV-PRD-1002` 及 Cancel/Close 正常。所有相關視窗可關閉，未出現 TypeError/ReferenceError/Unhandled 紀錄。
+- [ ] 本輪不是完整 CRUD/正式 API 驗收；公司端 pull 後沿用既有正式唯讀/DEV 假資料邊界，後續正式 API/schema 與完整 CRUD 仍依模組文件 handoff 接續。
+
 ## 2026-11-18 公司端進度：PS102 製造層別設定
 
 - [x] 閱讀 `frmFABPRSStageBasis`/Def Form 與 Designer、`wsPRS.Load/Add/Edit/Delete/ApproveFABPRSStageBasis`、`kcBasis_Query`、`kcPRS.clsProcess`、`kcBasis_UPD`；整理欄位、四狀態、Sequence 唯一、Apply/Confirm、刪除與 IssueManagement 流程。
@@ -74,7 +81,7 @@
 - [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀取得 QC501–QC503 共用六表 Oracle DDL/PK index，產生 Oracle source DDL 與 PostgreSQL 空表 CREATE 參考；無業務列、未執行 Oracle DDL、無連線秘密輸出。
 - [x] 建立 `/YMES/QC/InspectionMachineParameterType` Vue DEV 假資料頁、品質資料→檢測儀器→檢測儀器類別路由/選單、查詢狀態、WinForms 欄位與按鈕、RS232/UserDefine 編輯、Driver picker、複製、多選刪除/送簽、Audit 區及假資料操作。
 - [x] 新增 `docs/modules/QC/檢測儀器類別.md`，更新模組索引、資料庫連線紀錄與 `todolist_homepc.md` schema/API handoff。
-- [ ] 未連 YMES PostgreSQL，沒有實作 API/migration；未執行 build、測試或瀏覽器驗收。家用端 API/schema 完成後 pull 再整合；QC502/QC503 handoff 已列於下方。
+- [x] 家用端已部署共用六表 0027 migration 與 QC501 API；app-browser 已驗證新增/套用/修改、複製/Driver lookup、核准取消/確定、引用刪除 409、狀態 1 唯讀、-1/2 成功刪除、四狀態/Close、錯誤文字與 Demo 登入；fixture 已清空。公司端待家用端 GitHub 同步後 pull，以 server DTO/nullable DataStamp 對接；共用 Issue/Job、Issue Control 仍待整合。QC503 UI 已於公司端 `b572f3b` 提交，下一步為家用端 API handoff。
 
 ## 2026-11-18 公司端進度：QC502 檢測儀器基本資料
 
@@ -82,7 +89,7 @@
 - [x] 確認 QC502 直接主表為 QC501 已取得 DDL 的 `TBLQCINSPMACHINEPARAMETER`；QC501 類別與 Driver 是 lookup。`TBLQCINSPMACHINEBASIS` 不在此 Form/Core 的 CRUD 寫入路徑；Property 按鈕 Designer 預設隱藏。本次無需重查 Oracle 或另建 CREATE SQL。
 - [x] 新增 `/YMES/QC/InspectionMachine` Vue DEV 頁與品質資料→檢測儀器→檢測儀器基本資料路由；包含 IssueState/識別碼查詢、主 Grid、Add/Edit/Copy/Approve/Delete、類別帶入/本機 RS232/UserDefine Driver 表單、lookup modal、audit 與獨立假資料。
 - [x] 新增 `docs/modules/QC/檢測儀器基本資料.md`，更新 module index、資料庫紀錄與家用端共用 API/schema handoff。
-- [ ] 未連 YMES PostgreSQL、未實作 API/migration，未執行 build、測試或瀏覽器驗收。QC501–QC503 交接已寫入 `todolist_homepc.md`；後續按全 MES 功能盤點接續。
+- [x] 家用端已部署 QC502 API，app-browser 已驗證新增/套用/修改、RS232→UserDefine 類別更換、複製/Driver lookup、核准、取消/確定刪除、nullable DataStamp 衝突與重查保存、四狀態/Close、錯誤文字及 Demo 登入；fixture 已清空。類別參數由 API 鎖定重讀，Apply 使用 server DTO。公司端待家用端 GitHub 同步後 pull 並確認 DTO/API 對接；QC503「檢測設備連線程式」UI 已於 `b572f3b` 提交，家用端接續 API。
 
 ## 2026-11-18 公司端進度：QC503 檢測設備連線程式
 

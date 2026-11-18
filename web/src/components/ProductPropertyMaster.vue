@@ -113,6 +113,7 @@ function chooseValue(value: string): void {
 }
 function saveEditor(closeAfter: boolean): void {
   if (!editor.value) return
+  const draft = editor.value
   clearMessage()
   if (!productNo.value) { error.value = 'ProductNo 不可空白。'; return }
   if (!editor.value.propertyNo) { error.value = 'PropertyNo 不可空白。'; return }
@@ -123,7 +124,6 @@ function saveEditor(closeAfter: boolean): void {
     return
   }
 
-  const draft = editor.value
   const updateKey = draft.mode === 'edit'
     ? text(draft.saved?.propertyNo)
     : draft.saved && text(draft.saved.propertyNo) === draft.propertyNo ? text(draft.saved.propertyNo) : ''

@@ -43,7 +43,7 @@ const emit = defineEmits<{ close: [] }>()
 
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const storageKey = 'ymes.dev.ps102-stage-basis.v1'
-const stateOptions: Array<{ value: IssueState; label: string }> = [
+const stateOptions: Array<{ value: Exclude<IssueState, null>; label: string }> = [
   { value: 0, label: '未核准' },
   { value: 1, label: '簽核中' },
   { value: 2, label: '已核准' },
@@ -320,7 +320,7 @@ onMounted(load)
         <button type="button" class="close-bottom" @click="emit('close')">Close</button>
       </aside>
     </section>
-    <footer class="grid-footer"><span>資料總筆數 {{ visibleRows.length }}<template v-if="activeRow">　{{ stateOptions.find(state => state.value === activeRow.issueState)?.label }}　DataStamp {{ activeRow.dataStamp ?? 'NULL' }}</template></span><small>Print：WinForms 原按鈕隱藏</small></footer>
+    <footer class="grid-footer"><span>資料總筆數 {{ visibleRows.length }}<template v-if="activeRow">　{{ stateOptions.find(state => state.value === activeRow?.issueState)?.label }}　DataStamp {{ activeRow.dataStamp ?? 'NULL' }}</template></span><small>Print：WinForms 原按鈕隱藏</small></footer>
 
     <div v-if="editorOpen" class="overlay" @click.self="editorOpen = false">
       <section class="dialog definition-dialog">
