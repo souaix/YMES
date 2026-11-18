@@ -6,7 +6,7 @@
 - [x] 以 PowerShell 5.1 + Oracle.ManagedDataAccess 從本機受保護連線唯讀取得 QC501–QC503 共用六表 Oracle DDL/PK index，產生 Oracle source DDL 與 PostgreSQL 空表 CREATE 參考；無業務列、未執行 Oracle DDL、無連線秘密輸出。
 - [x] 建立 `/YMES/QC/InspectionMachineParameterType` Vue DEV 假資料頁、品質資料→檢測儀器→檢測儀器類別路由/選單、查詢狀態、WinForms 欄位與按鈕、RS232/UserDefine 編輯、Driver picker、複製、多選刪除/送簽、Audit 區及假資料操作。
 - [x] 新增 `docs/modules/QC/檢測儀器類別.md`，更新模組索引、資料庫連線紀錄與 `todolist_homepc.md` schema/API handoff。
-- [x] 家用端 merge 後以遠端 production Docker 成功完成 Web `vue-tsc`/Vite build，修正 `@submit.prevent` 型別錯誤；app-browser 確認 QC501 選單可見。QC501 API/migration 尚未完成、未做正式 CRUD 驗收；QC502 handoff 已列於下方，下一功能 QC503「檢測 Driver」。
+- [x] 家用端已部署共用六表 0027 migration 與 QC501 API；app-browser 已驗證新增/套用/修改、複製/Driver lookup、核准取消/確定、引用刪除 409、狀態 1 唯讀、-1/2 成功刪除、四狀態/Close、錯誤文字與 Demo 登入；fixture 已清空。公司端待家用端 GitHub 同步後 pull，以 server DTO/nullable DataStamp 對接；共用 Issue/Job、Issue Control 仍待整合。QC503 UI 已於公司端 `b572f3b` 提交，下一步為家用端 API handoff。
 
 ## 2026-11-18 公司端進度：QC502 檢測儀器基本資料
 
@@ -14,7 +14,7 @@
 - [x] 確認 QC502 直接主表為 QC501 已取得 DDL 的 `TBLQCINSPMACHINEPARAMETER`；QC501 類別與 Driver 是 lookup。`TBLQCINSPMACHINEBASIS` 不在此 Form/Core 的 CRUD 寫入路徑；Property 按鈕 Designer 預設隱藏。本次無需重查 Oracle 或另建 CREATE SQL。
 - [x] 新增 `/YMES/QC/InspectionMachine` Vue DEV 頁與品質資料→檢測儀器→檢測儀器基本資料路由；包含 IssueState/識別碼查詢、主 Grid、Add/Edit/Copy/Approve/Delete、類別帶入/本機 RS232/UserDefine Driver 表單、lookup modal、audit 與獨立假資料。
 - [x] 新增 `docs/modules/QC/檢測儀器基本資料.md`，更新 module index、資料庫紀錄與家用端共用 API/schema handoff。
-- [x] 家用端 merge 後已完成 production Web `vue-tsc`/Vite build；QC502 API/migration 尚未實作。app-browser 已確認 QC502 選單入口在正式 menu；待 API 完成後再驗證資料與 CRUD。QC501/502 交接已合併寫入 `todolist_homepc.md`；下一功能 QC503「檢測設備連線程式」。
+- [x] 家用端已部署 QC502 API，app-browser 已驗證新增/套用/修改、RS232→UserDefine 類別更換、複製/Driver lookup、核准、取消/確定刪除、nullable DataStamp 衝突與重查保存、四狀態/Close、錯誤文字及 Demo 登入；fixture 已清空。類別參數由 API 鎖定重讀，Apply 使用 server DTO。公司端待家用端 GitHub 同步後 pull 並確認 DTO/API 對接；QC503「檢測設備連線程式」UI 已於 `b572f3b` 提交，家用端接續 API。
 
 > 目的：記錄家用電腦完成資料庫/API交接後，公司電腦接著要做的 WinForms UI、互動邏輯與規格文件。公司電腦先讀本檔；家用電腦先讀 `todolist_homepc.md`。
 

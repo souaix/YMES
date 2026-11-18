@@ -2,8 +2,8 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
-- QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。已依 WinForms 主/編輯 Form、`clsInspMachine` 與直接唯讀 Oracle DDL 完成 Vue DEV 清單/編輯/Driver 選擇、三層選單及 API handoff；QC501–QC503 共用六表 Oracle source DDL 與 PostgreSQL CREATE 參考已建立。家用端需核對 YMES live schema、接上共用 Issue Job/Issue Control，再實作 QC501 API；QC502 handoff 已列於下方，QC503 尚待遷移。
-- QC502「檢測儀器基本資料」：[功能規格](modules/QC/檢測儀器基本資料.md)。已依 `frmInspMachineParameter`/Def、`wsQC`、`clsInspMachine` 完成類別帶入/本機 RS232/Driver 流程、Vue DEV 清單/編輯及 API handoff；主表是 QC501 已查的 `TBLQCINSPMACHINEPARAMETER`，沿用既有六表 DDL，不新增 CREATE SQL。家用端需與 QC501 共用 lookup、Issue Control、Issue Job/DataStamp，並檢查 YMES live schema。
+- QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。共用六表 migration 0027、登入保護 API 已部署；app-browser 已驗證新增/套用/修改、複製/Driver lookup、取消/確定核准、引用刪除防護、狀態 1 唯讀、-1/2 刪除、四狀態/Close、錯誤文字與 Demo 登入。本輪測試資料已清空；共用簽核/Issue Control 限制見規格。公司端 QC503 UI 已於 `b572f3b` 提交，下一步為家用端 API handoff。
+- QC502「檢測儀器基本資料」：[功能規格](modules/QC/檢測儀器基本資料.md)。主表 `TBLQCINSPMACHINEPARAMETER`；CRUD/lookup API 已部署，類別通訊參數以交易內鎖定重讀為準、DataStamp 保留 NULL 並精確 CAS。app-browser 已驗證新增/套用/修改、RS232→UserDefine 類別更換、複製/Driver lookup、核准、取消/確定刪除、舊版本衝突、四狀態/Close、錯誤文字與 Demo 登入。本輪測試資料已清空，共用資源限制依規格追蹤。
 
 ## 規格產出原則
 

@@ -1,22 +1,28 @@
 # 家裡電腦接手清單
 
-## 最新公司端交接：QC501 檢測儀器類別（2026-11-18）
+## 家用端進度：QC501/QC502 檢測儀器（2026-11-18）
 
-- [ ] 先 pull 最新 `main`，閱讀 `docs/modules/QC/檢測儀器類別.md` 與 `docs/DATABASE_CONNECTION.md` QC501 段落。
-- [ ] 查 YMES PostgreSQL live schema/migrations 中 QC501–QC503 共用六表：`tblqcinspmachineparametertype`、`tblqcinspmachinetype`、`tblqcinspmachinebasis`、`tblqcinspmachineparameter`、`tblqcinspmachineproperty`、`tblqcinspdriver`。對照 `database/reference/mestest_qc501_inspection_machine_create.sql` 及 Oracle source DDL；只為缺表新增 forward migration，不要執行 Oracle source DDL、重建既有表或新增不符來源的 PK/FK。
-- [ ] 實作 QC501 API contract：GET 類別清單（IssueState/識別碼）、GET Driver lookup（舊服務未限制狀態）、POST/PUT/DELETE/approve。逐筆 CRUD 要驗證狀態與 DataStamp、參數化 SQL、由 server 管理 Creator/CreateDate/Reviser/ReviseDate/DataStamp，核准接既有 Issue Job。QC501 主鍵是 InspMachineType 單欄；不要改為複合鍵。IssueState/DataStamp 在 Oracle 可 NULL；`ChNo` 欄位 DB 長度 3，WinForms MaxLength=10，API 必須回明確驗證錯誤。
-- [ ] 編輯 API 依共用 `ExeIssueControl`/表單設定限制 IssueState=1 唯讀，IssueState=2/-1 按控制項配置；核准狀態由 Issue Job 回傳，不得由前端硬設。硬刪前查 QC502 儀器、QC503 Driver/屬性等引用並採一致交易策略；現有 Core 裸刪除缺少完整引用檢查。
-- [ ] 公司端 Vue 頁 `web/src/components/QcInspMachineParameterTypeMaster.vue` 使用上述路由；請將真 API 的回應 DTO、錯誤格式、route ACL、簽核服務與實際表名接起來。DEV mock 不寫正式資料庫。
-- [ ] API/schema 完成後回報或推送，供公司端 pull 後對接和驗收；QC502 handoff 已列於下方，QC503「檢測 Driver」仍待遷移，沿用同一批六表與 CREATE/source DDL。
+- [x] QC501–QC503 六張共用表 live schema audit 確認缺表；先備份並驗證 `/opt/ymes/backups/ymes_before_0027_qc501_20261118.dump`，再套用 migration `0027_qc501_qc502_inspection_machines.sql`，授予 `ymes_app` 表級 CRUD。
+- [x] 實作並部署 QC501/QC502 登入保護 API、參數化 SQL、DataStamp/IssueState CAS、audit、欄位檢查、類別/Driver lookup、刪除引用檢查；Release build 0 warning/0 error，API readiness=200，未登入 API=401。
+- [x] Production app-browser 已驗證 QC501 新增/套用/修改、複製 UserDefine/Driver lookup、核准取消不改資料後確定轉 2，以及被儀器引用的類別刪除回 409 且保留資料。
+- [x] QC502 新增/套用/修改、類別 A RS232→類別 B UserDefine 更換、無類別複製/Driver lookup、核准轉 2 與刪除儀器 B 均經 app-browser 驗證；舊 DataStamp 在 DB 改成 NULL 後保存回 409，重查 NULL 後保存成功。
+- [x] 精確 nullable DataStamp CAS、交易內鎖定權威類別/Driver、Apply 使用 server DTO 與新增轉修改模式已實作。.NET 9 Release build 0 warning/0 error；頁內確認框已取代 `window.confirm`。最終部署後 app-browser 確認 ProblemDetails 顯示清楚中文 detail，不顯示 JSON。
+- [x] 本輪與先前測試儀器/類別均已清理；暫存 Driver 以交易清理，遠端精確 fixture 計數為 0。
+- [x] 收尾驗證通過：QC501 狀態 1 編輯欄位/保存停用、-1 與 2 類別刪除成功；QC502 狀態 0 刪除先取消保留再確定刪除，狀態 2 刪除成功。兩頁四狀態篩選、Close 回空白首頁及登出/Demo 登入均通過；API/Web healthy、readiness=200。
+- [ ] 同步本次家用端變更至 GitHub，讓公司端 pull API/schema 文件後對接；最新 `origin/main`=`28bc913` 含 QC503 UI 提交 `b572f3b`，合併後讀新版待辦，接手 QC503 家用端 API。
+
+## 最新公司端交接：QC501 檢測儀器類別（2026-11-18；家用端已接手）
+
+- [x] 家用端已完成 live schema audit、備份、0027 migration 與 QC501 API；細節見 `docs/modules/QC/檢測儀器類別.md`。主鍵 InspMachineType 單欄，IssueState/DataStamp nullable，ChNo 長度 3。
+- [x] app-browser 已驗證新增/套用/修改、複製/Driver lookup、核准取消/確定、引用刪除防護、狀態 1 唯讀、-1/2 成功刪除、四狀態/Close 與最終錯誤文字。共用 Issue/Job 表不存在時核准轉 ACTIVE，若表出現則 API fail closed；Issue Control 尚未接入。
+- [ ] 公司端 pull 家用端同步後，確認 Vue DTO/API contract 與正式 route；不要把 DEV mock 資料送至正式 DB。
+- [ ] 公司端已提交 QC503 UI（`b572f3b`）；家用端 merge 後讀規格並接手 API，沿用 0027 六表與 CREATE/source DDL。
 
 ## 公司端交接：QC502 檢測儀器基本資料（2026-11-18）
 
-- [ ] 閱讀 `docs/modules/QC/檢測儀器基本資料.md`。Vue 頁 `/YMES/QC/InspectionMachine`；QC502 主表是 `TBLQCINSPMACHINEPARAMETER`。它與 QC501 共用類別、Driver lookup 與六表 Oracle DDL/PG CREATE 參考，沒有新增 CREATE SQL。
-- [ ] 先查 YMES live schema/migrations 的 `tblqcinspmachineparameter`，比較 `database/reference/mestest_qc501_inspection_machine_create.sql`；只在確定缺表時新增 forward migration。主鍵 `InspMachineNo`；InspMachineType 可 NULL；來源 IssueState/DataStamp nullable+default。
-- [ ] 實作 QC502 GET/POST/PUT/DELETE/approve API，與 QC501 共用類別/Driver API。POST/PUT 欄位、RS232 必填、Format2/ChNo 空值寫 `NA`、可選類別帶入、audit/DataStamp/IssueState 依規格；`ChNo` Oracle 長度3但 WinForms MaxLength10，API 回清楚欄位錯誤。Edit 不能假裝清除空白類別已成功，需忠實處理舊 service 對空字串的語義。
-- [ ] Approval 連共用 IssueManagement：沒有 Job 時直接轉 IssueState=2，有 Job 時啟動簽核轉 1；前端只送簽，不指定結果狀態。Edit 要接 `ExeIssueControl`，Delete 檢查 live schema 與相關資料使用情況並以 DataStamp/IssueState CAS。
-- [ ] QC502 Property 按鈕在 WinForms 預設隱藏；不需要因此建 UI/API。`TBLQCINSPMACHINEBASIS` 雖在來源 DDL 內，QC502 主畫面 Add/Edit/Delete 沒有使用，勿誤作本頁主表。
-- [ ] QC501/QC502 API/schema 完成後回公司端 pull 整合；QC503 Driver 頁仍待遷移，沿用 QC501 已查 DDL。
+- [x] 家用端已建立 QC502 GET/POST/PUT/DELETE/approve API，沿用 0027 六表 migration 與 QC501 class/Driver lookup；規則見 `docs/modules/QC/檢測儀器基本資料.md`。
+- [x] app-browser 已驗證新增/套用/修改、跨通訊型別類別帶入、複製/Driver lookup、核准、取消/確定刪除、nullable DataStamp 409 與重查後保存、四狀態/Close、最終錯誤文字及 Demo 登入；本輪 fixture 已清空。
+- [ ] 公司端 pull 家用端同步並確認正式 API/DTO；QC503 UI 已提交，下一項由家用端接手 API，沿用 QC501 已查 DDL。
 
 ## 最新公司端 handoff：QC305 產品規格設定（2026-11-17）
 

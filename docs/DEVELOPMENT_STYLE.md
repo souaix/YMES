@@ -24,6 +24,9 @@
 | 公司電腦 | Vue UI、選單、表單、按鈕互動與呼叫 API | 資料庫連線、SSH、遠端上版 |
 
 - GitHub `souaix/YMES` 是兩台電腦共用的程式來源。開始修改前先同步最新程式，完成後提交回同一個 repo。
+- 每個版本完成後，家用端使用 app-browser 逐項操作本次模組的查詢、新增、修改、複製、套用、lookup、核准、刪除及關閉；驗收結果與未完成原因寫入模組 Markdown。需要登入時可自行按既有 Demo 登入，使用者已授權，毋須等待使用者回到電腦前。
+- 驗證完成才同步 GitHub：先 fetch 並檢查公司端新增提交，再正常 merge，衝突按雙方功能整合；禁止以 force push 或檔案整批覆蓋取代合併。合併有程式差異時重做相關 build/操作驗收，push 後再檢查 `todolist_homepc.md` 的下一交接。
+- 每個完成模組必須有 `docs/modules/<模組>/<功能>.md`，包含來源規則、資料表/migration、API 契約、按鈕邏輯、驗證紀錄與維護限制；先前缺漏的模組文件也要補齊。公司端後續工作寫 `todolist_officepc.md`，家用端資料庫/API/部署工作寫 `todolist_homepc.md`。
 - 公司電腦先以明確標示的 Development 假資料完成所有畫面與本地互動邏輯，不連資料庫；同時把正式 API 契約和 Oracle 對照的 CREATE SQL 寫入交接文件，交由家用電腦完成 API/schema。Development 假資料不得冒充正式資料，Production 必須使用正式 API，且不得啟用假資料。
 - 資料庫連線字串、`.env.local`、私鑰與其他憑證不得提交到 GitHub。資料庫結構與 migration 由家用電腦維護，並透過 API 提供給 UI。
 - Web 與 API 是分開建置、設定及執行的服務，可以部署在同一台 Server。Web 路徑固定為 `/YMES`，API 路徑固定為 `/YMES/API`；路徑大小寫固定，不自行改名或增加反向代理前綴。
@@ -52,7 +55,7 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 ## 登入、主選單與首頁
 
 - 登入頁保持精簡，只放作業環境、帳號、密碼、Demo 登入和登入按鈕；錯誤訊息貼近欄位或表單顯示。不要另加大型頁首、宣傳文字、狀態看板或非必要說明區塊。
-- 作業環境選項為正式區、測試區、開發區，預設正式區。Demo 登入只供明確啟用的 Development 預覽。
+- 作業環境選項為正式區、測試區、開發區，預設正式區。既有部署提供的 Demo 登入依使用者授權供驗收使用；Development 假資料預覽仍與正式 API 資料分開。
 - 登入後使用 KD Logo 與固定側欄/主內容區。主內容首頁先留白，不自行增加儀表板或統計卡片。
 - 選單預設全部收合，依舊系統 Module → Menu Group → Function 的三層結構呈現；不得把第三層主檔功能誤列為第一層。
 - 每一層選單項目都顯示語意相符的圖示；側欄收合時只顯示圖示，隱藏文字與展開箭頭。
@@ -107,7 +110,7 @@ API 從 YMES 復刻資料庫的 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunct
 
 1. 兩台電腦都在同一個 `souaix/YMES` repo，使用相同的 API 契約與 .NET 9 目標。
 2. Vue Web 呼叫 `/YMES/API`；UI 專案不設定資料庫連線。
-3. Production 不啟用 Fake repository 或 Demo 登入。
+3. Production 不啟用 Fake repository；驗收可依使用者授權使用部署已提供的 Demo 登入，登入後仍呼叫正式 API。
 4. 新增樣式遵循 KD 色票、收合式三層選單與自適應版面。
 5. 修改部署路徑時，同步檢查 `deploy/compose.yaml` 和 `deploy/nginx-ymes.locations.conf`。
 

@@ -7,6 +7,7 @@
 - 只讀資料字典/DDL，未讀業務資料列，未在 Oracle 執行 DDL；連線秘密未輸出/提交。PS7 載入此舊版 Oracle provider 時遇 BinaryFormatter 平台例外；改用 Windows PowerShell 5.1 後查詢成功。
 - QC501 表主鍵實際是 InspMachineType 單欄；來源 `IssueState`/`DataStamp` 可 NULL 且有 DEFAULT，CREATE reference 保留 nullable；`ChNo` 欄位長度為 3，但 WinForms TextBox MaxLength=10，API 需回報超長值錯誤，不得靜默截斷。
 - QC502「檢測儀器基本資料」沿用同一批 Oracle source DDL 與 PostgreSQL CREATE 對照；其主要寫入表 `TBLQCINSPMACHINEPARAMETER` 在 QC501 六表清單中已直接查得。本次未重查 Oracle，沒有讀業務列或執行 Oracle DDL。`TBLQCINSPMACHINEBASIS` 不在 QC502 Form/Core 的 Add/Edit/Delete 呼叫內，不要當成 QC502 主表。
+- 家用端 2026-11-18 live schema audit 確認六張 `tblqcinsp*` 表皆缺少；先以遠端 `postgres` 維護角色備份 YMES，`/opt/ymes/backups/ymes_before_0027_qc501_20261118.dump` 通過 `pg_restore --list`，再套用 `database/migrations/0027_qc501_qc502_inspection_machines.sql`。六張表已建立並授予 `ymes_app` 表級 CRUD；API 角色本身無 schema CREATE 權限。此 migration 沒有建立額外 FK/index、沒有複製來源業務資料。
 
 ## 連線用途與邊界
 

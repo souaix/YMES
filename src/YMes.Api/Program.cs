@@ -111,7 +111,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("frontend", policy =>
     {
         policy.WithOrigins(allowedOrigins)
-            .WithMethods("GET", "POST")
+            .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Content-Type")
             .AllowCredentials();
     });
