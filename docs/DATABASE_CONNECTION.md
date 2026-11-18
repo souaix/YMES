@@ -645,3 +645,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - 公司桌機以 Windows PowerShell 5.1 + ODP.NET 經本機 DPAPI profile 驗證 MESTEST 登入。唯讀核對 `TBLPRDRUNTIMESETUP` 及六張共用 lookup 表的欄位、約束及索引。`GET_DDL` 回 `ORA-03135`，RunTime DDL 依資料字典重建。
 - `TBLPRDRUNTIMESETUP` 有 20 欄、10 個具名 `NOT NULL` 條件，無 PK、FK、unique、索引或 trigger。DDL、欄位來源及缺口見 [產品標準工時](modules/PRD/產品標準工時.md)。查詢限 metadata。
+
+### 更新 2026-11-18：PRD PD102 QC Item Oracle metadata
+
+- Windows PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDQCITEM`、OP／QC 共用目錄及 BindLog 字典。新查來源有 13 欄，包含舊參照未列的 `XX_FREQ NVARCHAR2(300)`。`GET_DDL` 回 `ORA-03135`，取字典重建邏輯 DDL。詳見 [產品品管項目](modules/PRD/產品品管項目設定.md)。

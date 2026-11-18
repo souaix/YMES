@@ -1666,3 +1666,9 @@ API 工作：
 - [ ] 先比對 live schema、first-phase bootstrap 與 migration history。以 [RunTime 規格](docs/modules/PRD/產品標準工時.md)、[Oracle 邏輯 DDL](database/reference/mestest_prd_run_time_source_ddl.sql) 及 [PostgreSQL CREATE-only](database/reference/mestest_prd_run_time_create.sql) 核對 `tblprdruntimesetup` 與六張既有 lookup 表。來源 RunTime 表沒有 PK、unique、FK、索引或 trigger。
 - [ ] 實作登入保護的產品版次 RunTime GET／PUT。GET 依產品 OP 區域、設備／群組與設備類型預設展開，再套用已存設定。PUT 拒絕空清單，核對伺服器計算的列身分、精度、權限與同版次並發，全量替換必須在同一 transaction。核對 Fix/Var 工時及 WorkPrice 欄位是否須為其他流程保留。
 - [ ] 驗收無設備、設備直掛／群組重複、首次儲存、整批替換、錯誤回滾、並發、Copy／刪除、稽核及權限。公司端 RunTime 已提供 DEV localStorage 操作，正式模式待 API 接線。
+
+## PRD PD102 QC Item 家用端 handoff（2026-11-18）
+
+- [ ] 依 [QC Item 規格](docs/modules/PRD/產品品管項目設定.md) 先比對 live schema 和 migration history。`TBLPRDQCITEM.XX_FREQ` 為目前 MESTEST 已確認的 nullable 欄位。沿用既有 OP、QC 目錄及 BindLog，評估需要的 forward migration。
+- [ ] 實作產品版次／OP 範圍 GET/PUT。按伺服器可用目錄驗證項目、PS 權限、LotIsValid、InLine 檢驗旗標和主鍵，以完整清單替換該 OP，支援清空，保留其他 OP，妥善處理 BindLog 與並發。
+- [ ] QC Import、QC Chart 檔案解析及檢查／寫入仍待接續，見規格中的 WinForms 與 Service 路徑。公司端目前已完成 DEV 指派表單。

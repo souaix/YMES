@@ -10,6 +10,7 @@ import ProductSubOpSetup from './ProductSubOpSetup.vue'
 import ProductProgramSetup from './ProductProgramSetup.vue'
 import ProductDefaultSetup from './ProductDefaultSetup.vue'
 import ProductRunTimeSetup from './ProductRunTimeSetup.vue'
+import ProductQCItemSetup from './ProductQCItemSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -22,6 +23,7 @@ type ProductBusinessRuleData = NonNullable<InstanceType<typeof ProductBusinessRu
 type ProductRunTimeProps = InstanceType<typeof ProductRunTimeSetup>['$props']
 type ProductRunTimeData = NonNullable<ProductRunTimeProps['setup']>
 type ProductRunTimeRow = ProductRunTimeProps['defaultRows'][number]
+type ProductQCAssignment = Parameters<InstanceType<typeof ProductQCItemSetup>['$props']['saveAssignments']>[1][number]
 type ProductRelation = {
   processes: ProductRow[]
   bom: ProductRow[]
@@ -441,6 +443,16 @@ const lookupOptions = computed(() => {
 function persistMock(): void {
   localStorage.setItem(rowsKey, JSON.stringify(rows.value))
   localStorage.setItem(relationKey, JSON.stringify(relations.value))
+}
+function replaceMockRelation(key: string, relation: ProductRelation): boolean {
+  const next = { ...relations.value, [key]: relation }
+  try {
+    localStorage.setItem(relationKey, JSON.stringify(next))
+  } catch {
+    return false
+  }
+  relations.value = next
+  return true
 }
 function loadMock(): void {
   try {
@@ -868,15 +880,20 @@ function saveProductPrograms(programNos: string[]): void {
 }
 function saveProductRunTime(setup: ProductRunTimeData): boolean {
   if (!active.value || !mock.value) return false
-  const key = keyOf(active.value)
-  const next = { ...relations.value, [key]: { ...relatedFor(active.value), runTime: setup } }
-  try {
-    localStorage.setItem(relationKey, JSON.stringify(next))
-  } catch {
-    return false
-  }
-  relations.value = next
+  if (!replaceMockRelation(keyOf(active.value), { ...relatedFor(active.value), runTime: setup })) return false
   notice.value = '產品 RunTime 假資料已儲存。'
+  return true
+}
+function saveProductQCItems(opNo: string, assignments: ProductQCAssignment[]): boolean {
+  const product = active.value
+  if (!product || !mock.value || !opNo) return false
+  const relation = relatedFor(product)
+  const assignedRows = assignments.map(row => ({
+    ...row, opNo, productNo: text(product.productNo), productVersion: text(product.productVersion),
+  }))
+  const qcItems = [...(relation.qcItems ?? []).filter(row => row.opNo !== opNo), ...assignedRows]
+  if (!replaceMockRelation(keyOf(product), { ...relation, qcItems })) return false
+  notice.value = '產品品管項目假資料已儲存。'
   return true
 }
 function applyProductDefaults(plan: ProductDefaultPlan): void {
@@ -1088,7 +1105,12 @@ onMounted(() => { void load() })
         :default-rows="developmentRunTimeRows" :setup="mock ? activeRelations.runTime : undefined" :development-preview="mock"
         :current-user="currentUser()" :save-setup="saveProductRunTime" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'qc-item'" class="prd-overlay child-feature-overlay">
+      <ProductQCItemSetup :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :product-name="text(active?.productName)" :saved-rows="mock ? activeRelations.qcItems ?? [] : []" :development-preview="mock"
+        :current-user="currentUser()" :save-assignments="saveProductQCItems" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>

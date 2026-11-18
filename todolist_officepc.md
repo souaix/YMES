@@ -1074,4 +1074,11 @@
 - [x] 核對 PD102 `btnRunTime_Click`、`frmProductRunTime` 和 `frmProductRunTimeDef`（含 Designer）、`wsPRD` 及 `clsProduct`。確認預設／已保存合併、六個欄位、無設備時的 `N/A` 列及全量儲存。
 - [x] 以桌機受保護 Oracle profile 經 Windows PowerShell 5.1 + ODP.NET 驗證 MESTEST 登入，唯讀核對 `TBLPRDRUNTIMESETUP` 及六張 lookup 表的資料字典。`GET_DDL` 回 `ORA-03135`，已依字典重建 RunTime DDL。查詢限 metadata。
 - [x] 完成產品主檔 RunTime 的 DEV 表格與單列編輯、Apply、Confirm、未儲存關閉提示，使用產品版次 localStorage。補齊模組規格、Oracle DDL／PostgreSQL CREATE-only 參照及家用端 API／schema handoff。
-- [ ] 家用端接續正式 API、schema 及瀏覽器驗收。公司端下一項為 PD102 `QC Item`。
+- [ ] 家用端接續正式 API、schema 及瀏覽器驗收。
+
+## PRD PD102 QC Item 公司端檢查點（2026-11-18）
+
+- [x] 依 `btnQCItem_Click`、`frmProductQCItem`／Designer、`wsOP`、`wsPRD`、`clsOpBasis`、`clsProduct` 與 `clsQCBasis`，完成四類 DEV 品管項目、InLine／OffLine、多選移除、檢驗旗標、Apply／Confirm 及 localStorage。
+- [x] 以 Windows PowerShell 5.1 + ODP.NET 唯讀核對 MESTEST 相關資料字典。以 13 欄版本重建 `TBLPRDQCITEM` 邏輯 DDL，包含舊參照缺少的 `XX_FREQ`。
+- [ ] QC Import／QC Chart 目前提供選檔視窗，完整 Excel 解析、檢查、選取及儲存待接續。正式 API、schema 和瀏覽器驗收由家用端執行。
+- [ ] 公司端下一項依 toolbar 順序做 PD102 `Packing Set`。
