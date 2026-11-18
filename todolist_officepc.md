@@ -1133,4 +1133,10 @@
 
 - [x] 核對 `PD_ProductDataImport_PRS`、Designer、Service／Core，完成 DEV XLSX 兩組預覽、主檔逐列驗證與新增。
 - [x] Oracle 唯讀核對產品主檔、類別、流程與節點鍵，補類別 DDL／CREATE-only 及匯入 API 交接。
-- [ ] 舊式 XLS、流程／子表寫入與範本服務待接續。下一項 PD102 `Expand All`。
+- [ ] 舊式 XLS、流程／子表寫入與範本服務待接續。
+
+## PRD PD102 Expand All 公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、一般與網狀 Service／Core。以 DEV 流程、區段和作業假資料完成唯讀結果表格。
+- [x] Oracle 唯讀核對共用表，沿用產品、區段、流程與作業主檔的 CREATE-only 參考。
+- [ ] 正式流程解析與背景作業 lookup 待接續。下一項 PD101 產品類別資料。

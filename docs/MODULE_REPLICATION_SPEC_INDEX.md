@@ -148,6 +148,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [產品資料匯入](modules/PRD/產品資料匯入.md) 已完成 DEV XLSX 預覽與主檔新增；正式流程／子表與範本服務待接入。
 
+[產品流程展開](modules/PRD/產品流程展開.md) 已完成一般／網狀流程的 DEV 唯讀結果與共用 schema 交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

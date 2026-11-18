@@ -19,6 +19,7 @@ import ProductApsIntegration from './ProductApsIntegration.vue'
 import ProductBinSetup from './ProductBinSetup.vue'
 import ProductGbomFiles from './ProductGbomFiles.vue'
 import ProductDataImport from './ProductDataImport.vue'
+import ProductProcessExpansion from './ProductProcessExpansion.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -1323,15 +1324,11 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'product-import'" class="prd-overlay child-feature-overlay">
       <ProductDataImport :development-preview="mock" :import-products="importDevelopmentProducts" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec','aps','bin','gbom-import','gbom-export','product-import'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
-      <section class="prd-feature-dialog">
-        <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
-        <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
-        <p>{{ feature.description }}</p>
-        <p v-if="featureKey === 'process-setup' || featureKey === 'process-expand'" class="prd-context">流程 {{ selectedProcess?.psNo || '—' }} / MOType {{ selectedProcess?.moTypeNo ?? '—' }} / {{ selectedProcess?.processNo || '—' }} / {{ selectedProcess?.processVersion || '—' }}</p>
-        <div class="prd-feature-placeholder"><strong>WinForms 功能入口已依原功能名稱保留。</strong><p>此子功能的專屬欄位、資料表與操作會在對應功能規格中拆分，API 尚待家用端實作。</p><p>Development 目前只展示產品上下文，不會寫入 MES 或 YMES 正式資料。</p></div>
-        <footer><button class="prd-button" type="button" @click="closeFeature">關閉</button></footer>
-      </section>
+    <div v-if="feature && active && selectedProcess && featureKey === 'process-expand'" class="prd-overlay child-feature-overlay">
+      <ProductProcessExpansion :product-no="text(active.productNo)" :product-version="text(active.productVersion)"
+        :process-no="text(selectedProcess.processNo)" :process-version="text(selectedProcess.processVersion)"
+        :ps-no="text(selectedProcess.psNo)" :mo-type-no="text(selectedProcess.moTypeNo)" :development-preview="mock"
+        @close="closeFeature" />
     </div>
   </main>
 </template>

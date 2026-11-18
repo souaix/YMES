@@ -1712,3 +1712,7 @@ API 工作：
 
 - [ ] 依 [產品資料匯入規格](docs/modules/PRD/產品資料匯入.md) 核對產品／類別／流程及子表的 live schema，沿用產品和 PS104 參考並檢查 `tblprdtype`。
 - [ ] 實作五張工作表預檢、依流程與產品群組匯入、各組結果、取消與 SYS 範本權限。Vue DEV 目前可預覽流程並新增主檔假資料。
+
+## PRD PD102 Expand All 家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品流程展開規格](docs/modules/PRD/產品流程展開.md)，核對共用流程與作業表；按 `IsNetFlow`、產品流程版次和工單類型實作唯讀 API。
