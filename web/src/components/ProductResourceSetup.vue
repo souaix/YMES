@@ -64,7 +64,7 @@ const devAreas: AreaRow[] = [
 ]
 
 const productProcesses = computed(() => {
-  const source = props.processes.length ? props.processes : (props.developmentPreview ? devProcesses : [])
+  const source: ResourceRow[] = props.processes.length ? props.processes : (props.developmentPreview ? devProcesses : [])
   return source.map(row => ({
     ...row,
     processNo: String(row.processNo ?? row.ProcessNo ?? ''),
@@ -83,7 +83,8 @@ const operationOptions = computed<OperationRow[]>(() => {
 })
 const areaMaster = computed<AreaRow[]>(() => {
   const result = new Map<string, AreaRow>()
-  for (const row of [...devAreas, ...working.value, ...draftAreas.value]) {
+  const source: ResourceRow[] = [...devAreas, ...working.value, ...draftAreas.value]
+  for (const row of source) {
     const areaNo = String(row.areaNo ?? row.AreaNo ?? '')
     if (!areaNo) continue
     result.set(areaNo, {

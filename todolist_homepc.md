@@ -1660,3 +1660,9 @@ API 工作：
 - [ ] 對照 `clsProduct.UpdPRDOP_BatchDefault`：此功能可能重建 `TBLPRDOP`、Parameter/Attrib/Rule、BusinessRule/Relation/XML CLOB、Description、OPArea、QCItem、SubOP 及 APS setup/detail。查清空來源時的清除行為、未勾項目的保留範圍、Parameter ECN 例外及實際交易邊界後，才決定 API transaction。
 - [ ] 注意 WinForms APS checkbox 在 `ExecuteAPS` 未啟用時隱藏但 Designer 預設 checked；QCItem 預設由 `PRDDefault_QCItemAutoChecked` 決定。核對舊 client 送旗標行為並寫入規格，避免 UI/API 默默改變資料。
 - [ ] 只有 live schema 確認缺表/缺欄才新增 migration；完成 API/DTO/錯誤處理後更新規格及 TODO，commit/push `main`。公司端 Default 目前只有 DEV localStorage；Production API 未接線，未部署 SQL。
+
+## PRD PD102 RunTime 家用端 handoff（2026-11-18）
+
+- [ ] 先比對 live schema、first-phase bootstrap 與 migration history。以 [RunTime 規格](docs/modules/PRD/產品標準工時.md)、[Oracle 邏輯 DDL](database/reference/mestest_prd_run_time_source_ddl.sql) 及 [PostgreSQL CREATE-only](database/reference/mestest_prd_run_time_create.sql) 核對 `tblprdruntimesetup` 與六張既有 lookup 表。來源 RunTime 表沒有 PK、unique、FK、索引或 trigger。
+- [ ] 實作登入保護的產品版次 RunTime GET／PUT。GET 依產品 OP 區域、設備／群組與設備類型預設展開，再套用已存設定。PUT 拒絕空清單，核對伺服器計算的列身分、精度、權限與同版次並發，全量替換必須在同一 transaction。核對 Fix/Var 工時及 WorkPrice 欄位是否須為其他流程保留。
+- [ ] 驗收無設備、設備直掛／群組重複、首次儲存、整批替換、錯誤回滾、並發、Copy／刪除、稽核及權限。公司端 RunTime 已提供 DEV localStorage 操作，正式模式待 API 接線。

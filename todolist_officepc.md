@@ -1068,3 +1068,10 @@
 - 公司端不連 YMES PostgreSQL、不設定 `ConnectionStrings__YMes`、不建立 PostgreSQL schema/migration、不實作或驗收家用端 API，也不 SSH/部署。這些工作只由家用電腦依 `todolist_homepc.md` 接手。
 - 桌機只需為 Vue DEV 配置 Node.js 22.x（22.12+）與 npm 並安裝 `web/` dependencies；.NET 9 SDK/API/PostgreSQL 連線不屬於公司端前置設定。
 - Oracle MESTEST 只可使用本機受保護設定唯讀查詢 DDL/metadata；如果桌機沒有該設定，安全重新設定後再查，不在 Git 或聊天輸出帳密。
+
+## PRD PD102 RunTime 公司端檢查點（2026-11-18）
+
+- [x] 核對 PD102 `btnRunTime_Click`、`frmProductRunTime` 和 `frmProductRunTimeDef`（含 Designer）、`wsPRD` 及 `clsProduct`。確認預設／已保存合併、六個欄位、無設備時的 `N/A` 列及全量儲存。
+- [x] 以桌機受保護 Oracle profile 經 Windows PowerShell 5.1 + ODP.NET 驗證 MESTEST 登入，唯讀核對 `TBLPRDRUNTIMESETUP` 及六張 lookup 表的資料字典。`GET_DDL` 回 `ORA-03135`，已依字典重建 RunTime DDL。查詢限 metadata。
+- [x] 完成產品主檔 RunTime 的 DEV 表格與單列編輯、Apply、Confirm、未儲存關閉提示，使用產品版次 localStorage。補齊模組規格、Oracle DDL／PostgreSQL CREATE-only 參照及家用端 API／schema handoff。
+- [ ] 家用端接續正式 API、schema 及瀏覽器驗收。公司端下一項為 PD102 `QC Item`。

@@ -9,6 +9,7 @@ import ProductResourceSetup from './ProductResourceSetup.vue'
 import ProductSubOpSetup from './ProductSubOpSetup.vue'
 import ProductProgramSetup from './ProductProgramSetup.vue'
 import ProductDefaultSetup from './ProductDefaultSetup.vue'
+import ProductRunTimeSetup from './ProductRunTimeSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -18,6 +19,9 @@ type IssueState = -1 | 0 | 1 | 2
 type ProductRow = Record<string, any>
 type ProductParameterData = NonNullable<InstanceType<typeof ProductParameterSetup>['$props']['parameters']>
 type ProductBusinessRuleData = NonNullable<InstanceType<typeof ProductBusinessRuleSetup>['$props']['businessRules']>
+type ProductRunTimeProps = InstanceType<typeof ProductRunTimeSetup>['$props']
+type ProductRunTimeData = NonNullable<ProductRunTimeProps['setup']>
+type ProductRunTimeRow = ProductRunTimeProps['defaultRows'][number]
 type ProductRelation = {
   processes: ProductRow[]
   bom: ProductRow[]
@@ -31,6 +35,7 @@ type ProductRelation = {
   opAreas?: ProductRow[]
   subOps?: ProductRow[]
   productPrograms?: string[]
+  runTime?: ProductRunTimeData
   qcItems?: ProductRow[]
   apsSetups?: ProductRow[]
   apsSetupDetails?: ProductRow[]
@@ -369,6 +374,36 @@ const visibleRows = computed(() => rows.value
   .filter(row => !productQuery.value.trim() || text(row.productNo).toLocaleLowerCase().includes(productQuery.value.trim().replaceAll('%', '').replaceAll('*', '').toLocaleLowerCase())))
 const active = computed(() => rows.value.find(row => keyOf(row) === selectedKey.value) ?? null)
 const activeRelations = computed(() => relatedFor(active.value))
+const developmentOpTimes = new Map([
+  ['DEV-OP-10', { opOrder: 10, stdUnitRunTime: 2.5, countOpUnitQty: 1, stdQueueTime: 3 }],
+  ['DEV-OP-20', { opOrder: 20, stdUnitRunTime: 1.25, countOpUnitQty: 2, stdQueueTime: 0 }],
+])
+const developmentAreaEquipment = new Map([
+  ['DEV-AREA-01', [
+    { equipmentNo: 'DEV-EQP-01', equipmentType: 'DEV-DISPENSER', stdUnitEmpTime: 0.5, stdUnitEqpTime: 1.25, countEqpUnitQty: 1 },
+    { equipmentNo: 'DEV-EQP-02', equipmentType: 'DEV-DISPENSER', stdUnitEmpTime: 0.5, stdUnitEqpTime: 1.25, countEqpUnitQty: 1 },
+  ]],
+  ['DEV-AREA-02', [
+    { equipmentNo: 'DEV-EQP-03', equipmentType: 'DEV-ASSEMBLY', stdUnitEmpTime: 1, stdUnitEqpTime: 2.75, countEqpUnitQty: 2 },
+  ]],
+])
+const developmentRunTimeRows = computed<ProductRunTimeRow[]>(() => {
+  if (!mock.value) return []
+  return (activeRelations.value.opAreas ?? []).flatMap(area => {
+    const opNo = text(area.opNo)
+    const areaNo = text(area.areaNo)
+    if (!opNo || !areaNo) return []
+    const { opOrder, ...opTimes } = developmentOpTimes.get(opNo) ?? {
+      opOrder: 0, stdUnitRunTime: 0, countOpUnitQty: 1, stdQueueTime: 0,
+    }
+    const equipment = developmentAreaEquipment.get(areaNo) ?? [
+      { equipmentNo: 'N/A', equipmentType: 'N/A', stdUnitEmpTime: 0, stdUnitEqpTime: 0, countEqpUnitQty: 1 },
+    ]
+    return equipment.map(({ equipmentNo, equipmentType, ...equipmentTimes }) => ({
+      opOrder, opNo, areaNo, equipmentNo, equipmentType, values: { ...opTimes, ...equipmentTimes },
+    }))
+  })
+})
 const subOpOperationOptions = computed(() => {
   const candidates: ProductRow[] = [
     ...(activeRelations.value.parameters?.ops ?? []),
@@ -831,6 +866,19 @@ function saveProductPrograms(programNos: string[]): void {
   persistMock()
   notice.value = '產品程式指派假資料已儲存。'
 }
+function saveProductRunTime(setup: ProductRunTimeData): boolean {
+  if (!active.value || !mock.value) return false
+  const key = keyOf(active.value)
+  const next = { ...relations.value, [key]: { ...relatedFor(active.value), runTime: setup } }
+  try {
+    localStorage.setItem(relationKey, JSON.stringify(next))
+  } catch {
+    return false
+  }
+  relations.value = next
+  notice.value = '產品 RunTime 假資料已儲存。'
+  return true
+}
 function applyProductDefaults(plan: ProductDefaultPlan): void {
   if (!active.value || !mock.value) return
   const relation = clone(relatedFor(active.value))
@@ -1035,7 +1083,12 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'default'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductDefaultSetup :product="active ?? {}" :has-product-process="activeRelations.processes.length > 0" :development-preview="mock" :qc-item-auto-checked="developmentDefaultSettings.qcItemAutoChecked" :aps-enabled="developmentDefaultSettings.apsEnabled" @apply="applyProductDefaults" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'run-time'" class="prd-overlay child-feature-overlay">
+      <ProductRunTimeSetup :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :default-rows="developmentRunTimeRows" :setup="mock ? activeRelations.runTime : undefined" :development-preview="mock"
+        :current-user="currentUser()" :save-setup="saveProductRunTime" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>

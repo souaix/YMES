@@ -640,3 +640,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端使用 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，由本機受保護設定的 `DatabaseConfigs.CS.Test.Mes.ConnectionString` 直連 MESTEST；`DBMS_METADATA.GET_DDL` 回 ORA-03135，改以 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES` 唯讀重建 `TBLPRDPRSOPAPSSETUP`、`TBLPRDPRSOPAPSSETUPDETAIL` 的邏輯 DDL。
 - 兩表只有 PK unique index，無 FK、trigger、額外 index；完整欄位與 DDL 來源見 `database/reference/mestest_prd_default_aps_source_ddl.sql`，PostgreSQL CREATE-only 參照見 `mestest_prd_default_aps_create.sql`。流程端 `TBLPRSOPAPSBASE/DETAIL` 沿用 PS104 已查來源 DDL。
 - 未查 MES 業務資料列，也未執行 Oracle DDL/DML。IP、帳號、密碼、SID 不寫入 Git；桌電若沒有本機受保護連線 profile，需透過安全方式重新提供，不可改用 DBeaver 螢幕抄 DDL。
+
+### 更新 2026-11-18：PRD PD102 RunTime Oracle metadata
+
+- 公司桌機以 Windows PowerShell 5.1 + ODP.NET 經本機 DPAPI profile 驗證 MESTEST 登入。唯讀核對 `TBLPRDRUNTIMESETUP` 及六張共用 lookup 表的欄位、約束及索引。`GET_DDL` 回 `ORA-03135`，RunTime DDL 依資料字典重建。
+- `TBLPRDRUNTIMESETUP` 有 20 欄、10 個具名 `NOT NULL` 條件，無 PK、FK、unique、索引或 trigger。DDL、欄位來源及缺口見 [產品標準工時](modules/PRD/產品標準工時.md)。查詢限 metadata。
