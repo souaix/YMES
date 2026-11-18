@@ -1081,4 +1081,9 @@
 - [x] 依 `btnQCItem_Click`、`frmProductQCItem`／Designer、`wsOP`、`wsPRD`、`clsOpBasis`、`clsProduct` 與 `clsQCBasis`，完成四類 DEV 品管項目、InLine／OffLine、多選移除、檢驗旗標、Apply／Confirm 及 localStorage。
 - [x] 以 Windows PowerShell 5.1 + ODP.NET 唯讀核對 MESTEST 相關資料字典。以 13 欄版本重建 `TBLPRDQCITEM` 邏輯 DDL，包含舊參照缺少的 `XX_FREQ`。
 - [ ] QC Import／QC Chart 目前提供選檔視窗，完整 Excel 解析、檢查、選取及儲存待接續。正式 API、schema 和瀏覽器驗收由家用端執行。
-- [ ] 公司端下一項依 toolbar 順序做 PD102 `Packing Set`。
+
+## PRD PD102 Packing Set 公司端檢查點（2026-11-18）
+
+- [x] 核對 `btnPackingSet_Click`、`PackOperationMode`、傳統及多階 Form／Designer、`wsPRD`／`wsWIP`、`clsProduct`／`clsBasis_UPD`。完成 DEV 三階數量與配件、Copy、多階規則對應和使用中阻擋示例。
+- [x] 以 Windows PowerShell 5.1 + ODP.NET 唯讀核對七張 Oracle 表，收錄邏輯 DDL／CREATE-only 及家用端交接。序號主檔來源為獨立唯一索引。
+- [ ] 接續傳統 Packing Set 的 Serial Rule、Label Rule、Multi View 及標籤預覽，完成後再接 PD102 `EQPCapItem`。瀏覽器與正式 API 尚待驗收。

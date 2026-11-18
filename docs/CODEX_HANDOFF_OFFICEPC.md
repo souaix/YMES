@@ -5,7 +5,7 @@
 ## 接手方式
 
 1. 在桌電開啟同一個 GitHub repository `souaix/YMES`，執行 `git pull origin main`。
-2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 及目前的 [PD102 QC Item 規格](modules/PRD/產品品管項目設定.md)。
+2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 及目前的 [PD102 Packing Set 規格](modules/PRD/產品包裝設定.md)。
 3. 本機 Codex 使用 YMES repo；MES WinForms 原始碼在公司筆電 `D:\iMES\CSiMES`，桌電可能是另一個路徑。若桌電有既有 MES checkout，先核對路徑；不可用 UI 截圖代替 Form/Designer/Service/Core 原始碼。原始碼缺少時記錄具體缺檔，先做不依賴它的工作。
 4. 若在桌電打開同一個 Codex 對話，thread 對話與 Goal 脈絡仍在；若另開新對話，把本檔及 TODO 當成接手上下文，不要假設新 thread 自動有舊 Goal 狀態。
 
@@ -29,7 +29,7 @@
 
 - PD102 DEV 子視窗已分段完成 Property、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item。各功能的 WinForms 證據、DDL 及 API handoff 在 `docs/modules/PRD/` 與兩份 TODO。
 - RunTime 已完成單列／表格編輯與套用。QC Item 已完成依 OP 指派與檢驗類型，QC Import／QC Chart 的 Excel 流程待接續。兩項 DDL 依 MESTEST 字典實查重建，Production API 由家用端接續。
-- 下一項依 WinForms toolbar 順序做 PD102 `Packing Set`，之後按 `MES_MENU_FUNCTION_INVENTORY.md` 逐功能接續。同步恢復後先用 `git status`、`git log -1` 核對本機提交。
+- Packing Set 已完成三階數量及配件、多階 Rule Map 的 DEV 檢查點。接續序號規則、標籤規則及預覽，再依 WinForms toolbar 做 PD102 `EQPCapItem`。同步恢復後先用 `git status`、`git log -1` 核對本機提交。
 
 ## Default 已核實事項
 
@@ -53,4 +53,4 @@
 - 公司端：DEV 假資料下完成 UI/互動、模組規格、Oracle source DDL 與家用端 API/schema/Create SQL handoff。家用端：核對 PostgreSQL live schema、建立缺少的 migration/API。使用者已授權此 YMES 專案完成後分階段 commit/push GitHub。
 - WinForms Form、Designer、Service/Core 是主要證據；圖片只用於版面核對。找不到原始碼/DDL時，告知具體缺少的路徑或表名，不要假裝已確認。
 - 不寫入或輸出資料庫秘密。未收到使用者要求時，不執行 build/test/browser；可做靜態檢閱和 `git diff --check`。
-- 接續時先核對 RunTime／QC Item 檢查點，依公司端待辦接手 PD102 Packing Set。
+- 接續時先核對本機檢查點，依公司端待辦完成 Packing Set 的剩餘子功能。

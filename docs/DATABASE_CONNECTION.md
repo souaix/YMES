@@ -649,3 +649,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-18：PRD PD102 QC Item Oracle metadata
 
 - Windows PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDQCITEM`、OP／QC 共用目錄及 BindLog 字典。新查來源有 13 欄，包含舊參照未列的 `XX_FREQ NVARCHAR2(300)`。`GET_DDL` 回 `ORA-03135`，取字典重建邏輯 DDL。詳見 [產品品管項目](modules/PRD/產品品管項目設定.md)。
+
+### 更新 2026-11-18：PRD PD102 Packing Set Oracle metadata
+
+- Windows PowerShell 5.1 + ODP.NET 唯讀核對七張 Packing Set 設定表，Map 的 `GET_DDL` 回 `ORA-03135`。依字典重建六個 PK 及一個獨立唯一索引，未見 FK、額外索引或 trigger。詳見 [產品包裝設定](modules/PRD/產品包裝設定.md)。

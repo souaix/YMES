@@ -1672,3 +1672,9 @@ API 工作：
 - [ ] 依 [QC Item 規格](docs/modules/PRD/產品品管項目設定.md) 先比對 live schema 和 migration history。`TBLPRDQCITEM.XX_FREQ` 為目前 MESTEST 已確認的 nullable 欄位。沿用既有 OP、QC 目錄及 BindLog，評估需要的 forward migration。
 - [ ] 實作產品版次／OP 範圍 GET/PUT。按伺服器可用目錄驗證項目、PS 權限、LotIsValid、InLine 檢驗旗標和主鍵，以完整清單替換該 OP，支援清空，保留其他 OP，妥善處理 BindLog 與並發。
 - [ ] QC Import、QC Chart 檔案解析及檢查／寫入仍待接續，見規格中的 WinForms 與 Service 路徑。公司端目前已完成 DEV 指派表單。
+
+## PRD PD102 Packing Set 家用端 handoff（2026-11-18）
+
+- [ ] 依 [Packing Set 規格](docs/modules/PRD/產品包裝設定.md) 核對 live schema、first-phase、既有 migrations 及七表的 [Oracle 邏輯 DDL](database/reference/mestest_prd_packing_set_source_ddl.sql)／[PostgreSQL CREATE-only](database/reference/mestest_prd_packing_set_create.sql)。產品包裝數量沿用產品主檔，保留序號主表索引與 PK 的差異紀錄。
+- [ ] 接三階 Pack Setting、配件 CRUD／整批 Copy 及多階 Rule Map API。以伺服器權限、產品 IssueState、DataStamp、Current／Specified 規則版次和使用中批次作為寫入條件。
+- [ ] 公司端尚待 Serial Rule、Label Rule／Multi View DEV 表單及預覽。家用端待核對標籤引擎、路徑與相關批次寫入。

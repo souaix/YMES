@@ -11,6 +11,7 @@ import ProductProgramSetup from './ProductProgramSetup.vue'
 import ProductDefaultSetup from './ProductDefaultSetup.vue'
 import ProductRunTimeSetup from './ProductRunTimeSetup.vue'
 import ProductQCItemSetup from './ProductQCItemSetup.vue'
+import ProductPackingSet from './ProductPackingSet.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -24,7 +25,8 @@ type ProductRunTimeProps = InstanceType<typeof ProductRunTimeSetup>['$props']
 type ProductRunTimeData = NonNullable<ProductRunTimeProps['setup']>
 type ProductRunTimeRow = ProductRunTimeProps['defaultRows'][number]
 type ProductQCAssignment = Parameters<InstanceType<typeof ProductQCItemSetup>['$props']['saveAssignments']>[1][number]
-type ProductRelation = {
+type ProductPackingProps = InstanceType<typeof ProductPackingSet>['$props']
+type ProductRelation = ProductPackingProps['relations'][string] & {
   processes: ProductRow[]
   bom: ProductRow[]
   constraints: ProductRow[]
@@ -376,6 +378,21 @@ const visibleRows = computed(() => rows.value
   .filter(row => !productQuery.value.trim() || text(row.productNo).toLocaleLowerCase().includes(productQuery.value.trim().replaceAll('%', '').replaceAll('*', '').toLocaleLowerCase())))
 const active = computed(() => rows.value.find(row => keyOf(row) === selectedKey.value) ?? null)
 const activeRelations = computed(() => relatedFor(active.value))
+function packingProduct(row: ProductRow): ProductPackingProps['product'] {
+  return {
+    key: keyOf(row),
+    productNo: text(row.productNo),
+    productVersion: text(row.productVersion),
+    productName: text(row.productName),
+    issueState: Number(row.issueState ?? -1),
+    settings: {
+      boxQty: Number(row.boxQty ?? 0), cartonQty: Number(row.cartonQty ?? 0), palletQty: Number(row.palletQty ?? 0),
+      packOiPath: text(row.packOiPath),
+    },
+  }
+}
+const packingProducts = computed(() => mock.value ? rows.value.map(packingProduct) : [])
+const activePackingProduct = computed(() => packingProduct(active.value ?? {}))
 const developmentOpTimes = new Map([
   ['DEV-OP-10', { opOrder: 10, stdUnitRunTime: 2.5, countOpUnitQty: 1, stdQueueTime: 3 }],
   ['DEV-OP-20', { opOrder: 20, stdUnitRunTime: 1.25, countOpUnitQty: 2, stdQueueTime: 0 }],
@@ -445,7 +462,9 @@ function persistMock(): void {
   localStorage.setItem(relationKey, JSON.stringify(relations.value))
 }
 function replaceMockRelation(key: string, relation: ProductRelation): boolean {
-  const next = { ...relations.value, [key]: relation }
+  return persistMockRelations({ ...relations.value, [key]: relation })
+}
+function persistMockRelations(next: Record<string, ProductRelation>): boolean {
   try {
     localStorage.setItem(relationKey, JSON.stringify(next))
   } catch {
@@ -896,6 +915,34 @@ function saveProductQCItems(opNo: string, assignments: ProductQCAssignment[]): b
   notice.value = '產品品管項目假資料已儲存。'
   return true
 }
+const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
+  if (!mock.value || !keys.length) return false
+  const targetKeys = new Set(keys)
+  if (rows.value.filter(row => targetKeys.has(keyOf(row))).length !== targetKeys.size) return false
+  const reviser = currentUser()
+  const reviseDate = new Date().toISOString()
+  const next = rows.value.map(row => targetKeys.has(keyOf(row)) ? {
+    ...row, ...settings, dataStamp: Number(row.dataStamp ?? 0) + 1, reviser, reviseDate,
+  } : row)
+  try {
+    localStorage.setItem(rowsKey, JSON.stringify(next))
+  } catch {
+    return false
+  }
+  rows.value = next
+  return true
+}
+const savePackingRelations: ProductPackingProps['saveRelations'] = changes => {
+  if (!mock.value || !changes.length) return false
+  const next = { ...relations.value }
+  const productsByKey = new Map(rows.value.map(row => [keyOf(row), row]))
+  for (const { key, ...patch } of changes) {
+    const product = productsByKey.get(key)
+    if (!product) return false
+    next[key] = { ...(next[key] ?? relatedFor(product)), ...patch }
+  }
+  return persistMockRelations(next)
+}
 function applyProductDefaults(plan: ProductDefaultPlan): void {
   if (!active.value || !mock.value) return
   const relation = clone(relatedFor(active.value))
@@ -1110,7 +1157,12 @@ onMounted(() => { void load() })
         :product-name="text(active?.productName)" :saved-rows="mock ? activeRelations.qcItems ?? [] : []" :development-preview="mock"
         :current-user="currentUser()" :save-assignments="saveProductQCItems" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'packing-set'" class="prd-overlay child-feature-overlay">
+      <ProductPackingSet :product="activePackingProduct" :products="packingProducts" :relations="mock ? relations : {}"
+        :current-user="currentUser()" :development-preview="mock" :save-settings="savePackingSettings"
+        :save-relations="savePackingRelations" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
