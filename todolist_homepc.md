@@ -1698,3 +1698,8 @@ API 工作：
 
 - [ ] 依 [產品 APS 規格](docs/modules/PRD/產品APS整合.md)，對照 Default／PS104 的四張既有 APS 表 DDL 與 live schema，沿用共用結構。
 - [ ] 實作產品版次／MOType／Node 主設定與設備明細 API。伺服器重新驗證流程、設備、群組與權限，主設定 Update／Delete 及設備明細重建保持同一交易。
+
+## PRD PD102 Bin 家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品 Bin 規格](docs/modules/PRD/產品Bin定義.md) 核對 `TBLSYSBIN`、`TBLPRDFTPROGRAMBIN` 的 Oracle metadata 與 YMES live schema，再定稿 CREATE 參考。
+- [ ] 實作依產品版本載入系統 Bin 目錄與整組定義，並提供交易式整批替換。確認 `IssueState`、空清單清除、Good／OS Bin 檢查與操作者稽核。

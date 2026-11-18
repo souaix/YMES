@@ -29,7 +29,7 @@
 
 - PD102 DEV 子視窗已分段完成 Property、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item。各功能的 WinForms 證據、DDL 及 API handoff 在 `docs/modules/PRD/` 與兩份 TODO。
 - RunTime 已完成單列／表格編輯與套用。QC Item 已完成依 OP 指派與檢驗類型，QC Import／QC Chart 的 Excel 流程待接續。兩項 DDL 依 MESTEST 字典實查重建，Production API 由家用端接續。
-- Packing Set、EQPCapItem、eSOP、EquipmentSpec 和 APS Integration 已完成 DEV 設定與 Oracle 交接。依 WinForms toolbar 接續 PD102 `Bin`。
+- Packing Set、EQPCapItem、eSOP、EquipmentSpec 和 APS Integration 已完成 DEV 設定與 Oracle 交接。PD102 `Bin` 已完成 DEV 設定，兩張來源表的 Oracle metadata 與 CREATE SQL 待補。依 WinForms toolbar 接續 `GBOMImport`／`GBOMExport`。
 
 ## Default 已核實事項
 
@@ -53,4 +53,4 @@
 - 公司端：DEV 假資料下完成 UI/互動、模組規格、Oracle source DDL 與家用端 API/schema/Create SQL handoff。家用端：核對 PostgreSQL live schema、建立缺少的 migration/API。使用者已授權此 YMES 專案完成後分階段 commit/push GitHub。
 - WinForms Form、Designer、Service/Core 是主要證據；圖片只用於版面核對。找不到原始碼/DDL時，告知具體缺少的路徑或表名，不要假裝已確認。
 - 不寫入或輸出資料庫秘密。未收到使用者要求時，不執行 build/test/browser；可做靜態檢閱和 `git diff --check`。
-- 接續時先核對本機檢查點，依公司端待辦開發 PD102 Bin。
+- 接續時先核對本機檢查點，依公司端待辦開發 PD102 GBOMImport／GBOMExport。

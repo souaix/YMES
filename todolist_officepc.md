@@ -1110,4 +1110,10 @@
 
 - [x] 核對 APS 主窗／EQPTIME 的 Form／Designer、Service、Core。完成 DEV Node、主／設備明細、Update／Delete、明細重建與數值驗證。
 - [x] 以 PowerShell 5.1 + ODP.NET 唯讀核對四張 APS 表欄數與鍵，沿用 Default／PS104 的 DDL 參照並補 API 交接。
-- [ ] 正式流程、群組展開、API 與瀏覽器驗收待接續；下一項 PD102 `Bin`。
+- [ ] 正式流程、群組展開、API 與瀏覽器驗收待接續。
+
+## PRD PD102 Bin 公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service 和 Core。完成 DEV Bin 勾選、Good/Fail、說明、OS Bin、版本狀態和本機儲存。
+- [ ] Codex 自動審查服務回傳 HTTP 503；待 PowerShell 5.1 + ODP.NET 可執行後補查 `TBLSYSBIN`、`TBLPRDFTPROGRAMBIN` 並補 CREATE-only 交接。
+- [ ] 接續 PD102 `GBOMImport`／`GBOMExport`。

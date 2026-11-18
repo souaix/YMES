@@ -142,6 +142,8 @@ Oracle 目錄共有 20 個 Module、601 筆 MenuItem、553 筆 Function；MenuTy
 | PRS | 流程主檔 | 既有主檔規格與程式待逐項核對 | 部分主檔 API 已有，擴充待補 |
 | PRD | [產品主檔](modules/PRD/產品主檔.md)、[RecipeGroup 指派](modules/PRD/產品RecipeGroup.md)、[配件設定](modules/PRD/產品配件設定.md)、[產品作業區域](modules/PRD/產品作業區域設定.md)、[產品子作業](modules/PRD/產品子作業設定.md)、[產品程式指派](modules/PRD/產品程式指派.md)、[產品預設設定](modules/PRD/產品預設設定.md)、[產品標準工時](modules/PRD/產品標準工時.md)、[產品品管項目](modules/PRD/產品品管項目設定.md)、[產品包裝設定](modules/PRD/產品包裝設定.md)、[產品設備能力項目](modules/PRD/產品設備能力項目.md)、[產品電子作業指導書](modules/PRD/產品電子作業指導書.md)、[產品設備參數規格](modules/PRD/產品設備參數規格.md)、[產品 APS 整合](modules/PRD/產品APS整合.md) | 基本表單及流程、BOM、產品屬性、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item 指派、Packing Set、EQPCapItem、eSOP、EquipmentSpec 與 APS Integration 已完成 DEV 主流程 | 正式標籤引擎、QC Import／QC Chart 與 Production API/schema 待接續 |
 
+PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主流程，Oracle metadata 和 CREATE SQL 待補。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

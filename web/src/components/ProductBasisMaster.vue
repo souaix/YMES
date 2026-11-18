@@ -16,6 +16,7 @@ import ProductEquipmentCapItems from './ProductEquipmentCapItems.vue'
 import ProductEsopSetup from './ProductEsopSetup.vue'
 import ProductEquipmentSpec from './ProductEquipmentSpec.vue'
 import ProductApsIntegration from './ProductApsIntegration.vue'
+import ProductBinSetup from './ProductBinSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -34,6 +35,7 @@ type EquipmentCapRows = InstanceType<typeof ProductEquipmentCapItems>['$props'][
 type ProductEsopRows = InstanceType<typeof ProductEsopSetup>['$props']['rows']
 type ProductEquipmentSpecProps = InstanceType<typeof ProductEquipmentSpec>['$props']
 type ProductApsProps = InstanceType<typeof ProductApsIntegration>['$props']
+type ProductBinProps = InstanceType<typeof ProductBinSetup>['$props']
 type ProductRelation = ProductPackingProps['relations'][string] & {
   processes: ProductRow[]
   bom: ProductRow[]
@@ -54,6 +56,7 @@ type ProductRelation = ProductPackingProps['relations'][string] & {
   equipmentSpecs?: ProductEquipmentSpecProps['savedSpecs']
   apsSetups?: ProductRow[]
   apsSetupDetails?: ProductRow[]
+  bins?: ProductBinProps['savedBins']
   materialGroups?: ProductRow[]
 }
 type ProductDefaultPlan = {
@@ -982,6 +985,13 @@ const saveProductAps: ProductApsProps['save'] = (apsSetups, apsSetupDetails) => 
   if (!product || !mock.value || !selectedProcess.value) return false
   return replaceMockRelation(keyOf(product), { ...relatedFor(product), apsSetups, apsSetupDetails })
 }
+const saveProductBins: ProductBinProps['save'] = bins => {
+  const product = active.value
+  if (!product || !mock.value || !editable.value) return false
+  if (!replaceMockRelation(keyOf(product), { ...relatedFor(product), bins })) return false
+  notice.value = 'DEV 假資料：Bin 定義已儲存。'
+  return true
+}
 const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
   if (!mock.value || !keys.length) return false
   const targetKeys = new Set(keys)
@@ -1254,7 +1264,12 @@ onMounted(() => { void load() })
         :setups="mock ? activeRelations.apsSetups ?? [] : []" :details="mock ? activeRelations.apsSetupDetails ?? [] : []"
         :current-user="currentUser()" :development-preview="mock" :save="saveProductAps" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec','aps'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'bin'" class="prd-overlay child-feature-overlay">
+      <ProductBinSetup :key="active ? keyOf(active) : ''" :product-no="text(active?.productNo)"
+        :product-version="text(active?.productVersion)" :can-edit="editable" :development-preview="mock"
+        :saved-bins="mock ? activeRelations.bins ?? [] : []" :save="saveProductBins" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec','aps','bin'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
