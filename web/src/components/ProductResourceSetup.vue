@@ -64,7 +64,7 @@ const devAreas: AreaRow[] = [
 ]
 
 const productProcesses = computed(() => {
-  const source = props.processes.length ? props.processes : (props.developmentPreview ? devProcesses : [])
+  const source: ResourceRow[] = props.processes.length ? props.processes : (props.developmentPreview ? devProcesses : [])
   return source.map(row => ({
     ...row,
     processNo: String(row.processNo ?? ('ProcessNo' in row ? row.ProcessNo : undefined) ?? ''),

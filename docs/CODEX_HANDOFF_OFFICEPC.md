@@ -5,7 +5,7 @@
 ## 接手方式
 
 1. 在桌電開啟同一個 GitHub repository `souaix/YMES`，執行 `git pull origin main`。
-2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 及 `docs/modules/PRD/產品預設設定.md`。
+2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 及目前的 [PD102 Packing Set 規格](modules/PRD/產品包裝設定.md)。
 3. 本機 Codex 使用 YMES repo；MES WinForms 原始碼在公司筆電 `D:\iMES\CSiMES`，桌電可能是另一個路徑。若桌電有既有 MES checkout，先核對路徑；不可用 UI 截圖代替 Form/Designer/Service/Core 原始碼。原始碼缺少時記錄具體缺檔，先做不依賴它的工作。
 4. 若在桌電打開同一個 Codex 對話，thread 對話與 Goal 脈絡仍在；若另開新對話，把本檔及 TODO 當成接手上下文，不要假設新 thread 自動有舊 Goal 狀態。
 
@@ -27,10 +27,9 @@
 
 ## 目前檢查點與下一步
 
-- 前一個已推送檢查點為 `45cddce`（PD102 Program）。此次 Default 檢查點以 GitHub `main` 最新狀態為準；先檢查 `git status`、`git log -1`，再決定是否尚需 commit/push，不要重做已提交的工作。
-- PD102 DEV 子視窗已分段完成 Property、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program。各功能的 WinForms 證據、DDL 及 API handoff 在 `docs/modules/PRD/` 與兩份 TODO。
-- 本 checkpoint 的 PD102 Default 內容包括 `web/src/components/ProductDefaultSetup.vue`、`ProductBasisMaster.vue` 接線、DEV localStorage 假樣板、APS DDL 參照、`docs/modules/PRD/產品預設設定.md` 與兩端 handoff。若這些變更已在最新 main，直接 review，不重做。
-- Default Production API 未完成。完成 checkpoint 後依 WinForms toolbar 次序接續 PD102 `RunTime`，再依 `MES_MENU_FUNCTION_INVENTORY.md` 逐功能完成全 MES；目前整體目標遠未完成。
+- PD102 DEV 子視窗已分段完成 Property、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item。各功能的 WinForms 證據、DDL 及 API handoff 在 `docs/modules/PRD/` 與兩份 TODO。
+- RunTime 已完成單列／表格編輯與套用。QC Item 已完成依 OP 指派與檢驗類型，QC Import／QC Chart 的 Excel 流程待接續。兩項 DDL 依 MESTEST 字典實查重建，Production API 由家用端接續。
+- Packing Set 已完成三階數量及配件、多階 Rule Map、序號／標籤規則與 DEV 欄位預覽。EQPCapItem 已完成 DEV CRUD、Copy 與 Oracle 交接。依 WinForms toolbar 接續 PD102 `eSOP`。
 
 ## Default 已核實事項
 
@@ -44,6 +43,7 @@
 - 查 DDL 固定使用 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，由本機受保護 profile 取得連線字串後直接讀 Oracle metadata；不用 DBeaver GUI 抄 DDL。
 - 公司筆電本次實際讀取的受保護設定檔是 `C:\Users\11019\.codex\attachments\14ce649b-edc6-4e1a-bfab-e971ae8a0cca\pasted-text.txt`（JSON），Oracle 測試連線欄位為 `DatabaseConfigs.CS.Test.Mes.ConnectionString`，類型欄位為 `DatabaseConfigs.CS.Test.Mes.DbType`。這是筆電上的 Codex attachment 路徑，不保證桌電存在；桌電先檢查此檔是否可用，不能因路徑不同就從文件猜密碼。
 - 該 JSON 還包含其他系統設定與機密。不可將檔案複製進 repo、提交 Git 或輸出內容；只在程式中讀取所需 Oracle key。若桌電不存在此受保護檔，請使用者安全地重新設定 Oracle profile。
+- 公司桌機已使用目前 Windows 帳號的 DPAPI profile 驗證 MESTEST 登入及 RunTime 資料字典查詢。設定檔位於 Git repo 外，由桌機帳號本機解密。
 - IP、帳號、密碼、SID 不得寫入 GitHub Markdown、SQL、source code 或 console output。桌電若沒有受保護 profile，透過安全方式請使用者重新設定；不可猜連線資料或從舊電腦文件搜尋明碼。
 - 只讀 metadata，不查 MES 業務資料列、不執行 Oracle DDL/DML。PostgreSQL CREATE-only reference 不是 migration；家用端先查 YMES live schema 和 migration history。
 
@@ -53,4 +53,4 @@
 - 公司端：DEV 假資料下完成 UI/互動、模組規格、Oracle source DDL 與家用端 API/schema/Create SQL handoff。家用端：核對 PostgreSQL live schema、建立缺少的 migration/API。使用者已授權此 YMES 專案完成後分階段 commit/push GitHub。
 - WinForms Form、Designer、Service/Core 是主要證據；圖片只用於版面核對。找不到原始碼/DDL時，告知具體缺少的路徑或表名，不要假裝已確認。
 - 不寫入或輸出資料庫秘密。未收到使用者要求時，不執行 build/test/browser；可做靜態檢閱和 `git diff --check`。
-- 開始接續時：pull `main` → 核對 Default checkpoint 狀態 → 靜態檢閱並 commit/push 尚未提交內容 → 開始 PD102 RunTime。
+- 接續時先核對本機檢查點，依公司端待辦開發 PD102 eSOP。

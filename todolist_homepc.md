@@ -1659,3 +1659,26 @@ API 工作：
 - [ ] 對照 `clsProduct.UpdPRDOP_BatchDefault`：此功能可能重建 `TBLPRDOP`、Parameter/Attrib/Rule、BusinessRule/Relation/XML CLOB、Description、OPArea、QCItem、SubOP 及 APS setup/detail。查清空來源時的清除行為、未勾項目的保留範圍、Parameter ECN 例外及實際交易邊界後，才決定 API transaction。
 - [ ] 注意 WinForms APS checkbox 在 `ExecuteAPS` 未啟用時隱藏但 Designer 預設 checked；QCItem 預設由 `PRDDefault_QCItemAutoChecked` 決定。核對舊 client 送旗標行為並寫入規格，避免 UI/API 默默改變資料。
 - [ ] 只有 live schema 確認缺表/缺欄才新增 migration；完成 API/DTO/錯誤處理後更新規格及 TODO，commit/push `main`。公司端 Default 目前只有 DEV localStorage；Production API 未接線，未部署 SQL。
+
+## PRD PD102 RunTime 家用端 handoff（2026-11-18）
+
+- [ ] 先比對 live schema、first-phase bootstrap 與 migration history。以 [RunTime 規格](docs/modules/PRD/產品標準工時.md)、[Oracle 邏輯 DDL](database/reference/mestest_prd_run_time_source_ddl.sql) 及 [PostgreSQL CREATE-only](database/reference/mestest_prd_run_time_create.sql) 核對 `tblprdruntimesetup` 與六張既有 lookup 表。來源 RunTime 表沒有 PK、unique、FK、索引或 trigger。
+- [ ] 實作登入保護的產品版次 RunTime GET／PUT。GET 依產品 OP 區域、設備／群組與設備類型預設展開，再套用已存設定。PUT 拒絕空清單，核對伺服器計算的列身分、精度、權限與同版次並發，全量替換必須在同一 transaction。核對 Fix/Var 工時及 WorkPrice 欄位是否須為其他流程保留。
+- [ ] 驗收無設備、設備直掛／群組重複、首次儲存、整批替換、錯誤回滾、並發、Copy／刪除、稽核及權限。公司端 RunTime 已提供 DEV localStorage 操作，正式模式待 API 接線。
+
+## PRD PD102 QC Item 家用端 handoff（2026-11-18）
+
+- [ ] 依 [QC Item 規格](docs/modules/PRD/產品品管項目設定.md) 先比對 live schema 和 migration history。`TBLPRDQCITEM.XX_FREQ` 為目前 MESTEST 已確認的 nullable 欄位。沿用既有 OP、QC 目錄及 BindLog，評估需要的 forward migration。
+- [ ] 實作產品版次／OP 範圍 GET/PUT。按伺服器可用目錄驗證項目、PS 權限、LotIsValid、InLine 檢驗旗標和主鍵，以完整清單替換該 OP，支援清空，保留其他 OP，妥善處理 BindLog 與並發。
+- [ ] QC Import、QC Chart 檔案解析及檢查／寫入仍待接續，見規格中的 WinForms 與 Service 路徑。公司端目前已完成 DEV 指派表單。
+
+## PRD PD102 Packing Set 家用端 handoff（2026-11-18）
+
+- [ ] 依 [Packing Set 規格](docs/modules/PRD/產品包裝設定.md) 核對 live schema、first-phase、既有 migrations 及七表的 [Oracle 邏輯 DDL](database/reference/mestest_prd_packing_set_source_ddl.sql)／[PostgreSQL CREATE-only](database/reference/mestest_prd_packing_set_create.sql)。產品包裝數量沿用產品主檔，保留序號主表索引與 PK 的差異紀錄。
+- [ ] 接三階 Pack Setting、配件 CRUD／整批 Copy 及多階 Rule Map API。以伺服器權限、產品 IssueState、DataStamp、Current／Specified 規則版次和使用中批次作為寫入條件。
+- [ ] 公司端已完成 Serial Rule、Label Rule／Multi View 和 DEV 欄位預覽；家用端待核對序號長度 100 與 Oracle 欄位精度、2D 分隔符、標籤引擎、檔案路徑權限與批次寫入。
+
+## PRD PD102 EQPCapItem 家用端 handoff（2026-11-18）
+
+- [ ] 依 [設備能力項目規格](docs/modules/PRD/產品設備能力項目.md) 核對 `tblprdopcapitem`、共用 `tblemseqpcapbasis`、`tblopbasis` 與 live schema／migration history。只補缺漏的表或欄位。
+- [ ] 實作產品版次設備能力 CRUD、OP／CapItem lookup、同版次 Copy、新舊 DataStamp 衝突、稽核和多選刪除語意。伺服器驗證 IssueState、權限、主鍵及 CapValue 資料型別與長度。

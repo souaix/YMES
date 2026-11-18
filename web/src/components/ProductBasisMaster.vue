@@ -9,6 +9,10 @@ import ProductResourceSetup from './ProductResourceSetup.vue'
 import ProductSubOpSetup from './ProductSubOpSetup.vue'
 import ProductProgramSetup from './ProductProgramSetup.vue'
 import ProductDefaultSetup from './ProductDefaultSetup.vue'
+import ProductRunTimeSetup from './ProductRunTimeSetup.vue'
+import ProductQCItemSetup from './ProductQCItemSetup.vue'
+import ProductPackingSet from './ProductPackingSet.vue'
+import ProductEquipmentCapItems from './ProductEquipmentCapItems.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -18,7 +22,13 @@ type IssueState = -1 | 0 | 1 | 2
 type ProductRow = Record<string, any>
 type ProductParameterData = NonNullable<InstanceType<typeof ProductParameterSetup>['$props']['parameters']>
 type ProductBusinessRuleData = NonNullable<InstanceType<typeof ProductBusinessRuleSetup>['$props']['businessRules']>
-type ProductRelation = {
+type ProductRunTimeProps = InstanceType<typeof ProductRunTimeSetup>['$props']
+type ProductRunTimeData = NonNullable<ProductRunTimeProps['setup']>
+type ProductRunTimeRow = ProductRunTimeProps['defaultRows'][number]
+type ProductQCAssignment = Parameters<InstanceType<typeof ProductQCItemSetup>['$props']['saveAssignments']>[1][number]
+type ProductPackingProps = InstanceType<typeof ProductPackingSet>['$props']
+type EquipmentCapRows = InstanceType<typeof ProductEquipmentCapItems>['$props']['rows']
+type ProductRelation = ProductPackingProps['relations'][string] & {
   processes: ProductRow[]
   bom: ProductRow[]
   constraints: ProductRow[]
@@ -31,7 +41,9 @@ type ProductRelation = {
   opAreas?: ProductRow[]
   subOps?: ProductRow[]
   productPrograms?: string[]
+  runTime?: ProductRunTimeData
   qcItems?: ProductRow[]
+  equipmentCapItems?: EquipmentCapRows
   apsSetups?: ProductRow[]
   apsSetupDetails?: ProductRow[]
   materialGroups?: ProductRow[]
@@ -123,7 +135,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
   'run-time': { title: 'RunTime', source: 'PD_ProductRunTime', description: '設定產品各作業站的標準工時。' },
   'qc-item': { title: 'QC Item', source: 'PD_ProductQCItem', description: '設定產品對應的品管項目。' },
   'packing-set': { title: 'Packing Set', source: 'PD_ProductPackingSet', description: '設定產品包裝規則與包裝配件。' },
-  'eqp-cap-item': { title: 'EQPCapItem', source: 'frmProductEQPConstraint_THEIL_BU1', description: '維護產品版本、作業站與設備的限制對應。' },
+  'eqp-cap-item': { title: 'EQPCapItem', source: 'PD_OPCapItem', description: '設定產品版次各作業站的設備能力項目。' },
   esop: { title: 'eSOP', source: 'eSOP product function', description: '依產品編號、版本開啟 eSOP 內容。' },
   'equipment-spec': { title: 'EquipmentSpec', source: 'frmPRDEquipmentSpec_THEIL_BU1', description: '維護產品版本的設備規格。' },
   aps: { title: 'APS Integration', source: 'frmPRDAPSIntegration_THEIL_BU1', description: '維護產品流程與 APS 整合資料；按鈕受 ExecuteAPS 參數控制。' },
@@ -188,6 +200,10 @@ const seedRelations: Record<string, ProductRelation> = {
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-20', subOpSequence: 1, subOpNo: 'DEV-SUB-20-01', subOpName: '外觀組裝確認', creator: 'DEV001', createDate: '2026-11-01T09:20:00', dataStamp: 0, reviser: '', reviseDate: '' },
     ],
     productPrograms: ['DEV-PROG-01', 'DEV-PROG-03'],
+    equipmentCapItems: [
+      { opNo: 'DEV-OP-10', capItem: 'DEV-CAP-DISPENSER', capValue: 'HIGHPRECISION', description: 'DEV 點膠設備能力範例',
+        creator: 'DEV001', createDate: '2026-11-01T09:10:00', reviser: '', reviseDate: '', dataStamp: 0 },
+    ],
     qcItems: [
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', qcItemNo: 'DEV-QC-VISUAL', qcItemType: 0, executeOrder: 1, inLine: 1, inspTypeFAI: 1, inspTypeIPQC: 1, inspTypePQC: 1, reviser: 'DEV001', reviseDate: '2026-11-04T10:30:00' },
     ],
@@ -369,6 +385,51 @@ const visibleRows = computed(() => rows.value
   .filter(row => !productQuery.value.trim() || text(row.productNo).toLocaleLowerCase().includes(productQuery.value.trim().replaceAll('%', '').replaceAll('*', '').toLocaleLowerCase())))
 const active = computed(() => rows.value.find(row => keyOf(row) === selectedKey.value) ?? null)
 const activeRelations = computed(() => relatedFor(active.value))
+function packingProduct(row: ProductRow): ProductPackingProps['product'] {
+  return {
+    key: keyOf(row),
+    productNo: text(row.productNo),
+    productVersion: text(row.productVersion),
+    productName: text(row.productName),
+    issueState: Number(row.issueState ?? -1),
+    settings: {
+      boxQty: Number(row.boxQty ?? 0), cartonQty: Number(row.cartonQty ?? 0), palletQty: Number(row.palletQty ?? 0),
+      packOiPath: text(row.packOiPath),
+    },
+  }
+}
+const packingProducts = computed(() => mock.value ? rows.value.map(packingProduct) : [])
+const activePackingProduct = computed(() => packingProduct(active.value ?? {}))
+const developmentOpTimes = new Map([
+  ['DEV-OP-10', { opOrder: 10, stdUnitRunTime: 2.5, countOpUnitQty: 1, stdQueueTime: 3 }],
+  ['DEV-OP-20', { opOrder: 20, stdUnitRunTime: 1.25, countOpUnitQty: 2, stdQueueTime: 0 }],
+])
+const developmentAreaEquipment = new Map([
+  ['DEV-AREA-01', [
+    { equipmentNo: 'DEV-EQP-01', equipmentType: 'DEV-DISPENSER', stdUnitEmpTime: 0.5, stdUnitEqpTime: 1.25, countEqpUnitQty: 1 },
+    { equipmentNo: 'DEV-EQP-02', equipmentType: 'DEV-DISPENSER', stdUnitEmpTime: 0.5, stdUnitEqpTime: 1.25, countEqpUnitQty: 1 },
+  ]],
+  ['DEV-AREA-02', [
+    { equipmentNo: 'DEV-EQP-03', equipmentType: 'DEV-ASSEMBLY', stdUnitEmpTime: 1, stdUnitEqpTime: 2.75, countEqpUnitQty: 2 },
+  ]],
+])
+const developmentRunTimeRows = computed<ProductRunTimeRow[]>(() => {
+  if (!mock.value) return []
+  return (activeRelations.value.opAreas ?? []).flatMap(area => {
+    const opNo = text(area.opNo)
+    const areaNo = text(area.areaNo)
+    if (!opNo || !areaNo) return []
+    const { opOrder, ...opTimes } = developmentOpTimes.get(opNo) ?? {
+      opOrder: 0, stdUnitRunTime: 0, countOpUnitQty: 1, stdQueueTime: 0,
+    }
+    const equipment = developmentAreaEquipment.get(areaNo) ?? [
+      { equipmentNo: 'N/A', equipmentType: 'N/A', stdUnitEmpTime: 0, stdUnitEqpTime: 0, countEqpUnitQty: 1 },
+    ]
+    return equipment.map(({ equipmentNo, equipmentType, ...equipmentTimes }) => ({
+      opOrder, opNo, areaNo, equipmentNo, equipmentType, values: { ...opTimes, ...equipmentTimes },
+    }))
+  })
+})
 const subOpOperationOptions = computed(() => {
   const candidates: ProductRow[] = [
     ...(activeRelations.value.parameters?.ops ?? []),
@@ -406,6 +467,18 @@ const lookupOptions = computed(() => {
 function persistMock(): void {
   localStorage.setItem(rowsKey, JSON.stringify(rows.value))
   localStorage.setItem(relationKey, JSON.stringify(relations.value))
+}
+function replaceMockRelation(key: string, relation: ProductRelation): boolean {
+  return persistMockRelations({ ...relations.value, [key]: relation })
+}
+function persistMockRelations(next: Record<string, ProductRelation>): boolean {
+  try {
+    localStorage.setItem(relationKey, JSON.stringify(next))
+  } catch {
+    return false
+  }
+  relations.value = next
+  return true
 }
 function loadMock(): void {
   try {
@@ -446,6 +519,10 @@ function loadMock(): void {
       }
       if (existing && !existing.productPrograms && seed.productPrograms) {
         existing.productPrograms = clone(seed.productPrograms)
+        migrated = true
+      }
+      if (existing && !existing.equipmentCapItems && seed.equipmentCapItems) {
+        existing.equipmentCapItems = clone(seed.equipmentCapItems)
         migrated = true
       }
       if (existing && !existing.qcItems && seed.qcItems) {
@@ -831,6 +908,57 @@ function saveProductPrograms(programNos: string[]): void {
   persistMock()
   notice.value = '產品程式指派假資料已儲存。'
 }
+function saveProductRunTime(setup: ProductRunTimeData): boolean {
+  if (!active.value || !mock.value) return false
+  if (!replaceMockRelation(keyOf(active.value), { ...relatedFor(active.value), runTime: setup })) return false
+  notice.value = '產品 RunTime 假資料已儲存。'
+  return true
+}
+function saveProductQCItems(opNo: string, assignments: ProductQCAssignment[]): boolean {
+  const product = active.value
+  if (!product || !mock.value || !opNo) return false
+  const relation = relatedFor(product)
+  const assignedRows = assignments.map(row => ({
+    ...row, opNo, productNo: text(product.productNo), productVersion: text(product.productVersion),
+  }))
+  const qcItems = [...(relation.qcItems ?? []).filter(row => row.opNo !== opNo), ...assignedRows]
+  if (!replaceMockRelation(keyOf(product), { ...relation, qcItems })) return false
+  notice.value = '產品品管項目假資料已儲存。'
+  return true
+}
+function saveProductEquipmentCapItems(items: EquipmentCapRows): boolean {
+  const product = active.value
+  if (!product || !mock.value || Number(product.issueState) !== 0) return false
+  return replaceMockRelation(keyOf(product), { ...relatedFor(product), equipmentCapItems: items })
+}
+const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
+  if (!mock.value || !keys.length) return false
+  const targetKeys = new Set(keys)
+  if (rows.value.filter(row => targetKeys.has(keyOf(row))).length !== targetKeys.size) return false
+  const reviser = currentUser()
+  const reviseDate = new Date().toISOString()
+  const next = rows.value.map(row => targetKeys.has(keyOf(row)) ? {
+    ...row, ...settings, dataStamp: Number(row.dataStamp ?? 0) + 1, reviser, reviseDate,
+  } : row)
+  try {
+    localStorage.setItem(rowsKey, JSON.stringify(next))
+  } catch {
+    return false
+  }
+  rows.value = next
+  return true
+}
+const savePackingRelations: ProductPackingProps['saveRelations'] = changes => {
+  if (!mock.value || !changes.length) return false
+  const next = { ...relations.value }
+  const productsByKey = new Map(rows.value.map(row => [keyOf(row), row]))
+  for (const { key, ...patch } of changes) {
+    const product = productsByKey.get(key)
+    if (!product) return false
+    next[key] = { ...(next[key] ?? relatedFor(product)), ...patch }
+  }
+  return persistMockRelations(next)
+}
 function applyProductDefaults(plan: ProductDefaultPlan): void {
   if (!active.value || !mock.value) return
   const relation = clone(relatedFor(active.value))
@@ -1035,13 +1163,33 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'default'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductDefaultSetup :product="active ?? {}" :has-product-process="activeRelations.processes.length > 0" :development-preview="mock" :qc-item-auto-checked="developmentDefaultSettings.qcItemAutoChecked" :aps-enabled="developmentDefaultSettings.apsEnabled" @apply="applyProductDefaults" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'run-time'" class="prd-overlay child-feature-overlay">
+      <ProductRunTimeSetup :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :default-rows="developmentRunTimeRows" :setup="mock ? activeRelations.runTime : undefined" :development-preview="mock"
+        :current-user="currentUser()" :save-setup="saveProductRunTime" @close="closeFeature" />
+    </div>
+    <div v-if="feature && featureKey === 'qc-item'" class="prd-overlay child-feature-overlay">
+      <ProductQCItemSetup :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :product-name="text(active?.productName)" :saved-rows="mock ? activeRelations.qcItems ?? [] : []" :development-preview="mock"
+        :current-user="currentUser()" :save-assignments="saveProductQCItems" @close="closeFeature" />
+    </div>
+    <div v-if="feature && featureKey === 'packing-set'" class="prd-overlay child-feature-overlay">
+      <ProductPackingSet :product="activePackingProduct" :products="packingProducts" :relations="mock ? relations : {}"
+        :current-user="currentUser()" :development-preview="mock" :save-settings="savePackingSettings"
+        :save-relations="savePackingRelations" @close="closeFeature" />
+    </div>
+    <div v-if="feature && featureKey === 'eqp-cap-item'" class="prd-overlay child-feature-overlay">
+      <ProductEquipmentCapItems :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :issue-state="Number(active?.issueState ?? -1)" :current-user="currentUser()" :development-preview="mock"
+        :rows="mock ? activeRelations.equipmentCapItems ?? [] : []" :save="saveProductEquipmentCapItems" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
         <p>{{ feature.description }}</p>
         <p v-if="featureKey === 'process-setup' || featureKey === 'process-expand'" class="prd-context">流程 {{ selectedProcess?.psNo || '—' }} / MOType {{ selectedProcess?.moTypeNo ?? '—' }} / {{ selectedProcess?.processNo || '—' }} / {{ selectedProcess?.processVersion || '—' }}</p>
-        <template v-if="featureKey === 'eqp-cap-item' || featureKey === 'equipment-spec'">
+        <template v-if="featureKey === 'equipment-spec'">
           <div class="prd-detail-grid"><table><thead><tr><th>OPNo</th><th>EquipmentNo</th><th>Description</th></tr></thead><tbody><tr v-for="(item,index) in activeRelations.constraints" :key="index"><td>{{ item.opNo }}</td><td>{{ item.equipmentNo }}</td><td>{{ item.description }}</td></tr><tr v-if="!activeRelations.constraints.length"><td colspan="3" class="empty">尚無設備資料。</td></tr></tbody></table></div>
         </template>
         <div v-else class="prd-feature-placeholder"><strong>WinForms 功能入口已依原功能名稱保留。</strong><p>此子功能由另一個 ObjectFileHandler/WinForms Form 載入；其專屬欄位、資料表與操作會在對應功能規格中拆分，API 尚待家用端實作。</p><p>Development 目前只展示產品上下文，不會寫入 MES 或 YMES 正式資料。</p></div>

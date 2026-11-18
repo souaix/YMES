@@ -641,7 +641,26 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 兩表只有 PK unique index，無 FK、trigger、額外 index；完整欄位與 DDL 來源見 `database/reference/mestest_prd_default_aps_source_ddl.sql`，PostgreSQL CREATE-only 參照見 `mestest_prd_default_aps_create.sql`。流程端 `TBLPRSOPAPSBASE/DETAIL` 沿用 PS104 已查來源 DDL。
 - 未查 MES 業務資料列，也未執行 Oracle DDL/DML。IP、帳號、密碼、SID 不寫入 Git；桌電若沒有本機受保護連線 profile，需透過安全方式重新提供，不可改用 DBeaver 螢幕抄 DDL。
 
+
 ## 家用端持續建置紀錄（2026-11-18）
 
 - QC503 核對既有 migration0027 Driver 欄位、PK/default/nullable，無須另建表。正式 UI 的測試 Driver A/B 及 QC501 引用類別均已刪除，精確 SQL 計數為 0。
 - PS102 live audit 確認缺表；備份 /opt/ymes/backups/ymes_before_0028_ps102_20261118.dump 通過 pg_restore --list 後，套用 migration0028，保留原 PK 與 Sequence 全表唯一、nullable/default，授予 ymes_app 表級 CRUD。未新增來源以外 FK/index 或搬移業務資料。正式 UI 測試 Stage A/B 已清空，grant 查核為 true。
+
+### 更新 2026-11-18：PRD PD102 RunTime Oracle metadata
+
+- 公司桌機以 Windows PowerShell 5.1 + ODP.NET 經本機 DPAPI profile 驗證 MESTEST 登入。唯讀核對 `TBLPRDRUNTIMESETUP` 及六張共用 lookup 表的欄位、約束及索引。`GET_DDL` 回 `ORA-03135`，RunTime DDL 依資料字典重建。
+- `TBLPRDRUNTIMESETUP` 有 20 欄、10 個具名 `NOT NULL` 條件，無 PK、FK、unique、索引或 trigger。DDL、欄位來源及缺口見 [產品標準工時](modules/PRD/產品標準工時.md)。查詢限 metadata。
+
+### 更新 2026-11-18：PRD PD102 QC Item Oracle metadata
+
+- Windows PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDQCITEM`、OP／QC 共用目錄及 BindLog 字典。新查來源有 13 欄，包含舊參照未列的 `XX_FREQ NVARCHAR2(300)`。`GET_DDL` 回 `ORA-03135`，取字典重建邏輯 DDL。詳見 [產品品管項目](modules/PRD/產品品管項目設定.md)。
+
+### 更新 2026-11-18：PRD PD102 Packing Set Oracle metadata
+
+- Windows PowerShell 5.1 + ODP.NET 唯讀核對七張 Packing Set 設定表，Map 的 `GET_DDL` 回 `ORA-03135`。依字典重建六個 PK 及一個獨立唯一索引，未見 FK、額外索引或 trigger。詳見 [產品包裝設定](modules/PRD/產品包裝設定.md)。
+
+### 更新 2026-11-18：PRD PD102 EQPCapItem Oracle metadata
+
+- Windows PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDOPCAPITEM` 和 `TBLEMSEQPCAPBASIS`。主表 `GET_DDL` 回 `ORA-03135`，兩表結構依字典重建。各表只有 PK 唯一索引。詳見 [設備能力項目規格](modules/PRD/產品設備能力項目.md)。
+
