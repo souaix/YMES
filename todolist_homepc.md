@@ -1640,3 +1640,13 @@ API 工作：
 - [ ] OP lookup 重用產品流程 OP 查詢及 `PSPrivilege=True` 範圍；由登入者權限在 server 計算 PSPrivilege，不信任 client 傳入的權限、Creator/Reviser、IssueState、OPNo 或 DataStamp 更新值。此子表單未按產品 IssueState 限制，資料表無 IssueState/Approval 欄，維持來源行為。
 - [ ] Edit 依舊以 DataStamp 做 optimistic concurrency；欄位 nullable/default 需保留，確認舊資料 DataStamp NULL 的更新語意。Sort 對各 OP 重新編成 1..N，只更新序號。
 - [ ] 完成 live schema/API/DTO/migration 與文件後 push `main`，通知公司端接正式 API；公司端目前只有 DEV 假資料，未執行 build/test/browser、未連 YMES PostgreSQL、未部署 SQL。
+
+## PRD PD102 Program API/schema handoff（2026-11-18 公司端更新）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/PRD/產品程式指派.md`、`docs/modules/PRD/產品主檔.md` 與本檔 handoff。
+- [ ] Oracle source DDL：`database/reference/mestest_prd_program_source_ddl.sql`；PostgreSQL CREATE-only：`database/reference/mestest_prd_program_create.sql`。先檢查 YMES live schema、migration、entity/repository；`tblprdprogrambasis` 已在 first-phase bootstrap，先核對欄位並修正既有 schema mapping，不要重複建立。只在確認 `tblprdproductprograms` 不存在時新增 forward migration。
+- [ ] `tblprdprogrambasis` 欄位：ProgramNo varchar(50) NOT NULL PK；ProgramType varchar(10) nullable；IssueState numeric(1,0) DEFAULT 0 NOT NULL；Creator varchar(10)、CreateDate timestamp、Description varchar(255) nullable。`tblprdproductprograms` 為 ProductNo varchar(50)、ProductVersion varchar(5)、ProgramNo varchar(50) 三欄 NOT NULL，複合 PK `(productno,productversion,programno)`；無 FK、trigger 或 PK 以外 index。
+- [ ] 提供登入保護的 Program option GET 與產品版次 assignments GET。WinForms `LoadProgram()` 不傳 IssueState 條件，option lookup 不過濾 Program IssueState；UI 欄位為 ProgramNo/ProgramType/Description。
+- [ ] 提供完整替換 API `PUT /api/products/{productNo}/versions/{version}/programs`；同一 transaction 內刪除該版次現有關聯並插入勾選清單。空清單代表清除全部。驗證 ProgramNo 存在、去重、登入者有產品版次設定權限。
+- [ ] 只有產品 IssueState=0 時允許儲存。舊畫面在其他狀態仍允許勾選，但 Confirm disabled；API 必須 server-side 再檢查狀態與權限，不信任 client 的 IssueState/identity。
+- [ ] 完成 schema/API/DTO/文件後 push main，通知公司端接正式 API。公司端目前只完成 DEV localStorage，Production API 未接線；未執行 build/test/browser、未連 YMES PostgreSQL、未部署 SQL。

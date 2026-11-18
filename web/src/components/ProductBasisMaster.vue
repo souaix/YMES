@@ -7,6 +7,7 @@ import ProductRecipeGroupSetup from './ProductRecipeGroupSetup.vue'
 import ProductAccessorySetup from './ProductAccessorySetup.vue'
 import ProductResourceSetup from './ProductResourceSetup.vue'
 import ProductSubOpSetup from './ProductSubOpSetup.vue'
+import ProductProgramSetup from './ProductProgramSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -28,6 +29,7 @@ type ProductRelation = {
   accessories?: ProductRow[]
   opAreas?: ProductRow[]
   subOps?: ProductRow[]
+  productPrograms?: string[]
   materialGroups?: ProductRow[]
 }
 type BomTreeLine = { id: string; label: string; kind: 'root' | 'material' | 'product' | 'group'; depth: number }
@@ -69,6 +71,11 @@ const sapPlnalOptions = [
   { value: '31', label: 'Rework_重工' },
   { value: '61', label: 'Total Outsource Rework_重工全委' },
 ]
+const programOptions: ProductRow[] = [
+  { programNo: 'DEV-PROG-01', programType: 'PLC', description: 'DEV 貼片機控制程式' },
+  { programNo: 'DEV-PROG-02', programType: 'VISION', description: 'DEV 外觀檢測程式' },
+  { programNo: 'DEV-PROG-03', programType: 'ROBOT', description: 'DEV 組裝機械手臂程式' },
+]
 const toolbar = [
   { key: 'add', label: 'ADD (&A)' }, { key: 'edit', label: 'EDIT (&E)' },
   { key: 'delete', label: 'DEL (&D)' }, { key: 'copy', label: 'Copy (&C)' },
@@ -96,7 +103,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
   accessory: { title: 'Accessory', source: 'frmPRDAccessory_THEIL_BU1', description: '維護產品版本使用的模治具/配件。' },
   resource: { title: 'Resource', source: 'PD_ProductOPArea', description: '設定產品流程作業區域；需要產品流程資料及 PS 權限。' },
   'sub-op': { title: 'SubOP', source: 'PD_PRDSubOP', description: '依產品版次設定作業站子工序，支援尾端新增、序號插入、修改、多選刪除與排序。' },
-  program: { title: 'Program', source: 'frmProductProgram_THEIL_BU1', description: '設定產品使用的程式與版本。' },
+  program: { title: 'Program', source: 'frmProductProgram', description: '依產品版次勾選程式主檔項目；確認時全量取代該產品版次的程式指派。' },
   default: { title: 'Default', source: 'PD_ProductLoadDefault', description: '設定產品流程的預設值。' },
   'run-time': { title: 'RunTime', source: 'PD_ProductRunTime', description: '設定產品各作業站的標準工時。' },
   'qc-item': { title: 'QC Item', source: 'PD_ProductQCItem', description: '設定產品對應的品管項目。' },
@@ -165,6 +172,7 @@ const seedRelations: Record<string, ProductRelation> = {
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', subOpSequence: 2, subOpNo: 'DEV-SUB-10-02', subOpName: '塗佈膠材', creator: 'DEV001', createDate: '2026-11-01T09:15:00', dataStamp: 1, reviser: '', reviseDate: '' },
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-20', subOpSequence: 1, subOpNo: 'DEV-SUB-20-01', subOpName: '外觀組裝確認', creator: 'DEV001', createDate: '2026-11-01T09:20:00', dataStamp: 0, reviser: '', reviseDate: '' },
     ],
+    productPrograms: ['DEV-PROG-01', 'DEV-PROG-03'],
     bom: [
       { nodeNo: 'DEV-MTL-001', nodeType: 0, nodeVersion: '001', opNo: 'DEV-OP-10', stdQty: 2, unitNo: 'EA', decreaseRate: 0, specified: 1, description: 'DEV 材料明細' },
       { nodeNo: 'DEV-PRD-SUB', nodeType: 1, nodeVersion: '01', opNo: 'DEV-OP-20', stdQty: 1, unitNo: 'EA', decreaseRate: 0.02, specified: 0, description: 'DEV 子產品節點' },
@@ -410,6 +418,10 @@ function loadMock(): void {
       }
       if (existing && !existing.subOps && seed.subOps) {
         existing.subOps = clone(seed.subOps)
+        migrated = true
+      }
+      if (existing && !existing.productPrograms && seed.productPrograms) {
+        existing.productPrograms = clone(seed.productPrograms)
         migrated = true
       }
     }
@@ -776,6 +788,13 @@ function saveProductSubOps(subOps: ProductRow[]): void {
   persistMock()
   notice.value = '產品子工序假資料已儲存。'
 }
+function saveProductPrograms(programNos: string[]): void {
+  if (!active.value || !mock.value) return
+  const key = keyOf(active.value)
+  relations.value[key] = { ...relatedFor(active.value), productPrograms: [...programNos] }
+  persistMock()
+  notice.value = '產品程式指派假資料已儲存。'
+}
 function addEqpConstraint(): void {
   if (!active.value || !editable.value) return
   const rel = relatedFor(active.value)
@@ -937,7 +956,10 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'sub-op'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductSubOpSetup :product="active ?? {}" :sub-ops="activeRelations.subOps ?? null" :operation-options="subOpOperationOptions" :development-preview="mock" :current-user-no="props.currentUserNo" @save="saveProductSubOps" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'program'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductProgramSetup :product="active ?? {}" :program-options="programOptions" :selected-program-nos="activeRelations.productPrograms ?? []" :development-preview="mock" @save="saveProductPrograms" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>

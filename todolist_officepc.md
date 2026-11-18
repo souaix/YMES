@@ -1043,3 +1043,12 @@
 - [x] 建立 `docs/modules/PRD/產品子作業設定.md`、Oracle source DDL、PostgreSQL CREATE-only 參照，並更新產品主規格、模組索引及 DB metadata provenance。
 - [ ] 家用端仍須核對 live schema/migration 並實作 Production API/schema；詳見 `todolist_homepc.md` 的 SubOP handoff。
 - [ ] 未執行 build、test 或 browser 驗收，未連 YMES PostgreSQL，未部署 CREATE SQL。下一個 PD102 側邊功能依 WinForms 順序為 Program。
+
+## PRD PD102 Program 公司端檢查點（2026-11-18）
+
+- [x] 閱讀 PD102 `btnProgram_Click`、`frmProductProgram` Form/Designer、`wsPRD.LoadProductProgramsDefine/UpdProductProgram` 及 `tcPRD_IC.clsProgram`；確認 checkbox Grid、產品 IssueState=0 才能 Confirm、全量替換、空選取清除指派。
+- [x] 使用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 從受保護 MESTEST profile 唯讀取得 `TBLPRDPROGRAMBASIS`、`TBLPRDPRODUCTPROGRAMS` DDL/字典；無業務列、未執行 Oracle DDL/DML、連線秘密未輸出。
+- [x] 新增 `ProductProgramSetup.vue` 並接至 PD102；DEV 可勾選程式並保存至關聯 localStorage，非未核准狀態保留可勾選但 Confirm disabled 的舊行為；Production 模式唯讀。
+- [x] 建立 Program Oracle source DDL、PostgreSQL CREATE-only 參照、功能規格及 Home handoff，更新主檔規格、模組索引、資料庫 metadata provenance。
+- [ ] 家用端須核對 `tblprdprogrambasis` first-phase bootstrap/live schema，僅在關聯表缺漏時新增 migration/API；詳見 `todolist_homepc.md`。
+- [ ] 未執行 build、test 或 browser 驗收，未連 YMES PostgreSQL，未部署 SQL。下一項依 PD102 側功能順序為 Default。

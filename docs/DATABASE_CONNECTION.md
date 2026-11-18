@@ -628,3 +628,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司電腦使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，讀取本機受保護的既有 Oracle profile，唯讀直連 MESTEST；取得 `TBLPRDOPSUBOP` 的 `DBMS_METADATA.GET_DDL` 與欄位、constraints、indexes dictionary。
 - 表 PK 為 `(PRODUCTNO, PRODUCTVERSION, OPNO, SUBOPSEQUENCE)`；6 個欄位 NOT NULL；只有 PK unique index，沒有 FK、trigger 或其他 index。Oracle source DDL 與 PostgreSQL CREATE-only 參照分別在 `database/reference/mestest_prd_subop_source_ddl.sql`、`mestest_prd_subop_create.sql`。
 - 僅讀結構 metadata，未讀 MES 業務資料列、未在 Oracle 執行 DDL/DML；Oracle IP、帳號、密碼、SID 未輸出或提交。家用端必須先核對 YMES live schema/migrations，不能直接部署 CREATE-only 參照。
+
+### 更新 2026-11-18：PRD PD102 Product Program Oracle metadata
+
+- 公司電腦使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，讀取本機受保護既有 Oracle profile，唯讀直連 MESTEST；取得 `TBLPRDPROGRAMBASIS`、`TBLPRDPRODUCTPROGRAMS` 的 `DBMS_METADATA.GET_DDL` 與欄位、constraint、index、trigger dictionary。
+- Program Basis PK 為 `PROGRAMNO`；Product assignment PK 為 `(PRODUCTNO, PRODUCTVERSION, PROGRAMNO)`。各表只有 PK unique index，沒有 FK、trigger 或其他 index。Oracle source DDL 與 PostgreSQL CREATE-only 參照分別為 `database/reference/mestest_prd_program_source_ddl.sql`、`mestest_prd_program_create.sql`。
+- 僅讀結構 metadata，未查 MES 業務資料列、未在 Oracle 執行 DDL/DML；Oracle IP、帳號、密碼、SID 未輸出或提交。家用端先核對 live schema/migrations，尤其 Program Basis 已出現在 first-phase bootstrap，不可重複建立。
