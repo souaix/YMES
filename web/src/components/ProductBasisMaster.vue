@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import ProductBomEditor from './ProductBomEditor.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
+import ProductPropertyMaster from './ProductPropertyMaster.vue'
 
 const window = globalThis.window
 type IssueState = -1 | 0 | 1 | 2
@@ -134,7 +135,10 @@ const seedRelations: Record<string, ProductRelation> = {
       { nodeNo: 'DEV-PRD-SUB', nodeType: 1, nodeVersion: '01', opNo: 'DEV-OP-20', stdQty: 1, unitNo: 'EA', decreaseRate: 0.02, specified: 0, description: 'DEV 子產品節點' },
     ],
     constraints: [{ opNo: 'DEV-OP-10', equipmentNo: 'DEV-EQP-01', description: '限定設備示例', creator: 'DEV001', createDate: '2026-11-01T09:00:00' }],
-    properties: [{ propertyNo: 'DEV-MODEL', controlled: 1, value: 'CTRL-A', sequence: 1 }, { propertyNo: 'DEV-COLOR', controlled: 2, value: '', sequence: 2 }],
+    properties: [
+      { productNo: 'DEV-PRD-1001', productVersion: '01', propertyNo: 'DEV-MODEL', controlled: 1, defaultValue: 'CTRL-A', propertySequence: 1, description: 'DEV 型號屬性', issueState: 0, dataStamp: 1, creator: 'DEV001', createDate: '2026-10-01T08:30:00', reviser: '', reviseDate: '' },
+      { productNo: 'DEV-PRD-1001', productVersion: '01', propertyNo: 'DEV-COLOR', controlled: 2, defaultValue: '', propertySequence: 2, description: 'DEV 顏色提示屬性', issueState: 0, dataStamp: 0, creator: 'DEV001', createDate: '2026-10-01T08:31:00', reviser: '', reviseDate: '' },
+    ],
     materialGroups: [{ nodeNo: 'DEV-MTL-001', opNo: 'DEV-OP-10', materialNo: 'DEV-MTL-GROUP-A' }, { nodeNo: 'DEV-MTL-001', opNo: 'DEV-OP-10', materialNo: 'DEV-MTL-GROUP-B' }],
   },
   'DEV-PRD-SUB|01': {
@@ -608,12 +612,12 @@ function saveProductBom(bom: ProductRow[], materialGroups: ProductRow[]): void {
   persistMock()
   notice.value = '產品 BOM 假資料已儲存。'
 }
-function updateProperty(property: ProductRow, field: string, value: string): void {
-  if (!active.value) return
-  const rel = relatedFor(active.value)
-  rel.properties = rel.properties.map(item => item.propertyNo === property.propertyNo ? { ...item, [field]: value } : item)
-  relations.value[keyOf(active.value)] = rel
-  if (mock.value) persistMock()
+function saveProductProperties(properties: ProductRow[]): void {
+  if (!active.value || !mock.value) return
+  const key = keyOf(active.value)
+  relations.value[key] = { ...relatedFor(active.value), properties: clone(properties) }
+  persistMock()
+  notice.value = '產品屬性假資料已儲存。'
 }
 function addEqpConstraint(): void {
   if (!active.value || !editable.value) return
@@ -752,19 +756,16 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'bom-editor'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductBomEditor :product="active ?? {}" :bom="activeRelations.bom" :material-groups="activeRelations.materialGroups ?? []" :products="rows" :relations="relations" :development-preview="mock" @save="saveProductBom" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'property'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductPropertyMaster :product="active ?? {}" :properties="activeRelations.properties" :development-preview="mock" :can-edit="editable" @save="saveProductProperties" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
         <p>{{ feature.description }}</p>
         <p v-if="featureKey === 'process-setup' || featureKey === 'process-expand'" class="prd-context">流程 {{ selectedProcess?.psNo || '—' }} / MOType {{ selectedProcess?.moTypeNo ?? '—' }} / {{ selectedProcess?.processNo || '—' }} / {{ selectedProcess?.processVersion || '—' }}</p>
-        <template v-if="featureKey === 'property'">
-          <div class="prd-detail-grid"><table><thead><tr><th>PropertyNo</th><th>Controlled</th><th>DefaultValue</th><th>設定值</th><th>PropertySequence</th></tr></thead><tbody>
-            <tr v-for="item in activeRelations.properties" :key="item.propertyNo"><td>{{ item.propertyNo }}</td><td>{{ Number(item.controlled) === 1 ? '必填' : Number(item.controlled) === 2 ? '提示' : '選填' }}</td><td>{{ item.defaultValue }}</td><td><input :value="item.value" :disabled="!editable" @input="updateProperty(item,'value',($event.target as HTMLInputElement).value)" /></td><td>{{ item.sequence }}</td></tr>
-            <tr v-if="!activeRelations.properties.length"><td colspan="5" class="empty">尚無產品屬性假資料。</td></tr>
-          </tbody></table></div>
-        </template>
-        <template v-else-if="featureKey === 'eqp-cap-item' || featureKey === 'equipment-spec'">
+        <template v-if="featureKey === 'eqp-cap-item' || featureKey === 'equipment-spec'">
           <div class="prd-detail-grid"><table><thead><tr><th>OPNo</th><th>EquipmentNo</th><th>Description</th></tr></thead><tbody><tr v-for="(item,index) in activeRelations.constraints" :key="index"><td>{{ item.opNo }}</td><td>{{ item.equipmentNo }}</td><td>{{ item.description }}</td></tr><tr v-if="!activeRelations.constraints.length"><td colspan="3" class="empty">尚無設備資料。</td></tr></tbody></table></div>
         </template>
         <div v-else class="prd-feature-placeholder"><strong>WinForms 功能入口已依原功能名稱保留。</strong><p>此子功能由另一個 ObjectFileHandler/WinForms Form 載入；其專屬欄位、資料表與操作會在對應功能規格中拆分，API 尚待家用端實作。</p><p>Development 目前只展示產品上下文，不會寫入 MES 或 YMES 正式資料。</p></div>

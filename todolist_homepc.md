@@ -1520,4 +1520,22 @@ API 工作：
 - [ ] 服務端重驗已核准節點、LOTCREATE、企業 TS 批號規則及 BOM 複合鍵；不能只依賴 Vue 欄位檢查。
 - [ ] 比較現有 `ym_product_process`/`ym_product_bom` 與 Oracle 原生語意後才決定 mapping / migration；測試完成後回報公司端接正式 API。
 
-公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。產品側邊 Property/Parameter/Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍須依其 WinForms 原始碼逐項遷移。
+公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。產品側邊 Parameter/Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍須依其 WinForms 原始碼逐項遷移。
+
+## PRD PD102 產品屬性子表單 API/schema handoff（2026-11-18）
+
+公司端已依 `frmProductProperty.vb`、`frmProductPropertyDef.vb`、`wsPRD`、`clsProduct` 完成 `ProductPropertyMaster.vue` DEV 假資料視窗；正式 API 模式唯讀。詳細欄位、狀態轉移、來源路徑與 API 規格：`docs/modules/PRD/產品主檔產品屬性.md`。既有 Oracle 字典證據在 `database/reference/mestest_prd_product_basis_source_ddl.sql` 的 `TBLPRDPRODUCTPROPERTY`；此表已存在，ProductProperty DDL 為 Oracle 字典重建，勿重建同一表或把 CREATE-only 參照 SQL 當 migration。
+
+### 家用端待辦
+
+- [ ] git pull 後先比對 YMES live PostgreSQL schema/migrations，確認產品屬性表是否已存在及其欄位/PK，避免重複建表。尚缺欄位才新增 migration；Create SQL 僅供 review。
+- [ ] 提供 `GET/POST/PUT/DELETE /api/products/{productNo}/versions/{version}/properties`、`POST /api/products/{productNo}/versions/{version}/properties/{propertyNo}/approve`；List 回傳 PK、DefaultValue、PropertySequence、Description、IssueState、DataStamp、Creator/CreateDate/Reviser/ReviseDate。
+- [ ] Add/Edit 只接收 ProductNo、Version、PropertyNo、DefaultValue、PropertySequence、Description。Creator/日期/IssueState/DataStamp 由 server 控制；Edit 僅狀態 0，PropertyNo 不可改；Update 用複合鍵+舊 DataStamp CAS。Sequence 限 0..99。
+- [ ] SYS Property Basis options 對應 `LoadProductPropertyDefine(PropertyType=5, IssueState=2)`；欄位至少 ElementNo、名稱、DefaultValue、ElementSequence、Controlled。PropertyValue options 對應 `wsSYS.LoadElementValue(ElementNo)`。API 端重用/建立適當 SYS lookup API，不能讓前端提供 Controlled 或有效值清單作為信任資料。
+- [ ] Add 與 DefaultValue 更新需服務端驗證 PropertyNo 已核准且值符合 SYS Element/MES Parameter (`ChkElementValueValid`)。
+- [ ] Delete：IssueState 0/-1 實體刪除；2 以 DataStamp CAS 設 -1；1 拒絕。多筆逐筆處理，回傳各筆結果，碰到第一筆錯誤即停止後續。
+- [ ] Approve 僅接受狀態 0。IssueNo=`PRD PROPERTY` 沒有 Job/Detail 時直接設 2；有簽核 Job 時建 Issue Master、設 1、送第一關通知，callback 再核准/退回。保留 audit/EventLog 並使用 DataStamp。
+- [ ] 產品主檔核准由 server 重查 SYS Controlled=1 必填、Controlled=2 空值確認及流程 RulePhase/AttribPhase/CPASS 規則，不接受 Vue 送入的 Controlled 作安全依據。
+- [ ] 明確對應 ProductType/無版次屬性的 PRODUCTVERSION sentinel；Oracle 空字串與空白語意需以現有資料/應用層規則定義，避免將 `-1`、`''`、`' '` 混為一談。
+
+公司端未執行 build/test/browser 驗收；Property 的選項只有 DEV 假資料，不連 Oracle/YMES API。API/schema 完成後請回報公司端對接。

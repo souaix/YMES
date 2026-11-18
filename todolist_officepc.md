@@ -949,8 +949,8 @@
 公司端依 frmProductBasis_THEIL_BU1 建立產品專用 Vue DEV 頁並接入 product-master 路由；整理主表單、IssueState、Add/Edit/Copy/Version/Approve/Delete、Process/BOM/EQPConstraint、WinForms 服務邏輯與七張 Oracle 主/關聯表 DDL/字典。規格為 docs/modules/PRD/產品主檔.md，Oracle/PG 參照為 database/reference/mestest_prd_product_basis_*。Oracle ProductProperty 的 DBMS_METADATA 發生 ORA-03135，欄位/約束依字典重建並已標註。家用端 API/schema 未完成。
 
 下一個公司端工作：
-1. 從 PD_ProductProcess、frmProductBOM_THEIL_BU1 原始 WinForms Form/Designer/Service 開始，補齊 Vue DEV 子功能和規格；不要用截圖代替原碼。
-2. 完成其餘按鈕子功能的 DEV 視窗/規格：Property、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。逐項記錄實際欄位、狀態規則、資料表和 service；DDL 缺漏時用本機 PowerShell 受保護 Oracle 連線查字典，不可猜。
+1. PD_ProductProcess、frmProductBOM_THEIL_BU1 的流程與 BOM DEV 子表單已完成；產品屬性 DEV 子表單也已完成，分別見 `產品主檔子表單.md`、`產品主檔產品屬性.md`。
+2. 依序完成尚未遷移的產品側按鈕：Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
 3. Product API/關聯 schema 由家用端接手後，回來核對 API contract 與 UI，避免公司端重複改 API。
 4. 依 MES 全功能目錄繼續下一個待遷 Function；每一段維護規格索引/TODO，假資料限定 DEV。
 
@@ -964,3 +964,12 @@
 - [x] 新增 `docs/modules/PRD/產品主檔子表單.md`，更新家用端 API/schema 待辦。
 - [ ] 產品主檔其他側邊子功能仍待閱讀各自 WinForms Form/Core/Service 後實作；不可用本次子表單完成狀態代表 PD102 所有側功能已完成。
 - [ ] 未執行 build/test/browser 驗收。完成同步 YMES 後 commit/push，再依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 排定下一個未完成 FunctionNo。
+
+## PRD PD102 產品屬性子表單續作（2026-11-18）
+
+- [x] 直接閱讀 `frmProductProperty`/Designer、`frmProductPropertyDef`/Designer、`wsPRD` 及 `clsProduct`：四狀態、清單欄位與隱藏 DataStamp、ADD/EDIT/DEL/Copy/Approve、PropertyType=5 已核准 SYS Element 查找、MES Parameter 值選取、Apply/Confirm/Close、`PRD PROPERTY` 簽核 Job 分流。
+- [x] 新增 `ProductPropertyMaster.vue`：684×486 清單、496×276 定義窗、MES/KD 黃色輸入、狀態篩選、多選/逐筆刪除、ACTIVE 標 UNUSED、Apply/Confirm、Property 與 Parameter DEV lookup、DEV localStorage。
+- [x] 正式 API 模式唯讀；DEV 假核准採未配置簽核 Job 的直接 ACTIVE 情境。Controlled 僅為 SYS Element Basis 資訊，產品表不存 Controlled。
+- [x] 新增 `docs/modules/PRD/產品主檔產品屬性.md`，更新 PRD 主規格/索引、`todolist_homepc.md` API/schema handoff。
+- [ ] 未執行 build/test/browser；按工作規則僅做靜態檢閱。現有 TBLPRDPRODUCTPROPERTY Oracle DDL 由字典重建且已存在，家用端先查 YMES schema/migration，再決定 API mapping/migration。
+- [ ] push 後接續 PD102 側功能 `Parameter`：直接從 WinForms Form/Designer/Core/Service 開始，確認所用 MES Parameter/產品參數表及核准/刪除規則，缺 DDL 時用受保護 PowerShell Oracle 連線查詢；完成 Vue DEV、規格與家用端 handoff。
