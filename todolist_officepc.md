@@ -1127,4 +1127,10 @@
 
 - [x] 核對 GBOM WinForms／Designer、Service、Core，完成 DEV 依版次匯入檔案備份、檔名與標頭檢查、原檔下載。
 - [x] 用 PowerShell 5.1 + ODP.NET 確認兩張客製表及一個 INVALID view，補 Oracle 邏輯 DDL、CREATE-only 及 API 交接。
-- [ ] 工作簿解析、複合資料異動與正式備份下載待接續。下一項 PD102 產品 `Import`。
+- [ ] 完整工作簿解析、複合資料異動與正式備份下載待接續。DEV XLSX 已檢查識別列與 `版次REV`。
+
+## PRD PD102 產品 Import 公司端檢查點（2026-11-19）
+
+- [x] 核對 `PD_ProductDataImport_PRS`、Designer、Service／Core，完成 DEV XLSX 兩組預覽、主檔逐列驗證與新增。
+- [x] Oracle 唯讀核對產品主檔、類別、流程與節點鍵，補類別 DDL／CREATE-only 及匯入 API 交接。
+- [ ] 舊式 XLS、流程／子表寫入與範本服務待接續。下一項 PD102 `Expand All`。

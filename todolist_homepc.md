@@ -1707,3 +1707,8 @@ API 工作：
 
 - [ ] 依 [GBOM 規格](docs/modules/PRD/產品GBOM匯入匯出.md) 核對共用流程表、客製表 CREATE-only 參照與 PP02／PP05 資訊記錄來源。MESTEST 的 `XX_TBLWIPINFORECORD` 為 INVALID。
 - [ ] 實作 Excel 驗證、產品流程與 BOM 的交易、檔案備份與原始檔下載，定義備份失敗後的恢復流程。
+
+## PRD PD102 產品 Import 家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品資料匯入規格](docs/modules/PRD/產品資料匯入.md) 核對產品／類別／流程及子表的 live schema，沿用產品和 PS104 參考並檢查 `tblprdtype`。
+- [ ] 實作五張工作表預檢、依流程與產品群組匯入、各組結果、取消與 SYS 範本權限。Vue DEV 目前可預覽流程並新增主檔假資料。

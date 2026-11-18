@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { parseFirstWorksheetXlsx } from './materialImportWorkbook'
 
 const props = defineProps<{
   mode: 'import' | 'export'
@@ -40,9 +41,22 @@ async function pickFile(event: Event): Promise<void> {
       error.value = '檔案格式與副檔名不符。'
       return
     }
+    if (name[2].toLowerCase() === 'xlsx') {
+      const [header, firstRow] = await parseFirstWorksheetXlsx(selected)
+      const base = expectedName.value.toUpperCase()
+      if (firstRow?.[0]?.toUpperCase() !== base || firstRow?.[1]?.toUpperCase() !== base) {
+        error.value = '第一張工作表的 A2、B2 都須等於檔名主體。'
+        return
+      }
+      const versionColumn = header?.findIndex(value => value.toUpperCase() === '版次REV') ?? -1
+      if (versionColumn < 0 || firstRow[versionColumn]?.toUpperCase() !== props.productVersion.toUpperCase()) {
+        error.value = '工作表的版次REV 必須等於產品版本。'
+        return
+      }
+    }
     file.value = selected
-  } catch {
-    error.value = '無法讀取選取的檔案。'
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : '無法讀取選取的檔案。'
   } finally {
     busy.value = false
   }
@@ -80,7 +94,7 @@ function confirm(): void {
     <template v-else-if="mode === 'import'">
       <p v-if="!canEdit">產品需為未簽核狀態。</p>
       <template v-else>
-        <p>DEV 只驗證檔名與檔案標頭，備份保留至頁面重新整理。</p>
+        <p>DEV 備份保留至頁面重新整理。XLS 僅檢查檔名和檔案標頭。</p>
         <label>選取 {{ expectedName }} 的 Excel 檔 <input type="file" accept=".xls,.xlsx" :disabled="busy" @change="pickFile" /></label>
         <p v-if="file">{{ file.name }}（{{ file.size.toLocaleString() }} bytes）</p>
       </template>

@@ -48,11 +48,9 @@ async function readZipEntries(buffer: ArrayBuffer): Promise<Map<string, string>>
     let content: Uint8Array
     if (method === 0) content = compressed
     else if (method === 8) {
-      const stream = new DecompressionStream('deflate-raw')
-      const writer = stream.writable.getWriter()
-      await writer.write(compressed.buffer.slice(compressed.byteOffset, compressed.byteOffset + compressed.byteLength) as ArrayBuffer)
-      await writer.close()
-      content = new Uint8Array(await new Response(stream.readable).arrayBuffer())
+      const source = compressed.buffer.slice(compressed.byteOffset, compressed.byteOffset + compressed.byteLength) as ArrayBuffer
+      const stream = new Blob([source]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
+      content = new Uint8Array(await new Response(stream).arrayBuffer())
     } else throw new Error(`Excel 壓縮格式 ${method} 尚未支援。`)
     entries.set(name, decoder.decode(content))
     offset += 46 + nameLength + extraLength + commentLength
@@ -73,27 +71,33 @@ function columnIndex(reference: string): number {
   return Math.max(0, value - 1)
 }
 
-export async function parseFirstWorksheetXlsx(file: File): Promise<string[][]> {
+export async function parseWorksheetsXlsx(file: File, count: number): Promise<string[][][]> {
   const entries = await readZipEntries(await file.arrayBuffer())
   const workbookText = entries.get('xl/workbook.xml')
   const relationsText = entries.get('xl/_rels/workbook.xml.rels')
   if (!workbookText || !relationsText) throw new Error('找不到 Excel 活頁簿或工作表。')
   const workbook = parseXml(workbookText, 'Excel 活頁簿')
   const relations = parseXml(relationsText, 'Excel 工作表關聯')
-  const firstSheet = descendants(workbook, 'sheet')[0]
-  if (!firstSheet) throw new Error('Excel 檔案沒有工作表。')
-  const relationshipId = firstSheet.getAttribute('r:id')
-    ?? firstSheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id')
-  const relationship = descendants(relations, 'Relationship').find((element) => element.getAttribute('Id') === relationshipId)
-  const target = relationship?.getAttribute('Target')
-  if (!target) throw new Error('找不到 Excel 第一個工作表。')
-  const sheetText = entries.get(normalizePath(target.startsWith('/') ? target : `xl/${target}`))
-  if (!sheetText) throw new Error('無法讀取 Excel 第一個工作表。')
-
+  const sheets = descendants(workbook, 'sheet').slice(0, count)
+  if (sheets.length !== count) throw new Error(`Excel 檔案至少需要 ${count} 張工作表。`)
+  const relationships = descendants(relations, 'Relationship')
   const sharedText = entries.get('xl/sharedStrings.xml')
   const sharedStrings = sharedText
     ? descendants(parseXml(sharedText, 'Excel 共用字串'), 'si').map((item) => descendants(item, 't').map((text) => text.textContent ?? '').join(''))
     : []
+  return sheets.map((sheet, index) => {
+    const relationshipId = sheet.getAttribute('r:id')
+      ?? sheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id')
+    const relationship = relationships.find((element) => element.getAttribute('Id') === relationshipId)
+    const target = relationship?.getAttribute('Target')
+    if (!target) throw new Error(`找不到 Excel 第 ${index + 1} 張工作表。`)
+    const sheetText = entries.get(normalizePath(target.startsWith('/') ? target : `xl/${target}`))
+    if (!sheetText) throw new Error(`無法讀取 Excel 第 ${index + 1} 張工作表。`)
+    return parseWorksheetRows(sheetText, sharedStrings)
+  })
+}
+
+function parseWorksheetRows(sheetText: string, sharedStrings: string[]): string[][] {
   const sheet = parseXml(sheetText, 'Excel 工作表')
   const rows = descendants(sheet, 'row').filter((row) => row.parentElement?.localName === 'sheetData')
   return rows.map((row) => {
@@ -110,6 +114,11 @@ export async function parseFirstWorksheetXlsx(file: File): Promise<string[][]> {
     }
     return values
   })
+}
+
+export async function parseFirstWorksheetXlsx(file: File): Promise<string[][]> {
+  const [first] = await parseWorksheetsXlsx(file, 1)
+  return first
 }
 
 export const parseMaterialXlsx = parseFirstWorksheetXlsx

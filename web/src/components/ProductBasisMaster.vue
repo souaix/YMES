@@ -18,6 +18,7 @@ import ProductEquipmentSpec from './ProductEquipmentSpec.vue'
 import ProductApsIntegration from './ProductApsIntegration.vue'
 import ProductBinSetup from './ProductBinSetup.vue'
 import ProductGbomFiles from './ProductGbomFiles.vue'
+import ProductDataImport from './ProductDataImport.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -37,6 +38,7 @@ type ProductEsopRows = InstanceType<typeof ProductEsopSetup>['$props']['rows']
 type ProductEquipmentSpecProps = InstanceType<typeof ProductEquipmentSpec>['$props']
 type ProductApsProps = InstanceType<typeof ProductApsIntegration>['$props']
 type ProductBinProps = InstanceType<typeof ProductBinSetup>['$props']
+type ImportProducts = InstanceType<typeof ProductDataImport>['$props']['importProducts']
 type ProductRelation = ProductPackingProps['relations'][string] & {
   processes: ProductRow[]
   bom: ProductRow[]
@@ -87,6 +89,7 @@ const states: Array<{ value: IssueState; label: string }> = [
   { value: 0, label: '未核准' }, { value: 1, label: '簽核中' },
   { value: 2, label: '已核准' }, { value: -1, label: '不使用' },
 ]
+const developmentProductTypes = ['DEV-FINISHED', 'DEV-SEMIFINISHED', 'DEV-RAW']
 
 const productColumns = [
   'ProductNo','ProductVersion','ProductName','ProductType','IssueState','Creator','CreateDate','Description','CurVersion',
@@ -496,7 +499,7 @@ const selectedRows = computed(() => rows.value.filter(row => selectedKeys.value.
 const feature = computed(() => featureInfo[featureKey.value] ?? null)
 const editable = computed(() => Boolean(active.value && Number(active.value.issueState) === 0))
 const lookupOptions = computed(() => {
-  if (lookupField.value === 'productType') return ['DEV-FINISHED', 'DEV-SEMIFINISHED', 'DEV-RAW']
+  if (lookupField.value === 'productType') return developmentProductTypes
   if (lookupField.value === 'unitType') return ['PCS', 'WEIGHT', 'LENGTH']
   if (lookupField.value === 'unitNo') return ['EA', 'KG', 'M']
   if (lookupField.value === 'serialTypeNoLot') return ['DEV-LOT-A', 'DEV-LOT-B']
@@ -1003,6 +1006,37 @@ function saveDevelopmentGbom(file: File): boolean {
   notice.value = 'DEV 假資料：可在本次頁面匯出 GBOM 備份。'
   return true
 }
+const importDevelopmentProducts: ImportProducts = entries => {
+  if (!mock.value) return entries.map(() => 'DEV 匯入未啟用。')
+  const known = new Set(rows.value.map(row => keyOf(row).toUpperCase()))
+  const now = new Date().toISOString()
+  const user = currentUser()
+  const additions: ProductRow[] = []
+  const results = entries.map(entry => {
+    const key = keyOf(entry)
+    if (entry.productNo.includes('|') || entry.productVersion.includes('|')) return '產品編號和版本不可包含 |。'
+    if (known.has(key)) return '產品編號與版本已存在。'
+    if (!developmentProductTypes.includes(entry.productType)) return '產品類別不在 DEV 已核准清單。'
+    known.add(key)
+    additions.push({ ...blankForm(), ...entry, issueState: 0, curVersion: 0, creator: user, createDate: now,
+      reviser: user, reviseDate: now, dataStamp: 0 })
+    return ''
+  })
+  if (additions.length) {
+    const next = [...rows.value, ...additions]
+    try {
+      localStorage.setItem(rowsKey, JSON.stringify(next))
+    } catch {
+      return results.map(message => message || '無法儲存 DEV 產品主檔。')
+    }
+    rows.value = next
+    issueState.value = 0
+    productQuery.value = ''
+    selectRow(additions[0])
+    notice.value = `DEV 假資料：已匯入 ${additions.length} 筆產品主檔。`
+  }
+  return results.map(message => message || '已匯入 DEV 主檔。')
+}
 const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
   if (!mock.value || !keys.length) return false
   const targetKeys = new Set(keys)
@@ -1144,7 +1178,7 @@ onMounted(() => { void load() })
       </div>
       <aside class="prd-actions" aria-label="產品功能">
         <button v-for="action in toolbar" :key="action.key" class="prd-button" type="button" :disabled="actionDisabled(action.key)" @click="runAction(action.key)">{{ action.label }}</button>
-        <button class="prd-button" type="button" @click="featureKey='product-import'">Import</button>
+        <button class="prd-button" type="button" :disabled="busy" @click="featureKey='product-import'">Import</button>
         <button class="prd-button" type="button" @click="emit('close')">Close</button>
       </aside>
     </div>
@@ -1286,7 +1320,10 @@ onMounted(() => { void load() })
         :development-preview="mock" :saved-file="developmentGbomFiles.get(keyOf(active))" :save="saveDevelopmentGbom"
         @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec','aps','bin','gbom-import','gbom-export'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'product-import'" class="prd-overlay child-feature-overlay">
+      <ProductDataImport :development-preview="mock" :import-products="importDevelopmentProducts" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop','equipment-spec','aps','bin','gbom-import','gbom-export','product-import'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
