@@ -67,11 +67,11 @@ const productProcesses = computed(() => {
   const source = props.processes.length ? props.processes : (props.developmentPreview ? devProcesses : [])
   return source.map(row => ({
     ...row,
-    processNo: String(row.processNo ?? row.ProcessNo ?? ''),
-    processVersion: String(row.processVersion ?? row.ProcessVersion ?? ''),
-    psNo: String(row.psNo ?? row.PSNo ?? ''),
-    psOrder: Number(row.psOrder ?? row.PSOrder ?? 0),
-    moTypeNo: row.moTypeNo ?? row.MOTypeNo ?? '',
+    processNo: String(row.processNo ?? ('ProcessNo' in row ? row.ProcessNo : undefined) ?? ''),
+    processVersion: String(row.processVersion ?? ('ProcessVersion' in row ? row.ProcessVersion : undefined) ?? ''),
+    psNo: String(row.psNo ?? ('PSNo' in row ? row.PSNo : undefined) ?? ''),
+    psOrder: Number(row.psOrder ?? ('PSOrder' in row ? row.PSOrder : undefined) ?? 0),
+    moTypeNo: row.moTypeNo ?? ('MOTypeNo' in row ? row.MOTypeNo : undefined) ?? '',
   })).filter(row => row.processNo)
 })
 const operationOptions = computed<OperationRow[]>(() => {
@@ -84,12 +84,12 @@ const operationOptions = computed<OperationRow[]>(() => {
 const areaMaster = computed<AreaRow[]>(() => {
   const result = new Map<string, AreaRow>()
   for (const row of [...devAreas, ...working.value, ...draftAreas.value]) {
-    const areaNo = String(row.areaNo ?? row.AreaNo ?? '')
+    const areaNo = String(row.areaNo ?? ('AreaNo' in row ? row.AreaNo : undefined) ?? '')
     if (!areaNo) continue
     result.set(areaNo, {
       areaNo,
-      areaName: String(row.areaName ?? row.AreaName ?? ''),
-      factoryNo: String(row.factoryNo ?? row.FactoryNo ?? ''),
+      areaName: String(row.areaName ?? ('AreaName' in row ? row.AreaName : undefined) ?? ''),
+      factoryNo: String(row.factoryNo ?? ('FactoryNo' in row ? row.FactoryNo : undefined) ?? ''),
     })
   }
   return [...result.values()].sort((a, b) => a.areaNo.localeCompare(b.areaNo))
@@ -107,7 +107,7 @@ const mainRows = computed(() => {
       })
     }
     if (isDefault(row.defaultArea ?? row.DefaultArea)) {
-      operations.get(opNo)!.defaultArea = String(row.areaNo ?? row.AreaNo ?? '')
+      operations.get(opNo)!.defaultArea = String(row.areaNo ?? ('AreaNo' in row ? row.AreaNo : undefined) ?? '')
     }
   }
   return [...operations.values()].sort((a, b) => a.opNo.localeCompare(b.opNo))
@@ -116,9 +116,9 @@ const activeSummary = computed(() => mainRows.value.find(row => row.opNo === act
 const detailRows = computed(() => working.value
   .filter(row => String(row.opNo ?? row.OPNo ?? '') === activeOpNo.value)
   .map(row => ({
-    areaNo: String(row.areaNo ?? row.AreaNo ?? ''),
-    areaName: String(row.areaName ?? row.AreaName ?? ''),
-    factoryNo: String(row.factoryNo ?? row.FactoryNo ?? ''),
+    areaNo: String(row.areaNo ?? ('AreaNo' in row ? row.AreaNo : undefined) ?? ''),
+    areaName: String(row.areaName ?? ('AreaName' in row ? row.AreaName : undefined) ?? ''),
+    factoryNo: String(row.factoryNo ?? ('FactoryNo' in row ? row.FactoryNo : undefined) ?? ''),
     defaultArea: isDefault(row.defaultArea ?? row.DefaultArea) ? 1 : 0,
   }))
   .sort((a, b) => b.areaNo.localeCompare(a.areaNo)))

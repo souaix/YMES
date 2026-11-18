@@ -26,6 +26,7 @@
 - GitHub `souaix/YMES` 是兩台電腦共用的程式來源。開始修改前先同步最新程式，完成後提交回同一個 repo。
 - 每個版本完成後，家用端使用 app-browser 逐項操作本次模組的查詢、新增、修改、複製、套用、lookup、核准、刪除及關閉；驗收結果與未完成原因寫入模組 Markdown。需要登入時可自行按既有 Demo 登入，使用者已授權，毋須等待使用者回到電腦前。
 - 驗證完成才同步 GitHub：先 fetch 並檢查公司端新增提交，再正常 merge，衝突按雙方功能整合；禁止以 force push 或檔案整批覆蓋取代合併。合併有程式差異時重做相關 build/操作驗收，push 後再檢查 `todolist_homepc.md` 的下一交接。
+- 單一模組完成後要繼續處理下一項可執行的家用端待辦；只有已無待開發項目，或存在必須由使用者補充資料且無其他可推進工作的阻礙時才停止。不得將分階段提交或同步 GitHub 當作停止工作的理由。
 - 每個完成模組必須有 `docs/modules/<模組>/<功能>.md`，包含來源規則、資料表/migration、API 契約、按鈕邏輯、驗證紀錄與維護限制；先前缺漏的模組文件也要補齊。公司端後續工作寫 `todolist_officepc.md`，家用端資料庫/API/部署工作寫 `todolist_homepc.md`。
 - 公司電腦先以明確標示的 Development 假資料完成所有畫面與本地互動邏輯，不連資料庫；同時把正式 API 契約和 Oracle 對照的 CREATE SQL 寫入交接文件，交由家用電腦完成 API/schema。Development 假資料不得冒充正式資料，Production 必須使用正式 API，且不得啟用假資料。
 - 資料庫連線字串、`.env.local`、私鑰與其他憑證不得提交到 GitHub。資料庫結構與 migration 由家用電腦維護，並透過 API 提供給 UI。

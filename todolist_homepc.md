@@ -1,5 +1,12 @@
 # 家裡電腦接手清單
 
+## 家用端持續開發進度（2026-11-18）
+
+- [x] QC503 Driver 與 PS102 製造層別 API/Web 已部署，正式 app-browser 操作驗證完成；測試資料 SQL 計數為 0，API/Web healthy、readiness=200。
+- [x] 本輪 Web 以本機 vue-tsc/Vite 驗證後產物建立 runtime image，解決遠端 Node heap OOM；作法見 `DEPLOYMENT_PROFILES.md`。
+- [ ] 同步本輪版本後繼續 QC401 主分類、QC102 抽樣計劃1916、PS101 生產區段；QC101/QC402 程式準備與驗收依各自段落追蹤。單一模組完成不是停止點。
+
+
 ## 家用端接手摘要（2026-11-18）
 
 - [x] QC501/QC502 已部署並完成本輪正式 app-browser 操作驗收，測試資料清空；細節見本檔 QC501/QC502 完成紀錄與各模組文件。
@@ -7,17 +14,12 @@
 - [x] 合併新增頁在本機 Development 完成相關修正的基本操作檢查；PRD/PRS 正式 API 與完整 CRUD 驗收仍依下方交接，未標成正式可用。正式站本輪發行範圍為 QC501/QC502。
 - [x] GitHub main 已同步整合提交 `340db5f`，包含公司端 `7125143`，未使用 force push。下一個家用端功能先接 QC503「檢測設備連線程式」；沿用 migration 0027 的 Driver 表及 QC501/QC502 共用查找。
 
-## 最新公司端交接：PS102 製造層別設定（2026-11-18）
+## 已完成家用端：PS102 製造層別設定（2026-11-18）
 
-- [ ] Pull 最新 GitHub `main`，閱讀 `docs/modules/PRS/製造層別設定.md`、`docs/DATABASE_CONNECTION.md` PS102 段落，以及 `database/reference/mestest_ps102_stage_basis_source_ddl.sql` / `mestest_ps102_stage_basis_create.sql`。
-- [ ] 先比對 YMES PostgreSQL live schema/migrations 與資料。Oracle source 是 `MESTEST.TBL_FABPRSSTAGEBASIS`；PS102 owner 建議用 `YMES.tbl_fabprsstagebasis`。只有 StageNo PK 與 Sequence unique constraint；不可新增 FK/index 或重建有資料的表。
-- [ ] 欄位/nullable/default 照 Oracle：StageNo/StageName/StageType varchar(50) NOT NULL；Sequence numeric(4,0) NOT NULL；IssueState numeric(1,0) NULL DEFAULT 0；Creator/Reviser varchar(10) NULL；CreateDate timestamp NULL DEFAULT current timestamp；DataStamp numeric(11,0) NULL DEFAULT 0；ReviseDate timestamp NULL。`Sequence` 對全表唯一，包含所有 IssueState。
-- [ ] CREATE 檔只是參考，先查 live schema/migrations；缺表才新增 forward migration，既有表只針對核實缺少的 default 做 ALTER，不覆蓋資料。
-- [ ] 建登入保護 API，FunctionNo=`STAGE BASIS`、FunctionKey=`PS102`：GET `/api/fab-prs-stages?stageNo=`、POST、PUT/DELETE `/{stageNo}`、POST `/{stageNo}/approve`。DTO 和 DEV Vue 契約依模組規格。
-- [ ] StageNo/StageName/StageType 必填且最多 50；StageNo 正規化大寫。Sequence 為 1–9999 整數且全表唯一。WinForms Confirm 的 duplicate check 誤把 Edit 自身列算重複；Web UI 排除自身，但 DB unique constraint 仍是最後防線。新增 Creator/CreateDate/IssueState 由 server 設；Edit 只允許狀態 0；DataStamp nullable-safe CAS，衝突回 409。
-- [ ] Delete 依 DB 最新 IssueState：0/-1 實體刪除；2 CAS 軟停用為 -1；1 拒絕。舊 Core 沒子表刪除且 Oracle 無 FK，勿自行 cascade。Approve 僅狀態 0，重用 IssueManagement IssueNo=`STAGE BASIS`，無 Job/Detail 才直接核准；有 Detail 建簽核、設 1、通知第一關，由 callback 設 2/0。
-- [ ] PS104 `tblprsnodebasis.StageNo` 應重用此 API 的已核准層別查找，不建立重複表。完成 live schema/API/migration 後更新規格/TODO，commit/push `main`。
-- [ ] 公司端 PS102 已做 Vue DEV localStorage 假資料和 Oracle DDL 參考，未連 YMES PostgreSQL、未做正式 API/migration；未執行 build/test/browser。
+- [x] Live schema 核對確認缺表，驗證備份 `/opt/ymes/backups/ymes_before_0028_ps102_20261118.dump` 後套用 migration `0028_ps102_fab_prs_stage_basis.sql`；來源 PK、Sequence 全表唯一、nullable/default 及 `ymes_app` CRUD grants 均保留。
+- [x] 已部署登入保護清單/CRUD/核准、Sequence 1–9999/全表唯一、nullable DataStamp CAS、server audit、0/-1 實刪與 2→-1 停用；有 Issue/Job 表但共用流程未接入時回 503，不改資料。
+- [x] 正式 app-browser 驗證新增/套用後修改、相同 Sequence 編輯、複製防重、四狀態/查詢、多選核准取消/確定、多選停用/刪除與 Close；測試 A/B 已清空。規格及維護紀錄見 `docs/modules/PRS/製造層別設定.md`。
+- [ ] 共用簽核服務日後建立時接入完整 IssueManagement；正式 API 的功能角色 ACL 依使用者目前暫緩決策維持登入保護。
 
 ## 最新公司端交接：PS101 生產區段資料（2026-11-18）
 
@@ -141,15 +143,12 @@
 - [ ] 補 `FunctionNo=OCAP BASIS`、`FunctionKey=QC408` 授權；驗證 OCAP No/Version 組合唯一、版本長度 5、No 長度 50、Description 長度 255、節點和 relation 主鍵、GroupNo 已簽核、DataStamp 衝突回 409。
 - [ ] 完成 API/schema 後推到 GitHub，通知公司端 pull。不要將 DEV localStorage 假資料灌入資料庫。
 
-## 最新公司端 handoff：QC503 檢測設備連線程式（2026-11-18）
+## 已完成家用端：QC503 檢測設備連線程式（2026-11-18）
 
-- [ ] Pull 最新 `main`，閱讀 `docs/modules/QC/檢測設備連線程式.md`、QC501/QC502 規格與 `docs/DATABASE_CONNECTION.md`。
-- [ ] 主表沿用 `TBLQCINSPDRIVER`，比較 YMES live schema/migrations 與 `database/reference/mestest_qc501_inspection_machine_create.sql`；確認缺表才建 migration，不重建既有資料。QC503 不需要新增 Oracle DDL 或重複 CREATE SQL。
-- [ ] 實作登入保護 API：GET `/api/qc/inspection-drivers?issueState&inspDriverNo`、GET `/api/qc/inspection-drivers/functions`、POST/PUT/DELETE/approve，授權 FunctionNo=`INSPMACHINE DRIVER`/FunctionKey=`QC503`。DriverNo PK 上限25、FunctionName 50、Description 255；DataStamp nullable+default、IssueState/DataStamp CAS、server audit、參數化 SQL。遇舊 NULL DataStamp 要按 live data/legacy 語義處理，不能跳過版本檢查。
-- [ ] Function options 必須由允許清單提供；本分支 WinForms reflection 只列出 `funDrv_Thick`、`funDrv_Channel`、`funDrFunctionC`，目前三個 legacy method 都回傳 default string。不要把任意用戶端字串反射執行。
-- [ ] 核准使用 IssueNo=`INSPMACHINE DRIVER`：依 Issue Job/Detail 決定直接 Active(2)或 Pending(1)，Issue Process 退回時回 0；前端不自行決定結果狀態。Edit 依共用 Issue Control，Pending 不可修改。
-- [ ] 刪除狀態 0/-1 硬刪、狀態2 改 -1 並遞增 DataStamp；1 禁止。舊 MES 沒明確檢查 QC502 儀器的 Driver 引用且 Oracle 無 FK；先查 YMES live schema/既有規則，再決定參照中 Driver 的防刪策略，記錄差異。
-- [ ] Driver GET 在不帶狀態條件時仍需回傳所有狀態，因 QC502 共用 Driver lookup 未限制 IssueState。逐筆動作遇首個失敗就停止的 WinForms 行為需保留。API/schema 完成後推送，供公司端 pull 整合。
+- [x] 核對已由 migration 0027 建立的 Driver 表，未重建資料表。登入保護 API 已部署；共用無狀態查找保留全狀態，functions 僅回來源三個允許名稱。
+- [x] CRUD/核准採精確 nullable DataStamp CAS、明確版本必要欄位、server audit、狀態 0 編輯、2→-1 停用、0/-1 硬刪與引用保護；共用流程限制見模組文件。
+- [x] 正式 app-browser 已驗證新增/套用/修改/複製、查找相容、核准取消/確定、已核准唯讀、停用再硬刪、引用刪除 409、NULL 版本寫入/舊版本衝突、四狀態查詢與 Close。測試 Driver/類別均清空。
+- [x] 邏輯/API/部署與驗證詳見 `docs/modules/QC/檢測設備連線程式.md`。Legacy 三個函式目前無有效解析實作，此功能管理設定名稱，不宣稱可驅動實體儀器。
 
 ## 家用端進度：QC501/QC502 檢測儀器（2026-11-18）
 

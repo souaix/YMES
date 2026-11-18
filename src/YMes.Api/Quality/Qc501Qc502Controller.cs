@@ -48,9 +48,6 @@ public sealed class Qc501Qc502Controller(NpgsqlDataSource dataSource, ILogger<Qc
     [HttpGet("inspection-machine-parameter-types/lookup")]
     public IActionResult TypeLookup() => Execute(() => Ok(new { items = repository.TypeLookup() }));
 
-    [HttpGet("inspection-drivers")]
-    public IActionResult DriverLookup() => Execute(() => Ok(new { items = repository.DriverLookup() }));
-
     [HttpPost("inspection-machines")]
     public IActionResult CreateMachine([FromBody] Qc502InspectionMachineWriteRequest request) =>
         Execute(() => Ok(repository.CreateMachine(request, Actor)));

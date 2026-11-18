@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2 | null
 type EditMode = '' | 'add' | 'edit' | 'copy'
@@ -40,6 +42,7 @@ const props = withDefaults(defineProps<{
   developmentPreview?: boolean
 }>(), { currentUserNo: '', developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const storageKey = 'ymes.dev.ps102-stage-basis.v1'
@@ -212,11 +215,12 @@ async function save(keepOpen: boolean): Promise<void> {
       await api('/api/fab-prs-stages', { method: 'POST', body: JSON.stringify(body) })
     }
     const savedStageNo = body.stageNo
+    const savedAction = mode.value === 'edit' ? '修改' : '新增'
     await load()
     activeStageNo.value = savedStageNo
     if (!keepOpen) editorOpen.value = false
-    notice.value = `製造層別 ${savedStageNo} 已${mode.value === 'edit' ? '修改' : '新增'}。`
-    if (keepOpen) draftDirty.value = false
+    notice.value = `製造層別 ${savedStageNo} 已${savedAction}。`
+    if (keepOpen) { draftDirty.value = false; sourceStageNo.value = savedStageNo; mode.value = 'edit' }
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '儲存製造層別失敗。'
   } finally { busy.value = false }
@@ -225,7 +229,7 @@ async function save(keepOpen: boolean): Promise<void> {
 async function deleteSelected(): Promise<void> {
   const targets = selectedRows.value
   if (!targets.length) { error.value = '請先選取製造層別。'; return }
-  if (!window.confirm(`確定刪除／停用 ${targets.length} 筆選取資料？`)) return
+  if (!(await requestConfirmation(`確定刪除／停用 ${targets.length} 筆選取資料？`))) return
   error.value = ''
   busy.value = true
   let changed = false
@@ -246,14 +250,14 @@ async function deleteSelected(): Promise<void> {
     }
     notice.value = skipped.length ? `已處理資料；簽核中略過：${skipped.join('、')}` : `已處理 ${targets.length} 筆製造層別。`
   } catch (cause) { error.value = cause instanceof Error ? cause.message : '刪除製造層別失敗。' }
-  finally { if (changed) await load(); busy.value = false }
+  finally { const message = notice.value, failure = error.value; if (changed) await load(); notice.value = message; error.value = failure; busy.value = false }
 }
 
 async function approveSelected(): Promise<void> {
   const targets = selectedRows.value
   if (!targets.length) { error.value = '請先選取製造層別。'; return }
   if (targets.some(row => row.issueState !== 0)) { error.value = '只有未核准資料可送出核准。'; return }
-  if (!window.confirm(`確定送出 ${targets.length} 筆製造層別核准？`)) return
+  if (!(await requestConfirmation(`確定送出 ${targets.length} 筆製造層別核准？`))) return
   error.value = ''
   busy.value = true
   let changed = false
@@ -274,7 +278,7 @@ async function approveSelected(): Promise<void> {
     }
     notice.value = '核准要求已處理；正式簽核狀態依 IssueManagement 回呼更新。'
   } catch (cause) { error.value = cause instanceof Error ? cause.message : '核准製造層別失敗。' }
-  finally { if (changed) await load(); busy.value = false }
+  finally { const message = notice.value, failure = error.value; if (changed) await load(); notice.value = message; error.value = failure; busy.value = false }
 }
 
 onMounted(load)
@@ -323,7 +327,7 @@ onMounted(load)
     <footer class="grid-footer"><span>資料總筆數 {{ visibleRows.length }}<template v-if="activeRow">　{{ stateOptions.find(state => state.value === activeRow?.issueState)?.label }}　DataStamp {{ activeRow.dataStamp ?? 'NULL' }}</template></span><small>Print：WinForms 原按鈕隱藏</small></footer>
 
     <div v-if="editorOpen" class="overlay" @click.self="editorOpen = false">
-      <section class="dialog definition-dialog">
+      <section class="dialog definition-dialog" role="dialog" aria-modal="true" aria-label="製造層別設定">
         <header class="dialog-title"><h3>FABPRSStageBasisDef ({{ mode === 'add' ? 'ADD' : mode === 'edit' ? 'EDIT' : 'Copy' }})</h3><button type="button" class="x-button" @click="editorOpen = false">×</button></header>
         <fieldset class="stage-fields"><legend>FABPRSStageBasis</legend>
           <div class="field-row"><label for="stage-no">StageNo</label><input id="stage-no" v-model.trim="draft.stageNo" class="yellow" maxlength="50" :readonly="mode === 'edit'" @input="draftDirty = true" @blur="draft.stageNo = draft.stageNo.toLocaleUpperCase()"></div>
@@ -337,6 +341,7 @@ onMounted(load)
       </section>
     </div>
   </main>
+  <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
 </template>
 
 <style scoped>

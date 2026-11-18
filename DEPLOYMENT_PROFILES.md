@@ -29,6 +29,12 @@ YMES Vue Web 與 ASP.NET Core API 使用不同容器，部署在同一台主機�
 
 ## 4. 遠端測試和發行
 
+### 遠端記憶體有限時的 Web 發行
+
+先在家用端 `web/` 執行 `npm.cmd run build`（包含 vue-tsc），將產出的 `dist/` 與 `web/nginx.conf` 放入同一發行目錄。以 `deploy/Dockerfile.web.prebuilt` 建立 `ymes-web:current`，再對既有 Compose 執行 `up -d --no-build --no-deps ymes-web`。此方式只搬已驗證的公開靜態產物，不包含 `.env`、node_modules、登入憑證或資料庫設定。API 獨立建置與部署；不調大共用主機記憶體或修改其他服務。
+
+2026-11-18 完整 UI 擴充後，遠端 Node 建置約 1 GB heap 上限耗盡；本機同版 Web build 已成功，因此 QC503/PS102 發行改採此方式。發行時保留前版 image tag 與靜態產物，回復使用前版 image，不在運作中的容器直接覆蓋檔案。
+
 - Ubuntu 遠端測試可透過 SSH 操作；IIS 依客戶核准的 Windows Server 管理/部署方式執行。
 - 測試、驗收和正式環境分開；未授權不得以正式資料做破壞性測試或 Migration。
 - 每次部署保留版本、設定差異、Migration 記錄、健康檢查和回復步驟。

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2
 type EditMode = 'add' | 'edit' | 'copy' | null
@@ -19,6 +21,7 @@ interface DriverForm { inspDriverNo: string; functionName: string; description: 
 
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { currentUserNo: '', developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const storageKey = 'ymes-dev-mock:qc-inspection-driver:v1'
 const statusOptions: { value: IssueState; label: string }[] = [
@@ -52,7 +55,7 @@ const visibleRows = computed(() => rows.value.filter(row => row.issueState === i
 const active = computed(() => visibleRows.value.find(row => row.inspDriverNo === activeNo.value) ?? null)
 const picked = computed(() => visibleRows.value.filter(row => selected.value.includes(row.inspDriverNo)))
 const userNo = computed(() => props.currentUserNo?.trim() || (mock.value ? 'DEV001' : ''))
-const formLocked = computed(() => mode.value === 'edit' && source.value?.issueState === 1)
+const formLocked = computed(() => mode.value === 'edit' && source.value?.issueState !== 0)
 const title = computed(() => mode.value === 'add' ? '新增' : mode.value === 'copy' ? '複製' : '修改')
 
 function blankForm(): DriverForm { return { inspDriverNo: '', functionName: '', description: '' } }
@@ -75,7 +78,11 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(endpoint(path), { credentials: 'include', ...init })
   if (response.status === 401) { window.location.assign(import.meta.env.BASE_URL + 'login'); throw new Error('登入已逾期，請重新登入。') }
   const text = await response.text()
-  if (!response.ok) throw new Error(text || `API 請求失敗 (${response.status})`)
+  if (!response.ok) {
+    let message = text || `API 請求失敗 (${response.status})`
+    try { const problem = JSON.parse(text) as { detail?: string; title?: string }; message = problem.detail?.trim() || problem.title?.trim() || message } catch { /* preserve plain text */ }
+    throw new Error(message)
+  }
   return (text ? JSON.parse(text) : undefined) as T
 }
 function persist(): void { localStorage.setItem(storageKey, JSON.stringify(rows.value)) }
@@ -124,7 +131,7 @@ function payload(): Record<string, unknown> { return { inspDriverNo: form.value.
 async function save(apply = false): Promise<void> {
   const message = validate()
   if (message) { formError.value = message; return }
-  if (formLocked.value) { formError.value = '簽核中的資料不可修改。'; return }
+  if (formLocked.value) { formError.value = '只有未簽核資料可修改。'; return }
   busy.value = true; formError.value = ''
   const data = payload(); const now = new Date().toISOString(); const no = String(data.inspDriverNo)
   try {
@@ -135,15 +142,13 @@ async function save(apply = false): Promise<void> {
       rows.value = mode.value === 'edit' ? rows.value.map(row => row.inspDriverNo === source.value?.inspDriverNo ? saved : row) : [...rows.value, saved]
       persist()
     } else if (mode.value === 'edit' && source.value) {
-      await api('/api/qc/inspection-drivers/' + encodeURIComponent(source.value.inspDriverNo), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...data, issueState: source.value.issueState, dataStamp: source.value.dataStamp }) })
-      saved = normalize({ ...source.value, ...data, reviser: userNo.value, reviseDate: now, dataStamp: (source.value.dataStamp ?? 0) + 1 })
+      saved = normalize(await api<Record<string, unknown>>('/api/qc/inspection-drivers/' + encodeURIComponent(source.value.inspDriverNo), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...data, issueState: source.value.issueState, dataStamp: source.value.dataStamp }) }))
     } else {
-      await api('/api/qc/inspection-drivers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-      saved = normalize({ ...data, creator: userNo.value, createDate: now, issueState: 0, dataStamp: 0 })
+      saved = normalize(await api<Record<string, unknown>>('/api/qc/inspection-drivers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }))
     }
-    if (apply && mode.value === 'edit') source.value = saved
+    if (apply) { source.value = saved; form.value.inspDriverNo = saved.inspDriverNo; mode.value = 'edit' }
     else if (!apply) mode.value = null
-    await load(); notice.value = apply ? '資料已套用。' : '資料已儲存。'
+    await load(); activeNo.value = saved.inspDriverNo; notice.value = apply ? '資料已套用。' : '資料已儲存。'
   } catch (cause) { formError.value = cause instanceof Error ? cause.message : '儲存檢測 Driver 失敗。' }
   finally { busy.value = false }
 }
@@ -151,7 +156,7 @@ function actionRows(): DriverRow[] { return picked.value.length ? picked.value :
 async function remove(): Promise<void> {
   const eligible = actionRows().filter(row => [0, 2, -1].includes(row.issueState))
   if (!eligible.length) { notice.value = '請選取未簽核、已簽核或不使用的資料。'; return }
-  if (!window.confirm(`確定刪除 ${eligible.length} 筆檢測 Driver？已簽核資料會改為不使用。`)) return
+  if (!(await requestConfirmation(`確定刪除 ${eligible.length} 筆檢測 Driver？已簽核資料會改為不使用。`))) return
   busy.value = true
   try {
     for (const row of eligible) {
@@ -166,7 +171,7 @@ async function remove(): Promise<void> {
 async function approve(): Promise<void> {
   const eligible = actionRows().filter(row => row.issueState === 0)
   if (!eligible.length) { notice.value = '核准只允許未簽核資料。'; return }
-  if (!window.confirm(`確定送出 ${eligible.length} 筆核准？`)) return
+  if (!(await requestConfirmation(`確定送出 ${eligible.length} 筆核准？`))) return
   busy.value = true
   try {
     for (const row of eligible) {
@@ -205,7 +210,7 @@ onMounted(() => { void load() })
     </section>
     <footer class="count">資料總筆數 {{ visibleRows.length }}　已選取 {{ picked.length }}</footer>
 
-    <div v-if="mode" class="shade" @click.self="mode=null"><section class="dialog">
+    <div v-if="mode" class="shade" @click.self="mode=null"><section class="dialog" role="dialog" aria-modal="true" :aria-label="`檢測設備連線程式（${title}）`">
       <header><b>檢測設備連線程式（{{ title }}）</b><button type="button" @click="mode=null">×</button></header>
       <form @submit.prevent="save()">
         <fieldset class="fields" :disabled="formLocked"><legend>Inspection Machine Driver Data</legend>
@@ -222,6 +227,7 @@ onMounted(() => { void load() })
       </form>
     </section></div>
   </main>
+  <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
 </template>
 
 <style scoped>
