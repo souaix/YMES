@@ -982,7 +982,7 @@
 - [x] 新增 Oracle source DDL 與 PostgreSQL CREATE-only reference、`docs/modules/PRD/產品參數設定.md`，更新 PRD 主規格、索引、家用端 handoff 及 DB query provenance。
 - [ ] 未執行 build/test/browser；未連 YMES PostgreSQL，未部署 SQL，正式 API 模式仍唯讀。
 - [x] PD102 Business Rule 已依真實入口 `btnBusinessRule_Click`、`frmProductOPBusinessRule`/Draw、wsPRD/Core/Service 完成 WinForms 規格、DEV UI 與 homepc API/schema handoff；注意真正入口不是名稱相近的 `frmPRDOPRule_THEIL_BU1`。
-- [ ] PD102 OPDescription 正在進行；本檔末尾有公司端檢查點與家用端 API/schema handoff。重開後先核對差異並完成靜態複核。
+- [x] PD102 OPDescription DEV/Oracle DDL 已由 commit `dde7973` checkpoint，完成靜態 code review；此段未執行 build/test/browser，Production API/schema 由家用端依 handoff 完成。
 
 
 ## PRD PD102 Business Rule DEV UI（2026-11-18）
@@ -991,7 +991,7 @@
 - [x] 完成產品 OP 清單/圖形預覽及 Default/Close 版面、Add/Edit/多選 Del、圖形節點/連線/Phase 編輯、NetFlow readonly 的 DEV UI，接至 ProductBasisMaster 並只寫專用 localStorage。
 - [x] 新增 `docs/modules/PRD/產品商業規則.md`；重用 Parameter 階段已查到的三張 Oracle 表與既有 DDL/PG CREATE 參照，沒有重複 Oracle query、沒有新增表或 CREATE SQL。
 - [ ] Production API、OP/Phase/Business Rule/Template lookup、Lassalle XML serializer 尚待家用端完成；Default、樣板及 catalog 現在仍為 DEV 假資料。
-- [ ] Business Rule 完成後已開始 PD102 OPDescription；DEV/DDL checkpoint 與 API handoff 見本檔末尾。未執行 build/test/browser；重開後完成靜態複核並 push，再依序接續 RecipeGroup。
+- [x] OPDescription DEV UI/DDL/規格 checkpoint 已提交為 `dde7973`；靜態檢閱已完成，未執行 build/test/browser。Production API/schema handoff 見本檔末尾。
 
 ## PRD PD102 OPDescription 公司端檢查點（2026-11-18）
 
@@ -999,5 +999,5 @@
 - [x] 以 Windows PowerShell 5.1 + 受保護 Oracle 設定直連 MESTEST，唯讀取得 `TBLPRDOPDESCRIPTION` DBMS_METADATA DDL、欄位、PK/index、FK/trigger metadata；無業務資料列，未執行 Oracle DDL/DML。
 - [x] 直接讀取 WinForms、wsPRD、Core，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 取得 `TBLPRDOPDESCRIPTION` DDL/字典；只讀 metadata，未讀業務列或執行 Oracle DDL/DML。
 - [x] 已在公司端工作區建立 `ProductOpDescriptionSetup.vue` 並接至 PD102；DEV 支援清單、流程/OP 假查找、Add/Edit/多選 Delete、audit/DataStamp 與狀態唯讀，只寫 localStorage。Oracle source DDL、PostgreSQL CREATE-only 與規格文件已建立。
-- [ ] 重開後先核對本次 push 的 component/spec/TODO 差異，再補靜態複核；未執行 build/test/browser，未連 YMES PostgreSQL。Production API/schema/lookup 尚待家用端。
+- [x] 已靜態複核元件、WinForms 操作流程與資料欄位；修正輸入欄位字型宣告。未執行 build/test/browser，未連 YMES PostgreSQL；Production API/schema/lookup 尚待家用端。
 - [ ] OPDescription 複核完成並交接後，接續 PD102 側邊按鈕 `RecipeGroup`，直接追 Form/Designer/Core/Service 與所需 Oracle metadata。
