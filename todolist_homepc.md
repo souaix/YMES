@@ -1610,3 +1610,14 @@ API 工作：
 - [ ] Server 依登入身分驗證產品、流程/PS 權限及配件 lookup，不接受 client 自傳 PSPrivilege、OPName/audit 身分或 IssueState。完成 API/schema/文件後 push main 通知公司端；DEV localStorage 資料不可送進正式 API。
 
 公司端此段未執行 build/test/browser、未連 YMES PostgreSQL、未部署 SQL。
+
+## PRD PD102 Resource API/schema handoff（2026-11-18 公司端更新）
+
+- [ ] Pull 最新 main，閱讀 docs/modules/PRD/產品作業區域設定.md、docs/modules/PRD/產品主檔.md 和本檔 handoff。
+- [ ] 不新增表或 CREATE SQL：Oracle source/PG CREATE 參照已存在。TBLPRDOPAREA：database/reference/mestest_prd_parameter_setup_source_ddl.sql / mestest_prd_parameter_setup_create.sql；TBLOPAREA：mestest_operation_and_system_source_ddl.sql / mestest_operation_and_system_create.sql；TBLSMDAREABASIS：mestest_smd_area_basis_source_ddl.sql / mestest_smd_area_basis_create.sql。仍先核對 YMES live schema/migrations，不可因參考 CREATE 檔重建有資料的表。
+- [ ] 核對 TBLPRDOPAREA 五欄與 PK (ProductNo,ProductVersion,OPNo,AreaNo)：前四欄 NOT NULL，DefaultArea numeric(1,0) nullable，無 audit/DataStamp/FK/trigger/額外 index。AreaName、FactoryNo 是 SMD Area lookup 顯示欄，不可存入此表。
+- [ ] 實作登入保護 API：GET 產品/版次 OP Area 清單及指定 OP 明細；PUT 以 (ProductNo,ProductVersion,OPNo) 全量取代 areas:[{areaNo,defaultArea}]；DELETE 必須帶完整產品、版次、OP 範圍並刪該 OP 全部區域。WinForms 新增/修改都呼叫同一 UpdEditPRDOPArea，來源註解要求全刪全增；家用端查 Core/Service 確認 transaction/空集合語意，更新需原子執行。
+- [ ] 提供產品版次流程 lookup、指定 Process/Version 的 OP NodeType=0 lookup、OP 的 TBLOPAREA 查找、Area Basis lookup。重用 PRS、OP、SMD 的既有 API/table，不新增同義表。新增模式初始區域由 OP Area Map 載入；修改模式載入目前產品 OP Area，兩者選項範圍按 WinForms 原 service 行為查證。
+- [ ] Server 從登入者權限決定 PSPrivilege；不接受 client 的 PSPrivilege、IssueState 或 audit identity。對產品當前 IssueState、OP/PS 權限、Area 存在及關聯範圍重新驗證。PUT 要拒絕重複 AreaNo，並要求恰一筆 DefaultArea=1；UI Delete 一次確認後逐 OP 呼叫，遇錯停止並保留先前已成功項目。
+- [ ] 查 LoadPRDOPArea 的 DefaultArea 篩選、LoadOPResourceDefine lookup 範圍、DelPRDOPArea 精確刪除條件及 CopyPRDOPArea 產品 Copy/Version 行為。規格記錄來源 client 無法證明之處；核對後更新模組規格。
+- [ ] 完成 YMES schema/API/DTO 與文件後 commit/push main，通知公司端接 Production API。公司端 Resource DEV 已完成；未執行 build/test/browser，未連 YMES PostgreSQL、未部署 SQL。

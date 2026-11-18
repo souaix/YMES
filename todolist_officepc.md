@@ -1018,3 +1018,12 @@
 - [x] 新增 `ProductAccessorySetup.vue` 接至 PD102；DEV 假資料含兩個作業站、兩種配件類別、指定配件與 `*` 全部模式；只寫產品關聯 localStorage，Production API 未接線時唯讀。
 - [x] 新增 `docs/modules/PRD/產品配件設定.md`、Oracle source DDL、PostgreSQL CREATE-only，更新主檔規格、DB metadata provenance、兩個索引與 homepc API/schema handoff。
 - [ ] 未執行 build/test/browser，未連 YMES PostgreSQL，未部署 SQL。下一個 PD102 側邊功能為 `Resource`。
+
+## PRD PD102 Resource 公司端檢查點（2026-11-18）
+
+- [x] 直接對照 PD102 btnOPArea_Click (Handles btnResource.Click)、frmProductOPArea/Def Form 與 Designer；記錄兩視窗尺寸、PSPrivilege 查找、OP/Area 雙 Grid、Add/Edit/多選 Delete、Confirm 僅能一個 Default Area、全量更新呼叫及錯誤停止行為。
+- [x] 重用既有 TBLPRDOPAREA、TBLOPAREA、TBLSMDAREABASIS Oracle DDL / PostgreSQL CREATE 參照；未重查 Oracle、未新增重複 CREATE SQL。
+- [x] 完成 ProductResourceSetup.vue，接至 PD102 Resource；DEV 有產品流程/OP/Area 假查找、Area 左右多選移動、雙擊移動、Enter 精確搜尋、Default Area 驗證及 OP 多選刪除；假資料存 ymes.dev.prd-product-basis-relations.v1 的 opAreas。
+- [x] 新增 docs/modules/PRD/產品作業區域設定.md，更新 PRD 主規格、規格索引、DB metadata provenance 及家用端 handoff。
+- [ ] wsPRD/wsOP Core/Service 的 transaction、空 multivalue、Delete 與 Copy/Version 邊界待家用端查核；Production API 尚未接線。
+- [ ] 未執行 build/test/browser，未連 YMES PostgreSQL或部署 SQL。接續 PD102 SubOP，再依側邊功能順序遷移。

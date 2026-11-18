@@ -5,6 +5,7 @@ import ProductBusinessRuleSetup from './ProductBusinessRuleSetup.vue'
 import ProductOpDescriptionSetup from './ProductOpDescriptionSetup.vue'
 import ProductRecipeGroupSetup from './ProductRecipeGroupSetup.vue'
 import ProductAccessorySetup from './ProductAccessorySetup.vue'
+import ProductResourceSetup from './ProductResourceSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -22,6 +23,7 @@ type ProductRelation = {
   opDescriptions?: ProductRow[]
   recipeGroups?: ProductRow[]
   accessories?: ProductRow[]
+  opAreas?: ProductRow[]
   materialGroups?: ProductRow[]
 }
 type BomTreeLine = { id: string; label: string; kind: 'root' | 'material' | 'product' | 'group'; depth: number }
@@ -148,6 +150,11 @@ const seedRelations: Record<string, ProductRelation> = {
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', opName: '點膠作業', accessoryType: 'DEV-ACC-FIXTURE', accessoryNo: 'DEV-JIG-001' },
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', opName: '點膠作業', accessoryType: 'DEV-ACC-FIXTURE', accessoryNo: 'DEV-JIG-003' },
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-20', opName: '組裝作業', accessoryType: 'DEV-ACC-CONSUMABLE', accessoryNo: '*' },
+    ],
+    opAreas: [
+      { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', areaNo: 'DEV-AREA-01', defaultArea: 1, areaName: '點膠區', factoryNo: 'DEV-FAB-01' },
+      { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', areaNo: 'DEV-AREA-04', defaultArea: 0, areaName: '待驗區', factoryNo: 'DEV-FAB-02' },
+      { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-20', areaNo: 'DEV-AREA-02', defaultArea: 1, areaName: '組裝區', factoryNo: 'DEV-FAB-01' },
     ],
     bom: [
       { nodeNo: 'DEV-MTL-001', nodeType: 0, nodeVersion: '001', opNo: 'DEV-OP-10', stdQty: 2, unitNo: 'EA', decreaseRate: 0, specified: 1, description: 'DEV 材料明細' },
@@ -313,8 +320,8 @@ function appendBomChildren(productNo: string, productVersion: string, depth: num
 }
 function currentUser(): string { return props.currentUserNo || (mock.value ? 'DEV001' : '') }
 function relatedFor(row: ProductRow | null): ProductRelation {
-  if (!row) return { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [], recipeGroups: [], accessories: [] }
-  return relations.value[keyOf(row)] ?? { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [], recipeGroups: [], accessories: [] }
+  if (!row) return { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [], recipeGroups: [], accessories: [], opAreas: [] }
+  return relations.value[keyOf(row)] ?? { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [], recipeGroups: [], accessories: [], opAreas: [] }
 }
 const visibleRows = computed(() => rows.value
   .filter(row => Number(row.issueState) === issueState.value)
@@ -371,6 +378,10 @@ function loadMock(): void {
       }
       if (existing && !existing.accessories && seed.accessories) {
         existing.accessories = clone(seed.accessories)
+        migrated = true
+      }
+      if (existing && !existing.opAreas && seed.opAreas) {
+        existing.opAreas = clone(seed.opAreas)
         migrated = true
       }
     }
@@ -723,6 +734,13 @@ function saveProductAccessories(accessories: ProductRow[]): void {
   persistMock()
   notice.value = '產品配件假資料已儲存。'
 }
+function saveProductResource(opAreas: ProductRow[]): void {
+  if (!active.value || !mock.value) return
+  const key = keyOf(active.value)
+  relations.value[key] = { ...relatedFor(active.value), opAreas: clone(opAreas) }
+  persistMock()
+  notice.value = '產品作業區域假資料已儲存。'
+}
 function addEqpConstraint(): void {
   if (!active.value || !editable.value) return
   const rel = relatedFor(active.value)
@@ -878,7 +896,10 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'accessory'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductAccessorySetup :product="active ?? {}" :processes="activeRelations.processes" :accessories="activeRelations.accessories ?? null" :development-preview="mock" @save="saveProductAccessories" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'resource'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductResourceSetup :product="active ?? {}" :processes="activeRelations.processes" :op-areas="activeRelations.opAreas ?? null" :development-preview="mock" :can-edit="editable" @save="saveProductResource" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
