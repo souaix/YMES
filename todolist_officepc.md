@@ -957,7 +957,7 @@
 
 下一個公司端工作：
 1. PD_ProductProcess、frmProductBOM_THEIL_BU1 的流程與 BOM DEV 子表單已完成；產品屬性 DEV 子表單也已完成，分別見 `產品主檔子表單.md`、`產品主檔產品屬性.md`。
-2. Business Rule、OPDescription、RecipeGroup DEV 已完成並有家用端 API/schema handoff；接續 Accessory、Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
+2. Business Rule、OPDescription、RecipeGroup、Accessory DEV 已完成並有家用端 API/schema handoff；接續 Resource、SubOP、Program、Default、RunTime、QC Item、Packing Set、EQPCapItem、eSOP、EquipmentSpec、APS、Bin、GBOM Import/Export、Product Import。每項直接閱讀 WinForms Form/Designer/Core/Service，記錄欄位、狀態規則、資料表和服務；DDL 缺漏時用受保護 PowerShell Oracle 連線查字典，不可猜。
 3. Product API/關聯 schema 由家用端接手後，回來核對 API contract 與 UI，避免公司端重複改 API。
 4. 依 MES 全功能目錄繼續下一個待遷 Function；每一段維護規格索引/TODO，假資料限定 DEV。
 
@@ -1015,4 +1015,13 @@
 - [x] Windows PowerShell 5.1 + 受保護 Oracle profile 直連 MESTEST，只讀取得 `TBLPRDRECIPE`、`TBLPRDRECIPEBASIS` DDL/字典；無業務資料列，未執行 Oracle DDL/DML。
 - [x] 新增 `ProductRecipeGroupSetup.vue` 並接到 PD102，DEV 依產品版本保存關聯 localStorage，含多選刪除、已核准目前版查找、Add/Apply/Confirm/Close；Production API 未接線時唯讀。
 - [x] 新增 `docs/modules/PRD/產品RecipeGroup.md`、Oracle source DDL、PostgreSQL CREATE-only 參照，更新主檔規格、DB connection provenance、兩個規格索引及 homepc API/schema handoff。
-- [ ] 未執行 build/test/browser，未連 YMES PostgreSQL，未部署 SQL。下一個 PD102 側邊功能為 `Accessory`。
+- [ ] 未執行 build/test/browser，未連 YMES PostgreSQL，未部署 SQL。RecipeGroup DEV/DDL handoff 已完成；Accessory checkpoint 接續如下。
+
+## PRD PD102 Accessory 公司端檢查點（2026-11-18）
+
+- [x] 閱讀 THEIL BU1 PD102 `btnAccessory_Click`、`frmPRDAccessory_THEIL_BU1` Form/Designer、`frmPRDAccessoryDef_THEIL_BU1`，核對主/明細雙 Grid、ADD/EDIT/DEL、產品流程 OP 查找、配件類別與配件編號查找、All `*` / Specified、Apply/Confirm 和多選逐筆 Delete。
+- [x] 追出 WinForms client 呼叫 `Load/Upd/DelPRDAccessory`、`LoadAccessoryType/Basis`、`LoadProductProcess(PSPrivilege=True)`、`LoadNodeBasis(NodeType=0)`、`LoadOPBasis` 及 `PD_ExpandProcess`。wsPRD/clsProduct server/Core 實作未包含於目前 client source，規格明列待家用端核對的替換/空清單/交易行為。
+- [x] Windows PowerShell 5.1 + 受保護 Oracle profile 唯讀直連 MESTEST，取得 `TBLPRDACCESSORY` DDL、欄位/constraint/index/trigger 字典；未讀業務資料、未執行 Oracle DDL/DML、未輸出連線秘密。
+- [x] 新增 `ProductAccessorySetup.vue` 接至 PD102；DEV 假資料含兩個作業站、兩種配件類別、指定配件與 `*` 全部模式；只寫產品關聯 localStorage，Production API 未接線時唯讀。
+- [x] 新增 `docs/modules/PRD/產品配件設定.md`、Oracle source DDL、PostgreSQL CREATE-only，更新主檔規格、DB metadata provenance、兩個索引與 homepc API/schema handoff。
+- [ ] 未執行 build/test/browser，未連 YMES PostgreSQL，未部署 SQL。下一個 PD102 側邊功能為 `Resource`。

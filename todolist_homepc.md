@@ -1514,7 +1514,7 @@ API 工作：
 8. 比對後才新增 migration；執行 migration 前確認 home DB schema/data。正式 API 檢查 PRD BASIS/PD102 權限。
 9. API/schema 完成後回報辦公室端，串 integration profile；localStorage 假資料僅供 DEV preview。
 
-產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property、Parameter、Business Rule、OPDescription 與 RecipeGroup DEV 子視窗已完成；OPDescription/RecipeGroup 的 Production API/schema 依本檔 handoff 由家用端處理。Accessory、Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待公司端逐項遷移。
+產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM、Property、Parameter、Business Rule、OPDescription、RecipeGroup 與 Accessory DEV 子視窗已完成；OPDescription/RecipeGroup/Accessory 的 Production API/schema 依本檔 handoff 由家用端處理。Resource、SubOP、Program、Default、RunTime、QC、Packing、eSOP、APS、Bin、GBOM、Import 仍待公司端逐項遷移。
 
 ## PRD PD102 產品流程／BOM 子表單 API handoff（2026-11-18 公司端更新）
 
@@ -1585,7 +1585,7 @@ API 工作：
 - [x] 完成產品 OP 清單/圖形預覽及 Default/Close 版面、Add/Edit/多選 Del、圖形節點/連線/Phase 編輯、NetFlow readonly 的 DEV UI，接至 ProductBasisMaster 並只寫專用 localStorage。
 - [x] 新增 `docs/modules/PRD/產品商業規則.md`；重用 Parameter 階段已查到的三張 Oracle 表與既有 DDL/PG CREATE 參照，沒有重複 Oracle query、沒有新增表或 CREATE SQL。
 - [ ] Production API、OP/Phase/Business Rule/Template lookup、Lassalle XML serializer 尚待家用端完成；Default、樣板及 catalog 現在仍為 DEV 假資料。
-- [ ] 公司端未執行 build/test/browser。OPDescription 與 RecipeGroup DEV/DDL handoff 已分別記於本檔後續段落；辦公室端接續 Accessory。
+- [ ] 公司端未執行 build/test/browser。OPDescription、RecipeGroup、Accessory DEV/DDL handoff 已分別記於本檔後續段落；辦公室端接續 Resource。
 
 
 ## PRD PD102 OPDescription API/schema handoff（2026-11-18 公司端更新）
@@ -1607,5 +1607,15 @@ API 工作：
 - [ ] 入口傳入 IssueState，但 `frmProductRecipe` 不用狀態限制 ADD/DEL；新 API 先保留這項 legacy 行為並檢查登入者對產品的權限。若要加狀態限制，需另有業務規則依據。
 - [ ] WinForms 多列刪除逐筆呼叫、遇錯停止且保留先前成功結果。API 若做批次需定義 partial result；單筆 DELETE 不可省略 RecipeGroup，避免 Core 預設刪除產品版本全部關聯。
 - [ ] 產品 Copy/Version 需保留 `CopyPRDRecipe`：先清除目標版本 RecipeGroup 關聯，再複製來源關聯。Product Recipe Apply/Confirm/Close 綁定原生指派語意；完成 schema/API/文件後 push main，通知公司端接正式 API。DEV localStorage 不寫正式 DB。
+
+## PRD PD102 Accessory API/schema handoff（2026-11-18 公司端更新）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/PRD/產品配件設定.md`、產品主檔規格與 DB connection 的 Oracle metadata provenance。
+- [ ] Oracle source DDL / PostgreSQL CREATE-only 參考：`database/reference/mestest_prd_accessory_source_ddl.sql`、`mestest_prd_accessory_create.sql`。先查 YMES `tblprdaccessory` live schema、migrations、entity/repository；僅在確認缺表後新增 forward migration。
+- [ ] Source `TBLPRDACCESSORY` 欄位：ProductNo varchar(50)、AccessoryType varchar(50)、AccessoryNo varchar(50)、ProductVersion varchar(5)、OPNo varchar(20) DEFAULT `'*'`、OPName varchar(200)；五欄 `(ProductNo,ProductVersion,OPNo,AccessoryType,AccessoryNo)` 複合 PK；OPName nullable；無 FK、trigger、其他 index（PK unique index 除外）。
+- [ ] 重用配件功能既有 `tbleqpaccessorytype`、`tbleqpaccessorybasis` lookup/API，不要新增同義表。提供產品/版本配件 GET、PS 權限下的產品流程 OP lookup、AccessoryType 與 AccessoryNo lookup。
+- [ ] 實作以單一 ProductNo/ProductVersion/OPNo 更新設定的 API，支援指定多個 AccessoryNo 與 `'*'` 全部模式；定義空 multivalue 是否清空該類別、操作是否以 transaction 原子替換。WinForms client 只證明 Update 帶單一 OPNo/OPName 與 multivalue、DEL 逐筆帶 OPNo/OPName/AccessoryType；`wsPRD`/`clsProduct` 實作不在 client source，需查服務/Core 確認替換範圍及 Copy/Version 行為。
+- [ ] Delete 必須明確限定 ProductNo、ProductVersion、OPNo、AccessoryType。UI 多選逐筆處理，遇錯停止並保留先前成功結果；批次 endpoint 若實作需回傳逐筆結果。
+- [ ] Server 依登入身分驗證產品、流程/PS 權限及配件 lookup，不接受 client 自傳 PSPrivilege、OPName/audit 身分或 IssueState。完成 API/schema/文件後 push main 通知公司端；DEV localStorage 資料不可送進正式 API。
 
 公司端此段未執行 build/test/browser、未連 YMES PostgreSQL、未部署 SQL。

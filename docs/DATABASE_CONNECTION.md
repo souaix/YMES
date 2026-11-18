@@ -610,3 +610,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端以 Windows PowerShell 5.1、Oracle.ManagedDataAccess 與本機受保護 MESTEST profile 唯讀查 `TBLPRDRECIPE`、`TBLPRDRECIPEBASIS` 的 `DBMS_METADATA.GET_DDL`、欄位、約束、index、trigger dictionary。沒有讀 MES 業務列，沒有執行 Oracle DDL/DML。
 - `TBLPRDRECIPE` 複合 PK `(PRODUCTNO,PRODUCTVERSION,RECIPEGROUP)`；`TBLPRDRECIPEBASIS` 複合 PK `(RECIPEGROUP,RECIPEVERSION)`。兩表只有 PK unique index，沒有 FK、trigger 或其他 index。DDL/CREATE-only 路徑見 `database/reference/mestest_prd_recipe_group_source_ddl.sql`、`mestest_prd_recipe_group_create.sql`。
 - 連線 IP/帳號/密碼/SID 未輸出或提交。家用端先比對 YMES live schema/migrations；lookup basis 是其他 Recipe 主檔共用表，不要重複建立。
+
+### 更新 2026-11-18：PD102 Product Accessory Oracle metadata
+
+- 公司電腦以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護 MESTEST profile 唯讀取得 `TBLPRDACCESSORY` 的 `DBMS_METADATA.GET_DDL` 與欄位、constraint、index、trigger dictionary。
+- `TBLPRDACCESSORY` 六欄，複合 PK `(PRODUCTNO,PRODUCTVERSION,OPNO,ACCESSORYTYPE,ACCESSORYNO)`；`OPNO` default `'*'`；只有 PK unique index，無 FK、trigger 或其他 index。Oracle source DDL 與 PostgreSQL CREATE-only 參照見 `database/reference/mestest_prd_accessory_source_ddl.sql`、`mestest_prd_accessory_create.sql`。
+- 只查資料字典/DDL，沒有讀業務資料、沒有執行 Oracle DDL/DML。連線 IP/帳號/密碼/SID 未輸出或提交。家用端需先比對 YMES live schema/migrations，確認缺表才建立 migration。
