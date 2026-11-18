@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import ProductBomEditor from './ProductBomEditor.vue'
+import ProductProcessEditor from './ProductProcessEditor.vue'
 
 const window = globalThis.window
 type IssueState = -1 | 0 | 1 | 2
@@ -235,7 +237,7 @@ function appendBomChildren(productNo: string, productVersion: string, depth: num
   if (depth > 5) return
   const productKey = productNo + '|' + productVersion
   const relation = relations.value[productKey]
-  for (const item of relation?.bom ?? []) {
+  for (const item of [...(relation?.bom ?? [])].sort((left, right) => Number(right.nodeType) - Number(left.nodeType))) {
     const isProduct = Number(item.nodeType) === 1
     const nodeKey = productKey + '|' + text(item.nodeNo) + '|' + text(item.opNo)
     const decreaseRate = Number(item.decreaseRate ?? 0) * 100
@@ -592,6 +594,20 @@ function runAction(action: string): void {
   }
 }
 function closeFeature(): void { featureKey.value = '' }
+function saveProductProcess(processes: ProductRow[]): void {
+  if (!active.value || !mock.value) return
+  const key = keyOf(active.value)
+  relations.value[key] = { ...relatedFor(active.value), processes: clone(processes) }
+  persistMock()
+  notice.value = '產品流程假資料已儲存。'
+}
+function saveProductBom(bom: ProductRow[], materialGroups: ProductRow[]): void {
+  if (!active.value || !mock.value) return
+  const key = keyOf(active.value)
+  relations.value[key] = { ...relatedFor(active.value), bom: clone(bom), materialGroups: clone(materialGroups) }
+  persistMock()
+  notice.value = '產品 BOM 假資料已儲存。'
+}
 function updateProperty(property: ProductRow, field: string, value: string): void {
   if (!active.value) return
   const rel = relatedFor(active.value)
@@ -730,7 +746,13 @@ onMounted(() => { void load() })
       <section class="prd-feature-dialog"><header><h2>選擇 {{ lookupField }}</h2><button type="button" @click="lookupField=''">×</button></header><div class="prd-lookup-list"><button v-for="value in lookupOptions" :key="value" class="prd-button" type="button" @click="chooseLookup(value)">{{ value }}</button></div><p class="prd-dev-note">以上為 Development 假資料選項。</p></section>
     </div>
 
-    <div v-if="feature" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'process-setup'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductProcessEditor :product="active ?? {}" :processes="activeRelations.processes" :development-preview="mock" @save="saveProductProcess" @close="closeFeature" />
+    </div>
+    <div v-if="feature && featureKey === 'bom-editor'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductBomEditor :product="active ?? {}" :bom="activeRelations.bom" :material-groups="activeRelations.materialGroups ?? []" :products="rows" :relations="relations" :development-preview="mock" @save="saveProductBom" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
@@ -754,6 +776,7 @@ onMounted(() => { void load() })
 
 <style scoped>
 .prd-master{min-width:0;height:100%;padding:9px;background:#fff;color:#292820;font:12px "Segoe UI","Microsoft JhengHei",sans-serif;display:flex;flex-direction:column;gap:6px}
+.child-feature-overlay{z-index:91}
 .prd-page-title{display:flex;gap:16px;align-items:center;padding:0 4px 5px;border-bottom:1px solid #e2dfd4;font-size:16px}.prd-page-title span{font-size:13px;color:#655f4d}
 .prd-dev-note{margin:0;padding:5px 8px;border:1px solid #e4d7a3;background:#fff8dc;color:#5f5427}
 .prd-query{display:flex;align-items:center;gap:8px;min-height:39px;padding:4px 7px;border:1px solid #c9c7bd;background:#faf9f5}.prd-state{display:flex;gap:12px;margin:0;padding:0 4px;border:0}.prd-state label{display:flex;align-items:center;gap:3px}.prd-state input{accent-color:#b4831d}

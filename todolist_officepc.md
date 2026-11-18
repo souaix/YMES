@@ -955,3 +955,12 @@
 4. 依 MES 全功能目錄繼續下一個待遷 Function；每一段維護規格索引/TODO，假資料限定 DEV。
 
 頁面底部 Set ... 與 Expand All 帶入選取流程列上下文；BOM Set 開啟該產品 BOM 遷移入口。WinForms Designer 設 Visible=False 的 QTY Conversion 與 DisApprove 沒顯示。window.print() 只是產品包裝 BOM 報表的 DEV 簡化。正式模式目前能載現有產品/流程/BOM，其餘欄位與子功能仍待家用端補 API 契約。
+
+## PRD PD102 產品流程／BOM 子表單續作（2026-11-18）
+
+- [x] 直接對照 `STD/MESWin/PRD/PD_ProductProcess/frmProductProcess.vb`：544×462 視窗、MOType/PS/Process 查找、Current/Specified、Default 唯一、暫存 Add/Del、Apply/Confirm/Close 與 Net Flow 檢查。
+- [x] 直接對照客製 `Customer/Production/MESWin/PRD/PD_ProductBasis_THEIL_BU1/frmProductBOM_THEIL_BU1.vb`：719×516 Tree/Node Define、右鍵節點權限、產品/材料版本、投入點、數量、損耗率、Specified、LOTCREATE、材料群組/替代料與遞迴樹。
+- [x] 新增 `ProductProcessEditor.vue`、`ProductBomEditor.vue` 並接入 `ProductBasisMaster.vue`。DEV 假資料的流程與 BOM 可新增/刪除/修改/檢視並保存至產品專用 localStorage；正式 API 模式唯讀。LOOKUP 只用 DEV 假資料，不能當正式選項。
+- [x] 新增 `docs/modules/PRD/產品主檔子表單.md`，更新家用端 API/schema 待辦。
+- [ ] 產品主檔其他側邊子功能仍待閱讀各自 WinForms Form/Core/Service 後實作；不可用本次子表單完成狀態代表 PD102 所有側功能已完成。
+- [ ] 未執行 build/test/browser 驗收。完成同步 YMES 後 commit/push，再依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 排定下一個未完成 FunctionNo。

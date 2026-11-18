@@ -1505,4 +1505,19 @@ API 工作：
 8. 比對後才新增 migration；執行 migration 前確認 home DB schema/data。正式 API 檢查 PRD BASIS/PD102 權限。
 9. API/schema 完成後回報辦公室端，串 integration profile；localStorage 假資料僅供 DEV preview。
 
-產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM 子表單及側邊 Property/Parameter/Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍依 WinForms 個別拆規格與實作。
+產品專用 Vue 頁已從 App.vue 的 product-master 分支載入。DEV 模式有四狀態假資料和主要表單。流程/BOM 子表單已由公司端依 WinForms 原始碼完成 DEV 假資料互動；側邊 Property/Parameter/Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 仍待逐項拆規格與實作。
+
+## PRD PD102 產品流程／BOM 子表單 API handoff（2026-11-18 公司端更新）
+
+公司端已依 WinForms 原始碼補上 `ProductProcessEditor.vue` 與 `ProductBomEditor.vue`，並接入產品專用頁。DEV 預覽支援產品流程 ADD/DEL/Apply/Confirm、重複與 Default Process 檢查、Net Flow 檢查；BOM 支援右鍵樹選單、已核准產品查找、假材料查找、節點 Add/Edit/View/Del、Specified、投入點、用量、損耗率、LOTCREATE 限制、替代料群組與五層遞迴樹。所有 DEV 寫入只更新產品專用 localStorage。正式 API 模式兩個子視窗唯讀。
+
+詳細 WinForms 欄位、事件、規則與來源路徑：`docs/modules/PRD/產品主檔子表單.md`。表結構參照仍以 `database/reference/mestest_prd_product_basis_source_ddl.sql` 為準；先核對 YMES migrations/live schema，不可重複建表或直接執行 CREATE-only 參照 SQL。
+
+### 家用端接手
+
+- [ ] 對照 Oracle `TBLPRDPRODUCTPROCESS`，補產品流程查詢/批次儲存契約：MOTypeNo、PSNo、PSOrder、ProcessNo、ProcessVersion (`*` current)、DefaultProcess、HaveComponent、HaveLevel；服務端驗證複合鍵、每一 MOType/PS 唯一 Default 與 Net Flow 單一區段。
+- [ ] 對照 `TBLPRDBOM` 及 `TBLPRDBOMMATERIALGROUP`，提供產品/材料/投入 OP lookup、節點新增修改刪除、指定料、投料點 2/3/4、數量、損耗率、材料群組/替代料與最多五層遞迴查詢。
+- [ ] 服務端重驗已核准節點、LOTCREATE、企業 TS 批號規則及 BOM 複合鍵；不能只依賴 Vue 欄位檢查。
+- [ ] 比較現有 `ym_product_process`/`ym_product_bom` 與 Oracle 原生語意後才決定 mapping / migration；測試完成後回報公司端接正式 API。
+
+公司端此段尚未執行 build、test 或 browser 驗收；DEV 元件採靜態檢閱。產品側邊 Property/Parameter/Business Rule/OPDescription/RecipeGroup/Accessory/Resource/SubOP/Program/Default/RunTime/QC/Packing/eSOP/APS/Bin/GBOM/Import 等仍須依其 WinForms 原始碼逐項遷移。
