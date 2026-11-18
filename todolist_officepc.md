@@ -1051,4 +1051,13 @@
 - [x] 新增 `ProductProgramSetup.vue` 並接至 PD102；DEV 可勾選程式並保存至關聯 localStorage，非未核准狀態保留可勾選但 Confirm disabled 的舊行為；Production 模式唯讀。
 - [x] 建立 Program Oracle source DDL、PostgreSQL CREATE-only 參照、功能規格及 Home handoff，更新主檔規格、模組索引、資料庫 metadata provenance。
 - [ ] 家用端須核對 `tblprdprogrambasis` first-phase bootstrap/live schema，僅在關聯表缺漏時新增 migration/API；詳見 `todolist_homepc.md`。
-- [ ] 未執行 build、test 或 browser 驗收，未連 YMES PostgreSQL，未部署 SQL。下一項依 PD102 側功能順序為 Default。
+- [ ] 未執行 build、test 或 browser 驗收，未連 YMES PostgreSQL，未部署 SQL。Default 檢查點接續見下節；完成交接後依 PD102 側功能順序做 RunTime。
+
+## PRD PD102 Default 公司端交接檢查點（2026-11-18）
+
+- [x] 依 PD102 `btnDefault_Click`、`frmProductLoadDefault`/Designer、`wsPRD.UpdPRDOP_BatchDefault`、`clsProduct.UpdPRDOP_BatchDefault` 整理入口、兩種 OP 範圍、七類資料複製、IssueState、確認與錯誤關閉行為。
+- [x] 新增 `ProductDefaultSetup.vue` 接至 PD102 Default，DEV 假樣板只寫 localStorage；正式 API 未接線時唯讀。
+- [x] 以 Windows PowerShell 5.1 + ODP.NET 直連 MESTEST 查 APS 產品表資料字典：DBMS_METADATA.GET_DDL 回 ORA-03135，改查 ALL_TAB_COLUMNS/CONSTRAINTS/CONS_COLUMNS/INDEXES 重建邏輯 DDL；沒有讀業務資料列或執行 DDL/DML。
+- [x] 新增 `docs/modules/PRD/產品預設設定.md`、APS Oracle source DDL、PostgreSQL CREATE-only 參照，更新產品主規格、規格索引、DB metadata provenance 及家用端 API handoff。
+- [ ] 未執行 build/test/browser，未連 YMES PostgreSQL，未部署 SQL。桌電 pull 此檢查點後先看 `git status` 和最新 commit，靜態檢閱 Default 變更，再做 PD102 `RunTime`。Vue UI 在 `web/`、API 在 `src/YMes.Api/`、共用 DTO 在 `src/YMes.Contracts/`。
+- [ ] 遇到 DBMS_METADATA ORA-03135 時，使用 Windows PowerShell 5.1 + ODP.NET 查 ALL_* dictionary；不要用 DBeaver GUI 抄 DDL。連線秘密不進 Git；桌電若沒有受保護 profile，要向使用者安全索取，不要猜連線資訊。

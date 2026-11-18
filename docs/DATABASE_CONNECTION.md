@@ -634,3 +634,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司電腦使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，讀取本機受保護既有 Oracle profile，唯讀直連 MESTEST；取得 `TBLPRDPROGRAMBASIS`、`TBLPRDPRODUCTPROGRAMS` 的 `DBMS_METADATA.GET_DDL` 與欄位、constraint、index、trigger dictionary。
 - Program Basis PK 為 `PROGRAMNO`；Product assignment PK 為 `(PRODUCTNO, PRODUCTVERSION, PROGRAMNO)`。各表只有 PK unique index，沒有 FK、trigger 或其他 index。Oracle source DDL 與 PostgreSQL CREATE-only 參照分別為 `database/reference/mestest_prd_program_source_ddl.sql`、`mestest_prd_program_create.sql`。
 - 僅讀結構 metadata，未查 MES 業務資料列、未在 Oracle 執行 DDL/DML；Oracle IP、帳號、密碼、SID 未輸出或提交。家用端先核對 live schema/migrations，尤其 Program Basis 已出現在 first-phase bootstrap，不可重複建立。
+
+### 更新 2026-11-18：PRD PD102 Default APS Product Oracle metadata
+
+- 公司端使用 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，由本機受保護設定的 `DatabaseConfigs.CS.Test.Mes.ConnectionString` 直連 MESTEST；`DBMS_METADATA.GET_DDL` 回 ORA-03135，改以 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES` 唯讀重建 `TBLPRDPRSOPAPSSETUP`、`TBLPRDPRSOPAPSSETUPDETAIL` 的邏輯 DDL。
+- 兩表只有 PK unique index，無 FK、trigger、額外 index；完整欄位與 DDL 來源見 `database/reference/mestest_prd_default_aps_source_ddl.sql`，PostgreSQL CREATE-only 參照見 `mestest_prd_default_aps_create.sql`。流程端 `TBLPRSOPAPSBASE/DETAIL` 沿用 PS104 已查來源 DDL。
+- 未查 MES 業務資料列，也未執行 Oracle DDL/DML。IP、帳號、密碼、SID 不寫入 Git；桌電若沒有本機受保護連線 profile，需透過安全方式重新提供，不可改用 DBeaver 螢幕抄 DDL。

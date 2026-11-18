@@ -1650,3 +1650,13 @@ API 工作：
 - [ ] 提供完整替換 API `PUT /api/products/{productNo}/versions/{version}/programs`；同一 transaction 內刪除該版次現有關聯並插入勾選清單。空清單代表清除全部。驗證 ProgramNo 存在、去重、登入者有產品版次設定權限。
 - [ ] 只有產品 IssueState=0 時允許儲存。舊畫面在其他狀態仍允許勾選，但 Confirm disabled；API 必須 server-side 再檢查狀態與權限，不信任 client 的 IssueState/identity。
 - [ ] 完成 schema/API/DTO/文件後 push main，通知公司端接正式 API。公司端目前只完成 DEV localStorage，Production API 未接線；未執行 build/test/browser、未連 YMES PostgreSQL、未部署 SQL。
+
+## PRD PD102 Default API/schema handoff（2026-11-18 公司端更新）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/PRD/產品預設設定.md`、`docs/modules/PRD/產品主檔.md` 與本段 handoff。
+- [ ] Oracle APS product source DDL：`database/reference/mestest_prd_default_aps_source_ddl.sql`；PG CREATE-only：`database/reference/mestest_prd_default_aps_create.sql`。先查 YMES live schema、migrations、first-phase bootstrap；APS bootstrap 有欄位曾標示為推測，不能直接執行 CREATE-only 或重建既有表。
+- [ ] `tblprdprsopapssetup` PK `(productno,productversion,motypeno,nodeid)`；`tblprdprsopapssetupdetail` PK `(productno,productversion,motypeno,nodeid,equipmentno)`。兩張 Oracle 表都存在；欄位、nullable/default 與字典證據見功能規格及 SQL reference。流程 APS `tblprsopapsbase/detail` 已由 PS104 提供，先比對 YMES schema，不建立重複表。
+- [ ] 實作登入保護的批次 Default API。請求攜帶 ProductNo、ProductVersion、DefaultOP (1=All PS OP、2=Product Process OP)、Parameter/BusinessRule/Description/OPResource/QCItem/SubOP/APS 旗標；API 端從 DB 展開 OP，重新驗證 IssueState=0、產品流程/PS 權限、來源預設已核准。禁止信任 client 的 OP 清單、IssueState 及 audit identity。
+- [ ] 對照 `clsProduct.UpdPRDOP_BatchDefault`：此功能可能重建 `TBLPRDOP`、Parameter/Attrib/Rule、BusinessRule/Relation/XML CLOB、Description、OPArea、QCItem、SubOP 及 APS setup/detail。查清空來源時的清除行為、未勾項目的保留範圍、Parameter ECN 例外及實際交易邊界後，才決定 API transaction。
+- [ ] 注意 WinForms APS checkbox 在 `ExecuteAPS` 未啟用時隱藏但 Designer 預設 checked；QCItem 預設由 `PRDDefault_QCItemAutoChecked` 決定。核對舊 client 送旗標行為並寫入規格，避免 UI/API 默默改變資料。
+- [ ] 只有 live schema 確認缺表/缺欄才新增 migration；完成 API/DTO/錯誤處理後更新規格及 TODO，commit/push `main`。公司端 Default 目前只有 DEV localStorage；Production API 未接線，未部署 SQL。

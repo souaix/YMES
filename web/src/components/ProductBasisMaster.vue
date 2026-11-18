@@ -8,6 +8,7 @@ import ProductAccessorySetup from './ProductAccessorySetup.vue'
 import ProductResourceSetup from './ProductResourceSetup.vue'
 import ProductSubOpSetup from './ProductSubOpSetup.vue'
 import ProductProgramSetup from './ProductProgramSetup.vue'
+import ProductDefaultSetup from './ProductDefaultSetup.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -30,7 +31,20 @@ type ProductRelation = {
   opAreas?: ProductRow[]
   subOps?: ProductRow[]
   productPrograms?: string[]
+  qcItems?: ProductRow[]
+  apsSetups?: ProductRow[]
+  apsSetupDetails?: ProductRow[]
   materialGroups?: ProductRow[]
+}
+type ProductDefaultPlan = {
+  updateParameter: boolean
+  updateBusinessRule: boolean
+  updateDescription: boolean
+  updateOPResource: boolean
+  updateQCItem: boolean
+  updateSubOP: boolean
+  updateAPS: boolean
+  defaultOP: 1 | 2
 }
 type BomTreeLine = { id: string; label: string; kind: 'root' | 'material' | 'product' | 'group'; depth: number }
 type Envelope<T> = { items?: T[]; rows?: T[]; data?: T[]; detail?: string; message?: string; title?: string }
@@ -76,6 +90,7 @@ const programOptions: ProductRow[] = [
   { programNo: 'DEV-PROG-02', programType: 'VISION', description: 'DEV 外觀檢測程式' },
   { programNo: 'DEV-PROG-03', programType: 'ROBOT', description: 'DEV 組裝機械手臂程式' },
 ]
+const developmentDefaultSettings = { qcItemAutoChecked: false, apsEnabled: false }
 const toolbar = [
   { key: 'add', label: 'ADD (&A)' }, { key: 'edit', label: 'EDIT (&E)' },
   { key: 'delete', label: 'DEL (&D)' }, { key: 'copy', label: 'Copy (&C)' },
@@ -104,7 +119,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
   resource: { title: 'Resource', source: 'PD_ProductOPArea', description: '設定產品流程作業區域；需要產品流程資料及 PS 權限。' },
   'sub-op': { title: 'SubOP', source: 'PD_PRDSubOP', description: '依產品版次設定作業站子工序，支援尾端新增、序號插入、修改、多選刪除與排序。' },
   program: { title: 'Program', source: 'frmProductProgram', description: '依產品版次勾選程式主檔項目；確認時全量取代該產品版次的程式指派。' },
-  default: { title: 'Default', source: 'PD_ProductLoadDefault', description: '設定產品流程的預設值。' },
+  default: { title: 'Default', source: 'PD_ProductLoadDefault', description: '從已核准作業站/流程預設資料，批次重建所選產品作業站參數、規則、說明、QC、Resource、SubOP 與 APS 設定。' },
   'run-time': { title: 'RunTime', source: 'PD_ProductRunTime', description: '設定產品各作業站的標準工時。' },
   'qc-item': { title: 'QC Item', source: 'PD_ProductQCItem', description: '設定產品對應的品管項目。' },
   'packing-set': { title: 'Packing Set', source: 'PD_ProductPackingSet', description: '設定產品包裝規則與包裝配件。' },
@@ -173,6 +188,15 @@ const seedRelations: Record<string, ProductRelation> = {
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-20', subOpSequence: 1, subOpNo: 'DEV-SUB-20-01', subOpName: '外觀組裝確認', creator: 'DEV001', createDate: '2026-11-01T09:20:00', dataStamp: 0, reviser: '', reviseDate: '' },
     ],
     productPrograms: ['DEV-PROG-01', 'DEV-PROG-03'],
+    qcItems: [
+      { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', qcItemNo: 'DEV-QC-VISUAL', qcItemType: 0, executeOrder: 1, inLine: 1, inspTypeFAI: 1, inspTypeIPQC: 1, inspTypePQC: 1, reviser: 'DEV001', reviseDate: '2026-11-04T10:30:00' },
+    ],
+    apsSetups: [
+      { productNo: 'DEV-PRD-1001', productVersion: '01', processNo: 'DEV-PROC-01', processVersion: '01', moTypeNo: 1, opNo: 'DEV-OP-10', nodeId: 'DEV-NODE-10', equipmentNo: 'N/A', equipmentGroup: 'DEV-EQP-GRP', description: 'DEV APS 預設', subcontractorNo: 'N/A', schedule: 0, apsFixEqpTime: 0, apsVarEqpTime: 0, stdWorkTimeQty: 10, transferQty: 0, lotRearTime: 0, batchOp: 0, batchMaxQty: 999999 },
+    ],
+    apsSetupDetails: [
+      { productNo: 'DEV-PRD-1001', productVersion: '01', processNo: 'DEV-PROC-01', processVersion: '01', moTypeNo: 1, opNo: 'DEV-OP-10', nodeId: 'DEV-NODE-10', equipmentNo: 'DEV-EQP-01', equipmentGroup: 'DEV-EQP-GRP', description: 'DEV APS 設備明細', schedule: 0, apsFixEqpTime: 0, apsVarEqpTime: 0, stdWorkTimeQty: 10, transferQty: 0, lotRearTime: 0, batchOp: 0, batchMaxQty: 999999 },
+    ],
     bom: [
       { nodeNo: 'DEV-MTL-001', nodeType: 0, nodeVersion: '001', opNo: 'DEV-OP-10', stdQty: 2, unitNo: 'EA', decreaseRate: 0, specified: 1, description: 'DEV 材料明細' },
       { nodeNo: 'DEV-PRD-SUB', nodeType: 1, nodeVersion: '01', opNo: 'DEV-OP-20', stdQty: 1, unitNo: 'EA', decreaseRate: 0.02, specified: 0, description: 'DEV 子產品節點' },
@@ -422,6 +446,18 @@ function loadMock(): void {
       }
       if (existing && !existing.productPrograms && seed.productPrograms) {
         existing.productPrograms = clone(seed.productPrograms)
+        migrated = true
+      }
+      if (existing && !existing.qcItems && seed.qcItems) {
+        existing.qcItems = clone(seed.qcItems)
+        migrated = true
+      }
+      if (existing && !existing.apsSetups && seed.apsSetups) {
+        existing.apsSetups = clone(seed.apsSetups)
+        migrated = true
+      }
+      if (existing && !existing.apsSetupDetails && seed.apsSetupDetails) {
+        existing.apsSetupDetails = clone(seed.apsSetupDetails)
         migrated = true
       }
     }
@@ -710,7 +746,7 @@ function runAction(action: string): void {
       error.value = '請先選取產品流程列。'
       return
     }
-    if (['parameter','business-rule','op-description','resource'].includes(action) && !activeRelations.value.processes.length) {
+    if (['parameter','business-rule','op-description','resource','default'].includes(action) && !activeRelations.value.processes.length) {
       error.value = '請先為產品設定流程，或確認 PS 權限。'
       return
     }
@@ -794,6 +830,43 @@ function saveProductPrograms(programNos: string[]): void {
   relations.value[key] = { ...relatedFor(active.value), productPrograms: [...programNos] }
   persistMock()
   notice.value = '產品程式指派假資料已儲存。'
+}
+function applyProductDefaults(plan: ProductDefaultPlan): void {
+  if (!active.value || !mock.value) return
+  const relation = clone(relatedFor(active.value))
+  const template = seedRelations['DEV-PRD-1001|01']
+  const defaultOps = (template.parameters?.ops ?? []).map(row => String(row.opNo ?? ''))
+  const productOps = (relation.parameters?.ops ?? []).map(row => String(row.opNo ?? ''))
+  const targetOps = new Set(plan.defaultOP === 1 ? defaultOps : (productOps.length ? productOps : defaultOps))
+  const isTargetOP = (row: ProductRow) => !row.opNo || targetOps.has(String(row.opNo))
+  const resultLabels: string[] = []
+
+  if (plan.updateParameter && template.parameters) {
+    const parameters = clone(template.parameters)
+    const targetSerials = new Set(parameters.ops.filter(row => targetOps.has(String(row.opNo ?? ''))).map(row => String(row.serialNo)))
+    parameters.ops = parameters.ops.filter(row => targetOps.has(String(row.opNo ?? '')))
+    parameters.attributes = parameters.attributes.filter(row => targetSerials.has(String(row.serialNo)))
+    parameters.rules = parameters.rules.filter(row => targetSerials.has(String(row.serialNo)))
+    parameters.equipments = parameters.equipments.filter(row => targetSerials.has(String(row.serialNo)))
+    relation.parameters = parameters
+    resultLabels.push('Parameter')
+  }
+  if (plan.updateBusinessRule && template.businessRules) {
+    relation.businessRules = { ...clone(template.businessRules), operations: clone(template.businessRules.operations.filter(isTargetOP)) }
+    resultLabels.push('BusinessRule')
+  }
+  if (plan.updateDescription) { relation.opDescriptions = clone((template.opDescriptions ?? []).filter(isTargetOP)); resultLabels.push('Description') }
+  if (plan.updateOPResource) { relation.opAreas = clone((template.opAreas ?? []).filter(isTargetOP)); resultLabels.push('OPResource') }
+  if (plan.updateQCItem) { relation.qcItems = clone((template.qcItems ?? []).filter(isTargetOP)); resultLabels.push('QCItem') }
+  if (plan.updateSubOP) { relation.subOps = clone((template.subOps ?? []).filter(isTargetOP)); resultLabels.push('SubOP') }
+  if (plan.updateAPS) {
+    relation.apsSetups = clone((template.apsSetups ?? []).filter(isTargetOP))
+    relation.apsSetupDetails = clone((template.apsSetupDetails ?? []).filter(isTargetOP))
+    resultLabels.push('APS')
+  }
+  relations.value[keyOf(active.value)] = relation
+  persistMock()
+  notice.value = 'DEV 預設完成：' + resultLabels.join('、') + (plan.defaultOP === 1 ? '；範圍：All PS OP' : '；範圍：Product Process OP') + '。'
 }
 function addEqpConstraint(): void {
   if (!active.value || !editable.value) return
@@ -959,7 +1032,10 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'program'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductProgramSetup :product="active ?? {}" :program-options="programOptions" :selected-program-nos="activeRelations.productPrograms ?? []" :development-preview="mock" @save="saveProductPrograms" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'default'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <ProductDefaultSetup :product="active ?? {}" :has-product-process="activeRelations.processes.length > 0" :development-preview="mock" :qc-item-auto-checked="developmentDefaultSettings.qcItemAutoChecked" :aps-enabled="developmentDefaultSettings.apsEnabled" @apply="applyProductDefaults" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
