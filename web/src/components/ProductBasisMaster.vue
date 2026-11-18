@@ -12,6 +12,7 @@ import ProductDefaultSetup from './ProductDefaultSetup.vue'
 import ProductRunTimeSetup from './ProductRunTimeSetup.vue'
 import ProductQCItemSetup from './ProductQCItemSetup.vue'
 import ProductPackingSet from './ProductPackingSet.vue'
+import ProductEquipmentCapItems from './ProductEquipmentCapItems.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -26,6 +27,7 @@ type ProductRunTimeData = NonNullable<ProductRunTimeProps['setup']>
 type ProductRunTimeRow = ProductRunTimeProps['defaultRows'][number]
 type ProductQCAssignment = Parameters<InstanceType<typeof ProductQCItemSetup>['$props']['saveAssignments']>[1][number]
 type ProductPackingProps = InstanceType<typeof ProductPackingSet>['$props']
+type EquipmentCapRows = InstanceType<typeof ProductEquipmentCapItems>['$props']['rows']
 type ProductRelation = ProductPackingProps['relations'][string] & {
   processes: ProductRow[]
   bom: ProductRow[]
@@ -41,6 +43,7 @@ type ProductRelation = ProductPackingProps['relations'][string] & {
   productPrograms?: string[]
   runTime?: ProductRunTimeData
   qcItems?: ProductRow[]
+  equipmentCapItems?: EquipmentCapRows
   apsSetups?: ProductRow[]
   apsSetupDetails?: ProductRow[]
   materialGroups?: ProductRow[]
@@ -132,7 +135,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
   'run-time': { title: 'RunTime', source: 'PD_ProductRunTime', description: '設定產品各作業站的標準工時。' },
   'qc-item': { title: 'QC Item', source: 'PD_ProductQCItem', description: '設定產品對應的品管項目。' },
   'packing-set': { title: 'Packing Set', source: 'PD_ProductPackingSet', description: '設定產品包裝規則與包裝配件。' },
-  'eqp-cap-item': { title: 'EQPCapItem', source: 'frmProductEQPConstraint_THEIL_BU1', description: '維護產品版本、作業站與設備的限制對應。' },
+  'eqp-cap-item': { title: 'EQPCapItem', source: 'PD_OPCapItem', description: '設定產品版次各作業站的設備能力項目。' },
   esop: { title: 'eSOP', source: 'eSOP product function', description: '依產品編號、版本開啟 eSOP 內容。' },
   'equipment-spec': { title: 'EquipmentSpec', source: 'frmPRDEquipmentSpec_THEIL_BU1', description: '維護產品版本的設備規格。' },
   aps: { title: 'APS Integration', source: 'frmPRDAPSIntegration_THEIL_BU1', description: '維護產品流程與 APS 整合資料；按鈕受 ExecuteAPS 參數控制。' },
@@ -197,6 +200,10 @@ const seedRelations: Record<string, ProductRelation> = {
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-20', subOpSequence: 1, subOpNo: 'DEV-SUB-20-01', subOpName: '外觀組裝確認', creator: 'DEV001', createDate: '2026-11-01T09:20:00', dataStamp: 0, reviser: '', reviseDate: '' },
     ],
     productPrograms: ['DEV-PROG-01', 'DEV-PROG-03'],
+    equipmentCapItems: [
+      { opNo: 'DEV-OP-10', capItem: 'DEV-CAP-DISPENSER', capValue: 'HIGHPRECISION', description: 'DEV 點膠設備能力範例',
+        creator: 'DEV001', createDate: '2026-11-01T09:10:00', reviser: '', reviseDate: '', dataStamp: 0 },
+    ],
     qcItems: [
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', qcItemNo: 'DEV-QC-VISUAL', qcItemType: 0, executeOrder: 1, inLine: 1, inspTypeFAI: 1, inspTypeIPQC: 1, inspTypePQC: 1, reviser: 'DEV001', reviseDate: '2026-11-04T10:30:00' },
     ],
@@ -512,6 +519,10 @@ function loadMock(): void {
       }
       if (existing && !existing.productPrograms && seed.productPrograms) {
         existing.productPrograms = clone(seed.productPrograms)
+        migrated = true
+      }
+      if (existing && !existing.equipmentCapItems && seed.equipmentCapItems) {
+        existing.equipmentCapItems = clone(seed.equipmentCapItems)
         migrated = true
       }
       if (existing && !existing.qcItems && seed.qcItems) {
@@ -915,6 +926,11 @@ function saveProductQCItems(opNo: string, assignments: ProductQCAssignment[]): b
   notice.value = '產品品管項目假資料已儲存。'
   return true
 }
+function saveProductEquipmentCapItems(items: EquipmentCapRows): boolean {
+  const product = active.value
+  if (!product || !mock.value || Number(product.issueState) !== 0) return false
+  return replaceMockRelation(keyOf(product), { ...relatedFor(product), equipmentCapItems: items })
+}
 const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
   if (!mock.value || !keys.length) return false
   const targetKeys = new Set(keys)
@@ -1162,13 +1178,18 @@ onMounted(() => { void load() })
         :current-user="currentUser()" :development-preview="mock" :save-settings="savePackingSettings"
         :save-relations="savePackingRelations" @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
+    <div v-if="feature && featureKey === 'eqp-cap-item'" class="prd-overlay child-feature-overlay">
+      <ProductEquipmentCapItems :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :issue-state="Number(active?.issueState ?? -1)" :current-user="currentUser()" :development-preview="mock"
+        :rows="mock ? activeRelations.equipmentCapItems ?? [] : []" :save="saveProductEquipmentCapItems" @close="closeFeature" />
+    </div>
+    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
       <section class="prd-feature-dialog">
         <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
         <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
         <p>{{ feature.description }}</p>
         <p v-if="featureKey === 'process-setup' || featureKey === 'process-expand'" class="prd-context">流程 {{ selectedProcess?.psNo || '—' }} / MOType {{ selectedProcess?.moTypeNo ?? '—' }} / {{ selectedProcess?.processNo || '—' }} / {{ selectedProcess?.processVersion || '—' }}</p>
-        <template v-if="featureKey === 'eqp-cap-item' || featureKey === 'equipment-spec'">
+        <template v-if="featureKey === 'equipment-spec'">
           <div class="prd-detail-grid"><table><thead><tr><th>OPNo</th><th>EquipmentNo</th><th>Description</th></tr></thead><tbody><tr v-for="(item,index) in activeRelations.constraints" :key="index"><td>{{ item.opNo }}</td><td>{{ item.equipmentNo }}</td><td>{{ item.description }}</td></tr><tr v-if="!activeRelations.constraints.length"><td colspan="3" class="empty">尚無設備資料。</td></tr></tbody></table></div>
         </template>
         <div v-else class="prd-feature-placeholder"><strong>WinForms 功能入口已依原功能名稱保留。</strong><p>此子功能由另一個 ObjectFileHandler/WinForms Form 載入；其專屬欄位、資料表與操作會在對應功能規格中拆分，API 尚待家用端實作。</p><p>Development 目前只展示產品上下文，不會寫入 MES 或 YMES 正式資料。</p></div>

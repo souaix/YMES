@@ -1678,3 +1678,8 @@ API 工作：
 - [ ] 依 [Packing Set 規格](docs/modules/PRD/產品包裝設定.md) 核對 live schema、first-phase、既有 migrations 及七表的 [Oracle 邏輯 DDL](database/reference/mestest_prd_packing_set_source_ddl.sql)／[PostgreSQL CREATE-only](database/reference/mestest_prd_packing_set_create.sql)。產品包裝數量沿用產品主檔，保留序號主表索引與 PK 的差異紀錄。
 - [ ] 接三階 Pack Setting、配件 CRUD／整批 Copy 及多階 Rule Map API。以伺服器權限、產品 IssueState、DataStamp、Current／Specified 規則版次和使用中批次作為寫入條件。
 - [ ] 公司端已完成 Serial Rule、Label Rule／Multi View 和 DEV 欄位預覽；家用端待核對序號長度 100 與 Oracle 欄位精度、2D 分隔符、標籤引擎、檔案路徑權限與批次寫入。
+
+## PRD PD102 EQPCapItem 家用端 handoff（2026-11-18）
+
+- [ ] 依 [設備能力項目規格](docs/modules/PRD/產品設備能力項目.md) 核對 `tblprdopcapitem`、共用 `tblemseqpcapbasis`、`tblopbasis` 與 live schema／migration history。只補缺漏的表或欄位。
+- [ ] 實作產品版次設備能力 CRUD、OP／CapItem lookup、同版次 Copy、新舊 DataStamp 衝突、稽核和多選刪除語意。伺服器驗證 IssueState、權限、主鍵及 CapValue 資料型別與長度。

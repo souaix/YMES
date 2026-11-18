@@ -1087,4 +1087,9 @@
 - [x] 核對 `btnPackingSet_Click`、`PackOperationMode`、傳統及多階 Form／Designer、`wsPRD`／`wsWIP`、`clsProduct`／`clsBasis_UPD`。完成 DEV 三階數量與配件、Copy、多階規則對應和使用中阻擋示例。
 - [x] 以 Windows PowerShell 5.1 + ODP.NET 唯讀核對七張 Oracle 表，收錄邏輯 DDL／CREATE-only 及家用端交接。序號主檔來源為獨立唯一索引。
 - [x] 完成傳統 Packing Set 的 Serial Rule、Label Rule、Multi View 與 DEV 欄位預覽。序號／標籤主明細寫入 DEV localStorage；正式標籤引擎及瀏覽器驗收待接續。
-- [ ] 下一項 PD102 `EQPCapItem`。
+
+## PRD PD102 EQPCapItem 公司端檢查點（2026-11-18）
+
+- [x] 核對 `btnEQPCapItem_Click`、`frmPRDOPCapItem`、Def／Designer、`wsPRD`／`wsEMS`／`wsOP` 及 Core。完成 DEV 清單、選擇 OP／CapItem、Add／Edit／Copy／Delete、Apply／Confirm 與 IssueState 限制。
+- [x] 使用 PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDOPCAPITEM` 與 `TBLEMSEQPCAPBASIS`。依字典建立 Oracle／PostgreSQL CREATE-only 參照，已補家用端交接。
+- [ ] 瀏覽器與正式 API 待家用端驗收；下一項 PD102 `eSOP`。
