@@ -5,7 +5,7 @@
 - [x] QC501/QC502 已部署並完成本輪正式 app-browser 操作驗收，測試資料清空；細節見本檔 QC501/QC502 完成紀錄與各模組文件。
 - [x] 已整合公司端 `28bc913` 及其前 23 筆新增提交，保留全部 DDL、規格與 UI；處理雙方文件衝突，補正 PRD/PRS 的 TypeScript/初始化/換版格式錯誤。完整 .NET Release 與 Web Vite build 成功。
 - [x] 合併新增頁在本機 Development 完成相關修正的基本操作檢查；PRD/PRS 正式 API 與完整 CRUD 驗收仍依下方交接，未標成正式可用。正式站本輪發行範圍為 QC501/QC502。
-- [ ] 完成 GitHub 同步並檢查是否有更新。下一個家用端功能先接 QC503「檢測設備連線程式」；沿用 migration 0027 的 Driver 表及 QC501/QC502 共用查找。
+- [x] GitHub main 已同步整合提交 `340db5f`，包含公司端 `7125143`，未使用 force push。下一個家用端功能先接 QC503「檢測設備連線程式」；沿用 migration 0027 的 Driver 表及 QC501/QC502 共用查找。
 
 ## 最新公司端交接：PS102 製造層別設定（2026-11-18）
 
@@ -160,7 +160,7 @@
 - [x] 精確 nullable DataStamp CAS、交易內鎖定權威類別/Driver、Apply 使用 server DTO 與新增轉修改模式已實作。.NET 9 Release build 0 warning/0 error；頁內確認框已取代 `window.confirm`。最終部署後 app-browser 確認 ProblemDetails 顯示清楚中文 detail，不顯示 JSON。
 - [x] 本輪與先前測試儀器/類別均已清理；暫存 Driver 以交易清理，遠端精確 fixture 計數為 0。
 - [x] 收尾驗證通過：QC501 狀態 1 編輯欄位/保存停用、-1 與 2 類別刪除成功；QC502 狀態 0 刪除先取消保留再確定刪除，狀態 2 刪除成功。兩頁四狀態篩選、Close 回空白首頁及登出/Demo 登入均通過；API/Web healthy、readiness=200。
-- [ ] 同步本次家用端變更至 GitHub，讓公司端 pull API/schema 文件後對接；最新 `origin/main`=`28bc913` 含 QC503 UI 提交 `b572f3b`，合併後讀新版待辦，接手 QC503 家用端 API。
+- [x] 本次家用端變更已隨 `340db5f` 同步 GitHub main，保留公司端 `7125143` 與 QC503 UI 提交 `b572f3b`；已讀新版待辦，下一步為 QC503 家用端 API。
 
 ## 最新公司端交接：QC501 檢測儀器類別（2026-11-18；家用端已接手）
 
