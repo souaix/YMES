@@ -1677,4 +1677,4 @@ API 工作：
 
 - [ ] 依 [Packing Set 規格](docs/modules/PRD/產品包裝設定.md) 核對 live schema、first-phase、既有 migrations 及七表的 [Oracle 邏輯 DDL](database/reference/mestest_prd_packing_set_source_ddl.sql)／[PostgreSQL CREATE-only](database/reference/mestest_prd_packing_set_create.sql)。產品包裝數量沿用產品主檔，保留序號主表索引與 PK 的差異紀錄。
 - [ ] 接三階 Pack Setting、配件 CRUD／整批 Copy 及多階 Rule Map API。以伺服器權限、產品 IssueState、DataStamp、Current／Specified 規則版次和使用中批次作為寫入條件。
-- [ ] 公司端尚待 Serial Rule、Label Rule／Multi View DEV 表單及預覽。家用端待核對標籤引擎、路徑與相關批次寫入。
+- [ ] 公司端已完成 Serial Rule、Label Rule／Multi View 和 DEV 欄位預覽；家用端待核對序號長度 100 與 Oracle 欄位精度、2D 分隔符、標籤引擎、檔案路徑權限與批次寫入。

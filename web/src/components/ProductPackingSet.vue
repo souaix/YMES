@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import ProductPackingLabelRules from './ProductPackingLabelRules.vue'
+import ProductPackingSerialRules from './ProductPackingSerialRules.vue'
 
 type PackSettings = { boxQty: number; cartonQty: number; palletQty: number; packOiPath: string }
 type Audit = { creator: string; createDate: string; reviser: string; reviseDate: string; dataStamp: number }
 type PackAccessory = Audit & { barcode: string; description: string }
 type RuleMapping = Audit & { ruleNo: string; ruleVersion: string }
 type PackProduct = { key: string; productNo: string; productVersion: string; productName: string; issueState: number; settings: PackSettings }
-type PackingRelation = { packingAccessories?: PackAccessory[]; packingRuleMap?: RuleMapping | null }
+type PackingSerialRows = InstanceType<typeof ProductPackingSerialRules>['$props']['rules']
+type PackingLabelRows = InstanceType<typeof ProductPackingLabelRules>['$props']['rules']
+type PackingRelation = {
+  packingAccessories?: PackAccessory[]
+  packingRuleMap?: RuleMapping | null
+  packingSerialRules?: PackingSerialRows
+  packingLabelRules?: PackingLabelRows
+}
 type PackingChange = PackingRelation & { key: string }
 type CopyAction = 'settings' | 'accessories'
 
@@ -22,6 +31,7 @@ const props = defineProps<{
 const emit = defineEmits<{ close: [] }>()
 
 const mode = ref<'0' | '1'>('0')
+const legacyTab = ref<'settings' | 'serial' | 'label'>('settings')
 const boxQty = ref('')
 const cartonQty = ref('')
 const palletQty = ref('')
@@ -41,6 +51,8 @@ const localRules = [
 const productsInUse = new Set(['DEV-PRD-1002|02'])
 const canEditLegacy = computed(() => props.developmentPreview && props.product.issueState === 0)
 const accessories = computed(() => props.relations[props.product.key]?.packingAccessories ?? [])
+const serialRules = computed(() => props.relations[props.product.key]?.packingSerialRules ?? [])
+const labelRules = computed(() => props.relations[props.product.key]?.packingLabelRules ?? [])
 const mappedProducts = computed(() => props.products.flatMap(product => {
   const mapping = props.relations[product.key]?.packingRuleMap
   return mapping ? [{ ...product, mapping }] : []
@@ -183,6 +195,14 @@ function deleteMappings(): void {
 function displayDate(value: string): string {
   return value ? new Date(value).toLocaleString('sv-SE') : ''
 }
+
+function saveSerialRules(rows: PackingSerialRows): boolean {
+  return canEditLegacy.value && props.saveRelations([{ key: props.product.key, packingSerialRules: rows }])
+}
+
+function saveLabelRules(rows: PackingLabelRows): boolean {
+  return canEditLegacy.value && props.saveRelations([{ key: props.product.key, packingLabelRules: rows }])
+}
 </script>
 
 <template>
@@ -203,6 +223,12 @@ function displayDate(value: string): string {
         </label>
       </div>
       <div v-if="mode === '0'" class="pack-body">
+        <nav class="pack-actions pack-tabs" aria-label="三階包裝設定">
+          <button type="button" :aria-pressed="legacyTab === 'settings'" @click="legacyTab = 'settings'">Pack Setting</button>
+          <button type="button" :aria-pressed="legacyTab === 'serial'" @click="legacyTab = 'serial'">Serial Rule</button>
+          <button type="button" :aria-pressed="legacyTab === 'label'" @click="legacyTab = 'label'">Label Rule</button>
+        </nav>
+        <div v-show="legacyTab === 'settings'">
         <form class="pack-card" @submit.prevent="savePackSettings">
           <h3>Pack Setting</h3>
           <div class="pack-fields">
@@ -232,7 +258,9 @@ function displayDate(value: string): string {
             </tbody>
           </table></div>
         </div>
-        <p class="pack-muted">包裝序號規則、Label Rule 與標籤預覽仍待接續。</p>
+        </div>
+        <ProductPackingSerialRules v-show="legacyTab === 'serial'" :rules="serialRules" :can-edit="canEditLegacy" :current-user="currentUser" :save="saveSerialRules" />
+        <ProductPackingLabelRules v-show="legacyTab === 'label'" :rules="labelRules" :can-edit="canEditLegacy" :product-no="product.productNo" :current-user="currentUser" :save="saveLabelRules" />
       </div>
       <div v-else class="pack-body">
         <div class="pack-actions">
@@ -329,5 +357,18 @@ function displayDate(value: string): string {
 .pack-message { margin: 8px 12px; }
 .pack-overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #0005; padding: 8px; }
 .pack-dialog { width: min(480px, 100%); max-height: 100%; overflow: auto; box-sizing: border-box; background: #fff; border: 1px solid #a9a69d; padding: 12px; display: grid; gap: 9px; }
+.pack-tabs { margin-bottom: 8px; }
+.pack-tabs button[aria-pressed="true"] { background: #fff2bd; font-weight: 600; }
+.pack-body :deep(.pack-rule-panel) { padding: 9px; border: 1px solid var(--line, #e5e1d5); }
+.pack-body :deep(.pack-rule-panel h3), .pack-body :deep(.pack-rule-panel h4) { margin: 0 0 8px; font-size: 14px; }
+.pack-body :deep(.pack-rule-actions), .pack-body :deep(.pack-rule-fields) { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 6px 0; }
+.pack-body :deep(.pack-rule-fields label) { display: flex; align-items: center; gap: 4px; }
+.pack-body :deep(.pack-rule-scroll) { overflow: auto; max-height: 34vh; margin: 7px 0; background: white; }
+.pack-body :deep(.pack-rule-scroll table) { width: 100%; border-collapse: collapse; }
+.pack-body :deep(.pack-rule-scroll td), .pack-body :deep(.pack-rule-scroll th) { padding: 5px; border: 1px solid var(--line, #e5e1d5); white-space: nowrap; text-align: left; }
+.pack-body :deep(.pack-rule-scroll input[type="number"]) { width: 60px; }
+.pack-body :deep(.pack-rule-form), .pack-body :deep(.pack-rule-form fieldset) { margin: 8px 0; border: 1px solid var(--line, #e5e1d5); padding: 7px; }
+.pack-body :deep(.pack-rule-error) { color: #941b18; }
+.pack-body :deep(.pack-rule-items) { margin: 6px 0; }
 @media (max-width: 640px) { .pack-fields { grid-template-columns: 1fr; } }
 </style>
