@@ -15,9 +15,10 @@ interface WorkOrder {
   description: string; belongToMoNo: string; issueState: IssueState; moState: number; dataStamp: number
   creator: string; createDate: string; reviser: string; reviseDate: string
   processes: Process[]; components: Component[]; properties: Property[]
+  fromErp?: boolean; hasLots?: boolean; hasIssuedMaterial?: boolean
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; deletionOnly?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
@@ -61,8 +62,9 @@ function readLocal(): WorkOrder[] {
   return [
     { ...seed, moNo: 'DEV-MO-001' },
     { ...seed, moNo: 'DEV-MO-002', issueState: 1, moState: 1 },
-    { ...seed, moNo: 'DEV-MO-003', issueState: 2, moState: 2 },
+    { ...seed, moNo: 'DEV-MO-003', issueState: 2, moState: 2, fromErp: true },
     { ...seed, moNo: 'DEV-MO-004', issueState: -1 },
+    { ...seed, moNo: 'DEV-MO-005', hasLots: true },
   ]
 }
 
@@ -72,15 +74,72 @@ const search = ref('')
 const appliedSearch = ref('')
 const activeNo = ref('')
 const error = ref('')
+const notice = ref('')
 const editError = ref('')
 const editor = ref<WorkOrder>()
 const mode = ref<'add' | 'edit' | 'copy' | 'property'>('add')
 const section = ref<'basis' | 'process' | 'components' | 'property'>('basis')
 const materials = ref<WorkOrder>()
-const visible = computed(() => rows.value.filter(row =>
-  row.issueState === currentState.value && row.moNo.toUpperCase().includes(appliedSearch.value),
-).sort((a, b) => a.moNo.localeCompare(b.moNo)))
+const selectedNos = ref<string[]>([])
+const deletionFilters = ref({
+  moNo: '', roNo: '', itemNo: '', customerNo: '', productNo: '', productVersion: '',
+  engNo: '', engVersion: '', moTypeNo: '', sources: [] as number[], states: [] as number[],
+})
+const appliedDeletionFilters = ref<typeof deletionFilters.value>()
+const deletionStates = Object.entries(moStateLabels).map(([value, label]) => ({ value: Number(value), label }))
+const visible = computed(() => rows.value.filter(row => {
+  if (!props.deletionOnly) return row.issueState === currentState.value && row.moNo.toUpperCase().includes(appliedSearch.value)
+  const query = appliedDeletionFilters.value
+  if (!query) return false
+  const fields = ['roNo', 'itemNo', 'customerNo', 'productNo', 'productVersion', 'engNo', 'engVersion', 'moTypeNo'] as const
+  return row.moNo.toUpperCase().startsWith(query.moNo) &&
+    fields.every(key => !query[key] || String(row[key]).toUpperCase() === query[key]) &&
+    (!query.sources.length || query.sources.includes(row.moSource)) &&
+    (query.states.length ? query.states.includes(row.moState) : row.moState >= 0 && row.moState <= 3)
+}).sort((a, b) => a.moNo.localeCompare(b.moNo)))
 const active = computed(() => visible.value.find(row => row.moNo === activeNo.value) ?? visible.value[0])
+
+function queryDeletion(): void {
+  const query = structuredClone(toRaw(deletionFilters.value))
+  const fields = ['moNo', 'roNo', 'itemNo', 'customerNo', 'productNo', 'productVersion', 'engNo', 'engVersion', 'moTypeNo'] as const
+  for (const key of fields) query[key] = query[key].trim().toUpperCase()
+  appliedDeletionFilters.value = query
+  selectedNos.value = []
+  notice.value = ''
+  error.value = ''
+}
+
+function toggleDeletionSelection(event: Event): void {
+  selectedNos.value = (event.target as HTMLInputElement).checked ? visible.value.map(row => row.moNo) : []
+}
+
+async function deleteSelected(): Promise<void> {
+  if (!props.deletionOnly || !isDev.value) return
+  const selection = visible.value.filter(row => selectedNos.value.includes(row.moNo))
+  if (!selection.length || !await requestConfirmation('確定處理 ' + selection.length + ' 筆工單的刪除或停用？')) return
+  let next = rows.value.slice()
+  let finished = 0
+  error.value = ''
+  notice.value = ''
+  for (const row of selection) {
+    if (row.issueState === 1 || row.moState >= 3) {
+      error.value = row.moNo + ' 的目前狀態不可執行刪除。'
+      break
+    }
+    const suspend = row.fromErp || row.issueState === 2
+    if (!suspend && (row.hasLots || row.hasIssuedMaterial)) {
+      error.value = row.moNo + (row.hasLots ? ' 已建立生產批。' : ' 仍有已發料記錄。')
+      break
+    }
+    next = suspend ? next.map(item => item === row ? {
+      ...item, issueState: -1, dataStamp: item.dataStamp + 1, reviser: operator(), reviseDate: now(),
+    } : item) : next.filter(item => item !== row)
+    finished++
+  }
+  if (finished > 0 && !saveLocal(next)) { error.value = '無法儲存本機工單。'; return }
+  notice.value = '已完成 ' + finished + ' 筆。'
+  selectedNos.value = selection.slice(finished).map(row => row.moNo)
+}
 
 function saveLocal(next: WorkOrder[]): boolean {
   if (!isDev.value) return false
@@ -101,6 +160,7 @@ function open(nextMode: typeof mode.value): void {
     editor.value = {
       ...structuredClone(toRaw(row)), moNo: '', issueState: 0, moState: 0, dataStamp: 0,
       creator: operator(), createDate: now(), reviser: '', reviseDate: '', belongToMoNo: 'N/A',
+      fromErp: false, hasLots: false, hasIssuedMaterial: false,
     }
   } else {
     editor.value = nextMode === 'add' || !row ? blank() : structuredClone(toRaw(row))
@@ -177,6 +237,11 @@ async function changeState(action: 'delete' | 'approve' | 'release'): Promise<vo
   if (isApproval && row.issueState !== 0) return
   if (isRelease && (row.issueState !== 2 || row.moState !== 2)) return
   if (action === 'delete' && (row.issueState === 1 || row.moState >= 3)) return
+  const hardDelete = action === 'delete' && row.issueState !== 2 && !row.fromErp
+  if (hardDelete && (row.hasLots || row.hasIssuedMaterial)) {
+    error.value = row.hasLots ? '此工單已建立生產批。' : '此工單仍有已發料記錄。'
+    return
+  }
   if (action !== 'delete') {
     if (!row.processes.length) { error.value = '工單至少需要一個流程。'; return }
     if (row.processes.some(process => process.haveComponent) && !row.components.length) {
@@ -184,11 +249,11 @@ async function changeState(action: 'delete' | 'approve' | 'release'): Promise<vo
     }
     if (row.components.length > row.moQty) { error.value = '元件數量不可超過工單量。'; return }
   }
-  const label = isApproval ? '核准' : isRelease ? '發放' : row.issueState === 2 ? '停用' : '刪除'
+  const label = isApproval ? '核准' : isRelease ? '發放' : hardDelete ? '刪除' : '停用'
   if (!await requestConfirmation('確定' + label + '工單 ' + row.moNo + '？')) return
   const next = rows.value.flatMap(item => {
     if (item !== row) return [item]
-    if (action === 'delete' && row.issueState !== 2) return []
+    if (hardDelete) return []
     return [{
       ...row, issueState: isApproval || isRelease ? 2 as const : -1 as const,
       moState: isApproval ? 2 : isRelease ? 3 : row.moState,
@@ -205,25 +270,62 @@ function apply(event: MouseEvent): void {
 
 <template>
   <section class="mo-page">
-    <h2>工單基本資料</h2>
+    <h2>{{ deletionOnly ? '工單刪除' : '工單基本資料' }}</h2>
     <template v-if="isDev">
-      <form class="toolbar" @submit.prevent="appliedSearch = search.trim().toUpperCase(); activeNo = ''; error = ''">
+      <form v-if="deletionOnly" class="deletion-query" @submit.prevent="queryDeletion">
+        <div class="toolbar">
+          <label>工單編號 <input v-model="deletionFilters.moNo" maxlength="50"></label>
+          <label>訂單編號 <input v-model="deletionFilters.roNo" maxlength="25"></label>
+          <label>訂單項次 <input v-model="deletionFilters.itemNo" type="text" inputmode="numeric" maxlength="2"></label>
+          <label>客戶編號 <input v-model="deletionFilters.customerNo" maxlength="50"></label>
+          <label>產品 <input v-model="deletionFilters.productNo" maxlength="50"></label>
+          <label>產品版本 <input v-model="deletionFilters.productVersion" maxlength="5"></label>
+          <label>工程編號 <input v-model="deletionFilters.engNo" maxlength="30"></label>
+          <label>工程版本 <input v-model="deletionFilters.engVersion" maxlength="3"></label>
+          <label>工單類別 <input v-model="deletionFilters.moTypeNo" type="text" inputmode="numeric" maxlength="2"></label>
+        </div>
+        <div class="toolbar">
+          <fieldset class="toolbar"><legend>來源</legend>
+            <label v-for="source in sources" :key="source.value"><input v-model="deletionFilters.sources" :value="source.value" type="checkbox"> {{ source.label }}</label>
+          </fieldset>
+          <fieldset class="toolbar"><legend>工單狀態</legend>
+            <label v-for="state in deletionStates" :key="state.value"><input v-model="deletionFilters.states" :value="state.value" type="checkbox"> {{ state.label }}</label>
+          </fieldset>
+          <button type="submit">查詢</button>
+        </div>
+      </form>
+      <form v-else class="toolbar" @submit.prevent="appliedSearch = search.trim().toUpperCase(); activeNo = ''; error = ''">
         <label>工單編號 <input v-model="search" maxlength="50"></label><button type="submit">查詢</button>
         <button v-for="state in states" :key="state.value" type="button" :aria-pressed="currentState === state.value" @click="currentState = state.value; activeNo = ''; error = ''">{{ state.label }}</button>
       </form>
       <p v-if="error" role="alert">{{ error }}</p>
+      <p v-if="notice" role="status">{{ notice }}</p>
       <div class="workspace">
         <div class="grid"><table>
-          <thead><tr><th>選取</th><th>工單編號</th><th>來源</th><th>訂單</th><th>廠別</th><th>客戶</th><th>產品</th><th>版本</th><th>工單量</th><th>單位</th><th>狀態</th><th>計畫完工</th><th>說明</th></tr></thead>
+          <thead><tr>
+            <th>
+              <input v-if="deletionOnly" type="checkbox" aria-label="選取查詢結果" :disabled="!visible.length" :checked="visible.length > 0 && selectedNos.length === visible.length" @change="toggleDeletionSelection">
+              <template v-else>選取</template>
+            </th>
+            <th>工單編號</th><th>來源</th><th>訂單</th><th>廠別</th><th>客戶</th><th>產品</th><th>版本</th><th>工單量</th><th>單位</th><th>工單狀態</th><th v-if="deletionOnly">簽核狀態</th><th>計畫完工</th><th>說明</th>
+          </tr></thead>
           <tbody>
-            <tr v-for="row in visible" :key="row.moNo" :class="{ selected: active?.moNo === row.moNo }" @click="activeNo = row.moNo">
-              <td><input type="radio" name="selected-work-order" :checked="active?.moNo === row.moNo" :aria-label="'選取 ' + row.moNo" @change="activeNo = row.moNo"></td>
-              <td>{{ row.moNo }}</td><td>{{ sources.find(item => item.value === row.moSource)?.label }}</td><td>{{ row.roNo }}</td><td>{{ row.factoryNo }}</td><td>{{ row.customerNo }}</td><td>{{ row.productNo }}</td><td>{{ row.productVersion }}</td><td>{{ row.moQty }}</td><td>{{ row.moUnitNo }}</td><td>{{ moStateLabels[row.moState] }}</td><td>{{ row.planFinishDate }}</td><td>{{ row.description }}</td>
+            <tr v-for="row in visible" :key="row.moNo" :class="{ selected: deletionOnly ? selectedNos.includes(row.moNo) : active?.moNo === row.moNo }" @click="activeNo = row.moNo">
+              <td>
+                <input v-if="deletionOnly" v-model="selectedNos" type="checkbox" :value="row.moNo" :aria-label="'選取 ' + row.moNo">
+                <input v-else type="radio" name="selected-work-order" :checked="active?.moNo === row.moNo" :aria-label="'選取 ' + row.moNo" @change="activeNo = row.moNo">
+              </td>
+              <td>{{ row.moNo }}</td><td>{{ sources.find(item => item.value === row.moSource)?.label }}</td><td>{{ row.roNo }}</td><td>{{ row.factoryNo }}</td><td>{{ row.customerNo }}</td><td>{{ row.productNo }}</td><td>{{ row.productVersion }}</td><td>{{ row.moQty }}</td><td>{{ row.moUnitNo }}</td><td>{{ moStateLabels[row.moState] }}</td>
+              <td v-if="deletionOnly">{{ states.find(item => item.value === row.issueState)?.label }}</td>
+              <td>{{ row.planFinishDate }}</td><td>{{ row.description }}</td>
             </tr>
-            <tr v-if="!visible.length"><td colspan="13">沒有符合條件的工單</td></tr>
+            <tr v-if="!visible.length"><td :colspan="deletionOnly ? 14 : 13">{{ deletionOnly && !appliedDeletionFilters ? '請輸入查詢條件或查詢全部' : '沒有符合條件的工單' }}</td></tr>
           </tbody>
         </table></div>
-        <div class="actions">
+        <div v-if="deletionOnly" class="actions">
+          <button type="button" :disabled="!selectedNos.length" @click="deleteSelected">刪除</button>
+        </div>
+        <div v-else class="actions">
           <button type="button" @click="open('add')">新增</button>
           <button type="button" :disabled="active?.issueState !== 0" @click="open('edit')">修改</button>
           <button type="button" :disabled="!active || active.issueState === 1 || active.moState >= 3" @click="changeState('delete')">刪除</button>
@@ -236,7 +338,7 @@ function apply(event: MouseEvent): void {
       </div>
       <p>資料總筆數 {{ visible.length }}</p>
     </template>
-    <p v-else role="status">工單基本資料尚未接入正式服務。</p>
+    <p v-else role="status">此功能尚未接入正式服務。</p>
     <button type="button" @click="emit('close')">關閉</button>
 
     <div v-if="editor" class="overlay">
@@ -318,6 +420,7 @@ function apply(event: MouseEvent): void {
 .mo-page { display: grid; align-content: start; gap: 12px; padding: 16px; color: #253244; }
 h2, h3, p { margin: 0; }
 .toolbar, .child-row, footer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.deletion-query { display: grid; gap: 8px; }
 .child-row { margin-bottom: 10px; }
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
 .actions { display: flex; flex-direction: column; gap: 8px; }

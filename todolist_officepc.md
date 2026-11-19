@@ -1328,3 +1328,8 @@
 
 - [x] 追查 THEIL Form／Designer、標準與客製 Service、Core；DEV 支援主檔與流程、元件、屬性、用料預覽、核准及發放。
 - [x] [OE201 規格](docs/modules/OE/工單基本資料.md) 含五張 MESTEST 表的 DDL、索引及家用端 API／schema 交接。跨模組寫入、正式簽核、挑片與 ERP 相依列為後續。
+
+## OE202 工單刪除
+
+- [x] 核對 `frmMODelete` Form／Designer、`wsOE.DelMOBasis` 與 Core。DEV 支援多條件查詢、多選、停用／硬刪與出錯停止。
+- [x] [OE202 規格](docs/modules/OE/工單刪除.md) 記錄 ERP、廠別、批號與發料限制。DDL 共用已查證的 OE201 主檔，跨模組回復由家用端接續。
