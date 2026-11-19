@@ -1358,3 +1358,8 @@
 
 - [x] 依 Form／Designer、Service 與 Core 交付 DEV 存料與元件雙表。上層與 OE206 模擬發料共用資料。
 - [x] [OE207 規格](docs/modules/OE/工單存料現況.md) 補元件表 Oracle DDL、CREATE-only 與唯讀 API 交接。
+
+## OE208 工單結案
+
+- [x] 依 Form／Designer、Service 與 Core 交付 DEV 選取、確認、WIP／ERP 阻擋及結案。
+- [x] [OE208 規格](docs/modules/OE/工單結案.md) 記錄結案 CAS 和在製品、半成品、報廢等守門。DDL 共用 OE201。

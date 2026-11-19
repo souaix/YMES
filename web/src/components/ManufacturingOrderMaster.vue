@@ -19,12 +19,15 @@ interface WorkOrder {
   fromErp?: boolean; hasLots?: boolean; hasIssuedMaterial?: boolean
   unreleaseLotQty?: number; erpMoLineNo?: string
   productType?: string; planStartDate?: string; actualStartDate?: string; actualFinishDate?: string
+  orgMoState?: number; hasOpenWip?: boolean
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' | 'material-stock' }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' | 'material-stock' | 'close' }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const deletionOnly = computed(() => props.pageMode === 'delete')
+const closingOnly = computed(() => props.pageMode === 'close')
+const batchSelection = computed(() => deletionOnly.value || closingOnly.value)
 const startReport = computed(() => props.pageMode === 'start-report')
 const finishReport = computed(() => props.pageMode === 'finish-report')
 const report = computed(() => startReport.value || finishReport.value)
@@ -33,6 +36,7 @@ const reportAction = computed(() => finishReport.value ? '完工' : '開工')
 const pageTitle = computed(() => {
   if (report.value) return '工單達交率（準時' + reportAction.value + '）'
   if (queryOnly.value) return '工單查詢'
+  if (closingOnly.value) return '工單結案'
   return deletionOnly.value ? '工單刪除' : '工單基本資料'
 })
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
@@ -83,6 +87,9 @@ function readLocal(): WorkOrder[] {
     { ...seed, moNo: 'DEV-MO-006', issueState: 2, moState: 99, unreleaseLotQty: 0, actualStartDate: '2026-11-13', actualFinishDate: '2026-11-15' },
     { ...seed, moNo: 'DEV-MO-007', issueState: 2, moState: 99, actualStartDate: '2026-11-11', actualFinishDate: '2026-11-14' },
     { ...seed, moNo: 'DEV-MO-008', issueState: 2, moState: 99, actualStartDate: '2026-11-12', actualFinishDate: '2026-11-16' },
+    { ...seed, moNo: 'DEV-MO-009', issueState: 2, moState: 3 },
+    { ...seed, moNo: 'DEV-MO-010', issueState: 2, moState: 3, fromErp: true },
+    { ...seed, moNo: 'DEV-MO-011', issueState: 2, moState: 3, hasOpenWip: true },
   ]
 }
 
@@ -109,6 +116,7 @@ const queryStates = computed(() => Object.entries(moStateLabels)
   .map(([value, label]) => ({ value: Number(value), label }))
   .filter(state => queryOnly.value || state.value <= 3))
 const visible = computed(() => rows.value.filter(row => {
+  if (closingOnly.value) return row.issueState === 2 && row.moState === 3 && row.moNo.toUpperCase().includes(appliedSearch.value)
   if (!props.pageMode) return row.issueState === currentState.value && row.moNo.toUpperCase().includes(appliedSearch.value)
   const query = appliedFilters.value
   if (!query) return false
@@ -179,8 +187,38 @@ function applyQueryFilters(): void {
   error.value = ''
 }
 
-function toggleDeletionSelection(event: Event): void {
+function searchOrders(): void {
+  appliedSearch.value = search.value.trim().toUpperCase()
+  activeNo.value = ''
+  selectedNos.value = []
+  error.value = ''
+  notice.value = ''
+}
+
+function toggleSelection(event: Event): void {
   selectedNos.value = (event.target as HTMLInputElement).checked ? visible.value.map(row => row.moNo) : []
+}
+
+async function closeSelected(): Promise<void> {
+  if (!closingOnly.value || !isDev.value) return
+  const selection = visible.value.filter(row => selectedNos.value.includes(row.moNo))
+  if (!selection.length || !await requestConfirmation('確定結案 ' + selection.length + ' 筆工單？')) return
+  const completed = new Set<string>()
+  error.value = ''
+  notice.value = ''
+  for (const row of selection) {
+    if (row.fromErp || row.hasOpenWip) {
+      error.value = row.moNo + (row.fromErp ? ' 為 ERP 工單，無法手動結案。' : ' 仍有在製品，無法結案。')
+      break
+    }
+    completed.add(row.moNo)
+  }
+  const next = rows.value.map(row => completed.has(row.moNo) ? {
+    ...row, moState: 99, orgMoState: row.moState, dataStamp: row.dataStamp + 1, reviser: operator(), reviseDate: now(),
+  } : row)
+  if (completed.size && !saveLocal(next)) { error.value = '無法儲存本機工單。'; return }
+  notice.value = '已結案 ' + completed.size + ' 筆。'
+  selectedNos.value = selectedNos.value.filter(no => !completed.has(no))
 }
 
 async function deleteSelected(): Promise<void> {
@@ -232,6 +270,7 @@ function open(nextMode: typeof mode.value): void {
       creator: operator(), createDate: now(), reviser: '', reviseDate: '', belongToMoNo: 'N/A',
       fromErp: false, hasLots: false, hasIssuedMaterial: false,
       unreleaseLotQty: undefined, erpMoLineNo: undefined, actualStartDate: undefined, actualFinishDate: undefined,
+      orgMoState: undefined, hasOpenWip: false,
     }
   } else {
     editor.value = nextMode === 'add' || !row ? blank() : structuredClone(toRaw(row))
@@ -345,7 +384,7 @@ function apply(event: MouseEvent): void {
   <section v-else class="mo-page">
     <h2>{{ pageTitle }}</h2>
     <template v-if="isDev">
-      <form v-if="pageMode" class="filter-form" @submit.prevent="applyQueryFilters">
+      <form v-if="pageMode && !closingOnly" class="filter-form" @submit.prevent="applyQueryFilters">
         <div class="toolbar">
           <label>工單編號 <input v-model="queryFilters.moNo" maxlength="50"></label>
           <label>訂單編號 <input v-model="queryFilters.roNo" maxlength="25"></label>
@@ -372,9 +411,11 @@ function apply(event: MouseEvent): void {
           <button type="submit">查詢</button>
         </div>
       </form>
-      <form v-else class="toolbar" @submit.prevent="appliedSearch = search.trim().toUpperCase(); activeNo = ''; error = ''">
+      <form v-else class="toolbar" @submit.prevent="searchOrders">
         <label>工單編號 <input v-model="search" maxlength="50"></label><button type="submit">查詢</button>
-        <button v-for="state in states" :key="state.value" type="button" :aria-pressed="currentState === state.value" @click="currentState = state.value; activeNo = ''; error = ''">{{ state.label }}</button>
+        <template v-if="!closingOnly">
+          <button v-for="state in states" :key="state.value" type="button" :aria-pressed="currentState === state.value" @click="currentState = state.value; activeNo = ''; error = ''">{{ state.label }}</button>
+        </template>
       </form>
       <p v-if="error" role="alert">{{ error }}</p>
       <p v-if="notice" role="status">{{ notice }}</p>
@@ -390,7 +431,7 @@ function apply(event: MouseEvent): void {
         <div class="grid"><table>
           <thead><tr>
             <th>
-              <input v-if="deletionOnly" type="checkbox" aria-label="選取查詢結果" :disabled="!visible.length" :checked="visible.length > 0 && selectedNos.length === visible.length" @change="toggleDeletionSelection">
+              <input v-if="batchSelection" type="checkbox" aria-label="選取查詢結果" :disabled="!visible.length" :checked="visible.length > 0 && selectedNos.length === visible.length" @change="toggleSelection">
               <template v-else>選取</template>
             </th>
             <th>工單編號</th><th>來源</th><th>訂單</th><th>廠別</th><th>客戶</th><th>產品</th><th>版本</th><th>工單量</th><th>單位</th><th>工單狀態</th><th v-if="pageMode">簽核狀態</th><th>計畫完工</th><th>說明</th>
@@ -401,9 +442,9 @@ function apply(event: MouseEvent): void {
             <th v-if="finishReport">生產天數</th>
           </tr></thead>
           <tbody>
-            <tr v-for="row in visible" :key="row.moNo" :class="{ selected: deletionOnly ? selectedNos.includes(row.moNo) : active?.moNo === row.moNo }" @click="activeNo = row.moNo">
+            <tr v-for="row in visible" :key="row.moNo" :class="{ selected: batchSelection ? selectedNos.includes(row.moNo) : active?.moNo === row.moNo }" @click="activeNo = row.moNo">
               <td>
-                <input v-if="deletionOnly" v-model="selectedNos" type="checkbox" :value="row.moNo" :aria-label="'選取 ' + row.moNo">
+                <input v-if="batchSelection" v-model="selectedNos" type="checkbox" :value="row.moNo" :aria-label="'選取 ' + row.moNo">
                 <input v-else type="radio" name="selected-work-order" :checked="active?.moNo === row.moNo" :aria-label="'選取 ' + row.moNo" @change="activeNo = row.moNo">
               </td>
               <td>{{ row.moNo }}</td><td>{{ sources.find(item => item.value === row.moSource)?.label }}</td><td>{{ row.roNo }}</td><td>{{ row.factoryNo }}</td><td>{{ row.customerNo }}</td><td>{{ row.productNo }}</td><td>{{ row.productVersion }}</td><td>{{ row.moQty }}</td><td>{{ row.moUnitNo }}</td><td>{{ moStateLabels[row.moState] }}</td>
@@ -419,11 +460,14 @@ function apply(event: MouseEvent): void {
               </template>
               <td v-if="finishReport">{{ displayDays(leadTime(row)) }}</td>
             </tr>
-            <tr v-if="!visible.length"><td :colspan="finishReport ? 29 : startReport ? 28 : queryOnly ? 23 : deletionOnly ? 14 : 13">{{ pageMode && !appliedFilters ? '請輸入查詢條件或查詢全部' : '沒有符合條件的工單' }}</td></tr>
+            <tr v-if="!visible.length"><td :colspan="finishReport ? 29 : startReport ? 28 : queryOnly ? 23 : batchSelection ? 14 : 13">{{ pageMode && !closingOnly && !appliedFilters ? '請輸入查詢條件或查詢全部' : '沒有符合條件的工單' }}</td></tr>
           </tbody>
         </table></div>
         <div v-if="deletionOnly" class="actions">
           <button type="button" :disabled="!selectedNos.length" @click="deleteSelected">刪除</button>
+        </div>
+        <div v-else-if="closingOnly" class="actions">
+          <button type="button" :disabled="!selectedNos.length" @click="closeSelected">工單結案</button>
         </div>
         <div v-else-if="queryOnly" class="actions">
           <button type="button" :disabled="!active" @click="open('property')">屬性</button>
