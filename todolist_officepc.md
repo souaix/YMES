@@ -4,7 +4,7 @@
 
 - [x] QC103/QC107/QC108 正式獨立主檔已部署並完成模組 MD 所列 app-browser 操作；請保留 nullable 版本、原子 aggregate、來源狀態規則和共用確認窗。完整共用簽核／算法／下列來源依賴仍未完成。
 - [x] QC301 使用 QC108 真實核准目錄；QC301/QC302 預設法則及引用鎖已有正式 API/DB 回歸。QC401/QC402 真實 XLSX 選檔預覽與部分成功已驗證，YMES 標準空白範本已可下載；不再以缺少舊範本 binary 阻擋一般匯入。
-- [ ] 公司端補 QC107 Action/ReasonType 真實 ValueList 儲存值、標籤與 provider，以及 UserDefineAQL 實際 0/1 設定。家用端不以 DEV 值猜測。
+- [x] QC107 已核對 ValueList provider、語系、排序、Oracle 主鍵與 UserDefineAQL 的缺值行為。見 [QC107 來源查證](docs/modules/QC/計數判別法則基本資料.md#公司端-valuelist-與開關來源查證2026-11-19)。
 - [x] QC108 核對標準 FUNQR 原始碼與公司端 DLL 靜態識別字。四個方法在標準 Core 均回傳 null，客製可執行版本仍待交付。見 [QC108 來源查證](docs/modules/QC/計量品管法則基本資料.md#公司端-funqr-來源查證2026-11-19)。
 - [x] QC103 已核實 FUNSA 名單、Type 4/6 ShowFlag、Type 6 Core 與母體上限旗標、QC301 一般／Wafer 分表條件。見 [QC103 來源查證](docs/modules/QC/抽樣計劃.md#公司端-formcore-與函式目錄查證2026-11-19)。
 - [ ] 若須與原 MES 範本完全相容，再提供 MCLASS/SCLASS 原始 binary 與 SYS template metadata；目前 YMES 標準 .xlsx 範本是已記錄的產品決策，非原 MES 匯出檔。
@@ -12,7 +12,7 @@
 
 - [x] QC101/QC102/QC401/QC402/PS101正式API及主要頁面操作已部署驗證，模組MD已補實作、版本與限制；公司端pull保留nullable版本條件與共用確認窗。QC101/QC102 Apply保持連續區間新增；QC401/QC402/PS101 Apply轉Edit，依各自來源／YMES明確決策保持一致。
 - [ ] 公司端補交 MCLASS BASIS／SCLASS BASIS 原始Excel範本binary和SYS template metadata，勿以DEV CSV代替。家用端正式匯入API已通，瀏覽器選檔驗收仍列家用端待辦。
-- [ ] 公司端補交 QC107 真實Action／ReasonType ValueList儲存值與標籤、對應來源schema/provider及SysInfo UserDefineAQL實際值；不要照舊註解硬編碼。來源空缺目前回明確503。
+- [ ] QC107 尚待授權來源提供 Action／ReasonType 實際字典值與對應標籤，以及 UserDefineAQL 部署值；現行 API 在來源空缺時回 503。
 - [ ] QC103 尚待 SYS ValueList／ElementValue 實際可用選項，以及各型別正式 Simulation 回歸的樣本與期望結果。
 - [ ] 公司端確認QC101 legacy AdditionalXml helper數值/識別字查詢規則，以便比較目前已明確記錄的YMES literal contains搜尋契約。
 
