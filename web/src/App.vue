@@ -60,6 +60,9 @@ import WipLotExecutionByComponent from './components/WipLotExecutionByComponent.
 import WipEquipmentLotState from './components/WipEquipmentLotState.vue'
 import WipEquipmentMaterialLoading from './components/WipEquipmentMaterialLoading.vue'
 import WipCarrierState from './components/WipCarrierState.vue'
+import WipCarrierManagement from './components/WipCarrierManagement.vue'
+import WipEquipmentConsumeStatus from './components/WipEquipmentConsumeStatus.vue'
+import WipEquipmentConsumeStatusLog from './components/WipEquipmentConsumeStatusLog.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
 import SemiInventory from './components/SemiInventory.vue'
 import PackingMOLine from './components/PackingMOLine.vue'
@@ -469,7 +472,10 @@ const fallbackMenuTree: MenuNode[] = [
   }, {
     id: 'menu:WIP:EQUIPMENT AND CARRIER', label: '設備與載具', shortLabel: '設備', children: [
       { id: 'function:WIP:EQP MOUNT MATERIAL', label: '設備上料', tableName: 'tblwipeqpmaterialstate', shortLabel: '上料', functionNo: 'EQP MOUNT MATERIAL', moduleNo: 'WIP' },
+      { id: 'function:WIP:EQP CONSUME STATUS', label: '設備耗品現況', tableName: 'tblwipeqpconsumestatus', shortLabel: '耗品', functionNo: 'EQP CONSUME STATUS', moduleNo: 'WIP' },
+      { id: 'function:WIP:EQP CONSUME STATUS LOG', label: '設備耗品歷程', tableName: 'tblwipeqpconsumelog', shortLabel: '耗品歷程', functionNo: 'EQP CONSUME STATUS LOG', moduleNo: 'WIP' },
       { id: 'function:WIP:CARRIER STATE', label: '載具現況管理', tableName: 'tblwipcarrierstate', shortLabel: '載具', functionNo: 'CARRIER STATE', moduleNo: 'WIP' },
+      { id: 'function:WIP:CARRIER MANAGEMENT COMP', label: '載具管理_元件', tableName: 'tblwipcarrierstatedetail', shortLabel: '載具元件', functionNo: 'CARRIER MANAGEMENT COMP', moduleNo: 'WIP' },
     ],
   }, {
     id: 'menu:WIP:PACKAGING', label: '包裝與庫房', shortLabel: '庫', children: [
@@ -493,7 +499,10 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:EXECUTE LOT_COMP': appBasePath + '/WIP/LotExecutionByComponent',
   'function:WIP:EXECUTE LOT_EQP': appBasePath + '/WIP/EquipmentLotState',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
+  'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
+  'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
   'function:WIP:CARRIER STATE': appBasePath + '/WIP/CarrierState',
+  'function:WIP:CARRIER MANAGEMENT COMP': appBasePath + '/WIP/CarrierManagement',
   'function:WIP:PACKING_MOLINE': appBasePath + '/WIP/PackingMOLine',
   'function:WIP:PACKING_MOLINE_INV': appBasePath + '/WIP/PackingMOLineInv',
   'function:WIP:WIP INV': appBasePath + '/WIP/WipInventory',
@@ -653,6 +662,7 @@ const menuRoutes: Record<string, string> = {
 
 const functionRoutes: Record<string, string> = {
   'CARRIER STATE': appBasePath + '/WIP/CarrierState',
+  'CARRIER MANAGEMENT COMP': appBasePath + '/WIP/CarrierManagement',
   'BROKER BASIS': brokerBasisRoute,
   'FORWARDER BASIS': forwarderBasisRoute,
   'TAKER BASIS': takerBasisRoute,
@@ -808,7 +818,10 @@ const isWipLotExecutionPage = computed(() => activeMasterKey.value === 'function
 const isWipLotExecutionByComponentPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_COMP')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
+const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
+const isWipEquipmentConsumeStatusLogPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS LOG')
 const isWipCarrierStatePage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER STATE')
+const isWipCarrierManagementPage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER MANAGEMENT COMP')
 const isWipFgdInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:FGD INV')
 const isWipPackingMOLinePage = computed(() => activeMasterKey.value === 'function:WIP:PACKING_MOLINE')
 const isWipPackingMOLineInvPage = computed(() => activeMasterKey.value === 'function:WIP:PACKING_MOLINE_INV')
@@ -2404,7 +2417,10 @@ async function signOut(): Promise<void> {
         <WipLotExecutionByComponent v-else-if="isWipLotExecutionByComponentPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentConsumeStatusLog v-else-if="isWipEquipmentConsumeStatusLogPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipCarrierState v-else-if="isWipCarrierStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipCarrierManagement v-else-if="isWipCarrierManagementPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipInventory v-else-if="isWipInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdInventory v-else-if="isWipFgdInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <PackingMOLine v-else-if="isWipPackingMOLinePage" key="wp601" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />

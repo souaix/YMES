@@ -1,5 +1,7 @@
 # 2026-11-20 公司版本整合入口驗證
 
+最新累計：在原 23 個入口之外，a3 追加 WP303／WP304／WP308 三個入口防護通過，合計 **26 個唯一入口**。下方保留原 23 個的版本及驗證紀錄，新增三個詳見末節；均不代表正式 API 或生產交易完成。
+
 公司端 `3192964` 之後至 `4e0bae1` 的二十筆 OE／WIP 提交正常整合後，由家用端使用正式 app-browser 實際驗證受影響的 **23 個唯一入口，23/23 通過入口防護**。清單包含新增 OE 6 個、WIP 12 個，以及共用元件受影響的既有 OE 5 個。
 
 ## 版本及驗證界線
@@ -47,3 +49,21 @@
 - WP601／WP629：實際往返兩入口確認模式分離，保留 `wp601`／`wp629` 元件 key；正式無 currentLot 時不以 `OP-PACK`／`PCS` 補值。兩頁 `Close (&X)` 及 WP302 `關閉 (Close)` 另有實按紀錄。
 - WP201／WP202：`Object.assign(defaults, overrides)` 僅解決 TypeScript 重複宣告；原預設與覆寫順序、DEV 流程及正式服務未提供狀態不變。
 - 家用端完整原始紀錄：`.tools/gui-proof-20261120/office-merge-final-a2.json`（本機 ignored QA artifact）；其中 23 個 ID／路徑皆唯一，`devValues` 全空、`reentryPassed` 全為 true，並保留前 22 個版本與 WP604 新版本資訊。
+
+## f68ecea 三個新入口補驗（a3）
+
+公司端接續三筆 WP308／WP303／WP304 提交至 `f68ecea` 正常合併後，修正三頁非 DEV 載入 seeded 資料及查詢／查找入口未隔離的缺陷；原 DEV seed、共用 storage 與來源流程保留。WP308 另以四個顯式欄位交換修正 TS2322，不改位置交換值語意。
+
+API 保持 `16a825af0bea`，新 Web 為 `722bc259cc81`（完整 image SHA `722bc259cc81b5bd9ea40ee8cc2f942dde9cdbfe4d1cb56b28da09227e64942f`）。家用端正式 app-browser 已完成下表三頁；每頁均實按頁內 Close 返回空白首頁並以相同路由重進，`devValues` 全空、三頁 console 紀錄為空。
+
+| 功能 | 完整選單 | 正式路徑 | 實測防護與離開 |
+| --- | --- | --- | --- |
+| WP303 | 在製品管理 / 設備與載具 / 設備耗品現況 | `/YMES/WIP/EquipmentConsumeStatus` | 0 現況列；ADD／EDIT／Copy／DEL／ConsumReset 五項 disabled；明確服務未提供；Close (&X) 後重進通過 |
+| WP304 | 在製品管理 / 設備與載具 / 設備耗品歷程 | `/YMES/WIP/EquipmentConsumeStatusLog` | 0 歷程列；整個條件 fieldset、Query、設備及耗品兩個 lookup disabled；明確服務未提供；Close (&X) 後重進通過 |
+| WP308 | 在製品管理 / 設備與載具 / 載具管理_元件 | `/YMES/WIP/CarrierManagement` | 0 載具／位置列且選取為無；Query、類別 lookup、In／Out／Change disabled；明確服務未提供；關閉 (Close) 後重進通過 |
+
+驗證分三批累計：`5959083456ce` 的原 22 個、`61166de65bf6` 的 WP604 1 個、`722bc259cc81` 的本節 3 個，ID／路徑合計 26 個且不重複。合計 21 個頁內 Close、5 個框架首頁離開；沒有宣稱在 a3 重跑全部 26 個。本次未進行正式耗品／載具 API 或交易測試，相關查詢、CRUD、Reset、Carrier In／Out／Change、schema 與鎖／冪等性仍由家用端依各模組規格接續。
+
+本機原始證據：`.tools/gui-proof-20261120/office-merge-extra-a3.json`（ignored QA artifact），與原 a2 receipt 分別保留，未覆寫前 23 個的紀錄。
+
+a3 另實讀導覽列 39 個按鈕，缺少 SVG 圖示 0 個、缺少 aria／title 0 個；收合後 nav 的 clientWidth 與 scrollWidth 同為 33，無橫向裁切。截圖為本機 `.tools/gui-proof-20261120/office-merge-final-icons-a3.jpg`。這是導覽顯示補驗，未重複宣稱九個既有模組的全部 CRUD 分支已在本版重跑。

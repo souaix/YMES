@@ -4,7 +4,7 @@
 
 此段為目前狀態；下方保留交接當時的待辦原文，歷史未勾選項不表示本段已完成內容又變回缺表。家用端管理 YMES PostgreSQL／API／PPK SSH；公司端持續提供原生 Oracle 的唯讀結構、來源邏輯與 UI。
 
-目前運行 API `16a825af0bea`／Web `61166de65bf6`，migration 已到 0053。本輪 PD101／PD206／OP103／OP105／PS103／QC201／QC202／QC301／QC302 的已開放主要操作已用正式 app-browser 實際驗證；自行 Demo 登入、預設正式區、空白首頁、三層選單與收合圖示亦已重驗。修正四頁彈窗焦點、選單圖示裁切與公開資產權限；各模組 MD 保留未實作 provider 和未測分支，不把 API 回歸或 SQL fixture 當成 GUI 通過。所有專用測試資料已精確清理。公司端最新 `4e0bae1` 的二十筆 OE／WIP 提交已正常合併、建置；受影響的 23 個唯一入口已全部完成正式 app-browser 路由、不可用提示、無 DEV 資料及離開／重進防護驗證，詳見 [公司整合 QA](docs/qa/20261120-office-integration.md)。這 23/23 不是 API 或生產交易完成；各模組原有 API／schema 待辦仍保留，接續同步已驗版本至 GitHub。下一批 OPB02 草稿與 0054 尚未發行，須獨立保存，不混入本批。
+目前運行 API `16a825af0bea`／Web `722bc259cc81`，migration 已到 0053。本輪 PD101／PD206／OP103／OP105／PS103／QC201／QC202／QC301／QC302 的已開放主要操作已用正式 app-browser 實際驗證；自行 Demo 登入、預設正式區、空白首頁、三層選單與收合圖示亦已重驗。修正四頁彈窗焦點、選單圖示裁切與公開資產權限；各模組 MD 保留未實作 provider 和未測分支，不把 API 回歸或 SQL fixture 當成 GUI 通過。所有專用測試資料已精確清理。公司端至 `4e0bae1` 的二十筆 OE／WIP 提交已正常合併並完成原 23 個入口防護；接續至 `f68ecea` 的 WP308／WP303／WP304 三筆亦已正常合併、建置、部署並以正式 app-browser 補驗 3/3，累計 26 個唯一路由的不可用提示、無 DEV 資料及離開／重進防護通過，詳見 [公司整合 QA](docs/qa/20261120-office-integration.md)。這 26/26 不是 API 或生產交易完成；原有 API／schema 待辦仍由家用端持續實作，GitHub 同步待完成。下一批 OPB02 草稿與 0054 尚未發行，須獨立保存，不混入本批。
 
 - [x] 已正常合併公司端至 `3192964`，保留新 OE 頁、DDL 與 QC／PD206 來源。PD206 文件衝突同時保留雙方內容；沒有 force push 或捨棄任一端開發。家用端本批仍在正式 GUI 驗收，尚未以完成版本推到 main。
 - [x] 0042–0050 已逐份備份、驗證 pg_restore --list 後套用並獨立讀回。0046／0047／0048 僅補既存引用表 SELECT；0049／0050建立來源核對的OP Type／共用Property空表，無FK或多餘index，詳見 docs/DATABASE_CONNECTION.md。沒有搬移Oracle業務資料。
@@ -19,6 +19,7 @@
 - [x] PD101／PD206／OP103／PS103 的主要 CRUD、套用、查找、狀態與日期顯示已補實際 GUI；四頁的取消／套用焦點與正反 Tab 修補已發布重驗。使用 app-browser 自行按 Demo，無須再次等待使用者登入。缺少來源的 Copy／Property／WIP／Simulation 等分支保持明確未開放，不回假成功。
 - [x] 驗證後正常 fetch，最新公司端為 `4e0bae1`（本機基底 `3192964` 之後二十筆 OE／WIP 提交）。接續正常 merge，保留兩端來源；合併完成前不以舊版覆蓋公司端。
 - [x] 公司整合正式入口防護 23/23：OE 11 個、WIP 12 個。前 22 個於 Web `5959083456ce` 實測，a2 僅修改 SemiInventory.vue 並以 Web `61166de65bf6` 補驗 WP604。18 個有頁內 Close 的入口實按關閉，5 個基本 WIP 正式 fallback 由框架首頁離開，所有入口均重進通過；WP601／WP629 模式往返及無 currentLot 時 OPNo／Unit 不套 DEV 預設值亦已確認。這是未提供服務時的正確防護，不勾選下方正式 API／交易待辦。
+- [x] 接續正常合併公司端 `f68ecea` 三筆 WP308／WP303／WP304。修正三頁正式 seed 洩漏、補 empty／disabled／handler guard／DEV-only modal，保留 DEV 原資料與流程；WP308 型別交換窄修後建置通過。Web `722bc259cc81` 的正式 app-browser 三頁均 0 DEV 業務列、不可用提示正確、查找／交易 disabled、頁內 Close→空首頁→同路由重進通過，console 無紀錄；原 23 加 3 共 26 個唯一入口。僅完成入口防護，未將新三頁正式 API／交易待辦勾為完成。
 - [ ] 僅提交已驗收來源與維護 MD，正常同步 GitHub；若公司端再有新提交，先正常合併並重驗受影響功能後 push main，同步精確版本至遠端來源。OPB02 未驗草稿另存，維持不 force push。
 
 ## 家用端接續：QC201／QC202（2026-11-19）
@@ -1996,3 +1997,33 @@ API 工作：
 - [ ] Check In／Out、Carrier Check In／Out、設備 Hold、全域 Hold、Eqp Change State 使用 POST command。不可 GET 寫入，也不可接受前端傳入的可派批次結果作為資格；伺服器重驗登入者、Equipment、LoadPort、Lot、LotStamp／狀態及關聯。
 - [ ] CI／CO 接 WP201 的共用 ExecuteLot、TriggerOP、Business Rule、TransferLot 交易；保留 QTime/LMS、ERF、SPC/QC、設備／Carrier 與 operation log side effects。定義 CAS/鎖定、冪等、部分失敗與錯誤碼，不用簡化的 LotStatus 更新替代。
 - [ ] 四張 CREATE SQL 為原生 Oracle 結構參考；來源中 TBLEQPFAVORITE 及 TBLPRDSTAGESTEPSET、DETAIL 沒有 PK，TBLWIPLOTGPEQUIPMENT 只有 LOTNO/OPNO 非唯一索引。不可自行補猜測 PK/FK。
+
+## WIP WP308 載具管理_元件家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 main，閱讀 docs/modules/WIP/載具管理_元件.md、docs/modules/WIP/載具現況管理.md 與 docs/DATABASE_CONNECTION.md 的 WP302/WP308 段落。
+- [ ] WP308 沒有新增 Oracle 表或 CREATE-only。先核對 YMES PostgreSQL live schema／migration history；重用 Carrier Basis/Type、CarrierState、Detail/DetailLog、LotBasis/State、ComponentState、StockerState。只有實際缺表才新增 forward migration，不要重建 reference 已覆蓋的表。
+- [ ] 建登入保護的載具查詢、明細、CarrierType、可用載具、Lot/Component/Stocker 驗證 lookup；遵守查詢權限範圍、參數化、分頁。
+- [ ] Carrier In、Carrier Out、Change Carrier 全用 POST command。交易內重新檢查 Carrier IssueState/UseLayer/容量、LotState/status/CarrierNo、Component SlotNo、StockerState 與 Carrier Detail；為兩個載具及 Lot/Component 關聯定義鎖定/CAS，確保歷程、明細、Lot carrier no、Component SlotNo、CarrierState 一致回滾。
+- [ ] 保留來源差異：Carrier Out 目前不清 ComponentState.SlotNo；Change Carrier 會清舊值並設新值；Carrier Change 的候選以 IssueState=2、無 Detail 與 UseLayer 過濾，不以 CarrierState 單獨判空；Carrier Change Lot 掃描沒有 Stocker 檢核。若正式端改行為，需明確記為功能修正。
+- [ ] 共享 WP302 假資料的 DEV localStorage 不是正式 DTO/schema；正式 API 需從資料庫重讀 serial、component 與 slot，再寫 Detail/DetailLog。完成 API、migration（若確有缺表）、錯誤碼與交易回歸後更新 API/schema/deploy records。
+
+## WIP WP303 設備耗品現況家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/WIP/設備耗品現況.md`、本段 `docs/DATABASE_CONNECTION.md` 與 `database/reference/mestest_wip_wp303_*`。
+- [ ] 兩張 Oracle 專用表已交付 PostgreSQL CREATE-only：`ymes.tblwipeqpconsumestatus`、`ymes.tblwipeqpconsumelog`。先查 PostgreSQL live schema／migration history；只為缺表建立 forward migration，不可把 CREATE-only 直接套用到既有環境。`ymes.tbleqpconsumebasis` 與設備主檔沿用既有 reference。
+- [ ] 實作登入保護、權限範圍明確、分頁排序的設備耗品現況列表；Equipment lookup 限 IssueState=2，ConsumeNo lookup 依 EquipmentType 查 ConsumeBasis。
+- [ ] 實作新增／編輯／刪除：Status PK 為 EquipmentNo+ConsumeNo；新增 Creator/CreateDate；編輯依 WinForms 只改 ConsumeSeq/CurQty/CurPeriod；刪除支援多選。來源多選刪除逐列執行，須明確選擇相容逐列部分成功或採原子 bulk-delete。
+- [ ] 實作 Reset POST command：以資料庫最新 Status/Basis 重算，於同一交易 INSERT 舊 ConsumeSeq 至 Log（Creator、CreateDate、AccQty、AccPeriod），再 CAS 更新 Status 的新 ConsumeSeq、CurQty=0、CurPeriod=0、Revisor、ReviseDate。任何步驟失敗都回滾；禁止以 GET 執行重置。
+- [ ] ConsumeSeq 重複檢查在來源以 ConsumeNo 為範圍查 Log，跨設備共用序號時也拒絕；此規則未由 PK 保證，需解決併發重複（資料庫鎖／交易級一致性檢查），但不可擅自新增 Oracle 不存在的唯一約束。編輯不更新 Revisor/ReviseDate 是 Core 來源行為。
+- [ ] 保留並評估來源的重置邊界瑕疵：Period=-1 代表不限；RemainPeriod 不足顯示時用 ToleranceQty（疑似應為 TolerancePeriod）；達用量／週期上限時 Reset 視窗會把 AccQty／AccPeriod 輸入清為 0。若修正，記為產品規則變更並取得辦公室確認。
+- [ ] CREATE-only 與 WinForms 假資料不構成正式 schema/API。完成 migration（若缺）、API／DTO、授權、錯誤碼、交易回歸與部署紀錄後更新此交接；WP304 設備耗品歷程交接列於下一節。
+
+## WIP WP304 設備耗品歷程家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/WIP/設備耗品歷程.md`、WP303 `docs/modules/WIP/設備耗品現況.md`，以及 `docs/DATABASE_CONNECTION.md` WP303/WP304 段落。
+- [ ] WP304 沒有新增 Oracle table／CREATE-only。只讀 WP303 已交付的 `ymes.tblwipeqpconsumelog`；先核對 PostgreSQL live schema／migration history，不要新增重複 migration。來源 DDL、metadata、CREATE-only 在 `database/reference/mestest_wip_wp303_*`。
+- [ ] 建立登入保護的唯讀 GET 查詢，支援 EquipmentNo、ConsumeNo、StartTime、EndTime；StartTime 使用 `CreateDate >=`，EndTime 使用 `CreateDate <=`，均含界值。WinForms 頁沒有 ConsumeSeq 欄位，即使底層 Service 支援，也不擴大此頁 UI。
+- [ ] 來源頁不帶條件也會查完整 log。正式 API 必須以使用者權限限制可見資料、參數化查詢、穩定排序與伺服器端分頁／最大筆數；不可讓 UI 一次下載全表。可要求日期區間或提供安全的預設範圍，但需將其記錄為相對 WinForms 的明確效能／安全調整。
+- [ ] Equipment lookup 限 IssueState=2；ConsumeNo lookup 讀全部 Equipment Type Consume Basis，不隨設備類別縮小。DTO 至少提供 EquipmentNo、ConsumeNo、ConsumeSeq、AccQty、AccPeriod、Creator、CreateDate。
+- [ ] WP304 Vue DEV 會在開頁時讀取 WP303 共用假 log localStorage；正式端改為 GET API，勿把 localStorage 假資料當成伺服器資料或授權依據。
+- [ ] 完成 API、查詢權限、分頁、空條件保護及部署紀錄後更新 TODO；接續公司端 WP305 設備線上點檢。

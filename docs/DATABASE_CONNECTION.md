@@ -809,3 +809,21 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 Oracle profile 直連 MESTEST，只讀取得 `TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCARRIERSTATEDETAILLOG`、`TBLINVSTOCKERSTATE` 的 DBMS_METADATA DDL、欄位／constraint／index／trigger metadata。未查業務資料列，未執行 Oracle DDL/DML，未連 YMES PostgreSQL。
 - Detail 有 11 欄、7 個 NOT NULL constraint、1 個 ComponentNo 非唯一 index，沒有 PK/FK/Trigger；DetailLog 有 18 欄、9 個 NOT NULL constraint，沒有 PK/index/FK/Trigger；StockerState 有 8 欄、三欄複合 PK unique index，沒有 FK/Trigger。Oracle source DDL、metadata 與 PostgreSQL CREATE-only 見 `database/reference/mestest_wip_wp302_*`。既有 CarrierState／CarrierType／Lot/Component references 重用，不重複 CREATE。
 - 受保護 profile／PowerShell 只在公司本機使用；Oracle IP、帳號、密碼、SID 未輸出或提交。CREATE-only 不是 migration；家用端需先查 YMES PostgreSQL live schema／migration history，僅為實際缺少的物件新增 forward migration。
+
+### 更新 2026-11-20：WIP WP308 載具管理_元件
+
+- WP308 依 frmCarrierManagement、CarrierIn/CarrierChange、wsEQP/wsWIP/wsINV 與 clsLot 使用載具、載具狀態／明細／歷程、Lot／Component、Stocker 現況；所有資料表均已有 Carrier Basis/Type、WP302 或 WP101 Oracle source DDL、metadata 與 CREATE-only reference。
+- 本功能沒有新增 Oracle 專屬資料表，故沒有重複產生 source DDL 或 CREATE-only。公司端未重查業務資料列、未執行 Oracle DDL/DML，未連 YMES PostgreSQL。家用端先對照 live schema/migration history，僅為確實缺失表新增 migration；正式放入、卸載、更換都應是登入保護的 POST command，並在交易內重驗 Carrier/Lot/Component/Stocker 與容量。
+
+### 更新 2026-11-20：WIP WP303 設備耗品現況
+
+- 公司端以 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 及本機受保護 Oracle profile 直連 MESTEST，只讀取得 `TBLWIPEQPCONSUMESTATUS`、`TBLWIPEQPCONSUMELOG` 的 DBMS_METADATA DDL 與 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`／`ALL_CONS_COLUMNS`、`ALL_INDEXES`／`ALL_IND_COLUMNS`、`ALL_TRIGGERS` metadata。未查業務資料列，未執行 Oracle DDL/DML。
+- Status 有 9 欄、5 個 NOT NULL 欄位約束及 EquipmentNo/ConsumeNo 複合 PK；Log 有 7 欄、3 個 NOT NULL 欄位約束及 EquipmentNo/ConsumeNo/ConsumeSeq 複合 PK。兩表均無 FK、額外索引或 trigger。Oracle source DDL、metadata、PostgreSQL CREATE-only 位於 `database/reference/mestest_wip_wp303_*`。
+- `TBLEQPCONSUMEBASIS` 已由設備類別資料查證並收錄於既有 `database/reference/mestest_equipment_type_*`；`TBLEQPEQUIPMENTBASIS` 沿用設備主檔 reference，不重複產生 CREATE-only。
+- 僅讀結構 metadata／DDL，未輸出或提交受保護 profile、連線字串或秘密，未連 YMES PostgreSQL。CREATE-only 不是 migration；家用端需先比對 live schema／migration history，只為實際缺少的表新增 forward migration。
+
+### 更新 2026-11-20：WIP WP304 設備耗品歷程
+
+- WP304 僅以設備、耗品及建立時間讀取 `TBLWIPEQPCONSUMELOG`；此表已由 WP303 直連 MESTEST Oracle dictionary 取得 DDL／metadata，source、metadata 與 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp303_*`。
+- 本功能沒有新表，不重複 query Oracle metadata 或產生 CREATE-only；設備及耗品 lookup 沿用既有 WP303／設備主檔 references。本頁未查 Oracle 業務資料列、未執行 Oracle DDL/DML，亦未連 YMES PostgreSQL。
+- WinForms 允許不帶條件查整張歷程；家用端 API 必須登入保護、參數化及分頁，限制單次回傳量，並核對使用者可查詢範圍。

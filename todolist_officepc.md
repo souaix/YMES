@@ -1,5 +1,11 @@
 # 公司端待辦
 
+**家用端最新回饋（2026-11-20）**
+
+- 已正常合併公司端至 `f68ecea`，保留兩端來源。原 OE／WIP 23 個入口加上 WP303、WP304、WP308 三個，累計 26 個唯一入口已完成正式 app-browser 的路由、不可用提示、無 DEV 業務資料及離開／重進防護；三個新入口實按頁內 Close 返回空白首頁，console 無紀錄。分批版本與精確範圍見 [公司整合 QA](docs/qa/20261120-office-integration.md)。這不是 26 個功能的正式 API 或交易完成。
+- 家用端已修正正式 non-DEV 不可回傳 seed／fixture、查詢／查找及異動入口的 disabled 與 handler guard，並保留公司端 DEV seed、共用 storage 與來源邏輯；WP308 額外修正四個位置欄位交換的 TypeScript 型別錯誤，未改值語意。後續公司端正常同步時請保留這些正式隔離及維護 MD。
+- 正式 PostgreSQL schema 核對／migration、API、並發交易、部署與驗收仍由家用電腦依 [家用端待辦](todolist_homepc.md) 持續接手；公司端繼續原生 Oracle 唯讀來源與 UI 開發，無須連家用 PostgreSQL 或 SSH。下方歷史交接與尚未交付的 provider／API 待辦保留，GitHub 正常同步尚待家用端完成。
+
 ## 公司桌機交回原公司筆電（2026-11-19）
 
 ### 先同步
@@ -1514,3 +1520,29 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 依 IC_CP_PKG Form／Designer、Industry Base Service、Core 交付 DEV 晶片測試工單及流程、模擬挑片、元件驗證與發放。
 - [x] [OEP01 規格](docs/modules/OE/工單開立_晶片測試.md) 交付半成品批次關聯表 Oracle DDL、CREATE-only 及 PSS API handoff。
 - [x] WP101、WP102、WP201、WP202 已完成；接續功能為 WP204，進度記錄於上方。
+
+## WP308 載具管理_元件已完成公司端 DEV（FunctionKey WP308，2026-11-20）
+
+- [x] 依 frmCarrierManagement、frmCarrierIn、frmCarrierChange 及 Service/Core 完成 CarrierState / Detail 雙 Grid、查詢、Carrier In / Out / Change Carrier 子視窗、Carrier lookup、掃 Lot、容量／狀態驗證、位置 Up/Down 與確認互動。
+- [x] Vue DEV 路徑 /YMES/WIP/CarrierManagement，掛入 WIP → 設備與載具 → 載具管理_元件；和 WP302 共用 localStorage 假資料。
+- [x] 完成 docs/modules/WIP/載具管理_元件.md、模組索引、資料庫連線紀錄與兩端 TODO。WP308 沒有新資料表，沿用 WP302、WP101、Carrier Basis/Type 已查證 DDL；不重複產生 CREATE SQL。
+- [x] 本輪未連 PostgreSQL，未執行 Oracle DDL/DML、build、test 或 browser。未改動 YMES API。
+- [x] WP303 設備耗品現況已接續完成，詳見下一節；WP304 設備耗品歷程亦已接續完成，詳見下方。
+
+## WP303 設備耗品現況已完成公司端 DEV（FunctionKey WP303，2026-11-20）
+
+- [x] 依 frmEQPConsumeStatus／Define、WP_EQPConsumeReset 外掛、wsWIP/wsEQP、clsWIP/clsEQPBasis 完成主 Grid、Add/Edit/Copy/Delete、Equipment/ConsumeBasis lookup 與 ConsumReset 模擬。
+- [x] Vue DEV `/YMES/WIP/EquipmentConsumeStatus`，掛入 WIP → 設備與載具 → 設備耗品現況；假資料只寫 localStorage `ymes.dev.wp303-consume-status.v1`。
+- [x] PowerShell 5.1 + 受保護 Oracle profile 直連取得 Status/Log 兩張表 DDL 與 metadata；新增 source DDL、metadata、PostgreSQL CREATE-only、模組規格、索引、DB 記錄與家用端 API handoff。
+- [x] ConsumeBasis 與 EquipmentBasis 沿用已存在 reference；未重複輸出 Create SQL。標明 Reset 的 ToleranceQty fallback／達上限清零行為，以及 WinForms 多筆逐列刪除的部分成功可能。
+- [x] 本輪未查業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未部署／修改 API，未執行 build/test/browser。
+- [x] WP304 設備耗品歷程已接續完成，詳見下一節；接續 WP305 設備線上點檢。
+
+## WP304 設備耗品歷程已完成公司端 DEV（FunctionKey WP304，2026-11-20）
+
+- [x] 依 frmEQPConsumeStatusLog／Designer、wsWIP.LoadEQPConsumeLog、wsEQP 設備與耗品 lookup、clsWIP 查詢邏輯完成 Vue DEV 唯讀頁。
+- [x] Vue 路徑 `/YMES/WIP/EquipmentConsumeStatusLog`，掛入 WIP → 設備與載具 → 設備耗品歷程；設備／耗品核取篩選、From/End Date、lookup、Query、Grid 七欄與 Close 已復刻，初始不自動查詢。
+- [x] 與 WP303 共用假 log localStorage。沿用 `TBLWIPEQPCONSUMELOG` 已完成 Oracle DDL、metadata 與 CREATE-only；本功能沒有新表，不重複查 DDL／產 SQL。
+- [x] 規格、索引、DB 記錄、handoff/TODO 已更新；指出來源可無篩選全表查詢，正式 API 需登入保護、參數化、分頁及權限範圍。
+- [x] 未查 Oracle 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL、未修改 API、未執行 build/test/browser。
+- [ ] 接續 WP305「設備線上點檢」，核對自己的 WinForms／Service/Core；若有缺少的 Oracle DDL，使用本機 PowerShell 5.1 + 受保護 profile 唯讀查字典。
