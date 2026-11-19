@@ -44,13 +44,17 @@
 - [x] 完成 Vue DEV 頁 `/YMES/WIP/LotExecutionByComponent`、FunctionNo EXECUTE LOT_COMP 三層選單路由、[WP202 規格](docs/modules/WIP/生產批執行_元件.md)與家用端 API/schema handoff。
 - [x] 公司端未連 YMES PostgreSQL、未實作 API／migration；未執行 build、test、browser。靜態檢查後推送 GitHub。
 
-### 下一功能：WP204 生產批執行_設備（FunctionNo EXECUTE LOT_EQP）
+### WP204 生產批執行_設備已交付（2026-11-19）
 
-- [ ] 對照 `frmEquipmentLotState`／Designer、Service／Core，查核 WP204 FunctionNo、FunctionKey、選單、設備選批／報工畫面與按鈕流程。
-- [ ] 列出實際讀寫表；只在 WP101/WP201 已有 Oracle reference 不足時，從受保護 MESTEST profile 唯讀查缺少 DDL／metadata，不讀業務列、不執行 Oracle DDL/DML。
-- [ ] 完成 WP204 Vue DEV、模組規格與家用端 API/schema handoff；不連 YMES PostgreSQL、不實作正式 API／migration。
-- [ ] 靜態核對、更新公司端／家用端 TODO，commit/push 後接續下一個未完成功能；除非使用者要求驗收，不執行 build、test 或 browser。
+- [x] 對照 frmEquipmentLotState Form／Designer、CI／CO／設備狀態子視窗、wsEQP／wsEMS／wsWIP 與 Core；完成設備收藏頁、5×3 看板、LoadPort、推薦及底部操作流程規格。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 透過受保護 profile 唯讀取得 TBLEQPFAVORITE、TBLWIPLOTGPEQUIPMENT、TBLPRDSTAGESTEPSET、TBLPRDSTAGESTEPSETDETAIL DDL/index；未讀業務列、未執行 Oracle DDL/DML。
+- [x] 完成 /YMES/WIP/EquipmentLotState DEV 假資料畫面、FunctionNo EXECUTE LOT_EQP fallback 三層選單／路由、WP204 模組規格、Oracle source DDL 與 PostgreSQL CREATE-only handoff。
+- [x] DEV 僅寫專屬 localStorage，不連 YMES PostgreSQL、不實作正式 API／migration；未執行 build、test、browser。
 
+### 下一功能：WP605 成品庫帳務維護（FunctionNo FGD INV）
+
+- [ ] 依 docs/MES_MENU_FUNCTION_INVENTORY.md 的 FGD INV 功能列，先核對 frmInventory_FGD Form／Designer、Service／Core、讀寫表及庫存交易，再完成 DEV 與 API/schema handoff。
+- [ ] 保持本檔及 todolist_homepc.md 隨每個功能更新；依使用者授權 commit/push GitHub 後持續接續，不執行 build、test 或 browser，除非使用者要求驗收。
 ### 公司端工作範圍
 
 - WinForms／Service／Core 原始碼、Vue DEV 假資料、模組規格與家用端 API／SQL 交接。Vue 環境為 Node.js 22.12+、npm 與 `web/` 套件，筆電沿用自己的既有工具，不依賴桌機的本機安裝路徑。
@@ -1437,4 +1441,4 @@
 
 - [x] 依 IC_CP_PKG Form／Designer、Industry Base Service、Core 交付 DEV 晶片測試工單及流程、模擬挑片、元件驗證與發放。
 - [x] [OEP01 規格](docs/modules/OE/工單開立_晶片測試.md) 交付半成品批次關聯表 Oracle DDL、CREATE-only 及 PSS API handoff。
-- [ ] 接續 WIP 的 WP101 生產批開立。
+- [x] WP101、WP102、WP201、WP202 已完成；接續功能為 WP204，進度記錄於上方。

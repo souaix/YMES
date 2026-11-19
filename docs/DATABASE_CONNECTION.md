@@ -716,3 +716,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - WP202 的 Component JOIN 查詢使用 `TBLWIPLOTSTATE`、`TBLWIPCOMPONENTSTATE`、`TBLWIPLOTBASIS`；三表 Oracle DDL／欄位／索引與 PostgreSQL CREATE-only 已由 WP101 唯讀查證並保存於 `database/reference/mestest_wip_wp101_source_ddl.sql`、`mestest_wip_wp101_create.sql`。
 - 本次對照 WinForms／Service／Core 後確認沒有 WP202 專屬表，故不重複直連或產出 CREATE SQL。未讀業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，連線秘密未輸出或提交。API/schema handoff 見 `docs/modules/WIP/生產批執行_元件.md` 與 `todolist_homepc.md`。
+
+### 更新 2026-11-19：WIP WP204 生產批執行_設備
+
+- 使用既有受保護 Oracle profile，以 Windows PowerShell 5.1 + STD/MES_S_DLL/Oracle.ManagedDataAccess.dll 直連 MESTEST，唯讀取得 TBLEQPFAVORITE、TBLWIPLOTGPEQUIPMENT、TBLPRDSTAGESTEPSET、TBLPRDSTAGESTEPSETDETAIL 的 DBMS_METADATA.GET_DDL 與該批表的索引 DDL。
+- 僅查 metadata／DDL，未讀業務資料列、未執行 Oracle DDL/DML，未輸出連線字串或憑證。來源與 CREATE-only 參考為 database/reference/mestest_wip_wp204_source_ddl.sql、mestest_wip_wp204_create.sql；家用端須先核 PostgreSQL live schema／migrations。

@@ -57,6 +57,7 @@ import WipLotBasisCreate from './components/WipLotBasisCreate.vue'
 import WipLotBasisBatch from './components/WipLotBasisBatch.vue'
 import WipLotExecution from './components/WipLotExecution.vue'
 import WipLotExecutionByComponent from './components/WipLotExecutionByComponent.vue'
+import WipEquipmentLotState from './components/WipEquipmentLotState.vue'
 import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
 import FtProgramMaster from './components/FtProgramMaster.vue'
@@ -457,6 +458,7 @@ const fallbackMenuTree: MenuNode[] = [
     id: 'menu:WIP:PRODUCTION REPORTING', label: '生產報工', shortLabel: '報', children: [
       { id: 'function:WIP:EXECUTE LOT', label: '生產批執行', tableName: 'tblwiplotstate', shortLabel: '執', functionNo: 'EXECUTE LOT', moduleNo: 'WIP' },
       { id: 'function:WIP:EXECUTE LOT_COMP', label: '生產批執行_元件', tableName: 'tblwipcomponentstate', shortLabel: '元', functionNo: 'EXECUTE LOT_COMP', moduleNo: 'WIP' },
+      { id: 'function:WIP:EXECUTE LOT_EQP', label: '生產批執行_設備', tableName: 'tbleqpfavorite', shortLabel: '設備', functionNo: 'EXECUTE LOT_EQP', moduleNo: 'WIP' },
     ],
   }] },
 ]
@@ -470,6 +472,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:CREATE LOT_BATCH': appBasePath + '/WIP/LotBasisBatch',
   'function:WIP:EXECUTE LOT': appBasePath + '/WIP/LotExecution',
   'function:WIP:EXECUTE LOT_COMP': appBasePath + '/WIP/LotExecutionByComponent',
+  'function:WIP:EXECUTE LOT_EQP': appBasePath + '/WIP/EquipmentLotState',
   'function:OE:RO BASIS': appBasePath + '/OE/ReceivingOrders',
   'function:OE:RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
   'function:OE:MO BASIS': appBasePath + '/OE/ManufacturingOrders',
@@ -776,6 +779,7 @@ const isWipLotBasisCreatePage = computed(() => activeMasterKey.value === 'functi
 const isWipLotBasisBatchPage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT_BATCH')
 const isWipLotExecutionPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT')
 const isWipLotExecutionByComponentPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_COMP')
+const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const manufacturingOrderPages = {
   'function:OE:MO BASIS': undefined,
   'function:OE:MO DELETE': 'delete',
@@ -2361,6 +2365,7 @@ async function signOut(): Promise<void> {
         <WipLotBasisBatch v-else-if="isWipLotBasisBatchPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotExecution v-else-if="isWipLotExecutionPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotExecutionByComponent v-else-if="isWipLotExecutionByComponentPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <ReceivingOrderMaster
           v-else-if="isReceivingOrderPage || isReceivingOrderClosePage"
           :key="activeMasterKey"

@@ -1868,3 +1868,12 @@ API 工作：
 - [ ] 建立登入保護的 Area／PS／OP Component JOIN 查詢，狀態限定 0／1／4／5，回傳 ComponentNo、OPNo、BRNo、StatusShow、BaseLotNo、LotNo、MoNo，參數化、分頁並依 ComponentNo 排序。OP lookup 可依 PS 限縮。
 - [ ] ComponentNo 可對應多個 ComponentState 列／LotNo 時，確認實際唯一性；有歧義時回候選，不可無排序取第一筆。Execute 使用 POST，若 LotNo 有值維持 LotNo 優先，否則伺服器解析 ComponentNo，再接 WP201 共用 ExecuteLot command；重驗登入身份、權限、批次狀態與 LotStamp/CAS。
 - [ ] API 必須沿用 WP201 的 TriggerOP、動態 BR、TransferLot、Future Hold／Wait／OS、StopFlag、ERF、幂等鍵及 operation log 決策；WP202 只增加元件選批入口，不建立簡化的獨立 Lot 狀態更新流程。完成後更新 API/schema、部署及驗收紀錄。
+
+## WIP WP204 生產批執行_設備家用端 handoff（2026-11-19）
+
+- [ ] Pull 最新 main，閱讀 docs/modules/WIP/生產批執行_設備.md、WP201 共用執行規格及 docs/DATABASE_CONNECTION.md WP204 段落。
+- [ ] Oracle source DDL／CREATE-only：database/reference/mestest_wip_wp204_source_ddl.sql、mestest_wip_wp204_create.sql。先核對 PostgreSQL live schema/migrations；設備、狀態、WIP 與產品流程表沿用既有 WP101/WP201／主檔資源，只對缺表做 forward migration，不得照單全建四張。
+- [ ] 建登入者授權的設備收藏／頁面查詢、設備狀態及顏色、LoadPort／在機批次、Lot Info、候選批次／Recommand、EQP／Lot log、QC List API；工作站與設備收藏需定義權限範圍及分頁。
+- [ ] Check In／Out、Carrier Check In／Out、設備 Hold、全域 Hold、Eqp Change State 使用 POST command。不可 GET 寫入，也不可接受前端傳入的可派批次結果作為資格；伺服器重驗登入者、Equipment、LoadPort、Lot、LotStamp／狀態及關聯。
+- [ ] CI／CO 接 WP201 的共用 ExecuteLot、TriggerOP、Business Rule、TransferLot 交易；保留 QTime/LMS、ERF、SPC/QC、設備／Carrier 與 operation log side effects。定義 CAS/鎖定、冪等、部分失敗與錯誤碼，不用簡化的 LotStatus 更新替代。
+- [ ] 四張 CREATE SQL 為原生 Oracle 結構參考；來源中 TBLEQPFAVORITE 及 TBLPRDSTAGESTEPSET、DETAIL 沒有 PK，TBLWIPLOTGPEQUIPMENT 只有 LOTNO/OPNO 非唯一索引。不可自行補猜測 PK/FK。
