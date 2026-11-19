@@ -1159,4 +1159,10 @@
 
 - [x] 完成 DEV 主檔、版次、查詢、流程、共用子頁及 XLSX 主檔匯入；核對主 Form／Designer／Service／Core。
 - [x] Oracle 唯讀確認 `TBLPRDMODULEBASIS`，補來源邏輯 DDL、CREATE-only 比對與家用端 API 交接。
-- [ ] 正式權限、簽核、完整匯入與共用資料解析待接續。下一項 PD104 產品內容查詢。
+- [ ] 正式權限、簽核、完整匯入與共用資料解析待接續。
+
+## PRD PD104 產品內容查詢公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core，完成 DEV 三類查找、條件交集及唯讀結果。重用 PD102 假資料。
+- [x] Oracle 唯讀確認四張既有表，沿用 PD102 DDL，記錄家用端即時 API 與分頁交接。
+- [ ] 正式查詢、資料權限和完整主檔報表欄位待接入。下一項 PD105 產品參數群組。

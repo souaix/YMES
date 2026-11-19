@@ -154,6 +154,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PD103 製程模組資料](modules/PRD/製程模組資料.md) 已完成 DEV 主檔、版次、流程與子頁、XLSX 主檔匯入和 SQL handoff。
 
+[PD104 產品內容查詢](modules/PRD/產品內容查詢.md) 已完成 DEV 條件查找、交集篩選與唯讀結果表格。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定
