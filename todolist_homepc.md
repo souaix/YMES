@@ -1799,3 +1799,7 @@ API 工作：
 ## PRD PDB02 產品設定_封測家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品設定_封測](docs/modules/PRD/產品設定封測.md) 核對既有產品主檔、ECN 六表、正式 WIP 清線、SEN 批號及封測 API。
+
+## PRD PDB04 檔案上傳基本資料家用端 handoff（2026-11-19）
+
+- [ ] 依 [檔案上傳基本資料](docs/modules/PRD/檔案上傳基本資料.md) 核對檔案類型 CREATE、DataStamp、正式連線與伺服器端憑證。

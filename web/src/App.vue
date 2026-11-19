@@ -63,6 +63,7 @@ import CpWaferShipReportMaster from './components/CpWaferShipReportMaster.vue'
 import CpWaferRuleMaster from './components/CpWaferRuleMaster.vue'
 import CpMergeMapRuleMaster from './components/CpMergeMapRuleMaster.vue'
 import ChooseWaferRuleMaster from './components/ChooseWaferRuleMaster.vue'
+import UploadFileTypeMaster from './components/UploadFileTypeMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -410,6 +411,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:P_PRD WAFERMAP MERGE RULE', label: '產品晶圓圖疊圖規則設置', tableName: 'tbl_bprdmergemaprule', shortLabel: '疊', functionNo: 'P_PRD WAFERMAP MERGE RULE', moduleNo: 'PRD' },
     ] }, { id: 'product-wafer-settings', label: '挑片規則', shortLabel: '挑', children: [
       { id: 'function:PRD:B_CHOOSE WAFER RULES', label: '挑片規則設定', tableName: 'tblprdchoosewaferrules', shortLabel: '挑', functionNo: 'B_CHOOSE WAFER RULES', moduleNo: 'PRD' },
+    ] }, { id: 'product-document-settings', label: '產品文件管理', shortLabel: '檔', children: [
+      { id: 'function:PRD:B_UPLOAD FILE BASIS', label: '檔案上傳基本資料', tableName: 'tbl_bprdmesfiletype', shortLabel: '傳', functionNo: 'B_UPLOAD FILE BASIS', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -554,6 +557,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:P_PRD WAFERMAP MERGE RULE': `${appBasePath}/PRD/CPMergeMapRules`,
   'function:PRD:B_CHOOSE WAFER RULES': `${appBasePath}/PRD/ChooseWaferRules`,
   'function:PRD:B_PRD BASIS_IC': `${appBasePath}/PRD/PackagingProducts`,
+  'function:PRD:B_UPLOAD FILE BASIS': `${appBasePath}/PRD/UploadFileTypes`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -705,6 +709,7 @@ const isCpWaferRulePage = computed(() => activeMasterKey.value === 'function:PRD
 const isCpMergeMapRulePage = computed(() => activeMasterKey.value === 'function:PRD:P_PRD WAFERMAP MERGE RULE')
 const isChooseWaferRulePage = computed(() => activeMasterKey.value === 'function:PRD:B_CHOOSE WAFER RULES')
 const isPackagingProductPage = computed(() => activeMasterKey.value === 'function:PRD:B_PRD BASIS_IC')
+const isUploadFileTypePage = computed(() => activeMasterKey.value === 'function:PRD:B_UPLOAD FILE BASIS')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2344,6 +2349,12 @@ async function signOut(): Promise<void> {
           v-else-if="isChooseWaferRulePage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <UploadFileTypeMaster
+          v-else-if="isUploadFileTypePage"
+          class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
