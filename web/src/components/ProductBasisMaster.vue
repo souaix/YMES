@@ -20,6 +20,7 @@ import ProductBinSetup from './ProductBinSetup.vue'
 import ProductGbomFiles from './ProductGbomFiles.vue'
 import ProductDataImport from './ProductDataImport.vue'
 import ProductProcessExpansion from './ProductProcessExpansion.vue'
+import { loadDevelopmentProductTypes } from './productTypeDevelopment'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -90,7 +91,8 @@ const states: Array<{ value: IssueState; label: string }> = [
   { value: 0, label: '未核准' }, { value: 1, label: '簽核中' },
   { value: 2, label: '已核准' }, { value: -1, label: '不使用' },
 ]
-const developmentProductTypes = ['DEV-FINISHED', 'DEV-SEMIFINISHED', 'DEV-RAW']
+const developmentProductTypes = computed(() => mock.value ? loadDevelopmentProductTypes()
+  .filter(row => row.issueState === 2).map(row => row.productType) : [])
 
 const productColumns = [
   'ProductNo','ProductVersion','ProductName','ProductType','IssueState','Creator','CreateDate','Description','CurVersion',
@@ -500,7 +502,7 @@ const selectedRows = computed(() => rows.value.filter(row => selectedKeys.value.
 const feature = computed(() => featureInfo[featureKey.value] ?? null)
 const editable = computed(() => Boolean(active.value && Number(active.value.issueState) === 0))
 const lookupOptions = computed(() => {
-  if (lookupField.value === 'productType') return developmentProductTypes
+  if (lookupField.value === 'productType') return developmentProductTypes.value
   if (lookupField.value === 'unitType') return ['PCS', 'WEIGHT', 'LENGTH']
   if (lookupField.value === 'unitNo') return ['EA', 'KG', 'M']
   if (lookupField.value === 'serialTypeNoLot') return ['DEV-LOT-A', 'DEV-LOT-B']
@@ -1017,7 +1019,7 @@ const importDevelopmentProducts: ImportProducts = entries => {
     const key = keyOf(entry)
     if (entry.productNo.includes('|') || entry.productVersion.includes('|')) return '產品編號和版本不可包含 |。'
     if (known.has(key)) return '產品編號與版本已存在。'
-    if (!developmentProductTypes.includes(entry.productType)) return '產品類別不在 DEV 已核准清單。'
+    if (!developmentProductTypes.value.includes(entry.productType)) return '產品類別不在 DEV 已核准清單。'
     known.add(key)
     additions.push({ ...blankForm(), ...entry, issueState: 0, curVersion: 0, creator: user, createDate: now,
       reviser: user, reviseDate: now, dataStamp: 0 })

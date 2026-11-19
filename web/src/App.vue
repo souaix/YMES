@@ -39,6 +39,7 @@ import ProductionLineBasisMaster from './components/ProductionLineBasisMaster.vu
 import PositionBasisMaster from './components/PositionBasisMaster.vue'
 import AreaShowMaster from './components/AreaShowMaster.vue'
 import ProductBasisMaster from './components/ProductBasisMaster.vue'
+import ProductTypeMaster from './components/ProductTypeMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -353,7 +354,10 @@ const fallbackMenuTree: MenuNode[] = [
     label: '產品資料',
     shortLabel: '品',
     moduleNo: 'PRD',
-    children: [{ id: 'product-settings', label: '產品設定', shortLabel: '設', children: [{ id: 'product-master', label: '產品主檔', tableName: 'tblprdproductbasis', shortLabel: '主', functionNo: 'PRD BASIS', moduleNo: 'PRD' }] }],
+    children: [{ id: 'product-settings', label: '產品設定', shortLabel: '設', children: [
+      { id: 'function:PRD:PRD TYPE', label: '產品類別資料', tableName: 'tblprdtype', shortLabel: '類', functionNo: 'PRD TYPE', moduleNo: 'PRD' },
+      { id: 'product-master', label: '產品主檔', tableName: 'tblprdproductbasis', shortLabel: '主', functionNo: 'PRD BASIS', moduleNo: 'PRD' },
+    ] }],
   },
 ]
 
@@ -469,6 +473,7 @@ const menuRoutes: Record<string, string> = {
   'function:OP:B_OP GROUP ATTRIB': appBasePath + '/OP/OperationGroupAttributes',
   'material-master': `${appBasePath}/MasterData/Materials`,
   'product-master': `${appBasePath}/MasterData/Products`,
+  'function:PRD:PRD TYPE': `${appBasePath}/MasterData/ProductTypes`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -592,6 +597,7 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
 const isPrsProcessBasisPage = computed(() => activeMasterKey.value === 'function:PRS:PRS BASIS')
 const isPrsProcessTypePage = computed(() => activeMasterKey.value === 'function:PRS:PRS TYPE')
 const isProductionSegmentPage = computed(() => activeMasterKey.value === 'function:PRS:PS BASIS')
+const isProductTypePage = computed(() => activeMasterKey.value === 'function:PRD:PRD TYPE')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2058,6 +2064,13 @@ async function signOut(): Promise<void> {
           v-else-if="isOperationGroupAttribPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductTypeMaster
+          v-else-if="isProductTypePage"
+          class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

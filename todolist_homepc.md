@@ -1684,3 +1684,8 @@ API 工作：
 ## PRD PD102 Expand All 家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品流程展開規格](docs/modules/PRD/產品流程展開.md)，核對共用流程與作業表；按 `IsNetFlow`、產品流程版次和工單類型實作唯讀 API。
+
+## PRD PD101 產品類別資料家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品類別規格](docs/modules/PRD/產品類別資料.md) 核對 `tblprdtype` 和 `ProductVersion='-1'` 共用表，沿用既有 CREATE-only。
+- [ ] 實作類別 API、狀態及 DataStamp、區段權限、交易式完整 Copy 和類別範圍的刪除。

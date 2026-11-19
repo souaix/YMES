@@ -1147,4 +1147,10 @@
 
 - [x] 核對 Form／Designer、一般與網狀 Service／Core。以 DEV 流程、區段和作業假資料完成唯讀結果表格。
 - [x] Oracle 唯讀核對共用表，沿用產品、區段、流程與作業主檔的 CREATE-only 參考。
-- [ ] 正式流程解析與背景作業 lookup 待接續。下一項 PD101 產品類別資料。
+- [ ] 正式流程解析與背景作業 lookup 待接續。
+
+## PRD PD101 產品類別資料公司端檢查點（2026-11-19）
+
+- [x] 核對主畫面、定義 Form／Designer、Service／Core；完成 DEV 查詢、ADD／EDIT／Copy、刪除／停用／核准及三個子視窗。
+- [x] 唯讀核對 Oracle 主表和共用子表，整理 API/DDL 交接並將 PD102 DEV 類別查找接到已核准類別。
+- [ ] 正式完整副本與資料權限待接續。下一項 PD103 製程模組資料。
