@@ -28,7 +28,7 @@
 - [x] PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得 TBLWIPLOTPROPERTY_TEMP 與 TBLWIPLOTPROPERTY DDL/constraints/indexes/triggers。WP102 新增需求僅 TEMP；正式屬性表與其他 WIP 表沿用 WP101，不重複建 SQL。未查業務列、未執行 Oracle DDL/DML。
 - [x] 完成 Vue DEV 頁 /YMES/WIP/LotBasisBatch、三層選單、by Count/by Qty、批次 Grid、BOM/Process、Add/View/Tuning 假視窗、確認驗證及專屬 localStorage。
 - [x] 新增 WP102 模組規格、Oracle source DDL、PostgreSQL CREATE-only（僅 TEMP）及家用端 API/schema handoff；未連 YMES PostgreSQL，未實作 API/migration。
-- [x] WP102 靜態檢查並推送 GitHub；本輪接續 WP201 完成，下一個功能為 WP202。
+- [x] WP102 靜態檢查並推送 GitHub；其後已接續完成 WP201、WP202。
 
 ### WP201 生產批執行已交付（2026-11-19）
 
@@ -37,12 +37,19 @@
 - [x] 完成 /YMES/WIP/LotExecution Vue DEV 假資料畫面、WP201 模組規格、39 表 PostgreSQL CREATE-only 參考與家用端 API/schema handoff；未連 YMES PostgreSQL、未建立正式 API/migration。
 - [x] 依本輪規則未執行 build、test、browser；完成靜態檢查與 GitHub push 後繼續下一個功能。
 
-### 下一功能：WP202 生產批執行_元件（FunctionNo EXECUTE LOT_COMP）
+### WP202 生產批執行_元件已交付（2026-11-19）
 
-- [ ] 閱讀 frmWIPLotSelectbyComp、Designer、相關 Service/Core 和元件批次執行路徑；核對 FunctionKey WP202、選單與畫面操作。
-- [ ] 列出元件查詢／執行實際讀寫表，唯讀查 MESTEST 缺少的 DDL/metadata；重用既有 CREATE 參考，不重複建立共用表。
-- [ ] 完成 WP202 Vue DEV、規格、家用端 API/schema handoff；公司端不連 YMES PostgreSQL、不實作正式 API/migration。
-- [ ] 靜態檢查、更新兩端 TODO，commit/push 後接續下一個未完成 FunctionNo；不執行 build/test/browser，除非使用者要求驗收。
+- [x] 依 `frmWIPLotSelectbyComp.vb`、標準 `wsWIP`、`tcWIP_IC.clsLot` 與 `clsLot.LoadComponentState` 核實三欄輸入、Component JOIN LotState 查詢、元件解析、七欄 Grid、Find 與共用 ExecuteLot 流程。
+- [x] 查詢只讀 TBLWIPLOTSTATE、TBLWIPCOMPONENTSTATE、TBLWIPLOTBASIS；Oracle DDL／PostgreSQL CREATE-only 已由 WP101 查證，沒有新表，未重複產生 CREATE SQL。
+- [x] 完成 Vue DEV 頁 `/YMES/WIP/LotExecutionByComponent`、FunctionNo EXECUTE LOT_COMP 三層選單路由、[WP202 規格](docs/modules/WIP/生產批執行_元件.md)與家用端 API/schema handoff。
+- [x] 公司端未連 YMES PostgreSQL、未實作 API／migration；未執行 build、test、browser。靜態檢查後推送 GitHub。
+
+### 下一功能：WP204 生產批執行_設備（FunctionNo EXECUTE LOT_EQP）
+
+- [ ] 對照 `frmEquipmentLotState`／Designer、Service／Core，查核 WP204 FunctionNo、FunctionKey、選單、設備選批／報工畫面與按鈕流程。
+- [ ] 列出實際讀寫表；只在 WP101/WP201 已有 Oracle reference 不足時，從受保護 MESTEST profile 唯讀查缺少 DDL／metadata，不讀業務列、不執行 Oracle DDL/DML。
+- [ ] 完成 WP204 Vue DEV、模組規格與家用端 API/schema handoff；不連 YMES PostgreSQL、不實作正式 API／migration。
+- [ ] 靜態核對、更新公司端／家用端 TODO，commit/push 後接續下一個未完成功能；除非使用者要求驗收，不執行 build、test 或 browser。
 
 ### 公司端工作範圍
 

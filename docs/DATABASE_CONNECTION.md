@@ -711,3 +711,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 依 FunctionNo EXECUTE LOT 的 THEIL Form、標準 Service/Core、THEIL 分支追查執行／TriggerOP／TransferLot 依賴；Windows PowerShell 5.1 + ODP.NET 使用本機受保護 Oracle 設定唯讀取得 39 張 MESTEST 表 DDL 與 ALL_TAB_COLUMNS 欄位 metadata。欄位數逐表與 PostgreSQL CREATE-only 參考吻合。
 - TBLWIPECNLOTBASIS、VIEW_TBLWIPPACK_LOT 在 MESTEST/PUBLIC 的 ALL_OBJECTS/ALL_SYNONYMS 均不存在；不生成猜測 DDL。完整來源與限制見 database/reference/mestest_wip_wp201_*.sql 及 docs/modules/WIP/生產批執行.md。
 - 只查資料字典與 DDL，未讀業務列、未執行 Oracle DDL/DML、未輸出或提交連線秘密。未連 YMES PostgreSQL。
+
+### 更新 2026-11-19：WIP WP202 生產批執行_元件
+
+- WP202 的 Component JOIN 查詢使用 `TBLWIPLOTSTATE`、`TBLWIPCOMPONENTSTATE`、`TBLWIPLOTBASIS`；三表 Oracle DDL／欄位／索引與 PostgreSQL CREATE-only 已由 WP101 唯讀查證並保存於 `database/reference/mestest_wip_wp101_source_ddl.sql`、`mestest_wip_wp101_create.sql`。
+- 本次對照 WinForms／Service／Core 後確認沒有 WP202 專屬表，故不重複直連或產出 CREATE SQL。未讀業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，連線秘密未輸出或提交。API/schema handoff 見 `docs/modules/WIP/生產批執行_元件.md` 與 `todolist_homepc.md`。

@@ -1860,3 +1860,11 @@ API 工作：
 - [ ] 交易性接續 wsWIP.ExecuteLot → Core TriggerOP／TransferLot。明確定義 ERF、Future Hold/Wait/OS、StopFlag、Complete+HOLD、狀態 11/12/31/99、Component RunBatchCO、動態 Manual BR DLL 的 YMES 對應與錯誤結果；不要假裝用單純 lot status CRUD 替代。
 - [ ] TBLWIPECNLOTBASIS 與 VIEW_TBLWIPPACK_LOT 在公司端 MESTEST/PUBLIC 無表、view 或 synonym；確認 YMES 現況／替代客製物件後再決定是否實作該可選分支，不要建立猜測的 CREATE SQL。
 - [ ] 依規格保留 API 錯誤碼、幂等鍵、CAS/LotStamp、operation log 與權限邊界；正式驗收需針對 status、併發、服務中斷／部分成功及自動／手動 BR 做回歸，成功後更新 migration/deploy record。
+
+## WIP WP202 生產批執行_元件家用端 handoff（2026-11-19）
+
+- [ ] Pull 最新 main，閱讀 [WP202 規格](docs/modules/WIP/生產批執行_元件.md)、[WP201 共用執行規格](docs/modules/WIP/生產批執行.md)，以及 `docs/DATABASE_CONNECTION.md` WP202 段落。
+- [ ] Component JOIN 查詢使用 WP101 已交付的 `TBLWIPLOTSTATE`、`TBLWIPCOMPONENTSTATE`、`TBLWIPLOTBASIS`；先核對 YMES PostgreSQL live schema 與 migrations，不新增重複表。Oracle source／CREATE-only 參考為 `database/reference/mestest_wip_wp101_source_ddl.sql`、`mestest_wip_wp101_create.sql`。
+- [ ] 建立登入保護的 Area／PS／OP Component JOIN 查詢，狀態限定 0／1／4／5，回傳 ComponentNo、OPNo、BRNo、StatusShow、BaseLotNo、LotNo、MoNo，參數化、分頁並依 ComponentNo 排序。OP lookup 可依 PS 限縮。
+- [ ] ComponentNo 可對應多個 ComponentState 列／LotNo 時，確認實際唯一性；有歧義時回候選，不可無排序取第一筆。Execute 使用 POST，若 LotNo 有值維持 LotNo 優先，否則伺服器解析 ComponentNo，再接 WP201 共用 ExecuteLot command；重驗登入身份、權限、批次狀態與 LotStamp/CAS。
+- [ ] API 必須沿用 WP201 的 TriggerOP、動態 BR、TransferLot、Future Hold／Wait／OS、StopFlag、ERF、幂等鍵及 operation log 決策；WP202 只增加元件選批入口，不建立簡化的獨立 Lot 狀態更新流程。完成後更新 API/schema、部署及驗收紀錄。
