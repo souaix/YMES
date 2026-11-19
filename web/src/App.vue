@@ -62,6 +62,7 @@ import ProductStationRuleMaster from './components/ProductStationRuleMaster.vue'
 import CpWaferShipReportMaster from './components/CpWaferShipReportMaster.vue'
 import CpWaferRuleMaster from './components/CpWaferRuleMaster.vue'
 import CpMergeMapRuleMaster from './components/CpMergeMapRuleMaster.vue'
+import ChooseWaferRuleMaster from './components/ChooseWaferRuleMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -406,6 +407,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:P_CP PROGRAM DEFINE', label: '晶圓測試程式定義', tableName: 'tbl_cpprdprogrambasis', shortLabel: '測', functionNo: 'P_CP PROGRAM DEFINE', moduleNo: 'PRD' },
       { id: 'function:PRD:P_WAFER RULE MANAGER', label: '產品晶圓法則管制管理', tableName: 'tbl_pprdwaferruleimportsummary', shortLabel: '管', functionNo: 'P_WAFER RULE MANAGER', moduleNo: 'PRD' },
       { id: 'function:PRD:P_PRD WAFERMAP MERGE RULE', label: '產品晶圓圖疊圖規則設置', tableName: 'tbl_bprdmergemaprule', shortLabel: '疊', functionNo: 'P_PRD WAFERMAP MERGE RULE', moduleNo: 'PRD' },
+    ] }, { id: 'product-wafer-settings', label: '挑片規則', shortLabel: '挑', children: [
+      { id: 'function:PRD:B_CHOOSE WAFER RULES', label: '挑片規則設定', tableName: 'tblprdchoosewaferrules', shortLabel: '挑', functionNo: 'B_CHOOSE WAFER RULES', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -548,6 +551,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:P_CP PROGRAM DEFINE': `${appBasePath}/PRD/CPPrograms`,
   'function:PRD:P_WAFER RULE MANAGER': `${appBasePath}/PRD/CPWaferRules`,
   'function:PRD:P_PRD WAFERMAP MERGE RULE': `${appBasePath}/PRD/CPMergeMapRules`,
+  'function:PRD:B_CHOOSE WAFER RULES': `${appBasePath}/PRD/ChooseWaferRules`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -697,6 +701,7 @@ const isCpWaferShipReportPage = computed(() => activeMasterKey.value === 'functi
 const isCpProgramPage = computed(() => activeMasterKey.value === 'function:PRD:P_CP PROGRAM DEFINE')
 const isCpWaferRulePage = computed(() => activeMasterKey.value === 'function:PRD:P_WAFER RULE MANAGER')
 const isCpMergeMapRulePage = computed(() => activeMasterKey.value === 'function:PRD:P_PRD WAFERMAP MERGE RULE')
+const isChooseWaferRulePage = computed(() => activeMasterKey.value === 'function:PRD:B_CHOOSE WAFER RULES')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2327,6 +2332,13 @@ async function signOut(): Promise<void> {
         />
         <CpMergeMapRuleMaster
           v-else-if="isCpMergeMapRulePage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ChooseWaferRuleMaster
+          v-else-if="isChooseWaferRulePage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
