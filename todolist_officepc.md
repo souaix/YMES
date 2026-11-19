@@ -1183,4 +1183,10 @@
 
 - [x] 完成 DEV 主檔與明細 CRUD、Copy、順序和欄位值 Test／Preview。核對 Form、Designer、Service 與 Core。
 - [x] Oracle 唯讀核對主／明細，補明細邏輯 DDL、CREATE-only 及 API 交接。
-- [ ] 正式標籤引擎、腳本產值、印表機和格式檔待接續。下一項 PD108 產品標籤對應設定。
+- [ ] 正式標籤引擎、腳本產值、印表機和格式檔待接續。
+
+## PRD PD108 產品標籤對應設定公司端檢查點（2026-11-19）
+
+- [x] 核對主窗、編輯與批次窗、Service／Core，完成 DEV 對應 CRUD、Copy、來源查找及過帳批次預設。
+- [x] Oracle 唯讀確認對應表；補來源 DDL、CREATE-only 及家用端 API 交接。
+- [ ] 正式跨頁 PrintLabel 參數與權限待接續。下一項 PD109 產品作業站預設。

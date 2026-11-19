@@ -162,6 +162,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PD107 標籤設定](modules/PRD/標籤設定.md) 已完成 DEV 主檔、明細、欄位值預覽及 SQL handoff。
 
+[PD108 產品標籤對應設定](modules/PRD/產品標籤對應設定.md) 已完成 DEV 對應、PD107 目錄查找、批次預設與 SQL 交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

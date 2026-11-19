@@ -45,6 +45,7 @@ import ProductContentsSearch from './components/ProductContentsSearch.vue'
 import RecipeGroupMaster from './components/RecipeGroupMaster.vue'
 import ProductTimeLimitMaster from './components/ProductTimeLimitMaster.vue'
 import LabelDataMaster from './components/LabelDataMaster.vue'
+import ProductLabelMapMaster from './components/ProductLabelMapMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -367,6 +368,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:PRD RECIPE BASIS', label: '產品參數群組', tableName: 'tblprdrecipebasis', shortLabel: '參', functionNo: 'PRD RECIPE BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:LIMITED TIME CONTROL', label: '生產時間限制(站與站)', tableName: 'tblprdlimitedtimecontrol', shortLabel: '時', functionNo: 'LIMITED TIME CONTROL', moduleNo: 'PRD' },
       { id: 'function:PRD:LABEL DATA', label: '標籤設定', tableName: 'tblprdlabelbasis', shortLabel: '標', functionNo: 'LABEL DATA', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRODUCT LABEL MAP BASIS', label: '產品標籤對應設定', tableName: 'tblprdlabelmap', shortLabel: '對', functionNo: 'PRODUCT LABEL MAP BASIS', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -489,6 +491,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRD RECIPE BASIS': `${appBasePath}/PRD/RecipeGroups`,
   'function:PRD:LIMITED TIME CONTROL': `${appBasePath}/PRD/TimeLimits`,
   'function:PRD:LABEL DATA': `${appBasePath}/PRD/LabelData`,
+  'function:PRD:PRODUCT LABEL MAP BASIS': `${appBasePath}/PRD/ProductLabelMap`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -618,6 +621,7 @@ const isProductContentsSearchPage = computed(() => activeMasterKey.value === 'fu
 const isRecipeGroupPage = computed(() => activeMasterKey.value === 'function:PRD:PRD RECIPE BASIS')
 const isProductTimeLimitPage = computed(() => activeMasterKey.value === 'function:PRD:LIMITED TIME CONTROL')
 const isLabelDataPage = computed(() => activeMasterKey.value === 'function:PRD:LABEL DATA')
+const isProductLabelMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT LABEL MAP BASIS')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2124,6 +2128,13 @@ async function signOut(): Promise<void> {
         />
         <LabelDataMaster
           v-else-if="isLabelDataPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductLabelMapMaster
+          v-else-if="isProductLabelMapPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"

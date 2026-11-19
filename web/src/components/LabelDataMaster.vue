@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { blank, blankPiece, labelStorageKey, loadDevelopmentLabels, type Label, type LabelRow, type Piece } from './labelDataDevelopment'
 
-type Piece = { itemName: string; pieceSource: string; pieceData: string; direction: 0 | 1 | 2; startIndex: number; pieceLength: number; dataScript: string; memo: string }
-type Label = { labelNo: string; labelType: string; labelSource: number; formatFileName: string; printerNo: string; description: string; pieces: Piece[] }
-type LabelRow = Label & { creator: string; createDate: string; reviser?: string; reviseDate?: string; dataStamp: number }
 type Mode = 'add' | 'edit' | 'copy' | ''
 const props = defineProps<{ developmentPreview: boolean; currentUserNo: string }>()
 const emit = defineEmits<{ close: [] }>()
-const storageKey = 'ymes.dev.prd107-label-data.v1'
 const labelTypes = ['SN', 'MATERIAL', 'SORT_PASS', 'SORT_NG', 'SORT_INV']
 const sources = ['LS', 'LB', 'MB', 'PB', 'WK', 'UD', 'RAW', 'SORTBIN', 'SC', 'SQL', 'D2', 'M2', 'M3', 'Y4', 'Y2', 'Y1', 'W2']
 const autoSources = ['WK', 'D2', 'M2', 'M3', 'Y4', 'Y2', 'Y1', 'W2']
@@ -16,7 +13,7 @@ const labelMode = ref<Mode>('')
 const previewMode = ref<'Test' | 'Preview' | ''>('')
 const testKey = ref('DEV-LOT-001')
 const testedKey = ref('DEV-LOT-001')
-const rows = ref(load())
+const rows = ref(props.developmentPreview ? loadDevelopmentLabels() : [])
 const selectedNo = ref('')
 const keyword = ref('')
 const query = ref('')
@@ -27,23 +24,9 @@ const user = computed(() => props.currentUserNo || 'DEV001')
 const visible = computed(() => rows.value.filter(row => row.labelNo.toUpperCase().includes(query.value) && (!typeQuery.value || row.labelType === typeQuery.value)))
 const active = computed(() => visible.value.find(row => row.labelNo === selectedNo.value) ?? visible.value[0])
 
-function blankPiece(): Piece { return { itemName: '', pieceSource: 'UD', pieceData: '', direction: 0, startIndex: 0, pieceLength: 1, dataScript: '', memo: '' } }
-function blank(): Label { return { labelNo: '', labelType: 'SN', labelSource: 1, formatFileName: '', printerNo: '', description: '', pieces: [] } }
-
-function load(): LabelRow[] {
-  if (!props.developmentPreview) return []
-  try {
-    const stored = localStorage.getItem(storageKey)
-    const parsed = stored ? JSON.parse(stored) : null
-    if (Array.isArray(parsed)) return parsed
-  } catch { /* Use the fixture when DEV storage is unavailable. */ }
-  return [{ ...blank(), labelNo: 'DEV-PRD-LABEL-01', formatFileName: 'dev-product.btw', description: '產品批號範例', creator: 'DEV001', createDate: '2026-11-19T08:00:00', dataStamp: 0,
-    pieces: [{ ...blankPiece(), itemName: 'LotNo', pieceSource: 'LB', pieceData: 'LotNo' }, { ...blankPiece(), itemName: 'Title', pieceData: 'DEV 生產標籤' }] }]
-}
-
 function saveRows(next: LabelRow[]): boolean {
   if (!props.developmentPreview) return false
-  try { localStorage.setItem(storageKey, JSON.stringify(next)) }
+  try { localStorage.setItem(labelStorageKey, JSON.stringify(next)) }
   catch { error.value = '無法儲存本機 DEV 標籤。'; return false }
   rows.value = next; error.value = ''; return true
 }
