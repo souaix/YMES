@@ -1248,4 +1248,10 @@
 
 - [x] 核對 WinForms／Designer、PRD Service／Core 和 MESTEST 程式／Bin 字典。
 - [x] 完成 DEV 主檔、版次、核准、Bin 文字檔預覽／匯入及程式檔名選擇，整理 [規格與交接](docs/modules/PRD/FT測試程式.md)。
-- [ ] 正式簽核、Bin 目錄、檔案及 API 待家用端接續。下一項 PD204 電性(EQC)抽樣規則。
+- [ ] 正式簽核、Bin 目錄、檔案及 API 待家用端接續。
+
+## PRD PD204 電性抽樣規則公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、PRD Service／Core 以及 MESTEST 主檔和 Bin 表。
+- [x] 完成兩種抽樣方式、Bin 選取和調序、狀態及 CRUD，整理 [規格與交接](docs/modules/PRD/電性抽樣規則.md)。
+- [ ] 正式抽樣執行、核准流程及選單待家用端接續。下一項 PD206 產品抽樣頻率規則。

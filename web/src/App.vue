@@ -54,6 +54,7 @@ import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
 import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
 import FtProgramMaster from './components/FtProgramMaster.vue'
+import EqcSampleRuleMaster from './components/EqcSampleRuleMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -388,6 +389,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:PRD GBOM IMPORT', label: 'GBOM批次匯入', tableName: 'tblprdbom', shortLabel: '匯', functionNo: 'PRD GBOM IMPORT', moduleNo: 'PRD' },
     ] }, { id: 'product-bin-settings', label: '等級設定', shortLabel: '級', children: [
       { id: 'function:PRD:FT PROGRAM BASIS', label: 'FT測試程式', tableName: 'tblprdftprogrambasis', shortLabel: '測', functionNo: 'FT PROGRAM BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:EQC SAMPLE RULE', label: '電性(EQC)抽樣規則', tableName: 'tblprdeqcsamplerule', shortLabel: '抽', functionNo: 'EQC SAMPLE RULE', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -521,6 +523,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRD QCITEM SPEC IMPORT': `${appBasePath}/PRD/QCSpecImport`,
   'function:PRD:PRD GBOM IMPORT': `${appBasePath}/PRD/GbomBatchImport`,
   'function:PRD:FT PROGRAM BASIS': `${appBasePath}/PRD/FTPrograms`,
+  'function:PRD:EQC SAMPLE RULE': `${appBasePath}/PRD/EQCSampleRules`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -661,6 +664,7 @@ const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'functi
 const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCITEM SPEC IMPORT')
 const isProductGbomBatchImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD GBOM IMPORT')
 const isFtProgramPage = computed(() => activeMasterKey.value === 'function:PRD:FT PROGRAM BASIS')
+const isEqcSampleRulePage = computed(() => activeMasterKey.value === 'function:PRD:EQC SAMPLE RULE')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2230,6 +2234,13 @@ async function signOut(): Promise<void> {
         />
         <FtProgramMaster
           v-else-if="isFtProgramPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <EqcSampleRuleMaster
+          v-else-if="isEqcSampleRulePage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"

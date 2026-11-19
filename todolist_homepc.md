@@ -1755,3 +1755,7 @@ API 工作：
 ## PRD PD202 FT 測試程式家用端 handoff（2026-11-19）
 
 - [ ] 依 [FT 測試程式](docs/modules/PRD/FT測試程式.md) 核對主檔與軟體 Bin CREATE、硬體 Bin、簽核、DataStamp 及檔案管理。
+
+## PRD PD204 電性抽樣規則家用端 handoff（2026-11-19）
+
+- [ ] 依 [電性抽樣規則](docs/modules/PRD/電性抽樣規則.md) 核對主從 CREATE、系統 Bin、DataStamp、簽核和執行函式。
