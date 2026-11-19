@@ -698,3 +698,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - Windows PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDEQUIPMENTSPEC` 與設備參數目錄。主表 `GET_DDL` 回 `ORA-03135`，依字典重建 10 欄、四欄 PK，四個數值欄均為 `NUMBER(12,6)`。[EquipmentSpec 規格](modules/PRD/產品設備參數規格.md)
 
+
+### 更新 2026-11-19：WIP WP102 生產批開立_批次
+
+- 公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護 profile 讀取 DatabaseConfigs.CS.Test.Mes.ConnectionString，唯讀直連 MESTEST，取得 TBLWIPLOTPROPERTY_TEMP、TBLWIPLOTPROPERTY 的 DBMS_METADATA.GET_DDL，並查 ALL_CONSTRAINTS、ALL_INDEXES、ALL_TRIGGERS。未查業務列、未執行 Oracle DDL/DML，未輸出連線秘密。
+- TBLWIPLOTPROPERTY_TEMP 以 (LOTNO, PROPERTYNO) 為 PK，只有 PK unique index，無 FK、trigger、其他 index。欄位為 LOTNO NVARCHAR2(50)、PROPERTYNO NVARCHAR2(20)、PROPERTYVALUE NVARCHAR2(255)、LOTSERIAL NVARCHAR2(55)；前兩欄 NOT NULL。
+- TBLWIPLOTPROPERTY 亦以 (LOTNO, PROPERTYNO) 為 PK，無 FK/trigger/額外 index；其 Oracle DDL 已由 WP101 保存，WP102 不重複建立。
+- Oracle source DDL：database/reference/mestest_wip_wp102_source_ddl.sql；PostgreSQL CREATE-only 僅含 TEMP：database/reference/mestest_wip_wp102_create.sql。家用端先核對 live schema/migrations，缺表才新增 migration。

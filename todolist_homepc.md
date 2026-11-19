@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 新交接公司端 WP102 生產批開立_批次（2026-11-19）
+
+- [ ] Pull 最新 main，讀 docs/modules/WIP/生產批開立_批次.md、database/reference/mestest_wip_wp102_source_ddl.sql 與 mestest_wip_wp102_create.sql。
+- [ ] 比對 YMES PostgreSQL live schema/migrations：WP102 新增需求只有 ymes.tblwiplotproperty_temp；tblwiplotproperty 已列於 WP101 schema/reference。工單、WIP LotBasis/State/Process 與 BOM/Process/Serial lookup 都是共用表，禁止重建或覆蓋。
+- [ ] 若 TEMP table 不存在，先驗證備份再新增 forward migration；欄位為 LOTNO varchar(50) NOT NULL、PROPERTYNO varchar(20) NOT NULL、PROPERTYVALUE varchar(255) NULL、LOTSERIAL varchar(55) NULL，PK (LOTNO, PROPERTYNO)，無 FK/額外索引。Create-only SQL 僅是空表參考。
+- [ ] 接登入保護 WP102 批次 API：重查 MOState=3、UnReleaseLotQty、Product LotBase、MO Process、BOM 及 SYS serial mode；不可信任 UI 顯示欄位，也不能使用 DEV 批號。自動序號由 server 驗證並原子保留，沿用 WP101 LotBasis/State/Process/Property domain logic，不重複實作 CRUD。
+- [ ] 一次批次請求逐筆回報結果；每筆交易需鎖定／條件扣減 MO 餘量，執行建批、StartLot、LotCreate material deduction、狀態 0→1、Property/SAP data。保留舊 Core 前批已提交、後批失敗可能部分成功的語意；不可錯誤宣稱全回滾。
+- [ ] 處理 Service 的 TEMP staging 生命週期：若使用 tblwiplotproperty_temp，依 LOTNO/PROPERTYNO 隔離並於失敗時清理；亦可採 transaction 內 staging，但要保留逐批結果。檢查 WIP_BIGQTY/WIP_SORTQTY、WIP_CIMLOTNO/WIP_INSP_NO/WIP_M_LOTNO property 對應及 SAP_PCSQTY/SAP_ARGQTY/SAP_PRDQTY 欄位。
+- [ ] API 完成後更新 WP102 規格、TODO、forward migration、交易回歸及部署紀錄；公司端 pull 後再接 Vue contract。公司端不連 PostgreSQL；Oracle CREATE-only 不可直接執行到 YMES。
+
 ## 新交接公司端 WP101 生產批開立（2026-11-19）
 
 - [ ] 先 pull 最新 main，再讀 docs/modules/WIP/生產批開立.md 與 database/reference/mestest_wip_wp101_source_ddl.sql / mestest_wip_wp101_create.sql。

@@ -22,12 +22,20 @@
 - [x] 規格與 API/schema handoff：docs/modules/WIP/生產批開立.md；索引與家用端待辦已更新。明確記錄物料扣帳、StartLot、CloseLot、屬性動態目標、ECN、自動 BR／OP 等正式限制。
 - [ ] 本輪未執行 build、test 或 browser；後續需要驗收時再依使用者指示執行。
 
-### 下一功能：WP102 生產批開立_批次
+### WP102 生產批開立_批次已交付（2026-11-19）
 
-- [ ] WinForms 入口已定位於 STD/MESWin/WIP/WP_LotBasisDef_Batch/frmLotBasisDef_Batch.vb；專案與方案在同目錄 WP_LotBasisDef_Batch.vbproj／.sln。畫面標題 Batch Create Lot and Release，含依數量／批數建立、流程調整及批次確認。
-- [ ] 直接對照完整 Form、Designer、InvokeSrv("wsWIP.AddLotBasis_Batch")、Service/Core 的 AddLotBasis_Batch，整理批號分配、尾批數量、一次確認多筆與逐筆失敗語意。
-- [ ] 依程式實際呼叫與 Oracle metadata 判定額外資料表；若無獨立表則明記共用 WP101 schema，不先猜或新增 CREATE SQL。
-- [ ] 完成 WP102 DEV UI、規格與家用端 API/SQL handoff，再依原授權 commit/push；公司端仍不連 PostgreSQL、不建 API。
+- [x] 直接對照 Form／Designer、工單／流程／BOM／LotBase／序號載入、Add/View/Tuning、Expand、Confirm 及 THEIL Service/Core；規格記錄兩種分批、序號重查／保留、批次逐筆寫入與部分成功語意。
+- [x] PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得 TBLWIPLOTPROPERTY_TEMP 與 TBLWIPLOTPROPERTY DDL/constraints/indexes/triggers。WP102 新增需求僅 TEMP；正式屬性表與其他 WIP 表沿用 WP101，不重複建 SQL。未查業務列、未執行 Oracle DDL/DML。
+- [x] 完成 Vue DEV 頁 /YMES/WIP/LotBasisBatch、三層選單、by Count/by Qty、批次 Grid、BOM/Process、Add/View/Tuning 假視窗、確認驗證及專屬 localStorage。
+- [x] 新增 WP102 模組規格、Oracle source DDL、PostgreSQL CREATE-only（僅 TEMP）及家用端 API/schema handoff；未連 YMES PostgreSQL，未實作 API/migration。
+- [ ] 依規則未執行 build/test/browser；完成靜態檢查及 GitHub push 後，接續 WP201「生產批執行」（FunctionNo EXECUTE LOT，Form frmWIPLotSelect_THEIL_BU1），並持續清冊內其他未完成功能。
+
+### 下一功能：WP201 生產批執行（FunctionNo EXECUTE LOT）
+
+- [ ] 依 docs/MES_MENU_FUNCTION_INVENTORY.md 核對第三層 MenuItem／FunctionKey，直接閱讀 THEIL frmWIPLotSelect_THEIL_BU1、Designer、Service/Core；確認主畫面與批次／操作站執行子流程。
+- [ ] 列出程式實際讀寫表，使用本機受保護 MESTEST profile 直連唯讀取得缺少表的 DDL/metadata；WP101/WP102 共用表不重複產生 CREATE SQL。
+- [ ] 完成 WP201 DEV UI、模組規格與家用端 API/schema handoff；公司端不連 YMES PostgreSQL、不建 API/migration。
+- [ ] 依規則不執行 build/test/browser；完成靜態檢查、更新 TODO、commit/push 後，繼續清冊中其他未完成功能。
 
 ### 公司端工作範圍
 

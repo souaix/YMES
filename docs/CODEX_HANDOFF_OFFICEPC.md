@@ -1,6 +1,6 @@
 # Codex handoff：公司筆電 → 桌電
 
-更新：2026-11-18。用途：在桌電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
+更新：2026-11-19。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
 ## 接手方式
 
@@ -27,7 +27,7 @@
 
 ## 目前檢查點與下一步
 
-- 公司端已接續 OE101、OE102、OE201 至 OE209、OEB01、OEP01 的 DEV 訂單與工單操作。各功能及 Oracle DDL／API 交接見 [模組索引](MODULE_REPLICATION_SPEC_INDEX.md#工單管理--訂單)。WP101「生產批開立」已完成公司端 DEV 與家用端 API handoff；接續項目為 WP102「生產批開立_批次」。
+- 公司端已接續 OE101、OE102、OE201 至 OE209、OEB01、OEP01 的 DEV 訂單與工單操作。各功能及 Oracle DDL／API 交接見 [模組索引](MODULE_REPLICATION_SPEC_INDEX.md#工單管理--訂單)。WP101「生產批開立」與 WP102「生產批開立_批次」已完成公司端 DEV、Oracle 結構查證及家用端 API/schema handoff；後續依 todolist_officepc.md 的 WP201「生產批執行」接續。
 
 - PD102 DEV 子視窗已分段完成 Property、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item。各功能的 WinForms 證據、DDL 及 API handoff 在 `docs/modules/PRD/` 與兩份 TODO。
 - RunTime 已完成單列／表格編輯與套用。QC Item 已完成依 OP 指派與檢驗類型，QC Import／QC Chart 的 Excel 流程待接續。兩項 DDL 依 MESTEST 字典實查重建，Production API 由家用端接續。

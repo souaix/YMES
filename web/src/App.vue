@@ -54,6 +54,7 @@ import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
 import ReceivingOrderMaster from './components/ReceivingOrderMaster.vue'
 import ManufacturingOrderMaster from './components/ManufacturingOrderMaster.vue'
 import WipLotBasisCreate from './components/WipLotBasisCreate.vue'
+import WipLotBasisBatch from './components/WipLotBasisBatch.vue'
 import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
 import FtProgramMaster from './components/FtProgramMaster.vue'
@@ -448,6 +449,7 @@ const fallbackMenuTree: MenuNode[] = [
   { id: 'module:WIP', label: '在製品管理', shortLabel: '製', moduleNo: 'WIP', children: [{
     id: 'menu:WIP:IN PROCESS', label: '在製品', shortLabel: '製', children: [
       { id: 'function:WIP:CREATE LOT', label: '生產批開立', tableName: 'tblwiplotbasis', shortLabel: '批', functionNo: 'CREATE LOT', moduleNo: 'WIP' },
+      { id: 'function:WIP:CREATE LOT_BATCH', label: '生產批開立_批次', tableName: 'tblwiplotbasis', shortLabel: '批次', functionNo: 'CREATE LOT_BATCH', moduleNo: 'WIP' },
     ],
   }] },
 ]
@@ -458,6 +460,7 @@ const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
   'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
+  'function:WIP:CREATE LOT_BATCH': appBasePath + '/WIP/LotBasisBatch',
   'function:OE:RO BASIS': appBasePath + '/OE/ReceivingOrders',
   'function:OE:RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
   'function:OE:MO BASIS': appBasePath + '/OE/ManufacturingOrders',
@@ -761,6 +764,7 @@ const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'functi
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
 const isWipLotBasisCreatePage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT')
+const isWipLotBasisBatchPage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT_BATCH')
 const manufacturingOrderPages = {
   'function:OE:MO BASIS': undefined,
   'function:OE:MO DELETE': 'delete',
@@ -2343,6 +2347,7 @@ async function signOut(): Promise<void> {
           @close="navigateHome"
         />
         <WipLotBasisCreate v-else-if="isWipLotBasisCreatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotBasisBatch v-else-if="isWipLotBasisBatchPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <ReceivingOrderMaster
           v-else-if="isReceivingOrderPage || isReceivingOrderClosePage"
           :key="activeMasterKey"
