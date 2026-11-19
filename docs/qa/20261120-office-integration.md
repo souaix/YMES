@@ -67,3 +67,5 @@ API 保持 `16a825af0bea`，新 Web 為 `722bc259cc81`（完整 image SHA `722bc
 本機原始證據：`.tools/gui-proof-20261120/office-merge-extra-a3.json`（ignored QA artifact），與原 a2 receipt 分別保留，未覆寫前 23 個的紀錄。
 
 a3 另實讀導覽列 39 個按鈕，缺少 SVG 圖示 0 個、缺少 aria／title 0 個；收合後 nav 的 clientWidth 與 scrollWidth 同為 33，無橫向裁切。截圖為本機 `.tools/gui-proof-20261120/office-merge-final-icons-a3.jpg`。這是導覽顯示補驗，未重複宣稱九個既有模組的全部 CRUD 分支已在本版重跑。
+
+GitHub 同步：正式驗收後，以 `84108ab`／`c64d0ee` 兩次正常 merge 保留公司端至 `f68ecea` 及家用端來源，已成功推送 `main`。`c64d0ee` 的 206 份 Web 來源與已部署 a3 快照逐檔比對一致（僅容許 Git CRLF/LF 文字轉換）；沒有 force push。

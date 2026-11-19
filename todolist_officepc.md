@@ -4,7 +4,7 @@
 
 - 已正常合併公司端至 `f68ecea`，保留兩端來源。原 OE／WIP 23 個入口加上 WP303、WP304、WP308 三個，累計 26 個唯一入口已完成正式 app-browser 的路由、不可用提示、無 DEV 業務資料及離開／重進防護；三個新入口實按頁內 Close 返回空白首頁，console 無紀錄。分批版本與精確範圍見 [公司整合 QA](docs/qa/20261120-office-integration.md)。這不是 26 個功能的正式 API 或交易完成。
 - 家用端已修正正式 non-DEV 不可回傳 seed／fixture、查詢／查找及異動入口的 disabled 與 handler guard，並保留公司端 DEV seed、共用 storage 與來源邏輯；WP308 額外修正四個位置欄位交換的 TypeScript 型別錯誤，未改值語意。後續公司端正常同步時請保留這些正式隔離及維護 MD。
-- 正式 PostgreSQL schema 核對／migration、API、並發交易、部署與驗收仍由家用電腦依 [家用端待辦](todolist_homepc.md) 持續接手；公司端繼續原生 Oracle 唯讀來源與 UI 開發，無須連家用 PostgreSQL 或 SSH。下方歷史交接與尚未交付的 provider／API 待辦保留，GitHub 正常同步尚待家用端完成。
+- 正式 PostgreSQL schema 核對／migration、API、並發交易、部署與驗收仍由家用電腦依 [家用端待辦](todolist_homepc.md) 持續接手；公司端繼續原生 Oracle 唯讀來源與 UI 開發，無須連家用 PostgreSQL 或 SSH。下方歷史交接與尚未交付的 provider／API 待辦保留，GitHub main 已由家用端正常推送至 `c64d0ee`，公司端可依既有安全合併流程同步；兩端歷史均保留。
 
 ## 公司桌機交回原公司筆電（2026-11-19）
 
