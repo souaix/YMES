@@ -1189,4 +1189,10 @@
 
 - [x] 核對主窗、編輯與批次窗、Service／Core，完成 DEV 對應 CRUD、Copy、來源查找及過帳批次預設。
 - [x] Oracle 唯讀確認對應表；補來源 DDL、CREATE-only 及家用端 API 交接。
-- [ ] 正式跨頁 PrintLabel 參數與權限待接續。下一項 PD109 產品作業站預設。
+- [ ] 正式跨頁 PrintLabel 參數與權限待接續。
+
+## PRD PD109 產品作業站預設公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core。完成 DEV 前綴查詢、作業範圍、批次 Default／Amend、逐筆進度與取消。
+- [x] Oracle 唯讀核對共用表，沿用既有 DDL 參考。
+- [ ] 正式候選、權限、批次 API、動態作業預設及 APS 待接續。下一項 PD110 產品作業站修正。
