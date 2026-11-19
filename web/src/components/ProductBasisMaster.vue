@@ -24,6 +24,7 @@ import { loadDevelopmentProductTypes } from './productTypeDevelopment'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
+import PackagingProductChanges from './PackagingProductChanges.vue'
 import {
   rowsKey, relationKey, seedRows, seedRelations,
   type ProductRow, type ProductParameterData, type ProductBusinessRuleData, type ProductRunTimeData, type ProductRunTimeRow, type ProductQCAssignment, type ProductPackingProps, type EquipmentCapRows, type ProductEsopRows, type ProductEquipmentSpecProps, type ProductApsProps, type ProductBinProps, type ImportProducts, type ProductRelation,
@@ -48,7 +49,8 @@ const props = withDefaults(defineProps<{
   apiBaseUrl: string
   currentUserNo?: string
   developmentPreview?: boolean
-}>(), { currentUserNo: '', developmentPreview: false })
+  packaging?: boolean
+}>(), { currentUserNo: '', developmentPreview: false, packaging: false })
 const emit = defineEmits<{ close: [] }>()
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const developmentGbomFiles = ref(new Map<string, File>())
@@ -544,7 +546,8 @@ function onPictureChange(event: Event): void {
   picturePreview.value = file ? URL.createObjectURL(file) : ''
 }
 function validateForm(): boolean {
-  const required = ['productNo', 'productVersion', 'productName', 'productType', 'unitType', 'unitNo', 'sapPlnal']
+  const required = ['productNo', 'productVersion', 'productName', 'productType', 'unitType', 'unitNo']
+  if (!props.packaging) required.push('sapPlnal')
   const missing = required.filter(key => !text(form.value[key]).trim())
   if (missing.length) {
     const labels: Record<string, string> = { productNo: 'ProductNo', productVersion: 'ProductVersion', productName: 'ProductName', productType: 'ProductType', unitType: 'UnitType', unitNo: 'UnitNo', sapPlnal: 'SAP_PLNAL' }
@@ -590,6 +593,7 @@ async function saveForm(closeAfter = true): Promise<void> {
       ...clone(form.value),
       productNo: text(form.value.productNo).trim().toUpperCase(),
       productVersion: text(form.value.productVersion).trim().toUpperCase(),
+      ...(props.packaging ? { ecnControl: 'Y' } : {}),
       issueState: old?.issueState ?? 0,
       curVersion: old?.curVersion ?? 0,
       creator: old?.creator ?? currentUser(),
@@ -969,7 +973,7 @@ onMounted(() => { void load() })
 
 <template>
   <main class="prd-master">
-    <div class="prd-page-title"><strong>產品設定</strong><span>產品基本資料</span></div>
+    <div class="prd-page-title"><strong>{{ packaging ? '產品設定_封測' : '產品設定' }}</strong><span>產品基本資料</span></div>
     <p v-if="mock" class="prd-dev-note">Development 假資料：資料只保存在這台電腦的瀏覽器 localStorage，不連 Oracle 或 YMES Production 資料庫。</p>
     <div class="prd-query">
       <fieldset class="prd-state">
@@ -1025,7 +1029,8 @@ onMounted(() => { void load() })
         <footer class="prd-count">資料總筆數 {{ visibleRows.length }}<span v-if="selectedKeys.length">　已選取 {{ selectedKeys.length }} 筆</span></footer>
       </div>
       <aside class="prd-actions" aria-label="產品功能">
-        <button v-for="action in toolbar" :key="action.key" class="prd-button" type="button" :disabled="actionDisabled(action.key)" @click="runAction(action.key)">{{ action.label }}</button>
+        <button v-for="action in toolbar.filter(item => !packaging || !item.key.startsWith('gbom-'))" :key="action.key" class="prd-button" type="button" :disabled="actionDisabled(action.key)" @click="runAction(action.key)">{{ action.label }}</button>
+        <button v-if="packaging && mock" class="prd-button" type="button" :disabled="!active" @click="featureKey = 'packaging-ecn'">工程變更</button>
         <button class="prd-button" type="button" :disabled="busy" @click="featureKey='product-import'">Import</button>
         <button class="prd-button" type="button" @click="emit('close')">Close</button>
       </aside>
@@ -1047,6 +1052,7 @@ onMounted(() => { void load() })
               <label class="field"><span>LotStdQty</span><div class="prd-lotqty"><label><input v-model="form.lotStdQtyMode" type="radio" value="none" @change="form.lotStdQty=0" />Not Set</label><label><input v-model="form.lotStdQtyMode" type="radio" value="set" />Std Qty</label><input v-model.number="form.lotStdQty" type="number" min="0" step="1" :disabled="form.lotStdQtyMode !== 'set'" /></div></label>
               <label class="field"><span>Unit Type *</span><div class="prd-control"><input v-model="form.unitType" readonly /><button type="button" class="prd-button" @click="openLookup('unitType')">...</button></div></label>
               <label class="field"><span>Unit No *</span><div class="prd-control"><input v-model="form.unitNo" readonly /><button type="button" class="prd-button" @click="openLookup('unitNo')">...</button></div></label>
+              <template v-if="!packaging">
               <label class="field"><span>SAP_KTEXT</span><input v-model="form.sapKtext" /></label>
               <label class="field"><span>SAP_BOMAENNR</span><select v-model="form.sapBomAennr"><option value="">(無)</option><option>DEV-CHANGE-01</option><option>DEV-CHANGE-02</option></select></label>
               <label class="field"><span>SAP_AENNR</span><input v-model="form.sapAennr" /></label>
@@ -1054,6 +1060,7 @@ onMounted(() => { void load() })
               <label class="field"><span>XX_SOPSPEC</span><input v-model="form.xxSopSpec" /></label>
               <label class="field"><span>XX_SOPREV</span><input v-model="form.xxSopRev" /></label>
               <label class="field"><span>SAP_PLNAL *</span><select v-model="form.sapPlnal" required><option value="">請選擇</option><option v-for="option in sapPlnalOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
+              </template>
               <label class="field"><span>ERPNo</span><input v-model="form.erpNo" /></label>
               <label class="field wide"><span>Description</span><textarea v-model="form.description" rows="3" /></label>
               <label class="field"><span>SerialTypeNo_Lot</span><div class="prd-control"><input v-model="form.serialTypeNoLot" readonly /><button type="button" class="prd-button" @click="openLookup('serialTypeNoLot')">...</button></div></label>
@@ -1062,7 +1069,7 @@ onMounted(() => { void load() })
               <label class="field"><span>ItemSpec</span><input v-model="form.itemSpec" /></label>
               <label class="field"><span>CustomerNo</span><input v-model="form.customerNo" /></label>
               <label class="field"><span>DeviceNo</span><input v-model="form.deviceNo" /></label>
-              <label class="field"><span>ECNControl</span><select v-model="form.ecnControl"><option value="N">N</option><option value="Y">Y</option></select></label>
+              <label v-if="!packaging" class="field"><span>ECNControl</span><select v-model="form.ecnControl"><option value="N">N</option><option value="Y">Y</option></select></label>
             </div>
             <div v-if="picturePreview" class="prd-picture-preview"><img :src="picturePreview" alt="產品圖片預覽" /></div>
           </fieldset>
@@ -1081,6 +1088,9 @@ onMounted(() => { void load() })
       <section class="prd-feature-dialog"><header><h2>選擇 {{ lookupField }}</h2><button type="button" @click="lookupField=''">×</button></header><div class="prd-lookup-list"><button v-for="value in lookupOptions" :key="value" class="prd-button" type="button" @click="chooseLookup(value)">{{ value }}</button></div><p class="prd-dev-note">以上為 Development 假資料選項。</p></section>
     </div>
 
+    <div v-if="packaging && mock && active && featureKey === 'packaging-ecn'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
+      <PackagingProductChanges :key="keyOf(active)" :product="text(active.productNo)" :version="text(active.productVersion)" :user="currentUser()" @close="closeFeature" />
+    </div>
     <div v-if="feature && featureKey === 'process-setup'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductProcessEditor :product="active ?? {}" :processes="activeRelations.processes" :development-preview="mock" @save="saveProductProcess" @close="closeFeature" />
     </div>
