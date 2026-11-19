@@ -7,6 +7,7 @@
 - [x] QC107 已核對 ValueList provider、語系、排序、Oracle 主鍵與 UserDefineAQL 的缺值行為。見 [QC107 來源查證](docs/modules/QC/計數判別法則基本資料.md#公司端-valuelist-與開關來源查證2026-11-19)。
 - [x] QC108 核對標準 FUNQR 原始碼與公司端 DLL 靜態識別字。四個方法在標準 Core 均回傳 null，客製可執行版本仍待交付。見 [QC108 來源查證](docs/modules/QC/計量品管法則基本資料.md#公司端-funqr-來源查證2026-11-19)。
 - [x] QC103 已核實 FUNSA 名單、Type 4/6 ShowFlag、Type 6 Core 與母體上限旗標、QC301 一般／Wafer 分表條件。見 [QC103 來源查證](docs/modules/QC/抽樣計劃.md#公司端-formcore-與函式目錄查證2026-11-19)。
+- [x] QC103 DEV 定義窗已套用核實的預設旗標及 FUNSA 名單，保留舊 DEV 參數值，`vue-tsc --noEmit` 通過。
 - [ ] 若須與原 MES 範本完全相容，再提供 MCLASS/SCLASS 原始 binary 與 SYS template metadata；目前 YMES 標準 .xlsx 範本是已記錄的產品決策，非原 MES 匯出檔。
 - [ ] 持續按照本檔完成 Oracle 來源／UI handoff。家用電腦負責 YMES PostgreSQL、API、SSH 部署與正式瀏覽器驗收；公司電腦不需取得 PostgreSQL 或 SSH 連線。
 

@@ -159,7 +159,9 @@ function parameterSpecs(planType: number): { parameterNo: string; showFlag: numb
     showFlag: planType === 0 ? Number(parameterNo === 'SampleQty')
       : planType === 1 ? Number(parameterNo === 'SampleRate')
         : planType === 2 || planType === 7 ? Number(['AQLType', 'QCLevel', 'AQL'].includes(parameterNo))
-          : planType === 5 ? Number(parameterNo === 'SamplingTable') : planType === 6 && !isMock.value ? null : 1,
+          : planType === 5 ? Number(parameterNo === 'SamplingTable')
+            : planType === 4 && isMock.value ? 2
+              : planType === 6 ? (isMock.value ? Number(['SamplingType', 'VLevel'].includes(parameterNo)) : null) : 1,
   }))
 }
 const visibleRows = computed(() => {
@@ -208,7 +210,7 @@ function setTypeRows(planType: number, existing: SamplingParameter[] = []): void
   const values = new Map(existing.map(item => [item.parameterNo.toUpperCase(), item]))
   parameterRows.value = parameterSpecs(planType).map(spec => {
     const stored = values.get(spec.parameterNo.toUpperCase())
-    return { ...spec, showFlag: stored ? stored.showFlag : spec.showFlag, parameterValue: stored?.parameterValue ?? '', options: isMock.value ? devOptions[spec.parameterNo] ?? [] : [] }
+    return { ...spec, showFlag: isMock.value ? spec.showFlag : stored ? stored.showFlag : spec.showFlag, parameterValue: stored?.parameterValue ?? '', options: isMock.value ? devOptions[spec.parameterNo] ?? [] : [] }
   })
   for (const item of existing) {
     if (!parameterRows.value.some(row => row.parameterNo.toUpperCase() === item.parameterNo.toUpperCase())) parameterRows.value.push({ ...item, parameterValue: item.parameterValue ?? '', options: isMock.value ? devOptions[item.parameterNo] ?? [] : [] })
@@ -234,7 +236,10 @@ async function loadParameterOptions(parameterNo: string): Promise<void> {
   } catch (reason) { if (epoch === parameterEpoch && optionRequests.get(parameterNo) === sequence) optionsNotice.value = reason instanceof Error ? reason.message : '參數選項暫時無法載入，可維護既有文字值。' }
 }
 async function loadFunctions(): Promise<void> {
-  if (isMock.value) { functionOptions.value = ['DEV_FUNSAMPLING_DEFAULT', 'DEV_FUNSAMPLING_AQL']; return }
+  if (isMock.value) {
+    functionOptions.value = ['funSASampling_FixedSize', 'funSASampling1', 'funSASamplingSetToPNL', 'funSASamplingDev']
+    return
+  }
   const epoch = parameterEpoch
   try { const received = await request<string[]>('api/qc/sampling-plans/options/functions'); if (epoch === parameterEpoch) functionOptions.value = received }
   catch (reason) { if (epoch === parameterEpoch) optionsNotice.value = reason instanceof Error ? reason.message : '載入抽樣函式失敗。' }
@@ -493,7 +498,19 @@ onMounted(async () => {
           <fieldset class="parameter-box" :disabled="saving"><legend>Sampling Parameter</legend>
             <div class="parameter-actions"><button type="button" :disabled="formReadOnly" @click="addParameter">ADD(A)</button><button type="button" :disabled="formReadOnly || !parameterRows.length" @click="removeParameter(parameterRows.length - 1)">DEL(D)</button></div>
             <div class="parameter-scroll"><table class="parameter-grid"><thead><tr><th>ParameterNo</th><th>ParameterValue</th><th>必填</th><th></th></tr></thead><tbody>
-              <tr v-for="(parameter, index) in parameterRows" :key="index"><td><input v-model="parameter.parameterNo" :readonly="isPredefinedParameter(parameter.parameterNo) || formReadOnly" maxlength="20" @input="markDirty"></td><td><select v-if="parameter.options.length" v-model="parameter.parameterValue" :disabled="formReadOnly" @change="markDirty"><option value="">（空白）</option><option v-if="parameter.parameterValue && !parameter.options.includes(parameter.parameterValue)" :value="parameter.parameterValue">{{ parameter.parameterValue }}</option><option v-for="value in parameter.options" :key="value" :value="value">{{ value }}</option></select><input v-else v-model="parameter.parameterValue" :readonly="formReadOnly" maxlength="255" @input="markDirty"></td><td>{{ parameter.showFlag === null ? '待確認' : parameter.showFlag === 1 ? '是' : '否' }}</td><td><button type="button" :disabled="formReadOnly" aria-label="刪除參數" @click="removeParameter(index)">×</button></td></tr>
+              <tr v-for="(parameter, index) in parameterRows" :key="index">
+                <td><input v-model="parameter.parameterNo" :readonly="isPredefinedParameter(parameter.parameterNo) || formReadOnly" maxlength="20" @input="markDirty"></td>
+                <td>
+                  <select v-if="parameter.options.length" v-model="parameter.parameterValue" :disabled="formReadOnly || (isMock && parameter.showFlag === 0)" @change="markDirty">
+                    <option value="">（空白）</option>
+                    <option v-if="parameter.parameterValue && !parameter.options.includes(parameter.parameterValue)" :value="parameter.parameterValue">{{ parameter.parameterValue }}</option>
+                    <option v-for="value in parameter.options" :key="value" :value="value">{{ value }}</option>
+                  </select>
+                  <input v-else v-model="parameter.parameterValue" :readonly="formReadOnly || (isMock && parameter.showFlag === 0)" maxlength="255" @input="markDirty">
+                </td>
+                <td>{{ parameter.showFlag === null ? '待確認' : parameter.showFlag === 1 ? '是' : '否' }}</td>
+                <td><button type="button" :disabled="formReadOnly" aria-label="刪除參數" @click="removeParameter(index)">×</button></td>
+              </tr>
               <tr v-if="!parameterRows.length"><td colspan="4" class="empty">此 PlanType 沒有預設參數</td></tr>
             </tbody></table></div>
           </fieldset>
