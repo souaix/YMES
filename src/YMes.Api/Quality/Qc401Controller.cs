@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
+using YMes.Api.Common;
 
 namespace YMes.Api.Quality;
 
@@ -50,8 +51,8 @@ public sealed class Qc401Controller(NpgsqlDataSource dataSource, ILogger<Qc401Co
     });
 
     [HttpGet("import/template")]
-    public IActionResult Template() => Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
-        title: "QC401 正式範本尚未提供", detail: "YMES 尚未遷移 MCLASS BASIS 的原始 Excel 範本；請由公司端交付正式 SYS template storage 範本，不以 DEV CSV 取代。");
+    public IActionResult Template() => File(XlsxTemplateFactory.Create("MClassNo", "Description"),
+        XlsxTemplateFactory.ContentType, "YMES-MClassBasis.xlsx");
 
     private decimal? ExpectedStamp(decimal? stamp)
     {

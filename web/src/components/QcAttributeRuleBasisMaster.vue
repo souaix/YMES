@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2
 type EditorMode = 'add' | 'edit' | 'copy' | null
@@ -8,21 +10,22 @@ interface Option { value: number; label: string }
 interface BasisRow {
   ruleNo: string
   componentCollect: number
-  issueState: IssueState
+  issueState: IssueState | null
   creator: string | null
   createDate: string | null
   reviser: string | null
   reviseDate: string | null
   editableFields?: string[]
+  version?: string
 }
 interface RuleDetail {
   ruleNo: string
   action: number
   reasonType: number
   reasonLevel: number
-  rejectNum: number
+  rejectNum: number | null
   rate: string | null
-  ruleType: RuleType
+  ruleType: RuleType | null
   changeAql: string | null
   creator?: string | null
   createDate?: string | null
@@ -35,14 +38,16 @@ interface RuleDraft {
   reasonLevel: number
   rejectNum: string
   rate: string
-  ruleType: RuleType
+  ruleType: RuleType | null
   changeAql: string
 }
 interface MockStore { bases: BasisRow[]; details: RuleDetail[] }
+interface SaveResult { basis: BasisRow; details: RuleDetail[] }
 type ListPayload<T> = T[] | { items?: T[] }
 
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const storageKey = 'ymes-dev-mock:qc-attribute-rule-basis:v1'
@@ -84,6 +89,8 @@ const selectedRuleNos = ref<string[]>([])
 const activeRuleNo = ref('')
 const loading = ref(false)
 const loadingDetails = ref(false)
+const loadedAggregateRuleNo = ref('')
+const loadedAggregateVersion = ref<string | undefined>()
 const busy = ref(false)
 const errorMessage = ref('')
 const notice = ref('')
@@ -107,6 +114,9 @@ const visibleBases = computed(() => bases.value
   .filter(row => matchesSearch(row.ruleNo, appliedSearch.value))
   .sort((a, b) => a.ruleNo.localeCompare(b.ruleNo)))
 const activeBasis = computed(() => bases.value.find(row => row.ruleNo === activeRuleNo.value) ?? null)
+const canOpenAggregate = computed(() => !loading.value && !loadingDetails.value && !!activeBasis.value
+  && loadedAggregateRuleNo.value === activeRuleNo.value
+  && (mock.value || loadedAggregateVersion.value === activeBasis.value.version))
 const selectedBases = computed(() => visibleBases.value.filter(row => selectedRuleNos.value.includes(row.ruleNo)))
 const visibleDetails = computed(() => [...detailRows.value].sort((a, b) => a.action - b.action || a.reasonType - b.reasonType || a.reasonLevel - b.reasonLevel))
 const selectedDetails = computed(() => editorDetails.value.filter(row => selectedDetailKeys.value.includes(detailKey(row))))
@@ -118,7 +128,8 @@ const canEditComponentCollect = computed(() => editorMode.value !== 'edit' || ed
 const canDelete = computed(() => selectedBases.value.length > 0 && issueState.value !== 1 && selectedBases.value.every(row => row.issueState === 0 || row.issueState === 2 || row.issueState === -1))
 const canApprove = computed(() => !loadingDetails.value && selectedBases.value.length > 0 && issueState.value === 0 && selectedBases.value.every(row => row.issueState === 0))
 
-function clone<T>(value: T): T { return structuredClone(value) }
+// API snapshots are JSON DTOs; JSON round trip also unwraps Vue proxies.
+function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
 function now(): string { return new Date().toISOString() }
 function formatDate(value: string | null | undefined): string {
   if (!value) return ''
@@ -171,7 +182,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 function actionLabel(value: number): string { return actionOptions.value.find(option => option.value === value)?.label ?? String(value) }
 function reasonTypeLabel(value: number): string { return reasonTypeOptions.value.find(option => option.value === value)?.label ?? String(value) }
-function ruleTypeLabel(value: number): string { return ruleTypes.find(option => option.value === value)?.label ?? String(value) }
+function ruleTypeLabel(value: number | null): string { return value === null ? '' : ruleTypes.find(option => option.value === value)?.label ?? String(value) }
 function editableFields(): string[] {
   if (editorMode.value !== 'edit' || !sourceBasis.value) return ['componentCollect', 'ruleDetails']
   if (sourceBasis.value.issueState === 0) return ['componentCollect', 'ruleDetails']
@@ -186,16 +197,25 @@ function focusRule(ruleNo = ''): void {
 }
 async function loadDetails(ruleNo: string): Promise<void> {
   const sequence = ++detailRequestSequence
+  loadedAggregateRuleNo.value = ''; loadedAggregateVersion.value = undefined
   if (!ruleNo) { detailRows.value = []; loadingDetails.value = false; return }
   if (mock.value) {
     detailRows.value = clone(readStore().details.filter(row => row.ruleNo === ruleNo))
+    loadedAggregateRuleNo.value = ruleNo; loadingDetails.value = false
     return
   }
   detailRows.value = []
   loadingDetails.value = true
   try {
-    const result = await request<ListPayload<RuleDetail>>('api/qc/attribute-rule-bases/' + encodeURIComponent(ruleNo) + '/details')
-    if (sequence === detailRequestSequence && activeRuleNo.value === ruleNo) detailRows.value = listOf(result)
+    const result = await request<SaveResult>('api/qc/attribute-rule-bases/' + encodeURIComponent(ruleNo))
+    if (!result.basis || result.basis.ruleNo !== ruleNo || !Array.isArray(result.details)
+      || !result.basis.version || !/^[0-9a-f]{64}$/i.test(result.basis.version)) throw new Error('主檔與明細回應不完整，請重新查詢後再修改。')
+    if (sequence === detailRequestSequence && activeRuleNo.value === ruleNo) {
+      detailRows.value = result.details
+      const index = bases.value.findIndex(row => row.ruleNo === ruleNo)
+      if (index >= 0) bases.value[index] = result.basis
+      loadedAggregateRuleNo.value = ruleNo; loadedAggregateVersion.value = result.basis.version
+    }
   } catch (error) {
     if (sequence === detailRequestSequence) errorMessage.value = error instanceof Error ? error.message : '載入判別法則明細失敗。'
   } finally { if (sequence === detailRequestSequence) loadingDetails.value = false }
@@ -207,6 +227,7 @@ async function selectBasis(row: BasisRow): Promise<void> {
   await loadDetails(row.ruleNo)
 }
 async function refresh(focusKey = ''): Promise<void> {
+  loadedAggregateRuleNo.value = ''; loadedAggregateVersion.value = undefined
   loading.value = true; errorMessage.value = ''
   try {
     if (mock.value) bases.value = clone(readStore().bases)
@@ -263,20 +284,23 @@ function openAdd(): void {
   createDate.value = now(); editorError.value = ''; editorNotice.value = ''; editorDirty.value = false; selectedDetailKeys.value = []; resetDetailDraft()
 }
 function openEdit(): void {
-  if (!activeBasis.value) return
+  if (!activeBasis.value || !canOpenAggregate.value) return
   editorMode.value = 'edit'; sourceBasis.value = clone(activeBasis.value)
   editor.value = { ruleNo: activeBasis.value.ruleNo, componentCollect: activeBasis.value.componentCollect }
   editorDetails.value = clone(detailRows.value); createDate.value = activeBasis.value.createDate ?? ''; editorError.value = ''; editorNotice.value = ''; editorDirty.value = false; selectedDetailKeys.value = []; resetDetailDraft()
 }
 function openCopy(): void {
-  if (!activeBasis.value) return
+  if (!activeBasis.value || !canOpenAggregate.value) return
   editorMode.value = 'copy'; sourceBasis.value = clone(activeBasis.value)
   editor.value = { ruleNo: activeBasis.value.ruleNo, componentCollect: activeBasis.value.componentCollect }
   editorDetails.value = clone(detailRows.value); createDate.value = now(); editorError.value = ''; editorNotice.value = '已複製主檔和明細，請輸入新的 RuleNo。'; editorDirty.value = false; selectedDetailKeys.value = []; resetDetailDraft()
 }
-function closeEditor(): void {
+async function closeEditor(): Promise<void> {
   if (saving.value) return
-  if (editorDirty.value && window.confirm('明細已變更，是否先保存？')) { void save(false); return }
+  if (editorDirty.value && await requestConfirmation('資料已變更，是否先保存？選擇取消將關閉並放棄尚未保存的變更。')) { await save(false); return }
+  dismissEditor()
+}
+function dismissEditor(): void {
   editorMode.value = null; sourceBasis.value = null; editorError.value = ''; editorNotice.value = ''; selectedDetailKeys.value = []; detailEditIndex.value = null; editorDirty.value = false
 }
 function resetDetailDraft(): void { detailDraft.value = emptyDraft(); detailEditIndex.value = null; detailEditingEnabled.value = false }
@@ -292,6 +316,7 @@ function changeRuleType(): void {
 }
 function validateDetail(): string {
   const value = detailDraft.value
+  if (value.ruleType === null) return '請明確選擇 RuleType；來源空值不會自動當成 Number。'
   if (!actionOptions.value.some(option => option.value === value.action)) return '請選擇有效的 Action。'
   if (!reasonTypeOptions.value.some(option => option.value === value.reasonType)) return '請選擇有效的 ReasonType。'
   if (!Number.isInteger(value.reasonLevel) || value.reasonLevel < -1 || value.reasonLevel > 9) return 'ReasonLevel 必須是 -1 到 9 的整數。'
@@ -336,9 +361,10 @@ function beginEditSelectedDetail(): void {
   const row = editorDetails.value.find(item => selectedDetailKeys.value.includes(detailKey(item)))
   if (row) editDetail(row)
 }
-function removeEditorDetails(): void {
+async function removeEditorDetails(): Promise<void> {
+  if (!canEditDetails.value) return
   if (!selectedDetails.value.length) { editorError.value = '請先選取要刪除的明細。'; return }
-  if (!window.confirm('確定移除選取的 ' + selectedDetails.value.length + ' 筆明細？')) return
+  if (!await requestConfirmation('確定移除選取的 ' + selectedDetails.value.length + ' 筆明細？')) return
   const removing = new Set(selectedDetailKeys.value)
   editorDetails.value = editorDetails.value.filter(row => !removing.has(detailKey(row)))
   selectedDetailKeys.value = []; editorError.value = ''; editorNotice.value = '明細已從編輯清單移除；按確定或套用才會保存。'; editorDirty.value = true; resetDetailDraft()
@@ -347,10 +373,16 @@ function validateBasis(): string {
   const ruleNo = editor.value.ruleNo.trim().toUpperCase()
   if (!ruleNo) return 'RuleNo 為必填。'
   if (ruleNo.length > 20) return 'RuleNo 不可超過 20 個字元。'
+  if (detailEditingEnabled.value) return '請先完成或取消目前編輯中的明細。'
+  if (editor.value.componentCollect !== 0 && editor.value.componentCollect !== 1) return 'ComponentCollect 只允許 Yes 或 No。'
   if (editorMode.value !== 'edit' && bases.value.some(row => row.ruleNo.toUpperCase() === ruleNo)) return 'RuleNo 已存在。'
   if (editorMode.value === 'edit' && sourceBasis.value?.issueState === 1) return '簽核中的資料不可修改。'
   if (editorMode.value === 'edit' && editableFields().length === 0) return '此資料狀態目前沒有可修改欄位。'
   return ''
+}
+function mutationQuery(row: BasisRow): URLSearchParams {
+  if (!row.version || !/^[0-9a-f]{64}$/i.test(row.version)) throw new Error('法則版本資料遺失，請重新查詢後再操作。')
+  return new URLSearchParams({ issueState: row.issueState === null ? '' : String(row.issueState), version: row.version })
 }
 async function save(keepOpen: boolean): Promise<void> {
   editorError.value = validateBasis()
@@ -360,11 +392,11 @@ async function save(keepOpen: boolean): Promise<void> {
   const ruleNo = editor.value.ruleNo.trim().toUpperCase()
   const payload = {
     ruleNo, componentCollect: editor.value.componentCollect,
-    issueState: mode === 'edit' ? original?.issueState : 0,
     details: editorDetails.value.map(row => ({ action: row.action, reasonType: row.reasonType, reasonLevel: row.reasonLevel, rejectNum: row.rejectNum, rate: row.rate, ruleType: row.ruleType, changeAql: row.changeAql })),
   }
   saving.value = true
   try {
+    let saved: SaveResult
     if (mock.value) {
       const store = readStore()
       if (mode === 'edit') {
@@ -372,24 +404,27 @@ async function save(keepOpen: boolean): Promise<void> {
         if (!current) throw new Error('資料已不存在，請重新查詢。')
         if (canEditComponentCollect.value) current.componentCollect = payload.componentCollect
         if (canEditDetails.value) store.details = store.details.filter(row => row.ruleNo !== current.ruleNo).concat(payload.details.map(row => ({ ...row, ruleNo: current.ruleNo })))
+        current.reviser = currentUser.value; current.reviseDate = now()
       } else {
         store.bases.push({ ruleNo, componentCollect: payload.componentCollect, issueState: 0, creator: currentUser.value, createDate: createDate.value, reviser: null, reviseDate: null })
         store.details.push(...payload.details.map(row => ({ ...row, ruleNo })))
       }
       writeStore(store)
+      saved = { basis: clone(store.bases.find(row => row.ruleNo === ruleNo)!), details: clone(store.details.filter(row => row.ruleNo === ruleNo)) }
     } else if (mode === 'edit') {
-      const query = new URLSearchParams({ issueState: String(original!.issueState) })
-      await request('api/qc/attribute-rule-bases/' + encodeURIComponent(original!.ruleNo) + '?' + query.toString(), { method: 'PUT', body: JSON.stringify(payload) })
-    } else await request('api/qc/attribute-rule-bases', { method: 'POST', body: JSON.stringify(payload) })
-    await refresh(ruleNo)
+      const query = mutationQuery(original!)
+      saved = await request<SaveResult>('api/qc/attribute-rule-bases/' + encodeURIComponent(original!.ruleNo) + '?' + query.toString(), { method: 'PUT', body: JSON.stringify(payload) })
+    } else saved = await request<SaveResult>('api/qc/attribute-rule-bases', { method: 'POST', body: JSON.stringify(payload) })
+    // Hold the committed aggregate/version before any list reload can fail.
+    sourceBasis.value = clone(saved.basis)
+    editor.value = { ruleNo: saved.basis.ruleNo, componentCollect: saved.basis.componentCollect }
+    editorDetails.value = clone(saved.details)
+    createDate.value = saved.basis.createDate ?? ''
+    editorMode.value = 'edit'
     editorDirty.value = false
-    if (keepOpen && mode !== 'edit') editorNotice.value = '資料已套用；新增或複製前請輸入新的 RuleNo。'
-    else if (keepOpen) {
-      sourceBasis.value = activeBasis.value ? clone(activeBasis.value) : null
-      editorDetails.value = clone(detailRows.value)
-      editor.value.ruleNo = activeBasis.value?.ruleNo ?? ruleNo
-      editorNotice.value = '主檔與明細已套用。'
-    } else closeEditor()
+    await refresh(saved.basis.ruleNo)
+    if (keepOpen) editorNotice.value = '主檔與明細已套用。'
+    else dismissEditor()
   } catch (error) { editorError.value = error instanceof Error ? error.message : '儲存計數判別法則失敗。' }
   finally { saving.value = false }
 }
@@ -397,7 +432,7 @@ async function removeSelected(): Promise<void> {
   const targets = [...selectedBases.value]
   if (!targets.length) { errorMessage.value = '請先選取要刪除的主檔。'; return }
   if (!canDelete.value) { errorMessage.value = '簽核中的資料不可刪除。'; return }
-  if (!window.confirm('確定刪除選取的 ' + targets.length + ' 筆主檔及其全部明細？')) return
+  if (!await requestConfirmation('確定刪除選取的 ' + targets.length + ' 筆主檔及其全部明細？')) return
   busy.value = true; errorMessage.value = ''; notice.value = ''
   let completed = 0; let failureMessage = ''
   try {
@@ -405,14 +440,14 @@ async function removeSelected(): Promise<void> {
       if (mock.value) {
         const store = readStore(); store.bases = store.bases.filter(item => item.ruleNo !== row.ruleNo); store.details = store.details.filter(item => item.ruleNo !== row.ruleNo); writeStore(store)
       } else {
-        const query = new URLSearchParams({ issueState: String(row.issueState) })
+        const query = mutationQuery(row)
         await request('api/qc/attribute-rule-bases/' + encodeURIComponent(row.ruleNo) + '?' + query.toString(), { method: 'DELETE' })
       }
       completed++
     }
     notice.value = '已刪除 ' + completed + ' 筆主檔及明細。'
   } catch (error) { failureMessage = (error instanceof Error ? error.message : '刪除失敗。') + (completed ? '（前 ' + completed + ' 筆已完成）' : '') }
-  finally { if (completed) await refresh(); if (failureMessage) errorMessage.value = failureMessage; busy.value = false }
+  finally { await refresh(); if (failureMessage) errorMessage.value = failureMessage; busy.value = false }
 }
 async function approveSelected(): Promise<void> {
   const targets = [...selectedBases.value]
@@ -423,7 +458,7 @@ async function approveSelected(): Promise<void> {
     const details = mock.value ? store!.details.filter(item => item.ruleNo === row.ruleNo) : row.ruleNo === activeRuleNo.value ? detailRows.value : null
     if (details && details.length === 0) { errorMessage.value = 'RuleNo ' + row.ruleNo + ' 沒有明細，無法核准。'; return }
   }
-  if (!window.confirm('確定送出核准選取的 ' + targets.length + ' 筆主檔？')) return
+  if (!await requestConfirmation('確定送出核准選取的 ' + targets.length + ' 筆主檔？')) return
   busy.value = true; errorMessage.value = ''; notice.value = ''
   let completed = 0; let failureMessage = ''
   try {
@@ -431,12 +466,12 @@ async function approveSelected(): Promise<void> {
       if (mock.value) {
         const current = store!.bases.find(item => item.ruleNo === row.ruleNo)!
         current.issueState = 2; writeStore(store!)
-      } else await request('api/qc/attribute-rule-bases/' + encodeURIComponent(row.ruleNo) + '/approve?issueState=0', { method: 'POST' })
+      } else await request('api/qc/attribute-rule-bases/' + encodeURIComponent(row.ruleNo) + '/approve?' + mutationQuery(row).toString(), { method: 'POST' })
       completed++
     }
     notice.value = mock.value ? '已核准 ' + completed + ' 筆 DEV 預覽資料。' : '已送出 ' + completed + ' 筆；實際狀態依 QCITEM_A RULE DATA 簽核流程更新。'
   } catch (error) { failureMessage = (error instanceof Error ? error.message : '核准失敗。') + (completed ? '（前 ' + completed + ' 筆已完成）' : '') }
-  finally { if (completed) await refresh(); if (failureMessage) errorMessage.value = failureMessage; busy.value = false }
+  finally { await refresh(); if (failureMessage) errorMessage.value = failureMessage; busy.value = false }
 }
 
 onMounted(async () => {
@@ -460,7 +495,7 @@ onMounted(async () => {
         <tr v-for="row in visibleBases" :key="row.ruleNo" :class="{ active: activeRuleNo === row.ruleNo }" @click="selectBasis(row)"><td class="select-col"><input type="checkbox" :checked="selectedRuleNos.includes(row.ruleNo)" :aria-label="'選取 ' + row.ruleNo" @click.stop @change="toggleBasis(row)"></td><td>{{ row.ruleNo }}</td><td>{{ row.componentCollect === 1 ? 'Yes' : 'No' }}</td><td>{{ row.creator }}</td><td>{{ formatDate(row.createDate) }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.reviseDate) }}</td></tr>
         <tr v-if="!visibleBases.length"><td colspan="7" class="empty-cell">{{ loading ? '載入中…' : '查無資料' }}</td></tr>
       </tbody></table></div>
-      <div class="action-column"><button type="button" class="button primary" :disabled="busy" @click="openAdd">新增(A)</button><button type="button" class="button" :disabled="busy || loadingDetails || !activeBasis" @click="openEdit">修改(E)</button><button type="button" class="button" :disabled="busy || !canDelete" @click="removeSelected">刪除(D)</button><button type="button" class="button" :disabled="busy || loadingDetails || !activeBasis" @click="openCopy">複製(C)</button><button type="button" class="button" :disabled="busy || !canApprove" @click="approveSelected">核准(Y)</button><button type="button" class="button close-button" @click="emit('close')">關閉(X)</button></div>
+      <div class="action-column"><button type="button" class="button primary" :disabled="busy" @click="openAdd">新增(A)</button><button type="button" class="button" :disabled="busy || !canOpenAggregate" @click="openEdit">修改(E)</button><button type="button" class="button" :disabled="busy || !canDelete" @click="removeSelected">刪除(D)</button><button type="button" class="button" :disabled="busy || !canOpenAggregate" @click="openCopy">複製(C)</button><button type="button" class="button" :disabled="busy || !canApprove" @click="approveSelected">核准(Y)</button><button type="button" class="button close-button" @click="emit('close')">關閉(X)</button></div>
     </section>
     <footer class="list-footer">主檔資料總筆數 {{ visibleBases.length }}<span v-if="activeBasis">　目前明細 {{ visibleDetails.length }} 筆</span><span v-if="loadingDetails">　明細載入中…</span></footer>
     <section class="detail-panel" aria-label="所選主檔明細">
@@ -476,20 +511,20 @@ onMounted(async () => {
       <header class="titlebar"><h2>{{ editorTitle }}</h2><button class="x" type="button" aria-label="關閉" :disabled="saving" @click="closeEditor">×</button></header>
       <form class="editor-form" @submit.prevent="save(false)">
         <fieldset class="basis-fields" :disabled="saving"><legend>主檔資料</legend>
-          <label class="field"><span>RuleNo</span><input v-model="editor.ruleNo" maxlength="20" :readonly="editorMode === 'edit'" required @blur="editor.ruleNo = editor.ruleNo.toUpperCase()"></label>
-          <div class="field component-collect"><span>ComponentCollect</span><label><input v-model.number="editor.componentCollect" type="radio" :value="1" :disabled="!canEditComponentCollect"> Yes</label><label><input v-model.number="editor.componentCollect" type="radio" :value="0" :disabled="!canEditComponentCollect"> No</label></div>
+          <label class="field"><span>RuleNo</span><input v-model="editor.ruleNo" maxlength="20" :readonly="editorMode === 'edit'" required @input="editorDirty = true" @blur="editor.ruleNo = editor.ruleNo.toUpperCase()"></label>
+          <div class="field component-collect"><span>ComponentCollect</span><label><input v-model.number="editor.componentCollect" type="radio" :value="1" :disabled="!canEditComponentCollect" @change="editorDirty = true"> Yes</label><label><input v-model.number="editor.componentCollect" type="radio" :value="0" :disabled="!canEditComponentCollect" @change="editorDirty = true"> No</label></div>
         </fieldset>
         <section class="detail-editor" :class="{ locked: !canEditDetails }"><header class="detail-editor-heading"><h3>Rule Detail</h3><span>{{ editorDetails.length }} 筆</span></header>
           <div class="editor-detail-grid"><table class="data-grid"><thead><tr><th class="select-col"></th><th>Action</th><th>ReasonType</th><th>ReasonLevel</th><th>RejectNum</th><th>Rate</th><th>RuleType</th><th v-if="userDefinedAqlEnabled">ChangeAQL</th></tr></thead><tbody>
             <tr v-for="row in editorDetails" :key="detailKey(row)" :class="{ active: selectedDetailKeys.includes(detailKey(row)) }" @click="selectEditorDetail(row)"><td class="select-col"><input type="checkbox" :checked="selectedDetailKeys.includes(detailKey(row))" :aria-label="'選取明細 ' + detailKey(row)" @click.stop @change="toggleDetail(row)"></td><td>{{ actionLabel(row.action) }}</td><td>{{ reasonTypeLabel(row.reasonType) }}</td><td>{{ row.reasonLevel }}</td><td>{{ row.rejectNum }}</td><td>{{ row.rate }}</td><td>{{ ruleTypeLabel(row.ruleType) }}</td><td v-if="userDefinedAqlEnabled">{{ row.changeAql }}</td></tr>
             <tr v-if="!editorDetails.length"><td :colspan="userDefinedAqlEnabled ? 8 : 7" class="empty-cell">尚未設定明細</td></tr>
           </tbody></table></div>
-          <div class="detail-actions"><button type="button" class="button" :disabled="!canEditDetails" @click="beginAddDetail">新增明細</button><button type="button" class="button" :disabled="!canEditDetails || selectedDetails.length !== 1" @click="beginEditSelectedDetail">修改明細</button><button type="button" class="button" :disabled="!canEditDetails || !selectedDetails.length" @click="removeEditorDetails">刪除明細</button></div>
+          <div class="detail-actions"><button type="button" class="button" :disabled="!canEditDetails || !actionOptions.length || !reasonTypeOptions.length" @click="beginAddDetail">新增明細</button><button type="button" class="button" :disabled="!canEditDetails || selectedDetails.length !== 1" @click="beginEditSelectedDetail">修改明細</button><button type="button" class="button" :disabled="!canEditDetails || !selectedDetails.length" @click="removeEditorDetails">刪除明細</button></div>
           <div class="rule-controls"><div class="field-grid">
-            <label class="field"><span>Action</span><select v-model.number="detailDraft.action" :disabled="!canEditDetails || !detailEditingEnabled"><option v-for="option in actionOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
+            <label class="field"><span>Action</span><select v-model.number="detailDraft.action" :disabled="!canEditDetails || !detailEditingEnabled || detailEditIndex !== null"><option v-for="option in actionOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
             <label class="field"><span>ReasonType</span><select v-model.number="detailDraft.reasonType" :disabled="!canEditDetails || !detailEditingEnabled || detailEditIndex !== null"><option v-for="option in reasonTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
             <label class="field"><span>ReasonLevel</span><input v-model.number="detailDraft.reasonLevel" type="number" min="-1" max="9" step="1" :readonly="!canEditDetails || !detailEditingEnabled || detailEditIndex !== null"></label>
-            <label class="field"><span>RuleType</span><select v-model.number="detailDraft.ruleType" :disabled="!canEditDetails || !detailEditingEnabled" @change="changeRuleType"><option v-for="option in ruleTypes" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
+            <label class="field"><span>RuleType</span><select v-model.number="detailDraft.ruleType" :disabled="!canEditDetails || !detailEditingEnabled" @change="changeRuleType"><option v-if="detailDraft.ruleType === null" :value="null">未設定</option><option v-for="option in ruleTypes" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
             <label v-if="detailDraft.ruleType === 0" class="field"><span>RejectNum</span><input v-model="detailDraft.rejectNum" inputmode="decimal" :disabled="!canEditDetails || !detailEditingEnabled" maxlength="15"></label>
             <label v-if="detailDraft.ruleType === 1" class="field"><span>Rate</span><input v-model="detailDraft.rate" inputmode="decimal" :disabled="!canEditDetails || !detailEditingEnabled" maxlength="10"></label>
             <label v-if="detailDraft.ruleType === 2 && userDefinedAqlEnabled" class="field"><span>ChangeAQL</span><select v-model="detailDraft.changeAql" :disabled="!canEditDetails || !detailEditingEnabled"><option value=""></option><option v-for="option in aqlOptions" :key="option" :value="option">{{ mock ? option + '（DEMO）' : option }}</option></select></label>
@@ -500,6 +535,7 @@ onMounted(async () => {
         <footer class="dialog-actions"><button type="submit" class="button primary" :disabled="!canSave">確定</button><button type="button" class="button" :disabled="saving" @click="closeEditor">關閉</button><button type="button" class="button" :disabled="!canSave" @click="save(true)">套用</button></footer>
       </form>
     </section></div>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </main>
 </template>
 

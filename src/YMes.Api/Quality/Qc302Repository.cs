@@ -81,9 +81,10 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
             return new Qc302PreviewResponse(columns, rows);
         }
         catch (Qc302RuleException) { throw; }
-        catch (Exception ex) when (ex is InvalidDataException or IOException or ArgumentException or FormatException)
+        catch (Exception ex) when (ex is InvalidDataException or IOException or ArgumentException or FormatException or NotSupportedException or System.Xml.XmlException
+                                   || ex.GetType().Namespace == "ExcelDataReader.Exceptions")
         {
-            throw new Qc302RuleException(400, "無法讀取 Excel；請確認檔案有效且第一張工作表格式正確。 ");
+            throw new Qc302RuleException(400, "無法讀取 Excel；請確認檔案有效、未加密且第一張工作表格式正確。 ");
         }
     }
 
@@ -365,7 +366,8 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
             FROM "YMES".tblqcitemrule m
             JOIN "YMES".tblqcrulebasis b ON b.ruleno=m.ruleno AND b.issuestate=2
             WHERE m.qcitemno=@no
-            ORDER BY m.spcid,m.ruleno;
+            ORDER BY b.ruleserial,m.spcid,m.ruleno
+            FOR SHARE OF b;
             """, connection, transaction);
         AddText(command, "no", qcItemNo, 25);
         using var reader = command.ExecuteReader();
@@ -378,7 +380,7 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
     private static HashSet<string> ReadApprovedRules(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
         EnsureTable(connection, transaction, "tblqcrulebasis", "TBLQCRULEBASIS（核准管制法則）");
-        using var command = new NpgsqlCommand("SELECT ruleno FROM \"YMES\".tblqcrulebasis WHERE issuestate=2;", connection, transaction);
+        using var command = new NpgsqlCommand("SELECT ruleno FROM \"YMES\".tblqcrulebasis WHERE issuestate=2 ORDER BY ruleserial FOR SHARE;", connection, transaction);
         using var reader = command.ExecuteReader();
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         while (reader.Read()) result.Add(reader.GetString(0));
@@ -531,8 +533,9 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
         if (file.Length > MaxWorkbookBytes) throw new Qc302RuleException(413, "Excel 工作簿不可超過 20 MB。 ");
     }
 
-    private static Dictionary<string, string> NormalizeRequestRow(Dictionary<string, JsonElement> input)
+    private static Dictionary<string, string> NormalizeRequestRow(Dictionary<string, JsonElement>? input)
     {
+        if (input is null) throw new Qc302RuleException(400, "匯入列不可為 NULL；該列未寫入。 ");
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (name, value) in input)
         {

@@ -1,5 +1,14 @@
 ## 家用端交付及公司端待補來源（2026-11-19）
 
+## 家用端最新交付及公司端接續（2026-11-19，QC103／QC107／QC108）
+
+- [x] QC103/QC107/QC108 正式獨立主檔已部署並完成模組 MD 所列 app-browser 操作；請保留 nullable 版本、原子 aggregate、來源狀態規則和共用確認窗。完整共用簽核／算法／下列來源依賴仍未完成。
+- [x] QC301 使用 QC108 真實核准目錄；QC301/QC302 預設法則及引用鎖已有正式 API/DB 回歸。QC401/QC402 真實 XLSX 選檔預覽與部分成功已驗證，YMES 標準空白範本已可下載；不再以缺少舊範本 binary 阻擋一般匯入。
+- [ ] 公司端補 QC107 Action/ReasonType 真實 ValueList 儲存值、標籤與 provider，以及 UserDefineAQL 實際 0/1 設定；QC108 補 FUNQR catalog。家用端不以 DEV 值猜測。
+- [ ] 公司端補 QC103 FUNSA、抽樣 Core/ShowFlag、ComponentCollect 真實分類來源及特殊計劃型別驗證。獨立 CRUD 已完成，這些分支目前明確不可用。
+- [ ] 若須與原 MES 範本完全相容，再提供 MCLASS/SCLASS 原始 binary 與 SYS template metadata；目前 YMES 標準 .xlsx 範本是已記錄的產品決策，非原 MES 匯出檔。
+- [ ] 持續按照本檔完成 Oracle 來源／UI handoff。家用電腦負責 YMES PostgreSQL、API、SSH 部署與正式瀏覽器驗收；公司電腦不需取得 PostgreSQL 或 SSH 連線。
+
 - [x] QC101/QC102/QC401/QC402/PS101正式API及主要頁面操作已部署驗證，模組MD已補實作、版本與限制；公司端pull保留nullable版本條件與共用確認窗。QC101/QC102 Apply保持連續區間新增；QC401/QC402/PS101 Apply轉Edit，依各自來源／YMES明確決策保持一致。
 - [ ] 公司端補交 MCLASS BASIS／SCLASS BASIS 原始Excel範本binary和SYS template metadata，勿以DEV CSV代替。家用端正式匯入API已通，瀏覽器選檔驗收仍列家用端待辦。
 - [ ] 公司端補交 QC107 真實Action／ReasonType ValueList儲存值與標籤、對應來源schema/provider及SysInfo UserDefineAQL實際值；不要照舊註解硬編碼。QC108補交真實FUNQR函式catalog。來源空缺目前回明確503，不填入DEV函式名。

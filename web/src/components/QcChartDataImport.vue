@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { apiErrorMessage } from '../utils/apiError'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 import { createXlsxTemplate, parseFirstWorksheetXlsx, parseMaterialCsv } from './materialImportWorkbook'
 
 type ImportRecord = Record<string, string | number | boolean | null | undefined>
@@ -21,6 +24,7 @@ interface ApiRowResult {
 
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { currentUserNo: '', developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const devMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const apiRoot = 'api/qc/chart-data-import'
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -85,8 +89,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     window.location.assign(`${import.meta.env.BASE_URL}login`)
     throw new Error('登入已逾期，請重新登入。')
   }
+  if (!response.ok) throw new Error(await apiErrorMessage(response))
   const body = await response.text()
-  if (!response.ok) throw new Error(body || `API 請求失敗 (${response.status})`)
   return (body ? JSON.parse(body) : undefined) as T
 }
 function pickFile(): void { error.value = ''; notice.value = ''; fileInput.value?.click() }
@@ -217,9 +221,10 @@ function normalizeResults(payload: unknown): void {
   })
 }
 async function save(): Promise<void> {
+  if (busy.value || confirmationMessage.value) return
   if (hasExecuted.value) { error.value = '這批資料已執行，請選擇另一個檔案。'; return }
   if (!rows.value.length) { error.value = '請先載入匯入檔案。'; return }
-  if (!window.confirm(`將匯入 ${rows.value.length} 筆管制圖資料。已存在的 QC Item/要因組合會更新既有管制圖。是否繼續？`)) return
+  if (!await requestConfirmation(`將匯入 ${rows.value.length} 筆管制圖資料。已存在的 QC Item/要因組合會更新既有管制圖。是否繼續？`)) return
   busy.value = true
   error.value = ''
   notice.value = ''
@@ -256,7 +261,7 @@ async function downloadTemplate(): Promise<void> {
     else {
       const response = await fetch(apiUrl(`${apiRoot}/template`), { credentials: 'include' })
       if (response.status === 401) { window.location.assign(`${import.meta.env.BASE_URL}login`); throw new Error('登入已逾期，請重新登入。') }
-      if (!response.ok) throw new Error(`範本下載失敗 (${response.status})`)
+      if (!response.ok) throw new Error(await apiErrorMessage(response))
       const disposition = response.headers.get('Content-Disposition') ?? ''
       const serverName = disposition.match(/filename\*?=(?:UTF-8''|\")?([^\";]+)/i)?.[1]
       if (serverName) downloadName = decodeURIComponent(serverName.trim())
@@ -327,13 +332,13 @@ function onGridKeydown(event: KeyboardEvent): void {
                 </td>
                 <td>{{ row.factorSerial }}</td>
               </tr>
-              <tr v-if="!rows.length"><td :colspan="totalColumns" class="empty-grid">按「File」載入 Excel 檔案，或在 DEV 預覽中載入假資料。</td></tr>
+              <tr v-if="!rows.length"><td :colspan="totalColumns" class="empty-grid">按「File」載入 Excel 檔案。<template v-if="devMock">亦可載入 DEV 預覽假資料。</template></td></tr>
             </tbody>
           </table>
         </div>
         <footer class="chart-status">
           <span>資料列總數 {{ rowCount }}</span><span>已執行 {{ resultCount }}</span><span>成功 {{ successCount }}</span>
-          <span v-if="notice" class="notice-text">{{ notice }}</span><span v-if="error" class="error-text">{{ error }}</span>
+          <span v-if="notice" class="notice-text" role="status">{{ notice }}</span><span v-if="error" class="error-text" role="alert">{{ error }}</span>
         </footer>
       </div>
       <aside class="button-rail" aria-label="管制圖匯入功能">
@@ -343,6 +348,7 @@ function onGridKeydown(event: KeyboardEvent): void {
         <div class="rail-bottom"><button type="button" @click="emit('close')">Close</button></div>
       </aside>
     </div>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
     <input ref="fileInput" class="hidden-file" type="file" :accept="devMock ? '.xls,.xlsx,.csv' : '.xls,.xlsx'" @change="handleFile" />
   </section>
 </template>

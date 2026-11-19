@@ -89,21 +89,26 @@ public sealed class Qc301Controller(NpgsqlDataSource dataSource, ILogger<Qc301Co
 }
 
 [ApiController]
+[Microsoft.AspNetCore.Authorization.Authorize]
 [Route("api/qc/sampling-plans")]
 public sealed class Qc301SamplingPlanLookupController(NpgsqlDataSource dataSource) : ControllerBase
 {
-    private readonly Qc301Repository _repository = new(dataSource);
+    // QC103 owns this aggregate; retain the published QC301 lookup routes and
+    // envelope so existing chart-basis callers continue using the same API.
+    private readonly Qc103Repository _repository = new(dataSource);
 
     [HttpGet]
-    public IActionResult List([FromQuery] int? issueState, [FromQuery] int? componentCollect) => Execute(() => Ok(new { items = _repository.SamplingPlans(issueState, componentCollect) }));
+    public IActionResult List([FromQuery] int? issueState, [FromQuery] int? componentCollect,
+        [FromQuery] string? searchFieldName = null, [FromQuery] string? searchFieldValue = null) =>
+        Execute(() => Ok(new { items = _repository.List(issueState, componentCollect, searchFieldName, searchFieldValue) }));
 
     [HttpGet("{planNo}/parameters")]
-    public IActionResult Parameters(string planNo, [FromQuery] int? issueState) => Execute(() => Ok(new { items = _repository.SamplingPlanParameters(planNo, issueState) }));
+    public IActionResult Parameters(string planNo, [FromQuery] int? issueState) => Execute(() => Ok(new { items = _repository.Parameters(planNo, issueState) }));
 
     private IActionResult Execute(Func<IActionResult> action)
     {
         try { return action(); }
-        catch (Qc301RuleException ex) { return Problem(statusCode: ex.StatusCode, title: "抽樣計畫查詢失敗", detail: ex.Message); }
-        catch (PostgresException) { return Problem(statusCode: StatusCodes.Status503ServiceUnavailable, title: "抽樣計畫查詢失敗", detail: "資料庫操作失敗，請確認 YMES 抽樣計畫相依表已部署。"); }
+        catch (Qc103RuleException ex) { return Problem(statusCode: ex.StatusCode, title: "抽樣計畫查詢失敗", detail: ex.Message); }
+        catch (NpgsqlException) { return Problem(statusCode: StatusCodes.Status503ServiceUnavailable, title: "抽樣計畫查詢失敗", detail: "資料庫操作失敗，請確認 YMES 抽樣計畫相依表已部署。"); }
     }
 }

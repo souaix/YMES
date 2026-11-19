@@ -1,5 +1,25 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 家用端部署 checkpoint：0034–0041（2026-11-19）
+
+本節記錄家用端主流程已透過 PPK/plink SSH 套用到 `ymes` 資料庫／`YMES` schema 的 forward migrations。公司端 Oracle MESTEST 仍是唯讀原生來源；此次沒有在 Oracle 執行 DDL、沒有複製 MES 業務資料。以下是實際套用範圍，不將「repo 有 SQL」視為已部署，也不將 schema 建立視為對應 API 已驗收。
+
+| Migration | 已套用物件／變更 | 權限與交付界線 |
+| --- | --- | --- |
+| [0034_qc103_sampling_plan.sql](../database/migrations/0034_qc103_sampling_plan.sql) | 新建 `tblqcsamplingplan`、`tblqcsamplingparameter`。 | `ymes_app` 兩表 CRUD；QC103 API／Web 已部署，已知四類管理實測見模組 MD。 |
+| [0035_qc107_attribute_rule_basis.sql](../database/migrations/0035_qc107_attribute_rule_basis.sql) | 新建 `tblqcattrulebasis`、`tblqcattruledetail`。 | 兩表 CRUD；保留來源 nullable IssueState，沒有新增 DataStamp。API／Web 已部署，空 aggregate 與保留既有明細的實測不等於新增明細／核准成功。 |
+| [0036_qc108_variable_rule_basis.sql](../database/migrations/0036_qc108_variable_rule_basis.sql) | 新建 `tblqcrulebasis`。 | 表級 CRUD；保留 RuleSerial PK、RuleNo 另欄及 nullable DataStamp，未增 RuleNo unique index。System 七類已實測；FUNQR 目錄未交付。 |
+| [0037_qc_aql_lookup.sql](../database/migrations/0037_qc_aql_lookup.sql) | 新建共用空表 `tblqcaql`。 | 僅 SELECT；沒有填入 AQL 業務列，也沒有補成未知的 SYS ValueList／UserDefineAQL 設定。 |
+| [0038_prd_product_programs.sql](../database/migrations/0038_prd_product_programs.sql) | 新建 `tblprdproductprograms`；恢復既有 `tblprdprogrambasis.issuestate DEFAULT 0`。 | 指派表 CRUD，Program master SELECT 及 `UPDATE(programno)` 供 row-locking SELECT；本批只有 PRD schema groundwork，Program 指派 API 尚未部署。 |
+| [0039_prd_product_recipe.sql](../database/migrations/0039_prd_product_recipe.sql) | 新建 `tblprdrecipe`；恢復既有 Recipe basis 的 recipeversion／issuestate／curversion／datastamp 四個 DEFAULT 0。 | 指派表 CRUD，Recipe master SELECT 及 `UPDATE(recipegroup)` 供 row-locking SELECT；RecipeGroup 指派 API 尚未部署。 |
+| [0040_prd_product_source_defaults.sql](../database/migrations/0040_prd_product_source_defaults.sql) | 恢復既有 `tblprdproductbasis` 已核實的 12 個來源 DEFAULT。 | 只改預設，不改既有值、NULL、型別或 PK；不代表 PRD 程式部署完成。 |
+| [0041_qc209_default_rule_dependency.sql](../database/migrations/0041_qc209_default_rule_dependency.sql) | 新建七欄的共用 `tblqcitemrule`，PK `(qcitemno,spcid,ruleno)`。 | 表級 CRUD；補 `tblqcitemforvariables` 的 `UPDATE(qcitemno)` 供父列鎖。解開 QC301／QC302 預設 Rule 相依；不因此宣稱 QC209 獨立頁 API 已完成。 |
+
+- 0034–0037 於 live audit 確認六張來源表缺少後才建立；保留核實的欄位、PK／nullable／default，沒有加入來源沒有的 FK 或額外索引。0038–0040 沿用現有 PRD master，只補缺指派表與明確 DEFAULT，不重建或改寫 master 業務列。
+- 三份套用前備份均已由主流程執行 `pg_restore --list` 驗證成功：`/opt/ymes/backups/ymes_before_0034_0037_20261119.dump`、`/opt/ymes/backups/ymes_before_0038_0040_20261119.dump`、`/opt/ymes/backups/ymes_before_0041_20261119.dump`。
+- QC103、QC107、QC108 的正式 API／app-browser 測試範圍分別記於 [抽樣計劃](modules/QC/抽樣計劃.md)、[計數判別法則](modules/QC/計數判別法則基本資料.md)、[計量品管法則](modules/QC/計量品管法則基本資料.md)。QC103 的分類／Core／FUNSA、QC107 ValueList／SysInfo、QC108 FUNQR 與共用 Issue/Job 缺項仍保留公司端來源交付，沒有用假資料通過。
+- 本輪三個 QC 模組的專屬 fixtures 已由 UI／API 逐一刪除，並以精確本輪識別鍵 SQL 總檢：QC103 主檔／參數、QC107 主檔／明細、QC108 法則皆0，包含 QC103 三個合法 route 邊界鍵及 QC101 共用抽樣表測試鍵。這不是宣稱全表無業務資料。QC301／QC302 的另一組 fixtures 與精確清理證據見各自模組文件。
+
 ### 更新 2026-11-18：PRS PS103 流程類別資料
 
 - 使用本機受保護 Oracle 設定，以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查 `MESTEST.TBLPRSTYPE` 的 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`。只有 `PROCESSTYPE` PK unique index，沒有 FK/其他 index。
@@ -672,7 +692,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 家用端2026-11-19：QC101/QC102/QC401/QC402/PS101
 
 - 比對來源reference及live缺表後，已套用forward migrations0029–0033，明確授予ymes_app CRUD（PS101另SYS序號SELECT）；來源唯一鍵/nullable/default保留，無新增FK或額外index。
-- 備份 `/opt/ymes/backups/ymes_before_0029_0030_20261118.dump` 及 `ymes_before_0031_0033_20261118.dump` 已由pg_restore --list驗證；正式API/Web與精確測試鍵清空SQL核對完成。下一批QC103/QC107/QC108六表於2026-11-19 PPK SSH只讀audit全部缺少，尚未套migration。
+- 備份 `/opt/ymes/backups/ymes_before_0029_0030_20261118.dump` 及 `ymes_before_0031_0033_20261118.dump` 已由pg_restore --list驗證；正式API/Web與精確測試鍵清空SQL核對完成。當時下一批QC103/QC107/QC108六表於2026-11-19 PPK SSH只讀audit全部缺少；後續已套用0034–0037，最新狀態以上方0034–0041 checkpoint為準。
 
 ### 更新 2026-11-18：PRD PD102 EquipmentSpec Oracle metadata
 

@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## 家用端本輪交付與接續（2026-11-19，QC103／QC107／QC108）
+
+- [x] QC103 抽樣計劃、QC107 計數判別法則、QC108 計量法則的獨立主檔 API/Web 已部署；正式 app-browser 實測範圍、來源依賴限制與清理證據見各模組 MD。缺少真實算法、ValueList 或共用簽核的分支仍明確回應不可用，沒有使用 DEV 資料替代。
+- [x] migration 0034–0037、0041 已核對來源並套用，包含 QC301/QC302 的真實預設法則依賴；0038–0040 已完成 PRD schema 基礎，PRD API/Web 尚待下一批部署與驗收。三份備份已用 pg_restore --list 驗證，見 docs/DATABASE_CONNECTION.md。
+- [x] 修正既有八個 repository 的資料庫物件存在檢查，使用 pg_catalog 區分缺表與權限不足，避免未取得權限時被當成缺表而略過必要驗證。相關 API 讀取回歸通過，維護規範見 docs/DATABASE_OBJECT_VISIBILITY.md。
+- [x] QC301/QC302 的預設法則、引用鎖、逐列交易與故障回滾已實測；QC302 壞 XLSX／空資料列錯誤處理、乾淨錯誤訊息與站內匯入確認窗已驗證。QC301 改用真實核准法則目錄，抽樣選項不可用時只限制相關編輯功能。
+- [x] QC401/QC402 真實瀏覽器選檔、預覽、重複列與部分成功已通過。新增 YMES 標準無業務資料 XLSX 範本（非舊 MES binary）；範本 API 200，格式以 ExcelDataReader 與獨立讀取器驗證。
+- [x] QC401/QC402 取消後結果不確定狀態已修正並通過正式瀏覽器重驗；兩者均提示可能部分保存並重新查詢，不誤報成功或整批回滾。實測自建資料已精確清理。
+- [ ] 下一批接續已準備的 PRD Program／Recipe Group 與產品 nullable CAS、PS103 schema/API；之後修復 QC301 全部寫入契約的 nullable state/stamp 及 Rule 開窗 snapshot。尚未驗收的工作不標成完成。
+- [ ] 保留既有 QC201/QC202 本機草稿，待共用依賴補齊後完成正式驗收。先同步經驗證版本、正常合併公司端新提交，再繼續所有可執行家用端待辦，不 force push。
+
 ## 家用端交付與下一批（2026-11-19）
 
 - [x] QC101、QC102、QC401、QC402、PS101 API/Web 已部署；各頁 CRUD、適用的核准/停用/多選及版本操作已由正式 app-browser 驗證，精確測試鍵SQL計數皆0。完整範圍與限制見各模組MD。

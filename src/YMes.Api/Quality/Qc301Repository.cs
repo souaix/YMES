@@ -244,6 +244,8 @@ public sealed class Qc301Repository(NpgsqlDataSource dataSource)
             EnsureExpected(current, request.IssueState, request.DataStamp);
             if (current.IssueState != 0) throw Rule(409, "只有 UNFROZEN 管制圖可以核准。");
             var item = ReadQcItem(connection, transaction, current.QcItemNo, lockRow: true);
+            ValidatePlan(connection, transaction, item, current.PlanNo,
+                ReadChartParameters(connection, current.FactorSerial, transaction));
             var factors = NormalizeFactorValues(connection, transaction, current.QcItemNo, current.FactorValues);
             foreach (var factor in GetFactors(connection, transaction, current.QcItemNo))
                 if (factor.FactorSpec && factors[factor.FactorNo] == "*")
@@ -316,7 +318,7 @@ public sealed class Qc301Repository(NpgsqlDataSource dataSource)
             if (rows.GroupBy(x => (x.SpcId, Rule: x.RuleNo.Trim()), new SpcRuleComparer()).Any(group => group.Count() > 1))
                 throw Rule(400, "同一 SPCID 的 RuleNo 不可重複。");
             var approved = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            using (var ruleLookup = new NpgsqlCommand("SELECT ruleno FROM \"YMES\".tblqcrulebasis WHERE issuestate=2;", connection, transaction))
+            using (var ruleLookup = new NpgsqlCommand("SELECT ruleno FROM \"YMES\".tblqcrulebasis WHERE issuestate=2 ORDER BY ruleserial FOR SHARE;", connection, transaction))
             using (var reader = ruleLookup.ExecuteReader()) while (reader.Read()) approved.Add(reader.GetString(0));
             foreach (var row in rows)
             {
@@ -342,7 +344,7 @@ public sealed class Qc301Repository(NpgsqlDataSource dataSource)
             using (var audit = new NpgsqlCommand("""
                 UPDATE "YMES".tblspcqcchartbasis
                 SET reviser=@actor,revisedate=now(),datastamp=@next
-                WHERE factorserial=@serial AND issuestate=0 AND COALESCE(datastamp,0)=@stamp;
+                WHERE factorserial=@serial AND issuestate=0 AND COALESCE(datastamp,0)=@stamp
                 RETURNING revisedate;
                 """, connection, transaction))
             {
@@ -399,6 +401,8 @@ public sealed class Qc301Repository(NpgsqlDataSource dataSource)
                     else targetValues[factor.FactorNo] = "*";
                 }
                 EnsureNoDuplicate(connection, transaction, targetNo, targetValues, null);
+                ValidatePlan(connection, transaction, target, old.PlanNo,
+                    ReadChartParameters(connection, old.FactorSerial, transaction));
                 var serial = NewSerial();
                 using (var insert = new NpgsqlCommand("""
                     INSERT INTO "YMES".tblspcqcchartbasis
@@ -557,10 +561,11 @@ public sealed class Qc301Repository(NpgsqlDataSource dataSource)
         return rows;
     }
 
-    private static IReadOnlyList<Qc301SamplingPlanParameterDto> ReadChartParameters(NpgsqlConnection connection, string serial)
+    private static IReadOnlyList<Qc301SamplingPlanParameterDto> ReadChartParameters(NpgsqlConnection connection, string serial,
+        NpgsqlTransaction? transaction = null)
     {
-        EnsureTable(connection, null, "tblspcqcchartsamplanparameter", "TBLSPCQCCHARTSAMPLANPARAMETER migration 0025");
-        using var command = new NpgsqlCommand("SELECT parameterno,COALESCE(parametervalue,'') FROM \"YMES\".tblspcqcchartsamplanparameter WHERE factorserial=@serial ORDER BY parameterno;", connection);
+        EnsureTable(connection, transaction, "tblspcqcchartsamplanparameter", "TBLSPCQCCHARTSAMPLANPARAMETER migration 0025");
+        using var command = new NpgsqlCommand("SELECT parameterno,COALESCE(parametervalue,'') FROM \"YMES\".tblspcqcchartsamplanparameter WHERE factorserial=@serial ORDER BY parameterno;", connection, transaction);
         AddVarchar(command, "serial", serial, 50);
         using var reader = command.ExecuteReader();
         var rows = new List<Qc301SamplingPlanParameterDto>();
@@ -744,10 +749,17 @@ public sealed class Qc301Repository(NpgsqlDataSource dataSource)
         }
         EnsureTable(connection, transaction, "tblqcsamplingplan", "TBLQCSAMPLINGPLAN 抽樣計畫");
         EnsureTable(connection, transaction, "tblqcsamplingparameter", "TBLQCSAMPLINGPARAMETER 抽樣計畫參數");
-        using (var planCheck = new NpgsqlCommand("SELECT 1 FROM \"YMES\".tblqcsamplingplan WHERE lower(planno)=lower(@no) AND issuestate=2;", connection, transaction))
+        if (!ColumnExists(connection, transaction, "tblqcsamplingplan", "componentcollect"))
+            throw Rule(503, "目前 YMES 抽樣計畫主檔沒有 ComponentCollect 欄位或已核實的對應分類，不能略過查找條件直接指定 PlanNo。");
+        // Every chart writer keeps this shared parent lock until commit. QC103
+        // takes FOR UPDATE before changing state or replacing plan parameters.
+        using (var planCheck = new NpgsqlCommand("SELECT componentcollect::int FROM \"YMES\".tblqcsamplingplan WHERE lower(planno)=lower(@no) AND issuestate=2 FOR SHARE;", connection, transaction))
         {
             AddVarchar(planCheck, "no", plan, 25);
-            if (planCheck.ExecuteScalar() is null) throw Rule(422, $"抽樣計畫 {plan} 不存在或尚未核准。");
+            var componentCollect = planCheck.ExecuteScalar();
+            if (componentCollect is null) throw Rule(422, $"抽樣計畫 {plan} 不存在或尚未核准。");
+            if (componentCollect is DBNull || Convert.ToInt32(componentCollect, CultureInfo.InvariantCulture) != item.ComponentCollect)
+                throw Rule(422, $"抽樣計畫 {plan} 的 ComponentCollect 與 QC Item 不符。");
         }
         using var expectedCommand = new NpgsqlCommand("SELECT parameterno FROM \"YMES\".tblqcsamplingparameter WHERE lower(planno)=lower(@no) ORDER BY parameterno;", connection, transaction);
         AddVarchar(expectedCommand, "no", plan, 25);
@@ -778,21 +790,15 @@ public sealed class Qc301Repository(NpgsqlDataSource dataSource)
 
     private static void CopyDefaultRules(NpgsqlConnection connection, NpgsqlTransaction transaction, string serial, string qcItemNo)
     {
-        using var command = new NpgsqlCommand("""
-            INSERT INTO "YMES".tblspcqcchartrule(factorserial,spcid,ruleno,action,equipmentstate,erfstate,emailstate)
-            SELECT @serial,spcid,ruleno,action,equipmentstate,erfstate,emailstate
-            FROM "YMES".tblqcitemrule WHERE lower(qcitemno)=lower(@item);
-            """, connection, transaction);
-        AddVarchar(command, "serial", serial, 50); AddVarchar(command, "item", qcItemNo, 25);
-        command.ExecuteNonQuery();
+        CopyRulesWithParentLocks(connection, transaction, qcItemNo, serial, fromItemDefaults: true);
     }
 
     private static void CopyChildRows(NpgsqlConnection connection, NpgsqlTransaction transaction, string fromSerial, string toSerial, string actor)
     {
+        CopyRulesWithParentLocks(connection, transaction, fromSerial, toSerial, fromItemDefaults: false);
         foreach (var (table, columns) in new[]
         {
             ("tblspcqcchartdetail", "spcid,us,ls,ucl,lcl,cl,target,cpkgoal,yaxisfrom,yaxisto,cs"),
-            ("tblspcqcchartrule", "spcid,ruleno,action,equipmentstate,erfstate,emailstate"),
             ("tblspcqcchartsamplanparameter", "parameterno,parametervalue")
         })
         {
@@ -808,6 +814,47 @@ public sealed class Qc301Repository(NpgsqlDataSource dataSource)
         AddVarchar(details, "to", toSerial, 50); AddVarchar(details, "from", fromSerial, 50); AddVarchar(details, "actor", actor.Trim(), 10);
         details.ExecuteNonQuery();
     }
+
+    private static void CopyRulesWithParentLocks(NpgsqlConnection connection, NpgsqlTransaction transaction,
+        string source, string targetSerial, bool fromItemDefaults)
+    {
+        // Materialize the source once: copying must not silently discard old
+        // mappings via an approved-only join or pick up new, unlocked rows.
+        var sourceQuery = fromItemDefaults
+            ? "FROM \"YMES\".tblqcitemrule WHERE lower(qcitemno)=lower(@source)"
+            : "FROM \"YMES\".tblspcqcchartrule WHERE factorserial=@source";
+        var rows = new List<CopiedRule>();
+        using (var read = new NpgsqlCommand($"SELECT spcid::int,ruleno,action::int,equipmentstate::int,erfstate::int,emailstate::int {sourceQuery} ORDER BY spcid,ruleno;", connection, transaction))
+        {
+            AddVarchar(read, "source", source, fromItemDefaults ? 25 : 50);
+            using var reader = read.ExecuteReader();
+            while (reader.Read()) rows.Add(new(reader.GetInt32(0), reader.GetString(1), reader.GetInt32(2),
+                reader.IsDBNull(3) ? null : reader.GetInt32(3), reader.IsDBNull(4) ? null : reader.GetInt32(4), reader.IsDBNull(5) ? null : reader.GetInt32(5)));
+        }
+        if (rows.Count == 0) return;
+        EnsureTable(connection, transaction, "tblqcrulebasis", "TBLQCRULEBASIS 計量管制法則");
+        var parents = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using (var guard = new NpgsqlCommand("SELECT ruleno FROM \"YMES\".tblqcrulebasis WHERE lower(ruleno)=ANY(@names) ORDER BY ruleserial FOR SHARE;", connection, transaction))
+        {
+            guard.Parameters.Add("names", NpgsqlDbType.Array | NpgsqlDbType.Text).Value = rows.Select(x => x.RuleNo.ToLowerInvariant()).Distinct().ToArray();
+            using var reader = guard.ExecuteReader();
+            while (reader.Read()) parents.Add(reader.GetString(0));
+        }
+        foreach (var row in rows)
+        {
+            if (!parents.Contains(row.RuleNo)) throw Rule(422, $"來源法則 {row.RuleNo} 的主檔不存在，複製交易未寫入。");
+            using var insert = new NpgsqlCommand("""
+                INSERT INTO "YMES".tblspcqcchartrule(factorserial,spcid,ruleno,action,equipmentstate,erfstate,emailstate)
+                VALUES(@serial,@spcid,@rule,@action,@equipment,@erf,@email);
+                """, connection, transaction);
+            AddVarchar(insert, "serial", targetSerial, 50); AddNumeric(insert, "spcid", row.SpcId);
+            AddVarchar(insert, "rule", row.RuleNo, 30); AddNumeric(insert, "action", row.Action);
+            AddNumeric(insert, "equipment", row.EquipmentState); AddNumeric(insert, "erf", row.ErfState); AddNumeric(insert, "email", row.EmailState);
+            insert.ExecuteNonQuery();
+        }
+    }
+
+    private sealed record CopiedRule(int SpcId, string RuleNo, int Action, int? EquipmentState, int? ErfState, int? EmailState);
 
     private static Dictionary<string, string> NormalizeFactorValues(NpgsqlConnection connection, NpgsqlTransaction transaction,
         string qcItemNo, IReadOnlyDictionary<string, string>? submitted)
@@ -929,7 +976,7 @@ public sealed class Qc301Repository(NpgsqlDataSource dataSource)
 
     private static bool ColumnExists(NpgsqlConnection connection, NpgsqlTransaction? transaction, string table, string column)
     {
-        using var command = new NpgsqlCommand("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='YMES' AND table_name=@table AND column_name=@column);", connection, transaction);
+        using var command = new NpgsqlCommand("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='YMES' AND c.relname=@table AND a.attname=@column AND a.attnum>0 AND NOT a.attisdropped);", connection, transaction);
         AddVarchar(command, "table", table, 63); AddVarchar(command, "column", column, 63);
         return (bool)command.ExecuteScalar()!;
     }
