@@ -253,7 +253,7 @@ public sealed class Qc503Repository(NpgsqlDataSource dataSource)
 
     private static bool TableExists(NpgsqlConnection connection, NpgsqlTransaction? transaction, string table)
     {
-        using var command = new NpgsqlCommand("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='YMES' AND table_name=@table);", connection, transaction);
+        using var command = new NpgsqlCommand("SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='YMES' AND c.relname=@table AND c.relkind IN ('r','p','v','m','f'));", connection, transaction);
         AddText(command, "table", table, 63);
         return command.ExecuteScalar() is true;
     }

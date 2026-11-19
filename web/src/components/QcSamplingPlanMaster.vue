@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = 0 | 1 | 2 | -1
 type FormMode = 'add' | 'edit' | 'copy' | null
 interface PlanTypeOption { value: number; label: string }
-interface SamplingParameter { parameterNo: string; parameterValue: string | null; showFlag: number }
+interface SamplingParameter { parameterNo: string; parameterValue: string | null; showFlag: number | null }
+interface ApiEnvelope<T> { items: T[] }
 interface PlanRow {
   planNo: string
   planName: string
@@ -18,6 +21,7 @@ interface PlanRow {
   dataStamp: number | null
   reviser: string | null
   reviseDate: string | null
+  parameters?: SamplingParameter[]
 }
 interface PlanForm {
   planNo: string
@@ -32,6 +36,7 @@ interface SamplingResult { sampleQty?: number; acceptQty?: number; rejectQty?: n
 
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const isMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const storageKey = 'ymes-dev-mock:qc-sampling-plans:v1'
@@ -74,6 +79,7 @@ const source = ref<PlanRow | null>(null)
 const form = ref<PlanForm>(emptyForm())
 const parameterRows = ref<ParameterRow[]>([])
 const formError = ref('')
+const optionsNotice = ref('')
 const dirty = ref(false)
 const createdBy = ref('')
 const createdAt = ref('')
@@ -85,9 +91,12 @@ const simulationBusy = ref(false)
 const simulationError = ref('')
 const simulationResult = ref<SamplingResult | null>(null)
 const simulationPlan = ref<PlanRow | null>(null)
+let parameterEpoch = 0
+let optionRequestSequence = 0
+const optionRequests = new Map<string, number>()
 
 function emptyForm(): PlanForm { return { planNo: '', planName: '', planType: 0, functionName: '', description: '', allowSampleAbovePopulation: false } }
-function clone<T>(value: T): T { return structuredClone(value) }
+function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
 function nowIso(): string { return new Date().toISOString() }
 function readStore(): { rows: PlanRow[]; parameters: Record<string, SamplingParameter[]> } {
   try {
@@ -113,9 +122,15 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(apiUrl(path), { credentials: 'include', ...init, headers })
   if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
   if (!response.ok) {
-    const problem = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
-    if (response.status === 404) throw new Error('QC103 API 尚未建立；請依 todolist_homepc.md 完成資料表與 API。')
-    throw new Error(problem?.detail || problem?.message || problem?.title || `API 回應錯誤（${response.status}）。`)
+    const problem: unknown = await response.json().catch(() => null)
+    if (problem && typeof problem === 'object') {
+      const values = problem as Record<string, unknown>
+      for (const key of ['detail', 'message', 'title']) {
+        const value = values[key]
+        if (typeof value === 'string' && value.trim()) throw new Error(value)
+      }
+    }
+    throw new Error(`目前無法完成操作（${response.status}），請稍後再試。`)
   }
   if (response.status === 204) return undefined as T
   return await response.json() as T
@@ -131,7 +146,7 @@ function formatDate(value: string | null): string {
   const part = (type: string) => parts.find(item => item.type === type)?.value ?? ''
   return `${part('year')}/${part('month')}/${part('day')} ${part('hour')}:${part('minute')}:${part('second')}`
 }
-function parameterSpecs(planType: number): { parameterNo: string; showFlag: number }[] {
+function parameterSpecs(planType: number): { parameterNo: string; showFlag: number | null }[] {
   const names: Record<number, string[]> = {
     0: ['PopulationQty', 'SampleQty'], 1: ['PopulationQty', 'SampleQty', 'SampleRate'],
     2: ['AcceptQty', 'AQLType', 'PopulationQty', 'QCLevel', 'RejectQty', 'SampleQty', 'AQL'],
@@ -144,7 +159,7 @@ function parameterSpecs(planType: number): { parameterNo: string; showFlag: numb
     showFlag: planType === 0 ? Number(parameterNo === 'SampleQty')
       : planType === 1 ? Number(parameterNo === 'SampleRate')
         : planType === 2 || planType === 7 ? Number(['AQLType', 'QCLevel', 'AQL'].includes(parameterNo))
-          : planType === 5 ? Number(parameterNo === 'SamplingTable') : 1,
+          : planType === 5 ? Number(parameterNo === 'SamplingTable') : planType === 6 && !isMock.value ? null : 1,
   }))
 }
 const visibleRows = computed(() => {
@@ -152,16 +167,17 @@ const visibleRows = computed(() => {
   return rows.value.filter(row => row.issueState === currentState.value && (!query || row.planNo.toUpperCase().includes(query)))
     .slice().sort((a, b) => a.planNo.localeCompare(b.planNo))
 })
-const activeRow = computed(() => rows.value.find(row => keyOf(row) === activeKey.value) ?? null)
+const activeRow = computed(() => visibleRows.value.find(row => keyOf(row) === activeKey.value) ?? null)
 const selectedRows = computed(() => visibleRows.value.filter(row => selectedKeys.value.includes(keyOf(row))))
-const formReadOnly = computed(() => formMode.value === 'edit' && source.value?.issueState === 1)
+const formReadOnly = computed(() => formMode.value === 'edit' && (source.value?.issueState === 1 || source.value?.issueState === -1))
 const dialogTitle = computed(() => `Sampling Plan Define (${formMode.value === 'add' ? 'ADD' : formMode.value === 'copy' ? 'Copy' : 'EDIT'})`)
 
 async function load(): Promise<void> {
   if (isMock.value) { rows.value = clone(readStore().rows); return }
   const query = new URLSearchParams()
   if (appliedSearchValue.value) { query.set('searchFieldName', 'PlanNo'); query.set('searchFieldValue', appliedSearchValue.value) }
-  rows.value = await request<PlanRow[]>('api/qc/sampling-plans' + (query.toString() ? '?' + query.toString() : ''))
+  const received = await request<PlanRow[] | ApiEnvelope<PlanRow>>('api/qc/sampling-plans' + (query.toString() ? '?' + query.toString() : ''))
+  rows.value = Array.isArray(received) ? received : received.items
 }
 function setActive(prefer = ''): void {
   const row = visibleRows.value.find(item => keyOf(item) === prefer) ?? visibleRows.value[0]
@@ -188,63 +204,86 @@ function selectVisible(event: Event): void {
   activeKey.value = selectedKeys.value[0] ?? ''
 }
 function setTypeRows(planType: number, existing: SamplingParameter[] = []): void {
-  const values = new Map(existing.map(item => [item.parameterNo, item.parameterValue ?? '']))
-  parameterRows.value = parameterSpecs(planType).map(spec => ({ ...spec, parameterValue: values.get(spec.parameterNo) ?? '', options: devOptions[spec.parameterNo] ?? [] }))
+  parameterEpoch++
+  const values = new Map(existing.map(item => [item.parameterNo.toUpperCase(), item]))
+  parameterRows.value = parameterSpecs(planType).map(spec => {
+    const stored = values.get(spec.parameterNo.toUpperCase())
+    return { ...spec, showFlag: stored ? stored.showFlag : spec.showFlag, parameterValue: stored?.parameterValue ?? '', options: isMock.value ? devOptions[spec.parameterNo] ?? [] : [] }
+  })
   for (const item of existing) {
-    if (!parameterRows.value.some(row => row.parameterNo === item.parameterNo)) parameterRows.value.push({ ...item, parameterValue: item.parameterValue ?? '', options: devOptions[item.parameterNo] ?? [] })
+    if (!parameterRows.value.some(row => row.parameterNo.toUpperCase() === item.parameterNo.toUpperCase())) parameterRows.value.push({ ...item, parameterValue: item.parameterValue ?? '', options: isMock.value ? devOptions[item.parameterNo] ?? [] : [] })
   }
   if (isMock.value) return
   for (const row of parameterRows.value) void loadParameterOptions(row.parameterNo)
 }
 async function loadParameterOptions(parameterNo: string): Promise<void> {
   if (!parameterNo || isMock.value) return
+  const epoch = parameterEpoch
+  const sequence = ++optionRequestSequence
+  optionRequests.set(parameterNo, sequence)
+  const query = new URLSearchParams()
+  if (parameterNo === 'VLevel') {
+    const type = parameterRows.value.find(item => item.parameterNo === 'SamplingType')?.parameterValue
+    if (type === '0' || type === '1') query.set('samplingType', type)
+  }
   try {
-    const options = await request<string[]>('api/qc/sampling-plans/parameter-options/' + encodeURIComponent(parameterNo))
+    const options = await request<string[]>('api/qc/sampling-plans/options/parameters/' + encodeURIComponent(parameterNo) + (query.size ? '?' + query.toString() : ''))
+    if (epoch !== parameterEpoch || optionRequests.get(parameterNo) !== sequence) return
     const row = parameterRows.value.find(item => item.parameterNo === parameterNo)
     if (row) row.options = options
-  } catch { /* free-text remains available if this parameter has no value list */ }
+  } catch (reason) { if (epoch === parameterEpoch && optionRequests.get(parameterNo) === sequence) optionsNotice.value = reason instanceof Error ? reason.message : '參數選項暫時無法載入，可維護既有文字值。' }
 }
 async function loadFunctions(): Promise<void> {
   if (isMock.value) { functionOptions.value = ['DEV_FUNSAMPLING_DEFAULT', 'DEV_FUNSAMPLING_AQL']; return }
-  try { functionOptions.value = await request<string[]>('api/qc/sampling-plans/function-options') }
-  catch (reason) { formError.value = reason instanceof Error ? reason.message : '載入抽樣函式失敗。' }
+  const epoch = parameterEpoch
+  try { const received = await request<string[]>('api/qc/sampling-plans/options/functions'); if (epoch === parameterEpoch) functionOptions.value = received }
+  catch (reason) { if (epoch === parameterEpoch) optionsNotice.value = reason instanceof Error ? reason.message : '載入抽樣函式失敗。' }
 }
 async function loadPlanTypes(): Promise<void> {
   if (isMock.value) return
-  try { typeOptions.value = await request<PlanTypeOption[]>('api/qc/sampling-plans/plan-types') }
+  try { typeOptions.value = await request<PlanTypeOption[]>('api/qc/sampling-plans/options/plan-types') }
   catch { /* source-derived fallback values remain available */ }
 }
 async function openForm(mode: Exclude<FormMode, null>, row: PlanRow | null = null): Promise<void> {
+  if (loading.value || saving.value) return
+  optionsNotice.value = ''
+  if (row && !isMock.value) {
+    loading.value = true
+    try { row = await request<PlanRow>('api/qc/sampling-plans/' + encodeURIComponent(row.planNo)) }
+    catch (reason) { error.value = reason instanceof Error ? reason.message : '載入抽樣計劃失敗。'; return }
+    finally { loading.value = false }
+  }
   source.value = row ? clone(row) : null
   form.value = row ? {
     planNo: row.planNo, planName: mode === 'copy' ? row.planName + ' (Copy)' : row.planName,
     planType: row.planType, functionName: row.functionName ?? '', description: row.description ?? '', allowSampleAbovePopulation: row.sQtyCanBBiggerThenPQty === 1,
   } : emptyForm()
-  createdBy.value = row?.creator ?? props.currentUserNo ?? 'DEV001'
-  createdAt.value = row?.createDate ?? nowIso()
-  revisedBy.value = row?.reviser ?? ''
-  revisedAt.value = row?.reviseDate ?? ''
+  createdBy.value = mode === 'edit' ? row?.creator ?? '' : props.currentUserNo ?? (isMock.value ? 'DEV001' : '')
+  createdAt.value = mode === 'edit' ? row?.createDate ?? '' : nowIso()
+  revisedBy.value = mode === 'edit' ? row?.reviser ?? '' : ''
+  revisedAt.value = mode === 'edit' ? row?.reviseDate ?? '' : ''
   formMode.value = mode; formError.value = ''; dirty.value = false; parameterRows.value = []
   if (row) {
     try {
-      const params = isMock.value ? clone(readStore().parameters[row.planNo] ?? []) : await request<SamplingParameter[]>('api/qc/sampling-plans/' + encodeURIComponent(row.planNo) + '/parameters')
+      const params = isMock.value ? clone(readStore().parameters[row.planNo] ?? []) : row.parameters ?? []
       setTypeRows(row.planType, params)
     } catch (reason) { formError.value = reason instanceof Error ? reason.message : '載入抽樣參數失敗。' }
   } else setTypeRows(form.value.planType)
   if (form.value.planType === 3) void loadFunctions()
 }
-function closeForm(): void { formMode.value = null; source.value = null; parameterRows.value = []; formError.value = ''; dirty.value = false }
+function closeForm(): void { if (saving.value) return; parameterEpoch++; formMode.value = null; source.value = null; parameterRows.value = []; formError.value = ''; optionsNotice.value = ''; dirty.value = false }
 function changePlanType(event: Event): void {
   const value = Number((event.target as HTMLSelectElement).value)
   form.value.planType = value
   if (value !== 3) form.value.functionName = ''
   setTypeRows(value)
+  optionsNotice.value = ''
   markDirty()
   if (value === 3) void loadFunctions()
 }
 function markDirty(): void { dirty.value = true; formError.value = '' }
 function isPredefinedParameter(parameterNo: string): boolean { return parameterSpecs(form.value.planType).some(spec => spec.parameterNo === parameterNo) }
-function addParameter(): void { parameterRows.value.push({ parameterNo: '', parameterValue: '', showFlag: 1, options: [] }); markDirty() }
+function addParameter(): void { parameterRows.value.push({ parameterNo: '', parameterValue: '', showFlag: isMock.value ? 1 : null, options: [] }); markDirty() }
 function removeParameter(index: number): void { parameterRows.value.splice(index, 1); markDirty() }
 function validate(): string {
   const planNo = form.value.planNo.trim().toUpperCase()
@@ -275,6 +314,7 @@ function validate(): string {
   return ''
 }
 async function save(keepOpen: boolean): Promise<void> {
+  if (saving.value) return
   formError.value = validate()
   if (formError.value || !formMode.value || formReadOnly.value) return
   const mode = formMode.value
@@ -284,11 +324,12 @@ async function save(keepOpen: boolean): Promise<void> {
     functionName: form.value.functionName.trim() || null, description: form.value.description.trim() || null,
     creator: createdBy.value || null, createDate: createdAt.value || null, issueState: 0,
     sQtyCanBBiggerThenPQty: form.value.allowSampleAbovePopulation ? 1 : 0,
-    dataStamp: original?.dataStamp ?? 0, reviser: revisedBy.value || null, reviseDate: revisedAt.value || null,
+    dataStamp: original?.dataStamp ?? null, reviser: revisedBy.value || null, reviseDate: revisedAt.value || null,
   }
   const parameters = parameterRows.value.map(row => ({ parameterNo: row.parameterNo.trim(), parameterValue: row.parameterValue?.trim() || null, showFlag: row.showFlag }))
   saving.value = true
   try {
+    let saved: PlanRow
     if (isMock.value) {
       const data = readStore()
       if (mode === 'edit') {
@@ -298,33 +339,42 @@ async function save(keepOpen: boolean): Promise<void> {
         data.rows[idx] = { ...record, creator: prior.creator, createDate: prior.createDate, issueState: prior.issueState, reviser: props.currentUserNo || 'DEV001', reviseDate: nowIso(), dataStamp: (prior.dataStamp ?? 0) + 1 }
       } else data.rows.push({ ...record, creator: props.currentUserNo || 'DEV001', createDate: nowIso(), issueState: 0, reviser: null, reviseDate: null, dataStamp: 0 })
       data.parameters[record.planNo] = clone(parameters)
+      saved = clone(data.rows.find(row => keyOf(row) === keyOf(record))!)
+      saved.parameters = clone(parameters)
       writeStore(data)
     } else if (mode === 'edit') {
       const query = new URLSearchParams()
       query.set('issueState', String(original!.issueState))
       query.set('dataStampIsNull', original!.dataStamp === null ? 'true' : 'false')
       if (original!.dataStamp !== null) query.set('dataStamp', String(original!.dataStamp))
-      await request('api/qc/sampling-plans/' + encodeURIComponent(original!.planNo) + '?' + query.toString(), {
+      saved = await request<PlanRow>('api/qc/sampling-plans/' + encodeURIComponent(original!.planNo) + '?' + query.toString(), {
         method: 'PUT', body: JSON.stringify({ planName: record.planName, planType: record.planType, functionName: record.functionName, description: record.description, sQtyCanBBiggerThenPQty: record.sQtyCanBBiggerThenPQty, parameters }),
       })
-    } else await request('api/qc/sampling-plans', { method: 'POST', body: JSON.stringify({ planNo: record.planNo, planName: record.planName, planType: record.planType, functionName: record.functionName, description: record.description, sQtyCanBBiggerThenPQty: record.sQtyCanBBiggerThenPQty, parameters }) })
-    await refresh(keyOf(record))
+    } else saved = await request<PlanRow>('api/qc/sampling-plans', { method: 'POST', body: JSON.stringify({ planNo: record.planNo, planName: record.planName, planType: record.planType, functionName: record.functionName, description: record.description, sQtyCanBBiggerThenPQty: record.sQtyCanBBiggerThenPQty, parameters }) })
+    source.value = clone(saved)
+    form.value = { planNo: saved.planNo, planName: saved.planName, planType: saved.planType, functionName: saved.functionName ?? '', description: saved.description ?? '', allowSampleAbovePopulation: saved.sQtyCanBBiggerThenPQty === 1 }
+    createdBy.value = saved.creator ?? ''; createdAt.value = saved.createDate ?? ''
+    revisedBy.value = saved.reviser ?? ''; revisedAt.value = saved.reviseDate ?? ''
+    if (mode !== 'edit') { currentState.value = saved.issueState; searchValue.value = ''; appliedSearchValue.value = '' }
+    const index = rows.value.findIndex(row => keyOf(row) === keyOf(saved))
+    if (index < 0) rows.value.push(clone(saved)); else rows.value[index] = clone(saved)
+    setActive(keyOf(saved))
     dirty.value = false
-    if (keepOpen && mode === 'edit') {
-      source.value = activeRow.value ? clone(activeRow.value) : null
-      if (activeRow.value) { revisedBy.value = activeRow.value.reviser ?? ''; revisedAt.value = activeRow.value.reviseDate ?? '' }
-      notice.value = '資料已套用。'
-    } else if (keepOpen) notice.value = '資料已套用。'
-    else closeForm()
+    if (keepOpen) { formMode.value = 'edit'; setTypeRows(saved.planType, saved.parameters ?? parameters) }
+    else { formMode.value = null; source.value = null; parameterRows.value = []; formError.value = '' }
+    notice.value = keepOpen ? '資料已套用。' : '資料已儲存。'
+    try { await refresh(keyOf(saved)) } catch (reason) { error.value = reason instanceof Error ? reason.message : '資料已保存，清單重載失敗。' }
   } catch (reason) { formError.value = reason instanceof Error ? reason.message : '儲存抽樣計劃失敗。' }
   finally { saving.value = false }
 }
 async function removeSelected(): Promise<void> {
+  if (loading.value || saving.value) return
   const items = [...selectedRows.value]
   if (!items.length) return
   if (items.some(row => row.issueState === 1)) { error.value = '簽核中的抽樣計劃不可刪除。'; return }
-  if (!window.confirm(`確定刪除或停用選取的 ${items.length} 筆抽樣計劃？`)) return
-  loading.value = true; error.value = ''
+  if (!(await requestConfirmation(`確定刪除或停用選取的 ${items.length} 筆抽樣計劃？`))) return
+  loading.value = true; error.value = ''; notice.value = ''
+  let completed = 0
   try {
     for (const row of items) {
       if (isMock.value) {
@@ -342,16 +392,19 @@ async function removeSelected(): Promise<void> {
         if (row.dataStamp !== null) query.set('dataStamp', String(row.dataStamp))
         await request('api/qc/sampling-plans/' + encodeURIComponent(row.planNo) + '?' + query.toString(), { method: 'DELETE' })
       }
+      completed++
     }
     await refresh(); notice.value = '操作完成。'
-  } catch (reason) { error.value = reason instanceof Error ? reason.message : '刪除抽樣計劃失敗。' }
+  } catch (reason) { error.value = reason instanceof Error ? reason.message : '刪除抽樣計劃失敗。'; notice.value = `已完成 ${completed} 筆，後續作業已停止。`; try { await refresh() } catch { /* keep operation error */ } }
   finally { loading.value = false }
 }
 async function approveSelected(): Promise<void> {
+  if (loading.value || saving.value) return
   const items = [...selectedRows.value]
   if (!items.length) return
-  if (!window.confirm(`確定核准選取的 ${items.length} 筆抽樣計劃？`)) return
-  loading.value = true; error.value = ''
+  if (!(await requestConfirmation(`確定核准選取的 ${items.length} 筆抽樣計劃？`))) return
+  loading.value = true; error.value = ''; notice.value = ''
+  let completed = 0
   try {
     for (const row of items) {
       if (row.issueState !== 0) throw new Error('只有未簽核資料可以核准。')
@@ -359,13 +412,14 @@ async function approveSelected(): Promise<void> {
         const data = readStore(); const current = data.rows.find(item => keyOf(item) === keyOf(row))!
         current.issueState = 2; current.reviser = props.currentUserNo || 'DEV001'; current.reviseDate = nowIso(); current.dataStamp = (current.dataStamp ?? 0) + 1; writeStore(data)
       } else {
-        const query = new URLSearchParams({ dataStampIsNull: row.dataStamp === null ? 'true' : 'false' })
+        const query = new URLSearchParams({ issueState: String(row.issueState), dataStampIsNull: row.dataStamp === null ? 'true' : 'false' })
         if (row.dataStamp !== null) query.set('dataStamp', String(row.dataStamp))
         await request('api/qc/sampling-plans/' + encodeURIComponent(row.planNo) + '/approve?' + query.toString(), { method: 'POST' })
       }
+      completed++
     }
     await refresh(); notice.value = '核准申請完成。'
-  } catch (reason) { error.value = reason instanceof Error ? reason.message : '核准抽樣計劃失敗。' }
+  } catch (reason) { error.value = reason instanceof Error ? reason.message : '核准抽樣計劃失敗。'; notice.value = `已完成 ${completed} 筆，後續作業已停止。`; try { await refresh() } catch { /* keep operation error */ } }
   finally { loading.value = false }
 }
 function openSimulation(): void {
@@ -389,6 +443,9 @@ async function runSimulation(): Promise<void> {
   finally { simulationBusy.value = false }
 }
 function closePage(): void { emit('close') }
+watch(() => parameterRows.value.find(item => item.parameterNo === 'SamplingType')?.parameterValue, () => {
+  if (formMode.value && form.value.planType === 6 && !isMock.value) void loadParameterOptions('VLevel')
+})
 onMounted(async () => {
   loading.value = true
   try { await Promise.all([load(), loadPlanTypes()]); setActive() }
@@ -401,23 +458,23 @@ onMounted(async () => {
   <section class="sampling-plan-page" aria-label="抽樣計劃">
     <header class="page-title"><h1>抽樣計劃</h1><span v-if="isMock" class="preview-tag">開發假資料</span></header>
     <div class="query-bar">
-      <div class="state-options"><label v-for="option in stateOptions" :key="option.value"><input type="radio" name="planState" :checked="currentState === option.value" @change="changeState(option.value)">{{ option.label }}</label></div>
-      <label class="search"><span>PlanNo</span><input v-model="searchValue" maxlength="25" @keyup.enter="query"><span>%</span></label>
-      <button type="button" @click="query">查詢</button>
+      <div class="state-options"><label v-for="option in stateOptions" :key="option.value"><input type="radio" name="planState" :disabled="loading || saving" :checked="currentState === option.value" @change="changeState(option.value)">{{ option.label }}</label></div>
+      <label class="search"><span>PlanNo</span><input v-model="searchValue" maxlength="25" :disabled="loading || saving" @keyup.enter="query"><span>%</span></label>
+      <button type="button" :disabled="loading || saving" @click="query">查詢</button>
     </div>
     <div v-if="error" class="message error" role="alert">{{ error }}</div><div v-if="notice" class="message notice" role="status">{{ notice }}</div>
     <div class="master-layout" :aria-busy="loading">
       <div class="grid-frame"><table class="plan-grid"><thead><tr>
-        <th class="selector"><input type="checkbox" aria-label="選取全部" :checked="visibleRows.length > 0 && selectedRows.length === visibleRows.length" @change="selectVisible"></th>
+        <th class="selector"><input type="checkbox" aria-label="選取全部" :disabled="loading || saving" :checked="visibleRows.length > 0 && selectedRows.length === visibleRows.length" @change="selectVisible"></th>
         <th>PlanNo</th><th>PlanName</th><th>PlanType</th><th>FunctionName</th><th>Description</th><th>Creator</th><th>CreateDate</th><th>Reviser</th><th>ReviseDate</th>
       </tr></thead><tbody>
         <tr v-for="row in visibleRows" :key="row.planNo" :class="{ active: activeKey === keyOf(row), selected: selectedKeys.includes(keyOf(row)) }" @click="selectRow(row)" @dblclick="openForm('edit', row)">
-          <td class="selector" @click.stop><input type="checkbox" :checked="selectedKeys.includes(keyOf(row))" :aria-label="`選取 ${row.planNo}`" @change="toggleRow(row)"></td>
+          <td class="selector" @click.stop><input type="checkbox" :disabled="loading || saving" :checked="selectedKeys.includes(keyOf(row))" :aria-label="`選取 ${row.planNo}`" @change="toggleRow(row)"></td>
           <td>{{ row.planNo }}</td><td>{{ row.planName }}</td><td>{{ planTypeLabel(row.planType) }}</td><td>{{ row.functionName ?? '' }}</td><td class="description-cell">{{ row.description ?? '' }}</td><td>{{ row.creator ?? '' }}</td><td>{{ formatDate(row.createDate) }}</td><td>{{ row.reviser ?? '' }}</td><td>{{ formatDate(row.reviseDate) }}</td>
         </tr>
         <tr v-if="!visibleRows.length"><td colspan="10" class="empty">{{ loading ? '載入中…' : '沒有資料' }}</td></tr>
       </tbody></table></div>
-      <aside class="actions"><button class="primary" type="button" @click="openForm('add')">新增(A)</button><button type="button" :disabled="!activeRow || currentState === 1" @click="activeRow && openForm('edit', activeRow)">修改(E)</button><button type="button" :disabled="!selectedRows.length" @click="removeSelected">刪除(D)</button><button type="button" :disabled="!activeRow || currentState === 1" @click="activeRow && openForm('copy', activeRow)">複製(C)</button><button type="button" :disabled="currentState !== 0 || !selectedRows.length" @click="approveSelected">核准(Y)</button><button type="button" :disabled="!activeRow" @click="openSimulation">Simulation</button><button class="close" type="button" @click="closePage">關閉(X)</button></aside>
+      <aside class="actions"><button class="primary" type="button" :disabled="loading || saving" @click="openForm('add')">新增(A)</button><button type="button" :disabled="loading || saving || !activeRow || currentState === 1 || currentState === -1" @click="activeRow && openForm('edit', activeRow)">修改(E)</button><button type="button" :disabled="loading || saving || !selectedRows.length" @click="removeSelected">刪除(D)</button><button type="button" :disabled="loading || saving || !activeRow || currentState === 1" @click="activeRow && openForm('copy', activeRow)">複製(C)</button><button type="button" :disabled="loading || saving || currentState !== 0 || !selectedRows.length" @click="approveSelected">核准(Y)</button><button type="button" :disabled="loading || saving || !activeRow" @click="openSimulation">Simulation</button><button class="close" type="button" @click="closePage">關閉(X)</button></aside>
     </div>
     <footer class="grid-footer">資料總筆數 {{ visibleRows.length }}</footer>
 
@@ -425,23 +482,23 @@ onMounted(async () => {
       <section class="dialog definition-dialog" role="dialog" aria-modal="true" :aria-label="dialogTitle">
         <header class="dialog-title"><h2>{{ dialogTitle }}</h2><button type="button" class="x-button" aria-label="關閉" @click="closeForm">×</button></header>
         <form class="editor" @submit.prevent="save(false)">
-          <fieldset><legend>Sampling Plan</legend>
+          <fieldset :disabled="saving"><legend>Sampling Plan</legend>
             <label class="plan-no"><span>Plan No</span><input v-model="form.planNo" maxlength="25" :readonly="formMode === 'edit' || formReadOnly" class="kd-field" @blur="form.planNo = form.planNo.toUpperCase()" @input="markDirty"></label>
             <label><span>Plan Name</span><input v-model="form.planName" maxlength="50" :readonly="formReadOnly" class="kd-field" @input="markDirty"></label>
             <label><span>Plan Type</span><select :value="form.planType" :disabled="formReadOnly" class="kd-field" @change="changePlanType"><option v-for="option in typeOptions" :key="option.value" :value="option.value">{{ option.value }} - {{ option.label }}</option></select></label>
-            <label v-if="form.planType === 3"><span>Function Name</span><select v-model="form.functionName" :disabled="formReadOnly" class="kd-field" @change="markDirty"><option value="">請選擇</option><option v-for="fn in functionOptions" :key="fn" :value="fn">{{ fn }}</option></select></label>
+            <label v-if="form.planType === 3"><span>Function Name</span><input v-model="form.functionName" :readonly="formReadOnly" class="kd-field" maxlength="50" list="qc103-functions" @input="markDirty"><datalist id="qc103-functions"><option v-for="fn in functionOptions" :key="fn" :value="fn" /></datalist></label>
             <label class="description"><span>Description</span><textarea v-model="form.description" maxlength="255" :readonly="formReadOnly" class="kd-field" @input="markDirty"></textarea></label>
             <div class="sample-limit"><span>Sample Qty Can Be Bigger Than Population Qty</span><label><input v-model="form.allowSampleAbovePopulation" type="radio" :value="true" :disabled="formReadOnly" @change="markDirty"> Yes</label><label><input v-model="form.allowSampleAbovePopulation" type="radio" :value="false" :disabled="formReadOnly" @change="markDirty"> No</label></div>
           </fieldset>
-          <fieldset class="parameter-box"><legend>Sampling Parameter</legend>
+          <fieldset class="parameter-box" :disabled="saving"><legend>Sampling Parameter</legend>
             <div class="parameter-actions"><button type="button" :disabled="formReadOnly" @click="addParameter">ADD(A)</button><button type="button" :disabled="formReadOnly || !parameterRows.length" @click="removeParameter(parameterRows.length - 1)">DEL(D)</button></div>
             <div class="parameter-scroll"><table class="parameter-grid"><thead><tr><th>ParameterNo</th><th>ParameterValue</th><th>必填</th><th></th></tr></thead><tbody>
-              <tr v-for="(parameter, index) in parameterRows" :key="index"><td><input v-model="parameter.parameterNo" :readonly="isPredefinedParameter(parameter.parameterNo) || formReadOnly" maxlength="20" @input="markDirty"></td><td><select v-if="parameter.options.length" v-model="parameter.parameterValue" :disabled="formReadOnly" @change="markDirty"><option value="">（空白）</option><option v-for="value in parameter.options" :key="value" :value="value">{{ value }}</option></select><input v-else v-model="parameter.parameterValue" :readonly="formReadOnly" maxlength="255" @input="markDirty"></td><td>{{ parameter.showFlag === 1 ? '是' : '否' }}</td><td><button type="button" :disabled="formReadOnly" aria-label="刪除參數" @click="removeParameter(index)">×</button></td></tr>
+              <tr v-for="(parameter, index) in parameterRows" :key="index"><td><input v-model="parameter.parameterNo" :readonly="isPredefinedParameter(parameter.parameterNo) || formReadOnly" maxlength="20" @input="markDirty"></td><td><select v-if="parameter.options.length" v-model="parameter.parameterValue" :disabled="formReadOnly" @change="markDirty"><option value="">（空白）</option><option v-if="parameter.parameterValue && !parameter.options.includes(parameter.parameterValue)" :value="parameter.parameterValue">{{ parameter.parameterValue }}</option><option v-for="value in parameter.options" :key="value" :value="value">{{ value }}</option></select><input v-else v-model="parameter.parameterValue" :readonly="formReadOnly" maxlength="255" @input="markDirty"></td><td>{{ parameter.showFlag === null ? '待確認' : parameter.showFlag === 1 ? '是' : '否' }}</td><td><button type="button" :disabled="formReadOnly" aria-label="刪除參數" @click="removeParameter(index)">×</button></td></tr>
               <tr v-if="!parameterRows.length"><td colspan="4" class="empty">此 PlanType 沒有預設參數</td></tr>
             </tbody></table></div>
           </fieldset>
           <fieldset class="audit-box"><legend>Basis Data</legend><label><span>Creator</span><input :value="createdBy" readonly></label><label><span>CreateDate</span><input :value="formatDate(createdAt)" readonly></label><label><span>Reviser</span><input :value="revisedBy" readonly></label><label><span>ReviseDate</span><input :value="formatDate(revisedAt)" readonly></label></fieldset>
-          <p v-if="formReadOnly" class="form-error">此資料簽核中，表單唯讀。</p><p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
+          <p v-if="optionsNotice" role="status">{{ optionsNotice }}</p><p v-if="formReadOnly" class="form-error">此資料目前狀態不可修改。</p><p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
           <div class="dialog-actions"><button class="primary" type="submit" :disabled="saving || formReadOnly">確定</button><button type="button" :disabled="saving" @click="closeForm">關閉</button><button type="button" :disabled="saving || !dirty || formReadOnly" @click="save(true)">套用</button></div>
         </form>
       </section>
@@ -449,6 +506,7 @@ onMounted(async () => {
 
     <div v-if="simulationOpen" class="backdrop" @click.self="simulationOpen = false"><section class="dialog simulation-dialog" role="dialog" aria-modal="true" aria-label="Sampling Parameter Simulation"><header class="dialog-title"><h2>Sampling Parameter Simulation</h2><button class="x-button" type="button" aria-label="關閉" @click="simulationOpen = false">×</button></header><div class="simulation-body"><p><b>{{ simulationPlan?.planNo }}</b> · {{ planTypeLabel(simulationPlan?.planType ?? -1) }}</p><label><span>Population Qty</span><input v-model="simulationPopulation" type="number" min="0" class="kd-field"></label><p v-if="simulationError" class="form-error" role="alert">{{ simulationError }}</p><fieldset v-if="simulationResult"><legend>Result</legend><div v-if="simulationResult.sampleQty !== undefined">SampleQty：{{ simulationResult.sampleQty }}</div><div v-if="simulationResult.acceptQty !== undefined">AcceptQty：{{ simulationResult.acceptQty }}</div><div v-if="simulationResult.rejectQty !== undefined">RejectQty：{{ simulationResult.rejectQty }}</div><div v-if="simulationResult.kValue !== undefined">KValue：{{ simulationResult.kValue }}</div><div v-if="simulationResult.fValue !== undefined">FValue：{{ simulationResult.fValue }}</div><div v-if="simulationResult.message">{{ simulationResult.message }}</div></fieldset><div class="dialog-actions"><button class="primary" type="button" :disabled="simulationBusy" @click="runSimulation">Simulation</button><button type="button" @click="simulationOpen = false">關閉</button></div></div></section></div>
   </section>
+  <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
 </template>
 
 <style scoped>

@@ -2,6 +2,8 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
+2026-11-19 家用端 checkpoint：forward migrations 0034–0041 已實際套用，三份備份已驗證，詳見 [資料庫部署紀錄](DATABASE_CONNECTION.md)。QC103／QC107／QC108 以各模組的實測範圍為準，未交付的分類／Core／metadata／函式不因 schema 建立而完成；0038–0040 僅為 PRD schema groundwork，Program／RecipeGroup 指派 API 尚未部署。三個 QC 模組的專屬 fixtures 已逐筆從 UI／API 刪除，最終精確本輪識別鍵 SQL 殘留各0；詳見模組驗收紀錄。
+
 - QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。共用六表 migration 0027、登入保護 API 已部署；app-browser 已驗證新增/套用/修改、複製/Driver lookup、取消/確定核准、引用刪除防護、狀態 1 唯讀、-1/2 刪除、四狀態/Close、錯誤文字與 Demo 登入。本輪測試資料已清空；共用簽核/Issue Control 限制見規格。公司端 QC503 UI 已於 `b572f3b` 提交，下一步為家用端 API handoff。
 - QC502「檢測儀器基本資料」：[功能規格](modules/QC/檢測儀器基本資料.md)。主表 `TBLQCINSPMACHINEPARAMETER`；CRUD/lookup API 已部署，類別通訊參數以交易內鎖定重讀為準、DataStamp 保留 NULL 並精確 CAS。app-browser 已驗證新增/套用/修改、RS232→UserDefine 類別更換、複製/Driver lookup、核准、取消/確定刪除、舊版本衝突、四狀態/Close、錯誤文字與 Demo 登入。本輪測試資料已清空，共用資源限制依規格追蹤。
 - QC503「檢測設備連線程式」：[功能規格](modules/QC/檢測設備連線程式.md)。登入保護 API 已部署並完成本輪正式 app-browser CRUD/查找/核准/狀態/引用防護/nullable CAS 驗證；沿用 0027 Driver 表與共用查找，測試資料已清空。共用簽核與解析函式限制見規格。
@@ -49,13 +51,13 @@
 - QC112「品質原因產品指導書」：[功能規格](modules/QC/品質原因產品指導書.md)。公司端依主畫面、Maintain/Import 表單、Oracle DDL 完成 Vue DEV 雙 Grid、產品對應維護、附件匯入 UI 與 API handoff。Oracle 關聯表以 `(ReasonNo, ProductNo)` 為 PK、無 FK/DataStamp；舊 DataImporter checker 未包含在來源樹，檔案共用/刪除規則及 YMES 檔案儲存整合待家用端查證。
 - QC110「特殊主檔維護」：[功能規格](modules/QC/特殊主檔維護.md)。公司端依 `frmSpecialBasisMaintain` 與共用 SYS/QC Service/Core 完成選列即載入的 metadata 動態 Grid DEV 頁、QC 基本資料選單及 API handoff。其 `ParameterClass=0`，與 QC109 class=1 分別授權；沿用 QC109 已查的 `TBLSYSMESPARAMETER`/`FC_%` Oracle DDL 及 PostgreSQL CREATE 參考，不重複建立 DDL。家用端需核對 YMES schema，實作 FunctionKey `QC110` 保護的安全動態讀寫 API。
 - QC109「要因資料維護」：[功能規格](modules/QC/要因資料維護.md)。公司端依 `frmQCFactorMaintain`、SYS/QC Service/Core 與 Oracle DDL 完成 metadata 驅動的動態 Grid DEV 頁、Import/Paste/整表 Save、QC 基本資料選單及 API handoff。來源以 `TBLSYSMESPARAMETER` 選出核准的 `FC_%` Table；本次字典查到三張 FC 表，沒有讀業務列。家用端需核對 YMES 既有參數目錄/動態表，再提供限制 `QC109` 權限的參數化整表 API。
-- QC108「計量品管法則基本資料」：[功能規格](modules/QC/計量品管法則基本資料.md)。公司端已依 `frmQCRuleBasis`/Def、wsQC、Core 與 Oracle DDL 完成單表清單/編輯 DEV 頁、路由/選單及 DataStamp、RuleOption 映射與 Issue Job 規格。Oracle 主鍵是 RuleSerial；RuleNo 唯一性由舊服務檢查。家用端需核對 YMES schema，提供 RuleOption/FunctionName 選項與 QC108 CRUD、nullable DataStamp CAS、`QC RULE BASIS` Issue Job。
-- QC107「計數判別法則基本資料」：[功能規格](modules/QC/計數判別法則基本資料.md)。公司端已對照 WinForms Form/Def、wsQC、Core、Oracle DDL，完成 `/YMES/QC/AttributeRuleBasis` 主從 DEV 頁與 QC 基本資料選單。主/明細複合 PK 已確認、無 FK/DataStamp；共用 TBLQCAQL 的 Oracle/PG DDL 參考亦已建立。家用端需重用 YMES AQL 表、實作 aggregate transaction CRUD、三種 RuleType、ValueList options、UserDefineAQL 與 `QCITEM_A RULE DATA` Issue Job。
+- QC108「計量品管法則基本資料」：[功能規格](modules/QC/計量品管法則基本資料.md)。migration0036 與登入保護 API／Web 已部署；正式實測七類 System 新增、Apply 模式／編輯、多選取消／確定、核准2、停用-1／硬刪及 NULL stamp stale409 後重載。RuleSerial PK／RuleNo 分離與 nullable CAS 保留；FUNQR、Issue Control／完整 Issue Job 仍待來源與整合，詳見模組驗收界線。
+- QC107「計數判別法則基本資料」：[功能規格](modules/QC/計數判別法則基本資料.md)。migration0035 主／明細及0037共用AQL空表已套用，登入保護 aggregate API／Web 已部署。正式實測空 aggregate CRUD／複製／多選刪除、缺metadata503、原明細NULL／audit保留及child snapshot stale409；無來源DataStamp，使用YMES aggregate hash。不曾成功新增明細或核准，Action／ReasonType／UserDefineAQL、Issue Control／Job 仍待交付。
 - QC106「品質原因基本資料」：[功能規格](modules/QC/品質原因基本資料.md)。公司端已對照 WinForms Form/Def、wsQC、Core、Oracle DDL，完成 `/YMES/QC/ReasonBasis` DEV 頁與 QC 基本資料選單。來源主表 ReasonNo 為 PK，只有 PK unique index、無 FK；家用端需核對 YMES schema、提供 MES ValueList ReasonType、同類且已核准 QC105 子類別 lookup，並實作 CRUD、Issue Control、nullable DataStamp CAS 與 `REASON BASIS` Issue Job。
 - QC105「品質原因子類別資料」：[功能規格](modules/QC/品質原因子類別資料.md)。公司端已對照 `frmReasonSubTypeBasis`/Def、wsQC、Core 與 Oracle DDL，完成 `/YMES/QC/ReasonSubTypeBasis` DEV 頁和 QC 基本資料選單。來源表以 ReasonSubType 為 PK，沒有 FK；家用端需比對既有 schema、提供正式 ReasonType ValueList，並實作 QC105 CRUD、Issue Control 編輯權限及 `ReasonSubType BASIS` Issue Job。
 - QC104「抽樣計劃_元件」：[功能規格](modules/QC/Wafer抽樣計劃.md)。公司端依 `frmSamplingPlan_Wafer`/Def、wsQC 與 Core 完成 `/YMES/QC/SamplingPlanWafer` DEV 頁和 QC 基本資料選單。Oracle source DDL / PostgreSQL CREATE 參考包含 Wafer 主檔、共用 Range、Area 三表；Range 無 PK/index/FK，家用端需先協調和 QC103 共用表的 schema/API 行為，再補 QC104 transaction CRUD、DataStamp CAS 及 `WAFER SAMPLING PLAN` Issue Job。
 
-- QC103「抽樣計劃」：[功能規格](modules/QC/抽樣計劃.md)。公司端已對照 `frmSamplingPlan`/`frmSamplingPlanDef`、wsQC 與 Core，完成 `/YMES/QC/SamplingPlan` DEV 頁及 QC 基本資料選單。兩張 Oracle source DDL / PostgreSQL CREATE 參考已建立；來源各有 PK、沒有 FK/額外索引。家用端需實作交易式主檔/參數 API、`SAMPLING PLAN` Issue Job、DataStamp CAS、PlanType/參數選項及 Simulation。
+- QC103「抽樣計劃」：[功能規格](modules/QC/抽樣計劃.md)。migration0034 與登入保護主檔／參數交易 API／Web 已部署；正式實測已知0／1／4／5類型、參數／範圍、核准及state2編輯／停用／硬刪、合法PLAN-TYPES等主鍵路由及NULL／0 CAS。QC301分類／原Core／FUNSA／部分SYS選項、Simulation與完整Issue Job仍未完成，不以四類管理通過代表抽樣引擎完成。
 
 
 - QC102「抽樣計劃設定_1916」：[功能規格](modules/QC/抽樣計劃設定_1916.md)。公司端已對照 WinForms Form/Def、wsQC、`clsQCBasis`/`clsBasis_UPD`，完成 `/YMES/QC/Sampling1916` DEV 頁與 QC 基本資料選單。Oracle source DDL/PostgreSQL 空表 CREATE 參考已建立；唯一索引為 SamplingType/MinNum/MaxNum/SLevel，沒有宣告 PK constraint、FK 或簽核。家用端需核對 YMES schema 並實作 QC102 CRUD、DataStamp CAS 及抽樣解析規則。 家用端2026-11-19：API/schema及上述模組文件所列正式頁面操作已驗證；具體未完成項以模組最新驗收紀錄為準。

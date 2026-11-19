@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2
 type RuleType = 0 | 1 | 2
@@ -10,7 +12,7 @@ interface RuleBasis {
   ruleName: string
   functionName: string | null
   ruleType: RuleType | null
-  issueState: IssueState
+  issueState: IssueState | null
   creator: string | null
   createDate: string | null
   description: string | null
@@ -37,6 +39,7 @@ type ListPayload<T> = T[] | { items?: T[] }
 
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const storageKey = 'ymes-dev-mock:qc-variable-rule-basis:v1'
@@ -89,9 +92,8 @@ const currentUser = computed(() => props.currentUserNo?.trim() || (mock.value ? 
 const currentOption = computed(() => ruleOptions.value.find(option => option.uiValue === editor.value.uiRuleOption) ?? null)
 const isSpecial = computed(() => editor.value.uiRuleOption === 6)
 const isCpkGoal = computed(() => isSpecial.value && editor.value.compareValue1.toUpperCase() === 'CPKGOAL')
-const isRange = computed(() => editor.value.uiRuleOption === 1 || editor.value.uiRuleOption === 4)
 const relationOptions = computed(() => {
-  if (editor.value.uiRuleOption === 1 || editor.value.uiRuleOption === 4 || (isSpecial.value && editor.value.compareValue1.toUpperCase() === 'SPECLIMIT')) return ['Between', 'Beyond']
+  if (editor.value.uiRuleOption === 1 || (isSpecial.value && editor.value.compareValue1.toUpperCase() === 'SPECLIMIT')) return ['Between', 'Beyond']
   if (editor.value.uiRuleOption === 3) return compareRelations
   if (isSpecial.value) return specialRelations
   if (editor.value.uiRuleOption === 5) return ['Increase', 'Decrease', 'Alternate']
@@ -116,7 +118,7 @@ function toStoredOption(uiValue: number, originalValue: number | null): number {
 function formatDate(value: string | null | undefined): string { if (!value) return ''; const date = new Date(value); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('zh-TW', { dateStyle: 'short', timeStyle: 'medium' }).format(date) }
 function optionLabel(value: number | null): string { if (value === null) return ''; if (value === 9) return 'Other'; const option = ruleOptions.value.find(item => item.storedValue === value); return option?.label.replace('（DEMO）', '') ?? String(value) }
 function ruleTypeLabel(value: number | null): string { return value === 0 ? 'System' : value === 1 ? 'User Define' : value === null ? '' : String(value) }
-function issueStateLabel(value: number): string { return states.find(state => state.value === value)?.label ?? String(value) }
+function issueStateLabel(value: number | null): string { return value === null ? '' : states.find(state => state.value === value)?.label ?? String(value) }
 function hasField(name: string): boolean { return editorMode.value !== 'edit' || permittedFields.value.includes(name) }
 function apiUrl(path: string): string {
   const base = props.apiBaseUrl.trim()
@@ -128,7 +130,21 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   const response = await fetch(apiUrl(path), { credentials: 'include', ...init, headers })
   if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
-  if (!response.ok) { const problem = await response.json().catch(() => null) as { detail?: string; title?: string; message?: string } | null; throw new Error(problem?.detail || problem?.message || problem?.title || 'API 呼叫失敗（' + response.status + '）。') }
+  if (!response.ok) {
+    const body = await response.text()
+    let message = body
+    try {
+      const problem: unknown = JSON.parse(body)
+      if (problem && typeof problem === 'object') {
+        const fields = problem as Record<string, unknown>
+        for (const key of ['detail', 'message', 'title']) {
+          const field = fields[key]
+          if (typeof field === 'string' && field.trim()) { message = field.trim(); break }
+        }
+      }
+    } catch { /* Preserve non-JSON service errors. */ }
+    throw new Error(message || 'API 呼叫失敗（' + response.status + '）。')
+  }
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
@@ -144,7 +160,7 @@ async function loadOptions(): Promise<void> {
   if (results[0].status === 'fulfilled') ruleOptions.value = listOf(results[0].value).filter(item => Object.prototype.hasOwnProperty.call(storedToUi, item.value)).map(item => ({ uiValue: storedToUi[item.value], storedValue: item.value, label: item.label })).filter((item, index, all) => all.findIndex(candidate => candidate.uiValue === item.uiValue) === index).sort((a, b) => a.uiValue - b.uiValue)
   else errorMessage.value = results[0].reason instanceof Error ? results[0].reason.message : '載入 RuleOption 選項失敗。'
   if (results[1].status === 'fulfilled') functionOptions.value = listOf(results[1].value)
-  else { functionsError.value = results[1].reason instanceof Error ? results[1].reason.message : '載入 FunctionName 選項失敗。'; if (!errorMessage.value) errorMessage.value = functionsError.value }
+  else functionsError.value = results[1].reason instanceof Error ? results[1].reason.message : '載入 FunctionName 選項失敗。'
 }
 async function refresh(focusKey = ''): Promise<void> {
   loading.value = true; errorMessage.value = ''
@@ -165,7 +181,8 @@ function openAdd(): void { editorMode.value = 'add'; sourceRow.value = null; edi
 function draftFrom(row: RuleBasis): RuleDraft { return { ruleNo: row.ruleNo, ruleName: row.ruleName, ruleType: row.ruleType === 1 ? 1 : 0, functionName: row.functionName ?? '', description: row.description ?? '', uiRuleOption: toUiOption(row.ruleOption), testOutof: row.testOutof?.toString() ?? '', testCount: row.testCount?.toString() ?? '', compareValue1: row.compareValue1 ?? '', compareValue2: row.compareValue2 ?? '', relation: row.relation ?? '' } }
 function openEdit(): void { if (!activeRow.value) return; sourceRow.value = clone(activeRow.value); editorMode.value = 'edit'; editor.value = draftFrom(activeRow.value); editorError.value = ''; editorNotice.value = ''; editorDirty.value = false }
 function openCopy(): void { if (!activeRow.value) return; sourceRow.value = clone(activeRow.value); editorMode.value = 'copy'; editor.value = draftFrom(activeRow.value); editorError.value = ''; editorNotice.value = '已複製規則內容，請輸入新的 RuleNo。'; editorDirty.value = false }
-function closeEditor(): void { if (saving.value) return; if (editorDirty.value && !window.confirm('放棄尚未保存的變更？')) return; editorMode.value = null; sourceRow.value = null; editorError.value = ''; editorNotice.value = ''; editorDirty.value = false }
+function resetEditor(): void { editorMode.value = null; sourceRow.value = null; editorError.value = ''; editorNotice.value = ''; editorDirty.value = false }
+async function closeEditor(): Promise<void> { if (saving.value) return; if (editorDirty.value && !await requestConfirmation('放棄尚未保存的變更？')) return; resetEditor() }
 function inputChanged(): void { editorDirty.value = true; editorError.value = '' }
 function validate(): string {
   const value = editor.value
@@ -183,8 +200,8 @@ function validate(): string {
     if (value.uiRuleOption === null || !ruleOptions.value.some(item => item.uiValue === value.uiRuleOption)) return 'System Rule 必須選擇 Rule Option。'
     const specialGoal = isSpecial.value && value.compareValue1.toUpperCase() === 'CPKGOAL'
     if (!specialGoal) {
-      const outOf = Number(value.testOutof); const count = Number(value.testCount)
-      if (!value.testOutof.trim() || !Number.isFinite(outOf)) return 'TestOutof 必須是數字。'
+      const outOf = isSpecial.value ? Number(value.testCount) : Number(value.testOutof); const count = Number(value.testCount)
+      if ((!isSpecial.value && !value.testOutof.trim()) || !Number.isFinite(outOf)) return 'TestOutof 必須是數字。'
       if (!value.testCount.trim() || !Number.isFinite(count)) return 'TestCount 必須是數字。'
       if (outOf < 1 || outOf > 99 || !Number.isInteger(outOf)) return 'TestOutof 必須是 1 到 99 的整數。'
       if (count < 1 || count > 99 || !Number.isInteger(count)) return 'TestCount 必須是 1 到 99 的整數。'
@@ -206,7 +223,7 @@ function buildPayload() {
   const payload: Record<string, unknown> = { ruleNo: value.ruleNo.trim().toUpperCase(), ruleName: value.ruleName.trim(), ruleType: value.ruleType, functionName: value.ruleType === 1 ? value.functionName : '', description: value.description, issueState: editorMode.value === 'edit' ? sourceRow.value?.issueState : 0, dataStamp: sourceRow.value?.dataStamp }
   if (value.ruleType === 0 && value.uiRuleOption !== null) {
     const specialGoal = value.uiRuleOption === 6 && value.compareValue1.toUpperCase() === 'CPKGOAL'
-    payload.ruleOption = toStoredOption(value.uiRuleOption, sourceRow.value?.ruleOption ?? null)
+    payload.ruleOption = toStoredOption(value.uiRuleOption, editorMode.value === 'edit' ? sourceRow.value?.ruleOption ?? null : null)
     if (specialGoal) { payload.testOutof = 1; payload.testCount = 1 }
     else if (value.uiRuleOption === 6) { payload.testOutof = Number(value.testCount); payload.testCount = Number(value.testCount) }
     else { payload.testOutof = Number(value.testOutof); payload.testCount = Number(value.testCount) }
@@ -218,11 +235,13 @@ function buildPayload() {
   return payload
 }
 async function save(keepOpen: boolean): Promise<void> {
+  if (saving.value) return
   editor.value.ruleNo = editor.value.ruleNo.trim().toUpperCase()
   editorError.value = validate()
   if (editorError.value || !editorMode.value || !canEdit.value) return
   const mode = editorMode.value; const original = sourceRow.value; const payload = buildPayload(); saving.value = true
   try {
+    let saved: RuleBasis
     if (mock.value) {
       const store = readStore()
       if (mode === 'edit') {
@@ -234,20 +253,23 @@ async function save(keepOpen: boolean): Promise<void> {
         if (permittedFields.value.includes('description')) row.description = editor.value.description || null
         applyRuleValues(row, payload)
         row.dataStamp = (row.dataStamp ?? 0) + 1; row.reviser = currentUser.value; row.reviseDate = new Date().toISOString()
+        saved = clone(row)
       } else {
         const next: RuleBasis = { ruleSerial: String(payload.ruleNo), ruleNo: String(payload.ruleNo), ruleName: String(payload.ruleName), functionName: editor.value.ruleType === 1 ? editor.value.functionName : null, ruleType: editor.value.ruleType, issueState: 0, creator: currentUser.value, createDate: new Date().toISOString(), description: editor.value.description || null, ruleOption: null, testOutof: null, testCount: null, compareValue1: null, compareValue2: null, relation: null, weType: 0, dataStamp: 0, reviser: null, reviseDate: null }
         applyRuleValues(next, payload); store.items.push(next)
+        saved = clone(next)
       }
       writeStore(store)
     } else if (mode === 'edit') {
       const query = new URLSearchParams({ issueState: String(original!.issueState), dataStamp: original!.dataStamp === null ? '' : String(original!.dataStamp) })
-      await request('api/qc/rule-bases/' + encodeURIComponent(original!.ruleNo) + '?' + query.toString(), { method: 'PUT', body: JSON.stringify(payload) })
-    } else await request('api/qc/rule-bases', { method: 'POST', body: JSON.stringify(payload) })
-    await refresh(String(payload.ruleNo))
+      saved = await request<RuleBasis>('api/qc/rule-bases/' + encodeURIComponent(original!.ruleNo) + '?' + query.toString(), { method: 'PUT', body: JSON.stringify(payload) })
+    } else saved = await request<RuleBasis>('api/qc/rule-bases', { method: 'POST', body: JSON.stringify(payload) })
+    if (saved.issueState !== null) issueState.value = saved.issueState
+    await refresh(saved.ruleNo)
     editorDirty.value = false
-    if (keepOpen && mode !== 'edit') editorNotice.value = '資料已套用；請輸入新的 RuleNo 再新增下一筆。'
-    else if (keepOpen) { sourceRow.value = activeRow.value ? clone(activeRow.value) : null; editor.value = activeRow.value ? draftFrom(activeRow.value) : editor.value; editorNotice.value = '資料已套用。' }
-    else closeEditor()
+    if (keepOpen && mode !== 'edit') { sourceRow.value = null; editor.value = draftFrom(saved); editorNotice.value = '資料已套用；請輸入新的 RuleNo 再新增下一筆。' }
+    else if (keepOpen) { sourceRow.value = clone(saved); editor.value = draftFrom(saved); editorNotice.value = '資料已套用。' }
+    else resetEditor()
   } catch (error) { editorError.value = error instanceof Error ? error.message : '儲存計量品管法則失敗。' }
   finally { saving.value = false }
 }
@@ -262,7 +284,7 @@ function applyRuleValues(row: RuleBasis, payload: Record<string, unknown>): void
 async function removeSelected(): Promise<void> {
   const targets = [...selectedRows.value]
   if (!targets.length || !canDelete.value) { errorMessage.value = '請先選取可刪除的資料。'; return }
-  if (!window.confirm('確定刪除／停用選取的 ' + targets.length + ' 筆資料？')) return
+  if (!await requestConfirmation('確定刪除／停用選取的 ' + targets.length + ' 筆資料？')) return
   busy.value = true; errorMessage.value = ''; notice.value = ''; let completed = 0; let failure = ''
   try {
     for (const row of targets) {
@@ -273,12 +295,15 @@ async function removeSelected(): Promise<void> {
     }
     notice.value = '已處理 ' + completed + ' 筆資料。'
   } catch (error) { failure = (error instanceof Error ? error.message : '刪除失敗。') + (completed ? '（前 ' + completed + ' 筆已完成）' : '') }
-  finally { if (completed) await refresh(); if (failure) errorMessage.value = failure; busy.value = false }
+  finally {
+    try { if (completed || failure) await refresh() }
+    finally { if (failure) errorMessage.value = failure; busy.value = false }
+  }
 }
 async function approveSelected(): Promise<void> {
   const targets = [...selectedRows.value]
   if (!targets.length || !canApprove.value) { errorMessage.value = '只有未簽核資料可送出核准。'; return }
-  if (!window.confirm('確定送出核准選取的 ' + targets.length + ' 筆資料？')) return
+  if (!await requestConfirmation('確定送出核准選取的 ' + targets.length + ' 筆資料？')) return
   busy.value = true; errorMessage.value = ''; notice.value = ''; let completed = 0; let failure = ''
   try {
     for (const row of targets) {
@@ -288,7 +313,10 @@ async function approveSelected(): Promise<void> {
     }
     notice.value = mock.value ? '已核准 ' + completed + ' 筆 DEV 預覽資料。' : '已送出 ' + completed + ' 筆；實際狀態依 QC RULE BASIS 簽核流程更新。'
   } catch (error) { failure = (error instanceof Error ? error.message : '核准失敗。') + (completed ? '（前 ' + completed + ' 筆已完成）' : '') }
-  finally { if (completed) await refresh(); if (failure) errorMessage.value = failure; busy.value = false }
+  finally {
+    try { if (completed || failure) await refresh() }
+    finally { if (failure) errorMessage.value = failure; busy.value = false }
+  }
 }
 function selectSpecial(value: string): void { editor.value.compareValue1 = value; if (value.toUpperCase() === 'CPKGOAL') { editor.value.testCount = '1'; editor.value.testOutof = '1' } if (value.toUpperCase() === 'SPECLIMIT' && !['Between', 'Beyond'].includes(editor.value.relation)) editor.value.relation = 'Between'; if (value.toUpperCase() !== 'SPECLIMIT' && ['Between', 'Beyond'].includes(editor.value.relation)) editor.value.relation = '>'; inputChanged() }
 
@@ -338,6 +366,7 @@ onMounted(async () => { await loadOptions(); const initialError = errorMessage.v
       </form>
     </section></div>
   </main>
+  <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
 </template>
 
 <style scoped>

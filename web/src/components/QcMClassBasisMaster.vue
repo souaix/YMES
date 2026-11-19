@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 import { useActionConfirmation } from '../composables/useActionConfirmation'
 import { apiErrorMessage as responseError } from '../utils/apiError'
@@ -46,6 +46,20 @@ const importResults = ref<ImportResult[]>([])
 const importError = ref('')
 const importing = ref(false)
 const importProgress = ref(0)
+const importConfirming = ref(false)
+const previewing = ref(false)
+const cancelRequested = ref(false)
+const importRequestPending = ref(false)
+const importRefreshing = ref(false)
+const importStatus = ref('')
+const importResultsUnconfirmed = ref(false)
+const importUiBusy = computed(() => importing.value || importConfirming.value || previewing.value)
+const importCloseBlocked = computed(() => importing.value || importConfirming.value)
+const canCancelImport = computed(() => importing.value && !cancelRequested.value && !importRefreshing.value
+  && (mock.value || importRequestPending.value))
+let importAbortController: AbortController | null = null
+let previewAbortController: AbortController | null = null
+let componentActive = true
 const visible = computed(() => rows.value.filter(r => r.issueState === state.value && (!appliedSearch.value || r.mClassNo.toLowerCase().includes(appliedSearch.value.toLowerCase()))).sort((a, b) => a.mClassNo.localeCompare(b.mClassNo)))
 const selectedRows = computed(() => visible.value.filter(r => selected.value.includes(r.mClassNo)))
 const activeRow = computed(() => rows.value.find(r => r.mClassNo === active.value) ?? null)
@@ -85,6 +99,7 @@ function setActive(prefer = ''): void {
   active.value = row?.mClassNo ?? ''; selected.value = row ? [row.mClassNo] : []
 }
 async function query(): Promise<void> {
+  if (importUiBusy.value) return
   appliedSearch.value = search.value.trim(); loading.value = true; error.value = ''; notice.value = ''
   try { await load(); setActive() } catch (e) { error.value = e instanceof Error ? e.message : '查詢主分類失敗。' } finally { loading.value = false }
 }
@@ -93,6 +108,7 @@ function selectRow(row: Row): void { active.value = row.mClassNo; selected.value
 function toggleRow(row: Row): void { selected.value = selected.value.includes(row.mClassNo) ? selected.value.filter(x => x !== row.mClassNo) : [...selected.value, row.mClassNo]; active.value = row.mClassNo }
 function selectAll(e: Event): void { selected.value = (e.target as HTMLInputElement).checked ? visible.value.map(r => r.mClassNo) : [] }
 function openForm(next: Exclude<Mode, null>, row: Row | null = null): void {
+  if (importUiBusy.value) return
   source.value = row ? copy(row) : null; form.value = { mClassNo: row?.mClassNo ?? '', description: row?.description ?? '' }; formCreateDate.value = row?.createDate ?? now(); formError.value = ''; mode.value = next
 }
 function closeForm(): void { mode.value = null; source.value = null; formError.value = '' }
@@ -106,6 +122,7 @@ function validate(): string {
   return ''
 }
 async function save(keepOpen: boolean): Promise<void> {
+  if (importUiBusy.value || saving.value) return
   formError.value = validate(); if (formError.value || !mode.value) return
   const currentMode = mode.value; const original = source.value; const no = form.value.mClassNo.trim().toUpperCase(); const description = form.value.description.trim() || null
   saving.value = true
@@ -142,6 +159,7 @@ async function save(keepOpen: boolean): Promise<void> {
   } catch (e) { formError.value = e instanceof Error ? e.message : '儲存主分類失敗。' } finally { saving.value = false }
 }
 async function removeSelected(): Promise<void> {
+  if (importUiBusy.value || busy.value || saving.value) return
   if (!selectedRows.value.length) return
   if (selectedRows.value.some(r => r.issueState === 1)) { error.value = '簽核中的資料不可刪除。'; return }
   if (!(await requestConfirmation('確定刪除或停用選取的 ' + selectedRows.value.length + ' 筆資料？'))) return
@@ -166,6 +184,7 @@ async function removeSelected(): Promise<void> {
   } finally { busy.value = false }
 }
 async function approveSelected(): Promise<void> {
+  if (importUiBusy.value || busy.value || saving.value) return
   if (!selectedRows.value.length) return
   if (selectedRows.value.some(r => r.issueState !== 0)) { error.value = '只有未簽核資料可以核准。'; return }
   if (!(await requestConfirmation('確定核准選取的 ' + selectedRows.value.length + ' 筆主分類？'))) return
@@ -182,7 +201,11 @@ async function approveSelected(): Promise<void> {
     error.value = message
   } finally { busy.value = false }
 }
-function openImport(): void { importOpen.value = true; importName.value = ''; importFile.value = null; importPairs.value = []; importResults.value = []; importError.value = ''; importProgress.value = 0 }
+function openImport(): void {
+  if (importUiBusy.value || busy.value || saving.value) return
+  importOpen.value = true; importName.value = ''; importFile.value = null; importPairs.value = []; importResults.value = []
+  importError.value = ''; importProgress.value = 0; importStatus.value = ''; cancelRequested.value = false; importResultsUnconfirmed.value = false
+}
 function parseCsv(text: string): string[][] {
   const records: string[][] = []; let row: string[] = []; let field = ''; let quoted = false
   for (let i = 0; i < text.length; i++) {
@@ -197,23 +220,35 @@ function parseCsv(text: string): string[][] {
   return records
 }
 async function chooseFile(e: Event): Promise<void> {
+  if (importUiBusy.value) return
   const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return
-  importName.value = file.name; importFile.value = file; importPairs.value = []; importResults.value = []; importError.value = ''
-  if (mock.value) {
-    if (!file.name.toLowerCase().endsWith('.csv')) { importError.value = 'DEV 預覽暫用 CSV；正式端依 WinForms 支援 .xls/.xlsx。'; return }
-    const text = await file.text(); const records = parseCsv(text.replace(/^\uFEFF/, ''))
-    if (records.length < 2) { importError.value = '匯入檔沒有資料列。'; return }
-    const pairs = records.slice(1).map(row => ({ mClassNo: (row[0] ?? '').trim(), description: (row[1] ?? '').trim() }))
-    if (pairs.some(row => !row.mClassNo)) { importError.value = '主分類編號必填；檔案第一欄的空白編號會使匯入檔檢核失敗。'; return }
-    importPairs.value = pairs.filter((item, index) => pairs.findIndex(other => other.mClassNo.toUpperCase() === item.mClassNo.toUpperCase() && other.description === item.description) === index)
-    return
-  }
+  const controller = new AbortController(); previewAbortController = controller
+  importName.value = file.name; importFile.value = file; importPairs.value = []; importResults.value = []
+  importError.value = ''; importStatus.value = ''; cancelRequested.value = false; importResultsUnconfirmed.value = false; previewing.value = true
   try {
-    const body = new FormData(); body.append('file', file)
-    importPairs.value = await request<ImportPair[]>('api/qc/m-class-basis/import/preview', { method: 'POST', body })
-  } catch (error) { importError.value = error instanceof Error ? error.message : '讀取匯入 Excel 失敗。' }
+    if (mock.value) {
+      if (!file.name.toLowerCase().endsWith('.csv')) { importError.value = 'DEV 預覽暫用 CSV；正式端依 WinForms 支援 .xls/.xlsx。'; return }
+      const text = await file.text(); const records = parseCsv(text.replace(/^\uFEFF/, ''))
+      if (controller.signal.aborted || !importOpen.value || importFile.value !== file || !componentActive) return
+      if (records.length < 2) { importError.value = '匯入檔沒有資料列。'; return }
+      const pairs = records.slice(1).map(row => ({ mClassNo: (row[0] ?? '').trim(), description: (row[1] ?? '').trim() }))
+      if (pairs.some(row => !row.mClassNo)) { importError.value = '主分類編號必填；檔案第一欄的空白編號會使匯入檔檢核失敗。'; return }
+      importPairs.value = pairs.filter((item, index) => pairs.findIndex(other => other.mClassNo.toUpperCase() === item.mClassNo.toUpperCase() && other.description === item.description) === index)
+    } else {
+      const body = new FormData(); body.append('file', file)
+      const pairs = await request<ImportPair[]>('api/qc/m-class-basis/import/preview', { method: 'POST', body, signal: controller.signal })
+      if (componentActive && importOpen.value && importFile.value === file && previewAbortController === controller && !controller.signal.aborted)
+        importPairs.value = pairs
+    }
+  } catch (error) {
+    if (componentActive && importOpen.value && importFile.value === file && !controller.signal.aborted)
+      importError.value = error instanceof Error ? error.message : '讀取匯入 Excel 失敗。'
+  } finally {
+    if (previewAbortController === controller) { previewing.value = false; previewAbortController = null }
+  }
 }
 async function downloadTemplate(): Promise<void> {
+  if (importUiBusy.value) return
   try {
     let blob: Blob; let filename = 'MClassTemplate.csv'
     if (mock.value) blob = new Blob(['MClassNo,Description\r\nMC-EXAMPLE,Example description\r\n'], { type: 'text/csv;charset=utf-8' })
@@ -223,24 +258,41 @@ async function downloadTemplate(): Promise<void> {
       if (!response.ok) throw new Error(await responseError(response))
       blob = await response.blob()
       const disposition = response.headers.get('Content-Disposition') ?? ''
-      filename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^\";]+)/i)?.[1] ?? 'MClassTemplate.xlsx'
+      filename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^\";]+)/i)?.[1] ?? 'YMES-MClassBasis.xlsx'
     }
     const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = decodeURIComponent(filename); link.click(); URL.revokeObjectURL(url)
   } catch (error) { importError.value = error instanceof Error ? error.message : '下載範本失敗。' }
 }
 async function startImport(): Promise<void> {
-  if (!importFile.value || !importPairs.value.length) return
-  if (!(await requestConfirmation('確定匯入 ' + importPairs.value.length + ' 筆主分類資料？'))) return
+  if (importUiBusy.value || !importFile.value || !importPairs.value.length || !importOpen.value) return
+  const file = importFile.value
+  importConfirming.value = true
+  let accepted = false
+  try { accepted = await requestConfirmation('確定匯入 ' + importPairs.value.length + ' 筆主分類資料？') }
+  finally { importConfirming.value = false }
+  if (!accepted || !componentActive || !importOpen.value || importFile.value !== file) return
   importing.value = true; importError.value = ''; importResults.value = []; importProgress.value = 0
+  importStatus.value = ''; cancelRequested.value = false; importRefreshing.value = false; importResultsUnconfirmed.value = false
+  let receivedResults = false
   try {
     if (!mock.value) {
-      const body = new FormData(); body.append('file', importFile.value)
-      importResults.value = await request<ImportResult[]>('api/qc/m-class-basis/import', { method: 'POST', body })
+      const body = new FormData(); body.append('file', file)
+      importAbortController = new AbortController(); importRequestPending.value = true
+      try {
+        const results = await request<ImportResult[]>('api/qc/m-class-basis/import', { method: 'POST', body, signal: importAbortController.signal })
+        if (!Array.isArray(results)) throw new Error('匯入回應未包含完整逐列結果。')
+        importResults.value = results
+        receivedResults = true
+      } finally { importRequestPending.value = false }
       importProgress.value = importResults.value.length
     } else {
       const store = readStore(); const groups = new Map<string, ImportPair[]>()
       for (const pair of importPairs.value) { const key = pair.mClassNo.toUpperCase(); groups.set(key, [...(groups.get(key) ?? []), pair]) }
       for (const [mClassNo, pairs] of groups) {
+        if (cancelRequested.value) {
+          importResults.value.push(...pairs.map(pair => ({ ...pair, result: 'fail' as const, message: '已取消，本列尚未處理；先前完成資料已保留。' })))
+          continue
+        }
         const first = pairs[0]
         if (pairs.length > 1) importResults.value.push(...pairs.map(pair => ({ ...pair, result: 'fail' as const, message: '同一 MClassNo 有多筆不同資料。' })))
         else if (store.rows.some(row => row.mClassNo.toUpperCase() === mClassNo.toUpperCase())) importResults.value.push({ ...first, result: 'fail', message: '主分類編號已存在。' })
@@ -250,22 +302,63 @@ async function startImport(): Promise<void> {
           importResults.value.push({ ...first, result: 'success', message: '' })
         }
         importProgress.value += pairs.length
+        // Mirror the server's per-group commits and yield so Cancel can run.
+        writeStore(store)
+        await new Promise<void>(resolve => window.setTimeout(resolve, 0))
       }
-      writeStore(store)
+      receivedResults = true
     }
     const successful = importResults.value.filter(result => result.result === 'success').length
-    if (successful) await refresh()
     const failed = importResults.value.length - successful
-    notice.value = '匯入已結束，成功 ' + successful + ' 筆，失敗或未處理 ' + failed + ' 筆。'
-  } catch (error) { importError.value = error instanceof Error ? error.message : '匯入主分類失敗。' }
-  finally { importing.value = false }
+    notice.value = '已收到匯入結果，成功 ' + successful + ' 筆，失敗或未處理 ' + failed + ' 筆。'
+    importStatus.value = cancelRequested.value
+      ? '已提出取消要求；已收到的逐列結果已保留，請依結果與重查清單確認。'
+      : notice.value
+  } catch (reason) {
+    importResultsUnconfirmed.value = !receivedResults
+    if (cancelRequested.value || importAbortController?.signal.aborted) {
+      importStatus.value = '已提出取消要求，但未收到完整逐列結果；可能已有資料保存，不能視為整批回滾。'
+    } else {
+      importError.value = reason instanceof Error ? reason.message : '匯入主分類失敗。'
+      importStatus.value = '未收到完整逐列結果；可能已有資料保存，請核對重查後的清單。'
+    }
+    // Never clear already received rows or invent success/failure for unknown rows.
+    notice.value = importStatus.value
+  } finally {
+    importRequestPending.value = false; importAbortController = null; importRefreshing.value = true
+    if (componentActive) {
+      try {
+        await refresh()
+        importStatus.value += receivedResults ? ' 主清單已重新載入。' : ' 已重新查詢目前清單；未確認項目仍需稍後查詢。'
+      } catch (reason) {
+        const message = reason instanceof Error ? reason.message : '重新查詢主清單失敗。'
+        importError.value = (importError.value ? importError.value + ' ' : '') + '主清單重新查詢失敗：' + message
+        importStatus.value += ' 已收到結果仍保留，請稍後手動查詢確認。'
+      }
+    }
+    importRefreshing.value = false; importing.value = false
+  }
+}
+function cancelImport(): void {
+  if (!canCancelImport.value) return
+  cancelRequested.value = true
+  importStatus.value = '已提出取消要求，正在確認目前資料。'
+  importAbortController?.abort()
 }
 function date(value: string | null): string {
   if (!value) return ''
   const d = new Date(value); if (Number.isNaN(d.getTime())) return value
   return new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(d)
 }
-function closeImport(): void { if (!importing.value) importOpen.value = false }
+function closeImport(): void {
+  if (importCloseBlocked.value) return
+  previewAbortController?.abort(); previewing.value = false; importOpen.value = false
+}
+function closePage(): void {
+  if (importCloseBlocked.value || busy.value || saving.value) return
+  previewAbortController?.abort(); previewing.value = false; emit('close')
+}
+onBeforeUnmount(() => { componentActive = false; cancelRequested.value = true; importAbortController?.abort(); previewAbortController?.abort() })
 watch(state, () => setActive())
 onMounted(() => { void (async () => { loading.value = true; try { await load(); setActive() } catch (e) { error.value = e instanceof Error ? e.message : '載入主分類失敗。' } finally { loading.value = false } })() })
 </script>
@@ -274,8 +367,8 @@ onMounted(() => { void (async () => { loading.value = true; try { await load(); 
   <main class="mclass-page">
     <header class="page-heading"><div><h1>主分類基本資料</h1><p>QC401 · MCLASS BASIS</p></div><span v-if="mock" class="dev-badge">DEV 假資料</span></header>
     <form class="query-panel" @submit.prevent="query">
-      <div class="states"><label v-for="s in states" :key="s.value" class="state-option"><input v-model="state" type="radio" :value="s.value" :disabled="loading || busy"><span>{{ s.label }}</span></label></div>
-      <label>主分類編號</label><input v-model="search" class="search-input" aria-label="主分類編號" :disabled="loading || busy"><button class="button" type="submit" :disabled="loading || busy">{{ loading ? '查詢中' : '查詢' }}</button>
+      <div class="states"><label v-for="s in states" :key="s.value" class="state-option"><input v-model="state" type="radio" :value="s.value" :disabled="loading || busy || importUiBusy"><span>{{ s.label }}</span></label></div>
+      <label>主分類編號</label><input v-model="search" class="search-input" aria-label="主分類編號" :disabled="loading || busy || importUiBusy"><button class="button" type="submit" :disabled="loading || busy || importUiBusy">{{ loading ? '查詢中' : '查詢' }}</button>
     </form>
     <p v-if="error" class="message error" role="alert">{{ error }}</p><p v-if="notice" class="message notice" role="status">{{ notice }}</p>
     <section class="grid-panel"><div class="table-scroll"><table class="data-grid">
@@ -284,7 +377,7 @@ onMounted(() => { void (async () => { loading.value = true; try { await load(); 
         <td class="check" @click.stop><input type="checkbox" :aria-label="'選取 ' + row.mClassNo" :checked="selected.includes(row.mClassNo)" @change="toggleRow(row)"></td><td class="key">{{ row.mClassNo }}</td><td class="description">{{ row.description || '' }}</td><td>{{ row.creator || '' }}</td><td>{{ date(row.createDate) }}</td><td>{{ row.reviser || '' }}</td><td>{{ date(row.reviseDate) }}</td>
       </tr><tr v-if="!visible.length" class="empty"><td colspan="7">{{ loading ? '資料載入中…' : '查無資料' }}</td></tr></tbody>
     </table></div><aside class="actions">
-      <button class="button primary" :disabled="busy || loading" @click="openForm('add')">新增(A)</button><button class="button" :disabled="busy || loading || !activeRow" @click="activeRow && openForm('edit', activeRow)">修改(E)</button><button class="button" :disabled="busy || loading || !activeRow" @click="activeRow && openForm('copy', activeRow)">複製(C)</button><button class="button" :disabled="busy || loading || !selectedRows.length" @click="approveSelected">核准</button><button class="button" :disabled="busy || loading || !selectedRows.length" @click="removeSelected">刪除(D)</button><button class="button" :disabled="busy || loading" @click="openImport">MClassImport</button><button class="button close" @click="emit('close')">關閉</button>
+      <button class="button primary" :disabled="busy || loading || importUiBusy" @click="openForm('add')">新增(A)</button><button class="button" :disabled="busy || loading || importUiBusy || !activeRow" @click="activeRow && openForm('edit', activeRow)">修改(E)</button><button class="button" :disabled="busy || loading || importUiBusy || !activeRow" @click="activeRow && openForm('copy', activeRow)">複製(C)</button><button class="button" :disabled="busy || loading || importUiBusy || !selectedRows.length" @click="approveSelected">核准</button><button class="button" :disabled="busy || loading || importUiBusy || !selectedRows.length" @click="removeSelected">刪除(D)</button><button class="button" :disabled="busy || loading || importUiBusy" @click="openImport">MClassImport</button><button class="button close" :disabled="busy || saving || importCloseBlocked" @click="closePage">關閉</button>
     </aside><footer class="grid-footer">資料總筆數：{{ visible.length }} <span v-if="busy">資料處理中…</span></footer></section>
 
     <div v-if="mode" class="backdrop" @click.self="closeForm"><section class="dialog" role="dialog" aria-modal="true" :aria-label="formTitle">
@@ -296,16 +389,18 @@ onMounted(() => { void (async () => { loading.value = true; try { await load(); 
       </form><footer class="dialog-actions"><button type="button" class="button primary" :disabled="saving || readOnly" @click="save(false)">確定</button><button type="button" class="button" @click="closeForm">關閉</button><button type="button" class="button" :disabled="saving || readOnly" @click="save(true)">套用</button></footer>
     </section></div>
     <div v-if="importOpen" class="backdrop" @click.self="closeImport"><section class="dialog import-dialog" role="dialog" aria-modal="true" aria-label="MClassImport">
-      <header class="titlebar"><h2>MClassImport</h2><button class="x" type="button" :disabled="importing" @click="closeImport">×</button></header>
-      <p class="import-hint">Excel 第一個工作表：第 1 欄 MClassNo（必填）、第 2 欄 Description（可空）；第 1 列視為標題列。載入後依欄位值去除完全重複列，再逐筆檢查主分類編號唯一性；同編號不同說明會回報重複資料。DEV 假資料只解析相同欄序的 CSV。</p>
-      <div class="import-toolbar"><input type="file" accept=".csv,.xls,.xlsx" :disabled="importing" @change="chooseFile"><span>{{ importName || '尚未選擇檔案' }}</span><button class="button" type="button" :disabled="importing" @click="downloadTemplate">下載範本</button></div>
+      <header class="titlebar"><h2>MClassImport</h2><button class="x" type="button" :disabled="importCloseBlocked" @click="closeImport">×</button></header>
+      <p class="import-hint">Excel 第一個工作表：第 1 欄 MClassNo（必填）、第 2 欄 Description（可空）；第 1 列視為標題列。載入後依欄位值去除完全重複列，再逐筆檢查主分類編號唯一性；同編號不同說明會回報重複資料。<span v-if="mock">DEV 假資料只解析相同欄序的 CSV。</span></p>
+      <div class="import-toolbar"><input type="file" :accept="mock ? '.csv' : '.xls,.xlsx'" :disabled="importUiBusy" @change="chooseFile"><span>{{ importName || '尚未選擇檔案' }}</span><button class="button" type="button" :disabled="importUiBusy" @click="downloadTemplate">下載範本</button></div>
       <p v-if="importError" class="message error" role="alert">{{ importError }}</p>
-      <p v-if="importing" class="import-progress">處理中 {{ importProgress }} / {{ importPairs.length }}</p>
+      <p v-if="importStatus" class="message notice" role="status">{{ importStatus }}</p>
+      <p v-if="previewing" class="import-progress">讀取預覽中…</p>
+      <p v-if="importing" class="import-progress">{{ importRefreshing ? '重新查詢目前資料中…' : cancelRequested ? '取消要求已提出，等待目前操作結束…' : mock ? '處理中 ' + importProgress + ' / ' + importPairs.length : '等待伺服器匯入結果…' }}</p>
       <div class="import-results"><table class="data-grid"><thead><tr><th>MClassNo</th><th>Description</th><th>Message</th></tr></thead><tbody>
-        <tr v-for="(row, index) in (importResults.length ? importResults : importPairs)" :key="index"><td>{{ row.mClassNo }}</td><td>{{ row.description }}</td><td v-if="'result' in row" :class="row.result === 'success' ? 'result-ok' : 'result-fail'">{{ row.result === 'success' ? 'success' : ('message' in row ? row.message : '') }}</td><td v-else>待匯入</td></tr>
+        <tr v-for="(row, index) in (importResults.length ? importResults : importPairs)" :key="index"><td>{{ row.mClassNo }}</td><td>{{ row.description }}</td><td v-if="'result' in row" :class="row.result === 'success' ? 'result-ok' : 'result-fail'">{{ row.result === 'success' ? 'success' : ('message' in row ? row.message : '') }}</td><td v-else>{{ importResultsUnconfirmed ? '結果未確認，請重查' : '待匯入' }}</td></tr>
         <tr v-if="!importPairs.length && !importResults.length"><td colspan="3">選取 Excel 檔後預覽資料與逐筆匯入結果。</td></tr>
       </tbody></table></div>
-      <footer class="dialog-actions"><button class="button primary" :disabled="importing || !importFile || !importPairs.length" @click="startImport">{{ importing ? '匯入中…' : '匯入' }}</button><button class="button" :disabled="importing" @click="closeImport">關閉</button></footer>
+      <footer class="dialog-actions"><button class="button primary" :disabled="importUiBusy || !importFile || !importPairs.length" @click="startImport">{{ importing ? '匯入中…' : '匯入' }}</button><button v-if="importing" class="button" :disabled="!canCancelImport" @click="cancelImport">{{ cancelRequested ? '已提出取消' : '取消後續資料' }}</button><button class="button" :disabled="importCloseBlocked" @click="closeImport">關閉</button></footer>
     </section></div>
     <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </main>

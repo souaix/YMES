@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { apiErrorMessage } from '../utils/apiError'
 
 type IssueState = 0 | 1 | 2 | -1
 type EditorMode = 'ADD' | 'EDIT' | 'COPY' | null
@@ -32,6 +33,7 @@ interface ChartDetail {
   yAxisTo: string
 }
 interface ChartRule { spcId: number; chartName: string; ruleNo: string; ruleName: string; action: number }
+interface RuleMasterOption { ruleNo: string; ruleName: string; issueState: number | null }
 interface PlanParameter { parameterNo: string; parameterValue: string }
 interface PlanOption { planNo: string; planName: string; componentCollect?: number }
 interface ChartBasis {
@@ -80,6 +82,8 @@ const selectedQcItemNo = ref('')
 const selectedBasisSerial = ref('')
 const issueState = ref<IssueState>(0)
 const planOptions = ref<PlanOption[]>([])
+const planLookupNotice = ref('')
+let planLookupRequestId = 0
 const busy = ref(false)
 const message = ref('')
 const error = ref('')
@@ -87,6 +91,12 @@ const editorMode = ref<EditorMode>(null)
 const editorDraft = ref<ChartBasis>(blankBasis())
 const ruleEditorOpen = ref(false)
 const ruleDraft = ref<ChartRule[]>([])
+const ruleOptions = ref<RuleMasterOption[]>([])
+const ruleOptionsLoading = ref(false)
+const ruleOptionsLoaded = ref(false)
+const ruleLookupError = ref('')
+const ruleSaving = ref(false)
+let ruleLookupRequestId = 0
 const copyDialogOpen = ref(false)
 const copyTargetNo = ref('')
 const copyState = ref<'both' | 'unfrozen' | 'active'>('both')
@@ -173,8 +183,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     window.location.assign(`${import.meta.env.BASE_URL}login`)
     throw new Error('登入已逾期，請重新登入。')
   }
+  if (!response.ok) throw new Error(await apiErrorMessage(response))
   const body = await response.text()
-  if (!response.ok) throw new Error(body || `API 請求失敗 (${response.status})`)
   return (body ? JSON.parse(body) : undefined) as T
 }
 function records<T>(payload: T[] | ApiEnvelope<T>): T[] {
@@ -195,8 +205,8 @@ async function loadPage(): Promise<void> {
       await loadChartRows()
     }
     if (!selectedQcItemNo.value && itemRows.value.length) selectedQcItemNo.value = itemRows.value[0].qcItemNo
-    await loadPlanOptions()
     selectFirstChart()
+    void loadPlanOptions()
   } catch (reason) {
     error.value = reason instanceof Error ? reason.message : '載入管制圖資料失敗。'
   } finally { busy.value = false }
@@ -209,8 +219,12 @@ async function loadChartRows(): Promise<void> {
   basisRows.value = [...basisRows.value.filter(row => !(row.qcItemNo === selectedQcItemNo.value && row.issueState === issueState.value)), ...incoming]
 }
 async function loadPlanOptions(): Promise<void> {
+  const requestId = ++planLookupRequestId
+  const qcItemNo = selectedQcItemNo.value
   const componentCollect = activeQcItem.value?.componentCollect
-  if (componentCollect === undefined) { planOptions.value = []; return }
+  planOptions.value = []
+  planLookupNotice.value = ''
+  if (componentCollect === undefined) return
   if (devMock.value) {
     planOptions.value = [
       { planNo: 'SP-100', planName: '一般抽樣計畫', componentCollect },
@@ -219,7 +233,15 @@ async function loadPlanOptions(): Promise<void> {
     return
   }
   const query = new URLSearchParams({ issueState: '2', componentCollect: String(componentCollect) })
-  planOptions.value = records(await request<PlanOption[] | ApiEnvelope<PlanOption>>(`/api/qc/sampling-plans?${query}`))
+  try {
+    const options = records(await request<PlanOption[] | ApiEnvelope<PlanOption>>(`/api/qc/sampling-plans?${query}`))
+    if (requestId === planLookupRequestId && selectedQcItemNo.value === qcItemNo) planOptions.value = options
+  } catch (reason) {
+    if (requestId === planLookupRequestId && selectedQcItemNo.value === qcItemNo) {
+      const detail = reason instanceof Error ? reason.message : '讀取抽樣計畫選項失敗。'
+      planLookupNotice.value = 'Plan 選項無法載入：' + detail
+    }
+  }
 }
 function selectFirstChart(): void { selectedBasisSerial.value = visibleBasisRows.value[0]?.factorSerial ?? '' }
 async function setIssueFilter(value: IssueState): Promise<void> {
@@ -231,7 +253,8 @@ async function chooseQcItem(item: QcItem): Promise<void> {
   selectedQcItemNo.value = item.qcItemNo
   selectedBasisSerial.value = ''
   message.value = ''
-  try { await Promise.all([loadChartRows(), loadPlanOptions()]); selectFirstChart() } catch (reason) { error.value = reason instanceof Error ? reason.message : '載入管制圖失敗。' }
+  void loadPlanOptions()
+  try { await loadChartRows(); selectFirstChart() } catch (reason) { error.value = reason instanceof Error ? reason.message : '載入管制圖失敗。' }
 }
 async function chooseBasis(row: ChartBasis): Promise<void> {
   selectedBasisSerial.value = row.factorSerial
@@ -417,21 +440,68 @@ async function disapproveBasis(): Promise<void> {
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '取消核准失敗。' }
 }
 
-function openRuleEditor(): void {
+async function openRuleEditor(): Promise<void> {
   if (!activeBasis.value) { error.value = '請先選擇管制圖資料。'; return }
   if (activeQcItem.value?.chartType === null || activeQcItem.value?.chartType === -1) { error.value = 'No Chart 的 QC Item 不提供 Rule 設定。'; return }
+  error.value = ''
   ruleDraft.value = clone(activeBasis.value.rules)
   ruleEditorOpen.value = true
+  await loadRuleOptions()
+}
+function ruleOption(ruleNo: string): RuleMasterOption | undefined {
+  return ruleOptions.value.find(option => option.ruleNo.toUpperCase() === ruleNo.trim().toUpperCase())
+}
+async function loadRuleOptions(): Promise<void> {
+  if (ruleSaving.value || !ruleEditorOpen.value) return
+  const requestId = ++ruleLookupRequestId
+  ruleOptions.value = []; ruleLookupError.value = ''; ruleOptionsLoaded.value = false; ruleOptionsLoading.value = true
+  try {
+    const options = devMock.value
+      ? [
+          { ruleNo: 'VR-001', ruleName: '單點超出管制界限', issueState: 2 },
+          { ruleNo: 'VR-004', ruleName: '連續九點位於中心線同側', issueState: 2 },
+          { ruleNo: 'VR-007', ruleName: '單點超出管制界限', issueState: 2 },
+        ]
+      : records(await request<RuleMasterOption[] | ApiEnvelope<RuleMasterOption>>('/api/qc/rule-bases')).filter(option => option.issueState === 2)
+    if (requestId !== ruleLookupRequestId || !ruleEditorOpen.value) return
+    ruleOptions.value = options
+    ruleOptionsLoaded.value = true
+    for (const rule of ruleDraft.value) {
+      const option = ruleOption(rule.ruleNo)
+      if (option) { rule.ruleNo = option.ruleNo; rule.ruleName = option.ruleName }
+    }
+  } catch (reason) {
+    if (requestId === ruleLookupRequestId && ruleEditorOpen.value)
+      ruleLookupError.value = reason instanceof Error ? reason.message : '讀取已核准法則失敗。'
+  } finally {
+    if (requestId === ruleLookupRequestId) ruleOptionsLoading.value = false
+  }
+}
+function setRuleNo(rule: ChartRule, value: string): void {
+  const option = ruleOption(value)
+  rule.ruleNo = option?.ruleNo ?? ''
+  rule.ruleName = option?.ruleName ?? ''
+}
+function closeRuleEditor(): void {
+  if (ruleSaving.value) return
+  ruleEditorOpen.value = false; ruleLookupRequestId++; ruleOptionsLoading.value = false
 }
 function addRule(): void {
+  if (ruleSaving.value || ruleOptionsLoading.value || !ruleOptionsLoaded.value || !ruleOptions.value.length) return
   const spcId = activeBasis.value?.details[0]?.spcId ?? 0
   ruleDraft.value.push({ spcId, chartName: activeChartName(spcId), ruleNo: '', ruleName: '', action: 0 })
 }
 async function saveRules(): Promise<void> {
+  if (ruleSaving.value || ruleOptionsLoading.value) return
   const row = activeBasis.value
   if (!row) return
+  error.value = ''
+  if (!ruleOptionsLoaded.value) { error.value = '請先成功載入已核准法則，再保存 Rule。'; return }
   if (ruleDraft.value.some(item => !item.ruleNo.trim())) { error.value = 'RuleNo 不可空白。'; return }
+  const unavailable = ruleDraft.value.find(item => !ruleOption(item.ruleNo))
+  if (unavailable) { error.value = `法則 ${unavailable.ruleNo} 不在已核准候選中，請更換或刪除該列。`; return }
   if (new Set(ruleDraft.value.map(item => `${item.spcId}:${item.ruleNo}`)).size !== ruleDraft.value.length) { error.value = '同一圖表的 RuleNo 不可重複。'; return }
+  ruleSaving.value = true
   try {
     if (devMock.value) recordAudit('維護管制圖法則', row.factorSerial)
     else {
@@ -444,6 +514,7 @@ async function saveRules(): Promise<void> {
     ruleEditorOpen.value = false
     message.value = 'Rule 資料已儲存。'
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '儲存 Rule 失敗。' }
+  finally { ruleSaving.value = false }
 }
 
 function openCopyDialog(): void {
@@ -601,7 +672,7 @@ onMounted(() => { void loadPage() })
               <label>QC Chart Serial No<input :value="editorDraft.factorSerial || '新增時由系統產生'" readonly></label><label>Chart Type<input :value="chartTypeLabel(activeQcItem?.chartType ?? null)" readonly></label>
               <label>SampleSize <em>*</em><input v-model.number="editorDraft.sampleSize" type="number" min="1" class="required-field"></label><label>KeyNode<select v-model="editorDraft.keyNode" class="required-field"><option value="N">N</option><option value="Y">Y</option></select></label>
               <label>ChartTitle<input v-model="editorDraft.chartTitle"></label><label>Unit<input v-model="editorDraft.chartUnit"></label>
-              <label>Sponsor<input v-model="editorDraft.sponsor"></label><label>Plan No<div class="qc-input-action"><select :value="editorDraft.planNo" class="required-field" @change="setPlanNo(($event.target as HTMLSelectElement).value)"><option value="">— 請選擇 —</option><option v-for="plan in planOptions" :key="plan.planNo" :value="plan.planNo">{{ plan.planNo }} {{ plan.planName }}</option><option v-if="editorDraft.planNo && !planOptions.some(plan => plan.planNo === editorDraft.planNo)" :value="editorDraft.planNo">{{ editorDraft.planNo }}（目前資料）</option></select><button class="qc-button compact" @click="getPlanParameters">...</button></div></label>
+              <label>Sponsor<input v-model="editorDraft.sponsor"></label><label>Plan No<div class="qc-input-action"><select :value="editorDraft.planNo" class="required-field" @change="setPlanNo(($event.target as HTMLSelectElement).value)"><option value="">— 請選擇 —</option><option v-for="plan in planOptions" :key="plan.planNo" :value="plan.planNo">{{ plan.planNo }} {{ plan.planName }}</option><option v-if="editorDraft.planNo && !planOptions.some(plan => plan.planNo === editorDraft.planNo)" :value="editorDraft.planNo">{{ editorDraft.planNo }}（目前資料）</option></select><button class="qc-button compact" @click="getPlanParameters">...</button></div><span v-if="planLookupNotice" class="qc-spec-note" role="status">{{ planLookupNotice }}</span></label>
               <label class="qc-memo-field">MEMO<input v-model="editorDraft.memo" :placeholder="editorMode === 'EDIT' ? '修改時請填寫修改原因' : ''" :class="{ 'required-field': editorMode === 'EDIT' }"></label>
             </div>
             <div class="qc-subform-heading"><b>Factor</b><span>FactorOnLine 要因值；黃色欄位為 FactorSpec 規格要因</span></div>
@@ -634,14 +705,18 @@ onMounted(() => { void loadPage() })
       </section>
     </div>
 
-    <div v-if="ruleEditorOpen" class="qc-modal-backdrop" @click.self="ruleEditorOpen = false">
+    <div v-if="ruleEditorOpen" class="qc-modal-backdrop" @click.self="closeRuleEditor">
       <section class="qc-modal qc-rule-modal" role="dialog" aria-modal="true" aria-label="QC Chart Rule Define">
-        <header class="qc-modal-heading"><div><h2>QC Chart Rule</h2><small>{{ activeBasis?.factorSerial }}　{{ activeBasis?.chartTitle }}</small></div><button class="qc-icon-close" aria-label="關閉" @click="ruleEditorOpen = false">×</button></header>
+        <header class="qc-modal-heading"><div><h2>QC Chart Rule</h2><small>{{ activeBasis?.factorSerial }}　{{ activeBasis?.chartTitle }}</small></div><button class="qc-icon-close" aria-label="關閉" :disabled="ruleSaving" @click="closeRuleEditor">×</button></header>
+        <p v-if="ruleOptionsLoading" class="qc-chart-message" role="status">讀取已核准法則中…</p>
+        <p v-if="ruleLookupError" class="qc-chart-message error" role="alert">{{ ruleLookupError }}</p>
+        <p v-else-if="ruleOptionsLoaded && !ruleOptions.length" class="qc-chart-message" role="status">目前沒有已核准法則；既有對應可移除。</p>
+        <p v-if="error" class="qc-chart-message error" role="alert">{{ error }}</p>
         <div class="qc-table-scroll"><table class="qc-table"><thead><tr><th>SPCID</th><th>Chart Type</th><th>RuleNo</th><th>RuleName</th><th>Action</th><th></th></tr></thead><tbody>
-          <tr v-for="(rule, index) in ruleDraft" :key="index"><td><select v-model.number="rule.spcId" @change="rule.chartName = activeChartName(rule.spcId)"><option v-for="detail in activeBasis?.details ?? []" :key="detail.spcId" :value="detail.spcId">{{ detail.spcId }} - {{ detail.chartName }}</option></select></td><td>{{ rule.chartName }}</td><td><select v-model="rule.ruleNo" @change="rule.ruleName = rule.ruleNo === 'VR-004' ? '連續九點位於中心線同側' : '單點超出管制界限'"><option value="">選擇 RuleNo</option><option value="VR-001">VR-001</option><option value="VR-004">VR-004</option><option value="VR-007">VR-007</option></select></td><td>{{ rule.ruleName }}</td><td><select v-model.number="rule.action"><option :value="0">Warning</option><option :value="1">Wait</option><option :value="2">Hold</option><option :value="3">Alert</option></select></td><td><button class="qc-button compact danger" @click="ruleDraft.splice(index, 1)">刪除</button></td></tr>
+          <tr v-for="(rule, index) in ruleDraft" :key="index"><td><select v-model.number="rule.spcId" :disabled="ruleOptionsLoading || ruleSaving" @change="rule.chartName = activeChartName(rule.spcId)"><option v-for="detail in activeBasis?.details ?? []" :key="detail.spcId" :value="detail.spcId">{{ detail.spcId }} - {{ detail.chartName }}</option></select></td><td>{{ rule.chartName }}</td><td><select :value="rule.ruleNo" :disabled="ruleOptionsLoading || ruleSaving || !ruleOptionsLoaded" @change="setRuleNo(rule, ($event.target as HTMLSelectElement).value)"><option value="">選擇 RuleNo</option><option v-if="rule.ruleNo && !ruleOption(rule.ruleNo)" :value="rule.ruleNo" disabled>{{ rule.ruleNo }}（{{ ruleOptionsLoaded ? '未列入已核准候選' : '目前對應' }}）</option><option v-for="option in ruleOptions" :key="option.ruleNo" :value="option.ruleNo">{{ option.ruleNo }}　{{ option.ruleName }}</option></select></td><td>{{ rule.ruleName || '—' }}</td><td><select v-model.number="rule.action" :disabled="ruleOptionsLoading || ruleSaving"><option :value="0">Warning</option><option :value="1">Wait</option><option :value="2">Hold</option><option :value="3">Alert</option></select></td><td><button class="qc-button compact danger" :disabled="ruleOptionsLoading || ruleSaving" @click="ruleDraft.splice(index, 1)">刪除</button></td></tr>
           <tr v-if="!ruleDraft.length"><td colspan="6" class="qc-empty">目前沒有已設定的 Rule</td></tr>
         </tbody></table></div>
-        <footer class="qc-modal-footer"><button class="qc-button" @click="addRule">新增</button><div class="qc-footer-buttons"><button class="qc-button primary" @click="saveRules">確定</button><button class="qc-button" @click="ruleEditorOpen = false">關閉</button></div></footer>
+        <footer class="qc-modal-footer"><div class="qc-footer-buttons"><button class="qc-button" :disabled="ruleOptionsLoading || ruleSaving || !ruleOptionsLoaded || !ruleOptions.length" @click="addRule">新增</button><button v-if="ruleLookupError" class="qc-button" :disabled="ruleOptionsLoading || ruleSaving" @click="loadRuleOptions">重新載入法則</button></div><div class="qc-footer-buttons"><button class="qc-button primary" :disabled="ruleOptionsLoading || ruleSaving || !ruleOptionsLoaded" @click="saveRules">{{ ruleSaving ? '儲存中…' : '確定' }}</button><button class="qc-button" :disabled="ruleSaving" @click="closeRuleEditor">關閉</button></div></footer>
       </section>
     </div>
 
