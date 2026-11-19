@@ -1,5 +1,21 @@
 # 家裡電腦接手清單
 
+## 最新接手：OPB03 客戶站點對應已完成正式驗收，待正常 Git 同步（2026-11-20）
+
+本機是 **HOME PC**，操作 YMES PostgreSQL 復刻資料庫、API、PPK SSH 與部署；公司端的 Oracle 是 MES 原生來源，用來提供唯讀結構、原型邏輯及 UI。以下 OPB02 與更早的版本狀態保留為歷史，現在正式版本以本段為準。
+
+目前 API `2a2291cc1163`／Web `fc83e8bc5484`，migration 已到 **0055**。OPB03 主、明細 CRUD、複製、真實查找及版本衝突處理已完成；API 八組單輪 162 HTTP／578 斷言通過，正式 app-browser 67 個檢查點（66 GUI、1 SQL 讀回）通過，23 個 GUI 測試範圍全零。完整操作、原始取證修復及未提供的原生細節見 [OPB03 QA](docs/qa/20261120-opb03.md) 與 [模組維護文件](docs/modules/OP/客戶站點對應設定.md)。
+
+- [x] 全庫 custom 備份與 restore-list 驗證後套用 0055；兩表 23 欄、兩個複合 PK、兩個 index、NULL/default/ACL 核對通過；沒有重建既有主檔或新增 FK。
+- [x] API 主來源 142 檔及保留 OPB02／OPB03 引用防護的相容回復來源 139 檔，均完成隔離 .NET 9 Release 建置與遠端 nonroot gate；正常 HTTPS 與 API 保護通過。
+- [x] Web 最終 a2 僅修正順序欄位名稱；206 檔固定來源、完整型別／Vite 建置、公開目錄 755／檔案 644、資產 MIME／大小／SHA、nonroot 與正式 app-browser 操作通過。A1 暖身 14 項未灌入最終 67 項。
+- [x] 真 GUI 驗證 Header Apply／Confirm 關窗、Detail Apply 轉 Edit／新 OP 主鍵與父子版本續存、選取／篩選、批次部分成功、NULL／stale／舊 raw PS／旗標 9／字面星號、主從刪除、空白首頁、21 個收合圖示、選單重進／深路由重載。最後重載與重載前採集的 console 紀錄均空；範圍詳見 QA。
+- [x] 所有主檔由 GUI Add／Copy 並由 GUI 刪除，獨立 SQL 已證主、明細為空，再精確清理 12 筆 lookup，23 個範圍獨立讀回全零。原始 86 筆取證事件完整保留，修復容器版本標記後逐筆比對最終 67 項，並另保留四次觀測修正。
+- [ ] 正常 fetch／合併／推送並核對 349 份來源與正式版本；不使用 force push，確認後再更新本段 Git 完成狀態。
+- [ ] 同步後檢查公司端新交接。下一個來源完整的候選為 ET102 客戶連絡人資料；目前只有 ignored 隔離候選，未整合、未建置、未判定 live schema，不能列為已完成。
+
+OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider 或角色引擎列為完成；公司端僅需補兩項原生事件／查詢來源，見其專用待辦。
+
 > **本批完成（2026-11-20）：已正常同步GitHub main `487e9d1`。** release code commit固定為 `487e9d1d15489be5d864c54abc832b81724f579d`；root核對1份migration／139份API／206份Web與已驗收來源一致後，正常推送395a→487，沒有force push或公司端新增提交。後續純文件狀態提交另記，不改本release code、不重建產物；歷史pending與其他未完成provider／模組待辦保留。
 
 ## 最新接手：OPB02 API／正式GUI已驗並同步main487e9d1（2026-11-20）

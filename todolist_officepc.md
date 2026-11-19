@@ -1,5 +1,16 @@
 # 公司端待辦
 
+## 家用端最新回饋：OPB03 已完成正式驗收，待正常 Git 同步（2026-11-20）
+
+HOME PC 已依原生 DDL 建立 YMES PostgreSQL 的 OPB03 兩表、完成 API／Web 與正式 app-browser 驗收。現在 API `2a2291cc1163`／Web `fc83e8bc5484`／0055；API 八組單輪 162／578，GUI 67 項含 SQL 讀回一項，測試資料精確清零。公司端無需操作家用 PostgreSQL、SSH 或部署；原生 Oracle 與 Vue 來源工作仍由公司端進行。Git 同步完成後會補上正式程式提交，請保留兩端歷史、正常合併，勿 force push。
+
+OPB03 已知 CRUD 不受以下兩個細節阻擋，目前採明載的 YMES 行為；請公司端僅做原程式唯讀查證並更新 [模組文件](docs/modules/OP/客戶站點對應設定.md)：
+
+- [ ] 補 `frmB_OPCustomerOPMappingDetailDef` 的 Apply／Confirm 成功事件精確片段，確認原生明細 Apply 是否關窗。目前 YMES 的 Detail Apply 留在 Edit 並採用真實新主鍵／版本；Header Apply 與 Confirm 皆關窗已有來源。
+- [ ] 補 `LoadCustomerOPMappingBasis` 的 CustomerNo／CustomerOPNo 查詢條件片段，確認前綴／包含、大小寫與 `%`／`_`／`*` 的原生解讀。目前 YMES 明載採字面 contains，不把輸入當 SQL wildcard。
+
+其他未交付的共用 Element／Job 等來源依原待辦持續查證；此段不新增公司端資料庫或上版任務。下方 OPB02 與較早的完成／pending 記錄保留歷史。
+
 > **本批完成（2026-11-20）：已正常同步GitHub main `487e9d1`。** release code commit為 `487e9d1d15489be5d864c54abc832b81724f579d`；root核對1份migration／139份API／206份Web後正常推送395a→487，保留兩端歷史、沒有force push或公司新增提交。公司端可依既有安全合併流程同步；後續純文件狀態提交另記，不取代此release code。下方推送前pending保留歷史，未提供的共享Element／Job規則仍依原待辦查證。
 
 ## 家用端最新回饋：OPB02已實測並正常同步main487e9d1（2026-11-20）

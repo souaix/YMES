@@ -1,5 +1,13 @@
 # 部署設定檔
 
+## 目前正式版本：OPB03（2026-11-20，驗收完成、Git 待同步）
+
+API `2a2291cc11630c3ff151f0821fe5ef4a789e63cf1933c319069da379765b1b2f`；Web `fc83e8bc548411500ba11d32da94d20fd0d8b1921d0a7f5cd912d38f7e75f9c9`；migration **0055**。Web `/YMES/`、API `/YMES/API/` 仍分開運行；`/ymes` 與 `/ymes/` 實際回 404。只更新 YMES API／Web，沒有清理其他專案或 orphan。
+
+可重建 API 來源在 `/opt/ymes/releases/opb03-api-20261120-a1/main`（142 檔）；相容回復來源在同目錄的 `compat`（139 檔），映像 `aab09e841b7b8dd47ed60152aa16edd14fd77ac15631111c25149e34428b4398`，保留兩種 OP 引用防護。不要在有 OPB03 資料時直接退回缺少此防護的舊 API。可重建 Web 來源在 `/opt/ymes/checkpoints/web-opb03-20261120-a2`（206 檔），canonical SHA256 `619f05129728123873253a4e25aacf4234a46cb6b72e42f81498f0473f0faf6e`。
+
+來源與備份保持目錄 700／檔案 600；只有公開 Web 產物與映像內 `/app` 的非機密發行檔採 755／644。兩份 API 實際 nonroot 可讀、Web nonroot、正常 HTTPS 資產 MIME／大小／SHA 均通過。API 八組單輪 162／578、最終 app-browser 67 項（66 GUI＋1 SQL）及 GUI 清理 23 範圍全零，見 [本批 QA](docs/qa/20261120-opb03.md)。Git 正常同步與 349 檔來源綁定仍待收尾，下方 OPB02 與舊 pending 保留歷史。
+
 > **本批完成（2026-11-20）：OPB02已正常同步GitHub main `487e9d1`。** 正式程式版本（release code commit）為 `487e9d1d15489be5d864c54abc832b81724f579d`；root核對1份migration／139份API／206份Web與已部署、已驗收來源一致，正常推送395a→487，沒有force push。API1d09／Webcfa／0054、GUI48項（含SQL讀回1項）及19scope全0狀態不變。下方pending為發行歷史；後續純文件狀態提交另記，不取代release code或重建產物，未提供的Job等provider繼續保留限制。
 
 ## 1. 共通原則

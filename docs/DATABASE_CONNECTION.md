@@ -1,5 +1,15 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## OPB03 客戶站點對應結構與最小查找權限：0055（2026-11-20）
+
+- HOME PC root 以 PPK SSH 唯讀核對所有 schema：`tbl_bopcustopmapbasis`、`tbl_bopcustopmapdetail`、兩個 PK index 名稱均不存在，type 衝突0；真 Customer／PS／OP 已存在。Customer 原無 SELECT／row-lock UPDATE，PS／OP 必要權限原已可用，未另建 lookup 表。
+- 完整 `ymes` custom-format 備份 `/opt/ymes/backups/ymes_before_0055_opb03_20261119T201650Z_ztd3uMlC.dump`，627945 bytes；目錄700、檔案600，`pg_restore --list` 成功且有1789個非空條目。檔名採UTC，本節日期採家用端本地日期。
+- 備份驗證後套用 [0055 migration](../database/migrations/0055_opb03_customer_op_mapping.sql)，原始 SHA256 `734eca05b5a335b5eafb5e6b4090452791959b761bd4372300a9de65caa54e8d`；同 transaction 內再查物件不存在後 CREATE／GRANT／COMMIT。保留原source SQL bytes與歷史註解，沒有 DROP、搬業務資料或 seed。
+- 提交後獨立 READ ONLY readback：Basis11欄、Detail12欄，共23欄的順序／型別／NULL／default差異0；兩個 PK分別2／3欄、兩個 PK index、user triggers0、RLS policies0、ACL差異0。兩個原生 DataStamp 均 nullable DEFAULT0，無 IssueState、FK或額外index；明細 OPNo 可以在不同客戶站點對應重用。
+- `ymes_app` 兩個owner表 CRUD；共用 Customer 僅 SELECT及 `UPDATE(customerno)` 供 `FOR SHARE` 鎖，沒有表級 UPDATE或其他欄 UPDATE。PS／OP lookup權限、角色及lookup目錄保持不變。`SET LOCAL ROLE ymes_app` 零列 SELECT probe通過；本次metadata檢查沒有讀取業務內容、沒有在 READ ONLY內做row-lock或DML。
+- 收據：`.tools/opb03-migration-apply-20261120.log`、`.tools/opb03-migration-applied-20261120.json`；migration時 API尚未發行。之後 root已正式啟動 OPB03 API `2a2291cc11630c3ff151f0821fe5ef4a789e63cf1933c319069da379765b1b2f`，ready200；相容回退候選 `aab09e841b7b8dd47ed60152aa16edd14fd77ac15631111c25149e34428b4398`。兩候選均通過實際非root讀取gate；切換時 Web仍為既有 `cfa5cf288359`。
+- Main142／compatible139份不可變API來源各自完成 .NET9 Release隔離建置，0 warnings／0 errors，詳見 `.tools/opb03-api-manifest-a1.json`。**正式API regression、OPB03 Web發行／app-browser、測試資料最終清理與GitHub同步仍待實證**；不能將 schema與readiness成功寫成主從操作驗收通過。維護/API界線見 [客戶站點對應設定](modules/OP/客戶站點對應設定.md)。
+
 > **本批完成（2026-11-20）：已正常同步GitHub main `487e9d1`。** release code commit為 `487e9d1d15489be5d864c54abc832b81724f579d`；0054、API1d09／Webcfa及實際API／GUI／精確清理證據已與1份migration／139份API／206份Web核對一致後正常推送。下方Git待推保留為同步前歷史；本次純文件狀態補充不改schema、產物或release code，完整Job provider仍未提供。
 
 ## OPB02 ECN 作業站群組結構與權限：0054（2026-11-20，schema／本批API及GUI已驗並同步main487e9d1）

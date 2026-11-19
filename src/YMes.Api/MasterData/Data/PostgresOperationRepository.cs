@@ -251,7 +251,9 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
                 OR EXISTS (SELECT 1 FROM "YMES".tblprdprsopapssetupdetail WHERE lower(opno) = lower(@operationNo));
             """, connection, transaction);
         AddVarchar(command, "operationNo", operationNo);
-        return (bool)(command.ExecuteScalar() ?? false) || HasEcnGroupDependents(connection, transaction, operationNo);
+        return (bool)(command.ExecuteScalar() ?? false)
+            || HasEcnGroupDependents(connection, transaction, operationNo)
+            || HasCustomerMappingDependents(connection, transaction, operationNo);
     }
 
     private static bool HasEcnGroupDependents(NpgsqlConnection connection, NpgsqlTransaction transaction, string operationNo)
@@ -278,6 +280,31 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
             // Missing permission/schema on an existing source is not no-reference.
             // Disposing the outer transaction rolls back; do not leak SQL details.
             throw new MasterDataRuleException(503, "無法確認 ECN 作業站群組引用，本次未刪除；請檢查來源結構與必要讀取權限。");
+        }
+    }
+
+    private static bool HasCustomerMappingDependents(NpgsqlConnection connection, NpgsqlTransaction transaction, string operationNo)
+    {
+        // The OP row is already locked. A plain read avoids reversing the
+        // mapping writer's parent -> OP SHARE lock order.
+        try
+        {
+            using var catalog = new NpgsqlCommand("""
+                SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c
+                  JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+                  WHERE n.nspname='YMES' AND c.relname='tbl_bopcustopmapdetail');
+                """, connection, transaction);
+            if (catalog.ExecuteScalar() is not true) return false;
+            using var reference = new NpgsqlCommand("""
+                SELECT EXISTS(SELECT 1 FROM "YMES".tbl_bopcustopmapdetail
+                  WHERE lower(btrim(opno))=lower(btrim(@operationNo)));
+                """, connection, transaction);
+            AddVarchar(reference, "operationNo", operationNo);
+            return reference.ExecuteScalar() is true;
+        }
+        catch (NpgsqlException)
+        {
+            throw new MasterDataRuleException(503, "無法確認客戶站點對應引用，本次未刪除；請檢查來源結構與必要讀取權限。");
         }
     }
 
