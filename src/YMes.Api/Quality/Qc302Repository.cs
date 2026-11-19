@@ -138,6 +138,7 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
             EnsureTable(connection, transaction, "tblspcqcchartrule", "QC302 圖表法則 migration 0024");
 
             var item = ReadApprovedQcItem(connection, transaction, qcItemNo);
+            qcItemNo = item.QcItemNo;
             var factors = ReadOnlineFactors(connection, transaction, qcItemNo);
             var factorValues = ReadFactorValues(row, factors);
             var sampleSize = ResolveSampleSize(row, item.SampleSize);
@@ -146,10 +147,12 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
             var rulesBySpc = ParseRules(row);
 
             var factorJson = JsonSerializer.Serialize(factorValues);
-            var lockKey = $"QC302:{qcItemNo}:{factorJson}";
-            using (var advisory = new NpgsqlCommand("SELECT pg_advisory_xact_lock(hashtextextended(@key,0));", connection, transaction))
+            // Same canonical parent + same jsonb factor object share one mutex,
+            // regardless of HTTP item casing, JSON key order or delimiters.
+            using (var advisory = new NpgsqlCommand("SELECT pg_advisory_xact_lock(hashtextextended('YMES:QC302:ChartFactors:' || jsonb_build_array(lower(@item),@factors::jsonb)::text,0));", connection, transaction))
             {
-                advisory.Parameters.AddWithValue("key", lockKey);
+                AddText(advisory, "item", qcItemNo, 25);
+                advisory.Parameters.Add("factors", NpgsqlDbType.Jsonb).Value = factorJson;
                 advisory.ExecuteNonQuery();
             }
 
@@ -167,7 +170,7 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
                 : ReadApprovedRules(connection, transaction);
             ValidateRules(rulesBySpc, approvedRules);
 
-            ValidatePlanIfProvided(connection, transaction, Get(row, "PlanNo"));
+            ValidatePlanIfProvided(connection, transaction, item, Get(row, "PlanNo"));
             UpsertBasis(connection, transaction, isNew, factorSerial, qcItemNo, actor, sampleSize, factorJson, row);
             UpsertDetails(connection, transaction, factorSerial, actor, details);
             if (isNew) InsertChartRules(connection, transaction, factorSerial, defaultRules);
@@ -185,7 +188,7 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
 
     private static List<string> FindChartSerials(NpgsqlConnection connection, NpgsqlTransaction transaction, string qcItemNo, string factorJson)
     {
-        using var command = new NpgsqlCommand("SELECT factorserial FROM \"YMES\".tblspcqcchartbasis WHERE qcitemno=@no AND factorvalues=@factors FOR UPDATE;", connection, transaction);
+        using var command = new NpgsqlCommand("SELECT factorserial FROM \"YMES\".tblspcqcchartbasis WHERE lower(qcitemno)=lower(@no) AND factorvalues=@factors ORDER BY factorserial FOR UPDATE;", connection, transaction);
         AddText(command, "no", qcItemNo, 25);
         command.Parameters.Add("factors", NpgsqlDbType.Jsonb).Value = factorJson;
         using var reader = command.ExecuteReader();
@@ -197,16 +200,22 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
     private static QcItem ReadApprovedQcItem(NpgsqlConnection connection, NpgsqlTransaction transaction, string qcItemNo)
     {
         using var command = new NpgsqlCommand("""
-            SELECT samplesize::int, speclinetype::int
+            SELECT qcitemno,samplesize::int,speclinetype::int,componentcollect::int,issuestate::int
             FROM "YMES".tblqcitemforvariables
-            WHERE qcitemno=@no AND issuestate=2
+            WHERE lower(qcitemno)=lower(@no)
+            ORDER BY lower(qcitemno),qcitemno
             FOR SHARE;
             """, connection, transaction);
         AddText(command, "no", qcItemNo, 25);
         using var reader = command.ExecuteReader();
         if (!reader.Read()) throw new Qc302RuleException(400, $"計量 QC Item {qcItemNo} 不存在或尚未核准（IssueState 必須為 2）。");
-        if (reader.IsDBNull(1)) throw new Qc302RuleException(400, $"QC Item {qcItemNo} 未設定 SpecLineType。");
-        return new QcItem(reader.IsDBNull(0) ? null : reader.GetInt32(0), reader.GetInt32(1));
+        var canonical = reader.GetString(0);
+        if (reader.IsDBNull(2)) throw new Qc302RuleException(400, $"QC Item {canonical} 未設定 SpecLineType。");
+        var item = new QcItem(canonical, reader.IsDBNull(1) ? null : reader.GetInt32(1), reader.GetInt32(2), reader.IsDBNull(3) ? null : reader.GetInt32(3));
+        var approved = !reader.IsDBNull(4) && reader.GetInt32(4) == 2;
+        if (reader.Read()) throw new Qc302RuleException(409, "QC Item 存在大小寫不同的重複主檔，無法安全決定匯入來源。");
+        if (!approved) throw new Qc302RuleException(400, $"計量 QC Item {canonical} 尚未核准（IssueState 必須為 2）。");
+        return item;
     }
 
     private static List<OnlineFactor> ReadOnlineFactors(NpgsqlConnection connection, NpgsqlTransaction transaction, string qcItemNo)
@@ -214,13 +223,20 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
         using var command = new NpgsqlCommand("""
             SELECT factorno, factorspec
             FROM "YMES".tblqcitemfactor
-            WHERE qcitemno=@no AND upper(factoronline)='Y'
+            WHERE lower(qcitemno)=lower(@no) AND upper(factoronline)='Y'
             ORDER BY factorno;
             """, connection, transaction);
         AddText(command, "no", qcItemNo, 25);
         using var reader = command.ExecuteReader();
         var factors = new List<OnlineFactor>();
-        while (reader.Read()) factors.Add(new OnlineFactor(reader.GetString(0), reader.GetString(1)));
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (reader.Read())
+        {
+            var no = reader.GetString(0);
+            if (!names.Add(no))
+                throw new Qc302RuleException(409, "QC Item 的線上 FactorNo 存在大小寫歧義，請先整理來源因子；本列未匯入。");
+            factors.Add(new OnlineFactor(no, reader.GetString(1)));
+        }
         return factors;
     }
 
@@ -365,7 +381,7 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
             SELECT m.spcid::int,m.ruleno,m.action::int,m.equipmentstate::int,m.erfstate::int,m.emailstate::int
             FROM "YMES".tblqcitemrule m
             JOIN "YMES".tblqcrulebasis b ON b.ruleno=m.ruleno AND b.issuestate=2
-            WHERE m.qcitemno=@no
+            WHERE lower(m.qcitemno)=lower(@no)
             ORDER BY b.ruleserial,m.spcid,m.ruleno
             FOR SHARE OF b;
             """, connection, transaction);
@@ -395,13 +411,14 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
                     throw new Qc302RuleException(400, $"{RuleColumns[spcId]} 的 RuleNo {item.RuleNo} 不存在或尚未核准。 ");
     }
 
-    private static void ValidatePlanIfProvided(NpgsqlConnection connection, NpgsqlTransaction transaction, string planNo)
+    private static void ValidatePlanIfProvided(NpgsqlConnection connection, NpgsqlTransaction transaction, QcItem item, string planNo)
     {
         if (planNo.Length == 0) return;
-        EnsureTable(connection, transaction, "tblqcsamplingplan", "TBLQCSAMPLINGPLAN 抽樣計畫");
-        using var command = new NpgsqlCommand("SELECT 1 FROM \"YMES\".tblqcsamplingplan WHERE planno=@no AND issuestate=2;", connection, transaction);
-        AddText(command, "no", planNo, 25);
-        if (command.ExecuteScalar() is null) throw new Qc302RuleException(400, $"PlanNo {planNo} 不存在或尚未核准。 ");
+        // The approved QC Item was already locked FOR SHARE in this row's
+        // transaction. Preserve the existing Excel contract (no invented plan
+        // parameter import), but validate/lock the correct real plan namespace.
+        _ = QcSamplingPlanReference.ReadGeneral(connection, transaction, planNo, item.ComponentCollect, 2,
+            (status, message) => new Qc302RuleException(status, message));
     }
 
     private static void UpsertBasis(NpgsqlConnection connection, NpgsqlTransaction transaction, bool isNew,
@@ -585,7 +602,7 @@ public sealed class Qc302Repository(NpgsqlDataSource dataSource)
     private static void AddNumeric(NpgsqlCommand command, string name, int? value) =>
         command.Parameters.Add(name, NpgsqlDbType.Integer).Value = (object?)value ?? DBNull.Value;
 
-    private sealed record QcItem(int? SampleSize, int SpecLineType);
+    private sealed record QcItem(string QcItemNo, int? SampleSize, int SpecLineType, int? ComponentCollect);
     private sealed record OnlineFactor(string FactorNo, string FactorSpec);
     private sealed record ChartMap(int SpcId, string Prefix, bool Trend);
     private sealed record ChartDetail(int SpcId, string Us, string Ls, string Ucl, string Lcl, string Cl,

@@ -2,15 +2,16 @@ using System.Security.Claims;
 using MES.Api.Data;
 using MES.Contracts;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 
 namespace MES.Api.Controllers;
 
 [ApiController]
 [Route("api")]
-public sealed class MasterDataController(IMasterDataRepository repository) : ControllerBase
+public sealed class MasterDataController(IMasterDataRepository repository, ILogger<MasterDataController> logger) : ControllerBase
 {
     [HttpGet("operations")]
-    public ActionResult<IReadOnlyList<OperationDto>> ListOperations([FromQuery] string? keyword, [FromQuery] int? issueState) => Ok(repository.ListOperations(keyword, issueState));
+    public ActionResult<IReadOnlyList<OperationDto>> ListOperations([FromQuery] string? keyword, [FromQuery] int? issueState) => Execute(() => repository.ListOperations(keyword, issueState));
 
     [HttpGet("operations/{no}")]
     public ActionResult<OperationDto> GetOperation(string no) => Execute(() => repository.GetOperation(no));
@@ -28,7 +29,7 @@ public sealed class MasterDataController(IMasterDataRepository repository) : Con
     public IActionResult DeleteOperation(string no, [FromQuery] int issueState, [FromQuery] int dataStamp) => ExecuteAction(() => repository.DeleteOperation(no, issueState, dataStamp, ActorUserNo), "作業無法刪除或停用");
 
     [HttpGet("materials")]
-    public ActionResult<IReadOnlyList<MaterialDto>> ListMaterials([FromQuery] string? keyword, [FromQuery] int? issueState, [FromQuery] string? materialType, [FromQuery] string? materialNoPrefix) => Ok(repository.ListMaterials(keyword, issueState, materialType, materialNoPrefix));
+    public ActionResult<IReadOnlyList<MaterialDto>> ListMaterials([FromQuery] string? keyword, [FromQuery] int? issueState, [FromQuery] string? materialType, [FromQuery] string? materialNoPrefix) => Execute(() => repository.ListMaterials(keyword, issueState, materialType, materialNoPrefix));
 
     [HttpGet("materials/{no}")]
     public ActionResult<MaterialDto> GetMaterial(string no) => Execute(() => repository.GetMaterial(no));
@@ -46,7 +47,7 @@ public sealed class MasterDataController(IMasterDataRepository repository) : Con
     public IActionResult DeleteMaterial(string no, [FromQuery] int issueState, [FromQuery] int dataStamp) => ExecuteAction(() => repository.DeleteMaterial(no, issueState, dataStamp, ActorUserNo), "物料無法刪除或停用");
 
     [HttpGet("processes")]
-    public ActionResult<IReadOnlyList<ProcessDto>> ListProcesses([FromQuery] string? keyword, [FromQuery] int? issueState) => Ok(repository.ListProcesses(keyword, issueState));
+    public ActionResult<IReadOnlyList<ProcessDto>> ListProcesses([FromQuery] string? keyword, [FromQuery] int? issueState) => Execute(() => repository.ListProcesses(keyword, issueState));
 
     [HttpGet("processes/{no}/{version}")]
     public ActionResult<ProcessDto> GetProcess(string no, string version) => Execute(() => repository.GetProcess(no, version));
@@ -76,28 +77,33 @@ public sealed class MasterDataController(IMasterDataRepository repository) : Con
     public IActionResult DeleteProcess(string no, string version, [FromQuery] int issueState, [FromQuery] int dataStamp) => ExecuteAction(() => repository.DeleteProcess(no, version, issueState, dataStamp, ActorUserNo), "流程無法刪除或停用");
 
     [HttpGet("products")]
-    public ActionResult<IReadOnlyList<ProductDto>> ListProducts([FromQuery] string? keyword, [FromQuery] int? issueState) => Ok(repository.ListProducts(keyword, issueState));
+    public ActionResult<IReadOnlyList<ProductDto>> ListProducts([FromQuery] string? keyword, [FromQuery] int? issueState) => ExecuteProduct(() => repository.ListProducts(keyword, issueState));
 
     [HttpGet("products/{no}/versions/{version}")]
-    public ActionResult<ProductDto> GetProduct(string no, string version) => Execute(() => repository.GetProduct(no, version));
+    public ActionResult<ProductDto> GetProduct(string no, string version) => ExecuteProduct(() => repository.GetProduct(no, version));
 
     [HttpPost("products")]
-    public ActionResult<ProductDto> CreateProduct([FromBody] ProductWriteRequest request) => Create(() => repository.CreateProduct(request, ActorUserNo), x => $"/api/products/{Uri.EscapeDataString(x.ProductNo)}/versions/{Uri.EscapeDataString(x.ProductVersion)}");
+    public ActionResult<ProductDto> CreateProduct([FromBody] ProductWriteRequest request) => CreateProductResource(() => repository.CreateProduct(request, ActorUserNo));
 
     [HttpPut("products/{no}/versions/{version}")]
-    public ActionResult<ProductDto> UpdateProduct(string no, string version, [FromBody] ProductWriteRequest request) => Execute(() => repository.UpdateProduct(no, version, request, ActorUserNo), "產品資料無法更新");
+    public ActionResult<ProductDto> UpdateProduct(string no, string version, [FromBody] ProductUpdateRequest request) => ExecuteProduct(() => repository.UpdateProduct(no, version, request, ActorUserNo), "產品資料無法更新");
 
     [HttpPost("products/{no}/versions/{version}/approve")]
-    public ActionResult<ProductDto> ApproveProduct(string no, string version, [FromBody] MasterDataCommandRequest request) => Execute(() => repository.ApproveProduct(no, version, request.DataStamp, ActorUserNo), "產品無法核准");
+    public ActionResult<ProductDto> ApproveProduct(string no, string version, [FromBody] ProductCommandRequest request) => ExecuteProduct(() => repository.ApproveProduct(no, version, request.IssueState, request.DataStamp, ActorUserNo), "產品無法核准");
 
     [HttpPost("products/{no}/versions/{version}/set-current")]
-    public ActionResult<ProductDto> SetCurrentProduct(string no, string version, [FromBody] MasterDataCommandRequest request) => Execute(() => repository.SetCurrentProduct(no, version, request.DataStamp, ActorUserNo), "無法設定目前產品版本");
+    public ActionResult<ProductDto> SetCurrentProduct(string no, string version, [FromBody] ProductCommandRequest request) => ExecuteProduct(() => repository.SetCurrentProduct(no, version, request.IssueState, request.DataStamp, ActorUserNo), "無法設定目前產品版本");
 
     [HttpPost("products/{no}/versions/{version}/new-version")]
-    public ActionResult<ProductDto> NewProductVersion(string no, string version) => Execute(() => repository.CreateProductVersion(no, version, ActorUserNo), "無法產生新產品版本");
+    public ActionResult<ProductDto> NewProductVersion(string no, string version) => ExecuteProduct(() => repository.CreateProductVersion(no, version, ActorUserNo), "無法產生新產品版本");
 
     [HttpDelete("products/{no}/versions/{version}")]
-    public IActionResult DeleteProduct(string no, string version, [FromQuery] int issueState, [FromQuery] int dataStamp) => ExecuteAction(() => repository.DeleteProduct(no, version, issueState, dataStamp, ActorUserNo), "產品無法刪除或停用");
+    public IActionResult DeleteProduct(string no, string version, [FromQuery] int? issueState, [FromQuery] decimal? dataStamp) => ExecuteProductAction(() =>
+    {
+        if (!Request.Query.ContainsKey(nameof(issueState)) || !Request.Query.ContainsKey(nameof(dataStamp)))
+            throw new MasterDataRuleException(400, "刪除產品必須明確提供 issueState 與 dataStamp；來源 NULL 使用 issueState= 或 dataStamp=，不可省略版本條件。");
+        repository.DeleteProduct(no, version, issueState, dataStamp, ActorUserNo);
+    }, "產品無法刪除或停用");
 
     [HttpGet("products/{no}/versions/{version}/processes")]
     public ActionResult<IReadOnlyList<ProductProcessDto>> GetProductProcesses(string no, string version) => Execute(() => repository.GetProductProcesses(no, version));
@@ -124,10 +130,38 @@ public sealed class MasterDataController(IMasterDataRepository repository) : Con
 
     private string ActorUserNo => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.Identity?.Name ?? "ymes";
 
+    // Product version tokens use their raw source nullability/decimal range;
+    // leave the other master modules' legacy command contracts unchanged.
+    private ActionResult<ProductDto> CreateProductResource(Func<ProductDto> action)
+    {
+        try
+        {
+            var item = action();
+            return Created($"{Request.PathBase}/api/products/{Uri.EscapeDataString(item.ProductNo)}/versions/{Uri.EscapeDataString(item.ProductVersion)}", item);
+        }
+        catch (MasterDataRuleException ex) { return Problem(statusCode: ex.StatusCode, title: "產品主檔資料無法建立", detail: ex.Message); }
+        catch (NpgsqlException) { return Problem(statusCode: 503, title: "產品主檔資料無法建立", detail: "YMES 產品資料庫操作失敗，請確認必要資料表與權限已部署。"); }
+    }
+
+    private ActionResult<T> ExecuteProduct<T>(Func<T> action, string title = "產品主檔讀取失敗")
+    {
+        try { return Ok(action()); }
+        catch (MasterDataRuleException ex) { return Problem(statusCode: ex.StatusCode, title: title, detail: ex.Message); }
+        catch (NpgsqlException) { return Problem(statusCode: 503, title: title, detail: "YMES 產品資料庫操作失敗，請確認必要資料表與權限已部署。"); }
+    }
+
+    private IActionResult ExecuteProductAction(Action action, string title)
+    {
+        try { action(); return NoContent(); }
+        catch (MasterDataRuleException ex) { return Problem(statusCode: ex.StatusCode, title: title, detail: ex.Message); }
+        catch (NpgsqlException) { return Problem(statusCode: 503, title: title, detail: "YMES 產品資料庫操作失敗，請確認必要資料表與權限已部署。"); }
+    }
+
     private ActionResult<T> Execute<T>(Func<T> action, string title = "主檔讀取失敗")
     {
         try { return Ok(action()); }
         catch (MasterDataRuleException ex) { return Problem(statusCode: ex.StatusCode, title: title, detail: ex.Message); }
+        catch (NpgsqlException ex) { return DatabaseUnavailable(ex, title); }
     }
 
     private ActionResult<T> Create<T>(Func<T> action, Func<T, string>? location = null)
@@ -138,12 +172,22 @@ public sealed class MasterDataController(IMasterDataRepository repository) : Con
             return location is null ? Ok(item) : Created(location(item), item);
         }
         catch (MasterDataRuleException ex) { return Problem(statusCode: ex.StatusCode, title: "主檔資料無法建立", detail: ex.Message); }
+        catch (NpgsqlException ex) { return DatabaseUnavailable(ex, "主檔資料無法建立"); }
     }
 
     private IActionResult ExecuteAction(Action action, string title)
     {
         try { action(); return NoContent(); }
         catch (MasterDataRuleException ex) { return Problem(statusCode: ex.StatusCode, title: title, detail: ex.Message); }
+        catch (NpgsqlException ex) { return DatabaseUnavailable(ex, title); }
+    }
+
+    private ObjectResult DatabaseUnavailable(NpgsqlException error, string title)
+    {
+        logger.LogError("YMES master data access failed: {ErrorType}, SQLSTATE {SqlState}",
+            error.GetType().Name, (error as PostgresException)?.SqlState);
+        return Problem(statusCode: 503, title: title,
+            detail: "無法存取 YMES 主檔或參照資料，請稍後重新查詢確認。");
     }
 }
 

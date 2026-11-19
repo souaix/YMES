@@ -33,10 +33,10 @@ public interface IMasterDataRepository
     ProductDto GetProduct(string no, string version);
     ProductDto CreateProduct(ProductWriteRequest request, string actorUserNo);
     ProductDto UpdateProduct(string no, string version, ProductWriteRequest request, string actorUserNo);
-    ProductDto ApproveProduct(string no, string version, int dataStamp, string actorUserNo);
-    ProductDto SetCurrentProduct(string no, string version, int dataStamp, string actorUserNo);
+    ProductDto ApproveProduct(string no, string version, int? issueState, decimal? dataStamp, string actorUserNo);
+    ProductDto SetCurrentProduct(string no, string version, int? issueState, decimal? dataStamp, string actorUserNo);
     ProductDto CreateProductVersion(string no, string version, string actorUserNo);
-    void DeleteProduct(string no, string version, int issueState, int dataStamp, string actorUserNo);
+    void DeleteProduct(string no, string version, int? issueState, decimal? dataStamp, string actorUserNo);
     IReadOnlyList<ProductProcessDto> GetProductProcesses(string no, string version);
     ProductProcessDto AddProductProcess(string no, string version, ProductProcessWriteRequest request, string actorUserNo);
     ProductProcessDto UpdateProductProcess(string no, string version, string processNo, string selector, ProductProcessWriteRequest request, string actorUserNo);

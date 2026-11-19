@@ -5,6 +5,7 @@ using Npgsql;
 namespace YMes.Api.Quality;
 
 [ApiController]
+[Microsoft.AspNetCore.Authorization.Authorize]
 [Route("api/qc/chart-bases")]
 public sealed class Qc301Controller(NpgsqlDataSource dataSource, ILogger<Qc301Controller> logger) : ControllerBase
 {
@@ -65,7 +66,7 @@ public sealed class Qc301Controller(NpgsqlDataSource dataSource, ILogger<Qc301Co
             logger.LogWarning("QC301 {Action} rejected for {Subject} by {Actor}: {Reason}", actionName, subject, Actor, ex.Message);
             return Problem(statusCode: ex.StatusCode, title: "QC301 管制圖資料操作失敗", detail: ex.Message);
         }
-        catch (PostgresException)
+        catch (NpgsqlException)
         {
             logger.LogError("QC301 {Action} failed in PostgreSQL for {Subject} by {Actor}", actionName, subject, Actor);
             return Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
@@ -80,7 +81,7 @@ public sealed class Qc301Controller(NpgsqlDataSource dataSource, ILogger<Qc301Co
         {
             return Problem(statusCode: ex.StatusCode, title: "QC301 管制圖資料讀取失敗", detail: ex.Message);
         }
-        catch (PostgresException)
+        catch (NpgsqlException)
         {
             return Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
                 title: "QC301 資料讀取失敗", detail: "資料庫操作失敗，請確認 YMES schema 與相依資料已部署。");
@@ -100,10 +101,25 @@ public sealed class Qc301SamplingPlanLookupController(NpgsqlDataSource dataSourc
     [HttpGet]
     public IActionResult List([FromQuery] int? issueState, [FromQuery] int? componentCollect,
         [FromQuery] string? searchFieldName = null, [FromQuery] string? searchFieldValue = null) =>
-        Execute(() => Ok(new { items = _repository.List(issueState, componentCollect, searchFieldName, searchFieldValue) }));
+        Execute(() =>
+        {
+            ValidateCollectQuery(componentCollect);
+            return Ok(new { items = _repository.List(issueState, componentCollect, searchFieldName, searchFieldValue) });
+        });
 
     [HttpGet("{planNo}/parameters")]
-    public IActionResult Parameters(string planNo, [FromQuery] int? issueState) => Execute(() => Ok(new { items = _repository.Parameters(planNo, issueState) }));
+    public IActionResult Parameters(string planNo, [FromQuery] int? issueState, [FromQuery] int? componentCollect) =>
+        Execute(() =>
+        {
+            ValidateCollectQuery(componentCollect);
+            return Ok(new { items = _repository.Parameters(planNo, issueState, componentCollect) });
+        });
+
+    private void ValidateCollectQuery(int? componentCollect)
+    {
+        if (Request.Query.ContainsKey("componentCollect") && !componentCollect.HasValue)
+            throw new Qc103RuleException(400, "ComponentCollect 不可為空；省略時才採既有一般抽樣計劃契約。");
+    }
 
     private IActionResult Execute(Func<IActionResult> action)
     {

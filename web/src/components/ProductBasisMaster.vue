@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { productIdentityKey, readProductIdentityKey } from '../utils/productIdentity'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 import ProductBomEditor from './ProductBomEditor.vue'
 import ProductBusinessRuleSetup from './ProductBusinessRuleSetup.vue'
 import ProductOpDescriptionSetup from './ProductOpDescriptionSetup.vue'
@@ -26,7 +29,7 @@ import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
 import PackagingProductChanges from './PackagingProductChanges.vue'
 import {
-  rowsKey, relationKey, seedRows, seedRelations,
+  rowsKey, seedRows, seedRelations, loadDevelopmentProductRelations, saveDevelopmentProductRelations, unresolvedDevelopmentProductRelationCount,
   type ProductRow, type ProductParameterData, type ProductBusinessRuleData, type ProductRunTimeData, type ProductRunTimeRow, type ProductQCAssignment, type ProductPackingProps, type EquipmentCapRows, type ProductEsopRows, type ProductEquipmentSpecProps, type ProductApsProps, type ProductBinProps, type ImportProducts, type ProductRelation,
 } from './productBasisDevelopment'
 
@@ -52,6 +55,7 @@ const props = withDefaults(defineProps<{
   packaging?: boolean
 }>(), { currentUserNo: '', developmentPreview: false, packaging: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const developmentGbomFiles = ref(new Map<string, File>())
 const states: Array<{ value: IssueState; label: string }> = [
@@ -133,6 +137,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
 
 const rows = ref<ProductRow[]>([])
 const relations = ref<Record<string, ProductRelation>>({})
+const unresolvedLegacyRelationCount = ref(0)
 const issueState = ref<IssueState>(0)
 const productQuery = ref('')
 const selectedKey = ref('')
@@ -142,11 +147,18 @@ const activeTab = ref<'Process' | 'BOM' | 'EQPConstraint'>('Process')
 const formOpen = ref(false)
 const mode = ref<'add' | 'edit' | 'copy' | 'version'>('add')
 const form = ref<ProductRow>(blankForm())
+const formIdentity = ref<{ productNo: string; productVersion: string } | null>(null)
 const detailSource = ref<'productType' | 'otherProduct' | 'none'>('none')
+const productionVersion = computed(() => !mock.value && mode.value === 'version')
 const sourceProductKey = ref('')
+const sourceProductIdentity = computed(() => readProductIdentityKey(sourceProductKey.value))
 const selectedFile = ref<File | null>(null)
 const picturePreview = ref('')
 const lookupField = ref('')
+const lookupLoading = ref(false)
+const lookupError = ref('')
+const productionLookupOptions = ref<string[]>([])
+let lookupEpoch = 0
 const featureKey = ref('')
 const error = ref('')
 const notice = ref('')
@@ -162,9 +174,25 @@ function blankForm(): ProductRow {
   }
 }
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
-function keyOf(row: ProductRow): string { return String(row.productNo ?? '') + '|' + String(row.productVersion ?? '') }
+const productWriteFields = ['productNo', 'productVersion', 'productName', 'productType', 'unitType', 'unitNo',
+  'description', 'specNo', 'productCode', 'serialTypeNoLot', 'serialTypeNoComp', 'lotStdQty', 'erpNo', 'sapPlnal'] as const
+function supportedProductFields(source: ProductRow): ProductRow {
+  const result: ProductRow = {}
+  for (const field of productWriteFields) if (source[field] !== undefined) result[field] = source[field]
+  return result
+}
+function keyOf(row: ProductRow): string { return productIdentityKey(String(row.productNo ?? ''), String(row.productVersion ?? '')) }
 function curVersionLabel(value: number): string { return Number(value) === 1 ? 'Yes' : 'No' }
 function text(value: unknown): string { return value == null ? '' : String(value) }
+function isIssueState(value: unknown): value is IssueState { return typeof value === 'number' && states.some(state => state.value === value) }
+function productIssueState(row: ProductRow | null | undefined): IssueState | null { return isIssueState(row?.issueState) ? row.issueState : null }
+function productVersionTokens(row: ProductRow): { issueState: IssueState | null; dataStamp: number | null } {
+  const state: unknown = row.issueState
+  const stamp: unknown = row.dataStamp
+  if (state !== null && !isIssueState(state)) throw new Error('產品狀態資料遺失或無效，請重新載入。')
+  if (stamp !== null && (typeof stamp !== 'number' || !Number.isInteger(stamp) || Math.abs(stamp) > 99999999999)) throw new Error('產品版本資料遺失或無效，請重新載入。')
+  return { issueState: state, dataStamp: stamp }
+}
 function formatDate(value: unknown): string {
   const raw = text(value)
   if (!raw) return ''
@@ -174,7 +202,7 @@ function formatDate(value: unknown): string {
   return date.getFullYear() + '/' + pad(date.getMonth() + 1) + '/' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds())
 }
 function rowCell(row: ProductRow, column: string): string {
-  const key = column.charAt(0).toLowerCase() + column.slice(1)
+  const key = column === 'SAP_PLNAL' ? 'sapPlnal' : column.charAt(0).toLowerCase() + column.slice(1)
   const value = column === 'CurVersion' ? row.curVersion ?? row.currentVersion : row[key]
   if (column === 'CurVersion') return curVersionLabel(Number(value ?? 0))
   if (column.endsWith('Date') || column.endsWith('DATETIME')) return formatDate(value)
@@ -186,7 +214,11 @@ function normalizeProduct(row: ProductRow): ProductRow {
     ...row,
     curVersion: typeof currentVersion === 'boolean' ? Number(currentVersion) : Number(currentVersion ?? 0),
     createDate: row.createDate ?? row.createdAt ?? '',
-    dataStamp: Number(row.dataStamp ?? 0),
+    reviseDate: row.reviseDate ?? row.revisedAt ?? '',
+    // Preserve exact source NULL tokens; missing/invalid tokens are rejected
+    // when building a mutation instead of silently becoming version 0.
+    issueState: row.issueState,
+    dataStamp: row.dataStamp,
   }
 }
 function normalizeProcess(row: ProductRow): ProductRow {
@@ -211,7 +243,7 @@ function normalizeBom(row: ProductRow): ProductRow {
 }
 function appendBomChildren(productNo: string, productVersion: string, depth: number, ancestors: Set<string>, result: BomTreeLine[]): void {
   if (depth > 5) return
-  const productKey = productNo + '|' + productVersion
+  const productKey = productIdentityKey(productNo, productVersion)
   const relation = relations.value[productKey]
   for (const item of [...(relation?.bom ?? [])].sort((left, right) => Number(right.nodeType) - Number(left.nodeType))) {
     const isProduct = Number(item.nodeType) === 1
@@ -233,7 +265,7 @@ function appendBomChildren(productNo: string, productVersion: string, depth: num
     }
     const childNo = text(item.nodeNo)
     const childVersion = text(item.nodeVersion) || '01'
-    const childKey = childNo + '|' + childVersion
+    const childKey = productIdentityKey(childNo, childVersion)
     if (depth < 5 && childNo && !ancestors.has(childKey)) {
       const nextAncestors = new Set(ancestors)
       nextAncestors.add(childKey)
@@ -247,9 +279,9 @@ function relatedFor(row: ProductRow | null): ProductRelation {
   return relations.value[keyOf(row)] ?? { processes: [], bom: [], constraints: [], properties: [], opDescriptions: [], recipeGroups: [], accessories: [], opAreas: [] }
 }
 const visibleRows = computed(() => rows.value
-  .filter(row => Number(row.issueState) === issueState.value)
+  .filter(row => productIssueState(row) === issueState.value)
   .filter(row => !productQuery.value.trim() || text(row.productNo).toLocaleLowerCase().includes(productQuery.value.trim().replaceAll('%', '').replaceAll('*', '').toLocaleLowerCase())))
-const active = computed(() => rows.value.find(row => keyOf(row) === selectedKey.value) ?? null)
+const active = computed(() => visibleRows.value.find(row => keyOf(row) === selectedKey.value) ?? null)
 const activeRelations = computed(() => relatedFor(active.value))
 function packingProduct(row: ProductRow): ProductPackingProps['product'] {
   return {
@@ -341,14 +373,20 @@ const developmentApsNodes = computed<ProductApsProps['nodeOptions']>(() => {
 })
 const bomTreeLines = computed(() => {
   if (!active.value) return []
-  const result: BomTreeLine[] = [{ id: keyOf(active.value), label: keyOf(active.value).replace('|', ':'), kind: 'root', depth: 0 }]
+  const result: BomTreeLine[] = [{ id: keyOf(active.value), label: text(active.value.productNo) + ':' + text(active.value.productVersion), kind: 'root', depth: 0 }]
   appendBomChildren(active.value.productNo, active.value.productVersion, 1, new Set([keyOf(active.value)]), result)
   return result
 })
-const selectedRows = computed(() => rows.value.filter(row => selectedKeys.value.includes(keyOf(row))))
+const selectedRows = computed(() => visibleRows.value.filter(row => selectedKeys.value.includes(keyOf(row))))
+watch(visibleRows, current => {
+  const visibleKeys = new Set(current.map(keyOf))
+  selectedKeys.value = selectedKeys.value.filter(key => visibleKeys.has(key))
+  if (!visibleKeys.has(selectedKey.value)) selectedKey.value = ''
+}, { flush: 'sync' })
 const feature = computed(() => featureInfo[featureKey.value] ?? null)
-const editable = computed(() => Boolean(active.value && Number(active.value.issueState) === 0))
+const editable = computed(() => Boolean(active.value && productIssueState(active.value) === 0))
 const lookupOptions = computed(() => {
+  if (!mock.value) return productionLookupOptions.value
   if (lookupField.value === 'productType') return developmentProductTypes.value
   if (lookupField.value === 'unitType') return ['PCS', 'WEIGHT', 'LENGTH']
   if (lookupField.value === 'unitNo') return ['EA', 'KG', 'M']
@@ -359,14 +397,14 @@ const lookupOptions = computed(() => {
 
 function persistMock(): void {
   localStorage.setItem(rowsKey, JSON.stringify(rows.value))
-  localStorage.setItem(relationKey, JSON.stringify(relations.value))
+  saveDevelopmentProductRelations(relations.value)
 }
 function replaceMockRelation(key: string, relation: ProductRelation): boolean {
   return persistMockRelations({ ...relations.value, [key]: relation })
 }
 function persistMockRelations(next: Record<string, ProductRelation>): boolean {
   try {
-    localStorage.setItem(relationKey, JSON.stringify(next))
+    saveDevelopmentProductRelations(next)
   } catch {
     return false
   }
@@ -376,10 +414,10 @@ function persistMockRelations(next: Record<string, ProductRelation>): boolean {
 function loadMock(): void {
   try {
     const savedRows = localStorage.getItem(rowsKey)
-    const savedRelations = localStorage.getItem(relationKey)
     rows.value = savedRows ? JSON.parse(savedRows) as ProductRow[] : clone(seedRows)
-    relations.value = savedRelations ? JSON.parse(savedRelations) as Record<string, ProductRelation> : clone(seedRelations)
-    let migrated = !savedRows || !savedRelations
+    relations.value = loadDevelopmentProductRelations(rows.value)
+    unresolvedLegacyRelationCount.value = unresolvedDevelopmentProductRelationCount()
+    let migrated = !savedRows
     for (const [key, seed] of Object.entries(seedRelations)) {
       const existing = relations.value[key]
       if (existing && !existing.parameters && seed.parameters) {
@@ -435,7 +473,8 @@ function loadMock(): void {
   } catch {
     rows.value = clone(seedRows)
     relations.value = clone(seedRelations)
-    persistMock()
+    unresolvedLegacyRelationCount.value = 0
+    error.value = '開發資料格式不正確，原儲存資料已保留，未以範例覆寫。'
   }
 }
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -453,20 +492,27 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
   return response.status === 204 ? undefined as T : await response.json() as T
 }
-function selectRow(row: ProductRow): void {
+function focusRow(row: ProductRow): void {
   selectedKey.value = keyOf(row)
   selectedProcessIndex.value = 0
-  if (!selectedKeys.value.includes(keyOf(row))) selectedKeys.value = [keyOf(row)]
   if (!mock.value) void loadRelations(row)
 }
+function selectRow(row: ProductRow): void {
+  if (busy.value) return
+  focusRow(row)
+  if (!selectedKeys.value.includes(keyOf(row))) selectedKeys.value = [keyOf(row)]
+}
 function toggleSelection(row: ProductRow, event: Event): void {
-  selectRow(row)
+  if (busy.value) return
+  // Checkbox focus must not run the row-click single-selection policy.
+  focusRow(row)
   const checked = (event.target as HTMLInputElement).checked
   selectedKeys.value = checked
     ? Array.from(new Set([...selectedKeys.value, keyOf(row)]))
     : selectedKeys.value.filter(key => key !== keyOf(row))
 }
-async function load(): Promise<void> {
+async function load(): Promise<boolean> { return busy.value ? false : refreshProducts() }
+async function refreshProducts(keepBusy = false): Promise<boolean> {
   busy.value = true
   error.value = ''
   try {
@@ -486,9 +532,11 @@ async function load(): Promise<void> {
     if (!mock.value && selected) await loadRelations(selected)
     else if (!selected) relations.value = {}
     notice.value = '資料總筆數 ' + visibleRows.value.length
+    return !error.value
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '產品資料載入失敗。'
-  } finally { busy.value = false }
+    return false
+  } finally { if (!keepBusy) busy.value = false }
 }
 async function loadRelations(row: ProductRow): Promise<void> {
   const key = keyOf(row)
@@ -518,34 +566,83 @@ async function loadRelations(row: ProductRow): Promise<void> {
   }
 }
 function openForm(nextMode: 'add' | 'edit' | 'copy' | 'version'): void {
+  if (busy.value) return
   error.value = ''
   mode.value = nextMode
+  formIdentity.value = (nextMode === 'edit' || nextMode === 'version') && active.value
+    ? { productNo: text(active.value.productNo), productVersion: text(active.value.productVersion) } : null
   selectedFile.value = null
   picturePreview.value = ''
-  detailSource.value = nextMode === 'copy' || nextMode === 'version' ? 'otherProduct' : 'none'
+  detailSource.value = mock.value && (nextMode === 'copy' || nextMode === 'version') ? 'otherProduct' : 'none'
   sourceProductKey.value = active.value ? keyOf(active.value) : ''
   if (nextMode === 'edit' && active.value) form.value = { ...blankForm(), ...clone(active.value) }
   else if ((nextMode === 'copy' || nextMode === 'version') && active.value) {
-    form.value = { ...blankForm(), ...clone(active.value) }
+    form.value = { ...blankForm(), ...clone(!mock.value && nextMode === 'copy' ? supportedProductFields(active.value) : active.value) }
     if (nextMode === 'copy') form.value.productNo = ''
     if (nextMode === 'version') {
-      form.value.productVersion = ''
+      form.value.productVersion = mock.value ? '' : active.value.productVersion
       form.value.productType = active.value.productType
     }
   } else form.value = blankForm()
   form.value.lotStdQtyMode = Number(form.value.lotStdQty ?? 0) === 0 ? 'none' : 'set'
   formOpen.value = true
 }
-function closeForm(): void { formOpen.value = false; lookupField.value = ''; selectedFile.value = null; picturePreview.value = '' }
-function openLookup(field: string): void { lookupField.value = field }
-function chooseLookup(value: string): void { form.value[lookupField.value] = value; lookupField.value = '' }
+function dismissForm(): void { formOpen.value = false; formIdentity.value = null; closeLookup(); selectedFile.value = null; picturePreview.value = '' }
+function closeForm(): void { if (!busy.value) dismissForm() }
+function closeProductMaster(): void { if (!busy.value) emit('close') }
+function useCommittedProductForm(saved: ProductRow): void {
+  formIdentity.value = { productNo: text(saved.productNo), productVersion: text(saved.productVersion) }
+  mode.value = 'edit'
+  // The current parent API is a partial product projection. Preserve editor
+  // fields it does not return; server fields/key/version always override them.
+  form.value = { ...blankForm(), ...form.value, ...clone(saved) }
+  form.value.lotStdQtyMode = Number(saved.lotStdQty ?? 0) === 0 ? 'none' : 'set'
+  detailSource.value = 'none'
+}
+function closeLookup(): void { lookupEpoch++; lookupField.value = ''; lookupLoading.value = false; lookupError.value = ''; productionLookupOptions.value = [] }
+async function openLookup(field: string): Promise<void> {
+  if (busy.value) return
+  const epoch = ++lookupEpoch
+  lookupField.value = field; lookupError.value = ''; productionLookupOptions.value = []
+  if (mock.value) return
+  lookupLoading.value = true
+  try {
+    let options: string[]
+    if (field === 'productType') {
+      const result = await api<{ items: { productType: string }[] }>('products/options/product-types')
+      options = result.items.map(row => row.productType)
+    } else if (field === 'unitType' || field === 'unitNo') {
+      const selectedType = text(form.value.unitType)
+      if (field === 'unitNo' && !selectedType) throw new Error('請先選擇單位類別。')
+      const result = await api<{ items: { unitNo: string; unitType: string }[] }>('products/options/units')
+      options = field === 'unitType' ? [...new Set(result.items.map(row => row.unitType))]
+        : result.items.filter(row => row.unitType === selectedType).map(row => row.unitNo)
+    } else if (field === 'serialTypeNoLot') {
+      const result = await api<{ items: { serialTypeNo: string }[] }>('system/serial-rule-basis?serialType=LOTNO')
+      options = result.items.map(row => row.serialTypeNo)
+    } else throw new Error('元件序號規則選項尚未備妥。')
+    if (lookupEpoch === epoch && lookupField.value === field && formOpen.value) productionLookupOptions.value = options
+  } catch (reason) {
+    if (lookupEpoch === epoch && lookupField.value === field) lookupError.value = reason instanceof Error ? reason.message : '選項載入失敗。'
+  } finally { if (lookupEpoch === epoch) lookupLoading.value = false }
+}
+function chooseLookup(value: string): void {
+  if (busy.value || lookupLoading.value || !lookupOptions.value.includes(value)) return
+  if (lookupField.value === 'unitType' && form.value.unitType !== value) form.value.unitNo = ''
+  form.value[lookupField.value] = value
+  closeLookup()
+}
 function onPictureChange(event: Event): void {
+  if (!mock.value) return
   const file = (event.target as HTMLInputElement).files?.[0] ?? null
   selectedFile.value = file
   form.value.pictureName = file?.name ?? ''
   picturePreview.value = file ? URL.createObjectURL(file) : ''
 }
 function validateForm(): boolean {
+  // Production Version copies the canonical source in its server transaction;
+  // there is no client-selected next version or field-edit payload contract.
+  if (productionVersion.value) return Boolean(formIdentity.value?.productNo && formIdentity.value.productVersion)
   const required = ['productNo', 'productVersion', 'productName', 'productType', 'unitType', 'unitNo']
   if (!props.packaging) required.push('sapPlnal')
   const missing = required.filter(key => !text(form.value[key]).trim())
@@ -555,40 +652,52 @@ function validateForm(): boolean {
     return false
   }
   if (Number(form.value.lotStdQty ?? 0) < 0) { error.value = 'LotStdQty 不可小於 0。'; return false }
-  const duplicate = rows.value.some(row => keyOf(row) === text(form.value.productNo).trim() + '|' + text(form.value.productVersion).trim()
-    && (mode.value !== 'edit' || keyOf(row) !== keyOf(active.value ?? {})))
+  const duplicate = rows.value.some(row => keyOf(row) === productIdentityKey(text(form.value.productNo).trim(), text(form.value.productVersion).trim())
+    && (mode.value !== 'edit' || !formIdentity.value || keyOf(row) !== keyOf(formIdentity.value)))
   if (duplicate) { error.value = '此產品編號與版本已存在。'; return false }
   return true
 }
 async function saveForm(closeAfter = true): Promise<void> {
+  if (busy.value) return
   error.value = ''
   if (!validateForm()) return
   busy.value = true
   try {
     if (!mock.value) {
-      const formPayload = { ...form.value }
-      delete formPayload.lotStdQtyMode
-      const payload = {
-        ...formPayload,
-        detailSource: detailSource.value,
-        sourceProductNo: sourceProductKey.value.split('|')[0],
-        sourceProductVersion: sourceProductKey.value.split('|')[1],
-      }
       const isEdit = mode.value === 'edit'
       const isVersion = mode.value === 'version'
+      const identity = formIdentity.value
+      if ((isEdit || isVersion) && (!identity?.productNo || !identity.productVersion)) throw new Error('產品表單來源鍵遺失，請關閉後重新開啟。')
+      const formPayload = supportedProductFields(form.value)
+      const payload = {
+        ...formPayload,
+        ...(isEdit ? productVersionTokens(form.value) : {}),
+      }
       const path = isEdit
-        ? 'products/' + encodeURIComponent(text(active.value?.productNo)) + '/versions/' + encodeURIComponent(text(active.value?.productVersion))
+        ? 'products/' + encodeURIComponent(identity!.productNo) + '/versions/' + encodeURIComponent(identity!.productVersion)
         : isVersion
-          ? 'products/' + encodeURIComponent(text(active.value?.productNo)) + '/versions/' + encodeURIComponent(text(active.value?.productVersion)) + '/new-version'
+          ? 'products/' + encodeURIComponent(identity!.productNo) + '/versions/' + encodeURIComponent(identity!.productVersion) + '/new-version'
           : 'products'
-      const saved = await api<ProductRow>(path, { method: isEdit ? 'PUT' : 'POST', body: JSON.stringify(payload) })
-      if (closeAfter) closeForm()
-      await load()
-      selectRow(saved)
-      notice.value = '產品 ' + text(saved.productNo) + '/' + text(saved.productVersion) + ' 已' + (isEdit ? '更新' : isVersion ? '建立新版本' : '建立') + '。'
+      const saved = normalizeProduct(await api<ProductRow>(path, { method: isEdit ? 'PUT' : 'POST', body: JSON.stringify(isVersion ? {} : payload) }))
+      const savedKey = keyOf(saved)
+      rows.value = rows.value.some(row => keyOf(row) === savedKey)
+        ? rows.value.map(row => keyOf(row) === savedKey ? clone(saved) : row) : [...rows.value, clone(saved)]
+      if (isIssueState(saved.issueState)) issueState.value = saved.issueState
+      productQuery.value = ''
+      selectedKey.value = savedKey
+      selectedKeys.value = [savedKey]
+      if (!closeAfter) {
+        // Apply now edits the committed DTO/version, even if the later list
+        // refresh fails. Never retain the pre-save NULL/old stamp.
+        useCommittedProductForm(saved)
+      }
+      if (closeAfter) dismissForm()
+      const refreshed = await refreshProducts(true)
+      notice.value = '產品 ' + text(saved.productNo) + '/' + text(saved.productVersion) + ' 已' + (isEdit ? '更新' : isVersion ? '建立新版本' : '建立') + '。' + (refreshed ? '' : '保存已完成，清單重新載入失敗。')
       return
     }
-    const old = mode.value === 'edit' ? active.value : null
+    const old = mode.value === 'edit' && formIdentity.value ? rows.value.find(row => keyOf(row) === keyOf(formIdentity.value!)) : null
+    if (mode.value === 'edit' && !old) throw new Error('來源產品已不存在，請關閉後重新載入。')
     const saved: ProductRow = {
       ...clone(form.value),
       productNo: text(form.value.productNo).trim().toUpperCase(),
@@ -617,18 +726,22 @@ async function saveForm(closeAfter = true): Promise<void> {
     selectedKey.value = savedKey
     selectedKeys.value = [savedKey]
     notice.value = 'DEV 假資料：產品 ' + saved.productNo + '/' + saved.productVersion + ' 已' + (old ? '更新' : '建立') + '。'
-    if (closeAfter) closeForm()
+    if (closeAfter) dismissForm()
+    else useCommittedProductForm(saved)
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '產品資料儲存失敗。'
   } finally { busy.value = false }
 }
 async function deleteSelected(): Promise<void> {
+  if (busy.value) return
   const targets = selectedRows.value.length ? selectedRows.value : active.value ? [active.value] : []
-  const allowed = targets.filter(row => [0, 2, -1].includes(Number(row.issueState)))
+  const allowed = clone(targets.filter(row => [0, 2, -1].includes(productIssueState(row) ?? 99)))
   if (!allowed.length) { error.value = '沒有可刪除的產品；簽核中的資料不可刪除。'; return }
   const ask = allowed.map(row => Number(row.issueState) === 2 ? text(row.productNo) + '/' + text(row.productVersion) + ' 設為不使用' : text(row.productNo) + '/' + text(row.productVersion) + ' 實體刪除').join('\n')
-  if (!window.confirm('確定執行以下操作？\n' + ask)) return
   busy.value = true
+  if (!await requestConfirmation('確定執行以下操作？\n' + ask)) { busy.value = false; return }
+  error.value = ''; notice.value = ''
+  let completed = 0; let failure = ''
   try {
     if (mock.value) {
       const removeKeys = new Set<string>()
@@ -642,25 +755,30 @@ async function deleteSelected(): Promise<void> {
         developmentGbomFiles.value.delete(key)
       }
       persistMock()
-      notice.value = 'DEV 假資料：已按簽核狀態停用或刪除產品。'
+      completed = allowed.length
     } else {
       for (const row of allowed) {
         const path = 'products/' + encodeURIComponent(text(row.productNo)) + '/versions/' + encodeURIComponent(text(row.productVersion))
-        await api(path + '?issueState=' + row.issueState + '&dataStamp=' + row.dataStamp, { method: 'DELETE' })
+        const tokens = productVersionTokens(row)
+        const query = new URLSearchParams({ issueState: tokens.issueState === null ? '' : String(tokens.issueState), dataStamp: tokens.dataStamp === null ? '' : String(tokens.dataStamp) })
+        await api(path + '?' + query.toString(), { method: 'DELETE' })
+        completed++
       }
-      notice.value = '產品刪除操作完成。'
     }
     selectedKeys.value = []
-    await load()
-  } catch (cause) { error.value = cause instanceof Error ? cause.message : '產品刪除失敗。' }
-  finally { busy.value = false }
+  } catch (cause) { failure = cause instanceof Error ? cause.message : '產品刪除失敗。' }
+  finally { await finishProductBatch(completed, allowed.length, '刪除或停用', failure) }
 }
 async function approveSelected(): Promise<void> {
+  if (busy.value) return
   const targets = selectedRows.value.length ? selectedRows.value : active.value ? [active.value] : []
-  const pending = targets.filter(row => Number(row.issueState) === 0)
+  const pending = clone(targets.filter(row => productIssueState(row) === 0))
   if (!pending.length) { error.value = '核准只處理 IssueState=0 的產品。'; return }
-  if (!window.confirm('確定核准選取的 ' + pending.length + ' 筆產品？')) return
   busy.value = true
+  const names = pending.map(row => text(row.productNo) + '/' + text(row.productVersion)).join('、')
+  if (!await requestConfirmation('確定核准選取的 ' + pending.length + ' 筆產品？\n' + names)) { busy.value = false; return }
+  error.value = ''; notice.value = ''
+  let completed = 0; let failure = ''; let cancelled = false
   try {
     if (mock.value) {
       for (const row of pending) {
@@ -668,7 +786,7 @@ async function approveSelected(): Promise<void> {
         const missing = rel.properties.filter(property => Number(property.controlled) === 1 && !text(property.value || property.defaultValue).trim())
         if (missing.length) throw new Error('必填產品屬性尚未設定：' + missing.map(property => text(property.propertyNo)).join('、'))
         const warnings = rel.properties.filter(property => Number(property.controlled) === 2 && !text(property.value || property.defaultValue).trim())
-        if (warnings.length && !window.confirm(text(row.productNo) + '/' + text(row.productVersion) + ' 尚有提示屬性未設定，仍要核准嗎？')) return
+        if (warnings.length && !await requestConfirmation(text(row.productNo) + '/' + text(row.productVersion) + ' 尚有提示屬性未設定，仍要核准嗎？')) { cancelled = true; return }
       }
       rows.value = rows.value.map(row => {
         const target = pending.some(item => keyOf(item) === keyOf(row))
@@ -677,20 +795,32 @@ async function approveSelected(): Promise<void> {
         return row
       })
       persistMock()
+      completed = pending.length
       issueState.value = 2
-      notice.value = 'DEV 假資料：產品已核准並設為目前版本。'
-      await load()
     } else {
       for (const row of pending) {
         const path = 'products/' + encodeURIComponent(text(row.productNo)) + '/versions/' + encodeURIComponent(text(row.productVersion)) + '/approve'
-        await api(path, { method: 'POST', body: JSON.stringify({ issueState: row.issueState, dataStamp: row.dataStamp }) })
+        await api(path, { method: 'POST', body: JSON.stringify(productVersionTokens(row)) })
+        completed++
       }
       issueState.value = 2
-      await load()
-      notice.value = '產品核准操作完成。'
     }
-  } catch (cause) { error.value = cause instanceof Error ? cause.message : '產品核准失敗。' }
-  finally { busy.value = false }
+  } catch (cause) { failure = cause instanceof Error ? cause.message : '產品核准失敗。' }
+  finally {
+    if (cancelled) busy.value = false
+    else await finishProductBatch(completed, pending.length, '核准', failure)
+  }
+}
+async function finishProductBatch(completed: number, total: number, operation: string, failure: string): Promise<void> {
+  let reloadFailure = ''
+  try {
+    if (!await refreshProducts(true)) reloadFailure = error.value
+  } catch (cause) { reloadFailure = cause instanceof Error ? cause.message : '產品清單重新載入失敗。' }
+  finally {
+    notice.value = (mock.value ? 'DEV 假資料：' : '') + '已' + operation + ' ' + completed + '/' + total + ' 筆產品。'
+    error.value = failure + (failure && reloadFailure ? '\n清單重新載入失敗：' : '') + reloadFailure
+    busy.value = false
+  }
 }
 async function makeVersion(): Promise<void> {
   if (!active.value) { error.value = '請先選取產品。'; return }
@@ -700,7 +830,7 @@ function actionDisabled(action: string): boolean {
   if (busy.value) return true
   if (action === 'edit') return !editable.value
   if (action === 'delete') return !selectedRows.value.length && !active.value
-  if (action === 'approve') return !(selectedRows.value.some(row => Number(row.issueState) === 0) || Number(active.value?.issueState) === 0)
+  if (action === 'approve') return !(selectedRows.value.some(row => productIssueState(row) === 0) || productIssueState(active.value) === 0)
   if (['process-setup','bom-editor'].includes(action)) return !editable.value
   if (action === 'process-expand') return !active.value || !selectedProcess.value
   if (['copy','version', ...Object.keys(featureInfo)].includes(action)) return !active.value
@@ -715,7 +845,7 @@ function runAction(action: string): void {
   if (action === 'version') return void makeVersion()
   if (action === 'delete') return void deleteSelected()
   if (action === 'approve') return void approveSelected()
-  if (action === 'close') return emit('close')
+  if (action === 'close') return closeProductMaster()
   if (featureInfo[action]) {
     if (['process-expand', 'equipment-spec', 'aps'].includes(action) && !selectedProcess.value) {
       error.value = '請先選取產品流程列。'
@@ -865,8 +995,7 @@ const importDevelopmentProducts: ImportProducts = entries => {
   const user = currentUser()
   const additions: ProductRow[] = []
   const results = entries.map(entry => {
-    const key = keyOf(entry)
-    if (entry.productNo.includes('|') || entry.productVersion.includes('|')) return '產品編號和版本不可包含 |。'
+    const key = keyOf(entry).toUpperCase()
     if (known.has(key)) return '產品編號與版本已存在。'
     if (!developmentProductTypes.value.includes(entry.productType)) return '產品類別不在 DEV 已核准清單。'
     known.add(key)
@@ -920,7 +1049,7 @@ const savePackingRelations: ProductPackingProps['saveRelations'] = changes => {
 function applyProductDefaults(plan: ProductDefaultPlan): void {
   if (!active.value || !mock.value) return
   const relation = clone(relatedFor(active.value))
-  const template = seedRelations['DEV-PRD-1001|01']
+  const template = seedRelations[productIdentityKey('DEV-PRD-1001', '01')]
   const defaultOps = (template.parameters?.ops ?? []).map(row => String(row.opNo ?? ''))
   const productOps = (relation.parameters?.ops ?? []).map(row => String(row.opNo ?? ''))
   const targetOps = new Set(plan.defaultOP === 1 ? defaultOps : (productOps.length ? productOps : defaultOps))
@@ -976,22 +1105,23 @@ onMounted(() => { void load() })
     <div class="prd-page-title"><strong>{{ packaging ? '產品設定_封測' : '產品設定' }}</strong><span>產品基本資料</span></div>
     <p v-if="mock" class="prd-dev-note">Development 假資料：資料只保存在這台電腦的瀏覽器 localStorage，不連 Oracle 或 YMES Production 資料庫。</p>
     <div class="prd-query">
-      <fieldset class="prd-state">
+      <fieldset class="prd-state" :disabled="busy">
         <label v-for="state in states" :key="state.value"><input v-model.number="issueState" type="radio" :value="state.value" @change="load" />{{ state.label }}</label>
       </fieldset>
-      <label class="prd-search">產品編號<input v-model="productQuery" @keydown.enter.prevent="load" /></label>
-      <span>%</span><button type="button" class="prd-button" @click="load">查詢</button>
+      <label class="prd-search">產品編號<input v-model="productQuery" :disabled="busy" @keydown.enter.prevent="load" /></label>
+      <span>%</span><button type="button" class="prd-button" :disabled="busy" @click="load">查詢</button>
     </div>
     <div v-if="error" class="prd-message error">{{ error }}</div>
     <div v-if="notice" class="prd-message">{{ notice }}</div>
+    <div v-if="mock && unresolvedLegacyRelationCount" class="prd-message error">部分舊開發關聯無法唯一對應，已保留備份，未套用到任何產品。</div>
     <div class="prd-workspace">
       <div class="prd-main-column">
         <div class="prd-grid-wrap">
           <table class="prd-grid">
             <thead><tr><th class="select-col">選取</th><th v-for="column in gridColumns" :key="column">{{ column }}</th></tr></thead>
             <tbody>
-              <tr v-for="row in visibleRows" :key="keyOf(row)" :class="{ focused: keyOf(row) === selectedKey }" @click="selectRow(row)" @dblclick="Number(row.issueState) === 0 && openForm('edit')">
-                <td class="select-col"><input type="checkbox" :checked="selectedKeys.includes(keyOf(row))" :aria-label="'選取 ' + keyOf(row)" @click.stop @change="toggleSelection(row, $event)" /></td>
+              <tr v-for="row in visibleRows" :key="keyOf(row)" :class="{ focused: keyOf(row) === selectedKey }" @click="selectRow(row)" @dblclick="productIssueState(row) === 0 && openForm('edit')">
+                <td class="select-col"><input type="checkbox" :checked="selectedKeys.includes(keyOf(row))" :disabled="busy" :aria-label="'選取 ' + text(row.productNo) + ' / ' + text(row.productVersion)" @click.stop @change="toggleSelection(row, $event)" /></td>
                 <td v-for="column in gridColumns" :key="column">{{ rowCell(row, column) }}</td>
               </tr>
               <tr v-if="!busy && visibleRows.length === 0"><td :colspan="gridColumns.length + 1" class="empty">沒有符合條件的產品資料</td></tr>
@@ -1032,20 +1162,22 @@ onMounted(() => { void load() })
         <button v-for="action in toolbar.filter(item => !packaging || !item.key.startsWith('gbom-'))" :key="action.key" class="prd-button" type="button" :disabled="actionDisabled(action.key)" @click="runAction(action.key)">{{ action.label }}</button>
         <button v-if="packaging && mock" class="prd-button" type="button" :disabled="!active" @click="featureKey = 'packaging-ecn'">工程變更</button>
         <button class="prd-button" type="button" :disabled="busy" @click="featureKey='product-import'">Import</button>
-        <button class="prd-button" type="button" @click="emit('close')">Close</button>
+        <button class="prd-button" type="button" :disabled="busy" @click="closeProductMaster">Close</button>
       </aside>
     </div>
 
     <div v-if="formOpen" class="prd-overlay" @click.self="closeForm">
       <form class="prd-form" @submit.prevent="saveForm(true)">
-        <header class="prd-form-header"><div><small>產品基本資料定義（{{ mode.toUpperCase() }}）</small><h2>Product Basis Data</h2></div><button type="button" aria-label="關閉" @click="closeForm">×</button></header>
+        <header class="prd-form-header"><div><small>產品基本資料定義（{{ mode.toUpperCase() }}）</small><h2>Product Basis Data</h2></div><button type="button" aria-label="關閉" :disabled="busy" @click="closeForm">×</button></header>
         <div class="prd-form-scroll">
-          <fieldset class="prd-fieldset"><legend>Product Basis Data</legend>
+          <p v-if="productionVersion" class="prd-message" role="status">由伺服器依來源建立下一個數字版次，並複製已支援的版本資料。</p>
+          <p v-else-if="!mock" class="prd-message" role="status">{{ mode === 'copy' ? '複製已支援的主檔欄位；不複製子項資料。' : '尚未開放保存的欄位僅供檢視。' }}</p>
+          <fieldset class="prd-fieldset" :disabled="productionVersion || busy"><legend>Product Basis Data</legend>
             <div class="prd-form-grid">
               <label class="field"><span>Product No *</span><input v-model.trim="form.productNo" :readonly="mode === 'edit' || mode === 'version'" /></label>
               <label class="field"><span>Product Version *</span><input v-model.trim="form.productVersion" :readonly="mode === 'edit'" /></label>
               <label class="field"><span>SPECNo</span><input v-model="form.specNo" /></label>
-              <label class="field"><span>PictureName</span><div class="prd-control"><input readonly :value="form.pictureName" /><label class="prd-button file-button">...<input type="file" accept="image/*" @change="onPictureChange" /></label></div></label>
+              <label class="field"><span>PictureName</span><div class="prd-control"><input readonly :value="form.pictureName" /><label class="prd-button file-button">...<input type="file" accept="image/*" :disabled="!mock" @change="onPictureChange" /></label></div></label>
               <label class="field"><span>Product Name *</span><input v-model.trim="form.productName" required /></label>
               <label class="field"><span>Product Code</span><input v-model="form.productCode" /></label>
               <label class="field"><span>Product Type *</span><div class="prd-control"><input v-model="form.productType" readonly /><button type="button" class="prd-button" @click="openLookup('productType')">...</button></div></label>
@@ -1053,39 +1185,40 @@ onMounted(() => { void load() })
               <label class="field"><span>Unit Type *</span><div class="prd-control"><input v-model="form.unitType" readonly /><button type="button" class="prd-button" @click="openLookup('unitType')">...</button></div></label>
               <label class="field"><span>Unit No *</span><div class="prd-control"><input v-model="form.unitNo" readonly /><button type="button" class="prd-button" @click="openLookup('unitNo')">...</button></div></label>
               <template v-if="!packaging">
-              <label class="field"><span>SAP_KTEXT</span><input v-model="form.sapKtext" /></label>
-              <label class="field"><span>SAP_BOMAENNR</span><select v-model="form.sapBomAennr"><option value="">(無)</option><option>DEV-CHANGE-01</option><option>DEV-CHANGE-02</option></select></label>
-              <label class="field"><span>SAP_AENNR</span><input v-model="form.sapAennr" /></label>
-              <label class="field"><span>SAP_DATUV</span><input v-model="form.sapDatuv" /></label>
-              <label class="field"><span>XX_SOPSPEC</span><input v-model="form.xxSopSpec" /></label>
-              <label class="field"><span>XX_SOPREV</span><input v-model="form.xxSopRev" /></label>
-              <label class="field"><span>SAP_PLNAL *</span><select v-model="form.sapPlnal" required><option value="">請選擇</option><option v-for="option in sapPlnalOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
+              <label class="field"><span>SAP_KTEXT</span><input v-model="form.sapKtext" :readonly="!mock" /></label>
+              <label class="field"><span>SAP_BOMAENNR</span><select v-model="form.sapBomAennr" :disabled="!mock"><option value="">(無)</option><template v-if="mock"><option>DEV-CHANGE-01</option><option>DEV-CHANGE-02</option></template><option v-else-if="form.sapBomAennr" :value="form.sapBomAennr">{{ form.sapBomAennr }}</option></select></label>
+              <label class="field"><span>SAP_AENNR</span><input v-model="form.sapAennr" :readonly="!mock" /></label>
+              <label class="field"><span>SAP_DATUV</span><input v-model="form.sapDatuv" :readonly="!mock" /></label>
+              <label class="field"><span>XX_SOPSPEC</span><input v-model="form.xxSopSpec" :readonly="!mock" /></label>
+              <label class="field"><span>XX_SOPREV</span><input v-model="form.xxSopRev" :readonly="!mock" /></label>
+              <label class="field"><span>SAP_PLNAL *</span><select v-model="form.sapPlnal" required><option value="">請選擇</option><option v-if="form.sapPlnal && !sapPlnalOptions.some(option => option.value === form.sapPlnal)" :value="form.sapPlnal">{{ form.sapPlnal }}（原值）</option><option v-for="option in sapPlnalOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
               </template>
               <label class="field"><span>ERPNo</span><input v-model="form.erpNo" /></label>
               <label class="field wide"><span>Description</span><textarea v-model="form.description" rows="3" /></label>
               <label class="field"><span>SerialTypeNo_Lot</span><div class="prd-control"><input v-model="form.serialTypeNoLot" readonly /><button type="button" class="prd-button" @click="openLookup('serialTypeNoLot')">...</button></div></label>
               <label class="field"><span>SerialTypeNo_Comp</span><div class="prd-control"><input v-model="form.serialTypeNoComp" readonly /><button type="button" class="prd-button" @click="openLookup('serialTypeNoComp')">...</button></div></label>
-              <label class="field"><span>QCCategory</span><input v-model="form.qccategory" /></label>
-              <label class="field"><span>ItemSpec</span><input v-model="form.itemSpec" /></label>
-              <label class="field"><span>CustomerNo</span><input v-model="form.customerNo" /></label>
-              <label class="field"><span>DeviceNo</span><input v-model="form.deviceNo" /></label>
-              <label v-if="!packaging" class="field"><span>ECNControl</span><select v-model="form.ecnControl"><option value="N">N</option><option value="Y">Y</option></select></label>
+              <label class="field"><span>QCCategory</span><input v-model="form.qccategory" :readonly="!mock" /></label>
+              <label class="field"><span>ItemSpec</span><input v-model="form.itemSpec" :readonly="!mock" /></label>
+              <label class="field"><span>CustomerNo</span><input v-model="form.customerNo" :readonly="!mock" /></label>
+              <label class="field"><span>DeviceNo</span><input v-model="form.deviceNo" :readonly="!mock" /></label>
+              <label v-if="!packaging" class="field"><span>ECNControl</span><select v-model="form.ecnControl" :disabled="!mock"><option value="N">N</option><option value="Y">Y</option></select></label>
             </div>
             <div v-if="picturePreview" class="prd-picture-preview"><img :src="picturePreview" alt="產品圖片預覽" /></div>
           </fieldset>
           <fieldset v-if="mode === 'copy' || mode === 'version' || mode === 'add'" class="prd-fieldset"><legend>Detail Source</legend>
-            <div class="prd-source-options"><label><input v-model="detailSource" type="radio" value="productType" />Copy from ProductType</label><label><input v-model="detailSource" type="radio" value="otherProduct" />Copy from Other Product</label><label><input v-model="detailSource" type="radio" value="none" />None</label>
-              <span>ProductNo <input readonly :value="sourceProductKey.split('|')[0] || '—'" /></span><span>ProductVersion <input readonly :value="sourceProductKey.split('|')[1] || '—'" /></span>
+            <div class="prd-source-options"><label><input v-model="detailSource" type="radio" value="productType" :disabled="!mock" />Copy from ProductType</label><label><input v-model="detailSource" type="radio" value="otherProduct" :disabled="!mock" />Copy from Other Product</label><label><input v-model="detailSource" type="radio" value="none" :disabled="!mock" />None</label>
+              <span>ProductNo <input readonly :value="sourceProductIdentity?.productNo || '—'" /></span><span>ProductVersion <input readonly :value="sourceProductIdentity?.productVersion || '—'" /></span>
             </div>
+            <p v-if="!mock" role="status">Detail Source 選擇尚未開放。</p>
           </fieldset>
-          <div class="prd-audit"><label>建立人<input readonly :value="form.creator || currentUser() || '—'" /></label><label>建立日期<input readonly :value="formatDate(form.createDate) || '—'" /></label><label>修改人<input readonly :value="form.reviser || '—'" /></label><label>修改日期<input readonly :value="formatDate(form.reviseDate) || '—'" /></label></div>
+          <div class="prd-audit"><label>建立人<input readonly :value="form.creator || (mock ? currentUser() : '') || '—'" /></label><label>建立日期<input readonly :value="formatDate(form.createDate) || '—'" /></label><label>修改人<input readonly :value="form.reviser || '—'" /></label><label>修改日期<input readonly :value="formatDate(form.reviseDate) || '—'" /></label></div>
         </div>
         <footer class="prd-form-footer"><button class="prd-button confirm" type="submit" :disabled="busy">確定</button><button class="prd-button" type="button" :disabled="busy" @click="closeForm">關閉</button><button class="prd-button" type="button" :disabled="busy" @click="saveForm(false)">套用</button></footer>
       </form>
     </div>
 
-    <div v-if="lookupField" class="prd-overlay lookup-overlay" @click.self="lookupField=''">
-      <section class="prd-feature-dialog"><header><h2>選擇 {{ lookupField }}</h2><button type="button" @click="lookupField=''">×</button></header><div class="prd-lookup-list"><button v-for="value in lookupOptions" :key="value" class="prd-button" type="button" @click="chooseLookup(value)">{{ value }}</button></div><p class="prd-dev-note">以上為 Development 假資料選項。</p></section>
+    <div v-if="lookupField" class="prd-overlay lookup-overlay" @click.self="closeLookup">
+      <section class="prd-feature-dialog"><header><h2>選擇 {{ lookupField }}</h2><button type="button" aria-label="關閉選項" @click="closeLookup">×</button></header><p v-if="lookupLoading" role="status">載入中…</p><p v-else-if="lookupError" class="prd-message error" role="alert">{{ lookupError }}</p><p v-else-if="!lookupOptions.length" role="status">沒有可選資料。</p><div class="prd-lookup-list"><button v-for="value in lookupOptions" :key="value" class="prd-button" type="button" :disabled="lookupLoading" @click="chooseLookup(value)">{{ value }}</button></div><p v-if="mock" class="prd-dev-note">以上為 Development 假資料選項。</p></section>
     </div>
 
     <div v-if="packaging && mock && active && featureKey === 'packaging-ecn'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
@@ -1109,8 +1242,8 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'op-description'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductOpDescriptionSetup :product="active ?? {}" :processes="activeRelations.processes" :op-descriptions="activeRelations.opDescriptions ?? null" :development-preview="mock" :can-edit="editable" @save="saveProductOpDescriptions" @close="closeFeature" />
     </div>
-    <div v-if="feature && featureKey === 'recipe-group'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
-      <ProductRecipeGroupSetup :product="active ?? {}" :recipe-groups="activeRelations.recipeGroups ?? null" :development-preview="mock" @save="saveProductRecipeGroups" @close="closeFeature" />
+    <div v-if="feature && featureKey === 'recipe-group'" class="prd-overlay child-feature-overlay">
+      <ProductRecipeGroupSetup :product="active ?? {}" :recipe-groups="activeRelations.recipeGroups ?? null" :api-base-url="apiBaseUrl" :development-preview="mock" @save="saveProductRecipeGroups" @close="closeFeature" />
     </div>
     <div v-if="feature && featureKey === 'accessory'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductAccessorySetup :product="active ?? {}" :processes="activeRelations.processes" :accessories="activeRelations.accessories ?? null" :development-preview="mock" @save="saveProductAccessories" @close="closeFeature" />
@@ -1121,8 +1254,8 @@ onMounted(() => { void load() })
     <div v-if="feature && featureKey === 'sub-op'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductSubOpSetup :product="active ?? {}" :sub-ops="activeRelations.subOps ?? null" :operation-options="subOpOperationOptions" :development-preview="mock" :current-user-no="props.currentUserNo" @save="saveProductSubOps" @close="closeFeature" />
     </div>
-    <div v-if="feature && featureKey === 'program'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
-      <ProductProgramSetup :product="active ?? {}" :program-options="programOptions" :selected-program-nos="activeRelations.productPrograms ?? []" :development-preview="mock" @save="saveProductPrograms" @close="closeFeature" />
+    <div v-if="feature && featureKey === 'program'" class="prd-overlay child-feature-overlay">
+      <ProductProgramSetup :product="active ?? {}" :program-options="programOptions" :selected-program-nos="activeRelations.productPrograms ?? []" :development-preview="mock" :api-base-url="props.apiBaseUrl" @save="saveProductPrograms" @saved="notice = '產品程式指派已儲存。'" @close="closeFeature" />
     </div>
     <div v-if="feature && featureKey === 'default'" class="prd-overlay child-feature-overlay" @click.self="closeFeature">
       <ProductDefaultSetup :product="active ?? {}" :has-product-process="activeRelations.processes.length > 0" :development-preview="mock" :qc-item-auto-checked="developmentDefaultSettings.qcItemAutoChecked" :aps-enabled="developmentDefaultSettings.apsEnabled" @apply="applyProductDefaults" @close="closeFeature" />
@@ -1187,6 +1320,7 @@ onMounted(() => { void load() })
         :ps-no="text(selectedProcess.psNo)" :mo-type-no="text(selectedProcess.moTypeNo)" :development-preview="mock"
         @close="closeFeature" />
     </div>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </main>
 </template>
 

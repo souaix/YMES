@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ProductPackingSet from './ProductPackingSet.vue'
-import { relationKey, rowsKey, seedRelations, seedRows, type ProductRelation, type ProductRow } from './productBasisDevelopment'
+import { loadDevelopmentProductRelations, productKey, rowsKey, saveDevelopmentProductRelations, seedRows, type ProductRelation, type ProductRow } from './productBasisDevelopment'
 
 type Editor = InstanceType<typeof ProductPackingSet>['$props']
 const props = defineProps<{ developmentPreview: boolean; currentUserNo: string }>()
@@ -19,10 +19,7 @@ function readRows(): ProductRow[] {
 
 function readRelations(): Record<string, ProductRelation> {
   if (!props.developmentPreview) return {}
-  const stored = JSON.parse(localStorage.getItem(relationKey) ?? 'null')
-  if (stored === null) return seedRelations
-  if (typeof stored !== 'object' || Array.isArray(stored)) throw new Error('本機 DEV 產品資料格式不符。')
-  return stored
+  return loadDevelopmentProductRelations(readRows())
 }
 
 const relations = ref<Record<string, ProductRelation>>({})
@@ -30,7 +27,7 @@ const loadError = ref('')
 try { relations.value = readRelations() }
 catch { loadError.value = 'DEV 產品關聯無法載入。' }
 
-const products: Editor['products'] = readRows().map(row => ({ key: `${row.productNo}|${row.productVersion}`, productNo: String(row.productNo), productVersion: String(row.productVersion),
+const products: Editor['products'] = readRows().map(row => ({ key: productKey(row.productNo, row.productVersion), productNo: String(row.productNo), productVersion: String(row.productVersion),
   productName: String(row.productName ?? ''), issueState: Number(row.issueState), settings: { boxQty: Number(row.boxQty ?? 0), cartonQty: Number(row.cartonQty ?? 0), palletQty: Number(row.palletQty ?? 0), packOiPath: String(row.packOiPath ?? '') } }))
 const product = products[0] ?? { key: '', productNo: '', productVersion: '', productName: '', issueState: 0, settings: { boxQty: 0, cartonQty: 0, palletQty: 0, packOiPath: '' } }
 
@@ -42,7 +39,7 @@ const saveRelations: Editor['saveRelations'] = changes => {
     for (const { key, packingRuleMap } of changes) {
       next[key] = { ...(next[key] ?? blank), packingRuleMap }
     }
-    localStorage.setItem(relationKey, JSON.stringify(next))
+    saveDevelopmentProductRelations(next)
     relations.value = next
     return true
   } catch { return false }

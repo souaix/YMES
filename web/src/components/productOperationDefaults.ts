@@ -1,10 +1,10 @@
-import { seedRelations, type ProductRelation, type ProductRow } from './productBasisDevelopment'
+import { productKey, seedRelations, type ProductRelation, type ProductRow } from './productBasisDevelopment'
 
 export type DefaultSelection = {
   parameter: boolean; description: boolean; qc: boolean; businessRule: boolean; resource: boolean; subOp: boolean
 }
 export type DefaultMode = 'default' | 'amend'
-const template = seedRelations['DEV-PRD-1001|01']
+const template = seedRelations[productKey('DEV-PRD-1001', '01')]
 const templateOps = template.parameters?.ops ?? []
 
 export const defaultOperations = templateOps.map(row => ({ opNo: String(row.opNo), opName: String(row.opName) }))

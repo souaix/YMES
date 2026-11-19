@@ -160,8 +160,8 @@ function parameterSpecs(planType: number): { parameterNo: string; showFlag: numb
       : planType === 1 ? Number(parameterNo === 'SampleRate')
         : planType === 2 || planType === 7 ? Number(['AQLType', 'QCLevel', 'AQL'].includes(parameterNo))
           : planType === 5 ? Number(parameterNo === 'SamplingTable')
-            : planType === 4 && isMock.value ? 2
-              : planType === 6 ? (isMock.value ? Number(['SamplingType', 'VLevel'].includes(parameterNo)) : null) : 1,
+            : planType === 4 ? 2
+              : planType === 6 ? Number(['SamplingType', 'VLevel'].includes(parameterNo)) : 1,
   }))
 }
 const visibleRows = computed(() => {
@@ -501,12 +501,12 @@ onMounted(async () => {
               <tr v-for="(parameter, index) in parameterRows" :key="index">
                 <td><input v-model="parameter.parameterNo" :readonly="isPredefinedParameter(parameter.parameterNo) || formReadOnly" maxlength="20" @input="markDirty"></td>
                 <td>
-                  <select v-if="parameter.options.length" v-model="parameter.parameterValue" :disabled="formReadOnly || (isMock && parameter.showFlag === 0)" @change="markDirty">
+                  <select v-if="parameter.options.length" v-model="parameter.parameterValue" :disabled="formReadOnly || parameter.showFlag === 0" @change="markDirty">
                     <option value="">（空白）</option>
                     <option v-if="parameter.parameterValue && !parameter.options.includes(parameter.parameterValue)" :value="parameter.parameterValue">{{ parameter.parameterValue }}</option>
                     <option v-for="value in parameter.options" :key="value" :value="value">{{ value }}</option>
                   </select>
-                  <input v-else v-model="parameter.parameterValue" :readonly="formReadOnly || (isMock && parameter.showFlag === 0)" maxlength="255" @input="markDirty">
+                  <input v-else v-model="parameter.parameterValue" :readonly="formReadOnly || parameter.showFlag === 0" maxlength="255" @input="markDirty">
                 </td>
                 <td>{{ parameter.showFlag === null ? '待確認' : parameter.showFlag === 1 ? '是' : '否' }}</td>
                 <td><button type="button" :disabled="formReadOnly" aria-label="刪除參數" @click="removeParameter(index)">×</button></td>

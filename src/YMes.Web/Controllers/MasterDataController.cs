@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Encodings.Web;
+using System.Globalization;
 using MES.Contracts;
 using MES.Web.Models;
 using MES.Web.Services;
@@ -271,7 +272,7 @@ public sealed class MasterDataController(MasterDataApiClient api) : Controller
         var item = await api.GetAsync<ProductDto>($"api/products/{E(no)}/versions/{E(version)}", ct);
         if (item is null) return NotFound();
         await LoadProductLookups(ct);
-        var request = ToRequest(item); request.ProductNo = ""; request.ProductVersion = "01"; request.DataStamp = 0;
+        var request = ToRequest(item); request.ProductNo = ""; request.ProductVersion = "01"; request.IssueState = null; request.DataStamp = null;
         ViewData["IsCopy"] = true;
         return View("ProductForm", request);
     }
@@ -291,23 +292,28 @@ public sealed class MasterDataController(MasterDataApiClient api) : Controller
         if (item is null) return NotFound();
         if (item.IssueState != 0) return Conflict("只有 UNFROZEN 產品可以編輯。");
         await LoadProductLookups(ct);
-        ViewData["CreatedAt"] = item.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss");
-        ViewData["RevisedAt"] = "";
+        ViewData["IsEdit"] = true;
+        ViewData["CreatedAt"] = item.CreatedAt?.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss") ?? "";
+        ViewData["RevisedAt"] = item.RevisedAt?.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss") ?? "";
         return View("ProductForm", ToRequest(item));
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> EditProduct(string no, string version, ProductWriteRequest request, CancellationToken ct)
     {
+        ViewData["IsEdit"] = true;
+        if (!Request.HasFormContentType || !Request.Form.ContainsKey("IssueState") || !Request.Form.ContainsKey("DataStamp"))
+            ModelState.AddModelError(string.Empty, "產品狀態與資料版本不可省略，請重新載入後再儲存。");
         if (!ModelState.IsValid) { await LoadProductLookups(ct); return View("ProductForm", request); }
         try { await api.PutAsync<ProductWriteRequest, ProductDto>($"api/products/{E(no)}/versions/{E(version)}", request, ct); TempData["Notice"] = $"產品 {no}/{version} 已更新。"; return RedirectToAction(nameof(Products), new { no, version }); }
         catch (HttpRequestException ex) { ModelState.AddModelError(string.Empty, ex.Message); await LoadProductLookups(ct); return View("ProductForm", request); }
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> ApproveProduct(string no, string version, int stamp, CancellationToken ct)
+    public async Task<IActionResult> ApproveProduct(string no, string version, int? state, decimal? stamp, CancellationToken ct)
     {
-        try { await api.PostAsync<object, ProductDto>($"api/products/{E(no)}/versions/{E(version)}/approve", new { DataStamp = stamp }, ct); TempData["Notice"] = $"產品 {no}/{version} 已核准。"; }
+        if (!ProductCommandTokensPresent()) { TempData["Error"] = "產品狀態與資料版本無效或遺失，請重新載入後再操作。"; return RedirectToAction(nameof(Products), new { no, version }); }
+        try { await api.PostAsync<ProductCommandRequest, ProductDto>($"api/products/{E(no)}/versions/{E(version)}/approve", new ProductCommandRequest { IssueState = state, DataStamp = stamp }, ct); TempData["Notice"] = $"產品 {no}/{version} 已核准。"; }
         catch (HttpRequestException ex) { TempData["Error"] = ex.Message; }
         return RedirectToAction(nameof(Products), new { no, version });
     }
@@ -320,15 +326,28 @@ public sealed class MasterDataController(MasterDataApiClient api) : Controller
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetCurrentProduct(string no, string version, int stamp, CancellationToken ct)
+    public async Task<IActionResult> SetCurrentProduct(string no, string version, int? state, decimal? stamp, CancellationToken ct)
     {
-        try { await api.PostAsync<object, ProductDto>($"api/products/{E(no)}/versions/{E(version)}/set-current", new { DataStamp = stamp }, ct); TempData["Notice"] = $"產品 {no}/{version} 已設為目前版本。"; }
+        if (!ProductCommandTokensPresent()) { TempData["Error"] = "產品狀態與資料版本無效或遺失，請重新載入後再操作。"; return RedirectToAction(nameof(Products), new { no, version }); }
+        try { await api.PostAsync<ProductCommandRequest, ProductDto>($"api/products/{E(no)}/versions/{E(version)}/set-current", new ProductCommandRequest { IssueState = state, DataStamp = stamp }, ct); TempData["Notice"] = $"產品 {no}/{version} 已設為目前版本。"; }
         catch (HttpRequestException ex) { TempData["Error"] = ex.Message; }
         return RedirectToAction(nameof(Products), new { no, version });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public Task<IActionResult> DeleteProduct(string no, string version, int state, int stamp, CancellationToken ct) => Remove("products", no, version, state, stamp, nameof(Products), ct, new { no, version });
+    public async Task<IActionResult> DeleteProduct(string no, string version, int? state, decimal? stamp, CancellationToken ct)
+    {
+        if (!ProductCommandTokensPresent()) { TempData["Error"] = "產品狀態與資料版本無效或遺失，請重新載入後再操作。"; return RedirectToAction(nameof(Products), new { no, version }); }
+        var expectedState = state?.ToString(CultureInfo.InvariantCulture) ?? "";
+        var expectedStamp = stamp?.ToString(CultureInfo.InvariantCulture) ?? "";
+        try
+        {
+            await api.DeleteAsync($"api/products/{E(no)}/versions/{E(version)}?issueState={E(expectedState)}&dataStamp={E(expectedStamp)}", ct);
+            TempData["Notice"] = $"產品 {no}/{version} 已完成刪除或停用。";
+        }
+        catch (HttpRequestException ex) { TempData["Error"] = ex.Message; }
+        return RedirectToAction(nameof(Products), new { no, version });
+    }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> AddProductProcess(string no, string version, ProductProcessWriteRequest request, CancellationToken ct)
@@ -438,5 +457,6 @@ public sealed class MasterDataController(MasterDataApiClient api) : Controller
     private static OperationWriteRequest ToRequest(OperationDto x) => new() { OperationNo = x.OperationNo, OperationName = x.OperationName, OperationType = x.OperationType, OperationClass = x.OperationClass, ShortName = x.ShortName, OperationOrder = x.OperationOrder, ProductionSegmentNo = x.ProductionSegmentNo, Description = x.Description, MaterialOption = x.MaterialOption, MultiOperatorMode = x.MultiOperatorMode, PrintOutOnRunCard = x.PrintOutOnRunCard, SpcInspAbnormalHoldLot = x.SpcInspAbnormalHoldLot, ErrorQtyToSpc = x.ErrorQtyToSpc, StandardUnitRunTime = x.StandardUnitRunTime, CountOperationUnitQty = x.CountOperationUnitQty, StandardQueueTime = x.StandardQueueTime, DataStamp = x.DataStamp };
     private static MaterialWriteRequest ToRequest(MaterialDto x) => new() { MaterialNo = x.MaterialNo, MaterialType = x.MaterialType, MaterialName = x.MaterialName, MaterialSpec = x.MaterialSpec, Description = x.Description, PutInPlace = x.PutInPlace, CountWay = x.CountWay, CheckLotNo = x.CheckLotNo, UnitType = x.UnitType, UnitNo = x.UnitNo, SafeQty = x.SafeQty, KeyMaterials = x.KeyMaterials, OpenLimitTimeFlag = x.OpenLimitTimeFlag, OpenLimitTime = x.OpenLimitTime, ResetOpenDate = x.ResetOpenDate, ExpireDateFlag = x.ExpireDateFlag, ErpNo = x.ErpNo, DataStamp = x.DataStamp };
     private static ProcessWriteRequest ToRequest(ProcessDto x) => new() { ProcessNo = x.ProcessNo, ProcessVersion = x.ProcessVersion, ProcessType = x.ProcessType, ProductionSegmentNo = x.ProductionSegmentNo, ProcessClass = x.ProcessClass, Description = x.Description, TuningProcess = x.TuningProcess, PartialType = x.PartialType, DataStamp = x.DataStamp };
-    private static ProductWriteRequest ToRequest(ProductDto x) => new() { ProductNo = x.ProductNo, ProductVersion = x.ProductVersion, ProductName = x.ProductName, ProductType = x.ProductType, UnitType = x.UnitType, UnitNo = x.UnitNo, Description = x.Description, SpecNo = x.SpecNo, ProductCode = x.ProductCode, SerialTypeNoLot = x.SerialTypeNoLot, SerialTypeNoComp = x.SerialTypeNoComp, LotStdQty = x.LotStdQty, ErpNo = x.ErpNo, DataStamp = x.DataStamp };
+    private bool ProductCommandTokensPresent() => ModelState.IsValid && Request.HasFormContentType && Request.Form.ContainsKey("state") && Request.Form.ContainsKey("stamp");
+    private static ProductWriteRequest ToRequest(ProductDto x) => new() { ProductNo = x.ProductNo, ProductVersion = x.ProductVersion, ProductName = x.ProductName, ProductType = x.ProductType, UnitType = x.UnitType, UnitNo = x.UnitNo, Description = x.Description, SpecNo = x.SpecNo, ProductCode = x.ProductCode, SerialTypeNoLot = x.SerialTypeNoLot, SerialTypeNoComp = x.SerialTypeNoComp, LotStdQty = x.LotStdQty, ErpNo = x.ErpNo, SapPlnal = x.SapPlnal, IssueState = x.IssueState, DataStamp = x.DataStamp };
 }

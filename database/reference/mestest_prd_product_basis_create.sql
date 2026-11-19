@@ -1,10 +1,14 @@
 -- CREATE-only PostgreSQL reference translated from Oracle MESTEST product master metadata.
 -- Not a migration. Compare the live YMES schema and migration history before use.
 -- ProductProperty Oracle DDL is reconstructed from dictionary metadata because DBMS_METADATA disconnected.
+-- Column order/PK/explicit NOT NULL checks verified against the raw source on 2026-11-19.
+-- VARCHAR2(n) -> varchar(n); omitted Oracle BYTE/CHAR semantics are not inferred.
+-- Oracle DATE -> timestamp without time zone (no timezone inference; PG precision is wider).
 CREATE SCHEMA IF NOT EXISTS "YMES";
 
 -- Oracle source table: MESTEST.TBLPRDPRODUCTBASIS
 CREATE TABLE IF NOT EXISTS "YMES".tblprdproductbasis (
+    "productno" varchar(50) NOT NULL,
     "productversion" varchar(5) NOT NULL,
     "productname" varchar(300) NOT NULL,
     "producttype" varchar(50) NOT NULL,
@@ -88,12 +92,14 @@ CREATE TABLE IF NOT EXISTS "YMES".tblprdproductbasis (
     "sap_ieuploaddate" timestamp without time zone,
     "sap_ieuploaduser" varchar(10),
     "sap_sapupdatedatetime" timestamp without time zone,
+    CONSTRAINT n_tblprdproductbasis_11 CHECK ("boxqty" IS NOT NULL),
     CONSTRAINT pk_tblprdproductbasis PRIMARY KEY ("productno", "productversion")
 );
 COMMENT ON TABLE "YMES".tblprdproductbasis IS 'Oracle source MESTEST.TBLPRDPRODUCTBASIS';
 
 -- Oracle source table: MESTEST.TBLPRDPRODUCTPROCESS
 CREATE TABLE IF NOT EXISTS "YMES".tblprdproductprocess (
+    "productno" varchar(50) NOT NULL,
     "productversion" varchar(5) NOT NULL,
     "psno" varchar(50) NOT NULL,
     "psorder" numeric(2,0) NOT NULL,
@@ -115,6 +121,7 @@ COMMENT ON TABLE "YMES".tblprdproductprocess IS 'Oracle source MESTEST.TBLPRDPRO
 
 -- Oracle source table: MESTEST.TBLPRDBOM
 CREATE TABLE IF NOT EXISTS "YMES".tblprdbom (
+    "productno" varchar(50) NOT NULL,
     "productversion" varchar(5) NOT NULL,
     "nodeno" varchar(50) NOT NULL,
     "nodetype" numeric(1,0) NOT NULL,
@@ -137,6 +144,7 @@ COMMENT ON TABLE "YMES".tblprdbom IS 'Oracle source MESTEST.TBLPRDBOM';
 
 -- Oracle source table: MESTEST.TBLPRDBOMMATERIALGROUP
 CREATE TABLE IF NOT EXISTS "YMES".tblprdbommaterialgroup (
+    "productno" varchar(50) NOT NULL,
     "productversion" varchar(5) NOT NULL,
     "nodeno" varchar(50) NOT NULL,
     "opno" varchar(20) NOT NULL,
@@ -147,6 +155,7 @@ COMMENT ON TABLE "YMES".tblprdbommaterialgroup IS 'Oracle source MESTEST.TBLPRDB
 
 -- Oracle source table: MESTEST.TBLPRDEQPCONSTRAINT
 CREATE TABLE IF NOT EXISTS "YMES".tblprdeqpconstraint (
+    "productno" varchar(50) NOT NULL,
     "productversion" varchar(5) NOT NULL,
     "opno" varchar(50) NOT NULL,
     "equipmentno" varchar(50) NOT NULL,
@@ -159,6 +168,7 @@ COMMENT ON TABLE "YMES".tblprdeqpconstraint IS 'Oracle source MESTEST.TBLPRDEQPC
 
 -- Oracle source table: MESTEST.TBLPRDPRODUCT_PICTURE
 CREATE TABLE IF NOT EXISTS "YMES".tblprdproduct_picture (
+    "picturename" varchar(50) NOT NULL,
     "picturebody" bytea NOT NULL,
     CONSTRAINT pk_tblprdproduct_picture PRIMARY KEY ("picturename")
 );

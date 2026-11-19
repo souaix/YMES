@@ -2232,6 +2232,7 @@ async function signOut(): Promise<void> {
         <ProductTypeMaster
           v-else-if="isProductTypePage"
           class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
@@ -2369,6 +2370,7 @@ async function signOut(): Promise<void> {
         <ProductQcFrequencyMaster
           v-else-if="isProductQcFrequencyPage"
           class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

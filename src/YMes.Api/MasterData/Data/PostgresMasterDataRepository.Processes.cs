@@ -44,6 +44,16 @@ public sealed partial class PostgresMasterDataRepository
         var version = RequiredCode(request.ProcessVersion, "流程版本", 3);
         using var connection = _dataSource.OpenConnection();
         using var transaction = connection.BeginTransaction();
+        string processType;
+        try
+        {
+            YMes.Api.Processes.PrsIdentifierGuard.EnsureProcessIdentifierAvailable(connection, transaction, no);
+            processType = YMes.Api.Processes.PrsIdentifierGuard.LockApprovedType(connection, transaction, request.ProcessType);
+        }
+        catch (NpgsqlException)
+        {
+            throw new MasterDataRuleException(503, "無法核對流程識別碼與已核准流程類別；請確認流程／類別資料表與權限已部署。");
+        }
         using (var command = new NpgsqlCommand(@"
             INSERT INTO ""YMES"".tblprsprocessbasis
               (processno,processclass,psno,processtype,issuestate,creator,createdate,description,
@@ -53,7 +63,7 @@ public sealed partial class PostgresMasterDataRepository
         {
             AddVarchar(command,"no",no); AddNumeric(command,"class",request.ProcessClass);
             AddVarchar(command,"segment",RequiredCode(request.ProductionSegmentNo,"製程段",50));
-            AddVarchar(command,"type",RequiredCode(request.ProcessType,"流程類別",20));
+            AddVarchar(command,"type",processType);
             AddVarchar(command,"actor",actorUserNo.Trim()); AddVarchar(command,"description",Optional(request.Description,255,"說明"));
             AddNumeric(command,"tuning",request.TuningProcess ? 1 : 0); AddVarchar(command,"version",version); AddNumeric(command,"partial",request.PartialType);
             ExecuteInsert(command,$"流程 {no}/{version} 已存在。");
@@ -66,19 +76,29 @@ public sealed partial class PostgresMasterDataRepository
     public ProcessDto UpdateProcess(string no, string version, ProcessWriteRequest request, string actorUserNo)
     {
         ValidateProcess(request); ValidateActor(actorUserNo);
-        var current = GetProcess(no, version); EnsureEditable(current.IssueState,current.DataStamp,request.DataStamp);
+        var processNo = RequiredCode(no, "流程編號", 30);
+        using var connection = _dataSource.OpenConnection();
+        using var transaction = connection.BeginTransaction();
+        // Cooperating PRS writers always acquire the identifier mutex before
+        // parent row locks. Edit keeps the source ProcessType relationship.
+        YMes.Api.Processes.PrsIdentifierGuard.LockIdentifier(connection, transaction, processNo);
+        var current = GetProcessForUpdate(connection, transaction, processNo, version);
+        EnsureEditable(current.IssueState,current.DataStamp,request.DataStamp);
         if (!Same(current.ProcessNo,request.ProcessNo) || !Same(current.ProcessVersion,request.ProcessVersion)) throw BadRequest("更新時不可變更 ProcessNo/ProcessVersion。");
-        using var command = _dataSource.CreateCommand(@"
-            UPDATE ""YMES"".tblprsprocessbasis SET processclass=@class, psno=@segment, processtype=@type,
+        if (!Same(current.ProcessType,request.ProcessType)) throw BadRequest("編輯流程時不可變更流程類別（ProcessType）。");
+        using var command = new NpgsqlCommand(@"
+            UPDATE ""YMES"".tblprsprocessbasis SET processclass=@class, psno=@segment,
               description=@description, tuningprocess=@tuning, partialtype=@partial,
               datastamp=COALESCE(datastamp,0)+1, reviser=@actor, revisedate=now()
             WHERE lower(processno)=lower(@no) AND lower(processversion)=lower(@version)
               AND issuestate=0 AND COALESCE(datastamp,0)=@stamp;
-            ");
-        AddProcessParameters(command,request); AddVarchar(command,"actor",actorUserNo.Trim()); AddVarchar(command,"no",current.ProcessNo);
+            ", connection, transaction);
+        AddProcessEditParameters(command,request); AddVarchar(command,"actor",actorUserNo.Trim()); AddVarchar(command,"no",current.ProcessNo);
         AddVarchar(command,"version",current.ProcessVersion); AddNumeric(command,"stamp",request.DataStamp);
         ExecuteOptimisticUpdate(command,"流程資料已變更，請重新載入後再儲存。");
-        return GetProcess(no,version);
+        var result = GetProcessForUpdate(connection, transaction, current.ProcessNo, current.ProcessVersion);
+        transaction.Commit();
+        return result;
     }
 
     public ProcessDto ApproveProcess(string no, string version, int dataStamp, string actorUserNo)
@@ -236,8 +256,8 @@ public sealed partial class PostgresMasterDataRepository
         if(request.ProcessClass is <0 or >99 || request.PartialType is <0 or >9)throw BadRequest("流程類別或部分流程代碼超出資料表範圍。");
     }
 
-    private static void AddProcessParameters(NpgsqlCommand command,ProcessWriteRequest request)
-    {AddNumeric(command,"class",request.ProcessClass);AddVarchar(command,"segment",RequiredCode(request.ProductionSegmentNo,"製程段",50));AddVarchar(command,"type",RequiredCode(request.ProcessType,"流程類別",20));AddVarchar(command,"description",Optional(request.Description,255,"說明"));AddNumeric(command,"tuning",request.TuningProcess?1:0);AddNumeric(command,"partial",request.PartialType);}
+    private static void AddProcessEditParameters(NpgsqlCommand command,ProcessWriteRequest request)
+    {AddNumeric(command,"class",request.ProcessClass);AddVarchar(command,"segment",RequiredCode(request.ProductionSegmentNo,"製程段",50));AddVarchar(command,"description",Optional(request.Description,255,"說明"));AddNumeric(command,"tuning",request.TuningProcess?1:0);AddNumeric(command,"partial",request.PartialType);}
 
     private static ProcessDto MapProcess(NpgsqlDataReader r)=>new(){ProcessNo=r.GetString(0),ProcessVersion=r.GetString(1),ProcessType=r.GetString(2),ProductionSegmentNo=r.GetString(3),ProcessClass=ToInt32(r.GetValue(4)),Description=r.GetString(5),TuningProcess=r.GetBoolean(6),PartialType=ToInt32(r.GetValue(7)),IssueState=ToInt32(r.GetValue(8)),CurrentVersion=r.GetBoolean(9),DataStamp=ToInt32(r.GetValue(10)),CreatedAt=r.GetDateTime(11)};
 

@@ -1,53 +1,160 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 type Row = Record<string, any>
-type ProgramOption = { programNo: string; programType: string; description: string }
+type ProgramOption = { programNo: string; programType: string | null; description: string | null; missing?: boolean }
+interface Assignments { productNo: string; productVersion: string; issueState: number | null; programNos: string[]; version: string }
 
 const props = defineProps<{
   product: Row
-  programOptions: Row[]
-  selectedProgramNos: string[]
+  programOptions?: Row[]
+  selectedProgramNos?: string[]
   developmentPreview: boolean
+  apiBaseUrl?: string
 }>()
-const emit = defineEmits<{ save: [programNos: string[]]; close: [] }>()
-const readOnly = computed(() => !props.developmentPreview)
-const issueState = computed(() => Number(props.product.issueState ?? props.product.IssueState ?? -1))
-const canConfirm = computed(() => !readOnly.value && issueState.value === 0)
+const emit = defineEmits<{ save: [programNos: string[]]; saved: []; close: [] }>()
+const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const productNo = computed(() => String(props.product.productNo ?? props.product.ProductNo ?? ''))
 const productVersion = computed(() => String(props.product.productVersion ?? props.product.ProductVersion ?? ''))
 const selected = ref<string[]>([])
+const options = ref<ProgramOption[]>([])
+const snapshot = ref<Assignments | null>(null)
+const loading = ref(false)
+const saving = ref(false)
+const ready = ref(false)
+const error = ref('')
+let sequence = 0
+let loadController: AbortController | null = null
+const issueState = computed(() => {
+  if (!mock.value) return snapshot.value?.issueState ?? null
+  const value = props.product.issueState ?? props.product.IssueState
+  return value === null || value === undefined || value === '' ? null : Number(value)
+})
+const canConfirm = computed(() => ready.value && !loading.value && !saving.value && issueState.value === 0)
+const readOnly = computed(() => !ready.value || loading.value || saving.value)
 
-const programs = computed<ProgramOption[]>(() => (props.programOptions ?? []).map(row => ({
+function mapOptions(rows: Row[]): ProgramOption[] { return rows.map(row => ({
   programNo: String(row.programNo ?? row.ProgramNo ?? ''),
-  programType: String(row.programType ?? row.ProgramType ?? ''),
-  description: String(row.description ?? row.Description ?? ''),
-})).filter(row => row.programNo))
+  programType: row.programType ?? row.ProgramType ?? null,
+  description: row.description ?? row.Description ?? null,
+})).filter(row => row.programNo) }
+const programs = computed<ProgramOption[]>(() => {
+  const rows = mock.value ? mapOptions(props.programOptions ?? []) : options.value
+  const assigned = mock.value ? props.selectedProgramNos ?? [] : snapshot.value?.programNos ?? []
+  // Show real orphan assignments explicitly so saving cannot silently drop a
+  // hidden relation. The server still rejects reassigning an absent master.
+  const missing = assigned.filter(no => !rows.some(row => row.programNo.toUpperCase() === no.toUpperCase()))
+    .map(no => ({ programNo: no, programType: null, description: '已指派，但程式主檔不存在；可取消勾選後儲存。', missing: true }))
+  return [...rows, ...missing]
+})
 
 watch(() => props.selectedProgramNos, value => {
-  selected.value = [...new Set((value ?? []).map(String))]
+  if (mock.value) selected.value = [...new Set((value ?? []).map(String))]
 }, { immediate: true, deep: true })
+
+function apiUrl(path: string): string {
+  const base = props.apiBaseUrl?.trim()
+  if (!base) throw new Error('目前環境尚未設定 API 位址。')
+  return new URL(path.replace(/^\/+/, ''), new URL(base.replace(/\/+$/, '') + '/', window.location.origin)).toString()
+}
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers)
+  if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
+  const response = await fetch(apiUrl(path), { credentials: 'include', ...init, headers })
+  if (response.status === 401) {
+    window.location.assign(import.meta.env.BASE_URL)
+    throw new Error('登入狀態已逾期，請重新登入。')
+  }
+  if (!response.ok) {
+    const body = await response.text()
+    let message = body.trim()
+    try {
+      const problem: unknown = JSON.parse(body)
+      if (problem && typeof problem === 'object') {
+        const fields = problem as Record<string, unknown>
+        const detail = [fields.detail, fields.message, fields.title].find(value => typeof value === 'string' && value.trim())
+        if (typeof detail === 'string') message = detail
+      }
+    } catch { /* Preserve non-JSON service messages. */ }
+    throw new Error(message || 'Program API 回應錯誤（' + response.status + '）。')
+  }
+  return await response.json() as T
+}
+function assignmentsPath(no: string, version: string): string {
+  return 'api/products/' + encodeURIComponent(no) + '/versions/' + encodeURIComponent(version) + '/programs'
+}
+function validAssignments(value: Assignments): boolean {
+  return !!value && typeof value.productNo === 'string' && typeof value.productVersion === 'string'
+    && Array.isArray(value.programNos) && value.programNos.every(no => typeof no === 'string')
+    && typeof value.version === 'string' && /^[0-9a-f]{64}$/i.test(value.version)
+    && (value.issueState === null || typeof value.issueState === 'number')
+}
+async function load(): Promise<void> {
+  const current = ++sequence
+  loadController?.abort(); loadController = null
+  ready.value = false; snapshot.value = null; selected.value = []; options.value = []; error.value = ''
+  if (mock.value) {
+    selected.value = [...new Set(props.selectedProgramNos ?? [])]
+    ready.value = true; loading.value = false
+    return
+  }
+  loading.value = true
+  const no = productNo.value; const version = productVersion.value
+  try {
+    if (!no || !version) throw new Error('請先選取有效的產品與版次。')
+    loadController = new AbortController()
+    const [choices, value] = await Promise.all([
+      request<ProgramOption[]>('api/products/options/programs', { signal: loadController.signal }),
+      request<Assignments>(assignmentsPath(no, version), { signal: loadController.signal }),
+    ])
+    if (!Array.isArray(choices) || !validAssignments(value)
+      || value.productNo.toUpperCase() !== no.toUpperCase() || value.productVersion.toUpperCase() !== version.toUpperCase())
+      throw new Error('產品 Program 回應不完整，請關閉後重新開啟。')
+    if (sequence !== current) return
+    options.value = mapOptions(choices)
+    snapshot.value = value
+    selected.value = [...new Set(value.programNos.map(code => choices.find(row => row.programNo.toUpperCase() === code.toUpperCase())?.programNo ?? code))]
+    ready.value = true
+  } catch (reason) {
+    if (sequence === current) error.value = reason instanceof Error ? reason.message : '載入產品 Program 指派失敗。'
+  } finally { if (sequence === current) loading.value = false }
+}
+watch([productNo, productVersion, mock], () => { void load() }, { immediate: true })
+onBeforeUnmount(() => { sequence++; loadController?.abort() })
 
 function toggleProgram(programNo: string, event: Event): void {
   if (readOnly.value) return
+  error.value = ''
   const checked = (event.target as HTMLInputElement).checked
   selected.value = checked
     ? [...new Set([...selected.value, programNo])]
     : selected.value.filter(value => value !== programNo)
 }
 
-function confirm(): void {
+async function confirm(): Promise<void> {
   if (!canConfirm.value) return
-  emit('save', [...selected.value])
-  emit('close')
+  if (mock.value) { emit('save', [...selected.value]); emit('close'); return }
+  const original = snapshot.value
+  if (!original) return
+  saving.value = true; error.value = ''
+  try {
+    const result = await request<Assignments>(assignmentsPath(original.productNo, original.productVersion), {
+      method: 'PUT', body: JSON.stringify({ programNos: [...selected.value], version: original.version }),
+    })
+    if (!validAssignments(result) || result.productNo !== original.productNo || result.productVersion !== original.productVersion)
+      throw new Error('儲存後回應不完整，請關閉後重新查詢確認。')
+    snapshot.value = result; selected.value = [...result.programNos]
+    emit('save', [...result.programNos]); emit('saved'); emit('close')
+  } catch (reason) { error.value = reason instanceof Error ? reason.message : '儲存產品 Program 指派失敗。' }
+  finally { saving.value = false }
 }
 </script>
 
 <template>
   <section class="prd-program-window" role="dialog" aria-modal="true" aria-label="Product Program">
     <header class="prd-program-title">
-      <span>Product Program</span><span v-if="developmentPreview" class="dev-badge">DEV</span>
-      <button type="button" aria-label="關閉視窗" @click="emit('close')">×</button>
+      <span>Product Program</span><span v-if="mock" class="dev-badge">DEV</span>
+      <button type="button" aria-label="關閉視窗" :disabled="saving" @click="emit('close')">×</button>
     </header>
     <main class="prd-program-body">
       <div class="prd-program-context">
@@ -66,20 +173,21 @@ function confirm(): void {
                 <td class="check-cell"><input :aria-label="'Select ' + row.programNo" type="checkbox" :checked="selected.includes(row.programNo)" :disabled="readOnly" @change="toggleProgram(row.programNo, $event)"></td>
                 <td>{{ row.programNo }}</td><td>{{ row.programType }}</td><td class="description">{{ row.description }}</td>
               </tr>
-              <tr v-if="!programs.length"><td colspan="4" class="empty">沒有可指派的程式資料。</td></tr>
+              <tr v-if="!programs.length"><td colspan="4" class="empty">{{ loading ? '載入中…' : '沒有可指派的程式資料。' }}</td></tr>
             </tbody>
           </table>
         </div>
       </fieldset>
 
       <div class="prd-program-status">
-        <span v-if="readOnly">Production API 尚未接線；正式資料唯讀。</span>
+        <span v-if="loading">載入中…</span>
         <span v-else-if="issueState !== 0">產品狀態不是未核准，Confirm 停用。</span>
         <span v-else>已勾選 {{ selected.length }} 個 Program</span>
       </div>
+      <p v-if="error" class="program-error" role="alert">{{ error }}</p>
       <footer class="prd-program-footer">
         <button class="button primary" type="button" :disabled="!canConfirm" @click="confirm">Confirm</button>
-        <button class="button" type="button" @click="emit('close')">Close</button>
+        <button class="button" type="button" :disabled="saving" @click="emit('close')">Close</button>
       </footer>
     </main>
   </section>
@@ -108,6 +216,7 @@ function confirm(): void {
 .prd-program-grid .description{max-width:150px}
 .prd-program-grid .empty{text-align:center;color:#737b82;height:50px}
 .prd-program-status{position:absolute;left:17px;right:190px;bottom:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#737b82;font-size:12px}
+.program-error{position:absolute;left:16px;right:16px;bottom:49px;z-index:2;margin:0;max-height:78px;overflow:auto;padding:7px;border:1px solid #c88d7a;background:#fff0e9;color:#873820;white-space:normal}
 .prd-program-footer{position:absolute;right:14px;bottom:13px;display:flex;gap:6px}
 .button{box-sizing:border-box;width:80px;height:32px;padding:4px 9px;border:1px solid #c5c9cd;border-radius:3px;background:linear-gradient(#fff,#f4f4f4);color:#292d31;cursor:pointer;font:13px "Times New Roman",Arial,"Microsoft JhengHei",sans-serif}
 .button:hover:not(:disabled){border-color:#eea145;background:#fff7e8}

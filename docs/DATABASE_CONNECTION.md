@@ -1,5 +1,36 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## OP103 原生結構：0049–0050（2026-11-19）
+
+- PPK再次唯讀查所有schema，確認 `tbloptype`／`tblopproperty` 仍缺少。備份 `/opt/ymes/backups/ymes_before_0049_0050_op103_20261119.dump` 通過 pg_restore --list 後，按0049→0050套用；未連Oracle或複製業務資料。
+- 0049類別8欄、PK(optype)；0050共用Property11欄、PK(opno,propertyno)，逐欄型別、順序、NOT NULL與DEFAULT已獨立讀回和來源一致。兩表各僅PK index、沒有其他constraint或user trigger；初始各0筆。
+- `ymes_app` 對類別CRUD全true；Property僅SELECT／DELETE=true、INSERT／UPDATE=false，僅供已核實的類別實刪清理。沒有交付Property維護provider，不把建表當完整服務。
+- OP103隔離API／Razor Release皆0警告／0錯誤，Web vue-tsc／Vite成功。已部署API `260dfd2ff2bb`／Web `760d6055e519`，正式十組112HTTP／234斷言通過，Type／OP／Property／自有PS與holder皆0；GUI另待。完整版本與測試界線見 [作業站類別資料](modules/OP/作業站類別資料.md)。
+- 已核對並將YMES備份目錄 `/opt/ymes/backups` 設為root專用700、本次dump600，再驗證pg_restore清單可讀。後續備份先用 `umask 077`；維護時由root讀檔或以stdin pipe給postgres，不為讀取備份而放寬目錄。應用容器不需存取備份目錄。
+
+## 作業站引用檢查讀取權限：0048（2026-11-19）
+
+- PD206正式父生命週期回歸發現OP硬刪500；家用PPK唯讀catalog查核確認既有 `PostgresOperationRepository.HasDependents` 的八張來源表都存在且有opno，其中六表缺 `ymes_app` SELECT。這是既存相依讀權，不是缺CREATE SQL，也不因無讀權就省略引用防護。
+- 主流程完成套用前備份並通過 `pg_restore --list`，再套用 [0048_op_dependency_read_permissions.sql](../database/migrations/0048_op_dependency_read_permissions.sql)，只對 `tblsysflownodebasis`、`tbleqplocatordetail`、`tblprdrecipedetail`、`tblopgroupdetail`、`tblprsopapsdetail`、`tblprdprsopapsbasedetail` 補SELECT。未改schema、業務列、FK/index，未授予這些表的應用DML。
+- 獨立readback六表皆SELECT=true、INSERT/UPDATE/DELETE=false；原已在0046補SELECT的 `tblprdesopbasis`／`tblprdprsopapssetupdetail` 不重建。後續PD206完整105項HTTP回歸含真OP硬刪204、規則保留及自身Delete，全scope四表清0，見 [產品抽樣頻率規則](modules/PRD/產品抽樣頻率規則.md)。
+- API小修 `269434c2aaf0` 已部署、readiness200，為MasterDataController補通用Npgsql→乾淨503及流程／物料／OP三list包裝，避免未處理DB例外裸500；Web維持 `29139f507e77`／`CKNGXUoB`。新API已做11項無fixture/SQL DML的HTTPS冒煙：四主檔清單匿名各401、登入後各200、登入200、小寫 `/ymes` 404及登出204。未在正式站撤權故障注入，也沒有把正常路徑冒煙寫成所有模組完成。
+
+## 產品類別引用讀取權限：0046–0047（2026-11-19）
+
+- PPK live catalog／grants 確認七張原生表存在但應用角色無 SELECT。先驗證 `/opt/ymes/backups/ymes_before_0046_pd101_grants_20261119.dump`、`ymes_before_0047_prd_module_read_20261119.dump` 可由 pg_restore --list 讀取，再分別套用兩份 forward migration。
+- 0046 對 `tblprdesopbasis`、`tblprdproductlabelrulebasis`、`tblprdproductlabelruledetail`、`tblprdproductserialrulebasis`、`tblprdproductserialruledetail`、`tblprdprsopapssetupdetail` 補 SELECT，供 PD101 硬刪前辨識既有 TypeNo／版本 -1 設定。
+- 0047 對 `tblprdmodulebasis` 補 SELECT，供新產品與模組編號衝突檢查。獨立讀回七表皆 SELECT=true，INSERT／UPDATE／DELETE=false；沒有改表、業務列、FK 或 index。API 不把無讀取權限當成不存在或無引用。
+- 本批日期保存／顯示採 [API 稽核日期契約](API_AUDIT_TIMESTAMPS.md)，僅調整已核實模組的 API 邊界，不變更資料庫時區或回填歷史日期。
+
+## 後續獨立 schema 基礎：0042–0045（2026-11-19）
+
+- 家用 PPK/SSH live metadata確認 `tblprstype` 與 `tblprdtype` 缺少後，分別驗證備份 `ymes_before_0042_ps103_20261119.dump`、`ymes_before_0044_pd101_20261119.dump` 可由 pg_restore --list讀取，再套用0042與0044。備份位於 `/opt/ymes/backups/`。
+- 0042 PS103建立原生八欄／單欄PK／來源default／nullable stamp；0044 PD101建立來源dictionary核對的11欄／單欄PK／來源default。兩表皆已獨立讀回欄位、PK、`ymes_app` CRUD權限，沒有加FK／額外索引或複製業務列。
+- 後續先驗證 `ymes_before_0043_pd206_20261119.dump` 與 `ymes_before_0045_qc301_20261119.dump` 的 pg_restore --list，再套用0043與0045。實際獨立套用順序為0042→0044→0043→0045，0044不依賴0043，不以檔號推定部署狀態。
+- 0043 `tblprdqcrulebasis` 已獨立讀回16欄、4個NOT NULL、0個DEFAULT、三欄PK且只有PK index、應用CRUD全true，初始count0。PD206 API尚未部署；完整父主檔刪除生命週期仍待整合，不以建表當成完成API。
+- 0045 `tblspcvardetaillog` 依原生DDL建立27欄、5個NOT NULL、0個DEFAULT、雙欄PK與三個真實來源索引；保留POSION原拼字。已核對app權限SELECT=true、INSERT/UPDATE/DELETE=false，僅供QC301引用檢查，未交付測量writer或其他QC210表。0045後16項硬刪／真量測引用回歸及精確清理通過，見 [管制圖內容](modules/QC/管制圖內容.md)。
+- PD101完整類別CRUD／共享設定Copy仍在接續，目前正式產品查找使用其已核准類別目錄。PS103實際API／瀏覽器驗收見 [流程類別資料](modules/PRS/流程類別資料.md)。
+
 ## 家用端部署 checkpoint：0034–0041（2026-11-19）
 
 本節記錄家用端主流程已透過 PPK/plink SSH 套用到 `ymes` 資料庫／`YMES` schema 的 forward migrations。公司端 Oracle MESTEST 仍是唯讀原生來源；此次沒有在 Oracle 執行 DDL、沒有複製 MES 業務資料。以下是實際套用範圍，不將「repo 有 SQL」視為已部署，也不將 schema 建立視為對應 API 已驗收。

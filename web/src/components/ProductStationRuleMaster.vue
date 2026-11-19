@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { parseFirstWorksheetXlsx } from './materialImportWorkbook'
-import { relationKey, rowsKey, seedRelations, seedRows } from './productBasisDevelopment'
+import { loadDevelopmentProductRelations, productKey, rowsKey, seedRows, type ProductRelation } from './productBasisDevelopment'
 
 type Rule = {
   product: string; version: string; station: string; stationName: string; serial: string
@@ -18,9 +18,13 @@ const storageKey = 'ymes.dev.prd-station-rules.v1'
 const catalog = ['DEV-RULE-CHECK', 'DEV-RULE-HOLD', 'DEV-RULE-QTY']
 const classes = ['一般', 'CP', 'FT']
 const stages = ['DEV 0', 'DEV 1', 'DEV 2', 'DEV 3']
-const relations = props.developmentPreview ? read(relationKey, seedRelations) : {}
-const stations: Station[] = props.developmentPreview ? read(rowsKey, seedRows).flatMap(product => {
-  const relation = relations[`${product.productNo}|${product.productVersion}`]
+const products = props.developmentPreview ? read(rowsKey, seedRows) : []
+const relationLoadError = ref('')
+let relations: Record<string, ProductRelation> = {}
+try { if (props.developmentPreview) relations = loadDevelopmentProductRelations(products) }
+catch (cause) { relationLoadError.value = cause instanceof Error ? cause.message : 'DEV 產品關聯無法載入。' }
+const stations: Station[] = props.developmentPreview ? products.flatMap(product => {
+  const relation = relations[productKey(product.productNo, product.productVersion)]
   return (relation?.parameters?.ops ?? []).map(op => ({ product: product.productNo, version: product.productVersion,
     station: op.opNo, stationName: op.opName, serial: op.serialNo })).filter(row => row.serial)
 }) : []
@@ -149,6 +153,7 @@ function applyImport(): void {
 
 <template>
   <main class="station-rules">
+    <p v-if="relationLoadError" role="alert">{{ relationLoadError }}</p>
     <header><h1>產品作業站法則維護</h1><button @click="emit('close')">關閉</button></header>
     <template v-if="developmentPreview">
       <form class="toolbar" @submit.prevent="search">

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { apiErrorMessage } from '../utils/apiError'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = 0 | 1 | 2 | -1
 type EditorMode = 'ADD' | 'EDIT' | 'COPY' | null
@@ -11,7 +13,7 @@ interface QcItem {
   qcDataType: string
   chartType: 0 | 1 | 2 | -1 | null
   specLineType: 0 | 1 | 2
-  componentCollect: number
+  componentCollect: number | null
   unit: string
   lotIsValid: number
   planNo: string
@@ -40,8 +42,8 @@ interface ChartBasis {
   factorSerial: string
   qcItemNo: string
   qcItemName: string
-  issueState: IssueState
-  dataStamp: number
+  issueState: IssueState | null
+  dataStamp: number | null
   sampleSize: number
   keyNode: string
   chartTitle: string
@@ -50,9 +52,9 @@ interface ChartBasis {
   planNo: string
   memo: string
   creator: string
-  createDate: string
+  createDate: string | null
   reviser: string
-  reviseDate: string
+  reviseDate: string | null
   factorValues: Record<string, string>
   details: ChartDetail[]
   rules: ChartRule[]
@@ -64,6 +66,7 @@ interface ApiEnvelope<T> { items?: T[]; rows?: T[]; data?: T }
 
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { currentUserNo: '', developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const devMock = computed(() => import.meta.env.DEV && props.developmentPreview)
 
 const stateFilters: { value: IssueState; label: string }[] = [
@@ -89,7 +92,12 @@ const message = ref('')
 const error = ref('')
 const editorMode = ref<EditorMode>(null)
 const editorDraft = ref<ChartBasis>(blankBasis())
+const editorItem = ref<QcItem | null>(null)
+const editorSourceSerial = ref('')
+let editorEpoch = 0
+const planParameterLoading = ref(false)
 const ruleEditorOpen = ref(false)
+const ruleSource = ref<ChartBasis | null>(null)
 const ruleDraft = ref<ChartRule[]>([])
 const ruleOptions = ref<RuleMasterOption[]>([])
 const ruleOptionsLoading = ref(false)
@@ -98,21 +106,48 @@ const ruleLookupError = ref('')
 const ruleSaving = ref(false)
 let ruleLookupRequestId = 0
 const copyDialogOpen = ref(false)
+const copySource = ref<QcItem | null>(null)
 const copyTargetNo = ref('')
 const copyState = ref<'both' | 'unfrozen' | 'active'>('both')
 const auditEntries = ref<string[]>([])
+const operationBusy = computed(() => busy.value || ruleSaving.value || planParameterLoading.value)
+const contextLocked = computed(() => operationBusy.value || editorMode.value !== null || ruleEditorOpen.value || copyDialogOpen.value || confirmationMessage.value !== null)
 
 const activeQcItem = computed(() => itemRows.value.find(row => row.qcItemNo === selectedQcItemNo.value) ?? null)
 const visibleBasisRows = computed(() => basisRows.value
   .filter(row => row.qcItemNo === selectedQcItemNo.value && row.issueState === issueState.value)
-  .sort((a, b) => b.createDate.localeCompare(a.createDate)))
+  .sort((a, b) => (b.createDate ?? '').localeCompare(a.createDate ?? '')))
 const activeBasis = computed(() => visibleBasisRows.value.find(row => row.factorSerial === selectedBasisSerial.value) ?? null)
 const detailRows = computed(() => activeBasis.value?.details ?? [])
 const ruleRows = computed(() => activeBasis.value?.rules ?? [])
 const chartFilterLabel = computed(() => stateFilters.find(item => item.value === issueState.value)?.label ?? '')
-const sourceCopyCount = computed(() => basisRows.value.filter(row => row.qcItemNo === selectedQcItemNo.value && (copyState.value === 'both' || (copyState.value === 'unfrozen' ? row.issueState === 0 : row.issueState === 2))).length)
+const sourceCopyCount = computed(() => basisRows.value.filter(row => row.qcItemNo === copySource.value?.qcItemNo && (copyState.value === 'both' ? row.issueState === 0 || row.issueState === 2 : copyState.value === 'unfrozen' ? row.issueState === 0 : row.issueState === 2)).length)
 
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
+function versionTokens(row: ChartBasis): { issueState: IssueState | null; dataStamp: number | null } {
+  if (!Object.prototype.hasOwnProperty.call(row, 'issueState') || !Object.prototype.hasOwnProperty.call(row, 'dataStamp')
+    || (row.issueState !== null && !stateFilters.some(state => state.value === row.issueState))
+    || (row.dataStamp !== null && (!Number.isInteger(row.dataStamp) || Math.abs(row.dataStamp) > 99999999999))) {
+    throw new Error('管制圖版本資訊不完整，請重新查詢；不能把遺漏版本當作 NULL 或 0。')
+  }
+  return { issueState: row.issueState, dataStamp: row.dataStamp }
+}
+function nextMockStamp(stamp: number | null): number {
+  if ((stamp ?? 0) >= 99999999999) throw new Error('管制圖 DataStamp 已達資料表上限；資料未變更。')
+  return (stamp ?? 0) + 1
+}
+function upsertBasis(row: ChartBasis): void {
+  basisRows.value = [...basisRows.value.filter(existing => existing.factorSerial !== row.factorSerial), clone(row)]
+}
+function dismissEditor(): void { editorMode.value = null; editorItem.value = null; editorSourceSerial.value = ''; editorEpoch++ }
+function closeEditor(): void { if (!operationBusy.value) dismissEditor() }
+function closePage(): void { if (!contextLocked.value) emit('close') }
+function closeCopyDialog(): void { if (!operationBusy.value) { copyDialogOpen.value = false; copySource.value = null } }
+async function refreshAfterCommand(success: string): Promise<void> {
+  message.value = success
+  try { await loadChartRows(); selectFirstChart() }
+  catch (reason) { error.value = '操作已完成，清單重新載入失敗：' + (reason instanceof Error ? reason.message : '請重新查詢。') }
+}
 function blankDetail(spcId: number, chartName: string): ChartDetail {
   return { spcId, chartName, us: '', cs: '', ls: '', ucl: '', cl: '', lcl: '', target: '', cpkGoal: '', yAxisFrom: '', yAxisTo: '' }
 }
@@ -213,10 +248,13 @@ async function loadPage(): Promise<void> {
 }
 async function loadChartRows(): Promise<void> {
   if (devMock.value || !selectedQcItemNo.value) return
-  const query = new URLSearchParams({ qcItemNo: selectedQcItemNo.value, issueState: String(issueState.value) })
+  const qcItemNo = selectedQcItemNo.value
+  const state = issueState.value
+  const query = new URLSearchParams({ qcItemNo, issueState: String(state) })
   const response = await request<ChartBasis[] | ApiEnvelope<ChartBasis>>(`/api/qc/chart-bases?${query}`)
+  if (selectedQcItemNo.value !== qcItemNo || issueState.value !== state) return
   const incoming = records(response)
-  basisRows.value = [...basisRows.value.filter(row => !(row.qcItemNo === selectedQcItemNo.value && row.issueState === issueState.value)), ...incoming]
+  basisRows.value = [...basisRows.value.filter(row => !(row.qcItemNo === qcItemNo && row.issueState === state)), ...incoming]
 }
 async function loadPlanOptions(): Promise<void> {
   const requestId = ++planLookupRequestId
@@ -225,6 +263,10 @@ async function loadPlanOptions(): Promise<void> {
   planOptions.value = []
   planLookupNotice.value = ''
   if (componentCollect === undefined) return
+  if (componentCollect !== 0 && componentCollect !== 1) {
+    planLookupNotice.value = 'QC Item 的 ComponentCollect 遺失或無效，不能判定抽樣計劃來源。'
+    return
+  }
   if (devMock.value) {
     planOptions.value = [
       { planNo: 'SP-100', planName: '一般抽樣計畫', componentCollect },
@@ -235,7 +277,7 @@ async function loadPlanOptions(): Promise<void> {
   const query = new URLSearchParams({ issueState: '2', componentCollect: String(componentCollect) })
   try {
     const options = records(await request<PlanOption[] | ApiEnvelope<PlanOption>>(`/api/qc/sampling-plans?${query}`))
-    if (requestId === planLookupRequestId && selectedQcItemNo.value === qcItemNo) planOptions.value = options
+    if (requestId === planLookupRequestId && selectedQcItemNo.value === qcItemNo && activeQcItem.value?.componentCollect === componentCollect) planOptions.value = options
   } catch (reason) {
     if (requestId === planLookupRequestId && selectedQcItemNo.value === qcItemNo) {
       const detail = reason instanceof Error ? reason.message : '讀取抽樣計畫選項失敗。'
@@ -245,35 +287,43 @@ async function loadPlanOptions(): Promise<void> {
 }
 function selectFirstChart(): void { selectedBasisSerial.value = visibleBasisRows.value[0]?.factorSerial ?? '' }
 async function setIssueFilter(value: IssueState): Promise<void> {
+  if (contextLocked.value) return
   issueState.value = value
-  message.value = ''
-  try { await loadChartRows(); selectFirstChart() } catch (reason) { error.value = reason instanceof Error ? reason.message : '載入狀態資料失敗。' }
+  message.value = ''; error.value = ''; busy.value = true
+  try { await loadChartRows(); selectFirstChart() }
+  catch (reason) { error.value = reason instanceof Error ? reason.message : '載入狀態資料失敗。' }
+  finally { busy.value = false }
 }
 async function chooseQcItem(item: QcItem): Promise<void> {
+  if (contextLocked.value) return
   selectedQcItemNo.value = item.qcItemNo
   selectedBasisSerial.value = ''
-  message.value = ''
+  message.value = ''; error.value = ''; busy.value = true
   void loadPlanOptions()
-  try { await loadChartRows(); selectFirstChart() } catch (reason) { error.value = reason instanceof Error ? reason.message : '載入管制圖失敗。' }
+  try { await loadChartRows(); selectFirstChart() }
+  catch (reason) { error.value = reason instanceof Error ? reason.message : '載入管制圖失敗。' }
+  finally { busy.value = false }
 }
-async function chooseBasis(row: ChartBasis): Promise<void> {
+function chooseBasis(row: ChartBasis): void {
+  if (contextLocked.value || !visibleBasisRows.value.some(item => item.factorSerial === row.factorSerial)) return
+  // The list already contains its complete basis/detail/rules/parameter DTO.
+  // Do not splice later, separately fetched rules into an older version row.
   selectedBasisSerial.value = row.factorSerial
-  if (devMock.value) return
-  try {
-    const [details, rules] = await Promise.all([
-      request<ChartDetail[] | ApiEnvelope<ChartDetail>>(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}/detail`),
-      request<ChartRule[] | ApiEnvelope<ChartRule>>(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}/rules`),
-    ])
-    row.details = records(details)
-    row.rules = records(rules)
-  } catch (reason) { error.value = reason instanceof Error ? reason.message : '載入圖表明細失敗。' }
 }
 
 function openEditor(mode: Exclude<EditorMode, null>): void {
+  if (contextLocked.value) return
   error.value = ''
   message.value = ''
   if (!activeQcItem.value) { error.value = '請先選擇品管項目。'; return }
   if (mode !== 'ADD' && !activeBasis.value) { error.value = '請先選擇管制圖資料。'; return }
+  if (mode === 'EDIT' && activeBasis.value?.issueState !== 0) { error.value = '僅 UNFROZEN 管制圖可修改。'; return }
+  if (mode === 'EDIT') {
+    try { versionTokens(activeBasis.value!) } catch (reason) { error.value = reason instanceof Error ? reason.message : '版本資料遺失。'; return }
+  }
+  editorItem.value = clone(activeQcItem.value)
+  editorSourceSerial.value = mode === 'EDIT' ? activeBasis.value!.factorSerial : ''
+  editorEpoch++
   if (mode === 'ADD') {
     const draft = blankBasis()
     draft.qcItemNo = activeQcItem.value.qcItemNo
@@ -296,7 +346,7 @@ function openEditor(mode: Exclude<EditorMode, null>): void {
   }
   editorMode.value = mode
 }
-function activeChartName(spcId: number): string { return expectedDetails(activeQcItem.value?.chartType ?? -1).find(row => row.spcId === spcId)?.chartName ?? `SPCID ${spcId}` }
+function activeChartName(spcId: number): string { return ruleSource.value?.details.find(row => row.spcId === spcId)?.chartName ?? `SPCID ${spcId}` }
 function basisCommand(includeConcurrency: boolean): Record<string, unknown> {
   const details = editorDraft.value.details.map(({ spcId, us, cs, ls, ucl, cl, lcl, target, cpkGoal, yAxisFrom, yAxisTo }) => ({ spcId, us, cs, ls, ucl, cl, lcl, target, cpkGoal, yAxisFrom, yAxisTo }))
   const command: Record<string, unknown> = {
@@ -306,25 +356,26 @@ function basisCommand(includeConcurrency: boolean): Record<string, unknown> {
     details, samplingPlanParameters: editorDraft.value.parameters.map(({ parameterNo, parameterValue }) => ({ parameterNo, parameterValue })),
   }
   if (includeConcurrency) {
-    command.expectedIssueState = editorDraft.value.issueState
-    command.dataStamp = editorDraft.value.dataStamp
+    const tokens = versionTokens(editorDraft.value)
+    command.expectedIssueState = tokens.issueState
+    command.dataStamp = tokens.dataStamp
   }
   return command
 }
 function validateDraft(requireMemo: boolean): string {
-  if (!activeQcItem.value) return '請先選擇品管項目。'
+  if (!editorItem.value || editorItem.value.qcItemNo !== editorDraft.value.qcItemNo) return '表單來源品管項目遺失，請重新開啟。'
   const sampleSize = Number(editorDraft.value.sampleSize)
   if (!Number.isInteger(sampleSize) || sampleSize <= 0) return 'SampleSize 必須是大於 0 的整數。'
-  if (activeQcItem.value.chartType === 2 && sampleSize !== 1) return 'X-Rm 圖的 SampleSize 必須為 1。'
+  if (editorItem.value.chartType === 2 && sampleSize !== 1) return 'X-Rm 圖的 SampleSize 必須為 1。'
   if (requireMemo && editorMode.value === 'EDIT' && !editorDraft.value.memo.trim()) return '修改時請填寫 MEMO 作為修改原因。'
-  for (const factor of activeQcItem.value.factors.filter(row => row.factorNo)) {
+  for (const factor of editorItem.value.factors.filter(row => row.factorNo)) {
     const value = editorDraft.value.factorValues[factor.factorNo]?.trim() ?? ''
     if (!value) return `${factor.factorNo} 的要因值不可空白。`
     if (value === '*') return '要因值不可為 *。'
   }
   for (const detail of editorDraft.value.details) {
-    if (detail.spcId === 0 && activeQcItem.value.chartType !== null && activeQcItem.value.chartType >= 0) {
-      const requiredFields = activeQcItem.value.specLineType === 0 ? ['us', 'ls'] : activeQcItem.value.specLineType === 1 ? ['us'] : ['ls']
+    if (detail.spcId === 0 && editorItem.value.chartType !== null && editorItem.value.chartType >= 0) {
+      const requiredFields = editorItem.value.specLineType === 0 ? ['us', 'ls'] : editorItem.value.specLineType === 1 ? ['us'] : ['ls']
       for (const key of requiredFields) if (!detail[key as keyof ChartDetail]) return `${detail.chartName} 的 ${key.toUpperCase()} 不可空白。`
     }
     for (const key of ['us', 'cs', 'ls', 'ucl', 'cl', 'lcl', 'target', 'cpkGoal', 'yAxisFrom', 'yAxisTo'] as const) {
@@ -333,7 +384,7 @@ function validateDraft(requireMemo: boolean): string {
     }
     if (detail.yAxisFrom && detail.yAxisTo && Number(detail.yAxisFrom) >= Number(detail.yAxisTo)) return `${detail.chartName} 的 YAxisTo 必須大於 YAxisFrom。`
   }
-  if (editorDraft.value.planNo && activeQcItem.value.componentCollect === 0 && !editorDraft.value.parameters.length) return '已指定 PlanNo，請按 Get Plan Parameter 載入抽樣計畫參數。'
+  if (editorDraft.value.planNo && editorItem.value.componentCollect === 0 && !editorDraft.value.parameters.length) return '已指定 PlanNo，請按 Get Plan Parameter 載入抽樣計畫參數。'
   if (editorDraft.value.parameters.some(row => !row.parameterNo.trim())) return '抽樣參數 ParameterNo 不可空白。'
   if (new Set(editorDraft.value.parameters.map(row => row.parameterNo.trim())).size !== editorDraft.value.parameters.length) return '抽樣參數 ParameterNo 不可重複。'
   return ''
@@ -343,108 +394,127 @@ function recordAudit(action: string, serial: string): void {
   auditEntries.value.unshift(`${stamp} ${props.currentUserNo || 'DEV001'} ${action} ${serial}`)
 }
 async function persistEditor(closeAfter: boolean): Promise<void> {
+  if (operationBusy.value || !editorMode.value) return
   const validation = validateDraft(closeAfter)
   if (validation) { error.value = validation; return }
-  busy.value = true
-  error.value = ''
+  const mode = editorMode.value
+  const sourceSerial = editorSourceSerial.value
+  if (mode === 'EDIT' && (!sourceSerial || sourceSerial !== editorDraft.value.factorSerial)) { error.value = '編輯來源鍵遺失，請重新開啟。'; return }
+  busy.value = true; error.value = ''; message.value = ''
   try {
+    let saved: ChartBasis
     if (devMock.value) {
-      const isNew = editorMode.value !== 'EDIT'
-      if (isNew && basisRows.value.some(row => row.qcItemNo === editorDraft.value.qcItemNo && JSON.stringify(row.factorValues) === JSON.stringify(editorDraft.value.factorValues) && row.issueState !== -1)) {
-        throw new Error('相同 QCItem 與要因組合已存在管制圖。')
-      }
-      if (isNew) {
-        editorDraft.value.factorSerial = `DEV-FS-${String(Date.now()).slice(-6)}`
-        editorDraft.value.creator = props.currentUserNo || 'DEV001'
-        editorDraft.value.createDate = new Date().toLocaleString('sv-SE')
-        editorDraft.value.issueState = 0
-        editorDraft.value.dataStamp = 1
-        basisRows.value.push(clone(editorDraft.value))
-        recordAudit(editorMode.value === 'COPY' ? '複製管制圖' : '新增管制圖', editorDraft.value.factorSerial)
+      saved = clone(editorDraft.value)
+      if (mode !== 'EDIT') {
+        if (basisRows.value.some(row => row.qcItemNo === saved.qcItemNo && JSON.stringify(row.factorValues) === JSON.stringify(saved.factorValues) && row.issueState !== -1))
+          throw new Error('相同 QCItem 與要因組合已存在管制圖。')
+        saved.factorSerial = `DEV-FS-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`
+        saved.creator = props.currentUserNo || 'DEV001'; saved.createDate = new Date().toISOString()
+        saved.reviser = ''; saved.reviseDate = null; saved.issueState = 0; saved.dataStamp = 0
       } else {
-        editorDraft.value.dataStamp += 1
-        editorDraft.value.reviser = props.currentUserNo || 'DEV001'
-        editorDraft.value.reviseDate = new Date().toLocaleString('sv-SE')
-        const index = basisRows.value.findIndex(row => row.factorSerial === editorDraft.value.factorSerial)
-        if (index >= 0) basisRows.value[index] = clone(editorDraft.value)
-        recordAudit('修改管制圖', editorDraft.value.factorSerial)
+        const current = basisRows.value.find(row => row.factorSerial === sourceSerial)
+        const tokens = versionTokens(saved)
+        if (!current || current.issueState !== 0 || current.issueState !== tokens.issueState || current.dataStamp !== tokens.dataStamp) throw new Error('資料已變更，請重新查詢。')
+        saved.dataStamp = nextMockStamp(current.dataStamp)
+        saved.reviser = props.currentUserNo || 'DEV001'; saved.reviseDate = new Date().toISOString()
       }
-    } else if (editorMode.value === 'EDIT') {
-      await request(`/api/qc/chart-bases/${encodeURIComponent(editorDraft.value.factorSerial)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(basisCommand(true)) })
+      recordAudit(mode === 'EDIT' ? '修改管制圖' : mode === 'COPY' ? '複製管制圖' : '新增管制圖', saved.factorSerial)
     } else {
-      const created = await request<ChartBasis>('/api/qc/chart-bases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(basisCommand(false)) })
-      if (created?.factorSerial) editorDraft.value.factorSerial = created.factorSerial
+      saved = await request<ChartBasis>(mode === 'EDIT' ? `/api/qc/chart-bases/${encodeURIComponent(sourceSerial)}` : '/api/qc/chart-bases', {
+        method: mode === 'EDIT' ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(basisCommand(mode === 'EDIT')),
+      })
     }
-    if (closeAfter) editorMode.value = null
-    await loadChartRows()
-    if (editorDraft.value.factorSerial) {
-      selectedBasisSerial.value = editorDraft.value.factorSerial
-      const saved = visibleBasisRows.value.find(row => row.factorSerial === editorDraft.value.factorSerial)
-      if (saved && !devMock.value) await chooseBasis(saved)
-    }
-    message.value = '資料已儲存。新資料預設為 UNFROZEN。'
+    versionTokens(saved)
+    if (!saved.factorSerial || saved.qcItemNo !== editorItem.value?.qcItemNo) throw new Error('伺服器回傳的保存資料來源不完整，請重新查詢確認結果。')
+    // Adopt the committed DTO before any subsequent list request can fail.
+    editorDraft.value = clone(saved)
+    editorSourceSerial.value = saved.factorSerial
+    editorMode.value = 'EDIT'
+    upsertBasis(saved)
+    selectedQcItemNo.value = saved.qcItemNo
+    if (saved.issueState !== null) issueState.value = saved.issueState
+    selectedBasisSerial.value = saved.factorSerial
+    if (closeAfter) dismissEditor()
+    message.value = '資料已儲存。'
+    try { await loadChartRows(); selectedBasisSerial.value = saved.factorSerial }
+    catch (reason) { error.value = '保存已完成，清單重新載入失敗：' + (reason instanceof Error ? reason.message : '請重新查詢。') }
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '儲存管制圖失敗。' }
   finally { busy.value = false }
 }
 
 async function deleteBasis(): Promise<void> {
-  const row = activeBasis.value
-  if (!row) { error.value = '請先選擇管制圖資料。'; return }
-  if (row.issueState === 1) { error.value = 'PENDING 狀態不可刪除。'; return }
-  const originalState = row.issueState
-  const action = originalState === 2 ? '停用' : '刪除'
-  if (!window.confirm(`確定${action}管制圖 ${row.factorSerial}？`)) return
+  if (contextLocked.value) return
+  const current = activeBasis.value
+  if (!current) { error.value = '請先選擇管制圖資料。'; return }
+  if (current.issueState !== 0 && current.issueState !== -1 && current.issueState !== 2) { error.value = '此狀態不可刪除。'; return }
+  const row = clone(current)
+  const action = row.issueState === 2 ? '停用' : '刪除'
+  if (!await requestConfirmation(`確定${action}管制圖 ${row.factorSerial}？`)) return
+  busy.value = true; error.value = ''; message.value = ''
   try {
+    const tokens = versionTokens(row)
     if (devMock.value) {
-      if (row.issueState === 2) row.issueState = -1
+      if (row.issueState === 2) upsertBasis({ ...row, issueState: -1, dataStamp: nextMockStamp(row.dataStamp) })
       else {
         if (row.hasMeasurementData) throw new Error('此管制圖已有量測資料，不允許刪除。')
         basisRows.value = basisRows.value.filter(item => item.factorSerial !== row.factorSerial)
       }
       recordAudit(action, row.factorSerial)
-    } else {
-      await request(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ issueState: row.issueState, dataStamp: row.dataStamp }) })
-    }
-    await loadChartRows()
-    selectFirstChart()
-    message.value = originalState === 2 ? '已核准的管制圖已標示為 UNUSED。' : '管制圖已刪除。'
+    } else await request(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(tokens) })
+    await refreshAfterCommand(row.issueState === 2 ? '已核准的管制圖已標示為 UNUSED。' : '管制圖已刪除。')
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '刪除失敗。' }
+  finally { busy.value = false }
 }
 async function approveBasis(): Promise<void> {
-  const row = activeBasis.value
-  if (!row || row.issueState !== 0) { error.value = '僅 UNFROZEN 資料可核准。'; return }
-  if (!window.confirm(`確定核准 ${row.factorSerial}？`)) return
+  if (contextLocked.value) return
+  if (!activeBasis.value || activeBasis.value.issueState !== 0) { error.value = '僅 UNFROZEN 資料可核准。'; return }
+  const row = clone(activeBasis.value)
+  if (!await requestConfirmation(`確定核准 ${row.factorSerial}？`)) return
+  busy.value = true; error.value = ''; message.value = ''
   try {
+    const tokens = versionTokens(row)
     if (devMock.value) {
       const duplicate = basisRows.value.some(other => other.factorSerial !== row.factorSerial && other.qcItemNo === row.qcItemNo && other.issueState === 2 && JSON.stringify(other.factorValues) === JSON.stringify(row.factorValues))
       if (duplicate) throw new Error('相同要因組合已有 ACTIVE 管制圖，請先確認重複資料。')
-      row.issueState = row.issueJobHasDetail ? 1 : 2
-      row.dataStamp += 1
-      row.reviser = props.currentUserNo || 'DEV001'
-      row.reviseDate = new Date().toLocaleString('sv-SE')
+      upsertBasis({ ...row, issueState: row.issueJobHasDetail ? 1 : 2, dataStamp: nextMockStamp(row.dataStamp), reviser: props.currentUserNo || 'DEV001', reviseDate: new Date().toISOString() })
       recordAudit('核准管制圖', row.factorSerial)
     } else {
-      await request(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dataStamp: row.dataStamp }) })
+      const result = await request<{ factorSerial: string; issueState: IssueState; dataStamp: number }>(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(tokens) })
+      upsertBasis({ ...row, issueState: result.issueState, dataStamp: result.dataStamp })
     }
-    await loadChartRows(); selectFirstChart(); message.value = '核准處理完成；Issue Job 設定會決定進入 PENDING 或 ACTIVE。'
+    await refreshAfterCommand('核准處理完成。')
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '核准失敗。' }
+  finally { busy.value = false }
 }
 async function disapproveBasis(): Promise<void> {
-  const row = activeBasis.value
-  if (!row || ![2, -1].includes(row.issueState)) { error.value = '僅 ACTIVE 或 UNUSED 資料可取消核准。'; return }
-  if (!window.confirm(`取消核准 ${row.factorSerial} 並回到 UNFROZEN？`)) return
+  if (contextLocked.value) return
+  if (!activeBasis.value || (activeBasis.value.issueState !== 2 && activeBasis.value.issueState !== -1)) { error.value = '僅 ACTIVE 或 UNUSED 資料可取消核准。'; return }
+  const row = clone(activeBasis.value)
+  if (!await requestConfirmation(`取消核准 ${row.factorSerial} 並回到 UNFROZEN？`)) return
+  busy.value = true; error.value = ''; message.value = ''
   try {
-    if (devMock.value) { row.issueState = 0; row.dataStamp += 1; recordAudit('取消核准', row.factorSerial) }
-    else await request(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}/disapprove`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ issueState: row.issueState, dataStamp: row.dataStamp }) })
-    await loadChartRows(); selectFirstChart(); message.value = '資料已回到 UNFROZEN。'
+    const tokens = versionTokens(row)
+    if (devMock.value) {
+      upsertBasis({ ...row, issueState: 0, dataStamp: nextMockStamp(row.dataStamp) })
+      recordAudit('取消核准', row.factorSerial)
+    } else {
+      const result = await request<{ factorSerial: string; issueState: IssueState; dataStamp: number }>(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}/disapprove`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(tokens) })
+      upsertBasis({ ...row, issueState: result.issueState, dataStamp: result.dataStamp })
+    }
+    await refreshAfterCommand('資料已回到 UNFROZEN。')
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '取消核准失敗。' }
+  finally { busy.value = false }
 }
 
 async function openRuleEditor(): Promise<void> {
+  if (contextLocked.value) return
   if (!activeBasis.value) { error.value = '請先選擇管制圖資料。'; return }
   if (activeQcItem.value?.chartType === null || activeQcItem.value?.chartType === -1) { error.value = 'No Chart 的 QC Item 不提供 Rule 設定。'; return }
+  if (activeBasis.value.issueState !== 0) { error.value = '僅 UNFROZEN 管制圖可維護 Rule。'; return }
+  try { versionTokens(activeBasis.value) } catch (reason) { error.value = reason instanceof Error ? reason.message : '版本資料遺失。'; return }
   error.value = ''
-  ruleDraft.value = clone(activeBasis.value.rules)
+  ruleSource.value = clone(activeBasis.value)
+  ruleDraft.value = clone(ruleSource.value.rules)
   ruleEditorOpen.value = true
   await loadRuleOptions()
 }
@@ -484,17 +554,16 @@ function setRuleNo(rule: ChartRule, value: string): void {
 }
 function closeRuleEditor(): void {
   if (ruleSaving.value) return
-  ruleEditorOpen.value = false; ruleLookupRequestId++; ruleOptionsLoading.value = false
+  ruleEditorOpen.value = false; ruleSource.value = null; ruleLookupRequestId++; ruleOptionsLoading.value = false
 }
 function addRule(): void {
   if (ruleSaving.value || ruleOptionsLoading.value || !ruleOptionsLoaded.value || !ruleOptions.value.length) return
-  const spcId = activeBasis.value?.details[0]?.spcId ?? 0
+  const spcId = ruleSource.value?.details[0]?.spcId ?? 0
   ruleDraft.value.push({ spcId, chartName: activeChartName(spcId), ruleNo: '', ruleName: '', action: 0 })
 }
 async function saveRules(): Promise<void> {
-  if (ruleSaving.value || ruleOptionsLoading.value) return
-  const row = activeBasis.value
-  if (!row) return
+  if (operationBusy.value || ruleOptionsLoading.value || !ruleEditorOpen.value || !ruleSource.value) return
+  const source = clone(ruleSource.value)
   error.value = ''
   if (!ruleOptionsLoaded.value) { error.value = '請先成功載入已核准法則，再保存 Rule。'; return }
   if (ruleDraft.value.some(item => !item.ruleNo.trim())) { error.value = 'RuleNo 不可空白。'; return }
@@ -503,35 +572,47 @@ async function saveRules(): Promise<void> {
   if (new Set(ruleDraft.value.map(item => `${item.spcId}:${item.ruleNo}`)).size !== ruleDraft.value.length) { error.value = '同一圖表的 RuleNo 不可重複。'; return }
   ruleSaving.value = true
   try {
-    if (devMock.value) recordAudit('維護管制圖法則', row.factorSerial)
-    else {
-      const saved = await request<{ dataStamp: number; reviser: string; reviseDate: string }>(`/api/qc/chart-bases/${encodeURIComponent(row.factorSerial)}/rules`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rules: ruleDraft.value.map(({ spcId, ruleNo, action }) => ({ spcId, ruleNo, action })) }) })
-      row.dataStamp = saved.dataStamp
-      row.reviser = saved.reviser
-      row.reviseDate = saved.reviseDate
+    const tokens = versionTokens(source)
+    let saved: { factorSerial: string; dataStamp: number; reviser: string; reviseDate: string; rules: ChartRule[] }
+    if (devMock.value) {
+      const current = basisRows.value.find(row => row.factorSerial === source.factorSerial)
+      if (!current || current.issueState !== 0 || current.issueState !== tokens.issueState || current.dataStamp !== tokens.dataStamp) throw new Error('資料已變更，請重新開啟 Rule 視窗。')
+      saved = { factorSerial: source.factorSerial, dataStamp: nextMockStamp(current.dataStamp), reviser: props.currentUserNo || 'DEV001', reviseDate: new Date().toISOString(), rules: clone(ruleDraft.value) }
+      recordAudit('維護管制圖法則', source.factorSerial)
+    } else {
+      saved = await request<typeof saved>(`/api/qc/chart-bases/${encodeURIComponent(source.factorSerial)}/rules`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expectedIssueState: tokens.issueState, dataStamp: tokens.dataStamp, rules: ruleDraft.value.map(({ spcId, ruleNo, action }) => ({ spcId, ruleNo, action })) }),
+      })
     }
-    row.rules = clone(ruleDraft.value)
-    ruleEditorOpen.value = false
+    if (saved.factorSerial !== source.factorSerial || !Array.isArray(saved.rules)) throw new Error('Rule 保存結果不完整，請重新查詢確認。')
+    const current = basisRows.value.find(row => row.factorSerial === source.factorSerial)
+    if (current) upsertBasis({ ...current, rules: saved.rules, dataStamp: saved.dataStamp, reviser: saved.reviser, reviseDate: saved.reviseDate })
+    ruleEditorOpen.value = false; ruleSource.value = null; ruleLookupRequestId++
     message.value = 'Rule 資料已儲存。'
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '儲存 Rule 失敗。' }
   finally { ruleSaving.value = false }
 }
 
 function openCopyDialog(): void {
+  if (contextLocked.value) return
   if (!activeQcItem.value) { error.value = '請先選擇來源品管項目。'; return }
+  copySource.value = clone(activeQcItem.value)
   copyTargetNo.value = ''
   copyState.value = 'both'
   copyDialogOpen.value = true
 }
 async function copyToItem(): Promise<void> {
-  const source = activeQcItem.value
+  if (operationBusy.value) return
+  const source = copySource.value
   const target = itemRows.value.find(row => row.qcItemNo === copyTargetNo.value)
   if (!source || !target) { error.value = '請選擇目標品管項目。'; return }
   if (source.qcItemNo === target.qcItemNo) { error.value = '來源與目標品管項目不可相同。'; return }
   if (source.factors.filter(f => f.factorSpec).map(f => f.factorNo).join('|') !== target.factors.filter(f => f.factorSpec).map(f => f.factorNo).join('|')) { error.value = '來源與目標品管項目的規格要因欄位不同，無法複製。'; return }
-  const selected = devMock.value ? basisRows.value.filter(row => row.qcItemNo === source.qcItemNo && (copyState.value === 'both' || (copyState.value === 'unfrozen' ? row.issueState === 0 : row.issueState === 2))) : []
+  const selected = devMock.value ? basisRows.value.filter(row => row.qcItemNo === source.qcItemNo && (copyState.value === 'both' ? row.issueState === 0 || row.issueState === 2 : copyState.value === 'unfrozen' ? row.issueState === 0 : row.issueState === 2)) : []
   if (devMock.value && !selected.length) { error.value = '目前選取狀態沒有可複製的管制圖。'; return }
   let copiedCount = selected.length
+  busy.value = true; error.value = ''; message.value = ''
   try {
     if (devMock.value) {
       for (const row of selected) {
@@ -540,9 +621,10 @@ async function copyToItem(): Promise<void> {
         copy.qcItemNo = target.qcItemNo
         copy.qcItemName = target.qcItemName
         copy.issueState = 0
-        copy.dataStamp = 1
+        copy.dataStamp = 0
         copy.creator = props.currentUserNo || 'DEV001'
         copy.createDate = new Date().toLocaleString('sv-SE')
+        copy.reviser = ''; copy.reviseDate = null
         basisRows.value.push(copy)
       }
       recordAudit('跨 QC Item 複製', `${source.qcItemNo} → ${target.qcItemNo}`)
@@ -551,30 +633,37 @@ async function copyToItem(): Promise<void> {
       const result = await request<{ copiedCount?: number }>('/api/qc/chart-bases/copy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fromQcItemNo: source.qcItemNo, toQcItemNo: target.qcItemNo, copyType }) })
       copiedCount = result?.copiedCount ?? 0
     }
-    copyDialogOpen.value = false
-    await loadChartRows()
-    message.value = `已複製 ${copiedCount} 筆管制圖至 ${target.qcItemNo}；副本狀態為 UNFROZEN。`
+    copyDialogOpen.value = false; copySource.value = null
+    await refreshAfterCommand(`已複製 ${copiedCount} 筆管制圖至 ${target.qcItemNo}；副本狀態為 UNFROZEN。`)
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '複製管制圖失敗。' }
+  finally { busy.value = false }
 }
 
-function setPlanNo(value: string): void { editorDraft.value.planNo = value }
-function getPlanParameters(): void {
-  if (!editorDraft.value.planNo.trim()) { error.value = '請先選擇 PlanNo。'; return }
-  if (devMock.value) {
-    editorDraft.value.parameters = editorDraft.value.planNo === 'SP-101'
-      ? [{ parameterNo: 'FREQUENCY', parameterValue: '每 2 小時' }, { parameterNo: 'LOT-QTY', parameterValue: '20' }]
-      : [{ parameterNo: 'FREQUENCY', parameterValue: '每批' }, { parameterNo: 'LOT-QTY', parameterValue: '25' }]
-  } else {
-    void request<PlanParameter[] | ApiEnvelope<PlanParameter>>(`/api/qc/sampling-plans/${encodeURIComponent(editorDraft.value.planNo)}/parameters?issueState=2`)
-      .then(response => { editorDraft.value.parameters = records(response) })
-      .catch(reason => { error.value = reason instanceof Error ? reason.message : '讀取抽樣計畫參數失敗。' })
-  }
+function setPlanNo(value: string): void { if (!operationBusy.value) editorDraft.value.planNo = value }
+async function getPlanParameters(): Promise<void> {
+  if (operationBusy.value || !editorMode.value) return
+  const planNo = editorDraft.value.planNo.trim()
+  if (!planNo) { error.value = '請先選擇 PlanNo。'; return }
+  const componentCollect = editorItem.value?.componentCollect
+  if (componentCollect !== 0 && componentCollect !== 1) { error.value = '表單來源 ComponentCollect 遺失或無效，不能載入一般抽樣計劃。'; return }
+  const epoch = editorEpoch
+  planParameterLoading.value = true
+  try {
+    const parameters = devMock.value
+      ? planNo === 'SP-101'
+        ? [{ parameterNo: 'FREQUENCY', parameterValue: '每 2 小時' }, { parameterNo: 'LOT-QTY', parameterValue: '20' }]
+        : [{ parameterNo: 'FREQUENCY', parameterValue: '每批' }, { parameterNo: 'LOT-QTY', parameterValue: '25' }]
+      : records(await request<PlanParameter[] | ApiEnvelope<PlanParameter>>(`/api/qc/sampling-plans/${encodeURIComponent(planNo)}/parameters?issueState=2&componentCollect=${componentCollect}`))
+    if (epoch === editorEpoch && editorMode.value && editorDraft.value.planNo.trim() === planNo && editorItem.value?.componentCollect === componentCollect) editorDraft.value.parameters = parameters
+  } catch (reason) {
+    if (epoch === editorEpoch) error.value = reason instanceof Error ? reason.message : '讀取抽樣計畫參數失敗。'
+  } finally { if (epoch === editorEpoch) planParameterLoading.value = false }
 }
-function clearPlan(): void { editorDraft.value.planNo = ''; editorDraft.value.parameters = [] }
+function clearPlan(): void { if (!operationBusy.value) { editorDraft.value.planNo = ''; editorDraft.value.parameters = [] } }
 function factorValue(factorNo: string): string { return editorDraft.value.factorValues[factorNo] ?? '' }
-function updateFactorValue(factorNo: string, value: string): void { editorDraft.value.factorValues[factorNo] = value }
-function addPlanParameter(): void { editorDraft.value.parameters.push({ parameterNo: '', parameterValue: '' }) }
-function formatDate(value: string): string { return value || '—' }
+function updateFactorValue(factorNo: string, value: string): void { if (!operationBusy.value) editorDraft.value.factorValues[factorNo] = value }
+function addPlanParameter(): void { if (!operationBusy.value) editorDraft.value.parameters.push({ parameterNo: '', parameterValue: '' }) }
+function formatDate(value: string | null): string { return value || '—' }
 
 onMounted(() => { void loadPage() })
 </script>
@@ -583,7 +672,7 @@ onMounted(() => { void loadPage() })
   <main class="qc-chart-page">
     <div class="qc-chart-heading">
       <div><h1>管制圖內容</h1><span class="qc-chart-caption">QC Chart Basis　｜　QC301</span></div>
-      <button class="qc-button" @click="emit('close')">關閉</button>
+      <button class="qc-button" :disabled="contextLocked" @click="closePage">關閉</button>
     </div>
 
     <div v-if="devMock" class="qc-chart-dev-note">DEV 假資料模式：所有新增、修改、簽核、刪除及規則操作只在本頁記憶體中模擬。</div>
@@ -606,7 +695,7 @@ onMounted(() => { void loadPage() })
     </section>
 
     <section class="qc-status-bar" aria-label="管制圖狀態篩選">
-      <label v-for="filter in stateFilters" :key="filter.value" class="qc-radio"><input type="radio" name="qc-chart-state" :checked="issueState === filter.value" @change="setIssueFilter(filter.value)"><span>{{ filter.label }}</span></label>
+      <label v-for="filter in stateFilters" :key="filter.value" class="qc-radio"><input type="radio" name="qc-chart-state" :disabled="contextLocked" :checked="issueState === filter.value" @change="setIssueFilter(filter.value)"><span>{{ filter.label }}</span></label>
       <span class="qc-current-item">目前項目：<b>{{ activeQcItem?.qcItemNo || '未選擇' }}</b>　{{ activeQcItem?.qcItemName }}</span>
     </section>
 
@@ -647,29 +736,29 @@ onMounted(() => { void loadPage() })
       </div>
 
       <aside class="qc-actions">
-        <button class="qc-button primary" :disabled="!activeQcItem || busy" @click="openEditor('ADD')">新增 (A)</button>
-        <button class="qc-button" :disabled="!activeBasis || busy" @click="openEditor('EDIT')">修改 (E)</button>
-        <button class="qc-button" :disabled="!activeBasis || busy" @click="deleteBasis">刪除 (D)</button>
-        <button class="qc-button" :disabled="!activeBasis || busy" @click="openEditor('COPY')">複製 (C)</button>
-        <button class="qc-button" :disabled="!activeBasis || busy" @click="approveBasis">核准</button>
-        <button class="qc-button" :disabled="!activeBasis || busy" @click="disapproveBasis">取消核准</button>
-        <button class="qc-button" :disabled="!activeBasis || busy || activeQcItem?.chartType === -1 || activeQcItem?.chartType === null" @click="openRuleEditor">Rule (R)</button>
-        <button class="qc-button" :disabled="!activeQcItem || busy" @click="openCopyDialog">Copy2</button>
+        <button class="qc-button primary" :disabled="!activeQcItem || contextLocked" @click="openEditor('ADD')">新增 (A)</button>
+        <button class="qc-button" :disabled="activeBasis?.issueState !== 0 || contextLocked" @click="openEditor('EDIT')">修改 (E)</button>
+        <button class="qc-button" :disabled="!activeBasis || (activeBasis.issueState !== 0 && activeBasis.issueState !== 2 && activeBasis.issueState !== -1) || contextLocked" @click="deleteBasis">刪除 (D)</button>
+        <button class="qc-button" :disabled="!activeBasis || contextLocked" @click="openEditor('COPY')">複製 (C)</button>
+        <button class="qc-button" :disabled="activeBasis?.issueState !== 0 || contextLocked" @click="approveBasis">核准</button>
+        <button class="qc-button" :disabled="!activeBasis || (activeBasis.issueState !== 2 && activeBasis.issueState !== -1) || contextLocked" @click="disapproveBasis">取消核准</button>
+        <button class="qc-button" :disabled="activeBasis?.issueState !== 0 || contextLocked || activeQcItem?.chartType === -1 || activeQcItem?.chartType === null" @click="openRuleEditor">Rule (R)</button>
+        <button class="qc-button" :disabled="!activeQcItem || contextLocked" @click="openCopyDialog">Copy2</button>
         <div class="qc-action-spacer"></div>
-        <button class="qc-button" @click="emit('close')">關閉 (X)</button>
+        <button class="qc-button" :disabled="contextLocked" @click="closePage">關閉 (X)</button>
       </aside>
     </div>
 
     <section v-if="auditEntries.length && devMock" class="qc-audit-preview"><b>DEV 操作記錄</b><span v-for="entry in auditEntries.slice(0, 3)" :key="entry">{{ entry }}</span></section>
 
-    <div v-if="editorMode" class="qc-modal-backdrop" @click.self="editorMode = null">
+    <div v-if="editorMode" class="qc-modal-backdrop" @click.self="closeEditor">
       <section class="qc-modal qc-editor-modal" role="dialog" aria-modal="true" :aria-label="`QC Chart Basis ${editorMode}`">
-        <header class="qc-modal-heading"><div><h2>QC Chart Basis Define ({{ editorMode }})</h2><small>依 WinForms frmQCChartBasisDef 欄位與圖表規格設定</small></div><button class="qc-icon-close" aria-label="關閉" @click="editorMode = null">×</button></header>
+        <header class="qc-modal-heading"><div><h2>QC Chart Basis Define ({{ editorMode }})</h2><small>依 WinForms frmQCChartBasisDef 欄位與圖表規格設定</small></div><button class="qc-icon-close" aria-label="關閉" :disabled="operationBusy" @click="closeEditor">×</button></header>
         <div class="qc-modal-scroll">
-          <fieldset class="qc-fieldset"><legend>QC Chart Basis</legend>
+          <fieldset class="qc-fieldset" :disabled="operationBusy"><legend>QC Chart Basis</legend>
             <div class="qc-form-grid">
               <label>QCItemNo<input v-model="editorDraft.qcItemNo" readonly></label><label>QCItemName<input v-model="editorDraft.qcItemName" readonly></label>
-              <label>QC Chart Serial No<input :value="editorDraft.factorSerial || '新增時由系統產生'" readonly></label><label>Chart Type<input :value="chartTypeLabel(activeQcItem?.chartType ?? null)" readonly></label>
+              <label>QC Chart Serial No<input :value="editorDraft.factorSerial || '新增時由系統產生'" readonly></label><label>Chart Type<input :value="chartTypeLabel(editorItem?.chartType ?? null)" readonly></label>
               <label>SampleSize <em>*</em><input v-model.number="editorDraft.sampleSize" type="number" min="1" class="required-field"></label><label>KeyNode<select v-model="editorDraft.keyNode" class="required-field"><option value="N">N</option><option value="Y">Y</option></select></label>
               <label>ChartTitle<input v-model="editorDraft.chartTitle"></label><label>Unit<input v-model="editorDraft.chartUnit"></label>
               <label>Sponsor<input v-model="editorDraft.sponsor"></label><label>Plan No<div class="qc-input-action"><select :value="editorDraft.planNo" class="required-field" @change="setPlanNo(($event.target as HTMLSelectElement).value)"><option value="">— 請選擇 —</option><option v-for="plan in planOptions" :key="plan.planNo" :value="plan.planNo">{{ plan.planNo }} {{ plan.planName }}</option><option v-if="editorDraft.planNo && !planOptions.some(plan => plan.planNo === editorDraft.planNo)" :value="editorDraft.planNo">{{ editorDraft.planNo }}（目前資料）</option></select><button class="qc-button compact" @click="getPlanParameters">...</button></div><span v-if="planLookupNotice" class="qc-spec-note" role="status">{{ planLookupNotice }}</span></label>
@@ -677,7 +766,7 @@ onMounted(() => { void loadPage() })
             </div>
             <div class="qc-subform-heading"><b>Factor</b><span>FactorOnLine 要因值；黃色欄位為 FactorSpec 規格要因</span></div>
             <div class="qc-table-scroll qc-factor-scroll"><table class="qc-table"><thead><tr><th>FactorNo</th><th>FactorName</th><th>Value</th><th>ParameterType</th></tr></thead><tbody>
-              <tr v-for="factor in activeQcItem?.factors ?? []" :key="factor.factorNo"><td>{{ factor.factorNo }}</td><td>{{ factor.parameterName }}</td><td><input :value="factorValue(factor.factorNo)" :class="{ 'required-field': factor.factorSpec }" @input="updateFactorValue(factor.factorNo, ($event.target as HTMLInputElement).value)"></td><td>{{ factor.parameterType === 2 ? '自由輸入' : '選項' }}</td></tr>
+              <tr v-for="factor in editorItem?.factors ?? []" :key="factor.factorNo"><td>{{ factor.factorNo }}</td><td>{{ factor.parameterName }}</td><td><input :value="factorValue(factor.factorNo)" :class="{ 'required-field': factor.factorSpec }" @input="updateFactorValue(factor.factorNo, ($event.target as HTMLInputElement).value)"></td><td>{{ factor.parameterType === 2 ? '自由輸入' : '選項' }}</td></tr>
             </tbody></table></div>
             <div class="qc-subform-heading"><b>Sampling Plan Parameter</b><span>PlanNo 綁定的參數值</span></div>
             <div class="qc-table-scroll qc-param-scroll"><table class="qc-table"><thead><tr><th>ParameterNo</th><th>ParameterValue</th></tr></thead><tbody>
@@ -686,50 +775,51 @@ onMounted(() => { void loadPage() })
             <div class="qc-inline-actions"><button class="qc-button compact" @click="getPlanParameters">Get Plan Parameter</button><button class="qc-button compact" @click="clearPlan">Clear Plan</button><button class="qc-button compact" @click="addPlanParameter">新增參數列</button></div>
           </fieldset>
 
-          <fieldset class="qc-fieldset"><legend>QC Chart Detail</legend>
-            <p class="qc-spec-note">Specification Type：{{ specLineTypes[activeQcItem?.specLineType ?? 0] }}；黃色欄位為必填規格限值。各管制圖的控制界限及 Y 軸可分別設定。</p>
+          <fieldset class="qc-fieldset" :disabled="operationBusy"><legend>QC Chart Detail</legend>
+            <p class="qc-spec-note">Specification Type：{{ specLineTypes[editorItem?.specLineType ?? 0] }}；黃色欄位為必填規格限值。各管制圖的控制界限及 Y 軸可分別設定。</p>
             <div v-for="detail in editorDraft.details" :key="detail.spcId" class="qc-limit-block">
               <h3>{{ detail.chartName }} <small>SPCID {{ detail.spcId }}</small></h3>
               <div class="qc-limit-grid">
-                <label>US<input v-model="detail.us" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null" :class="{ 'required-field': detail.spcId === 0 && activeQcItem?.chartType !== -1 && activeQcItem?.specLineType !== 2 }"></label>
-                <label>CS<input v-model="detail.cs" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null"></label>
-                <label>LS<input v-model="detail.ls" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null" :class="{ 'required-field': detail.spcId === 0 && activeQcItem?.chartType !== -1 && activeQcItem?.specLineType !== 1 }"></label>
-                <label>UCL<input v-model="detail.ucl" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null"></label><label>CL<input v-model="detail.cl" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null"></label><label>LCL<input v-model="detail.lcl" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null"></label>
-                <label v-if="detail.spcId === 0">Target<input v-model="detail.target" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null"></label><label v-if="detail.spcId === 0">Cpk_Goal<input v-model="detail.cpkGoal" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null"></label>
-                <label>YAxisFrom<input v-model="detail.yAxisFrom" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null"></label><label>YAxisTo<input v-model="detail.yAxisTo" :disabled="activeQcItem?.chartType === -1 || activeQcItem?.chartType === null"></label>
+                <label>US<input v-model="detail.us" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null" :class="{ 'required-field': detail.spcId === 0 && editorItem?.chartType !== -1 && editorItem?.specLineType !== 2 }"></label>
+                <label>CS<input v-model="detail.cs" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null"></label>
+                <label>LS<input v-model="detail.ls" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null" :class="{ 'required-field': detail.spcId === 0 && editorItem?.chartType !== -1 && editorItem?.specLineType !== 1 }"></label>
+                <label>UCL<input v-model="detail.ucl" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null"></label><label>CL<input v-model="detail.cl" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null"></label><label>LCL<input v-model="detail.lcl" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null"></label>
+                <label v-if="detail.spcId === 0">Target<input v-model="detail.target" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null"></label><label v-if="detail.spcId === 0">Cpk_Goal<input v-model="detail.cpkGoal" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null"></label>
+                <label>YAxisFrom<input v-model="detail.yAxisFrom" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null"></label><label>YAxisTo<input v-model="detail.yAxisTo" :disabled="editorItem?.chartType === -1 || editorItem?.chartType === null"></label>
               </div>
             </div>
           </fieldset>
         </div>
-        <footer class="qc-modal-footer"><span v-if="error" class="qc-modal-error">{{ error }}</span><div class="qc-footer-buttons"><button class="qc-button primary" :disabled="busy" @click="persistEditor(true)">確定</button><button class="qc-button" :disabled="busy" @click="editorMode = null">關閉</button><button class="qc-button" :disabled="busy" @click="persistEditor(false)">套用</button></div></footer>
+        <footer class="qc-modal-footer"><span v-if="error" class="qc-modal-error">{{ error }}</span><div class="qc-footer-buttons"><button class="qc-button primary" :disabled="operationBusy" @click="persistEditor(true)">確定</button><button class="qc-button" :disabled="operationBusy" @click="closeEditor">關閉</button><button class="qc-button" :disabled="operationBusy" @click="persistEditor(false)">套用</button></div></footer>
       </section>
     </div>
 
     <div v-if="ruleEditorOpen" class="qc-modal-backdrop" @click.self="closeRuleEditor">
       <section class="qc-modal qc-rule-modal" role="dialog" aria-modal="true" aria-label="QC Chart Rule Define">
-        <header class="qc-modal-heading"><div><h2>QC Chart Rule</h2><small>{{ activeBasis?.factorSerial }}　{{ activeBasis?.chartTitle }}</small></div><button class="qc-icon-close" aria-label="關閉" :disabled="ruleSaving" @click="closeRuleEditor">×</button></header>
+        <header class="qc-modal-heading"><div><h2>QC Chart Rule</h2><small>{{ ruleSource?.factorSerial }}　{{ ruleSource?.chartTitle }}</small></div><button class="qc-icon-close" aria-label="關閉" :disabled="ruleSaving" @click="closeRuleEditor">×</button></header>
         <p v-if="ruleOptionsLoading" class="qc-chart-message" role="status">讀取已核准法則中…</p>
         <p v-if="ruleLookupError" class="qc-chart-message error" role="alert">{{ ruleLookupError }}</p>
         <p v-else-if="ruleOptionsLoaded && !ruleOptions.length" class="qc-chart-message" role="status">目前沒有已核准法則；既有對應可移除。</p>
         <p v-if="error" class="qc-chart-message error" role="alert">{{ error }}</p>
         <div class="qc-table-scroll"><table class="qc-table"><thead><tr><th>SPCID</th><th>Chart Type</th><th>RuleNo</th><th>RuleName</th><th>Action</th><th></th></tr></thead><tbody>
-          <tr v-for="(rule, index) in ruleDraft" :key="index"><td><select v-model.number="rule.spcId" :disabled="ruleOptionsLoading || ruleSaving" @change="rule.chartName = activeChartName(rule.spcId)"><option v-for="detail in activeBasis?.details ?? []" :key="detail.spcId" :value="detail.spcId">{{ detail.spcId }} - {{ detail.chartName }}</option></select></td><td>{{ rule.chartName }}</td><td><select :value="rule.ruleNo" :disabled="ruleOptionsLoading || ruleSaving || !ruleOptionsLoaded" @change="setRuleNo(rule, ($event.target as HTMLSelectElement).value)"><option value="">選擇 RuleNo</option><option v-if="rule.ruleNo && !ruleOption(rule.ruleNo)" :value="rule.ruleNo" disabled>{{ rule.ruleNo }}（{{ ruleOptionsLoaded ? '未列入已核准候選' : '目前對應' }}）</option><option v-for="option in ruleOptions" :key="option.ruleNo" :value="option.ruleNo">{{ option.ruleNo }}　{{ option.ruleName }}</option></select></td><td>{{ rule.ruleName || '—' }}</td><td><select v-model.number="rule.action" :disabled="ruleOptionsLoading || ruleSaving"><option :value="0">Warning</option><option :value="1">Wait</option><option :value="2">Hold</option><option :value="3">Alert</option></select></td><td><button class="qc-button compact danger" :disabled="ruleOptionsLoading || ruleSaving" @click="ruleDraft.splice(index, 1)">刪除</button></td></tr>
+          <tr v-for="(rule, index) in ruleDraft" :key="index"><td><select v-model.number="rule.spcId" :disabled="ruleOptionsLoading || ruleSaving" @change="rule.chartName = activeChartName(rule.spcId)"><option v-for="detail in ruleSource?.details ?? []" :key="detail.spcId" :value="detail.spcId">{{ detail.spcId }} - {{ detail.chartName }}</option></select></td><td>{{ rule.chartName }}</td><td><select :value="rule.ruleNo" :disabled="ruleOptionsLoading || ruleSaving || !ruleOptionsLoaded" @change="setRuleNo(rule, ($event.target as HTMLSelectElement).value)"><option value="">選擇 RuleNo</option><option v-if="rule.ruleNo && !ruleOption(rule.ruleNo)" :value="rule.ruleNo" disabled>{{ rule.ruleNo }}（{{ ruleOptionsLoaded ? '未列入已核准候選' : '目前對應' }}）</option><option v-for="option in ruleOptions" :key="option.ruleNo" :value="option.ruleNo">{{ option.ruleNo }}　{{ option.ruleName }}</option></select></td><td>{{ rule.ruleName || '—' }}</td><td><select v-model.number="rule.action" :disabled="ruleOptionsLoading || ruleSaving"><option :value="0">Warning</option><option :value="1">Wait</option><option :value="2">Hold</option><option :value="3">Alert</option></select></td><td><button class="qc-button compact danger" :disabled="ruleOptionsLoading || ruleSaving" @click="ruleDraft.splice(index, 1)">刪除</button></td></tr>
           <tr v-if="!ruleDraft.length"><td colspan="6" class="qc-empty">目前沒有已設定的 Rule</td></tr>
         </tbody></table></div>
         <footer class="qc-modal-footer"><div class="qc-footer-buttons"><button class="qc-button" :disabled="ruleOptionsLoading || ruleSaving || !ruleOptionsLoaded || !ruleOptions.length" @click="addRule">新增</button><button v-if="ruleLookupError" class="qc-button" :disabled="ruleOptionsLoading || ruleSaving" @click="loadRuleOptions">重新載入法則</button></div><div class="qc-footer-buttons"><button class="qc-button primary" :disabled="ruleOptionsLoading || ruleSaving || !ruleOptionsLoaded" @click="saveRules">{{ ruleSaving ? '儲存中…' : '確定' }}</button><button class="qc-button" :disabled="ruleSaving" @click="closeRuleEditor">關閉</button></div></footer>
       </section>
     </div>
 
-    <div v-if="copyDialogOpen" class="qc-modal-backdrop" @click.self="copyDialogOpen = false">
+    <div v-if="copyDialogOpen" class="qc-modal-backdrop" @click.self="closeCopyDialog">
       <section class="qc-modal qc-copy-modal" role="dialog" aria-modal="true" aria-label="Copy QC Chart Basis">
-        <header class="qc-modal-heading"><div><h2>Copy QC Chart Basis</h2><small>複製來源項目管制圖至另一個 QC Item</small></div><button class="qc-icon-close" aria-label="關閉" @click="copyDialogOpen = false">×</button></header>
+        <header class="qc-modal-heading"><div><h2>Copy QC Chart Basis</h2><small>複製來源項目管制圖至另一個 QC Item</small></div><button class="qc-icon-close" aria-label="關閉" :disabled="operationBusy" @click="closeCopyDialog">×</button></header>
         <div class="qc-copy-content">
-          <fieldset class="qc-fieldset"><legend>From QCItem</legend><div class="qc-copy-row"><label>QCItem<input :value="`${activeQcItem?.qcItemNo ?? ''}　${activeQcItem?.qcItemName ?? ''}`" readonly></label></div><label>Copy<select v-model="copyState" class="required-field"><option value="both">UNFROZEN &amp; ACTIVE</option><option value="unfrozen">UNFROZEN</option><option value="active">ACTIVE</option></select></label><p v-if="devMock">符合目前條件的來源筆數：{{ sourceCopyCount }}</p></fieldset>
-          <fieldset class="qc-fieldset"><legend>To QCItem</legend><label>QCItem<select v-model="copyTargetNo" class="required-field"><option value="">— 請選擇 —</option><option v-for="item in itemRows.filter(row => row.qcItemNo !== selectedQcItemNo)" :key="item.qcItemNo" :value="item.qcItemNo">{{ item.qcItemNo }}　{{ item.qcItemName }}</option></select></label></fieldset>
+          <fieldset class="qc-fieldset" :disabled="operationBusy"><legend>From QCItem</legend><div class="qc-copy-row"><label>QCItem<input :value="`${copySource?.qcItemNo ?? ''}　${copySource?.qcItemName ?? ''}`" readonly></label></div><label>Copy<select v-model="copyState" class="required-field"><option value="both">UNFROZEN &amp; ACTIVE</option><option value="unfrozen">UNFROZEN</option><option value="active">ACTIVE</option></select></label><p v-if="devMock">符合目前條件的來源筆數：{{ sourceCopyCount }}</p></fieldset>
+          <fieldset class="qc-fieldset" :disabled="operationBusy"><legend>To QCItem</legend><label>QCItem<select v-model="copyTargetNo" class="required-field"><option value="">— 請選擇 —</option><option v-for="item in itemRows.filter(row => row.qcItemNo !== copySource?.qcItemNo)" :key="item.qcItemNo" :value="item.qcItemNo">{{ item.qcItemNo }}　{{ item.qcItemName }}</option></select></label></fieldset>
         </div>
-        <footer class="qc-modal-footer"><span v-if="error" class="qc-modal-error">{{ error }}</span><div class="qc-footer-buttons"><button class="qc-button primary" @click="copyToItem">確定</button><button class="qc-button" @click="copyDialogOpen = false">關閉</button></div></footer>
+        <footer class="qc-modal-footer"><span v-if="error" class="qc-modal-error">{{ error }}</span><div class="qc-footer-buttons"><button class="qc-button primary" :disabled="operationBusy" @click="copyToItem">確定</button><button class="qc-button" :disabled="operationBusy" @click="closeCopyDialog">關閉</button></div></footer>
       </section>
     </div>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </main>
 </template>
 

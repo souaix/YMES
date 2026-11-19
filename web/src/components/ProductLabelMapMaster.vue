@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { loadDevelopmentLabels } from './labelDataDevelopment'
-import { relationKey, rowsKey, seedRelations, seedRows } from './productBasisDevelopment'
+import { loadDevelopmentProductRelations, productKey, rowsKey, seedRows, type ProductRelation } from './productBasisDevelopment'
 
 type Mapping = { productNo: string; customerNo: string; opNo: string; labelSource: number; labelType: string; labelNo: string }
 type MappingRow = Mapping & { creator: string; createDate: string; reviser?: string; reviseDate?: string; dataStamp: number; lastActionUserNo?: string; lastActionDate?: string }
@@ -22,8 +22,12 @@ function read<T>(key: string, fallback: T): T {
 }
 
 const data = ref(read(storageKey, seed))
-const products = props.developmentPreview ? read(rowsKey, seedRows).filter(row => Number(row.issueState) === 2 && Number(row.curVersion) === 1) : []
-const relations = props.developmentPreview ? read(relationKey, seedRelations) : {}
+const productRows = props.developmentPreview ? read(rowsKey, seedRows) : []
+const products = productRows.filter(row => Number(row.issueState) === 2 && Number(row.curVersion) === 1)
+const relationLoadError = ref('')
+let relations: Record<string, ProductRelation> = {}
+try { if (props.developmentPreview) relations = loadDevelopmentProductRelations(productRows) }
+catch (cause) { relationLoadError.value = cause instanceof Error ? cause.message : 'DEV 產品關聯無法載入。' }
 const labels = props.developmentPreview ? loadDevelopmentLabels() : []
 const user = computed(() => props.currentUserNo || 'DEV001')
 const sources = [1, 2, 3]
@@ -54,9 +58,10 @@ const batchRows = computed(() => data.value.rows.filter(row => row.labelSource =
 function productVersion(productNo: string): string { return String(products.find(row => row.productNo === productNo)?.productVersion ?? '') }
 
 function operations(productNo: string): string[] {
+  if (relationLoadError.value) return []
   const version = productVersion(productNo)
   if (!version) return []
-  const assigned = relations[`${productNo}|${version}`]?.parameters?.ops ?? []
+  const assigned = relations[productKey(productNo, version)]?.parameters?.ops ?? []
   return assigned.length ? [...new Set(assigned.map(row => String(row.opNo)).filter(Boolean))]
     : productNo === 'DEV-PRD-1002' ? opCatalog : []
 }
@@ -140,6 +145,7 @@ const titles = { productNo: 'ProductNo', customerNo: 'CustomerNo', opNo: 'OPNo',
 
 <template>
   <main class="map-master">
+    <p v-if="relationLoadError" role="alert" class="error">{{ relationLoadError }}</p>
     <header><h1>產品標籤對應設定</h1><button @click="emit('close')">關閉</button></header>
     <p v-if="!developmentPreview">標籤對應等待正式 API 接入。</p>
     <template v-else>

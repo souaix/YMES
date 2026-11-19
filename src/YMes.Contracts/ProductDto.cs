@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace MES.Contracts;
 
@@ -17,18 +18,24 @@ public sealed record ProductDto
     public string SerialTypeNoComp { get; init; } = "";
     public decimal LotStdQty { get; init; }
     public string ErpNo { get; init; } = "";
-    public int IssueState { get; init; }
+    public string? SapPlnal { get; init; }
+    public int? IssueState { get; init; }
     public bool CurrentVersion { get; init; }
-    public int DataStamp { get; init; }
-    public DateTime CreatedAt { get; init; }
+    public decimal? DataStamp { get; init; }
+    public string? Creator { get; init; }
+    public DateTime? CreatedAt { get; init; }
+    public string? Reviser { get; init; }
+    public DateTime? RevisedAt { get; init; }
 }
 
-public sealed class ProductWriteRequest
+public class ProductWriteRequest
 {
-    [Required, StringLength(40)] public string ProductNo { get; set; } = "";
-    [Required, StringLength(10)] public string ProductVersion { get; set; } = "01";
+    [Required, StringLength(50)] public string ProductNo { get; set; } = "";
+    [Required, StringLength(5)] public string ProductVersion { get; set; } = "01";
     [Required, StringLength(200)] public string ProductName { get; set; } = "";
-    [Required, StringLength(40)] public string ProductType { get; set; } = "";
+    // The server validates new/changed choices; unchanged legacy empty values
+    // remain editable without turning them into a new selectable type.
+    [StringLength(50)] public string ProductType { get; set; } = "";
     [StringLength(40)] public string UnitType { get; set; } = "";
     [Required, StringLength(40)] public string UnitNo { get; set; } = "";
     [StringLength(1000)] public string Description { get; set; } = "";
@@ -38,7 +45,24 @@ public sealed class ProductWriteRequest
     [StringLength(40)] public string SerialTypeNoComp { get; set; } = "";
     [Range(0, 999999999)] public decimal LotStdQty { get; set; }
     [StringLength(40)] public string ErpNo { get; set; } = "";
-    public int DataStamp { get; set; }
+    // Omitted/null preserves the existing value on update; creation stays NULL.
+    [StringLength(2)] public string? SapPlnal { get; set; }
+    public virtual int? IssueState { get; set; }
+    public virtual decimal? DataStamp { get; set; }
+}
+
+// Creation has no expected version. Updates must distinguish an omitted token
+// from an explicitly supplied NULL source value.
+public sealed class ProductUpdateRequest : ProductWriteRequest
+{
+    [JsonRequired] public override int? IssueState { get; set; }
+    [JsonRequired] public override decimal? DataStamp { get; set; }
+}
+
+public sealed class ProductCommandRequest
+{
+    [JsonRequired] public int? IssueState { get; set; }
+    [JsonRequired] public decimal? DataStamp { get; set; }
 }
 
 public sealed record ProductProcessDto(

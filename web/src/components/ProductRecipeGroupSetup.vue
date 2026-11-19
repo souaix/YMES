@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { loadDevelopmentRecipeGroups, type RecipeGroup } from './recipeGroupDevelopment'
+import { loadDevelopmentRecipeGroups } from './recipeGroupDevelopment'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
-type RecipeGroupRow = Record<string, any>
+type RecipeGroupRow = { productNo: string; productVersion: string; recipeGroup: string }
+type RecipeCatalogRow = { recipeGroup: string; recipeVersion: number; description: string | null; issueState: number; curVersion: number }
+type InputRow = Record<string, unknown>
 
-const browserWindow = globalThis.window
-const props = defineProps<{
-  product: RecipeGroupRow
-  recipeGroups: RecipeGroupRow[] | null
+const props = withDefaults(defineProps<{
+  product: InputRow
+  recipeGroups: InputRow[] | null
+  apiBaseUrl?: string
   developmentPreview: boolean
-}>()
+}>(), { apiBaseUrl: '' })
 const emit = defineEmits<{ save: [rows: RecipeGroupRow[]]; close: [] }>()
-
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
+const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const working = ref<RecipeGroupRow[]>([])
+const catalog = ref<RecipeCatalogRow[]>([])
 const selectedKeys = ref<string[]>([])
 const activeKey = ref('')
 const definitionOpen = ref(false)
@@ -22,108 +28,164 @@ const dirty = ref(false)
 const appliedRecipeGroup = ref('')
 const error = ref('')
 const notice = ref('')
-const readOnly = computed(() => !props.developmentPreview)
+const loading = ref(false)
+const lookupLoading = ref(false)
+const busy = ref(false)
 const productNo = computed(() => String(props.product.productNo ?? props.product.ProductNo ?? ''))
 const productVersion = computed(() => String(props.product.productVersion ?? props.product.ProductVersion ?? ''))
+const assignmentPath = computed(() => 'products/' + encodeURIComponent(productNo.value) + '/versions/' + encodeURIComponent(productVersion.value) + '/recipe-groups')
 
-// Only current, approved product recipe groups are selectable by the legacy Add dialog.
-const approvedCurrentCatalog = computed(() => props.developmentPreview
-  ? loadDevelopmentRecipeGroups().filter(row => row.issueState === 2 && row.curVersion === 1) : [])
-const displayRows = computed(() => working.value.map(row => ({
-  ...row,
-  key: String(row.recipeGroup ?? row.RecipeGroup ?? ''),
-  recipeGroup: String(row.recipeGroup ?? row.RecipeGroup ?? ''),
-})))
+const approvedCurrentCatalog = computed(() => catalog.value.filter(row => row.issueState === 2 && row.curVersion === 1))
+const displayRows = computed(() => working.value.map(row => ({ ...row, key: row.recipeGroup })))
 const selectedRows = computed(() => displayRows.value.filter(row => selectedKeys.value.includes(row.key)))
-const canApply = computed(() => !readOnly.value && dirty.value && Boolean(draftRecipeGroup.value))
+const canApply = computed(() => !busy.value && !loading.value && dirty.value && Boolean(draftRecipeGroup.value))
+let listRequest = 0
 
 watch(() => props.recipeGroups, value => {
-  working.value = clone(Array.isArray(value) ? value : [])
-  if (!working.value.some(row => groupKey(row) === activeKey.value)) activeKey.value = working.value[0] ? groupKey(working.value[0]) : ''
-  selectedKeys.value = selectedKeys.value.filter(key => working.value.some(row => groupKey(row) === key))
+  if (mock.value) replaceRows(normalizeRows(value))
 }, { immediate: true, deep: true })
+watch([productNo, productVersion, mock], async () => {
+  error.value = ''; notice.value = ''; definitionOpen.value = false; lookupOpen.value = false
+  replaceRows([])
+  try { await loadAssignments() }
+  catch (cause) { error.value = message(cause, '載入產品 RecipeGroup 失敗。') }
+}, { immediate: true })
 
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
-function groupKey(row: RecipeGroupRow): string { return String(row.recipeGroup ?? row.RecipeGroup ?? '') }
-function persist(): void {
-  emit('save', clone(working.value))
-  notice.value = 'DEV 產品 RecipeGroup 假資料已儲存。'
+function normalizeRows(value: InputRow[] | null): RecipeGroupRow[] {
+  return (Array.isArray(value) ? value : []).map(row => ({
+    productNo: String(row.productNo ?? row.ProductNo ?? productNo.value),
+    productVersion: String(row.productVersion ?? row.ProductVersion ?? productVersion.value),
+    recipeGroup: String(row.recipeGroup ?? row.RecipeGroup ?? ''),
+  }))
 }
+function message(cause: unknown, fallback: string): string { return cause instanceof Error ? cause.message : fallback }
+async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  if (!props.apiBaseUrl.trim()) throw new Error('尚未設定 Recipe Group 服務位址。')
+  const headers = new Headers(init.headers)
+  if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
+  const response = await fetch(props.apiBaseUrl.replace(/\/+$/, '') + '/api/' + path, { credentials: 'include', ...init, headers })
+  if (response.status === 401) {
+    window.location.assign(import.meta.env.BASE_URL + 'login')
+    throw new Error('登入狀態已逾期，請重新登入。')
+  }
+  if (!response.ok) {
+    const raw = await response.text()
+    let detail = raw
+    try {
+      const body: unknown = JSON.parse(raw)
+      if (body && typeof body === 'object') {
+        const problem = body as Record<string, unknown>
+        detail = [problem.detail, problem.message, problem.title].find((value): value is string => typeof value === 'string' && value.trim().length > 0) || raw
+      }
+    } catch { /* Non-JSON responses retain their original text. */ }
+    throw new Error(detail || 'API 回應錯誤 (' + response.status + ')')
+  }
+  return response.status === 204 ? undefined as T : await response.json() as T
+}
+function replaceRows(rows: RecipeGroupRow[], focus = ''): void {
+  working.value = clone(rows)
+  if (focus && rows.some(row => row.recipeGroup === focus)) { activeKey.value = focus; selectedKeys.value = [focus] }
+  else {
+    if (!rows.some(row => row.recipeGroup === activeKey.value)) activeKey.value = rows[0]?.recipeGroup ?? ''
+    selectedKeys.value = selectedKeys.value.filter(key => rows.some(row => row.recipeGroup === key))
+  }
+}
+async function loadAssignments(focus = ''): Promise<void> {
+  const requestId = ++listRequest
+  loading.value = true
+  try {
+    const rows = mock.value ? normalizeRows(props.recipeGroups) : await api<RecipeGroupRow[]>(assignmentPath.value)
+    if (requestId === listRequest) replaceRows(rows, focus)
+  } finally { if (requestId === listRequest) loading.value = false }
+}
+function persistDevelopment(): void { emit('save', clone(working.value)) }
 function selectRow(row: RecipeGroupRow, event: MouseEvent): void {
-  const key = row.key
+  if (busy.value) return
+  const key = row.recipeGroup
   activeKey.value = key
-  if (event.ctrlKey || event.metaKey) {
-    selectedKeys.value = selectedKeys.value.includes(key) ? selectedKeys.value.filter(item => item !== key) : [...selectedKeys.value, key]
-  } else if (event.shiftKey && selectedKeys.value.length) {
+  if (event.ctrlKey || event.metaKey) selectedKeys.value = selectedKeys.value.includes(key) ? selectedKeys.value.filter(item => item !== key) : [...selectedKeys.value, key]
+  else if (event.shiftKey && selectedKeys.value.length) {
     const keys = displayRows.value.map(item => item.key)
-    const from = keys.indexOf(selectedKeys.value[selectedKeys.value.length - 1])
-    const to = keys.indexOf(key)
+    const from = keys.indexOf(selectedKeys.value[selectedKeys.value.length - 1]); const to = keys.indexOf(key)
     selectedKeys.value = keys.slice(Math.min(from, to), Math.max(from, to) + 1)
   } else selectedKeys.value = [key]
 }
 function openAdd(): void {
-  if (readOnly.value) return
-  error.value = ''
-  notice.value = ''
-  draftRecipeGroup.value = ''
-  dirty.value = false
-  appliedRecipeGroup.value = ''
-  lookupOpen.value = false
-  definitionOpen.value = true
+  if (busy.value || loading.value) return
+  error.value = ''; notice.value = ''; draftRecipeGroup.value = ''; dirty.value = false; appliedRecipeGroup.value = ''
+  lookupOpen.value = false; definitionOpen.value = true
 }
-function chooseRecipeGroup(row: RecipeGroup): void {
-  draftRecipeGroup.value = row.recipeGroup
-  dirty.value = true
-  appliedRecipeGroup.value = ''
-  error.value = ''
-  lookupOpen.value = false
+async function openLookup(): Promise<void> {
+  if (busy.value || lookupLoading.value) return
+  lookupOpen.value = true; lookupLoading.value = true; error.value = ''; catalog.value = []
+  try { catalog.value = mock.value ? clone(loadDevelopmentRecipeGroups()) : await api<RecipeCatalogRow[]>(assignmentPath.value + '/options') }
+  catch (cause) { error.value = message(cause, '載入 RecipeGroup 查找失敗。') }
+  finally { lookupLoading.value = false }
 }
-function saveAssignment(closeAfter: boolean): boolean {
-  if (readOnly.value) return false
+function chooseRecipeGroup(row: RecipeCatalogRow): void {
+  if (busy.value || lookupLoading.value) return
+  draftRecipeGroup.value = row.recipeGroup; dirty.value = true; appliedRecipeGroup.value = ''; error.value = ''; lookupOpen.value = false
+}
+async function saveAssignment(closeAfter: boolean): Promise<void> {
+  if (busy.value || loading.value) return
   const group = draftRecipeGroup.value.trim()
-  if (!group) { error.value = '請選擇 Recipe Group。'; return false }
-  if (!approvedCurrentCatalog.value.some(row => row.recipeGroup === group)) { error.value = 'Recipe Group 必須是已核准的目前版本。'; return false }
-  if (working.value.some(row => groupKey(row) === group)) { error.value = '此產品版本已指派這個 Recipe Group。'; return false }
-  const row = { productNo: productNo.value, productVersion: productVersion.value, recipeGroup: group }
-  working.value = [...working.value, row]
-  activeKey.value = group
-  selectedKeys.value = [group]
-  dirty.value = false
-  appliedRecipeGroup.value = group
-  error.value = ''
-  persist()
-  if (closeAfter) definitionOpen.value = false
-  return true
+  if (!group) { error.value = '請選擇 Recipe Group。'; return }
+  if (!approvedCurrentCatalog.value.some(row => row.recipeGroup === group)) { error.value = 'Recipe Group 必須是已核准的目前版本。'; return }
+  if (working.value.some(row => row.recipeGroup.toUpperCase() === group.toUpperCase())) { error.value = '此產品版本已指派這個 Recipe Group。'; return }
+  busy.value = true; error.value = ''; notice.value = ''
+  try {
+    const saved = mock.value
+      ? { productNo: productNo.value, productVersion: productVersion.value, recipeGroup: group }
+      : await api<RecipeGroupRow>(assignmentPath.value, { method: 'POST', body: JSON.stringify({ recipeGroup: group }) })
+    replaceRows([...working.value, saved], saved.recipeGroup)
+    if (mock.value) persistDevelopment()
+    dirty.value = false; appliedRecipeGroup.value = saved.recipeGroup; draftRecipeGroup.value = saved.recipeGroup
+    notice.value = (mock.value ? 'DEV 假資料：' : '') + '已新增 RecipeGroup ' + saved.recipeGroup + '。'
+    try { if (!mock.value) await loadAssignments(saved.recipeGroup) }
+    catch (cause) { error.value = '新增已完成，但重新載入失敗：' + message(cause, '請稍後重試。') }
+    if (closeAfter) definitionOpen.value = false
+  } catch (cause) { error.value = message(cause, '新增 RecipeGroup 指派失敗。') }
+  finally { busy.value = false }
 }
-function confirmAssignment(): void {
-  if (appliedRecipeGroup.value && appliedRecipeGroup.value === draftRecipeGroup.value) {
-    definitionOpen.value = false
-    return
-  }
-  saveAssignment(true)
+async function confirmAssignment(): Promise<void> {
+  if (busy.value || loading.value) return
+  if (!dirty.value && appliedRecipeGroup.value === draftRecipeGroup.value && appliedRecipeGroup.value) { definitionOpen.value = false; return }
+  await saveAssignment(true)
 }
-function closeDefinition(): void {
-  definitionOpen.value = false
-  lookupOpen.value = false
-  error.value = ''
+async function closeDefinition(): Promise<void> {
+  if (busy.value || (dirty.value && !await requestConfirmation('放棄尚未新增的 RecipeGroup 選擇？'))) return
+  definitionOpen.value = false; lookupOpen.value = false; dirty.value = false; error.value = ''
 }
-function deleteSelected(): void {
-  if (readOnly.value) return
+async function closeWindow(): Promise<void> {
+  if (busy.value || (definitionOpen.value && dirty.value && !await requestConfirmation('放棄尚未新增的 RecipeGroup 選擇並關閉？'))) return
+  emit('close')
+}
+async function deleteSelected(): Promise<void> {
+  if (busy.value || loading.value) return
   const keys = selectedRows.value.length ? selectedRows.value.map(row => row.key) : activeKey.value ? [activeKey.value] : []
   if (!keys.length) { error.value = '請先選取資料。'; return }
-  if (!browserWindow.confirm('確定刪除選取的 ' + keys.length + ' 筆 RecipeGroup 指派？')) return
-  working.value = working.value.filter(row => !keys.includes(groupKey(row)))
-  selectedKeys.value = []
-  activeKey.value = working.value[0] ? groupKey(working.value[0]) : ''
-  error.value = ''
-  persist()
+  if (!await requestConfirmation('確定刪除選取的 ' + keys.length + ' 筆 RecipeGroup 指派？')) return
+  busy.value = true; error.value = ''; notice.value = ''; let completed = 0; let failure = ''
+  try {
+    for (const group of keys) {
+      if (!mock.value) await api<RecipeGroupRow>(assignmentPath.value + '/' + encodeURIComponent(group), { method: 'DELETE' })
+      working.value = working.value.filter(row => row.recipeGroup !== group)
+      if (mock.value) persistDevelopment()
+      completed++
+    }
+  } catch (cause) { failure = message(cause, '刪除 RecipeGroup 指派失敗。') + (completed ? '（前 ' + completed + ' 筆已完成）' : '') }
+  finally {
+    try { if (mock.value) replaceRows(working.value); else await loadAssignments() }
+    catch (cause) { if (!failure) failure = message(cause, '重新載入 RecipeGroup 失敗。') }
+    finally { if (completed) notice.value = '已刪除 ' + completed + ' 筆 RecipeGroup 指派。'; if (failure) error.value = failure; busy.value = false }
+  }
 }
 </script>
 
 <template>
   <section class="prd-recipe-window" role="dialog" aria-modal="true" aria-label="Product Recipe">
-    <header class="prd-recipe-title"><span>Product Recipe</span><button type="button" aria-label="關閉" @click="emit('close')">×</button></header>
-    <p v-if="readOnly" class="prd-recipe-note">Production API 尚未接線；正式資料唯讀。</p>
+    <header class="prd-recipe-title"><span>Product Recipe</span><button type="button" aria-label="關閉" :disabled="busy" @click="closeWindow">×</button></header>
     <p v-if="notice" class="prd-recipe-message">{{ notice }}</p>
     <p v-if="error && !definitionOpen" class="prd-recipe-message is-error">{{ error }}</p>
     <main class="prd-recipe-main">
@@ -132,40 +194,43 @@ function deleteSelected(): void {
           <thead><tr><th>RecipeGroup</th></tr></thead>
           <tbody>
             <tr v-for="row in displayRows" :key="row.key" :class="{ selected: selectedKeys.includes(row.key), active: activeKey === row.key }" @click="selectRow(row, $event)"><td>{{ row.recipeGroup }}</td></tr>
-            <tr v-if="!displayRows.length"><td class="prd-recipe-empty">目前產品版本尚未指派 Recipe Group。</td></tr>
+            <tr v-if="loading"><td class="prd-recipe-empty">載入中…</td></tr>
+            <tr v-else-if="!displayRows.length"><td class="prd-recipe-empty">目前產品版本尚未指派 Recipe Group。</td></tr>
           </tbody>
         </table>
       </div>
       <aside class="prd-recipe-actions">
-        <button class="prd-recipe-button confirm" type="button" :disabled="readOnly" @click="openAdd">ADD (&amp;A)</button>
-        <button class="prd-recipe-button" type="button" :disabled="readOnly || (!selectedKeys.length && !activeKey)" @click="deleteSelected">DEL (&amp;D)</button>
+        <button class="prd-recipe-button confirm" type="button" :disabled="busy || loading" @click="openAdd">ADD (&amp;A)</button>
+        <button class="prd-recipe-button" type="button" :disabled="busy || loading || (!selectedKeys.length && !activeKey)" @click="deleteSelected">DEL (&amp;D)</button>
         <span class="prd-recipe-spacer"></span>
-        <button class="prd-recipe-button" type="button" @click="emit('close')">Close (&amp;X)</button>
+        <button class="prd-recipe-button" type="button" :disabled="busy" @click="closeWindow">Close (&amp;X)</button>
       </aside>
     </main>
 
     <div v-if="definitionOpen" class="prd-recipe-form-backdrop">
       <section class="prd-recipe-definition" role="dialog" aria-modal="true" aria-label="Product Recipe Define">
-        <header class="prd-recipe-title"><span>Product Recipe Define</span><button type="button" aria-label="關閉" @click="closeDefinition">×</button></header>
+        <header class="prd-recipe-title"><span>Product Recipe Define</span><button type="button" aria-label="關閉" :disabled="busy" @click="closeDefinition">×</button></header>
         <fieldset class="prd-recipe-fields">
           <legend>Product Recipe</legend>
           <label for="prd-recipe-group">Recipe Group</label>
           <input id="prd-recipe-group" class="prd-recipe-yellow" :value="draftRecipeGroup" readonly>
-          <button class="prd-recipe-lookup" type="button" @click="lookupOpen = true">...</button>
+          <button class="prd-recipe-lookup" type="button" :disabled="busy || lookupLoading" @click="openLookup">...</button>
         </fieldset>
         <p v-if="error" class="prd-recipe-message is-error prd-recipe-form-error">{{ error }}</p>
         <footer class="prd-recipe-form-actions">
-          <button class="prd-recipe-button confirm" type="button" @click="confirmAssignment">Confirm</button>
-          <button class="prd-recipe-button" type="button" @click="closeDefinition">Close</button>
+          <button class="prd-recipe-button confirm" type="button" :disabled="busy || loading" @click="confirmAssignment">Confirm</button>
+          <button class="prd-recipe-button" type="button" :disabled="busy" @click="closeDefinition">Close</button>
           <button class="prd-recipe-button" type="button" :disabled="!canApply" @click="saveAssignment(false)">Apply</button>
         </footer>
         <div v-if="lookupOpen" class="prd-recipe-lookup-backdrop" @click.self="lookupOpen = false">
           <section class="prd-recipe-lookup-dialog" role="dialog" aria-modal="true" aria-label="選擇 Recipe Group">
             <header><strong>選擇已核准的目前 Recipe Group</strong><button type="button" aria-label="關閉查找" @click="lookupOpen = false">×</button></header>
+            <p v-if="error" class="prd-recipe-message is-error">{{ error }}</p>
             <table><thead><tr><th>RecipeGroup</th><th>Version</th><th>Description</th></tr></thead>
               <tbody>
-                <tr v-for="row in approvedCurrentCatalog" :key="row.recipeGroup" @click="chooseRecipeGroup(row)"><td>{{ row.recipeGroup }}</td><td>{{ row.recipeVersion }}</td><td>{{ row.description }}</td></tr>
-                <tr v-if="!approvedCurrentCatalog.length"><td colspan="3">沒有可選的已核准目前版本。</td></tr>
+                <tr v-for="row in approvedCurrentCatalog" :key="row.recipeGroup + '|' + row.recipeVersion" @click="chooseRecipeGroup(row)"><td>{{ row.recipeGroup }}</td><td>{{ row.recipeVersion }}</td><td>{{ row.description }}</td></tr>
+                <tr v-if="lookupLoading"><td colspan="3">載入中…</td></tr>
+                <tr v-else-if="!approvedCurrentCatalog.length"><td colspan="3">沒有可選的已核准目前版本。</td></tr>
               </tbody>
             </table>
           </section>
@@ -173,6 +238,7 @@ function deleteSelected(): void {
       </section>
     </div>
   </section>
+  <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
 </template>
 
 <style scoped>

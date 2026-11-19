@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { productIdentityKey } from '../utils/productIdentity'
 
 type Row = Record<string, any>
 type TreeLine = { id: string; label: string; kind: 'root' | 'material' | 'product' | 'group'; depth: number; directIndex?: number; node?: Row }
@@ -65,9 +66,9 @@ function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
 function keyOfProduct(productNo: string, version: string): string {
   if (version === '*') {
     const current = props.products.find(row => String(row.productNo) === productNo && Number(row.curVersion) === 1)
-    if (current) return `${productNo}|${current.productVersion}`
+    if (current) return productIdentityKey(productNo, String(current.productVersion))
   }
-  return `${productNo}|${version}`
+  return productIdentityKey(productNo, version)
 }
 function lineKey(index: number, row: Row): string { return `${index}|${String(row.nodeNo)}|${String(row.opNo)}` }
 function percent(value: unknown): string {
@@ -109,7 +110,7 @@ const editorDisabled = computed(() => readOnly.value || !['add', 'edit'].include
 const treeLines = computed<TreeLine[]>(() => {
   const root: TreeLine = { id: 'root', label: `${props.product.productNo}:${props.product.productVersion}`, kind: 'root', depth: 0 }
   const lines: TreeLine[] = [root]
-  const ancestors = new Set([`${props.product.productNo}|${props.product.productVersion}`])
+  const ancestors = new Set([productIdentityKey(String(props.product.productNo), String(props.product.productVersion))])
   const sortedBom = [...workingBom.value].sort((left, right) => Number(right.nodeType) - Number(left.nodeType))
   sortedBom.forEach(node => {
     const index = workingBom.value.indexOf(node)
@@ -129,13 +130,13 @@ const treeLines = computed<TreeLine[]>(() => {
 const approvedProducts = computed(() => props.products.filter(row => Number(row.issueState) === 2))
 const productVersions = computed(() => approvedProducts.value.filter(row => row.productNo === draft.value.nodeNo))
 const lookupOptions = computed(() => lookupField.value === 'ProductNo'
-  ? approvedProducts.value.map(item => ({ key: `${item.productNo}|${item.productVersion}`, label: `${item.productNo} / ${item.productVersion} / ${item.productName}`, row: item }))
+  ? approvedProducts.value.map(item => ({ key: productIdentityKey(String(item.productNo), String(item.productVersion)), label: `${item.productNo} / ${item.productVersion} / ${item.productName}`, row: item }))
   : materials.map(item => ({ key: item.materialNo, label: `${item.materialNo} / ${item.unitNo} / ${item.description}`, row: item })))
 const operationOptions = computed(() => [...new Set(['DEV-OP-10', 'DEV-OP-20', 'DEV-OP-30', 'DEV-OP-40', 'DEV-OP-50', ...workingBom.value.map(row => String(row.opNo)), 'LOTCREATE'])])
 const currentMaterial = computed(() => materials.find(row => row.materialNo === draft.value.nodeNo))
 const canSubstitute = computed(() => Boolean(context.value.line?.directIndex !== undefined && Number(context.value.line.node?.nodeType) === 0 && Number(context.value.line.node?.specified) === 0))
 
-watch(() => `${props.product.productNo}|${props.product.productVersion}`, () => {
+watch(() => productIdentityKey(String(props.product.productNo), String(props.product.productVersion)), () => {
   const bom = props.bom
   const groups = props.materialGroups
   workingBom.value = clone(bom ?? [])

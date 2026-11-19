@@ -6,7 +6,7 @@ public sealed record OperationDto
 {
     public required string OperationNo { get; init; }
     public required string OperationName { get; init; }
-    public required string OperationType { get; init; }
+    public required string? OperationType { get; init; }
     public int OperationClass { get; init; }
     public string ShortName { get; init; } = "";
     public int OperationOrder { get; init; }
@@ -29,7 +29,9 @@ public sealed class OperationWriteRequest
 {
     [Required, StringLength(20)] public string OperationNo { get; set; } = "";
     [Required, StringLength(200)] public string OperationName { get; set; } = "";
-    [Required, StringLength(20)] public string OperationType { get; set; } = "";
+    // New/changed choices are validated by the server. An unchanged legacy
+    // blank type must reach the raw-value preservation branch on update.
+    [StringLength(20)] public string? OperationType { get; set; } = "";
     [Range(0, 9)] public int OperationClass { get; set; }
     [StringLength(50)] public string ShortName { get; set; } = "";
     [Range(0, 999999)]

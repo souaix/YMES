@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { parseFirstWorksheetXlsx } from './materialImportWorkbook'
-import { relationKey, rowsKey, seedRelations, seedRows } from './productBasisDevelopment'
+import { loadDevelopmentProductRelations, productKey, rowsKey, seedRows } from './productBasisDevelopment'
 
 type Rule = { product: string; version: string; opName: string; op: string; alarm: number | null; groups: string; hold: number | null }
 type PreviewRow = { line: number; rule: Rule; errors: string[] }
@@ -69,7 +69,7 @@ async function loadPreview(event: Event): Promise<void> {
     if (!/\.xlsx$/i.test(file.name)) throw new Error('DEV 支援 XLSX。')
     const sheet = await parseFirstWorksheetXlsx(file, true)
     const index = new Set<string>()
-    const relations = read(relationKey, seedRelations)
+    const relations = loadDevelopmentProductRelations(read(rowsKey, seedRows))
     preview.value = sheet.slice(1).flatMap((cells, position): PreviewRow[] => {
       const [product = '', version = '', opName = '', opNo = '', alarm = '', alarmGroup = '', hold = ''] = cells
       if (!product) return []
@@ -81,7 +81,7 @@ async function loadPreview(event: Event): Promise<void> {
       if (!rule.product.includes('ALL')) {
         const approved = products.value.some(row => row.productNo === rule.product && row.productVersion === rule.version)
         if (!approved) errors.push('找不到核准的 DEV 產品／版次')
-        const relation = relations[`${rule.product}|${rule.version}`]
+        const relation = relations[productKey(rule.product, rule.version)]
         const processOps = relation?.parameters?.ops.map(operation => operation.opNo) ?? (rule.product === sample.product && rule.version === sample.version ? ops : [])
         if (!processOps.includes(rule.op)) errors.push('站點不在此 DEV 產品流程')
       }

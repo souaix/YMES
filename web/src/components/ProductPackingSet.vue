@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { productIdentityKey } from '../utils/productIdentity'
 import ProductPackingLabelRules from './ProductPackingLabelRules.vue'
 import ProductPackingSerialRules from './ProductPackingSerialRules.vue'
 import { loadDevelopmentPackingRules } from './packingRuleDevelopment'
@@ -56,7 +57,7 @@ const localRules = computed(() => {
   }
   return [...grouped].map(([no, definition]) => ({ no, ...definition }))
 })
-const productsInUse = new Set(['DEV-PRD-1002|02'])
+const productsInUse = new Set([productIdentityKey('DEV-PRD-1002', '02')])
 const canEditLegacy = computed(() => props.developmentPreview && props.product.issueState === 0)
 const accessories = computed(() => props.relations[props.product.key]?.packingAccessories ?? [])
 const serialRules = computed(() => props.relations[props.product.key]?.packingSerialRules ?? [])

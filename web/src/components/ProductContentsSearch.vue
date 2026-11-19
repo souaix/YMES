@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { relationKey, rowsKey, seedRelations, seedRows, type ProductRelation, type ProductRow } from './productBasisDevelopment'
+import { loadDevelopmentProductRelations, productKey, rowsKey, seedRows, type ProductRelation, type ProductRow } from './productBasisDevelopment'
 
 type Filter = 'material' | 'process' | 'property'
 type Option = { code: string; detail: string }
@@ -18,7 +18,10 @@ function readStored<T extends object>(key: string, fallback: T): T {
 }
 
 const products = props.developmentPreview ? readStored(rowsKey, seedRows) : []
-const relations: Record<string, ProductRelation> = props.developmentPreview ? readStored(relationKey, seedRelations) : {}
+const relationLoadError = ref('')
+let relations: Record<string, ProductRelation> = {}
+try { if (props.developmentPreview) relations = loadDevelopmentProductRelations(products) }
+catch (cause) { relationLoadError.value = cause instanceof Error ? cause.message : 'DEV 產品關聯無法載入。' }
 const sources = Object.values(relations)
 const fields: { key: Filter; name: string }[] = [{ key: 'material', name: 'MaterialNo' }, { key: 'process', name: 'ProcessNo' }, { key: 'property', name: 'PropertyNo' }]
 const filters = ref<Record<Filter, string>>({ material: '', process: '', property: '' })
@@ -67,12 +70,13 @@ function choose(code: string): void {
 
 function search(): void {
   if (!props.developmentPreview) return
+  if (relationLoadError.value) { error.value = relationLoadError.value; results.value = null; return }
   const missing = fields.find(field => checked.value[field.key] && !filters.value[field.key])
   const value = propertyValue.value.trim()
   error.value = missing ? `請選取 ${missing.name}。` : checked.value.property && !value ? '請輸入 PropertyValue。' : ''
   if (error.value) { results.value = null; return }
   results.value = products.filter(row => {
-    const relation = relations[`${row.productNo}|${row.productVersion}`]
+    const relation = relations[productKey(row.productNo, row.productVersion)]
     return (!checked.value.material || relation?.bom?.some(item => item.nodeNo === filters.value.material))
       && (!checked.value.process || relation?.processes?.some(item => item.processNo === filters.value.process))
       && (!checked.value.property || relation?.properties?.some(item => item.propertyNo === filters.value.property && String(item.defaultValue ?? item.value ?? '') === value))
@@ -101,10 +105,10 @@ function cell(row: ProductRow, key: string): string {
         </div>
         <button type="submit">Query</button>
       </form>
-      <p v-if="error" class="error" role="alert">{{ error }}</p>
+      <p v-if="error || relationLoadError" class="error" role="alert">{{ error || relationLoadError }}</p>
       <p v-if="results" role="status">共 {{ results.length }} 筆產品版次</p>
       <div class="grid"><table><thead><tr><th v-for="column in columns" :key="column.key">{{ column.label }}</th></tr></thead>
-        <tbody><tr v-for="row in results ?? []" :key="`${row.productNo}|${row.productVersion}`"><td v-for="column in columns" :key="column.key" :class="{ quantity: column.key.endsWith('Qty') }">{{ cell(row, column.key) }}</td></tr>
+        <tbody><tr v-for="row in results ?? []" :key="productKey(row.productNo, row.productVersion)"><td v-for="column in columns" :key="column.key" :class="{ quantity: column.key.endsWith('Qty') }">{{ cell(row, column.key) }}</td></tr>
         <tr v-if="!results?.length"><td :colspan="columns.length">{{ results ? '沒有符合條件的產品。' : '請執行查詢。' }}</td></tr></tbody>
       </table></div>
     </template>

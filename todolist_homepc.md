@@ -1,5 +1,23 @@
 # 家裡電腦接手清單
 
+## 家用端最新進度（2026-11-19，PRD／PRS／QC／OP103）
+
+此段為目前狀態；下方保留交接當時的待辦原文，歷史未勾選項不表示本段已完成內容又變回缺表。家用端管理 YMES PostgreSQL／API／PPK SSH；公司端持續提供原生 Oracle 的唯讀結構、來源邏輯與 UI。
+
+- [x] 已正常合併公司端至 `3192964`，保留新 OE 頁、DDL 與 QC／PD206 來源。PD206 文件衝突同時保留雙方內容；沒有 force push 或捨棄任一端開發。家用端本批仍在正式 GUI 驗收，尚未以完成版本推到 main。
+- [x] 0042–0050 已逐份備份、驗證 pg_restore --list 後套用並獨立讀回。0046／0047／0048 僅補既存引用表 SELECT；0049／0050建立來源核對的OP Type／共用Property空表，無FK或多餘index，詳見 docs/DATABASE_CONNECTION.md。沒有搬移Oracle業務資料。
+- [x] PS103、PRD Program／Recipe 指派與產品 nullable CAS 已部署。PS103 原58項 API及實際GUI流程已通；PRD完整10群組與SAP專項已通。新版產品多選、取消／確定、部分成功1/2與stale409、重載後2/2、核准必要條件／成功／停用／實刪已由正式 app-browser 驗證；產品與目錄10項SQL計數皆0，見各模組MD。
+- [x] PD101 正式 API 九組功能分兩輪共184項HTTP斷言通過；nullable CAS／UTC及NULL audit／引用鎖／雙向同名競爭／模組碰撞均驗證。兩輪15表與鎖holder精確殘留0。完整子設定Copy／IssueJob仍依模組規格，不冒稱全部原Core已完成。
+- [x] PD206 最後完整一輪104項檢查加登出共105項通過，包含產品多版本與最後版、設備及作業站真刪除後保留抽樣規則、資格失效時拒絕保存、literal `*`、UTC／NULL audit、CAS與鎖等待。四表自有資料精確殘留0；不等同WIP抽樣執行引擎。
+- [x] 捕捉PD206回歸中的OP刪除500，補齊六張真引用表SELECT（0048）；另部署通用主檔Npgsql錯誤503回應。當時API `269434c2aaf0`／Web `29139f507e77` 的四主檔登入讀取／匿名保護／小寫404共11項冒煙通過；PS103新UTC日期另5項HTTP與DB epoch/時間窗通過，自有Type/Process0。
+- [x] 一般抽樣來源／ShowFlag子集18項HTTP通過；QC301／302的chart、Plan引用鎖、Create/Update/Approve與Import、反向Copy及alias十組分三輪共88項預期HTTP斷言通過。新因子目錄歧義／重複輸入／NULL stamp與Rule舊snapshot四組分兩輪共39項取得成功證據；每輪11表及本機／DB holder0。細節及各輪helper錯誤保留於QC301／302 MD，不冒稱單次全通或GUI通過。
+- [x] QC一般source與因子防護已合入目前發行來源，OP103隔離API／Razor建置0警告／0錯誤、Web vue-tsc／Vite通過。21:19已啟動API `260dfd2ff2bb`／Web `760d6055e519`（`index-DI-geD67.js`），ready200；僅更新YMES容器，未清除其他專案或orphan。
+- [x] OP103正式API十組回歸通過：run54BC802、112次HTTP、234項斷言，包含四態、nullable CAS、精準Property清理、namespace競爭及Type引用鎖雙方向。最後Type／OP／Property／自有PS／holder皆0。兩表Source19欄／PK／NULL/default/grants已核對；GUI與完整Property provider仍待，不猜路由或回空成功。
+- [ ] QC301 nullable契約已有85項API與0045後16項真量測引用／硬刪回歸通過、各輪API fixtures清空。新GUI已確認實際NULL建立日期留空、NULL stamp首次Apply及沿回傳版本再次保存；Rule、其餘狀態／新增／複製／刪除仍接續驗證，`CODUI301N-1119-*`是尚未清理的明確自有GUI fixtures。
+- [ ] 完成PD101／PD206／OP103的正式GUI逐項操作、PS103日期顯示、QC301其餘操作與一般Plan查找回歸。原生確認窗曾恢復；之後app-browser工具移除，Windows備援又因平台無法確認目前網址而停止本輪CU。已請使用者方便時在Chrome開YMES；已有Demo授權，恢復後自行登入，不再等登入許可。平台停止期間不改用其他UI技術繞過；API與其他工作繼續，不將GUI標通過。
+- [ ] 只讀fetch已看見公司端 `954e4a5`（新增OE/WP交接），目前已整合之公司端基底仍`3192964`。此新差異尚未合併／部署；本機另以codex分支保留API檢查點，GUI待驗，不以本機舊版覆蓋遠端或當成完成版本推送。
+- [ ] 全部本批必要GUI／API驗證完成後，僅提交已驗收來源與維護MD，正常fetch／merge公司新版本再push main；將精確提交同步遠端source，避免後續compose rebuild回到舊版。保留QC201/QC202等未驗收草稿，不誤夾入發行。
+
 ## 公司端新交接（2026-11-19，OE／QC／PRD）
 
 - [ ] [OE101／OE102](docs/MODULE_REPLICATION_SPEC_INDEX.md#工單管理--訂單) 訂單主檔、明細、屬性與結案。已提供四張表的 Oracle DDL 及 CREATE-only 參考。先核對 live schema，再實作正式 API、資料驗證及狀態互斥。
@@ -277,7 +295,7 @@
 
 ## 最新公司端 handoff：QC217 設備品檢管理設定（2026-11-17）
 
-- [x] Pull 最新 `main` 至 `19b8e11`，讀完 `docs/modules/QC/設備品檢管理設定.md`、`docs/DATABASE_CONNECTION.md` 與本節；FunctionNo=`QC INSPECTION`、FunctionKey=`QC217`。公司端 Vue 頁已掛 `/YMES/QC/Inspection`，EQP `/YMES/Equipment/Inspection` 維持獨立。
+- [x] Pull 並 merge 公司端最新 `main` 至 `0b0f434`，讀完 `docs/modules/QC/設備品檢管理設定.md`、`docs/DATABASE_CONNECTION.md` 與本節；FunctionNo=`QC INSPECTION`、FunctionKey=`QC217`。公司端 Vue 頁已掛 `/YMES/QC/Inspection`，EQP `/YMES/Equipment/Inspection` 維持獨立。
 - [x] 以家用端 PPK/SSH 查 YMES live schema：兩張 QC217 表原先都不存在；設備、作業站、設備狀態、計數/計量項目與計量群組主檔已存在。原始 DDL 與 CREATE 參考已比對，沒有覆蓋既有表。
 - [x] 新增及套用 `database/migrations/0023_qc217_equipment_inspection.sql`。套用前的 `/opt/ymes/backups/ymes_before_0023_qc217_20261117.dump` 已通過 `pg_restore --list`；套用後核對兩張表欄位、複合 PK 與 `ymes_app` CRUD grants。
 - [x] 建立登入保護 API：`GET /api/qc/inspections`、`GET /options`、`GET /{opNo}/{equipmentNo}/{inspType}/details`、POST、PUT、DELETE 及 `/approval`。主檔/共用明細原子交易、查找重驗、參數化 SQL、DataStamp CAS 及 audit 已實作；API 使用目前產品決策的登入保護，FunctionKey ACL 尚未建立。
@@ -286,7 +304,7 @@
 - [x] Add/Edit/Delete/Approval API 已實作並部署：主檔/明細原子交易、狀態限制、共用明細鍵、DataStamp CAS、登入身份與伺服器稽核；API 以正確完整複合鍵更新，不沿用舊 callback 的 InspWeek 條件錯誤。未在正式資料庫新增測試業務資料；寫入路徑尚未透過瀏覽器實際送出。
 - [x] Delete 規則依來源實作：狀態 0/-1 硬刪、2 改 -1、1 拒絕；硬刪依 legacy 共用鍵清除明細，UI 操作需留意同 OP/設備/檢查類型其他排程共用的細項。
 - [x] 核准 API 已依 live YMES 結構處理：沒有 Issue Job/Detail 表時沿用 legacy 直接 0→2；若簽核結構存在但共用簽核尚未接入，回 503 且不改狀態。
-- [ ] commit/push 本次 QC217 API、migration、Web 路由修正與必要 Vue build 修正後，公司端 pull 並以 Production API 對接。公司端 UI 實際 CRUD 瀏覽器驗收待資料來源補齊。
+- [x] QC217 API/migration、路由與必要 Vue build 修正已於 `2730c7f` commit，與公司端 `43079d6` merge 成 `0b0f434` 並 push `main`；公司端可 pull 後以 Production API 對接。公司端 UI 實際 CRUD 瀏覽器驗收待資料來源補齊。
 
 ## 最新公司端 handoff：QC216 計量品管項目群組_減項（2026-11-17）
 

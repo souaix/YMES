@@ -9,6 +9,8 @@ import type ProductEquipmentSpec from './ProductEquipmentSpec.vue'
 import type ProductApsIntegration from './ProductApsIntegration.vue'
 import type ProductBinSetup from './ProductBinSetup.vue'
 import type ProductDataImport from './ProductDataImport.vue'
+import { productIdentityKey, migrateLegacyProductRelations, readProductRelationStore } from '../utils/productIdentity'
+export { productIdentityKey as productKey } from '../utils/productIdentity'
 
 export type ProductRow = Record<string, any>
 export type ProductParameterData = NonNullable<InstanceType<typeof ProductParameterSetup>['$props']['parameters']>
@@ -49,7 +51,8 @@ export type ProductRelation = ProductPackingProps['relations'][string] & {
 }
 
 export const rowsKey = 'ymes.dev.prd-product-basis.v1'
-export const relationKey = 'ymes.dev.prd-product-basis-relations.v1'
+export const legacyRelationKey = 'ymes.dev.prd-product-basis-relations.v1'
+export const relationKey = 'ymes.dev.prd-product-basis-relations.v2'
 
 export const seedRows: ProductRow[] = [
   {
@@ -84,7 +87,7 @@ export const seedRows: ProductRow[] = [
   },
 ]
 export const seedRelations: Record<string, ProductRelation> = {
-  'DEV-PRD-1001|01': {
+  [productIdentityKey('DEV-PRD-1001', '01')]: {
     processes: [{ moTypeNo: 1, psNo: 'DEV-PS-10', psOrder: 10, processNo: 'DEV-PROC-01', processVersion: '01', defaultProcess: 1, haveComponent: 1, haveLevel: 0, equipmentGroup: 'DEV-EQP-GRP' }],
     opDescriptions: [
       { productNo: 'DEV-PRD-1001', productVersion: '01', opNo: 'DEV-OP-10', opName: '點膠作業', description: 'DEV 產品版本作業說明範例。', dataStamp: 2, creator: 'DEV001', createDate: '2026-11-01T09:10:00', reviser: 'DEV001', reviseDate: '2026-11-04T10:30:00' },
@@ -153,7 +156,7 @@ export const seedRelations: Record<string, ProductRelation> = {
     ] }] },
     materialGroups: [{ nodeNo: 'DEV-MTL-001', opNo: 'DEV-OP-10', materialNo: 'DEV-MTL-GROUP-A' }, { nodeNo: 'DEV-MTL-001', opNo: 'DEV-OP-10', materialNo: 'DEV-MTL-GROUP-B' }],
   },
-  'DEV-PRD-SUB|01': {
+  [productIdentityKey('DEV-PRD-SUB', '01')]: {
     processes: [],
     bom: [
       { nodeNo: 'DEV-MTL-SUB-01', nodeType: 0, nodeVersion: '001', opNo: 'DEV-OP-30', stdQty: 4, unitNo: 'EA', decreaseRate: 0, specified: 1, description: 'DEV 子產品材料' },
@@ -161,12 +164,52 @@ export const seedRelations: Record<string, ProductRelation> = {
     ],
     constraints: [], properties: [],
   },
-  'DEV-PRD-COMP|02': {
+  [productIdentityKey('DEV-PRD-COMP', '02')]: {
     processes: [],
     bom: [{ nodeNo: 'DEV-MTL-COMP-01', nodeType: 0, nodeVersion: '001', opNo: 'DEV-OP-50', stdQty: 2, unitNo: 'EA', decreaseRate: 0.005, specified: 1, description: 'DEV 第三層材料' }],
     constraints: [], properties: [],
   },
-  'DEV-PRD-1002|02': { processes: [], bom: [], constraints: [], properties: [] },
-  'DEV-PRD-1003|01': { processes: [], bom: [], constraints: [], properties: [] },
-  'DEV-PRD-1004|01': { processes: [], bom: [], constraints: [], properties: [] },
+  [productIdentityKey('DEV-PRD-1002', '02')]: { processes: [], bom: [], constraints: [], properties: [] },
+  [productIdentityKey('DEV-PRD-1003', '01')]: { processes: [], bom: [], constraints: [], properties: [] },
+  [productIdentityKey('DEV-PRD-1004', '01')]: { processes: [], bom: [], constraints: [], properties: [] },
+}
+
+let unresolvedLegacyRelations: Record<string, ProductRelation> = {}
+
+export function unresolvedDevelopmentProductRelationCount(): number { return Object.keys(unresolvedLegacyRelations).length }
+
+export function loadDevelopmentProductRelations(products: ProductRow[] = []): Record<string, ProductRelation> {
+  const current = localStorage.getItem(relationKey)
+  if (current !== null) {
+    const store = readProductRelationStore<ProductRelation>(JSON.parse(current))
+    unresolvedLegacyRelations = store.unresolvedLegacyRelations
+    return store.relations
+  }
+  const legacy = localStorage.getItem(legacyRelationKey)
+  if (legacy !== null) {
+    const parsed: unknown = JSON.parse(legacy)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('舊產品開發關聯儲存格式不正確。')
+    const savedRows = localStorage.getItem(rowsKey)
+    const storedProducts: unknown = savedRows !== null ? JSON.parse(savedRows) : seedRows
+    if (!Array.isArray(storedProducts)) throw new Error('產品開發主檔儲存格式不正確。')
+    const identities = [...storedProducts, ...products].map((row: ProductRow) => ({
+      productNo: String(row.productNo ?? ''), productVersion: String(row.productVersion ?? ''),
+    }))
+    const store = migrateLegacyProductRelations(parsed as Record<string, ProductRelation>, identities)
+    localStorage.setItem(relationKey, JSON.stringify(store))
+    unresolvedLegacyRelations = store.unresolvedLegacyRelations
+    return store.relations
+  }
+  unresolvedLegacyRelations = {}
+  const relations = JSON.parse(JSON.stringify(seedRelations)) as Record<string, ProductRelation>
+  localStorage.setItem(relationKey, JSON.stringify({ version: 2, relations, unresolvedLegacyRelations }))
+  return relations
+}
+
+export function saveDevelopmentProductRelations(relations: Record<string, ProductRelation>): void {
+  // Refresh the shared envelope before saving, including unresolved entries
+  // that another product page may have migrated since this page was opened.
+  loadDevelopmentProductRelations()
+  const store = readProductRelationStore<ProductRelation>({ version: 2, relations, unresolvedLegacyRelations })
+  localStorage.setItem(relationKey, JSON.stringify(store))
 }

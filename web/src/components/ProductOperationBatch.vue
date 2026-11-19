@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { rowsKey, relationKey, seedRows, seedRelations, type ProductRow, type ProductRelation } from './productBasisDevelopment'
+import { rowsKey, seedRows, loadDevelopmentProductRelations, productKey, saveDevelopmentProductRelations, type ProductRow, type ProductRelation } from './productBasisDevelopment'
 import { applyOperationDefaults, copyOperationSettings, defaultOperations, operationTargets, type DefaultMode, type DefaultSelection } from './productOperationDefaults'
 
 const props = defineProps<{ developmentPreview: boolean; amendOnly?: boolean; copyOnly?: boolean }>()
@@ -21,7 +21,7 @@ const processing = ref(false)
 const cancelled = ref(false)
 const done = ref(0)
 const total = ref(0)
-const keyOf = (row: ProductRow) => `${row.productNo}|${row.productVersion}`
+const keyOf = (row: ProductRow) => productKey(row.productNo, row.productVersion)
 const sourceKey = ref('')
 const sourceOptions = ref<ProductRow[]>([])
 const copyProcess = ref(true)
@@ -37,10 +37,9 @@ function eligibleForCopy(row: ProductRow): boolean {
 
 function readSnapshot(): { products: ProductRow[]; relations: Record<string, ProductRelation> } {
   const storedProducts = localStorage.getItem(rowsKey)
-  const storedRelations = localStorage.getItem(relationKey)
   const products = storedProducts ? JSON.parse(storedProducts) : seedRows
-  const relations = storedRelations ? JSON.parse(storedRelations) : seedRelations
-  if (!Array.isArray(products) || !relations || Array.isArray(relations) || typeof relations !== 'object') throw new Error('本機 DEV 資料格式無法讀取。')
+  if (!Array.isArray(products)) throw new Error('本機 DEV 資料格式無法讀取。')
+  const relations = loadDevelopmentProductRelations(products)
   return { products, relations }
 }
 
@@ -91,14 +90,14 @@ async function run(mode: DefaultMode | 'copy'): Promise<void> {
             messages.value[key] = '來源或目標不符版次狀態與 ECN 條件。'; continue
           }
           const updated = copyOperationSettings(product, relations[source] ?? blankRelation, relation ?? blankRelation, selection, includeProcess)
-          localStorage.setItem(relationKey, JSON.stringify({ ...relations, [key]: updated }))
+          saveDevelopmentProductRelations({ ...relations, [key]: updated })
           messages.value[key] = '已複製所選項目。'
           continue
         }
         const operations = relation ? operationTargets(relation, mode, useAll, scope) : []
         if (!relation || !operations.length) { messages.value[key] = '沒有符合範圍的 DEV 流程作業。'; continue }
         const updated = applyOperationDefaults(product, relation, mode, selection, operations)
-        localStorage.setItem(relationKey, JSON.stringify({ ...relations, [key]: updated }))
+        saveDevelopmentProductRelations({ ...relations, [key]: updated })
         messages.value[key] = `${mode === 'default' ? '已帶入預設' : '已補齊缺項'}，${operations.length} 個作業站。`
       } catch (cause) { messages.value[key] = cause instanceof Error ? cause.message : '無法儲存本機 DEV 資料。' }
       finally { done.value++ }

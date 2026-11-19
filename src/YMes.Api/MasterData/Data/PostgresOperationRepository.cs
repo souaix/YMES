@@ -64,7 +64,13 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
     {
         ValidateRequest(request);
         ValidateActor(actorUserNo);
-        using var command = dataSource.CreateCommand("""
+        var no=RequiredCode(request.OperationNo,"作業編號",20);
+        if(no.Contains(',') || no=="LOTCREATE") throw new MasterDataRuleException(400,"作業編號不可含逗號或使用LOTCREATE。");
+        using var connection=dataSource.OpenConnection();
+        using var transaction=connection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
+        YMes.Api.Operations.Op103IdentifierGuard.EnsureNewOperation(connection,transaction,no);
+        var operationType=YMes.Api.Operations.Op103IdentifierGuard.LockExistingType(connection,transaction,request.OperationType);
+        using var command = new NpgsqlCommand("""
             INSERT INTO "YMES".tblopbasis
                 (opno, opname, optype, opclass, opshortname, oporder, description,
                  creator, createdate, issuestate, psno, printoutonruncard,
@@ -75,22 +81,35 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
                  @actor, now(), 0, @productionSegmentNo, @printOutOnRunCard,
                  @standardUnitRunTime, @countOperationUnitQty, @standardQueueTime, @materialOption,
                  @multiOperatorMode, @spcInspAbnormalHoldLot, 0, 1);
-            """);
-        AddWriteParameters(command, request, actorUserNo);
-        ExecuteInsert(command, NormalizeCode(request.OperationNo));
-        return Get(NormalizeCode(request.OperationNo));
+            """,connection,transaction);
+        AddWriteParameters(command, request, actorUserNo,operationType);
+        ExecuteInsert(command,no);
+        var result=GetLockedForWrite(connection,transaction,no);
+        transaction.Commit();return result;
     }
 
     public OperationDto Update(string operationNo, OperationWriteRequest request, string actorUserNo)
     {
-        ValidateRequest(request);
+        ValidateRequest(request,validateType:false);
         ValidateActor(actorUserNo);
-        var current = Get(operationNo);
+        using var connection=dataSource.OpenConnection();
+        using var transaction=connection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
+        var current = GetLockedForWrite(connection,transaction,operationNo);
         EnsureEditable(current, request.DataStamp);
         if (!Same(current.OperationNo, request.OperationNo))
             throw new MasterDataRuleException(400, "更新時不可變更作業編號。");
+        // The raw type is read independently, never inferred from display DTO
+        // defaults. Unchanged legacy NULL/blank/case/inactive/missing stays raw.
+        string? rawType;
+        using(var raw=new NpgsqlCommand("SELECT optype FROM \"YMES\".tblopbasis WHERE opno=@no;",connection,transaction))
+        {
+            AddVarchar(raw,"no",current.OperationNo);
+            var value=raw.ExecuteScalar();
+            rawType=value is null || value is DBNull ? null : (string)value;
+        }
+        var operationType=YMes.Api.Operations.Op103IdentifierGuard.ResolveForUpdate(connection,transaction,request.OperationType,rawType);
 
-        using var command = dataSource.CreateCommand("""
+        using var command = new NpgsqlCommand("""
             UPDATE "YMES".tblopbasis
             SET opname = @operationName,
                 optype = @operationType,
@@ -109,15 +128,16 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
                 datastamp = COALESCE(datastamp, 0) + 1,
                 reviser = @actor,
                 revisedate = now()
-            WHERE lower(opno) = lower(@operationNo)
+            WHERE opno = @operationNo
               AND COALESCE(datastamp, 0) = @dataStamp
               AND issuestate = 0;
-            """);
-        AddWriteParameters(command, request, actorUserNo);
-        AddVarchar(command, "operationNo", current.OperationNo);
+            """,connection,transaction);
+        AddWriteParameters(command, request, actorUserNo,operationType);
+        command.Parameters["operationNo"].Value=current.OperationNo;
         AddNumeric(command, "dataStamp", request.DataStamp);
         ExecuteOptimisticUpdate(command, "作業資料已變更，請重新載入後再儲存。");
-        return Get(current.OperationNo);
+        var result=GetLockedForWrite(connection,transaction,current.OperationNo);
+        transaction.Commit();return result;
     }
 
     public OperationDto Approve(string operationNo, long dataStamp, string actorUserNo)
@@ -207,6 +227,17 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
         return reader.Read() ? Map(reader) : throw NotFound(operationNo);
     }
 
+    private static OperationDto GetLockedForWrite(NpgsqlConnection connection,NpgsqlTransaction transaction,string operationNo)
+    {
+        using var command=new NpgsqlCommand($"SELECT {SelectColumns} FROM \"YMES\".tblopbasis WHERE lower(btrim(opno))=lower(@no) ORDER BY opno FOR UPDATE;",connection,transaction);
+        AddVarchar(command,"no",RequiredCode(operationNo,"作業編號",20));
+        using var reader=command.ExecuteReader();
+        if(!reader.Read())throw NotFound(operationNo);
+        var result=Map(reader);
+        if(reader.Read())throw new MasterDataRuleException(409,"作業編號存在大小寫／空白歧義，請先整理主檔。");
+        return result;
+    }
+
     private static bool HasDependents(NpgsqlConnection connection, NpgsqlTransaction transaction, string operationNo)
     {
         using var command = new NpgsqlCommand("""
@@ -227,7 +258,7 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
     {
         OperationNo = reader.GetString(0),
         OperationName = reader.GetString(1),
-        OperationType = reader.GetString(2),
+        OperationType = reader.IsDBNull(2) ? null : reader.GetString(2),
         OperationClass = ToInt32(reader.GetValue(3)),
         ShortName = reader.GetString(4),
         OperationOrder = ToInt32(reader.GetValue(5)),
@@ -246,11 +277,11 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
         CreatedAt = reader.IsDBNull(18) ? null : reader.GetDateTime(18)
     };
 
-    private static void AddWriteParameters(NpgsqlCommand command, OperationWriteRequest request, string actorUserNo)
+    private static void AddWriteParameters(NpgsqlCommand command, OperationWriteRequest request, string actorUserNo,string? validatedType)
     {
         AddVarchar(command, "operationNo", RequiredCode(request.OperationNo, "作業編號", 20));
         AddVarchar(command, "operationName", Required(request.OperationName, "作業名稱", 200));
-        AddVarchar(command, "operationType", RequiredCode(request.OperationType, "作業類別", 20));
+        AddVarchar(command, "operationType", validatedType);
         AddNumeric(command, "operationClass", request.OperationClass);
         AddVarchar(command, "shortName", Optional(request.ShortName, 50));
         AddNumeric(command, "operationOrder", request.OperationOrder);
@@ -266,11 +297,11 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
         AddNumeric(command, "spcInspAbnormalHoldLot", request.SpcInspAbnormalHoldLot ? 1 : 0);
     }
 
-    private static void ValidateRequest(OperationWriteRequest request)
+    private static void ValidateRequest(OperationWriteRequest request,bool validateType=true)
     {
         _ = RequiredCode(request.OperationNo, "作業編號", 20);
         _ = Required(request.OperationName, "作業名稱", 200);
-        _ = RequiredCode(request.OperationType, "作業類別", 20);
+        if(validateType) _ = RequiredCode(request.OperationType, "作業類別", 20);
         _ = RequiredCode(request.ProductionSegmentNo, "製程段", 50);
         _ = Optional(request.ShortName, 50);
         _ = Optional(request.Description, 255);

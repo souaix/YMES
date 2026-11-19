@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace YMes.Api.Quality;
 
 public sealed record Qc301FactorDto(string FactorNo, string ParameterName, bool FactorSpec, int ParameterType);
@@ -8,7 +10,7 @@ public sealed record Qc301QcItemDto(
     string QcDataType,
     int? ChartType,
     int SpecLineType,
-    int ComponentCollect,
+    int? ComponentCollect,
     string Unit,
     int LotIsValid,
     string PlanNo,
@@ -20,8 +22,8 @@ public sealed class Qc301ChartBasisDto
     public string FactorSerial { get; set; } = "";
     public string QcItemNo { get; set; } = "";
     public string QcItemName { get; set; } = "";
-    public int IssueState { get; set; }
-    public decimal DataStamp { get; set; }
+    public int? IssueState { get; set; }
+    public decimal? DataStamp { get; set; }
     public int SampleSize { get; set; }
     public string KeyNode { get; set; } = "N";
     public string ChartTitle { get; set; } = "";
@@ -70,8 +72,8 @@ public class Qc301ChartWriteRequest
 
 public sealed class Qc301ChartUpdateRequest : Qc301ChartWriteRequest
 {
-    public int ExpectedIssueState { get; set; }
-    public decimal DataStamp { get; set; }
+    [JsonRequired] public int? ExpectedIssueState { get; set; }
+    [JsonRequired] public decimal? DataStamp { get; set; }
 }
 
 public sealed class Qc301ChartDetailWriteRequest
@@ -91,13 +93,15 @@ public sealed class Qc301ChartDetailWriteRequest
 
 public sealed class Qc301StateRequest
 {
-    public int IssueState { get; set; }
-    public decimal DataStamp { get; set; }
+    [JsonRequired] public int? IssueState { get; set; }
+    [JsonRequired] public decimal? DataStamp { get; set; }
 }
 
 public sealed class Qc301RulesRequest
 {
-    public List<Qc301RuleWriteRequest> Rules { get; set; } = [];
+    [JsonRequired] public int? ExpectedIssueState { get; set; }
+    [JsonRequired] public decimal? DataStamp { get; set; }
+    [JsonRequired] public List<Qc301RuleWriteRequest>? Rules { get; set; }
 }
 
 public sealed class Qc301RuleWriteRequest

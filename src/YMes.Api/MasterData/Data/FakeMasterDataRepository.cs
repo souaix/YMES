@@ -269,6 +269,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
 
     public ProductDto CreateProduct(ProductWriteRequest request, string actorUserNo) => Write(() =>
     {
+        CheckProductSapPlnal(request.SapPlnal);
         var no = Key(request.ProductNo);
         var version = Key(request.ProductVersion);
         if (_products.ContainsKey((no, version))) throw Conflict($"產品 {no}/{version} 已存在。");
@@ -282,36 +283,41 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
     {
         var key = (Key(no), Key(version));
         var current = GetProductUnsafe(no, version);
-        CheckEditable(current.IssueState, current.DataStamp, request.DataStamp);
+        CheckProductSapPlnal(request.SapPlnal, current.SapPlnal);
+        CheckProductExpected(current, request.IssueState, request.DataStamp);
+        if (current.IssueState != 0) throw Conflict("只有 UNFROZEN 產品可以編輯。");
         if (!Key(request.ProductNo).Equals(key.Item1, StringComparison.OrdinalIgnoreCase) || !Key(request.ProductVersion).Equals(key.Item2, StringComparison.OrdinalIgnoreCase))
             throw BadRequest("更新時不可變更 ProductNo/ProductVersion。");
-        var item = MapProduct(request, 0, current.CurrentVersion, current.DataStamp + 1, current.CreatedAt);
+        var item = MapProduct(request, 0, current.CurrentVersion, NextProductStamp(current.DataStamp), current.CreatedAt)
+            with { SapPlnal = string.IsNullOrWhiteSpace(request.SapPlnal) ? current.SapPlnal : request.SapPlnal.Trim() };
         _products[key] = item;
         return item;
     });
 
-    public ProductDto ApproveProduct(string no, string version, int dataStamp, string actorUserNo) => Write(() =>
+    public ProductDto ApproveProduct(string no, string version, int? issueState, decimal? dataStamp, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var current = GetProductUnsafe(no, version);
-        CheckStamp(current.DataStamp, dataStamp);
+        CheckProductExpected(current, issueState, dataStamp);
         if (current.IssueState != 0) throw Conflict("只有 UNFROZEN 產品可以核准。");
         if (!_productProcesses.Any(x => x.ProductNo.Equals(no, StringComparison.OrdinalIgnoreCase) && x.ProductVersion.Equals(version, StringComparison.OrdinalIgnoreCase) && x.DefaultProcess))
             throw Conflict("產品至少需要一條預設流程才能核准。");
-        var item = current with { IssueState = 2, DataStamp = current.DataStamp + 1 };
+        var item = current with { IssueState = 2, DataStamp = NextProductStamp(current.DataStamp) };
         _products[key] = item;
         return item;
     });
 
-    public ProductDto SetCurrentProduct(string no, string version, int dataStamp, string actorUserNo) => Write(() =>
+    public ProductDto SetCurrentProduct(string no, string version, int? issueState, decimal? dataStamp, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var current = GetProductUnsafe(no, version);
-        CheckStamp(current.DataStamp, dataStamp);
+        CheckProductExpected(current, issueState, dataStamp);
         if (current.IssueState != 2) throw Conflict("只有 ACTIVE 產品版本可以設為目前版本。");
-        foreach (var old in _products.Where(x => x.Key.No.Equals(key.Item1, StringComparison.OrdinalIgnoreCase) && x.Value.CurrentVersion).ToArray())
-            _products[old.Key] = old.Value with { CurrentVersion = false, DataStamp = old.Value.DataStamp + 1 };
-        var updated = current with { CurrentVersion = true, DataStamp = current.DataStamp + 1 };
+        var oldVersions = _products.Where(x => x.Key.No.Equals(key.Item1, StringComparison.OrdinalIgnoreCase)
+            && x.Key != key && x.Value.CurrentVersion)
+            .Select(old => (old.Key, Product: old.Value with { CurrentVersion = false, DataStamp = NextProductStamp(old.Value.DataStamp) })).ToArray();
+        var updated = current with { CurrentVersion = true, DataStamp = NextProductStamp(current.DataStamp) };
+        foreach (var old in oldVersions) _products[old.Key] = old.Product;
         _products[key] = updated;
         return updated;
     });
@@ -321,6 +327,7 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         var current = GetProductUnsafe(no, version);
         if (!int.TryParse(current.ProductVersion, out var numeric)) throw BadRequest("產品版本格式不是數字。");
         var nextVersion = (numeric + 1).ToString(new string('0', Math.Max(2, current.ProductVersion.Length)));
+        if (nextVersion.Length > 5) throw BadRequest("產品版本已達資料表可用長度，無法建立下一版。");
         var nextKey = (Key(no), nextVersion);
         if (_products.ContainsKey(nextKey)) throw Conflict($"產品 {no}/{nextVersion} 已存在。");
         var next = current with { ProductVersion = nextVersion, IssueState = 0, CurrentVersion = false, DataStamp = 1, CreatedAt = DateTime.UtcNow };
@@ -332,16 +339,17 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         return next;
     });
 
-    public void DeleteProduct(string no, string version, int issueState, int dataStamp, string actorUserNo) => Write(() =>
+    public void DeleteProduct(string no, string version, int? issueState, decimal? dataStamp, string actorUserNo) => Write(() =>
     {
         var key = (Key(no), Key(version));
         var item = GetProductUnsafe(no, version);
-        CheckRemoval(item.IssueState, issueState, item.DataStamp, dataStamp);
+        CheckProductExpected(item, issueState, dataStamp);
         if (item.IssueState == 2)
         {
-            _products[key] = item with { IssueState = -1, CurrentVersion = false, DataStamp = item.DataStamp + 1 };
+            _products[key] = item with { IssueState = -1, CurrentVersion = false, DataStamp = NextProductStamp(item.DataStamp) };
             return true;
         }
+        if (item.IssueState is not (0 or -1)) throw Conflict("只有未簽核或不使用的產品版本可以實體刪除。");
         if (_bom.Any(x => x.ComponentType == "PRODUCT" && x.ComponentNo.Equals(no, StringComparison.OrdinalIgnoreCase)))
             throw Conflict("產品仍被其他產品 BOM 使用，不能物理刪除。");
         _productProcesses.RemoveAll(x => x.ProductNo.Equals(no, StringComparison.OrdinalIgnoreCase) && x.ProductVersion.Equals(version, StringComparison.OrdinalIgnoreCase));
@@ -507,13 +515,36 @@ public sealed class FakeMasterDataRepository : IMasterDataRepository
         TuningProcess = x.TuningProcess, PartialType = x.PartialType, IssueState = state, CurrentVersion = currentVersion, DataStamp = stamp, CreatedAt = created
     };
 
-    private static ProductDto MapProduct(ProductWriteRequest x, int state, bool currentVersion, int stamp, DateTime created) => new()
+    private static ProductDto MapProduct(ProductWriteRequest x, int? state, bool currentVersion, decimal? stamp, DateTime? created) => new()
     {
         ProductNo = Key(x.ProductNo), ProductVersion = Key(x.ProductVersion), ProductName = x.ProductName.Trim(), ProductType = Key(x.ProductType),
         UnitType = Key(x.UnitType), UnitNo = Key(x.UnitNo), Description = x.Description.Trim(), SpecNo = Key(x.SpecNo), ProductCode = Key(x.ProductCode),
         SerialTypeNoLot = Key(x.SerialTypeNoLot), SerialTypeNoComp = Key(x.SerialTypeNoComp), LotStdQty = x.LotStdQty, ErpNo = Key(x.ErpNo),
-        IssueState = state, CurrentVersion = currentVersion, DataStamp = stamp, CreatedAt = created
+        IssueState = state, CurrentVersion = currentVersion, DataStamp = stamp, CreatedAt = created,
+        SapPlnal = string.IsNullOrWhiteSpace(x.SapPlnal) ? null : x.SapPlnal.Trim()
     };
+
+    private static void CheckProductSapPlnal(string? value, string? existing = null)
+    {
+        var code = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        if (code is not null && code != existing && code is not ("11" or "21" or "51" or "31" or "61"))
+            throw BadRequest("SAP_PLNAL 僅允許 11、21、51、31、61；未提供時保留原值。");
+    }
+
+    private static void CheckProductExpected(ProductDto current, int? state, decimal? stamp)
+    {
+        if (state.HasValue && state.Value is not (-1 or 0 or 1 or 2)) throw BadRequest("產品 IssueState 僅允許 -1、0、1、2 或 NULL。");
+        if (stamp.HasValue && (decimal.Truncate(stamp.Value) != stamp.Value || stamp.Value < -99999999999m || stamp.Value > 99999999999m))
+            throw BadRequest("產品 DataStamp 必須是 11 位數範圍內的整數或 NULL。");
+        if (current.IssueState != state || current.DataStamp != stamp) throw Conflict("產品狀態或版本已變更，請重新載入後再操作。");
+    }
+
+    private static decimal NextProductStamp(decimal? stamp)
+    {
+        var next = (stamp ?? 0m) + 1;
+        if (next > 99999999999m) throw Conflict("產品資料版本已超出來源可用範圍。");
+        return next;
+    }
 
     private void SeedOperation(string no, string name, string type, string segment, int state, DateTime now)
     {

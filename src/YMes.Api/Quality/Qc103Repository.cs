@@ -17,32 +17,27 @@ public sealed class Qc103Repository(NpgsqlDataSource dataSource)
         0 => [new("PopulationQty", null, 0), new("SampleQty", null, 1)],
         1 => [new("PopulationQty", null, 0), new("SampleQty", null, 0), new("SampleRate", null, 1)],
         2 or 7 => [new("AcceptQty", null, 0), new("AQLType", null, 1), new("PopulationQty", null, 0), new("QCLevel", null, 1), new("RejectQty", null, 0), new("SampleQty", null, 0), new("AQL", null, 1)],
-        4 => [new("PopulationQty", null, 1), new("SampleQty", null, 1)],
+        4 => [new("PopulationQty", null, 2), new("SampleQty", null, 2)],
         5 => [new("SamplingTable", null, 1), new("PopulationQty", null, 0), new("SampleQty", null, 0), new("RejectQty", null, 0)],
-        // Names are verified; exact input/output ShowFlag needs original Core.
-        6 => [new("SamplingType", null, null), new("VLevel", null, null), new("PopulationQty", null, null), new("SampleQty", null, null), new("KValue", null, null), new("FValue", null, null), new("RejectQty", null, null)],
+        // Verified source form defaults; SYS ElementValue's conditional override
+        // still needs its real provider and does not imply an implemented engine.
+        6 => [new("SamplingType", null, 1), new("VLevel", null, 1), new("PopulationQty", null, 0), new("SampleQty", null, 0), new("KValue", null, 0), new("FValue", null, 0), new("RejectQty", null, 0)],
         _ => []
     };
 
     public IReadOnlyList<Qc103PlanDto> List(int? issueState, int? componentCollect, string? searchFieldName, string? searchFieldValue)
     {
         if (issueState is not null and not (-1 or 0 or 1 or 2)) throw Rule(400, "IssueState 僅允許 -1、0、1、2。");
-        if (componentCollect is not null and not (0 or 1)) throw Rule(400, "ComponentCollect 僅允許 0 或 1。");
+        QcSamplingPlanReference.RequireGeneral(componentCollect ?? 0, Rule, invalidStatus: 400);
         if (!string.IsNullOrWhiteSpace(searchFieldName) && !string.Equals(searchFieldName.Trim(), "PlanNo", StringComparison.OrdinalIgnoreCase)) throw Rule(400, "查詢欄位只允許 PlanNo。");
         var search = OptionalText(searchFieldValue, "PlanNo 查詢", 25) ?? "";
         using var connection = dataSource.OpenConnection();
         EnsureTable(connection, null, "tblqcsamplingplan");
-        if (componentCollect is not null)
-        {
-            using var column = new NpgsqlCommand("SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid=a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='YMES' AND c.relname='tblqcsamplingplan' AND a.attname='componentcollect' AND a.attnum>0 AND NOT a.attisdropped);", connection);
-            if (column.ExecuteScalar() is not true) throw Rule(503, "目前 YMES 抽樣計劃主檔沒有 ComponentCollect 欄位或已核實的對應分類，無法套用此篩選。");
-        }
         var sql = $"SELECT {Columns} FROM \"YMES\".tblqcsamplingplan WHERE (@search='' OR position(lower(@search) in lower(planno))>0)" +
-            (issueState is null ? "" : " AND issuestate=@state") + (componentCollect is null ? "" : " AND componentcollect=@collect") + " ORDER BY planno;";
+            (issueState is null ? "" : " AND issuestate=@state") + " ORDER BY planno;";
         using var command = new NpgsqlCommand(sql, connection);
         Text(command, "search", search, 25);
         if (issueState is { } state) Number(command, "state", state);
-        if (componentCollect is { } collect) Number(command, "collect", collect);
         var rows = new List<Qc103PlanDto>();
         using var reader = command.ExecuteReader();
         while (reader.Read()) rows.Add(Read(reader));
@@ -61,13 +56,20 @@ public sealed class Qc103Repository(NpgsqlDataSource dataSource)
         return result;
     }
 
-    public IReadOnlyList<Qc103ParameterDto> Parameters(string planNo, int? issueState)
+    public IReadOnlyList<Qc103ParameterDto> Parameters(string planNo, int? issueState, int? componentCollect = null)
     {
         if (issueState is not null and not (-1 or 0 or 1 or 2)) throw Rule(400, "IssueState 僅允許 -1、0、1、2。");
-        var row = Get(planNo);
-        if (issueState is { } state && row.IssueState != state) throw Rule(409, "抽樣計劃狀態已改變，請重新載入。");
+        // Omission is the published QC103 general-plan contract. A known Wafer
+        // request must carry its namespace and never fall through by PlanNo.
+        QcSamplingPlanReference.RequireGeneral(componentCollect ?? 0, Rule, invalidStatus: 400);
+        using var connection = dataSource.OpenConnection();
+        using var transaction = connection.BeginTransaction();
+        var row = QcSamplingPlanReference.ReadGeneral(connection, transaction, Key(planNo), componentCollect ?? 0, issueState, Rule, stateMismatchStatus: 409, missingStatus: 404);
+        var specs = ParameterSpecs(row.PlanType);
         // Preserve existing QC301 lookup's empty-string parameter contract.
-        return row.Parameters.Select(value => value with { ParameterValue = value.ParameterValue ?? "" }).ToArray();
+        var result = row.Parameters.Select(value => new Qc103ParameterDto(value.ParameterNo, value.ParameterValue ?? "",
+            specs.FirstOrDefault(spec => string.Equals(spec.ParameterNo, value.ParameterNo, StringComparison.OrdinalIgnoreCase))?.ShowFlag)).ToArray();
+        transaction.Commit(); return result;
     }
 
     public IReadOnlyList<string> ParameterOptions(string parameterNo, string? samplingType)

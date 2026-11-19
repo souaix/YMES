@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2
 type EditMode = '' | 'add' | 'edit' | 'copy'
 
 interface ProcessTypeRow {
   processType: string
-  description: string
-  issueState: IssueState
+  description: string | null
+  issueState: IssueState | null
   dataStamp: number | null
-  creator: string
-  createDate: string
-  reviser: string
-  reviseDate: string
+  creator: string | null
+  createDate: string | null
+  reviser: string | null
+  reviseDate: string | null
 }
 
 interface ProcessPropertyRow {
@@ -41,6 +43,7 @@ const props = withDefaults(defineProps<{
   developmentPreview?: boolean
 }>(), { currentUserNo: '', developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const listStorageKey = 'ymes.dev.ps103-process-type.v1'
@@ -73,6 +76,10 @@ const selectedTypes = ref<string[]>([])
 const editorOpen = ref(false)
 const mode = ref<EditMode>('')
 const sourceType = ref('')
+const editorSource = ref<ProcessTypeRow | null>(null)
+const editorCreateDate = ref('')
+const typeInput = ref<HTMLInputElement | null>(null)
+const descriptionInput = ref<HTMLTextAreaElement | null>(null)
 const draft = ref({ processType: '', description: '' })
 const draftDirty = ref(false)
 const propertyWindowOpen = ref(false)
@@ -87,18 +94,30 @@ const notice = ref('')
 const visibleRows = computed(() => rows.value.filter((row) =>
   row.issueState === issueState.value
   && (!searchText.value.trim() || row.processType.toLocaleLowerCase().includes(searchText.value.trim().toLocaleLowerCase()))))
-const activeRow = computed(() => rows.value.find((row) => row.processType === activeType.value) ?? null)
-const selectedRows = computed(() => rows.value.filter((row) => selectedTypes.value.includes(row.processType)))
-const visibleProperties = computed(() => propertyRows.value.filter((row) =>
+const activeRow = computed(() => visibleRows.value.find((row) => row.processType === activeType.value) ?? null)
+const selectedRows = computed(() => visibleRows.value.filter((row) => selectedTypes.value.includes(row.processType)))
+const visibleProperties = computed(() => !mock.value ? [] : propertyRows.value.filter((row) =>
   row.processNo === activeType.value && row.issueState === propertyState.value))
 const selectedProperties = computed(() => propertyRows.value.filter((row) => selectedPropertyKeys.value.includes(propertyKey(row))))
+const draftAudit = computed(() => editorSource.value?.processType.toUpperCase() === draft.value.processType.trim().toUpperCase() ? editorSource.value : null)
+
+watch(visibleRows, visible => {
+  const visibleKeys = new Set(visible.map(row => row.processType))
+  selectedTypes.value = selectedTypes.value.filter(key => visibleKeys.has(key))
+  if (!visibleKeys.has(activeType.value)) activeType.value = ''
+})
 
 function copy<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
 function userNo(): string { return props.currentUserNo || (mock.value ? 'DEV001' : '') }
-function formatDate(value: string): string {
-  return value ? value.replace('T', ' ').slice(0, 19).replaceAll('-', '/') : ''
+function formatDate(value: string | null | undefined): string {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value.replace('T', ' ').slice(0, 19).replaceAll('-', '/')
+  const pad = (part: number) => String(part).padStart(2, '0')
+  return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
-function issueLabel(value: IssueState): string {
+function issueLabel(value: IssueState | null): string {
+  if (value === null) return ''
   return states.find((item) => item.value === value)?.label ?? String(value)
 }
 function persistMock(): void {
@@ -130,8 +149,17 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error('登入逾期，請重新登入。')
   }
   if (!response.ok) {
-    const body = await response.json().catch(() => null) as Envelope<unknown> | null
-    throw new Error(body?.detail || body?.message || body?.title || `API 回應錯誤 (${response.status})。`)
+    const raw = await response.text()
+    let message = raw.trim()
+    try {
+      const body: unknown = JSON.parse(raw)
+      if (body && typeof body === 'object') {
+        const values = body as Record<string, unknown>
+        const detail = [values.detail, values.message, values.title].find(value => typeof value === 'string' && value.trim())
+        if (typeof detail === 'string') message = detail
+      }
+    } catch { /* Preserve non-JSON service messages. */ }
+    throw new Error(message || `API 回應錯誤 (${response.status})。`)
   }
   return response.status === 204 ? undefined as T : await response.json() as T
 }
@@ -157,41 +185,48 @@ async function load(): Promise<void> {
 }
 
 function selectRow(row: ProcessTypeRow): void {
+  if (busy.value || !visibleRows.value.some(item => item.processType === row.processType)) return
   activeType.value = row.processType
   selectedTypes.value = [row.processType]
 }
 function toggleRow(row: ProcessTypeRow): void {
+  if (busy.value || !visibleRows.value.some(item => item.processType === row.processType)) return
   selectedTypes.value = selectedTypes.value.includes(row.processType)
     ? selectedTypes.value.filter((value) => value !== row.processType)
     : [...selectedTypes.value, row.processType]
   activeType.value = row.processType
 }
 function openEditor(next: Exclude<EditMode, ''>): void {
+  if (busy.value) return
   const row = activeRow.value
   error.value = ''
   if (next !== 'add' && !row) { error.value = '請先選取流程類別。'; return }
   if (next === 'edit' && row?.issueState !== 0) { error.value = '只有未核准資料可修改。'; return }
   mode.value = next
   sourceType.value = row?.processType ?? ''
+  editorSource.value = next === 'edit' && row ? copy(row) : null
+  editorCreateDate.value = next === 'edit' ? row?.createDate ?? '' : new Date().toISOString()
   draftDirty.value = false
   draft.value = next === 'add'
     ? { processType: '', description: '' }
     : { processType: row?.processType ?? '', description: row?.description ?? '' }
   editorOpen.value = true
 }
+function closeEditor(): void { if (!busy.value) editorOpen.value = false }
 
 function validateDraft(): string {
-  const processType = draft.value.processType.trim().toLocaleUpperCase()
+  const processType = draft.value.processType.trim().toUpperCase()
   if (!processType) return 'Process Type 為必填欄位。'
   if (processType.length > 20) return 'Process Type 最多 20 個字元。'
   if (draft.value.description.length > 255) return 'Description 最多 255 個字元。'
-  const duplicate = rows.value.some((row) => row.processType.toLocaleUpperCase() === processType
+  const duplicate = rows.value.some((row) => row.processType.toUpperCase() === processType
     && !(mode.value === 'edit' && row.processType === sourceType.value))
   if (duplicate) return 'Process Type 已存在。'
   return ''
 }
 
 async function save(keepOpen: boolean): Promise<void> {
+  if (busy.value) return
   const validation = validateDraft()
   if (validation) { error.value = validation; return }
   if (mode.value === 'edit' && !draftDirty.value) {
@@ -199,42 +234,52 @@ async function save(keepOpen: boolean): Promise<void> {
     notice.value = '資料未變更。'
     return
   }
-  const processType = draft.value.processType.trim().toLocaleUpperCase()
+  const processType = draft.value.processType.trim().toUpperCase()
   const description = draft.value.description
-  const original = rows.value.find((row) => row.processType === sourceType.value)
+  const original = editorSource.value
   busy.value = true
   error.value = ''
   try {
+    let saved: ProcessTypeRow
     if (!mock.value) {
-      const body = JSON.stringify({ processType, description, dataStamp: original?.dataStamp })
       if (mode.value === 'edit') {
-        await api(`/api/process-types/${encodeURIComponent(sourceType.value)}`, { method: 'PUT', body })
+        if (!original) throw new Error('編輯版本資料遺失，請關閉後重新查詢。')
+        const body = JSON.stringify({ processType, description, dataStamp: original.dataStamp })
+        saved = await api<ProcessTypeRow>(`/api/process-types/${encodeURIComponent(original.processType)}`, { method: 'PUT', body })
       } else {
-        await api('/api/process-types', { method: 'POST', body })
+        saved = await api<ProcessTypeRow>('/api/process-types', { method: 'POST', body: JSON.stringify({ processType, description }) })
       }
-      await load()
     } else if (mode.value === 'edit' && original) {
-      Object.assign(original, { description, dataStamp: (original.dataStamp ?? 0) + 1, reviser: userNo(), reviseDate: new Date().toISOString() })
+      const current = rows.value.find(row => row.processType === original.processType)
+      if (!current || current.dataStamp !== original.dataStamp || current.issueState !== 0) throw new Error('資料已變更，請重新查詢。')
+      Object.assign(current, { description, dataStamp: (current.dataStamp ?? 0) + 1, reviser: userNo(), reviseDate: new Date().toISOString() })
+      saved = copy(current)
       persistMock()
     } else {
       const now = new Date().toISOString()
-      rows.value.push({ processType, description, issueState: 0, dataStamp: 0, creator: userNo(), createDate: now, reviser: '', reviseDate: '' })
-      activeType.value = processType
-      issueState.value = 0
+      saved = { processType, description, issueState: 0, dataStamp: 0, creator: userNo(), createDate: now, reviser: null, reviseDate: null }
+      rows.value.push(saved)
       persistMock()
     }
+    // Retain the real committed version before reloading a filtered list.
+    editorSource.value = copy(saved)
+    sourceType.value = saved.processType
+    draft.value = { processType: saved.processType, description: saved.description ?? '' }
+    editorCreateDate.value = saved.createDate ?? ''
+    activeType.value = saved.processType
+    if (saved.issueState !== null) issueState.value = saved.issueState
+    await load()
     if (keepOpen && (mode.value === 'add' || mode.value === 'copy')) {
       draftDirty.value = false
-      sourceType.value = ''
       notice.value = '資料已套用；表單保持開啟，Process Type 欄位可繼續輸入。'
     } else if (keepOpen && mode.value === 'edit') {
-      if (original) sourceType.value = original.processType
       draftDirty.value = false
-      notice.value = '開發假資料已套用；表單保持開啟。'
+      notice.value = '資料已套用；表單保持開啟。'
     } else {
       editorOpen.value = false
       notice.value = mock.value ? '開發假資料已更新。' : '已儲存。'
     }
+    if (keepOpen) { await nextTick(); if (mode.value === 'edit') descriptionInput.value?.focus(); else typeInput.value?.focus() }
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '儲存流程類別失敗。'
   } finally {
@@ -243,39 +288,57 @@ async function save(keepOpen: boolean): Promise<void> {
 }
 
 async function deleteSelected(): Promise<void> {
+  if (busy.value) return
   if (!selectedRows.value.length && activeRow.value) selectedTypes.value = [activeRow.value.processType]
-  const targets = [...selectedRows.value]
+  const targets = selectedRows.value.map(row => copy(row))
   if (!targets.length) { error.value = '請先選取流程類別。'; return }
   if (targets.some((row) => row.issueState === 1)) { error.value = '簽核中的資料不可刪除。'; return }
-  if (!window.confirm(`確定刪除／停用 ${targets.length} 筆流程類別？`)) return
+  if (!await requestConfirmation(`確定刪除／停用 ${targets.length} 筆流程類別？`)) return
+  if (targets.some(row => !visibleRows.value.some(item => item.processType === row.processType))) {
+    error.value = '目前顯示資料已變更，請重新選取可見的流程類別。'; return
+  }
+  busy.value = true; error.value = ''
+  let completed = 0; let failure = ''
   try {
     for (const row of targets) {
       if (!mock.value) {
         await api(`/api/process-types/${encodeURIComponent(row.processType)}`, {
           method: 'DELETE', body: JSON.stringify({ issueState: row.issueState, dataStamp: row.dataStamp }),
         })
-      } else if (row.issueState === 2) {
-        row.issueState = -1
-        row.dataStamp = (row.dataStamp ?? 0) + 1
-        row.reviser = userNo()
-        row.reviseDate = new Date().toISOString()
       } else {
-        rows.value = rows.value.filter((item) => item.processType !== row.processType)
-        propertyRows.value = propertyRows.value.filter((item) => item.processNo !== row.processType)
+        const current = rows.value.find(item => item.processType === row.processType)
+        if (!current || current.dataStamp !== row.dataStamp || current.issueState !== row.issueState) throw new Error('資料已變更，請重新查詢。')
+        if (current.issueState === 2) {
+          current.issueState = -1; current.dataStamp = (current.dataStamp ?? 0) + 1
+          current.reviser = userNo(); current.reviseDate = new Date().toISOString()
+        } else {
+          rows.value = rows.value.filter((item) => item.processType !== row.processType)
+          propertyRows.value = propertyRows.value.filter((item) => item.processNo !== row.processType)
+        }
       }
+      completed++
     }
+  } catch (cause) {
+    failure = (cause instanceof Error ? cause.message : '刪除流程類別失敗。') + (completed ? `（前 ${completed} 筆已完成）` : '')
+  } finally {
     if (mock.value) persistMock()
     await load()
-    notice.value = mock.value ? 'DEV 資料已刪除／標記不使用。' : '刪除完成。'
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : '刪除流程類別失敗。'
+    notice.value = `已刪除／停用 ${completed} 筆流程類別。`
+    if (failure) error.value = failure
+    busy.value = false
   }
 }
 
 async function approveSelected(): Promise<void> {
-  const targets = selectedRows.value.length ? [...selectedRows.value] : activeRow.value ? [activeRow.value] : []
+  if (busy.value) return
+  const targets = (selectedRows.value.length ? selectedRows.value : activeRow.value ? [activeRow.value] : []).map(row => copy(row))
   if (!targets.length || targets.some((row) => row.issueState !== 0)) { error.value = '請選取未核准的流程類別。'; return }
-  if (!window.confirm(`送出 ${targets.length} 筆流程類別核准？`)) return
+  if (!await requestConfirmation(`送出 ${targets.length} 筆流程類別核准？`)) return
+  if (targets.some(row => !visibleRows.value.some(item => item.processType === row.processType))) {
+    error.value = '目前顯示資料已變更，請重新選取可見的流程類別。'; return
+  }
+  busy.value = true; error.value = ''
+  let completed = 0; let failure = ''
   try {
     for (const row of targets) {
       if (!mock.value) {
@@ -283,27 +346,35 @@ async function approveSelected(): Promise<void> {
           method: 'POST', body: JSON.stringify({ dataStamp: row.dataStamp }),
         })
       } else {
-        row.issueState = 2
-        row.dataStamp = (row.dataStamp ?? 0) + 1
-        row.reviser = userNo()
-        row.reviseDate = new Date().toISOString()
+        const current = rows.value.find(item => item.processType === row.processType)
+        if (!current || current.dataStamp !== row.dataStamp || current.issueState !== 0) throw new Error('資料已變更，請重新查詢。')
+        current.issueState = 2; current.dataStamp = (current.dataStamp ?? 0) + 1
+        current.reviser = userNo(); current.reviseDate = new Date().toISOString()
       }
+      completed++
     }
+  } catch (cause) {
+    failure = (cause instanceof Error ? cause.message : '核准流程類別失敗。') + (completed ? `（前 ${completed} 筆已完成）` : '')
+  } finally {
     if (mock.value) persistMock()
     await load()
-    notice.value = mock.value ? 'DEV 核准流程已模擬完成。' : '已送交共用簽核流程。'
-  } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : '核准流程類別失敗。'
+    notice.value = `已完成 ${completed} 筆流程類別核准送出。`
+    if (failure) error.value = failure
+    busy.value = false
   }
 }
 
 async function openProperties(): Promise<void> {
+  if (busy.value) return
   if (!activeRow.value) { error.value = '請先選取流程類別。'; return }
+  if (!propertyWindowOpen.value) propertyState.value = 0
   propertyWindowOpen.value = true
-  propertyState.value = 0
   propertyDraft.value = null
   selectedPropertyKey.value = ''
   selectedPropertyKeys.value = []
+  // No shared ProcessProperty/Element provider exists yet. Do not present DEV
+  // choices or pretend an absent service is an empty production data set.
+  if (!mock.value) { propertyRows.value = []; error.value = ''; return }
   try {
     if (mock.value) loadMock()
     else {
@@ -334,6 +405,7 @@ function toggleProperty(row: ProcessPropertyRow): void {
   propertyDraft.value = null
 }
 function editProperty(row?: ProcessPropertyRow): void {
+  if (!mock.value) return
   if (row) selectedPropertyKey.value = propertyKey(row)
   propertyDraft.value = row ? copy(row) : {
     processNo: activeType.value, processVersion: '-1', propertyNo: '', defaultValue: '',
@@ -345,6 +417,7 @@ function editSelectedProperty(): void {
   if (row) editProperty(row)
 }
 async function saveProperty(): Promise<void> {
+  if (!mock.value) return
   const value = propertyDraft.value
   if (!value || !value.propertyNo.trim()) { error.value = 'Property No 為必填欄位。'; return }
   try {
@@ -367,7 +440,8 @@ async function saveProperty(): Promise<void> {
   }
 }
 async function deleteProperty(row: ProcessPropertyRow, confirmDelete = true): Promise<void> {
-  if (confirmDelete && !window.confirm(`確定刪除 Property ${row.propertyNo}？`)) return
+  if (!mock.value) return
+  if (confirmDelete && !await requestConfirmation(`確定刪除 Property ${row.propertyNo}？`)) return
   if (row.issueState === 1) { error.value = '簽核中的屬性不可刪除。'; return }
   try {
     if (!mock.value) await api('/api/process-properties', { method: 'DELETE', body: JSON.stringify({ processNo: row.processNo, processVersion: row.processVersion, propertyNo: row.propertyNo, issueState: row.issueState, dataStamp: row.dataStamp }) })
@@ -380,18 +454,20 @@ async function deleteProperty(row: ProcessPropertyRow, confirmDelete = true): Pr
   }
 }
 async function deleteSelectedProperties(): Promise<void> {
+  if (!mock.value) return
   const targets = selectedProperties.value
   if (!targets.length) { error.value = '請先選取 Property。'; return }
   if (targets.some((row) => row.issueState === 1)) { error.value = '簽核中的屬性不可刪除。'; return }
-  if (!window.confirm(`確定刪除／停用 ${targets.length} 筆 Property？`)) return
+  if (!await requestConfirmation(`確定刪除／停用 ${targets.length} 筆 Property？`)) return
   for (const row of targets) await deleteProperty(row, false)
   selectedPropertyKeys.value = []
   selectedPropertyKey.value = ''
 }
 async function approveSelectedProperties(): Promise<void> {
+  if (!mock.value) return
   const targets = selectedProperties.value
   if (!targets.length || targets.some((row) => row.issueState !== 0)) { error.value = '請選取未核准的 Property。'; return }
-  if (!window.confirm(`送出 ${targets.length} 筆 Property 核准？`)) return
+  if (!await requestConfirmation(`送出 ${targets.length} 筆 Property 核准？`)) return
   try {
     for (const row of targets) {
       if (!mock.value) {
@@ -420,15 +496,15 @@ onMounted(load)
     <header class="page-title">
       <div><h2>流程類別資料</h2><small>流程資料 / 流程設定 / PRS TYPE / PS103</small></div>
       <b v-if="mock" class="dev-badge">開發假資料</b>
-      <button type="button" @click="emit('close')">關閉</button>
+      <button type="button" :disabled="busy" @click="emit('close')">關閉</button>
     </header>
     <p v-if="mock" class="dev-note">資料只存在這台電腦的 localStorage，不會寫入正式資料庫。</p>
     <section class="filters">
       <label v-for="state in states" :key="state.value" class="state-option">
-        <input v-model="issueState" type="radio" :value="state.value" @change="load">{{ state.label }}
+        <input v-model="issueState" type="radio" :value="state.value" :disabled="busy" @change="load">{{ state.label }}
       </label>
-      <label class="search">Process Type <input v-model="searchText" maxlength="20" @keyup.enter="load"></label>
-      <button type="button" class="primary" @click="load">查詢</button>
+      <label class="search">Process Type <input v-model="searchText" maxlength="20" :disabled="busy" @keyup.enter="load"></label>
+      <button type="button" class="primary" :disabled="busy" @click="load">查詢</button>
     </section>
     <p v-if="error" class="message error" role="alert">{{ error }}</p>
     <p v-else-if="notice" class="message" role="status">{{ notice }}</p>
@@ -447,39 +523,40 @@ onMounted(load)
         </table>
       </div>
       <aside class="actions">
-        <button type="button" class="primary" @click="openEditor('add')">ADD (A)</button>
-        <button type="button" :disabled="activeRow?.issueState !== 0" @click="openEditor('edit')">EDIT (E)</button>
-        <button type="button" :disabled="!activeRow" @click="openEditor('copy')">Copy (C)</button>
-        <button type="button" @click="approveSelected">Approve (Y)</button>
-        <button type="button" @click="deleteSelected">DEL (D)</button>
-        <button type="button" :disabled="!activeRow" @click="openProperties">Property (S)</button>
+        <button type="button" class="primary" :disabled="busy" @click="openEditor('add')">ADD (A)</button>
+        <button type="button" :disabled="busy || activeRow?.issueState !== 0" @click="openEditor('edit')">EDIT (E)</button>
+        <button type="button" :disabled="busy || !activeRow" @click="openEditor('copy')">Copy (C)</button>
+        <button type="button" :disabled="busy" @click="approveSelected">Approve (Y)</button>
+        <button type="button" :disabled="busy" @click="deleteSelected">DEL (D)</button>
+        <button type="button" :disabled="busy || !activeRow" @click="openProperties">Property (S)</button>
       </aside>
     </section>
-    <footer class="grid-footer"><span>資料總筆數 {{ visibleRows.length }}<template v-if="activeRow">　{{ issueLabel(activeRow.issueState) }}　DataStamp {{ activeRow.dataStamp ?? 'NULL' }}</template></span><small>Print / Find：WinForms 原按鈕隱藏</small></footer>
+    <footer class="grid-footer"><span>資料總筆數 {{ visibleRows.length }}<template v-if="activeRow">　{{ issueLabel(activeRow.issueState) }}</template></span></footer>
 
-    <div v-if="editorOpen" class="overlay" @click.self="editorOpen = false">
-      <section class="dialog">
-        <header><h3>Process Type Define ({{ mode === 'add' ? 'ADD' : mode === 'edit' ? 'EDIT' : 'Copy' }})</h3><button type="button" @click="editorOpen = false">×</button></header>
+    <div v-if="editorOpen" class="overlay" @click.self="closeEditor">
+      <section class="dialog" role="dialog" aria-modal="true" aria-label="Process Type Define">
+        <header><h3>Process Type Define ({{ mode === 'add' ? 'ADD' : mode === 'edit' ? 'EDIT' : 'Copy' }})</h3><button type="button" :disabled="busy" @click="closeEditor">×</button></header>
         <fieldset><legend>Process Type Data</legend>
-          <label>Process Type<input v-model.trim="draft.processType" maxlength="20" :readonly="mode === 'edit'" @input="draftDirty = true" @blur="draft.processType = draft.processType.toLocaleUpperCase()"></label>
-          <label>Description<textarea v-model="draft.description" maxlength="255" rows="3" @input="draftDirty = true"></textarea></label>
+          <label>Process Type<input ref="typeInput" v-model.trim="draft.processType" maxlength="20" :disabled="busy" :readonly="mode === 'edit'" @input="draftDirty = true" @blur="draft.processType = draft.processType.toUpperCase()"></label>
+          <label>Description<textarea ref="descriptionInput" v-model="draft.description" maxlength="255" rows="3" :disabled="busy" @input="draftDirty = true"></textarea></label>
         </fieldset>
-        <div class="audit-grid"><span>Creator</span><input :value="mode === 'edit' ? activeRow?.creator : userNo()" disabled><span>CreateDate</span><input :value="formatDate(mode === 'edit' ? activeRow?.createDate ?? '' : new Date().toISOString())" disabled><span>Reviser</span><input :value="mode === 'edit' ? userNo() : '—'" disabled><span>ReviseDate</span><input :value="mode === 'edit' ? formatDate(new Date().toISOString()) : '—'" disabled></div>
+        <div class="audit-grid"><span>Creator</span><input :value="draftAudit?.creator ?? userNo()" disabled><span>CreateDate</span><input :value="formatDate(draftAudit?.createDate ?? editorCreateDate)" disabled><span>Reviser</span><input :value="draftAudit?.reviser ?? ''" disabled><span>ReviseDate</span><input :value="formatDate(draftAudit?.reviseDate)" disabled></div>
         <p v-if="error" class="message error">{{ error }}</p>
-        <footer><button type="button" class="primary" :disabled="busy" @click="save(false)">確定</button><button type="button" :disabled="busy" @click="save(true)">套用</button><button type="button" @click="editorOpen = false">關閉</button></footer>
+        <footer><button type="button" class="primary" :disabled="busy" @click="save(false)">確定</button><button type="button" :disabled="busy" @click="save(true)">套用</button><button type="button" :disabled="busy" @click="closeEditor">關閉</button></footer>
       </section>
     </div>
 
     <div v-if="propertyWindowOpen" class="overlay" @click.self="propertyWindowOpen = false">
-      <section class="dialog property-dialog">
-        <header><div><h3>Process Property</h3><small>ProcessNo = {{ activeType }}；依 WinForms 未指定 ProcessVersion 載入</small></div><button type="button" @click="propertyWindowOpen = false">×</button></header>
-        <div class="property-states"><label v-for="state in states" :key="state.value"><input v-model="propertyState" type="radio" :value="state.value" @change="openProperties">{{ state.label }}</label></div>
+      <section class="dialog property-dialog" role="dialog" aria-modal="true" aria-label="Process Property">
+        <header><div><h3>Process Property</h3><small>ProcessNo = {{ activeType }}</small></div><button type="button" @click="propertyWindowOpen = false">×</button></header>
+        <p v-if="!mock" class="message error" role="alert">流程屬性維護尚未開放；主檔功能可正常使用。</p>
+        <div class="property-states"><label v-for="state in states" :key="state.value"><input v-model="propertyState" type="radio" :value="state.value" :disabled="!mock" @change="openProperties">{{ state.label }}</label></div>
         <div class="grid-wrap property-grid"><table><thead><tr><th class="select-cell"></th><th>ProcessVersion</th><th>PropertyNo</th><th>DefaultValue</th><th>Sequence</th><th>Description</th></tr></thead><tbody>
           <tr v-for="row in visibleProperties" :key="propertyKey(row)" :class="{ selected: selectedPropertyKeys.includes(propertyKey(row)) }" @click="selectProperty(row)"><td><input type="checkbox" :checked="selectedPropertyKeys.includes(propertyKey(row))" @click.stop="toggleProperty(row)"></td><td>{{ row.processVersion === '-1' ? '' : row.processVersion }}</td><td>{{ row.propertyNo }}</td><td>{{ row.defaultValue }}</td><td>{{ row.propertySequence }}</td><td>{{ row.description }}</td></tr>
-          <tr v-if="!visibleProperties.length"><td colspan="6" class="empty">查無資料</td></tr>
+          <tr v-if="!visibleProperties.length"><td colspan="6" class="empty">{{ mock ? '查無資料' : '流程屬性服務尚未提供' }}</td></tr>
         </tbody></table></div>
-        <div class="property-actions"><button type="button" @click="editProperty()">ADD</button><button type="button" :disabled="!selectedPropertyKey" @click="editSelectedProperty">EDIT</button><button type="button" :disabled="!propertyDraft" @click="saveProperty">套用屬性</button><button type="button" :disabled="!selectedPropertyKeys.length" @click="deleteSelectedProperty">DEL</button><button type="button" :disabled="!selectedPropertyKeys.length" @click="approveSelectedProperties">Approve</button></div>
-        <div v-if="propertyDraft" class="property-form">
+        <div class="property-actions"><button type="button" :disabled="!mock" @click="editProperty()">ADD</button><button type="button" :disabled="!mock || !selectedPropertyKey" @click="editSelectedProperty">EDIT</button><button type="button" :disabled="!mock || !propertyDraft" @click="saveProperty">套用屬性</button><button type="button" :disabled="!mock || !selectedPropertyKeys.length" @click="deleteSelectedProperty">DEL</button><button type="button" :disabled="!mock || !selectedPropertyKeys.length" @click="approveSelectedProperties">Approve</button></div>
+        <div v-if="propertyDraft && mock" class="property-form">
           <label>ProcessVersion<input :value="propertyDraft.processVersion === '-1' ? '' : propertyDraft.processVersion" readonly></label>
           <label>PropertyNo<select v-model="propertyDraft.propertyNo"><option value="">請選擇</option><option v-for="value in propertyChoices" :key="value">{{ value }}</option></select></label>
           <label>DefaultValue<input v-model="propertyDraft.defaultValue"></label>
@@ -490,6 +567,7 @@ onMounted(load)
         <footer><button type="button" class="primary" @click="propertyWindowOpen = false">關閉</button></footer>
       </section>
     </div>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </main>
 </template>
 

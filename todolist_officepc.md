@@ -1,5 +1,11 @@
 ## 家用端交付及公司端待補來源（2026-11-19）
 
+### OP103／OP BASIS 公司端來源補件（家用端追加）
+
+- [ ] 讀原 `frmOPBasisDef` 的 OPType 選擇與服務呼叫，確認是否有狀態／ValueList／其他篩選，提供具體 Form→Service→Core 與條件。現有證據未證明只允許已核准，家用端只做真類別存在性／唯一性與引用鎖，不猜 active-only。
+- [ ] 補 `OP_OPProperty` 的 Form／Designer／Service／Core、Element 候選、Controlled／值驗證、簽核與共享OPNo owner規則。8欄Type及11欄共用Property的原生DDL已有，不需再造表或讀業務資料；家用端已按來源建立空表，僅實作Type硬刪所需精準Property清理，維護provider仍未交付。
+- [ ] UI 後續接線保留真正 nullable Type 與 DataStamp，不將 NULL 版本改為0；保留伺服器回傳的 canonical key／新版本、頁內確認及逐筆部分成功。公司端繼續使用 API／DEV 假資料，不需要 PostgreSQL 或 SSH。
+
 ## 家用端最新交付及公司端接續（2026-11-19，QC103／QC107／QC108）
 
 - [x] QC103/QC107/QC108 正式獨立主檔已部署並完成模組 MD 所列 app-browser 操作；請保留 nullable 版本、原子 aggregate、來源狀態規則和共用確認窗。完整共用簽核／算法／下列來源依賴仍未完成。
