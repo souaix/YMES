@@ -208,6 +208,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PDB02 產品設定_封測](modules/PRD/產品設定封測.md) 已完成 DEV 封測入口、ECN／TECN／SEN 流程與 Oracle 六表交接。
 
+[PDB04 檔案上傳基本資料](modules/PRD/檔案上傳基本資料.md) 已完成 DEV 檔案類型、FTP 欄位預檢、核准與資料字典交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

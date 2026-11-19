@@ -1300,4 +1300,6 @@
 - [x] PDB01 已完成 DEV 主檔、倉庫／供應商、條件與核准，以及 [規格與交接](docs/modules/PRD/挑片規則設定.md)。
 - [ ] 正式條件執行與候選待家用端接續。
 - [x] PDB02 完成共用封測主檔入口、DEV 工程變更與清線查詢，以及 [規格與六表交接](docs/modules/PRD/產品設定封測.md)。
-- [ ] PDB02 封測專用 BOM、EquipmentRelease、產線清線執行與正式 ECN 明細待接續。下一項 PDB04 檔案上傳基本資料。
+- [ ] PDB02 封測專用 BOM、EquipmentRelease、產線清線執行與正式 ECN 明細待接續。
+- [x] PDB04 已完成 DEV 設定、欄位檢查、核准與 [規格及 Oracle 交接](docs/modules/PRD/檔案上傳基本資料.md)。
+- [ ] 正式檔案服務及憑證管理待家用端接續。下一項 PDB05 測試程式檔案管理。
