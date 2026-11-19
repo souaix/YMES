@@ -57,6 +57,7 @@ import FtProgramMaster from './components/FtProgramMaster.vue'
 import EqcSampleRuleMaster from './components/EqcSampleRuleMaster.vue'
 import ProductQcFrequencyMaster from './components/ProductQcFrequencyMaster.vue'
 import ProductWorkTimeMaster from './components/ProductWorkTimeMaster.vue'
+import ProductOverstayMaster from './components/ProductOverstayMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -390,6 +391,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:PRD QCITEM SPEC IMPORT', label: '產品品管項目規格匯入', tableName: 'tblprdqcitem', shortLabel: '檢', functionNo: 'PRD QCITEM SPEC IMPORT', moduleNo: 'PRD' },
       { id: 'function:PRD:PRD GBOM IMPORT', label: 'GBOM批次匯入', tableName: 'tblprdbom', shortLabel: '匯', functionNo: 'PRD GBOM IMPORT', moduleNo: 'PRD' },
       { id: 'function:PRD:PRD WORKTIME', label: '產品作業站標工維護', tableName: 'xx_tblprdruntime_theil_bu1', shortLabel: '工', functionNo: 'PRD WORKTIME', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD OVERSTAY', label: '產品作業站Overstay維護', tableName: 'xx_tbloversetup_theil_bu1', shortLabel: '候', functionNo: 'PRD OVERSTAY', moduleNo: 'PRD' },
     ] }, { id: 'product-bin-settings', label: '等級設定', shortLabel: '級', children: [
       { id: 'function:PRD:FT PROGRAM BASIS', label: 'FT測試程式', tableName: 'tblprdftprogrambasis', shortLabel: '測', functionNo: 'FT PROGRAM BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:EQC SAMPLE RULE', label: '電性(EQC)抽樣規則', tableName: 'tblprdeqcsamplerule', shortLabel: '抽', functionNo: 'EQC SAMPLE RULE', moduleNo: 'PRD' },
@@ -530,6 +532,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:EQC SAMPLE RULE': `${appBasePath}/PRD/EQCSampleRules`,
   'function:PRD:PRD QCRULE BASIS': `${appBasePath}/PRD/QCFrequencyRules`,
   'function:PRD:PRD WORKTIME': `${appBasePath}/PRD/WorkTime`,
+  'function:PRD:PRD OVERSTAY': `${appBasePath}/PRD/Overstay`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -673,6 +676,7 @@ const isFtProgramPage = computed(() => activeMasterKey.value === 'function:PRD:F
 const isEqcSampleRulePage = computed(() => activeMasterKey.value === 'function:PRD:EQC SAMPLE RULE')
 const isProductQcFrequencyPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCRULE BASIS')
 const isProductWorkTimePage = computed(() => activeMasterKey.value === 'function:PRD:PRD WORKTIME')
+const isProductOverstayPage = computed(() => activeMasterKey.value === 'function:PRD:PRD OVERSTAY')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2263,6 +2267,12 @@ async function signOut(): Promise<void> {
         />
         <ProductWorkTimeMaster
           v-else-if="isProductWorkTimePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductOverstayMaster
+          v-else-if="isProductOverstayPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

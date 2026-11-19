@@ -1266,4 +1266,15 @@
 
 - [x] 核對客製 WinForms／Designer、PRD Service／Core、MESTEST 標工主表、歷史與科技類別 view 字典。
 - [x] 完成 DEV 查詢、XLSX 預覽／本機套用、轉 SAP 預覽和 [規格與交接](docs/modules/PRD/產品作業站標工維護.md)。
-- [ ] 正式工時、版次對應、SAP 與 API 待家用端接續。下一項 PRD OVERSTAY 產品作業站 Overstay 維護。
+- [ ] 正式工時、版次對應、SAP 與 API 待家用端接續。
+
+## PRD OVERSTAY 產品作業站 Overstay 公司端檢查點（2026-11-19）
+
+- [x] 核對客製 WinForms／Designer、Service／Core、MESTEST 主表與歷史表。
+- [x] 完成 DEV 查詢、逐列 XLSX 預檢、本機套用與批次刪除，整理 [規格與交接](docs/modules/PRD/產品作業站Overstay維護.md)。
+- [ ] 正式範圍鍵、歷史交易及 Overstay 執行待家用端接續。
+
+## PRD 產品設定後續項目
+
+- [ ] `PD_BATCHMODIFYAREA` 列於功能清冊，Form 為 `frmBatchModifyArea`、執行檔為 `PD_BatchModifyArea_THEIL.dll`。桌機的 `D:\iMES\CSiMES` 找不到該 Form、專案或對應 Service／Core 名稱，需等客製原始碼或業務規格補齊。
+- [ ] 接續已找到客製原始碼的 `PRD OP RULE` 產品作業站法則維護。

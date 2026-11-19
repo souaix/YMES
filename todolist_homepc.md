@@ -1767,3 +1767,7 @@ API 工作：
 ## PRD PD901 產品作業站標工維護家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品作業站標工維護](docs/modules/PRD/產品作業站標工維護.md) 核對主表、歷史、SAP_KTEXT 與內部版次、查詢、匯入交易及轉 SAP。
+
+## PRD OVERSTAY 產品作業站 Overstay 家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站 Overstay 維護](docs/modules/PRD/產品作業站Overstay維護.md) 核對主表與歷史、舊匯入三欄範圍和實際六欄主鍵、異常群組及交易。
