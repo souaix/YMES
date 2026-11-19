@@ -1771,3 +1771,7 @@ API 工作：
 ## PRD OVERSTAY 產品作業站 Overstay 家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品作業站 Overstay 維護](docs/modules/PRD/產品作業站Overstay維護.md) 核對主表與歷史、舊匯入三欄範圍和實際六欄主鍵、異常群組及交易。
+
+## PRD OP RULE 產品作業站法則家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站法則維護](docs/modules/PRD/產品作業站法則維護.md) 核對已存在的作業站 DDL、新增的歷史 DDL、CP／FT 條件及批量替換／匯入交易。

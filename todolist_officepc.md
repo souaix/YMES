@@ -1277,4 +1277,7 @@
 ## PRD 產品設定後續項目
 
 - [ ] `PD_BATCHMODIFYAREA` 列於功能清冊，Form 為 `frmBatchModifyArea`、執行檔為 `PD_BatchModifyArea_THEIL.dll`。桌機的 `D:\iMES\CSiMES` 找不到該 Form、專案或對應 Service／Core 名稱，需等客製原始碼或業務規格補齊。
-- [ ] 接續已找到客製原始碼的 `PRD OP RULE` 產品作業站法則維護。
+- [x] `PRD OP RULE` 已完成原始碼與字典核對、DEV 法則新增、一般法則批量替換、刪除、XLSX 預檢及 [規格與交接](docs/modules/PRD/產品作業站法則維護.md)。
+- [ ] `PRD OP RULE` 的正式 CP／FT 條件、腳本編輯器與匯入轉換待接續。
+- [ ] `PDCUSTOMERDEVICE`、`PRDGBOMEXPORT_OLD` 與 `PRDGBOMEXPORT` 的獨立 Form 未在桌機來源樹找到。PD102 的 GBOM 匯出子功能另有既有交接。
+- [ ] 接續可核對原始碼的 PDP01 晶圓良率與出貨報告維護。
