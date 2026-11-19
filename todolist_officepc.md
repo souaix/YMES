@@ -1206,4 +1206,10 @@
 
 - [x] 核對 Form／Designer、Service／Core，完成 DEV 來源／目標版次、可選複製項目、目標參數序號、進度與取消。
 - [x] 沿用 PD109 Oracle 字典及共用表 CREATE-only，整理家用端複製 API 交接。
-- [ ] 正式權限、ECN 開關、APS 與 API 待接入。下一項 PD112 包裝規則設定。
+- [ ] 正式權限、ECN 開關、APS 與 API 待接入。
+
+## PRD PD112 包裝規則設定公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core，完成 DEV 包裝版次、1–6 層定義、序號／標籤／配件及 PD102 候選串接。
+- [x] Oracle 唯讀核對七張規則表，補來源邏輯 DDL、CREATE-only 與 API 交接。
+- [ ] 正式用量檢查、站點規則及標籤引擎待接續。下一項 PD113 產品包裝規則對應設定。

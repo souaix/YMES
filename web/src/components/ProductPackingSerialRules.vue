@@ -27,8 +27,9 @@ const props = defineProps<{
   canEdit: boolean
   currentUser: string
   save: (rules: SerialRule[]) => boolean
+  levelTypes?: { key: number; name: string }[]
 }>()
-const serialTypes = [{ key: 11, name: '棧板' }, { key: 12, name: '大箱' }, { key: 13, name: '小箱' }]
+const serialTypes = computed(() => props.levelTypes ?? [{ key: 11, name: '棧板' }, { key: 12, name: '大箱' }, { key: 13, name: '小箱' }])
 const sources = [
   ['D2', '日'], ['M2', '兩碼月'], ['M3', '三碼月'], ['Y4', '四碼年'], ['Y2', '兩碼年'], ['Y1', '一碼年'],
   ['W2', '週別'], ['PT', '產品類別'], ['PN', '產品編號'], ['UD', '自訂資料'], ['FN', '產地代號'],
@@ -42,7 +43,7 @@ const draft = ref<SerialRule | null>(null)
 const originalType = ref(0)
 const error = ref('')
 const notice = ref('')
-const availableTypes = computed(() => serialTypes.filter(type =>
+const availableTypes = computed(() => serialTypes.value.filter(type =>
   type.key === originalType.value || !props.rules.some(row => row.serialType === type.key)))
 const selectedRule = computed(() => props.rules.find(row => row.serialType === selected.value))
 

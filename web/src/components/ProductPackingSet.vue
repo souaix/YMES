@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import ProductPackingLabelRules from './ProductPackingLabelRules.vue'
 import ProductPackingSerialRules from './ProductPackingSerialRules.vue'
+import { loadDevelopmentPackingRules } from './packingRuleDevelopment'
 
 type PackSettings = { boxQty: number; cartonQty: number; palletQty: number; packOiPath: string }
 type Audit = { creator: string; createDate: string; reviser: string; reviseDate: string; dataStamp: number }
@@ -44,10 +45,15 @@ const copyAction = ref<CopyAction | null>(null)
 const copyKeys = ref<string[]>([])
 const mapSelection = ref<string[]>([])
 const mapDraft = ref<{ action: 'add' | 'edit' | 'copy'; key: string; ruleNo: string; ruleVersion: string; current: boolean } | null>(null)
-const localRules = [
-  { no: 'DEV-PACK-STD', versions: ['01', '02'] },
-  { no: 'DEV-PACK-EXP', versions: ['01'] },
-]
+const localRules = computed(() => {
+  const grouped = new Map<string, { versions: string[]; current: boolean }>()
+  for (const rule of props.developmentPreview ? loadDevelopmentPackingRules() : []) {
+    if (rule.issueState !== 2) continue
+    const prior = grouped.get(rule.no)
+    grouped.set(rule.no, { versions: [...(prior?.versions ?? []), rule.version], current: Boolean(prior?.current || rule.curVersion) })
+  }
+  return [...grouped].map(([no, definition]) => ({ no, ...definition }))
+})
 const productsInUse = new Set(['DEV-PRD-1002|02'])
 const canEditLegacy = computed(() => props.developmentPreview && props.product.issueState === 0)
 const accessories = computed(() => props.relations[props.product.key]?.packingAccessories ?? [])
@@ -59,7 +65,7 @@ const mappedProducts = computed(() => props.products.flatMap(product => {
 }))
 const selectedMapping = computed(() => mappedProducts.value.find(row => row.key === mapSelection.value[0]))
 const selectedAccessory = computed(() => accessories.value.find(row => row.barcode === accessorySelection.value[0]))
-const ruleVersions = computed(() => localRules.find(rule => rule.no === mapDraft.value?.ruleNo)?.versions ?? [])
+const ruleVersions = computed(() => localRules.value.find(rule => rule.no === mapDraft.value?.ruleNo)?.versions ?? [])
 
 watch(() => props.product.settings, settings => {
   boxQty.value = String(settings.boxQty)
@@ -163,7 +169,8 @@ function openMap(action: 'add' | 'edit' | 'copy'): void {
 function saveMap(closeAfter: boolean): void {
   const draft = mapDraft.value
   if (!props.developmentPreview || !draft) return
-  if (!draft.key || !localRules.some(rule => rule.no === draft.ruleNo) || (!draft.current && !ruleVersions.value.includes(draft.ruleVersion))) {
+  const definition = localRules.value.find(rule => rule.no === draft.ruleNo)
+  if (!draft.key || !definition || (draft.current ? !definition.current : !ruleVersions.value.includes(draft.ruleVersion))) {
     error.value = '請選擇產品版次、包裝規則及指定版次。'
     return
   }

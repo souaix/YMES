@@ -47,6 +47,7 @@ import ProductTimeLimitMaster from './components/ProductTimeLimitMaster.vue'
 import LabelDataMaster from './components/LabelDataMaster.vue'
 import ProductLabelMapMaster from './components/ProductLabelMapMaster.vue'
 import ProductOperationBatch from './components/ProductOperationBatch.vue'
+import PackingRuleBasisMaster from './components/PackingRuleBasisMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -373,6 +374,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:PRODUCT OP DEFAULT', label: '產品作業站預設', tableName: 'tblprdop', shortLabel: '預', functionNo: 'PRODUCT OP DEFAULT', moduleNo: 'PRD' },
       { id: 'function:PRD:PRODUCT OP AMEND', label: '產品作業站修正', tableName: 'tblprdop', shortLabel: '修', functionNo: 'PRODUCT OP AMEND', moduleNo: 'PRD' },
       { id: 'function:PRD:PRODUCT OP COPY', label: '產品作業站批次複製', tableName: 'tblprdop', shortLabel: '複', functionNo: 'PRODUCT OP COPY', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD PACKING RULE BASIS', label: '包裝規則設定', tableName: 'tblprdpackingrulebasis', shortLabel: '包', functionNo: 'PRD PACKING RULE BASIS', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -499,6 +501,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRODUCT OP DEFAULT': `${appBasePath}/PRD/OperationDefaults`,
   'function:PRD:PRODUCT OP AMEND': `${appBasePath}/PRD/OperationAmend`,
   'function:PRD:PRODUCT OP COPY': `${appBasePath}/PRD/OperationCopy`,
+  'function:PRD:PRD PACKING RULE BASIS': `${appBasePath}/PRD/PackingRules`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -632,6 +635,7 @@ const isProductLabelMapPage = computed(() => activeMasterKey.value === 'function
 const isProductOperationBatchPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT OP DEFAULT')
 const isProductOperationAmendPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT OP AMEND')
 const isProductOperationCopyPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT OP COPY')
+const isPackingRuleBasisPage = computed(() => activeMasterKey.value === 'function:PRD:PRD PACKING RULE BASIS')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2157,6 +2161,13 @@ async function signOut(): Promise<void> {
           :development-preview="isDevelopmentPreview"
           :amend-only="isProductOperationAmendPage"
           :copy-only="isProductOperationCopyPage"
+          @close="navigateHome"
+        />
+        <PackingRuleBasisMaster
+          v-else-if="isPackingRuleBasisPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
         <ProductBasisMaster

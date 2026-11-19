@@ -34,9 +34,10 @@ const props = defineProps<{
   productNo: string
   currentUser: string
   save: (rules: LabelRule[]) => boolean
+  levelTypes?: { key: string; label: string }[]
 }>()
-const labelTypes = Object.entries({ B: '小箱', C: '大箱', T: '棧板' }).flatMap(([prefix, label]) =>
-  [1, 2, 3, 4].map(number => ({ key: prefix + number, label: label + ' Type' + number })))
+const labelTypes = computed(() => props.levelTypes ?? Object.entries({ B: '小箱', C: '大箱', T: '棧板' }).flatMap(([prefix, label]) =>
+  [1, 2, 3, 4].map(number => ({ key: prefix + number, label: label + ' Type' + number }))))
 const sourceOptions = [
   ['D2', '日'], ['M2', '兩碼月'], ['M3', '三碼月'], ['Y4', '四碼年'], ['Y2', '兩碼年'], ['Y1', '一碼年'],
   ['W2', '週別'], ['PT', '產品類別'], ['PN', '產品編號'], ['PU', '產品單位'], ['FN', '產地代號'],
@@ -52,7 +53,7 @@ const previewOpen = ref(false)
 const error = ref('')
 const notice = ref('')
 const selectedRule = computed(() => props.rules.find(row => row.labelType === selected.value))
-const availableTypes = computed(() => labelTypes.filter(type =>
+const availableTypes = computed(() => labelTypes.value.filter(type =>
   type.key === originalType.value || !props.rules.some(row => row.labelType === type.key)))
 
 function blankSource(): ValueSource {
