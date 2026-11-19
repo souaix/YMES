@@ -59,6 +59,7 @@ import ProductQcFrequencyMaster from './components/ProductQcFrequencyMaster.vue'
 import ProductWorkTimeMaster from './components/ProductWorkTimeMaster.vue'
 import ProductOverstayMaster from './components/ProductOverstayMaster.vue'
 import ProductStationRuleMaster from './components/ProductStationRuleMaster.vue'
+import CpWaferShipReportMaster from './components/CpWaferShipReportMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -398,6 +399,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:FT PROGRAM BASIS', label: 'FT測試程式', tableName: 'tblprdftprogrambasis', shortLabel: '測', functionNo: 'FT PROGRAM BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:EQC SAMPLE RULE', label: '電性(EQC)抽樣規則', tableName: 'tblprdeqcsamplerule', shortLabel: '抽', functionNo: 'EQC SAMPLE RULE', moduleNo: 'PRD' },
       { id: 'function:PRD:PRD QCRULE BASIS', label: '產品抽樣頻率規則', tableName: 'tblprdqcrulebasis', shortLabel: '頻', functionNo: 'PRD QCRULE BASIS', moduleNo: 'PRD' },
+    ] }, { id: 'product-cp-settings', label: 'CP行業設定', shortLabel: 'CP', children: [
+      { id: 'function:PRD:P_CP WAFER YIELD SHIP REPORT', label: '晶圓良率與出貨報告維護', tableName: 'tbl_cpsyscombomapbasis', shortLabel: '報', functionNo: 'P_CP WAFER YIELD SHIP REPORT', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -536,6 +539,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRD WORKTIME': `${appBasePath}/PRD/WorkTime`,
   'function:PRD:PRD OVERSTAY': `${appBasePath}/PRD/Overstay`,
   'function:PRD:PRD OP RULE': `${appBasePath}/PRD/StationRules`,
+  'function:PRD:P_CP WAFER YIELD SHIP REPORT': `${appBasePath}/PRD/CPWaferShipReports`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -681,6 +685,7 @@ const isProductQcFrequencyPage = computed(() => activeMasterKey.value === 'funct
 const isProductWorkTimePage = computed(() => activeMasterKey.value === 'function:PRD:PRD WORKTIME')
 const isProductOverstayPage = computed(() => activeMasterKey.value === 'function:PRD:PRD OVERSTAY')
 const isProductStationRulePage = computed(() => activeMasterKey.value === 'function:PRD:PRD OP RULE')
+const isCpWaferShipReportPage = computed(() => activeMasterKey.value === 'function:PRD:P_CP WAFER YIELD SHIP REPORT')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2283,6 +2288,13 @@ async function signOut(): Promise<void> {
         />
         <ProductStationRuleMaster
           v-else-if="isProductStationRulePage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <CpWaferShipReportMaster
+          v-else-if="isCpWaferShipReportPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"

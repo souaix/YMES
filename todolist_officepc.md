@@ -1280,4 +1280,5 @@
 - [x] `PRD OP RULE` 已完成原始碼與字典核對、DEV 法則新增、一般法則批量替換、刪除、XLSX 預檢及 [規格與交接](docs/modules/PRD/產品作業站法則維護.md)。
 - [ ] `PRD OP RULE` 的正式 CP／FT 條件、腳本編輯器與匯入轉換待接續。
 - [ ] `PDCUSTOMERDEVICE`、`PRDGBOMEXPORT_OLD` 與 `PRDGBOMEXPORT` 的獨立 Form 未在桌機來源樹找到。PD102 的 GBOM 匯出子功能另有既有交接。
-- [ ] 接續可核對原始碼的 PDP01 晶圓良率與出貨報告維護。
+- [x] PDP01 晶圓良率與出貨報告維護已完成原始碼、四表 metadata、DEV 出貨規則及 [規格與交接](docs/modules/PRD/晶圓良率與出貨報告維護.md)。
+- [ ] 正式報告產出、候選及檢查待接續。下一項 PDP02 晶圓測試程式定義。

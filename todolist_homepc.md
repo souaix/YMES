@@ -1775,3 +1775,7 @@ API 工作：
 ## PRD OP RULE 產品作業站法則家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品作業站法則維護](docs/modules/PRD/產品作業站法則維護.md) 核對已存在的作業站 DDL、新增的歷史 DDL、CP／FT 條件及批量替換／匯入交易。
+
+## PRD PDP01 晶圓良率與出貨報告家用端 handoff（2026-11-19）
+
+- [ ] 依 [晶圓良率與出貨報告維護](docs/modules/PRD/晶圓良率與出貨報告維護.md) 核對四表 CREATE、候選、ComboSeqNo、停用及報告檢查。

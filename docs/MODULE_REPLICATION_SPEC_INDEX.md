@@ -194,6 +194,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [產品作業站法則維護](modules/PRD/產品作業站法則維護.md) 已完成 DEV 法則清單、新增、批量替換／刪除及 XLSX 交接。
 
+[PDP01 晶圓良率與出貨報告維護](modules/PRD/晶圓良率與出貨報告維護.md) 已完成 DEV 報告規則、來源站點、停用與四表交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定
