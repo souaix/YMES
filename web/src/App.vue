@@ -429,6 +429,7 @@ const fallbackMenuTree: MenuNode[] = [
       id: 'menu:OE:MO', label: '工單', shortLabel: '工', children: [
         { id: 'function:OE:MO BASIS', label: '工單基本資料', tableName: 'tbloemobasis', shortLabel: '基', functionNo: 'MO BASIS', moduleNo: 'OE' },
         { id: 'function:OE:MO DELETE', label: '工單刪除', tableName: 'tbloemobasis', shortLabel: '刪', functionNo: 'MO DELETE', moduleNo: 'OE' },
+        { id: 'function:OE:MO QUERY', label: '工單查詢', tableName: 'tbloemobasis', shortLabel: '查', functionNo: 'MO QUERY', moduleNo: 'OE' },
       ],
     }],
   },
@@ -443,6 +444,7 @@ const menuRoutes: Record<string, string> = {
   'function:OE:RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
   'function:OE:MO BASIS': appBasePath + '/OE/ManufacturingOrders',
   'function:OE:MO DELETE': appBasePath + '/OE/ManufacturingOrderDelete',
+  'function:OE:MO QUERY': appBasePath + '/OE/ManufacturingOrderQuery',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -661,6 +663,7 @@ const functionRoutes: Record<string, string> = {
   'RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
   'MO BASIS': appBasePath + '/OE/ManufacturingOrders',
   'MO DELETE': appBasePath + '/OE/ManufacturingOrderDelete',
+  'MO QUERY': appBasePath + '/OE/ManufacturingOrderQuery',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -725,6 +728,7 @@ const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
 const isManufacturingOrderPage = computed(() => activeMasterKey.value === 'function:OE:MO BASIS')
 const isManufacturingOrderDeletePage = computed(() => activeMasterKey.value === 'function:OE:MO DELETE')
+const isManufacturingOrderQueryPage = computed(() => activeMasterKey.value === 'function:OE:MO QUERY')
 const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCITEM SPEC IMPORT')
 const isProductGbomBatchImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD GBOM IMPORT')
 const isFtProgramPage = computed(() => activeMasterKey.value === 'function:PRD:FT PROGRAM BASIS')
@@ -2299,9 +2303,9 @@ async function signOut(): Promise<void> {
           @close="navigateHome"
         />
         <ManufacturingOrderMaster
-          v-else-if="isManufacturingOrderPage || isManufacturingOrderDeletePage"
+          v-else-if="isManufacturingOrderPage || isManufacturingOrderDeletePage || isManufacturingOrderQueryPage"
           :key="activeMasterKey"
-          :deletion-only="isManufacturingOrderDeletePage"
+          :page-mode="isManufacturingOrderDeletePage ? 'delete' : isManufacturingOrderQueryPage ? 'query' : undefined"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"

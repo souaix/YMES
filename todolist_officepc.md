@@ -1333,3 +1333,8 @@
 
 - [x] 核對 `frmMODelete` Form／Designer、`wsOE.DelMOBasis` 與 Core。DEV 支援多條件查詢、多選、停用／硬刪與出錯停止。
 - [x] [OE202 規格](docs/modules/OE/工單刪除.md) 記錄 ERP、廠別、批號與發料限制。DDL 共用已查證的 OE201 主檔，跨模組回復由家用端接續。
+
+## OE203 工單查詢
+
+- [x] 依 `frmMOQuery` Form／Designer、`wsOE.LoadMOBasis` 及 Core 完成 DEV 多條件查詢、屬性唯讀及六種工單狀態篩選。
+- [x] [OE203 規格](docs/modules/OE/工單查詢.md) 記錄來源參數、欄位、手動查找差異與正式 API 交接。DDL 共用 OE201。
