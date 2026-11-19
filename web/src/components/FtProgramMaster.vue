@@ -1,22 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { parseFirstWorksheetXlsx } from './materialImportWorkbook'
-
-type SoftwareBin = { plan: string; software: string; hardware: string; fail: boolean }
-type HardwareBin = { no: string; fail: boolean; description: string; os?: boolean; color?: string }
-type Program = {
-  no: string; version: string; description: string; manageSoftware: boolean; state: number; current: boolean
-  hardwareBins: HardwareBin[]; softwareBins: SoftwareBin[]; files: string[]; creator: string; reviser?: string; stamp: number; programType?: string
-}
+import { developmentCpProgramTypes as cpTypes, developmentProgramKey, loadDevelopmentPrograms, newDevelopmentProgram, type HardwareBin, type SoftwareBin, type TestProgram as Program } from './testProgramDevelopment'
 type EditorMode = 'new' | 'edit' | 'copy' | 'version'
 type Panel = 'program' | 'hardware' | 'software' | 'files' | ''
 
 const props = defineProps<{ developmentPreview: boolean; currentUserNo: string; cp?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
-const storageKey = props.cp ? 'ymes.dev.pdp02-cp-programs.v1' : 'ymes.dev.prd202-ft-programs.v1'
-const cpTypes = ['DEV-CP', 'DEV-WAFER']
+const storageKey = developmentProgramKey(Boolean(props.cp))
 const title = props.cp ? '晶圓測試程式定義' : 'FT 測試程式'
-const rows = ref(load())
+const rows = ref(props.developmentPreview ? loadDevelopmentPrograms(Boolean(props.cp)) : [])
 const query = ref('')
 const stateFilter = ref('all')
 const typeFilter = ref('')
@@ -47,25 +40,7 @@ const user = computed(() => props.currentUserNo || 'DEV001')
 function key(row: Program): string { return JSON.stringify([row.no, row.version]) }
 
 function blank(): Program {
-  return { no: '', version: '01', description: '', manageSoftware: false, state: 0, current: false,
-    hardwareBins: [], softwareBins: [], files: [], creator: '', stamp: 0, programType: props.cp ? cpTypes[0] : undefined }
-}
-
-function load(): Program[] {
-  if (!props.developmentPreview) return []
-  try {
-    const stored = JSON.parse(localStorage.getItem(storageKey) ?? 'null')
-    if (Array.isArray(stored)) return stored
-  } catch { /* Use DEV fixtures when local storage is unavailable. */ }
-  if (props.cp) return [
-    { ...blank(), no: 'DEV-CP-01', description: 'DEV 核准晶圓測試程式', state: 2, current: true, creator: 'DEV001',
-      hardwareBins: [{ no: 'BIN01', fail: false, os: false, description: '', color: '#008000' }] },
-    { ...blank(), no: 'DEV-CP-02', description: 'DEV 待核准晶圓測試程式', creator: 'DEV001' },
-  ]
-  return [
-    { ...blank(), no: 'DEV-FT-01', description: 'DEV 核准測試程式', state: 2, current: true, creator: 'DEV001' },
-    { ...blank(), no: 'DEV-FT-02', description: 'DEV 待核准測試程式', manageSoftware: true, creator: 'DEV001' },
-  ]
+  return newDevelopmentProgram(Boolean(props.cp))
 }
 
 function clone(row: Program): Program {

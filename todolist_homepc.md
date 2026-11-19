@@ -1803,3 +1803,7 @@ API 工作：
 ## PRD PDB04 檔案上傳基本資料家用端 handoff（2026-11-19）
 
 - [ ] 依 [檔案上傳基本資料](docs/modules/PRD/檔案上傳基本資料.md) 核對檔案類型 CREATE、DataStamp、正式連線與伺服器端憑證。
+
+## PRD PDB05 測試程式檔案管理家用端 handoff（2026-11-19）
+
+- [ ] 依 [測試程式檔案管理](docs/modules/PRD/測試程式檔案管理.md) 核對檔案／歷程 CREATE、程式版本鍵、核准類型、傳輸與交易一致性。

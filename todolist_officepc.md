@@ -1293,4 +1293,7 @@
 - [x] PDB02 完成共用封測主檔入口、DEV 工程變更與清線查詢，以及 [規格與六表交接](docs/modules/PRD/產品設定封測.md)。
 - [ ] PDB02 封測專用 BOM、EquipmentRelease、產線清線執行與正式 ECN 明細待接續。
 - [x] PDB04 已完成 DEV 設定、欄位檢查、核准與 [規格及 Oracle 交接](docs/modules/PRD/檔案上傳基本資料.md)。
-- [ ] 正式檔案服務及憑證管理待家用端接續。下一項 PDB05 測試程式檔案管理。
+- [ ] 正式檔案服務及憑證管理待家用端接續。
+- [x] PDB05 完成 DEV 程式查詢、檔案登錄、更新歷程與本頁下載，以及 [規格與雙表交接](docs/modules/PRD/測試程式檔案管理.md)。
+- [ ] PDI01 產品設備限制維護已找到部署用 `PD_I_PRD_EquipmentRelease.dll` 與 PDB02 的查詢呼叫。公司端來源樹尚未找到 `frmPRDEquipmentRelease` 或獨立專案，正式維護欄位待補 Form／Designer 或業務規格。
+- [ ] PDI03 配件群組維護已找到部署用 `PD_I_PRD_ACCGroupMaintain.dll`，公司端來源樹尚未找到 `frmPRDACCGroupMaintain` 或獨立專案。待補 Form／Designer 或業務規格。
