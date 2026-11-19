@@ -1654,4 +1654,33 @@ API 工作：
 ## PRD PD102 eSOP 家用端 handoff（2026-11-18）
 
 - [ ] 依 [產品電子作業指導書規格](docs/modules/PRD/產品電子作業指導書.md) 核對 `tblprdesopbasis`、first-phase 和 live schema。沿用 OP／SubOP 及參數，依需求補缺漏的 migration。
-- [ ] 實作產品版次的 eSOP CRUD、Position／SubOP／文件 lookup 與授權存取。正式 Position／文件模型對照 EAI 的 `station.get`、`sop.get`。DEV目前只用假資料或檔名，不讀檔案內容。
+- [ ] 實作產品版次的 eSOP CRUD、Position／SubOP／文件 lookup 與授權存取。正式 Position／文件模型對照 EAI 的 `station.get`、`sop.get`。DEV 目前只用假資料或檔名，不讀檔案內容。
+
+## PRD PD102 EquipmentSpec 家用端 handoff（2026-11-18）
+
+- [ ] 依 [產品設備參數規格](docs/modules/PRD/產品設備參數規格.md) 核對 `tblprdequipmentspec`、`tbleqpparameterbasis`、live schema 和既有 migrations。
+- [ ] 實作依流程與 PS 權限找設備、設備參數目錄與產品規格合併查詢、整批 PUT。驗證四欄順序、精度、可用參數與稽核來源，固化整批交易及並發語意。
+
+## PRD PD102 APS Integration 家用端 handoff（2026-11-18）
+
+- [ ] 依 [產品 APS 規格](docs/modules/PRD/產品APS整合.md)，對照 Default／PS104 的四張既有 APS 表 DDL 與 live schema，沿用共用結構。
+- [ ] 實作產品版次／MOType／Node 主設定與設備明細 API。伺服器重新驗證流程、設備、群組與權限，主設定 Update／Delete 及設備明細重建保持同一交易。
+
+## PRD PD102 Bin 家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品 Bin 規格](docs/modules/PRD/產品Bin定義.md) 及兩張表的 [CREATE-only 參考](database/reference/mestest_prd_bin_create.sql) 核對 YMES live schema，確認是否需要 migration。
+- [ ] 實作依產品版本載入系統 Bin 目錄與整組定義，並提供交易式整批替換。確認 `IssueState`、空清單清除、Good／OS Bin 檢查與操作者稽核。
+
+## PRD PD102 GBOM 家用端 handoff（2026-11-19）
+
+- [ ] 依 [GBOM 規格](docs/modules/PRD/產品GBOM匯入匯出.md) 核對共用流程表、客製表 CREATE-only 參照與 PP02／PP05 資訊記錄來源。MESTEST 的 `XX_TBLWIPINFORECORD` 為 INVALID。
+- [ ] 實作 Excel 驗證、產品流程與 BOM 的交易、檔案備份與原始檔下載，定義備份失敗後的恢復流程。
+
+## PRD PD102 產品 Import 家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品資料匯入規格](docs/modules/PRD/產品資料匯入.md) 核對產品／類別／流程及子表的 live schema，沿用產品和 PS104 參考並檢查 `tblprdtype`。
+- [ ] 實作五張工作表預檢、依流程與產品群組匯入、各組結果、取消與 SYS 範本權限。Vue DEV 目前可預覽流程並新增主檔假資料。
+
+## PRD PD102 Expand All 家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品流程展開規格](docs/modules/PRD/產品流程展開.md)，核對共用流程與作業表；按 `IsNetFlow`、產品流程版次和工單類型實作唯讀 API。

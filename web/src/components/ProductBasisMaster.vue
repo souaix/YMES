@@ -14,6 +14,12 @@ import ProductQCItemSetup from './ProductQCItemSetup.vue'
 import ProductPackingSet from './ProductPackingSet.vue'
 import ProductEquipmentCapItems from './ProductEquipmentCapItems.vue'
 import ProductEsopSetup from './ProductEsopSetup.vue'
+import ProductEquipmentSpec from './ProductEquipmentSpec.vue'
+import ProductApsIntegration from './ProductApsIntegration.vue'
+import ProductBinSetup from './ProductBinSetup.vue'
+import ProductGbomFiles from './ProductGbomFiles.vue'
+import ProductDataImport from './ProductDataImport.vue'
+import ProductProcessExpansion from './ProductProcessExpansion.vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -30,6 +36,10 @@ type ProductQCAssignment = Parameters<InstanceType<typeof ProductQCItemSetup>['$
 type ProductPackingProps = InstanceType<typeof ProductPackingSet>['$props']
 type EquipmentCapRows = InstanceType<typeof ProductEquipmentCapItems>['$props']['rows']
 type ProductEsopRows = InstanceType<typeof ProductEsopSetup>['$props']['rows']
+type ProductEquipmentSpecProps = InstanceType<typeof ProductEquipmentSpec>['$props']
+type ProductApsProps = InstanceType<typeof ProductApsIntegration>['$props']
+type ProductBinProps = InstanceType<typeof ProductBinSetup>['$props']
+type ImportProducts = InstanceType<typeof ProductDataImport>['$props']['importProducts']
 type ProductRelation = ProductPackingProps['relations'][string] & {
   processes: ProductRow[]
   bom: ProductRow[]
@@ -47,8 +57,10 @@ type ProductRelation = ProductPackingProps['relations'][string] & {
   qcItems?: ProductRow[]
   equipmentCapItems?: EquipmentCapRows
   esopRows?: ProductEsopRows
+  equipmentSpecs?: ProductEquipmentSpecProps['savedSpecs']
   apsSetups?: ProductRow[]
   apsSetupDetails?: ProductRow[]
+  bins?: ProductBinProps['savedBins']
   materialGroups?: ProductRow[]
 }
 type ProductDefaultPlan = {
@@ -73,10 +85,12 @@ const emit = defineEmits<{ close: [] }>()
 const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
 const rowsKey = 'ymes.dev.prd-product-basis.v1'
 const relationKey = 'ymes.dev.prd-product-basis-relations.v1'
+const developmentGbomFiles = ref(new Map<string, File>())
 const states: Array<{ value: IssueState; label: string }> = [
   { value: 0, label: '未核准' }, { value: 1, label: '簽核中' },
   { value: 2, label: '已核准' }, { value: -1, label: '不使用' },
 ]
+const developmentProductTypes = ['DEV-FINISHED', 'DEV-SEMIFINISHED', 'DEV-RAW']
 
 const productColumns = [
   'ProductNo','ProductVersion','ProductName','ProductType','IssueState','Creator','CreateDate','Description','CurVersion',
@@ -141,7 +155,7 @@ const featureInfo: Record<string, { title: string; source: string; description: 
   'eqp-cap-item': { title: 'EQPCapItem', source: 'PD_OPCapItem', description: '設定產品版次各作業站的設備能力項目。' },
   esop: { title: 'eSOP', source: 'PD_eSOPBasis', description: '設定產品版次與作業站的 SOP 文件。' },
   'equipment-spec': { title: 'EquipmentSpec', source: 'frmPRDEquipmentSpec_THEIL_BU1', description: '維護產品版本的設備規格。' },
-  aps: { title: 'APS Integration', source: 'frmPRDAPSIntegration_THEIL_BU1', description: '維護產品流程與 APS 整合資料；按鈕受 ExecuteAPS 參數控制。' },
+  aps: { title: 'APS Integration', source: 'frmPRSAPSIntegration_THEIL_BU1', description: '維護產品流程節點的 APS 設定及設備明細。' },
   bin: { title: 'Bin', source: 'PRD bin function', description: '維護產品程式使用的 Bin 資料。' },
   'gbom-import': { title: 'GBOMImport', source: 'wsPRD.UpdGBOMExcelFile', description: '僅允許未核准產品；Excel 檔名須為 ProductNo-ProductVersion，讀取內容後上傳檔案位元組。' },
   'gbom-export': { title: 'GBOMExport', source: 'Product GBOM export', description: '匯出已匯入的 ProductNo-ProductVersion GBOM Excel。' },
@@ -449,6 +463,33 @@ const subOpOperationOptions = computed(() => {
   return [...operations.values()]
 })
 const selectedProcess = computed(() => activeRelations.value.processes[selectedProcessIndex.value] ?? null)
+const equipmentSpecOptions = computed(() => {
+  if (!mock.value || !selectedProcess.value) return []
+  const psNo = text(selectedProcess.value.psNo)
+  const operations = new Set((activeRelations.value.parameters?.ops ?? [])
+    .filter(row => text(row.psNo) === psNo).map(row => text(row.opNo)))
+  return [...new Map(developmentRunTimeRows.value
+    .filter(row => row.equipmentNo !== 'N/A' && operations.has(row.opNo))
+    .map(({ equipmentNo, equipmentType }) => [equipmentNo, { equipmentNo, equipmentType }])).values()]
+})
+const developmentApsNodes = computed<ProductApsProps['nodeOptions']>(() => {
+  if (!mock.value || !selectedProcess.value) return []
+  const process = selectedProcess.value
+  const nodes = new Map<string, string>()
+  for (const row of activeRelations.value.parameters?.ops ?? []) {
+    if (text(row.psNo) !== text(process.psNo) || !row.opNo) continue
+    const opNo = text(row.opNo)
+    nodes.set(text(row.nodeId) || 'DEV-NODE-' + opNo.replace(/^DEV-OP-/, ''), opNo)
+  }
+  for (const row of activeRelations.value.apsSetups ?? []) {
+    if (text(row.processNo) === text(process.processNo) && text(row.processVersion) === text(process.processVersion)
+      && Number(row.moTypeNo) === Number(process.moTypeNo) && row.nodeId) nodes.set(text(row.nodeId), text(row.opNo))
+  }
+  return [...nodes].map(([nodeId, opNo]) => ({
+    nodeId, opNo, equipmentNos: [...new Set(developmentRunTimeRows.value
+      .filter(row => row.opNo === opNo && row.equipmentNo !== 'N/A').map(row => row.equipmentNo))],
+  }))
+})
 const bomTreeLines = computed(() => {
   if (!active.value) return []
   const result: BomTreeLine[] = [{ id: keyOf(active.value), label: keyOf(active.value).replace('|', ':'), kind: 'root', depth: 0 }]
@@ -459,7 +500,7 @@ const selectedRows = computed(() => rows.value.filter(row => selectedKeys.value.
 const feature = computed(() => featureInfo[featureKey.value] ?? null)
 const editable = computed(() => Boolean(active.value && Number(active.value.issueState) === 0))
 const lookupOptions = computed(() => {
-  if (lookupField.value === 'productType') return ['DEV-FINISHED', 'DEV-SEMIFINISHED', 'DEV-RAW']
+  if (lookupField.value === 'productType') return developmentProductTypes
   if (lookupField.value === 'unitType') return ['PCS', 'WEIGHT', 'LENGTH']
   if (lookupField.value === 'unitNo') return ['EA', 'KG', 'M']
   if (lookupField.value === 'serialTypeNoLot') return ['DEV-LOT-A', 'DEV-LOT-B']
@@ -745,7 +786,10 @@ async function deleteSelected(): Promise<void> {
         if (Number(row.issueState) === 2) return [{ ...row, issueState: -1, reviser: currentUser(), reviseDate: new Date().toISOString(), dataStamp: Number(row.dataStamp ?? 0) + 1 }]
         removeKeys.add(keyOf(row)); return []
       })
-      for (const key of removeKeys) delete relations.value[key]
+      for (const key of removeKeys) {
+        delete relations.value[key]
+        developmentGbomFiles.value.delete(key)
+      }
       persistMock()
       notice.value = 'DEV 假資料：已按簽核狀態停用或刪除產品。'
     } else {
@@ -822,7 +866,7 @@ function runAction(action: string): void {
   if (action === 'approve') return void approveSelected()
   if (action === 'close') return emit('close')
   if (featureInfo[action]) {
-    if (action === 'process-expand' && !selectedProcess.value) {
+    if (['process-expand', 'equipment-spec', 'aps'].includes(action) && !selectedProcess.value) {
       error.value = '請先選取產品流程列。'
       return
     }
@@ -938,6 +982,61 @@ function saveProductEsopRows(items: ProductEsopRows): boolean {
   const product = active.value
   if (!product || !mock.value) return false
   return replaceMockRelation(keyOf(product), { ...relatedFor(product), esopRows: items })
+}
+const saveProductEquipmentSpecs: ProductEquipmentSpecProps['save'] = (equipmentNo, specs) => {
+  const product = active.value
+  if (!product || !mock.value || !equipmentSpecOptions.value.some(row => row.equipmentNo === equipmentNo)) return false
+  const relation = relatedFor(product)
+  return replaceMockRelation(keyOf(product), { ...relation, equipmentSpecs: { ...relation.equipmentSpecs, [equipmentNo]: specs } })
+}
+const saveProductAps: ProductApsProps['save'] = (apsSetups, apsSetupDetails) => {
+  const product = active.value
+  if (!product || !mock.value || !selectedProcess.value) return false
+  return replaceMockRelation(keyOf(product), { ...relatedFor(product), apsSetups, apsSetupDetails })
+}
+const saveProductBins: ProductBinProps['save'] = bins => {
+  const product = active.value
+  if (!product || !mock.value || !editable.value) return false
+  if (!replaceMockRelation(keyOf(product), { ...relatedFor(product), bins })) return false
+  notice.value = 'DEV 假資料：Bin 定義已儲存。'
+  return true
+}
+function saveDevelopmentGbom(file: File): boolean {
+  if (!mock.value || !editable.value || !active.value) return false
+  developmentGbomFiles.value.set(keyOf(active.value), file)
+  notice.value = 'DEV 假資料：可在本次頁面匯出 GBOM 備份。'
+  return true
+}
+const importDevelopmentProducts: ImportProducts = entries => {
+  if (!mock.value) return entries.map(() => 'DEV 匯入未啟用。')
+  const known = new Set(rows.value.map(row => keyOf(row).toUpperCase()))
+  const now = new Date().toISOString()
+  const user = currentUser()
+  const additions: ProductRow[] = []
+  const results = entries.map(entry => {
+    const key = keyOf(entry)
+    if (entry.productNo.includes('|') || entry.productVersion.includes('|')) return '產品編號和版本不可包含 |。'
+    if (known.has(key)) return '產品編號與版本已存在。'
+    if (!developmentProductTypes.includes(entry.productType)) return '產品類別不在 DEV 已核准清單。'
+    known.add(key)
+    additions.push({ ...blankForm(), ...entry, issueState: 0, curVersion: 0, creator: user, createDate: now,
+      reviser: user, reviseDate: now, dataStamp: 0 })
+    return ''
+  })
+  if (additions.length) {
+    const next = [...rows.value, ...additions]
+    try {
+      localStorage.setItem(rowsKey, JSON.stringify(next))
+    } catch {
+      return results.map(message => message || '無法儲存 DEV 產品主檔。')
+    }
+    rows.value = next
+    issueState.value = 0
+    productQuery.value = ''
+    selectRow(additions[0])
+    notice.value = `DEV 假資料：已匯入 ${additions.length} 筆產品主檔。`
+  }
+  return results.map(message => message || '已匯入 DEV 主檔。')
 }
 const savePackingSettings: ProductPackingProps['saveSettings'] = (keys, settings) => {
   if (!mock.value || !keys.length) return false
@@ -1080,7 +1179,7 @@ onMounted(() => { void load() })
       </div>
       <aside class="prd-actions" aria-label="產品功能">
         <button v-for="action in toolbar" :key="action.key" class="prd-button" type="button" :disabled="actionDisabled(action.key)" @click="runAction(action.key)">{{ action.label }}</button>
-        <button class="prd-button" type="button" @click="featureKey='product-import'">Import</button>
+        <button class="prd-button" type="button" :disabled="busy" @click="featureKey='product-import'">Import</button>
         <button class="prd-button" type="button" @click="emit('close')">Close</button>
       </aside>
     </div>
@@ -1198,18 +1297,38 @@ onMounted(() => { void load() })
         :sub-ops="(activeRelations.subOps ?? []).map(row => ({ opNo: text(row.opNo), subOpNo: text(row.subOpNo), subOpName: text(row.subOpName) }))"
         @close="closeFeature" />
     </div>
-    <div v-if="feature && !['process-setup','bom-editor','property','parameter','business-rule','op-description','recipe-group','accessory','resource','sub-op','program','default','run-time','qc-item','packing-set','eqp-cap-item','esop'].includes(featureKey)" class="prd-overlay" @click.self="closeFeature">
-      <section class="prd-feature-dialog">
-        <header><div><small>{{ feature.source }}</small><h2>{{ feature.title }}</h2></div><button type="button" aria-label="關閉" @click="closeFeature">×</button></header>
-        <p class="prd-context">產品 {{ active?.productNo }} / {{ active?.productVersion }}　{{ active?.productName }}</p>
-        <p>{{ feature.description }}</p>
-        <p v-if="featureKey === 'process-setup' || featureKey === 'process-expand'" class="prd-context">流程 {{ selectedProcess?.psNo || '—' }} / MOType {{ selectedProcess?.moTypeNo ?? '—' }} / {{ selectedProcess?.processNo || '—' }} / {{ selectedProcess?.processVersion || '—' }}</p>
-        <template v-if="featureKey === 'equipment-spec'">
-          <div class="prd-detail-grid"><table><thead><tr><th>OPNo</th><th>EquipmentNo</th><th>Description</th></tr></thead><tbody><tr v-for="(item,index) in activeRelations.constraints" :key="index"><td>{{ item.opNo }}</td><td>{{ item.equipmentNo }}</td><td>{{ item.description }}</td></tr><tr v-if="!activeRelations.constraints.length"><td colspan="3" class="empty">尚無設備資料。</td></tr></tbody></table></div>
-        </template>
-        <div v-else class="prd-feature-placeholder"><strong>WinForms 功能入口已依原功能名稱保留。</strong><p>此子功能由另一個 ObjectFileHandler/WinForms Form 載入；其專屬欄位、資料表與操作會在對應功能規格中拆分，API 尚待家用端實作。</p><p>Development 目前只展示產品上下文，不會寫入 MES 或 YMES 正式資料。</p></div>
-        <footer><button class="prd-button" type="button" @click="closeFeature">關閉</button></footer>
-      </section>
+    <div v-if="feature && featureKey === 'equipment-spec'" class="prd-overlay child-feature-overlay">
+      <ProductEquipmentSpec :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :process-no="text(selectedProcess?.processNo)" :process-version="text(selectedProcess?.processVersion)"
+        :equipment-options="equipmentSpecOptions" :saved-specs="mock ? activeRelations.equipmentSpecs ?? {} : {}"
+        :development-preview="mock" :current-user="currentUser()" :save="saveProductEquipmentSpecs" @close="closeFeature" />
+    </div>
+    <div v-if="feature && featureKey === 'aps'" class="prd-overlay child-feature-overlay">
+      <ProductApsIntegration :product-no="text(active?.productNo)" :product-version="text(active?.productVersion)"
+        :process-no="text(selectedProcess?.processNo)" :process-version="text(selectedProcess?.processVersion)"
+        :mo-type-no="Number(selectedProcess?.moTypeNo ?? 0)" :node-options="developmentApsNodes"
+        :setups="mock ? activeRelations.apsSetups ?? [] : []" :details="mock ? activeRelations.apsSetupDetails ?? [] : []"
+        :current-user="currentUser()" :development-preview="mock" :save="saveProductAps" @close="closeFeature" />
+    </div>
+    <div v-if="feature && featureKey === 'bin'" class="prd-overlay child-feature-overlay">
+      <ProductBinSetup :key="active ? keyOf(active) : ''" :product-no="text(active?.productNo)"
+        :product-version="text(active?.productVersion)" :can-edit="editable" :development-preview="mock"
+        :saved-bins="mock ? activeRelations.bins ?? [] : []" :save="saveProductBins" @close="closeFeature" />
+    </div>
+    <div v-if="feature && active && (featureKey === 'gbom-import' || featureKey === 'gbom-export')" class="prd-overlay child-feature-overlay">
+      <ProductGbomFiles :key="`${featureKey}:${keyOf(active)}`" :mode="featureKey === 'gbom-import' ? 'import' : 'export'"
+        :product-no="text(active.productNo)" :product-version="text(active.productVersion)" :can-edit="editable"
+        :development-preview="mock" :saved-file="developmentGbomFiles.get(keyOf(active))" :save="saveDevelopmentGbom"
+        @close="closeFeature" />
+    </div>
+    <div v-if="feature && featureKey === 'product-import'" class="prd-overlay child-feature-overlay">
+      <ProductDataImport :development-preview="mock" :import-products="importDevelopmentProducts" @close="closeFeature" />
+    </div>
+    <div v-if="feature && active && selectedProcess && featureKey === 'process-expand'" class="prd-overlay child-feature-overlay">
+      <ProductProcessExpansion :product-no="text(active.productNo)" :product-version="text(active.productVersion)"
+        :process-no="text(selectedProcess.processNo)" :process-version="text(selectedProcess.processVersion)"
+        :ps-no="text(selectedProcess.psNo)" :mo-type-no="text(selectedProcess.moTypeNo)" :development-preview="mock"
+        @close="closeFeature" />
     </div>
   </main>
 </template>

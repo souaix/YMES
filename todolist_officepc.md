@@ -1112,4 +1112,39 @@
 
 - [x] 核對主／Def Form、Designer、`wsPRD`、Core 與 eSOP EAI 呼叫。完成 DEV Position／Sub OP、文件選擇、Add／Edit／Copy、Delete 及 Apply／Confirm。
 - [x] 以 PowerShell 5.1 + ODP.NET 唯讀核對 `TBLPRDESOPBASIS`，依資料字典重建 DDL 參照並交接家用端。
-- [ ] 正式 eSOP、文件存取、API 與瀏覽器驗收待接續；下一項 PD102 `EquipmentSpec`。
+- [ ] 正式 eSOP、文件存取、API 與瀏覽器驗收待接續。
+
+## PRD PD102 EquipmentSpec 公司端檢查點（2026-11-18）
+
+- [x] 核對 EquipmentSpec 入口、Form／Designer、Service、Core，完成 DEV 流程／設備查找、規格明細、四欄順序／精度檢查和 Confirm。
+- [x] 以 PowerShell 5.1 + ODP.NET 唯讀核對 `TBLPRDEQUIPMENTSPEC`，補 Oracle DDL、CREATE-only 和家用端 API/schema handoff。
+- [ ] 正式流程展開、設備權限、API 與瀏覽器驗收待接續。
+
+## PRD PD102 APS Integration 公司端檢查點（2026-11-18）
+
+- [x] 核對 APS 主窗／EQPTIME 的 Form／Designer、Service、Core。完成 DEV Node、主／設備明細、Update／Delete、明細重建與數值驗證。
+- [x] 以 PowerShell 5.1 + ODP.NET 唯讀核對四張 APS 表欄數與鍵，沿用 Default／PS104 的 DDL 參照並補 API 交接。
+- [ ] 正式流程、群組展開、API 與瀏覽器驗收待接續。
+
+## PRD PD102 Bin 公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service 和 Core。完成 DEV Bin 勾選、Good/Fail、說明、OS Bin、版本狀態和本機儲存。
+- [x] 以 PowerShell 5.1 + ODP.NET 唯讀查兩張表，補 Oracle 邏輯 DDL 及 PostgreSQL CREATE-only 交接。`GET_DDL` 失敗碼已記錄。
+
+## PRD PD102 GBOM 公司端檢查點（2026-11-19）
+
+- [x] 核對 GBOM WinForms／Designer、Service、Core，完成 DEV 依版次匯入檔案備份、檔名與標頭檢查、原檔下載。
+- [x] 用 PowerShell 5.1 + ODP.NET 確認兩張客製表及一個 INVALID view，補 Oracle 邏輯 DDL、CREATE-only 及 API 交接。
+- [ ] 完整工作簿解析、複合資料異動與正式備份下載待接續。DEV XLSX 已檢查識別列與 `版次REV`。
+
+## PRD PD102 產品 Import 公司端檢查點（2026-11-19）
+
+- [x] 核對 `PD_ProductDataImport_PRS`、Designer、Service／Core，完成 DEV XLSX 兩組預覽、主檔逐列驗證與新增。
+- [x] Oracle 唯讀核對產品主檔、類別、流程與節點鍵，補類別 DDL／CREATE-only 及匯入 API 交接。
+- [ ] 舊式 XLS、流程／子表寫入與範本服務待接續。
+
+## PRD PD102 Expand All 公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、一般與網狀 Service／Core。以 DEV 流程、區段和作業假資料完成唯讀結果表格。
+- [x] Oracle 唯讀核對共用表，沿用產品、區段、流程與作業主檔的 CREATE-only 參考。
+- [ ] 正式流程解析與背景作業 lookup 待接續。下一項 PD101 產品類別資料。
