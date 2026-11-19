@@ -1343,3 +1343,9 @@
 
 - [x] 依 `frmMOQuery2` 及原 Core 完成 DEV 起迄日、產品類別、開工差異與實際比率規則。
 - [x] [OE204 規格](docs/modules/OE/工單達交率_準時開工.md) 核實缺日期分母、產品版本關聯及家用端查詢交接。DDL 共用 OE201。
+
+## OE205 工單達交率（準時完工）
+
+- [x] 依 `frmMOQuery3` 及原 Core 完成 DEV 計畫完工日期、產品類別、完工達交率與平均生產天數。
+- [x] [OE205 規格](docs/modules/OE/工單達交率_準時完工.md) 記錄 NULL、比率及生產天數分母，DDL 共用 OE201。
+- [ ] 接續 OE206 工單用料清單。已確認 `STD/MESWin/OE/OE_MOMaterialList/frmMOMaterialList.vb` 及用料現況、替代料與出料入口。

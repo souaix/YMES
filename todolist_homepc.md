@@ -1,5 +1,12 @@
 # 家裡電腦接手清單
 
+## 公司端新交接（2026-11-19，OE／QC／PRD）
+
+- [ ] [OE101／OE102](docs/MODULE_REPLICATION_SPEC_INDEX.md#工單管理--訂單) 訂單主檔、明細、屬性與結案。已提供四張表的 Oracle DDL 及 CREATE-only 參考。先核對 live schema，再實作正式 API、資料驗證及狀態互斥。
+- [ ] [OE201–OE205](docs/MODULE_REPLICATION_SPEC_INDEX.md#工單管理--工單) 工單基本資料、刪除、查詢及兩種達交率。先核對五張工單表和後續用料、ERP、挑片、簽核等相依表的現況。保留兩個報表對缺日期分母與 LeadTime 的各自規則。
+- [ ] [QC103](docs/modules/QC/抽樣計劃.md#公司端-formcore-與函式目錄查證2026-11-19) 已有 FUNSA、Type 4／6 旗標及 QC301 一般／Wafer 選表來源。QC107 實際字典值與部署開關仍待交付，QC108 標準 FUNQR 方法名單均對應空實作。
+- [ ] [PD206](docs/modules/PRD/產品抽樣頻率規則.md#父主檔生命週期來源查證) 已補產品、設備與站點刪除／停用及 WIP 萬用鍵順序。父資料暫不存在及競態處理仍須由 YMES 明定。
+
 ## 家用端本輪交付與接續（2026-11-19，QC103／QC107／QC108）
 
 - [x] QC103 抽樣計劃、QC107 計數判別法則、QC108 計量法則的獨立主檔 API/Web 已部署；正式 app-browser 實測範圍、來源依賴限制與清理證據見各模組 MD。缺少真實算法、ValueList 或共用簽核的分支仍明確回應不可用，沒有使用 DEV 資料替代。

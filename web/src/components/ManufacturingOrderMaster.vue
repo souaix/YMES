@@ -20,12 +20,20 @@ interface WorkOrder {
   productType?: string; planStartDate?: string; actualStartDate?: string; actualFinishDate?: string
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const deletionOnly = computed(() => props.pageMode === 'delete')
 const startReport = computed(() => props.pageMode === 'start-report')
-const queryOnly = computed(() => props.pageMode === 'query' || startReport.value)
+const finishReport = computed(() => props.pageMode === 'finish-report')
+const report = computed(() => startReport.value || finishReport.value)
+const queryOnly = computed(() => props.pageMode === 'query' || report.value)
+const reportAction = computed(() => finishReport.value ? '完工' : '開工')
+const pageTitle = computed(() => {
+  if (report.value) return '工單達交率（準時' + reportAction.value + '）'
+  if (queryOnly.value) return '工單查詢'
+  return deletionOnly.value ? '工單刪除' : '工單基本資料'
+})
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const storageKey = 'ymes-dev-oe201-work-orders-v1'
 const sources: { value: MoSource; label: string }[] = [
@@ -72,7 +80,8 @@ function readLocal(): WorkOrder[] {
     { ...seed, moNo: 'DEV-MO-004', issueState: -1 },
     { ...seed, moNo: 'DEV-MO-005', hasLots: true },
     { ...seed, moNo: 'DEV-MO-006', issueState: 2, moState: 99, unreleaseLotQty: 0, actualStartDate: '2026-11-13', actualFinishDate: '2026-11-15' },
-    { ...seed, moNo: 'DEV-MO-007', issueState: 2, moState: 3, actualStartDate: '2026-11-11' },
+    { ...seed, moNo: 'DEV-MO-007', issueState: 2, moState: 99, actualStartDate: '2026-11-11', actualFinishDate: '2026-11-14' },
+    { ...seed, moNo: 'DEV-MO-008', issueState: 2, moState: 99, actualStartDate: '2026-11-12', actualFinishDate: '2026-11-16' },
   ]
 }
 
@@ -102,8 +111,8 @@ const visible = computed(() => rows.value.filter(row => {
   if (!props.pageMode) return row.issueState === currentState.value && row.moNo.toUpperCase().includes(appliedSearch.value)
   const query = appliedFilters.value
   if (!query) return false
-  if (startReport.value) {
-    const planDate = row.planStartDate?.slice(0, 10) ?? ''
+  if (report.value) {
+    const planDate = (finishReport.value ? row.planFinishDate : row.planStartDate)?.slice(0, 10) ?? ''
     if (query.dateFrom && planDate < query.dateFrom) return false
     if (query.dateTo && (!planDate || planDate > query.dateTo)) return false
     const type = row.productType ?? productTypes[row.productNo] ?? ''
@@ -123,16 +132,27 @@ function dayDifference(actual?: string, planned?: string): number | null {
   return Number.isFinite(days) ? days : null
 }
 
+function leadTime(row: WorkOrder): number | null {
+  const days = dayDifference(row.actualFinishDate, row.actualStartDate)
+  return days === null ? null : days + 1
+}
+
 const deliverySummary = computed(() => {
   const counts = { early: 0, onTime: 0, late: 0, missing: 0 }
+  let leadDays = 0
+  let leadRows = 0
   for (const row of visible.value) {
-    const days = dayDifference(row.actualStartDate, row.planStartDate)
+    const days = finishReport.value
+      ? dayDifference(row.actualFinishDate, row.planFinishDate)
+      : dayDifference(row.actualStartDate, row.planStartDate)
     if (days === null) counts.missing++
     else if (days < 0) counts.early++
     else if (days > 0) counts.late++
     else counts.onTime++
+    const lead = leadTime(row)
+    if (lead !== null) { leadDays += lead; leadRows++ }
   }
-  return counts
+  return { ...counts, averageLeadTime: leadRows ? leadDays / leadRows : 0 }
 })
 
 function displayRate(count: number): string {
@@ -320,7 +340,7 @@ function apply(event: MouseEvent): void {
 
 <template>
   <section class="mo-page">
-    <h2>{{ startReport ? '工單達交率（準時開工）' : queryOnly ? '工單查詢' : deletionOnly ? '工單刪除' : '工單基本資料' }}</h2>
+    <h2>{{ pageTitle }}</h2>
     <template v-if="isDev">
       <form v-if="pageMode" class="filter-form" @submit.prevent="applyQueryFilters">
         <div class="toolbar">
@@ -335,9 +355,9 @@ function apply(event: MouseEvent): void {
           <label>工單類別 <input v-model="queryFilters.moTypeNo" type="text" inputmode="numeric" maxlength="2"></label>
         </div>
         <div class="toolbar">
-          <template v-if="startReport">
-            <label>計畫開工起日 <input v-model="queryFilters.dateFrom" type="date"></label>
-            <label>計畫開工迄日 <input v-model="queryFilters.dateTo" type="date"></label>
+          <template v-if="report">
+            <label>計畫{{ reportAction }}起日 <input v-model="queryFilters.dateFrom" type="date"></label>
+            <label>計畫{{ reportAction }}迄日 <input v-model="queryFilters.dateTo" type="date"></label>
             <label>產品類別 <select v-model="queryFilters.productTypes" multiple><option v-for="type in Object.values(productTypes)" :key="type">{{ type }}</option></select></label>
           </template>
           <fieldset class="toolbar"><legend>來源</legend>
@@ -355,12 +375,13 @@ function apply(event: MouseEvent): void {
       </form>
       <p v-if="error" role="alert">{{ error }}</p>
       <p v-if="notice" role="status">{{ notice }}</p>
-      <dl v-if="startReport && appliedFilters" class="summary" aria-label="開工統計">
+      <dl v-if="report && appliedFilters" class="summary" :aria-label="reportAction + '統計'">
         <div><dt>工單總數</dt><dd>{{ visible.length }}</dd></div>
         <div><dt>準時</dt><dd>{{ deliverySummary.onTime }} 筆（{{ displayRate(deliverySummary.onTime) }}）</dd></div>
         <div><dt>提前</dt><dd>{{ deliverySummary.early }} 筆（{{ displayRate(deliverySummary.early) }}）</dd></div>
         <div><dt>延遲</dt><dd>{{ deliverySummary.late }} 筆（{{ displayRate(deliverySummary.late) }}）</dd></div>
         <div><dt>缺少計畫或實際日期</dt><dd>{{ deliverySummary.missing }}</dd></div>
+        <div v-if="finishReport"><dt>平均生產天數</dt><dd>{{ displayDays(deliverySummary.averageLeadTime) }}</dd></div>
       </dl>
       <div class="workspace">
         <div class="grid"><table>
@@ -373,7 +394,8 @@ function apply(event: MouseEvent): void {
             <template v-if="queryOnly">
               <th>訂單項次</th><th>未開批量</th><th>工程編號</th><th>工程版本</th><th>工單類別</th><th>優先序</th><th>父工單</th><th>客戶批號</th><th>ERP 行號</th>
             </template>
-            <template v-if="startReport"><th>計畫開工</th><th>實際開工</th><th>開工差異天數</th><th>實際完工</th><th>完工差異天數</th></template>
+            <template v-if="report"><th>計畫開工</th><th>實際開工</th><th>開工差異天數</th><th>實際完工</th><th>完工差異天數</th></template>
+            <th v-if="finishReport">生產天數</th>
           </tr></thead>
           <tbody>
             <tr v-for="row in visible" :key="row.moNo" :class="{ selected: deletionOnly ? selectedNos.includes(row.moNo) : active?.moNo === row.moNo }" @click="activeNo = row.moNo">
@@ -388,12 +410,13 @@ function apply(event: MouseEvent): void {
                 <td>{{ row.itemNo }}</td><td>{{ row.unreleaseLotQty ?? row.moQty }}</td><td>{{ row.engNo }}</td><td>{{ row.engVersion }}</td>
                 <td>{{ row.moTypeNo }}</td><td>{{ row.priority }}</td><td>{{ row.belongToMoNo }}</td><td>{{ row.customerLotNo }}</td><td>{{ row.erpMoLineNo }}</td>
               </template>
-              <template v-if="startReport">
+              <template v-if="report">
                 <td>{{ row.planStartDate }}</td><td>{{ row.actualStartDate }}</td><td>{{ displayDays(dayDifference(row.actualStartDate, row.planStartDate)) }}</td>
                 <td>{{ row.actualFinishDate }}</td><td>{{ displayDays(dayDifference(row.actualFinishDate, row.planFinishDate)) }}</td>
               </template>
+              <td v-if="finishReport">{{ displayDays(leadTime(row)) }}</td>
             </tr>
-            <tr v-if="!visible.length"><td :colspan="startReport ? 28 : queryOnly ? 23 : deletionOnly ? 14 : 13">{{ pageMode && !appliedFilters ? '請輸入查詢條件或查詢全部' : '沒有符合條件的工單' }}</td></tr>
+            <tr v-if="!visible.length"><td :colspan="finishReport ? 29 : startReport ? 28 : queryOnly ? 23 : deletionOnly ? 14 : 13">{{ pageMode && !appliedFilters ? '請輸入查詢條件或查詢全部' : '沒有符合條件的工單' }}</td></tr>
           </tbody>
         </table></div>
         <div v-if="deletionOnly" class="actions">

@@ -431,6 +431,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:OE:MO DELETE', label: '工單刪除', tableName: 'tbloemobasis', shortLabel: '刪', functionNo: 'MO DELETE', moduleNo: 'OE' },
         { id: 'function:OE:MO QUERY', label: '工單查詢', tableName: 'tbloemobasis', shortLabel: '查', functionNo: 'MO QUERY', moduleNo: 'OE' },
         { id: 'function:OE:MO QUERY2', label: '工單達交率（準時開工）', tableName: 'tbloemobasis', shortLabel: '開', functionNo: 'MO QUERY2', moduleNo: 'OE' },
+        { id: 'function:OE:MO QUERY3', label: '工單達交率（準時完工）', tableName: 'tbloemobasis', shortLabel: '完', functionNo: 'MO QUERY3', moduleNo: 'OE' },
       ],
     }],
   },
@@ -447,6 +448,7 @@ const menuRoutes: Record<string, string> = {
   'function:OE:MO DELETE': appBasePath + '/OE/ManufacturingOrderDelete',
   'function:OE:MO QUERY': appBasePath + '/OE/ManufacturingOrderQuery',
   'function:OE:MO QUERY2': appBasePath + '/OE/ManufacturingOrderStartRate',
+  'function:OE:MO QUERY3': appBasePath + '/OE/ManufacturingOrderFinishRate',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -667,6 +669,7 @@ const functionRoutes: Record<string, string> = {
   'MO DELETE': appBasePath + '/OE/ManufacturingOrderDelete',
   'MO QUERY': appBasePath + '/OE/ManufacturingOrderQuery',
   'MO QUERY2': appBasePath + '/OE/ManufacturingOrderStartRate',
+  'MO QUERY3': appBasePath + '/OE/ManufacturingOrderFinishRate',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -729,10 +732,17 @@ const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'funct
 const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
-const isManufacturingOrderPage = computed(() => activeMasterKey.value === 'function:OE:MO BASIS')
-const isManufacturingOrderDeletePage = computed(() => activeMasterKey.value === 'function:OE:MO DELETE')
-const isManufacturingOrderQueryPage = computed(() => activeMasterKey.value === 'function:OE:MO QUERY')
-const isManufacturingOrderStartRatePage = computed(() => activeMasterKey.value === 'function:OE:MO QUERY2')
+const manufacturingOrderPages = {
+  'function:OE:MO BASIS': undefined,
+  'function:OE:MO DELETE': 'delete',
+  'function:OE:MO QUERY': 'query',
+  'function:OE:MO QUERY2': 'start-report',
+  'function:OE:MO QUERY3': 'finish-report',
+} as const
+const manufacturingOrderPage = computed(() => {
+  const key = activeMasterKey.value
+  return key && Object.hasOwn(manufacturingOrderPages, key) ? key as keyof typeof manufacturingOrderPages : null
+})
 const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCITEM SPEC IMPORT')
 const isProductGbomBatchImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD GBOM IMPORT')
 const isFtProgramPage = computed(() => activeMasterKey.value === 'function:PRD:FT PROGRAM BASIS')
@@ -2307,9 +2317,9 @@ async function signOut(): Promise<void> {
           @close="navigateHome"
         />
         <ManufacturingOrderMaster
-          v-else-if="isManufacturingOrderPage || isManufacturingOrderDeletePage || isManufacturingOrderQueryPage || isManufacturingOrderStartRatePage"
+          v-else-if="manufacturingOrderPage"
           :key="activeMasterKey"
-          :page-mode="isManufacturingOrderDeletePage ? 'delete' : isManufacturingOrderStartRatePage ? 'start-report' : isManufacturingOrderQueryPage ? 'query' : undefined"
+          :page-mode="manufacturingOrderPages[manufacturingOrderPage]"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
