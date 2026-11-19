@@ -1153,4 +1153,10 @@
 
 - [x] 核對主畫面、定義 Form／Designer、Service／Core；完成 DEV 查詢、ADD／EDIT／Copy、刪除／停用／核准及三個子視窗。
 - [x] 唯讀核對 Oracle 主表和共用子表，整理 API/DDL 交接並將 PD102 DEV 類別查找接到已核准類別。
-- [ ] 正式完整副本與資料權限待接續。下一項 PD103 製程模組資料。
+- [ ] 正式完整副本與資料權限待接續。
+
+## PRD PD103 製程模組資料公司端檢查點（2026-11-19）
+
+- [x] 完成 DEV 主檔、版次、查詢、流程、共用子頁及 XLSX 主檔匯入；核對主 Form／Designer／Service／Core。
+- [x] Oracle 唯讀確認 `TBLPRDMODULEBASIS`，補來源邏輯 DDL、CREATE-only 比對與家用端 API 交接。
+- [ ] 正式權限、簽核、完整匯入與共用資料解析待接續。下一項 PD104 產品內容查詢。

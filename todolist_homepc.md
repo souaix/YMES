@@ -1689,3 +1689,8 @@ API 工作：
 
 - [ ] 依 [產品類別規格](docs/modules/PRD/產品類別資料.md) 核對 `tblprdtype` 和 `ProductVersion='-1'` 共用表，沿用既有 CREATE-only。
 - [ ] 實作類別 API、狀態及 DataStamp、區段權限、交易式完整 Copy 和類別範圍的刪除。
+
+## PRD PD103 製程模組資料家用端 handoff（2026-11-19）
+
+- [ ] 依 [製程模組規格](docs/modules/PRD/製程模組資料.md) 核對 live schema、`tblprdmodulebasis` 與共用子表鍵。
+- [ ] 實作模組版次、簽核與目前版切換、區段權限、完整複製與匯入，確保共用子表可區別模組及產品。
