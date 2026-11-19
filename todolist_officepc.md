@@ -1318,3 +1318,8 @@
 
 - [x] 以 Form／Designer、wsOE、Core 完成 DEV 訂單、屬性與明細操作，並核對 MESTEST 主檔、明細及兩張屬性表的 DDL。
 - [x] [OE101 規格](docs/modules/OE/訂單基本資料.md) 含 API／schema handoff 及 CREATE-only 參考。正式字典、屬性映射、Issue Control／Job 及廠別差異列為後續。
+
+## OE102 訂單結案
+
+- [x] 核對 `frmROClose` Form／Designer、`wsOE.SetROBasisState` 與 `clsOEBasis`。DEV 支援多選、確認及原訂單轉結案，已結案列保留於清單。
+- [x] [OE102 規格](docs/modules/OE/訂單結案.md) 記錄結案條件、逐筆失敗規則、家用端 API 交接及共用 OE101 DDL。

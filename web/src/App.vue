@@ -422,6 +422,7 @@ const fallbackMenuTree: MenuNode[] = [
     id: 'module:OE', label: '工單管理', shortLabel: '單', moduleNo: 'OE', children: [{
       id: 'menu:OE:RO', label: '訂單', shortLabel: '訂', children: [
         { id: 'function:OE:RO BASIS', label: '訂單基本資料', tableName: 'tbloerobasis', shortLabel: '基', functionNo: 'RO BASIS', moduleNo: 'OE' },
+        { id: 'function:OE:RO CLOSE', label: '訂單結案', tableName: 'tbloerobasis', shortLabel: '結', functionNo: 'RO CLOSE', moduleNo: 'OE' },
       ],
     }],
   },
@@ -433,6 +434,7 @@ const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
   'function:OE:RO BASIS': appBasePath + '/OE/ReceivingOrders',
+  'function:OE:RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -648,6 +650,7 @@ const functionRoutes: Record<string, string> = {
   'STAGE BASIS': `${appBasePath}/PRS/FabPrsStageBasis`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
   'RO BASIS': appBasePath + '/OE/ReceivingOrders',
+  'RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -709,6 +712,7 @@ const isPackingRuleMapPage = computed(() => activeMasterKey.value === 'function:
 const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'function:PRD:USER DEFINED RUNCARD')
 const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
+const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
 const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCITEM SPEC IMPORT')
 const isProductGbomBatchImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD GBOM IMPORT')
 const isFtProgramPage = computed(() => activeMasterKey.value === 'function:PRD:FT PROGRAM BASIS')
@@ -2274,7 +2278,9 @@ async function signOut(): Promise<void> {
           @close="navigateHome"
         />
         <ReceivingOrderMaster
-          v-else-if="isReceivingOrderPage"
+          v-else-if="isReceivingOrderPage || isReceivingOrderClosePage"
+          :key="activeMasterKey"
+          :closing-only="isReceivingOrderClosePage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"

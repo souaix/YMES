@@ -251,6 +251,7 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 ## 工單管理 → 訂單
 
 - [OE101 訂單基本資料](modules/OE/訂單基本資料.md) 已完成公司端 DEV 操作與 Oracle DDL、家用端 API／schema 交接。
+- [OE102 訂單結案](modules/OE/訂單結案.md) 已完成公司端 DEV 多選結案與家用端 API 交接，共用 OE101 表結構。
 
 ## 全 MES 盤點狀態
 

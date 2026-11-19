@@ -17,7 +17,7 @@ interface Order {
   properties: OrderProperty[]; lines: OrderLine[]; releasedToWorkOrder?: boolean
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; closingOnly?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
@@ -69,6 +69,7 @@ const issueState = ref<IssueState>(0)
 const search = ref('')
 const appliedSearch = ref('')
 const selectedNo = ref('')
+const closeOrderNos = ref<string[]>([])
 const pageError = ref('')
 const dialogError = ref('')
 const dialogMode = ref<'add' | 'edit' | 'copy' | null>(null)
@@ -78,9 +79,15 @@ const lineDraft = ref<OrderLine>()
 const editingItem = ref<number | null>(null)
 const lineError = ref('')
 
-const visibleOrders = computed(() => orders.value.filter(row =>
-  row.issueState === issueState.value && row.roNo.toUpperCase().includes(appliedSearch.value),
-).sort((a, b) => a.roNo.localeCompare(b.roNo)))
+const visibleOrders = computed(() => orders.value.filter(row => {
+  const eligible = props.closingOnly
+    ? row.issueState === 2 && (row.roState === 2 || row.roState === 99)
+    : row.issueState === issueState.value
+  return eligible && row.roNo.toUpperCase().includes(appliedSearch.value)
+}).sort((a, b) => a.roNo.localeCompare(b.roNo)))
+const closableOrders = computed(() => visibleOrders.value.filter(row => row.roState === 2))
+const canCloseAll = computed(() => closableOrders.value.length > 0 &&
+  closableOrders.value.every(row => closeOrderNos.value.includes(row.roNo)))
 const selected = computed(() => visibleOrders.value.find(row => row.roNo === selectedNo.value) ?? visibleOrders.value[0])
 const detail = computed(() => orders.value.find(row => row.roNo === detailNo.value))
 const detailEditable = computed(() => detail.value?.issueState === 0)
@@ -99,7 +106,27 @@ function persist(next: Order[]): boolean {
 function searchOrders(): void {
   appliedSearch.value = search.value.trim().toUpperCase()
   selectedNo.value = ''
+  closeOrderNos.value = []
   pageError.value = ''
+}
+
+function toggleAllClosable(event: Event): void {
+  closeOrderNos.value = (event.target as HTMLInputElement).checked ? closableOrders.value.map(row => row.roNo) : []
+}
+
+async function closeSelectedOrders(): Promise<void> {
+  if (!props.closingOnly || !isDev.value) return
+  const selectedNos = closeOrderNos.value.filter(no => closableOrders.value.some(row => row.roNo === no))
+  if (!selectedNos.length || !await requestConfirmation('確定結案 ' + selectedNos.length + ' 筆訂單？')) return
+  const next = orders.value.map(row => selectedNos.includes(row.roNo) && row.issueState === 2 && row.roState === 2
+    ? { ...row, roState: 99 }
+    : row)
+  if (persist(next)) {
+    closeOrderNos.value = []
+    pageError.value = ''
+  } else {
+    pageError.value = '無法儲存本機訂單。'
+  }
 }
 
 function selectState(value: IssueState): void {
@@ -237,27 +264,41 @@ async function deleteLine(itemNo: number): Promise<void> {
 
 <template>
   <section class="order-page">
-    <h2>訂單基本資料</h2>
+    <h2>{{ closingOnly ? '訂單結案' : '訂單基本資料' }}</h2>
     <template v-if="isDev">
       <form class="toolbar" @submit.prevent="searchOrders">
         <label>訂單編號 <input v-model="search" maxlength="25"></label>
         <button type="submit">查詢</button>
-        <button v-for="status in states" :key="status.value" type="button" :aria-pressed="issueState === status.value" @click="selectState(status.value)">{{ status.label }}</button>
+        <template v-if="!closingOnly">
+          <button v-for="status in states" :key="status.value" type="button" :aria-pressed="issueState === status.value" @click="selectState(status.value)">{{ status.label }}</button>
+        </template>
       </form>
       <p v-if="pageError" role="alert">{{ pageError }}</p>
       <div class="workspace">
         <div class="grid"><table>
-          <thead><tr><th scope="col">選取</th><th>訂單編號</th><th>客戶</th><th>訂單狀態</th><th>說明</th><th>建立人員</th><th>建立時間</th><th>修改人員</th><th>修改時間</th></tr></thead>
+          <thead><tr>
+            <th scope="col">
+              <input v-if="closingOnly" type="checkbox" aria-label="選取全部可結案訂單" :checked="canCloseAll" :disabled="closableOrders.length === 0" @change="toggleAllClosable">
+              <template v-else>選取</template>
+            </th>
+            <th>訂單編號</th><th>客戶</th><th>訂單狀態</th><th>說明</th><th>建立人員</th><th>建立時間</th><th>修改人員</th><th>修改時間</th>
+          </tr></thead>
           <tbody>
-            <tr v-for="row in visibleOrders" :key="row.roNo" :class="{ selected: selected?.roNo === row.roNo }" @click="selectedNo = row.roNo">
-              <td><input type="radio" name="selected-order" :aria-label="'選取 ' + row.roNo" :checked="selected?.roNo === row.roNo" @change="selectedNo = row.roNo"></td>
+            <tr v-for="row in visibleOrders" :key="row.roNo" :class="{ selected: closingOnly ? closeOrderNos.includes(row.roNo) : selected?.roNo === row.roNo }" @click="selectedNo = row.roNo">
+              <td>
+                <input v-if="closingOnly" v-model="closeOrderNos" type="checkbox" :value="row.roNo" :aria-label="'選取 ' + row.roNo" :disabled="row.roState !== 2">
+                <input v-else type="radio" name="selected-order" :aria-label="'選取 ' + row.roNo" :checked="selected?.roNo === row.roNo" @change="selectedNo = row.roNo">
+              </td>
               <td>{{ row.roNo }}</td><td>{{ row.customerNo }}</td><td>{{ roStates[row.roState] ?? row.roState }}</td><td>{{ row.description }}</td>
               <td>{{ row.creator }}</td><td>{{ row.createDate.slice(0, 19).replace('T', ' ') }}</td><td>{{ row.reviser }}</td><td>{{ row.reviseDate.slice(0, 19).replace('T', ' ') }}</td>
             </tr>
             <tr v-if="!visibleOrders.length"><td colspan="9">沒有符合條件的訂單</td></tr>
           </tbody>
         </table></div>
-        <div class="actions">
+        <div v-if="closingOnly" class="actions">
+          <button type="button" :disabled="!closeOrderNos.length" @click="closeSelectedOrders">訂單結案</button>
+        </div>
+        <div v-else class="actions">
           <button type="button" @click="openOrder('add')">新增</button>
           <button type="button" :disabled="selected?.issueState !== 0" @click="openOrder('edit')">修改</button>
           <button type="button" :disabled="!selected || selected.issueState === 1" @click="changeOrderState('delete')">刪除</button>
@@ -268,7 +309,7 @@ async function deleteLine(itemNo: number): Promise<void> {
       </div>
       <p>資料總筆數 {{ visibleOrders.length }}</p>
     </template>
-    <p v-else role="status">訂單基本資料尚未接入正式服務。</p>
+    <p v-else role="status">此功能尚未接入正式服務。</p>
     <button type="button" @click="emit('close')">關閉</button>
 
     <div v-if="draft" class="overlay">
