@@ -1,3 +1,31 @@
+# 公司端待辦
+
+## 公司桌機交回原公司筆電（2026-11-19）
+
+### 先同步
+
+1. 在公司筆電的 YMES 工作目錄執行 `git status --short --branch`，保留筆電既有改動，再以 `git pull --ff-only origin main` 同步。功能交接以包含 `a1f382f` 的版本為準。該提交包含先前的 `09349eb`（OEB01）及 `c9de376`（OEP01）。桌機曾遇到 GitHub HTTPS 連線重置，請用 `git log -1 --oneline` 和 `git merge-base --is-ancestor a1f382f HEAD` 確認已取得最新一批桌機功能。
+2. 以本節為起點，配合 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)、[原 MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md)、[模組規格索引](docs/MODULE_REPLICATION_SPEC_INDEX.md) 及 [家用端待辦](todolist_homepc.md)。切換電腦後從 Git 和本文件接續即可。
+
+### 已完成與驗證
+
+- [x] PRD 已從 PD102 RunTime 接續至各子功能及產品設定、封測功能。PDI01、PDI03、PRDGBOMEXPORT／OLD、PD_BATCHMODIFYAREA、PDCUSTOMERDEVICE 缺可讀的獨立客製來源，具體缺件記於本檔後段，可平行等資料。
+- [x] PD206 已交付父主檔刪除／停用和八種萬用鍵優先順序。QC103 已核對 FUNSA、Type 4／6 ShowFlag、QC301 一般／Wafer 分流，並更新 DEV 定義窗。QC107 已核對 provider，實際選項與 UserDefineAQL 部署值待補。QC108 四個標準 FUNQR 回傳 null，正式可執行版本仍需客製來源。
+- [x] OE 完成 13 項公司端 DEV 功能，OE101／OE102、OE201–OE209、OEB01、OEP01。Vue 入口集中在 `web/src/App.vue`，各項規格在 `docs/modules/OE/`，Oracle DDL 與 PostgreSQL CREATE-only 參考在 `database/reference/mestest_oe_*.sql`。製程、發料、挑片、ERP 與正式簽核的簡化已分項記錄。
+- [x] 截至 `c9de376`，Vue `vue-tsc --noEmit` 通過。各批提交均通過 `git diff --check`，13 份 OE 模組文件的本機連結已檢查。公司端本輪採靜態驗證，瀏覽器操作與正式 API 驗收由各自後續流程處理。
+
+### 筆電從 WP101 生產批開立繼續
+
+- [ ] 選單 FunctionNo 為 `CREATE LOT`、FunctionKey 為 `WP101`。原始碼入口是 `STD/MESWin/WIP/WP_LotBasis/frmLotBasis.vb` 和 `STD/MESWin/WIP/WP_LotBasisDef/frmLotBasisDef.vb`，Designer 內嵌。已定位 `STD/MESws_STD/wsSTD/wsWIP/wsWIP.cs` 的 Load／Add／Edit／DelLotBasis、SetLotBasisLotState，以及 `STD/MESkc/kcWIP/clsLot.cs` 對應 ArrayBinding 和 `ChkLotBasisConfirm`。尚未建立 WP101 Vue、模組規格或 SQL 檔。
+- [ ] 已核對清單工單條件為 MOState 3／6，加上未下線量大於 0 或仍有 LotState=0 的批；明細只載入所選工單的 LotState=0。開立與修改涉及流程、元件、略過作業站、屬性和工單元件預約；核准／下線重查未下線量、扣量及轉態。先依這些來源完成 DEV 假資料操作，再記錄正式交易邊界。
+- [ ] 桌機已透過 MESTEST 字典確認 `TBLWIPLOTBASIS`、`TBLWIPLOTPROCESS`、`TBLWIPLOTNOTEXECUTEOP`、`TBLWIPLOTPROPERTY_RECIVE`、`TBLWIPCOMPONENTSTATE` 存在，可在筆電重跑唯讀 DDL；Core 開立另寫 `TBLWIPLOTSTATE`，本輪尚未擷取這張表。先把完整 WP101 來源 DDL 與 CREATE-only 交接入 Git，再依功能順序接 WP102。
+
+### 公司端工作範圍
+
+- WinForms／Service／Core 原始碼、Vue DEV 假資料、模組規格與家用端 API／SQL 交接。Vue 環境為 Node.js 22.12+、npm 與 `web/` 套件，筆電沿用自己的既有工具，不依賴桌機的本機安裝路徑。
+- Oracle MESTEST 使用筆電自己的本機受保護 profile，以 Windows PowerShell 5.1 + ODP.NET 唯讀查 DDL／資料字典。桌機 DPAPI 設定繫結桌機帳號，筆電應使用原有安全設定。沒有 profile 時再安全設定，勿將連線資料寫進 Git 或交接檔。
+- 正式 PostgreSQL、`ConnectionStrings__YMes`、.NET API、migration、SSH 與部署由家用端處理。每完成一項，做靜態檢查、更新待辦並單獨 commit，GitHub 可連時再推送。
+
 ## 家用端交付及公司端待補來源（2026-11-19）
 
 ## 家用端最新交付及公司端接續（2026-11-19，QC103／QC107／QC108）
