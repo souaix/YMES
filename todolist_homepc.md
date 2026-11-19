@@ -1743,3 +1743,7 @@ API 工作：
 ## PRD PD115 產品流程卡對應家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品流程卡對應設定](docs/modules/PRD/產品流程卡對應設定.md) 核對 CREATE-only、候選 API、DataStamp、`*` 及正式列印呼叫端。
+
+## PRD PD116 產品品管項目規格匯入家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品品管項目規格匯入](docs/modules/PRD/產品品管項目規格匯入.md) 沿用 PD102／QC302 CREATE，實作業務預檢、整批交易、規格歷史與範本匯出。

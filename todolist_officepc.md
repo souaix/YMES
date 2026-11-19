@@ -1230,4 +1230,10 @@
 
 - [x] 核對 WinForms／Designer、PRD Service／Core、MESTEST 欄位和主鍵。
 - [x] 完成 CRUD、複製、核准產品與主流程卡候選，整理 [規格與交接](docs/modules/PRD/產品流程卡對應設定.md)。
-- [ ] 正式候選及 API 待家用端接續。下一項 PD116 產品品管項目規格匯入。
+- [ ] 正式候選及 API 待家用端接續。
+
+## PRD PD116 產品品管項目規格匯入公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、客製 Service／Core、MESTEST 指派與 SPC 表。
+- [x] 完成 DEV 51 欄 XLSX 範本、預覽驗證、New Plan／Override 本機套用，整理 [規格與交接](docs/modules/PRD/產品品管項目規格匯入.md)。
+- [ ] 正式業務檢查與匯入待家用端接續。下一項 PD117 GBOM 批次匯入。

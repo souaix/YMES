@@ -51,6 +51,7 @@ import PackingRuleBasisMaster from './components/PackingRuleBasisMaster.vue'
 import PackingRuleMapPage from './components/PackingRuleMapPage.vue'
 import UserDefinedRunCardMaster from './components/UserDefinedRunCardMaster.vue'
 import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
+import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -381,6 +382,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:PRD PACKINGRULE MAP', label: '產品包裝規則對應設定', tableName: 'tblprdpackingrulemap', shortLabel: '配', functionNo: 'PRD PACKINGRULE MAP', moduleNo: 'PRD' },
       { id: 'function:PRD:USER DEFINED RUNCARD', label: '自定義流程卡', tableName: 'tblprddefineruncardbasis', shortLabel: '卡', functionNo: 'USER DEFINED RUNCARD', moduleNo: 'PRD' },
       { id: 'function:PRD:PRODUCT RUN CARD MAP BASIS', label: '產品流程卡對應設定', tableName: 'tblprdruncardmap', shortLabel: '對', functionNo: 'PRODUCT RUN CARD MAP BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD QCITEM SPEC IMPORT', label: '產品品管項目規格匯入', tableName: 'tblprdqcitem', shortLabel: '檢', functionNo: 'PRD QCITEM SPEC IMPORT', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -511,6 +513,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRD PACKINGRULE MAP': `${appBasePath}/PRD/PackingRuleMap`,
   'function:PRD:USER DEFINED RUNCARD': `${appBasePath}/PRD/RunCards`,
   'function:PRD:PRODUCT RUN CARD MAP BASIS': `${appBasePath}/PRD/ProductRunCardMap`,
+  'function:PRD:PRD QCITEM SPEC IMPORT': `${appBasePath}/PRD/QCSpecImport`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -648,6 +651,7 @@ const isPackingRuleBasisPage = computed(() => activeMasterKey.value === 'functio
 const isPackingRuleMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRD PACKINGRULE MAP')
 const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'function:PRD:USER DEFINED RUNCARD')
 const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
+const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCITEM SPEC IMPORT')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2200,6 +2204,12 @@ async function signOut(): Promise<void> {
           v-else-if="isProductRunCardMapPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductQCSpecImport
+          v-else-if="isProductQCSpecImportPage"
+          class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
