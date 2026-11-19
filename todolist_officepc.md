@@ -1242,4 +1242,10 @@
 
 - [x] 核對 WinForms／Designer、客製 Service／Core、MESTEST 流程、BOM 與客製表。
 - [x] 完成 DEV 多檔選取、逐檔預檢、流程連線預覽及本機套用，整理 [規格與交接](docs/modules/PRD/GBOM批次匯入.md)。
-- [ ] 正式節點與 BOM 轉換、原檔管理待家用端接續。下一項 PD202 FT 測試程式。
+- [ ] 正式節點與 BOM 轉換、原檔管理待家用端接續。
+
+## PRD PD202 FT 測試程式公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、PRD Service／Core 和 MESTEST 程式／Bin 字典。
+- [x] 完成 DEV 主檔、版次、核准、Bin 文字檔預覽／匯入及程式檔名選擇，整理 [規格與交接](docs/modules/PRD/FT測試程式.md)。
+- [ ] 正式簽核、Bin 目錄、檔案及 API 待家用端接續。下一項 PD204 電性(EQC)抽樣規則。

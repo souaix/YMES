@@ -1751,3 +1751,7 @@ API 工作：
 ## PRD PD117 GBOM 批次匯入家用端 handoff（2026-11-19）
 
 - [ ] 依 [GBOM 批次匯入](docs/modules/PRD/GBOM批次匯入.md) 沿用現有產品、流程與客製表，實作逐檔預檢、每產品版次交易、原檔備份、逐檔結果與 SAP 相依。
+
+## PRD PD202 FT 測試程式家用端 handoff（2026-11-19）
+
+- [ ] 依 [FT 測試程式](docs/modules/PRD/FT測試程式.md) 核對主檔與軟體 Bin CREATE、硬體 Bin、簽核、DataStamp 及檔案管理。

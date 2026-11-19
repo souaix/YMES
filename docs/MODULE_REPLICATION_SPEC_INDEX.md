@@ -182,6 +182,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PD117 GBOM 批次匯入](modules/PRD/GBOM批次匯入.md) 已完成多檔預檢、流程連線預覽、本機套用與客製流程及 BOM 交接。
 
+[PD202 FT 測試程式](modules/PRD/FT測試程式.md) 已完成 DEV 程式版次、Bin 匯入及檔案管理交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定
