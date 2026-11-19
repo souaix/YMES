@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, toRaw } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import ManufacturingOrderMaterials from './ManufacturingOrderMaterials.vue'
 import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2
@@ -20,7 +21,7 @@ interface WorkOrder {
   productType?: string; planStartDate?: string; actualStartDate?: string; actualFinishDate?: string
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const deletionOnly = computed(() => props.pageMode === 'delete')
@@ -339,7 +340,8 @@ function apply(event: MouseEvent): void {
 </script>
 
 <template>
-  <section class="mo-page">
+  <ManufacturingOrderMaterials v-if="pageMode === 'materials'" class="mo-page" :orders="rows" :development-preview="isDev" @close="emit('close')" />
+  <section v-else class="mo-page">
     <h2>{{ pageTitle }}</h2>
     <template v-if="isDev">
       <form v-if="pageMode" class="filter-form" @submit.prevent="applyQueryFilters">
@@ -505,13 +507,8 @@ function apply(event: MouseEvent): void {
       </form>
     </div>
     <div v-if="materials" class="overlay">
-      <section class="dialog" role="dialog" aria-modal="true" aria-label="工單用料清單">
-        <h3>工單用料清單 {{ materials.moNo }}</h3>
-        <table><thead><tr><th>料號</th><th>標準用量</th><th>需求量</th><th>單位</th></tr></thead>
-          <tbody><tr><td>DEV-MTL-001</td><td>1</td><td>{{ materials.moQty }}</td><td>{{ materials.moUnitNo }}</td></tr></tbody>
-        </table>
-        <p>DEV 示範用料</p><footer><button type="button" @click="materials = undefined">關閉</button></footer>
-      </section>
+      <ManufacturingOrderMaterials class="dialog materials-dialog" role="dialog" aria-modal="true" aria-label="工單用料清單"
+        :orders="rows" :initial-mo-no="materials.moNo" :development-preview="isDev" @close="materials = undefined" />
     </div>
     <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </section>
@@ -539,6 +536,7 @@ button:disabled { opacity: .55; }
 .actions button { width: 100%; }
 .overlay { position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; background: #21334b55; padding: 18px; }
 .dialog { width: min(760px, 100%); max-height: 90vh; overflow: auto; display: grid; gap: 14px; background: white; padding: 18px; border: 1px solid #8fa4bf; border-radius: 6px; }
+.materials-dialog { width: min(1050px, 100%); }
 .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .fields label { display: grid; gap: 3px; }
 .wide { grid-column: 1 / -1; }

@@ -432,6 +432,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:OE:MO QUERY', label: '工單查詢', tableName: 'tbloemobasis', shortLabel: '查', functionNo: 'MO QUERY', moduleNo: 'OE' },
         { id: 'function:OE:MO QUERY2', label: '工單達交率（準時開工）', tableName: 'tbloemobasis', shortLabel: '開', functionNo: 'MO QUERY2', moduleNo: 'OE' },
         { id: 'function:OE:MO QUERY3', label: '工單達交率（準時完工）', tableName: 'tbloemobasis', shortLabel: '完', functionNo: 'MO QUERY3', moduleNo: 'OE' },
+        { id: 'function:OE:MO MATERIAL LIST', label: '工單用料清單', tableName: 'tbloemomateriallist', shortLabel: '料', functionNo: 'MO MATERIAL LIST', moduleNo: 'OE' },
       ],
     }],
   },
@@ -449,6 +450,7 @@ const menuRoutes: Record<string, string> = {
   'function:OE:MO QUERY': appBasePath + '/OE/ManufacturingOrderQuery',
   'function:OE:MO QUERY2': appBasePath + '/OE/ManufacturingOrderStartRate',
   'function:OE:MO QUERY3': appBasePath + '/OE/ManufacturingOrderFinishRate',
+  'function:OE:MO MATERIAL LIST': appBasePath + '/OE/ManufacturingOrderMaterials',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -670,6 +672,7 @@ const functionRoutes: Record<string, string> = {
   'MO QUERY': appBasePath + '/OE/ManufacturingOrderQuery',
   'MO QUERY2': appBasePath + '/OE/ManufacturingOrderStartRate',
   'MO QUERY3': appBasePath + '/OE/ManufacturingOrderFinishRate',
+  'MO MATERIAL LIST': appBasePath + '/OE/ManufacturingOrderMaterials',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -738,6 +741,7 @@ const manufacturingOrderPages = {
   'function:OE:MO QUERY': 'query',
   'function:OE:MO QUERY2': 'start-report',
   'function:OE:MO QUERY3': 'finish-report',
+  'function:OE:MO MATERIAL LIST': 'materials',
 } as const
 const manufacturingOrderPage = computed(() => {
   const key = activeMasterKey.value

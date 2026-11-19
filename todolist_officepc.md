@@ -1348,4 +1348,8 @@
 
 - [x] 依 `frmMOQuery3` 及原 Core 完成 DEV 計畫完工日期、產品類別、完工達交率與平均生產天數。
 - [x] [OE205 規格](docs/modules/OE/工單達交率_準時完工.md) 記錄 NULL、比率及生產天數分母，DDL 共用 OE201。
-- [ ] 接續 OE206 工單用料清單。已確認 `STD/MESWin/OE/OE_MOMaterialList/frmMOMaterialList.vb` 及用料現況、替代料與出料入口。
+
+## OE206 工單用料清單
+
+- [x] 核對 Form／Designer、替代料、發料入口及 Service／Core。DEV 支援兩種用料層級、增修、批次刪除、替代料與模擬發料。
+- [x] [OE206 規格](docs/modules/OE/工單用料清單.md) 交付兩張表的 Oracle DDL、CREATE-only 與庫房 API handoff。下一項 OE207 工單存料現況沿用已查證的存料表。
