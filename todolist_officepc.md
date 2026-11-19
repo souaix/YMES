@@ -1,8 +1,8 @@
 # 公司端待辦
 
-## 家用端最新回饋：OPB03 已完成正式驗收，待正常 Git 同步（2026-11-20）
+## 家用端最新回饋：OPB03 已驗收並同步 main caae71d（2026-11-20）
 
-HOME PC 已依原生 DDL 建立 YMES PostgreSQL 的 OPB03 兩表、完成 API／Web 與正式 app-browser 驗收。現在 API `2a2291cc1163`／Web `fc83e8bc5484`／0055；API 八組單輪 162／578，GUI 67 項含 SQL 讀回一項，測試資料精確清零。公司端無需操作家用 PostgreSQL、SSH 或部署；原生 Oracle 與 Vue 來源工作仍由公司端進行。Git 同步完成後會補上正式程式提交，請保留兩端歷史、正常合併，勿 force push。
+HOME PC 已依原生 DDL 建立 YMES PostgreSQL 的 OPB03 兩表、完成 API／Web 與正式 app-browser 驗收。現在 API `2a2291cc1163`／Web `fc83e8bc5484`／0055；API 八組單輪 162／578，GUI 67 項含 SQL 讀回一項，測試資料精確清零。公司端無需操作家用 PostgreSQL、SSH 或部署；原生 Oracle 與 Vue 來源工作仍由公司端進行。正式程式提交 `caae71d25ed3b88274aeddc5095806e286b5816e` 已正常快轉推到 main，349 檔來源核對通過；當時公司端沒有新提交。後續純文件狀態提交另記，保留兩端歷史、不 force push。
 
 OPB03 已知 CRUD 不受以下兩個細節阻擋，目前採明載的 YMES 行為；請公司端僅做原程式唯讀查證並更新 [模組文件](docs/modules/OP/客戶站點對應設定.md)：
 
