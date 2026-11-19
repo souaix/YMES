@@ -2,7 +2,7 @@
 
 ## 適用範圍與來源
 
-本批先統一 PS103 流程類別、PD101 產品類別、PD102 產品父主檔、PD206 抽樣頻率規則與 OP103 作業站類別。OP103 僅指類別主檔，既有 OP BASIS 稽核日期不由本批一併推定。原生相容的 CreateDate／ReviseDate 保留 PostgreSQL `timestamp without time zone`，不修改欄位型別、資料庫或角色時區。2026-11-19 PPK 查核資料庫與 API 連線時區為 UTC；這些 YMES API 寫入的稽核值採 UTC，沒有匯入 Oracle 業務日期。
+本批先統一 PS103 流程類別、PD101 產品類別、PD102 產品父主檔、PD206 抽樣頻率規則與 OP103 作業站類別；接續的 QC201 計數品管項目（含原因／作業站對應新audit）及 QC202 計數管制內容亦採相同契約。OP103 僅指類別主檔，既有 OP BASIS 稽核日期不由本批一併推定。原生相容的 CreateDate／ReviseDate 保留 PostgreSQL `timestamp without time zone`，不修改欄位型別、資料庫或角色時區。2026-11-19 PPK 查核資料庫與 API 連線時區為 UTC；這些 YMES API 寫入的稽核值採 UTC，沒有匯入 Oracle 業務日期。
 
 - API 寫入明確使用 `now() AT TIME ZONE 'UTC'`，不依賴連線時區的隱式 cast。
 - 讀取上述模組的稽核值時明確標示 UTC，JSON 回傳 ISO 8601 `Z`；Vue 轉為使用者裝置的當地時間，保留秒數。
@@ -11,8 +11,12 @@
 
 未來若匯入 Oracle 原生歷史資料，須先確認來源日期代表的時區，在匯入邊界轉換後保存；不可將未確認的原生牆鐘值直接視為 UTC。其他模組須逐一核實 writer 與來源，不能由此文件推論全系統已完成轉換。
 
+OP105 作業站群組主明細於接續批次也採相同契約。固定API16a825af0bea的8組正式回歸已驗證actor／UTC及舊NULL日期保持；API及群組／member版本變更在同一交易。前端當地時間顯示仍須另做app-browser操作驗證，不由此推論其他OP BASIS或ECN模組已轉換。
+
 ## 驗證
 
 本批須核對 API 新增／修改時間有 `Z`、與資料庫原值及請求時間相符、來源 NULL 不變，並以正式 app-browser 檢查使用者當地時間。建置或 API 測試通過不代替 GUI 驗證，實際結果記錄於各模組 MD。
+
+QC201／QC202固定API `95a153cef1d7` 的主檔／管制內容及QC201作業站對應actor與UTC、舊NULL日期及保存DTO已納入2026-11-19正式API回歸，結果見各模組MD；這兩頁GUI日期顯示另待補驗，不能以API回歸取代。
 
 Npgsql 的 timestamp／DateTime 對應見 [官方日期文件](https://www.npgsql.org/doc/types/datetime.html)。

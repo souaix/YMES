@@ -245,7 +245,7 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
                 OR EXISTS (SELECT 1 FROM "YMES".tbleqplocatordetail WHERE lower(opno) = lower(@operationNo))
                 OR EXISTS (SELECT 1 FROM "YMES".tblprdrecipedetail WHERE lower(opno) = lower(@operationNo))
                 OR EXISTS (SELECT 1 FROM "YMES".tblprdesopbasis WHERE lower(opno) = lower(@operationNo))
-                OR EXISTS (SELECT 1 FROM "YMES".tblopgroupdetail WHERE lower(opno) = lower(@operationNo))
+                OR EXISTS (SELECT 1 FROM "YMES".tblopgroupdetail WHERE lower(btrim(opno)) = lower(btrim(@operationNo)))
                 OR EXISTS (SELECT 1 FROM "YMES".tblprsopapsdetail WHERE lower(opno) = lower(@operationNo))
                 OR EXISTS (SELECT 1 FROM "YMES".tblprdprsopapsbasedetail WHERE lower(opno) = lower(@operationNo))
                 OR EXISTS (SELECT 1 FROM "YMES".tblprdprsopapssetupdetail WHERE lower(opno) = lower(@operationNo));

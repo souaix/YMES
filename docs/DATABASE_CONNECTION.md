@@ -1,5 +1,17 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## OP105來源預設值與權限：0053（2026-11-19）
+
+- PPK READ ONLY獨立比對 `tblopgroupbasis` 11欄與 `tblopgroupdetail` 9欄，順序／型別／NULL／PK差異0；只缺五個來源DEFAULT0。兩表僅各PK index、無其他constraint／user trigger；app當時Basis無CRUD、Detail只有SELECT。
+- `/opt/ymes/backups/ymes_before_0053_op105_20261119.dump`（625213 bytes、600，目錄700）通過 `pg_restore --list` 後，套用0053成功。只ALTER五個default並授予兩owner表CRUD，沒有回填真NULL、重建或搬入業務資料。
+- 獨立套用後20欄／五default／PK／index／trigger／CRUD權限回讀差異0；證據 `.tools/op105-root-before-audit-20261119.json`、`op105-root-after-audit-20261119.json`。API／Web仍為未部署草稿，不能把schema完成當作功能或GUI通過，見 [作業站群組資料](modules/OP/作業站群組資料.md)。
+
+## QC 共用參數目錄與原因參照鎖：0051–0052（2026-11-19）
+
+- PPK只讀確認所有schema缺少 `tblsysmesparameter`，原生／PG參照／0051的16欄順序、型別、NULL、DEFAULT、PK離線比對差異0；保留ParameterNo首欄、5個NOT NULL、4個DEFAULT，只建PK index。
+- 備份 `/opt/ymes/backups/ymes_before_0051_0052_qc_parameters_20261119.dump`（622742 bytes、600，目錄700）通過 `pg_restore --list` 後，依序套用0051、0052成功。只補參數表及SELECT／UPDATE(parameterno)，既有原因表只補UPDATE(reasonno)供FOR SHARE，不授予全表UPDATE。
+- 獨立PPK READ ONLY回讀16欄差異0；PK／PK index各1且無其他constraint/index/user trigger。app SELECT=true、表INSERT／UPDATE／DELETE=false，只有parameterno欄UPDATE=true其餘15欄false；新catalog COUNT=0。沒有插入目錄業務資料、猜測ValueList／Table／Function provider、建立FC表或改其他專案。建表不等於QC201／QC202 API或GUI驗收完成，維護界線見 [因子參數目錄相依](modules/QC/因子參數目錄相依.md)。
+
 ## OP103 原生結構：0049–0050（2026-11-19）
 
 - PPK再次唯讀查所有schema，確認 `tbloptype`／`tblopproperty` 仍缺少。備份 `/opt/ymes/backups/ymes_before_0049_0050_op103_20261119.dump` 通過 pg_restore --list 後，按0049→0050套用；未連Oracle或複製業務資料。

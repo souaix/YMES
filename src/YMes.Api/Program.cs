@@ -56,6 +56,9 @@ if (!localDemoAuth)
     builder.Services.AddSingleton<NavigationRepository>();
     builder.Services.AddSingleton<IYmesQc112FileStorage, LocalYmesQc112FileStorage>();
     builder.Services.AddSingleton<Qc112Repository>();
+    builder.Services.AddSingleton<Qc201Repository>();
+    builder.Services.AddSingleton<Qc202Repository>();
+    builder.Services.AddSingleton<YMes.Api.Operations.Op105Repository>();
 }
 builder.Services.AddControllers();
 

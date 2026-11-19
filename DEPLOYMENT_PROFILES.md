@@ -43,3 +43,21 @@ YMES Vue Web 與 ASP.NET Core API 使用不同容器，部署在同一台主機�
 - 部署後驗證 Web/API 健康檢查、認證授權、資料庫連線和關鍵流程。
 - 回滾程式版本不代表可回滾 DB；Migration 設計備份前置條件和向前修正方案。
 - SSH 私鑰、Windows 管理憑證、正式帳號和環境檔放在受控憑證系統；文件只記取得和輪替流程，不記機密值。
+
+### 2026-11-19 家用端可重建的來源快照
+
+當工作目錄同時包含下一批草稿時，發行從固定 commit 加明列且已核對的檔案建立獨立快照。保留檔案清單、內容比對結果、建置輸出、API/Web image ID 與靜態資產名稱；不能直接把整個工作目錄當發行來源。
+
+目前遠端另保存 root 專用的 `/opt/ymes/checkpoints/fb22a87`，是本機提交 `fb22a87` 的完整來源封存；不含 `.env` 或尚未驗證的 QC201/QC202 草稿。此提交只作本機及遠端維護 checkpoint，尚未推送 GitHub，也尚未完成本批所有瀏覽器驗收。來源封存不代表版本驗收完成。
+
+`/opt/ymes/current-checkpoint.json` 記錄 checkpoint、公司端來源基底、映像及驗收狀態。OP103快照為API `260dfd2ff2bb`、Web `760d6055e519`，入口引用 `index-DI-geD67.js`；`browserQa` 與 `githubSync` 仍為 `pending`、`releaseComplete=false`。之後切換版本時更新此記錄，不把這些狀態提前改為完成。
+
+OP103映像建置來源是 `/opt/ymes/releases/op103-20261119/`；共用 Compose 仍位於 `/opt/ymes/source/deploy/compose.yaml`，環境機密留在原受保護檔案。`/opt/ymes/source` 其他原始碼尚未同步至本 checkpoint，不能直接在該舊目錄執行預設重建而將線上程式退回舊版。重建須使用已記錄的獨立快照，確認映像內容與來源一致後，以指定映像對 `ymes-api`、`ymes-web` 執行 `--no-build --no-deps` 切換；保留其他專案及既有孤立服務。
+
+OP103回復標籤為 `ymes-api:before-op103-20261119` 與 `ymes-web:before-op103-20261119`。回復前先核對實際標籤及 image ID，依本批 migration 的相容性判斷，只回復程式不會還原資料庫。備份使用 `umask 077`，`/opt/ymes/backups` 維持 700，dump 維持 600；由 root 讀取或透過標準輸入交由資料庫維護工具驗證，不放寬目錄權限。
+
+QC201／QC202批API為 `95a153cef1d7`，由同一 `fb22a87` 基底加13份明列覆檔建立；完整API建置來源在 `/opt/ymes/releases/qc201202-20261119-a1/api`，同層 `api-source-manifest.json` 保存SHA與建置／部署狀態。本機及遠端 .NET9 Release均成功，本機0警告／0錯誤，啟動ready200；QC201七組分兩輪224HTTP／771斷言、QC202十組103HTTP／444斷言通過，各自exact fixtures／holder均0。品質Web最終a4已部署1c9b82c00343並通過完整資產HTTP核對，app-browser仍待；此批API回復標籤為 `ymes-api:before-qc201202-20261119`。
+
+接續OP105批目前運行API `16a825af0bea`／Web `1f2dff75f080`；API來源 `/opt/ymes/releases/op105-20261119-a1/api`，基於品質API加6份SHA覆檔，Web來源 `/opt/ymes/releases/op105-20261119-a2/web`，沿品質a4僅加OP105。兩者同層manifest與 `/opt/ymes/current-checkpoint.json` 記錄實際映像、來源、回歸與pending GUI／GitHub狀態。OP105 API8組145HTTP／501斷言及Web9項路由／完整資產SHA通過，不宣稱GUI已驗收。回復標籤 `ymes-api:before-op105-20261119`／`ymes-web:before-op105-20261119`。保留每批base與delta來源，不把舊 `fb22a87` 誤當已包含後續批次；未驗收的OPB02等草稿不得混入重建。
+
+每批完成 app-browser 操作驗證並清理測試資料後，再正常 fetch/merge GitHub 新提交，解決衝突、重跑受影響檢查後 push；禁止 force push。若公司端同時有新工作，保留雙方提交與變更，合併不等於已部署或已驗收。

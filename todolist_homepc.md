@@ -1,8 +1,10 @@
 # 家裡電腦接手清單
 
-## 家用端最新進度（2026-11-19，PRD／PRS／QC／OP103）
+## 家用端最新進度（2026-11-19，PRD／PRS／QC／OP105）
 
 此段為目前狀態；下方保留交接當時的待辦原文，歷史未勾選項不表示本段已完成內容又變回缺表。家用端管理 YMES PostgreSQL／API／PPK SSH；公司端持續提供原生 Oracle 的唯讀結構、來源邏輯與 UI。
+
+目前運行API `16a825af0bea`／Web `1f2dff75f080`（OP105批，含已部署品質頁），migration已到0053。QC201／QC202／OP105的API、建置與靜態資產驗證已通過，GUI仍因平台控制停止待補，不以此當成已驗收main；程式以本機WIP checkpoint與遠端固定來源保存。下一批OPB02已做唯讀來源／缺表核對並準備獨立草稿，未套0054／未發行，不能混入已驗證批次。
 
 - [x] 已正常合併公司端至 `3192964`，保留新 OE 頁、DDL 與 QC／PD206 來源。PD206 文件衝突同時保留雙方內容；沒有 force push 或捨棄任一端開發。家用端本批仍在正式 GUI 驗收，尚未以完成版本推到 main。
 - [x] 0042–0050 已逐份備份、驗證 pg_restore --list 後套用並獨立讀回。0046／0047／0048 僅補既存引用表 SELECT；0049／0050建立來源核對的OP Type／共用Property空表，無FK或多餘index，詳見 docs/DATABASE_CONNECTION.md。沒有搬移Oracle業務資料。
@@ -17,6 +19,17 @@
 - [ ] 完成PD101／PD206／OP103的正式GUI逐項操作、PS103日期顯示、QC301其餘操作與一般Plan查找回歸。原生確認窗曾恢復；之後app-browser工具移除，Windows備援又因平台無法確認目前網址而停止本輪CU。已請使用者方便時在Chrome開YMES；已有Demo授權，恢復後自行登入，不再等登入許可。平台停止期間不改用其他UI技術繞過；API與其他工作繼續，不將GUI標通過。
 - [ ] 只讀fetch已看見公司端 `954e4a5`（新增OE/WP交接），目前已整合之公司端基底仍`3192964`。此新差異尚未合併／部署；本機另以codex分支保留API檢查點，GUI待驗，不以本機舊版覆蓋遠端或當成完成版本推送。
 - [ ] 全部本批必要GUI／API驗證完成後，僅提交已驗收來源與維護MD，正常fetch／merge公司新版本再push main；將精確提交同步遠端source，避免後續compose rebuild回到舊版。保留QC201/QC202等未驗收草稿，不誤夾入發行。
+
+## 家用端接續：QC201／QC202（2026-11-19）
+
+- [x] QC共用參數目錄0051、Reason參照鎖權限0052已備份並驗證pg_restore清單後套用；原生／PG參照／migration及live16欄比對無差異，PK/index/grants已獨立回讀。真實catalog保持空表，不seed假資料，見 `docs/modules/QC/因子參數目錄相依.md`。
+- [x] 保存既有本機草稿後重新稽核：QC201／QC202原有NULL→0、子資料無版本及Factor metadata fallback不算正式可用；已接手修正。QC202 Vue已對齊單一saved DTO、Apply轉Edit、raw nullable stamp、JSON身分與部分刪除結果，Web型別／Vite建置成功；尚未部署或GUI驗收。
+- [ ] 完成QC201狀態／nullable CAS、共用identifier／參照鎖、子資源snapshot版本、Copy預覽選擇、真實lookup與Vue對接。未交付的WIP刪除檢查、IssueJob、Simulation、ValueList／Table／Function provider不以空資料或成功替代；來源不足交公司端補證據。
+- [x] QC201／QC202固定API快照13檔SHA一致，.NET9 Release 0警告／0錯誤，遠端API `95a153cef1d7` 已啟動ready200。QC202十組一次通過103項HTTP／444斷言、6表／holder0；QC201前六組175HTTP／544斷言、12scope／holder0，Op第7組另49HTTP／227斷言、14scope／holder0，合計七組分兩輪224HTTP／771斷言。每輪schema metadata保持、登出204。不是GUI驗收；Web仍 `760d6055e519`，新畫面尚未部署。
+- [x] 兩頁最終Web a4固定快照vue-tsc／Vite exit0；只含QC201／QC202覆檔、不含OP105草稿。已部署Web `1c9b82c00343`（`index-M6-uxH7Y.js`／`index-GktQBV6c.css`），封裝907350 bytes；遠端8項HTTP確認入口／兩頁SPA／JS3331109與CSS875532 bytes及SHA／小寫404／API ready200全過。API當時為已驗證95a153cef1d7，沒有更動其他專案。
+- [ ] QC201與QC202的實際app-browser全流程待工具可用後補驗；未完成前不標完成或推送為已驗收main。API／Web建置、實際HTTP與程式碼審查均不能替代GUI操作。
+- [x] OP105：兩表20欄比對及0053備份／套用／readback完成，僅補5defaults與owner CRUD；API隔離.NET9 Release 0警告／0錯誤、16a825af0bea已啟動ready200。正式8組145HTTP／501斷言一次通過，5owner表／group ref及其他7引用表精準鍵／holder0，metadata保持、登出204。包含真OP引用鎖與padded舊member防實刪。最終Web a2已修7項peer邊界、build exit0，23:14部署1f2dff75f080（DY_b-9Fr.js／BCM0CnE5.css），9項靜態HTTP及完整資產SHA通過；GUI仍待。
+- [x] 可重建來源／發行界線已補 `DEPLOYMENT_PROFILES.md`：遠端 `/opt/ymes/checkpoints/fb22a87` 與本機checkpoint保留已部署來源；共用 `/opt/ymes/source` 尚有舊碼，不可直接預設重建退回舊版。
 
 ## 公司端新交接（2026-11-19，OE／QC／PRD）
 
@@ -359,13 +372,15 @@
 
 ### QC201 計數品管項目（公司端 2026-11-17 交接）
 
-- [ ] 閱讀 `docs/modules/QC/計數品管項目.md`、公司端 QC201 區段及 `docs/DATABASE_CONNECTION.md`；確認 Vue route/menu 使用 FunctionNo `QCITEM_A`、API 權限使用 FunctionKey `QC201`。
-- [ ] 比對 YMES live PostgreSQL schema 與 migrations：主表 `tblqcitemforattributes` 已列於 `mestest_mtl_qc_item_tables_create.sql`；四張直接子表 `tblqcitemparameter`、`tblqcitemfactor`、`tblqcitemreasonmap`、`tblqcsampleplanchange` 參考 `mestest_qc_item_attributes_create.sql`。只對實際缺少的表/欄位/constraint 建立 forward migration；保留 YMES 擴充欄位與資料，禁止 drop/recreate 或從 Oracle 複製 MES 業務資料。
-- [ ] `mestest_qc_item_attributes_source_ddl.sql` 含 18 張 Oracle 結構物件，包含舊刪除流程參照表；先把主表與 4 張直接子表以外的物件逐一對照 YMES 既有功能/表，不要將 raw DDL 全部批次建立。這四張子表各自只有列出的 PK，沒有 Oracle FK/非 PK index；SamplePlanChange 的 `LOTRANGE`、`AQLCHKFORSPLANCHG` 以 CHECK NOT NULL 實作，請保留語義。
+- [x] 閱讀 `docs/modules/QC/計數品管項目.md`、公司端 QC201 區段及 `docs/DATABASE_CONNECTION.md`；確認 Vue route/menu 使用 FunctionNo `QCITEM_A`、API 權限使用 FunctionKey `QC201`。本專案目前沒有 user-function ACL 對照，依使用者「角色/權限先不管」決策，端點沿用登入保護。
+- [x] 比對 YMES live PostgreSQL schema 與 migrations：主表 `tblqcitemforattributes` 已存在且有 YMES 擴充欄位；四張直接子表 `tblqcitemparameter`、`tblqcitemfactor`、`tblqcitemreasonmap`、`tblqcsampleplanchange` 原本缺少。2026-11-17 建立並套用 `0021_qc201_attribute_qc_item.sql`，套用前備份已驗證；只建四張子表並補本 API 所需 CRUD 權限，未 drop/recreate 或複製 Oracle 業務資料。
+- [x] 已逐項閱讀 `mestest_qc_item_attributes_source_ddl.sql`；其餘刪除依賴表不批次建立，對既有 YMES 關聯只用固定表名做引用檢查，直接子表清理放在交易內。
 - [ ] 實作 FunctionKey QC201 保護的 API，契約詳見規格：主清單 GET、主檔 POST/PUT/DELETE、Copy POST、Approve POST；options、已核准 Reason lookup、ReasonType ValueList、Parameter/Factor/Reason/Operations/SamplePlanChange GET/PUT、Operation choices GET 及 Simulation POST。DTO 欄位大小寫/日期/nullable 請和 Vue `QcAttributeQcItemMaster.vue` 對齊。
 - [ ] API 必須重做 WinForms/Core 驗證：Add/Edit/Copy 的欄位限制、Issue Control、DataStamp concurrency、複製關聯交易、Approve 僅未簽核且至少有 Factor/Reason、Delete 的 0/-1 實刪/2→-1/1 拒絕及 WIP/MTL/MTL Type/OP/PRD/QC Group/SPC 引用檢查。刪除與子表清理必須交易化，按多選逐筆處理時保留前端首錯停止的結果語義。
 - [ ] Options 從 YMES 真實抽樣計劃、計數判別法則、主分類與介面目錄取得；`showQcClass` 對 ZKT/KYT 開啟，`showLotValid`/`showComponentCollect` 依 SPK 模式設定。ReasonType 由 MES ValueList 的實際有效值及顯示字串提供，不能照搬 DEV 假資料。
-- [ ] `QC_ItemOp` Vue 左右雙清單已完成；接 API `GET /api/qc/attribute-qc-items/{qcItemNo}/operations`、`GET /api/qc/attribute-qc-items/options/operations?qcType=0&lotIsValid=...`、`PUT /api/qc/attribute-qc-items/{qcItemNo}/operations`。保存採完整替換，保留 OP/Inline/ExecuteOrder/檢驗時機/Reviser/ReviseDate；僅 IssueState=2 可編輯、LotIsValid=0 不可加 InLine、每筆 InLine 必須至少勾一個 FAI/IPQC/PQC。沿用 YMES 已有的作業站及 `TBLOPQCITEM` schema，不另建重複表。
+- [x] `QC_ItemOp` API 已接上 Vue 路徑：GET assigned/choices、PUT full replacement；保留 OP/Inline/ExecuteOrder/檢驗時機/Reviser/ReviseDate，只允許 IssueState=2、LotIsValid=0 不可加 InLine、每筆 InLine 必須至少勾一個 FAI/IPQC/PQC。沿用 YMES 已有的 `tblopbasis`、`tblopqcitem`，不另建重複表。
+- [ ] 2026-11-17 家用端本機已新增 QC201 Controller、主檔 CRUD/Copy/Approve、Parameter/Factor/Reason/Operation/SamplePlanChange GET/PUT；`dotnet build src/YMes.Api/YMes.Api.csproj -c Release --no-restore` 成功（0 warning/0 error）。尚未部署或 push。正式 options 仍缺 `tblqcsamplingplan`（QC103）、`tblqcattrulebasis`（QC107）、`tblqcmclassbasis`（QC401）資料來源；`TBLSYSVALUELIST` 在 YMES 不存在，ReasonType endpoint 先回 503；介面目錄未核實；Simulation 尚無可核實算法，先回 503，不回 DEV 假計算。
+- [ ] 補齊 QC103/QC107/QC401 正式 lookup 資料/API、MES ValueList 對應來源與 Simulation 原生算法；補完後做 QC201 端到端驗證再部署。
 - [ ] 完成後更新 migration/API 文件及本待辦，提交並 push；公司端 pull 後對照 QC201 Production 頁面及回應契約。
 
 ### QC112 品質原因產品指導書（公司端 2026-11-17 交接）
@@ -1372,6 +1387,10 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 - API：GET api/qc/attribute-control-limits?qcItemNo=、GET .../options?qcItemNo=、POST collection、PUT /{qcItemNo} body 帶 originalFactorValues/dataStamp、DELETE /{qcItemNo} body 帶 factorValues/dataStamp。完整 DTO、FactorOnline 白名單、RuleSet 格式、nullable DataStamp CAS 見 docs/modules/QC/計數管制內容.md。
 - 因子沿用既有 QC201 Factor API，查找值沿用 MES parameter reference；法則從 TBLQCRULEBASIS 讀 IssueState=2。API 所有端點需檢查登入與 FunctionKey QC202，SQL 參數化；新增以 QCItemNo + 正規化 factorValues 防重，修改/刪除以 composite key + DataStamp CAS，NULL DataStamp 使用 IS NULL。勿把 FactorNo 直接拼成 PostgreSQL 欄位名。
 - TBLSPCATTLIMIT Oracle source 無 PK/FK/唯一鍵，只有 QCITEMNO index；WinForms 客戶端新增時先查重。PG CREATE reference 加入 composite unique constraint 作 server-side 防重，屬 YMES 適配，請在實作前確認與既有架構相容。
+- [x] 讀取 QC202 規格、source DDL、PG JSONB 參考及公司端 handoff；家用端 SSH live audit 確認 `tblspcattlimit` 缺表，`tblqcitemforattributes`/`tblqcitemfactor` 已存在，`tblqcrulebasis`/`tblsysmesparameter` 未建立。
+- [x] 建立並套用 `database/migrations/0022_qc202_attribute_control_limit.sql`；套用前建立並驗證 `/opt/ymes/backups/ymes_before_0022_qc202_20261117.dump`。只新增 `tblspcattlimit`、JSONB 因子字典、唯一鍵、QCItemNo 索引及 `ymes_app` CRUD 權限；遠端欄位、索引、grant 已核對，未新增 Oracle 動態欄位或匯入業務資料。
+- [ ] 本機已新增 QC202 API routes/repository：approved QC Item 限值查詢、FactorOnline 欄位白名單、JSONB 新增/修改/刪除、界限驗證、RuleSet 格式/狀態驗證及 nullable DataStamp CAS；Release build 成功，尚未部署。因 `tblsysmesparameter` 缺少，FactorName/ParameterType/參照選項尚不能完整供應；目前非 ParameterType=2 因子只允許 `*`。因 `tblqcrulebasis` 缺少，法則 options 為空、非空 RuleSet 寫入回 503。
+- [ ] 取得/建立正式 MES Parameter reference 與 QC108 Rule lookup 後補齊 options，再部署並用 Production 頁逐項核對新增、修改、複製、多選刪除與 nullable DataStamp 衝突行為。
 
 
 ## QC204 刪除計數型品管項目量測記錄（公司端 UI handoff，2026-11-17）

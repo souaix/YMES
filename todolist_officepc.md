@@ -6,6 +6,20 @@
 - [ ] 補 `OP_OPProperty` 的 Form／Designer／Service／Core、Element 候選、Controlled／值驗證、簽核與共享OPNo owner規則。8欄Type及11欄共用Property的原生DDL已有，不需再造表或讀業務資料；家用端已按來源建立空表，僅實作Type硬刪所需精準Property清理，維護provider仍未交付。
 - [ ] UI 後續接線保留真正 nullable Type 與 DataStamp，不將 NULL 版本改為0；保留伺服器回傳的 canonical key／新版本、頁內確認及逐筆部分成功。公司端繼續使用 API／DEV 假資料，不需要 PostgreSQL 或 SSH。
 
+### QC201／QC202 公司端來源補交（2026-11-19，家用端追加）
+
+此節只列仍缺少的原生程式／系統 metadata 證據。QC201／QC202 API 已部署與實測範圍見各模組 MD，不代表 GUI 或尚缺 provider 已驗收完成。公司端唯讀追查 WinForms → Service → Core、必要的 Oracle 結構及系統選項 metadata，補到既有模組 MD 並附檔案、方法、行號／來源版本；不讀取或匯出 MES 業務列，不在 Oracle 執行 DDL/DML，也不連 YMES PostgreSQL、使用 PPK/SSH 或部署。家用端繼續負責 API、migration、權限與驗收，不把這些工作轉交公司端。
+
+QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 及 `TBLSYSMESPARAMETER` 16 欄的真實 DDL／參照均已在 repo；不必重查或重交 CREATE SQL。以下 provider 缺口不等同缺表，也不能用空表、DEV 假選項或另一個表單的規則代替。
+
+- [ ] **QC201 刪除與停用的真實 WIP 檢查：** 從 `wsQC`／`clsQCBasis.DelQCItemForAttributes` 追完整引用檢查呼叫鏈，交付實際 WIP table/view、查詢 SQL／參數、join 與 QCItemNo 對應欄位、`QCType`／`QCItemType` 的計數範圍，以及目前／歷史／已失效記錄的判斷。確認此檢查在 0/-1 實刪及 2→-1 停用各分支的執行順序，並列原生其餘物料／作業站／產品／群組／SPC 引用檢查與清理順序。不要虛構 `tblwipqcitem`，也不要把查無已知表解讀成「沒有引用」。僅當實際追到 repo 尚無結構的真物件，才唯讀補該物件的 DDL／欄位／約束；已有 DDL 不重交。交付至 `docs/modules/QC/計數品管項目.md`。
+- [ ] **QC201 已核准主檔的 IssueControl 欄位：** 補 `frmQCItemForAttributesDef`、共用 `ExeIssueControl`／服務端 Edit 路徑的完整控制來源，列出 state2 每個可改／唯讀欄位、判斷用 FunctionNo／IssueNo／控制設定鍵及缺設定時的行為，確認 Service/Core 是否重驗。另核實 Parameter／Factor／Reason／SamplePlanChange 手動維護各狀態的允許規則；不要把 QC215 匯入的 ParameterClass=1 條件當成手動 Factor 規則。家用端目前採明載的 state0 保守寫入及已證實 state2 Op 規則；取得來源後由家用端調整。交付至 QC201 既有模組 MD。
+- [ ] **QC201 CopyParameters=false 的初始化分支：** 追 Copy Form → Service/Core 在不勾複製 Parameter、且目標 Sampling Plan 有參數時，究竟建立 Plan 預設值、保留空集合、要求選來源或採其他分支；交付實際方法、參數來源及交易順序。並核實項目／Plan 參數不一致時的選擇、取消、缺值與 NULL 行為，說明四個 copy checkbox 各自如何影響初始化。不要因未勾選就假設成功建立空參數設定。交付至 QC201 既有模組 MD。
+- [ ] **QC201／QC202 共用 MES Parameter Reference 契約：** 沿 `wsSYS.LoadMesParameterRef`／`LoadMESParameterRef` → `clsSYSMesParameter` 核實 `ParameterType` 完整 enum（已知 0=Table、2=自由文字；補 1／其他／未知值的真實處理），以及 TableName／FieldName／Condition／FunctionName／ShowName 的實際語意、參數、回傳欄位與顯示值、大小寫／NULL／空值／`*` 規則。提供原生允許的 table/column/function 清單及查找篩選，說明核准狀態與 ParameterClass 條件在哪個 caller 生效，讓家用端依可信 allowlist 實作；不要要求 API 任意執行 metadata SQL 或 FunctionName。`TBLSYSMESPARAMETER`／三張 FC 表結構已有，無需重交 DDL 或把 provider 實作推給公司端；補到 `docs/modules/QC/要因資料維護.md`、`特殊主檔維護.md`，QC201／QC202 MD 引用同一份契約。
+- [ ] **QC201 ReasonType 真正 ValueList：** 核實 `frmQCItemReason` 的 ValueList 呼叫鍵／owner、語系、排序、代碼／標籤與缺值行為，以系統 metadata 交付；若與 QC105/QC106/QC107 共用，明確列出同一來源及各 caller 的篩選，避免重做字典或借用其他表單的硬編碼選項。本檔既有 QC107 Action／ReasonType 待辦仍保留其自身範圍。`TBLQCITEMREASONMAP` 只存 ReasonNo，ReasonType 是原因主檔／篩選資料；缺字典不應阻止真實已核准 ReasonNo 對應。交付至 QC201 MD，並由相關模組引用。
+- [ ] **QC201 SpecialForm 目錄：** 補主定義窗 FormName／ExecutionFile 的真實選擇器、目錄 provider／介面篩選、欄位對應、有效性驗證與缺項時的原生行為，確認既有值保留和新增／變更的差別；不以掃描任意檔案或 DEV 文字清單替代正式來源。交付至 QC201 MD。
+- [ ] **QC201 Simulation 原生計算來源：** 補 `QC_SamplingParameterSimulation` 對 `PlanOrQCItem=1` 的方法簽章與完整 Core／外部 DLL 來源、版本與相依，核實 QCType、ComponentCollect 一般／Wafer 分支、Plan／QC Item 參數的優先順序及輸出／錯誤契約。沿用本檔既有 QC103 Simulation 待辦提供共用算法的合成輸入、來源可核對的期望輸出及邊界案例，不另做重複算法清單；QC201 只補其 caller 差異。若只有 binary 或來源不存在，明確標示，不用近似公式或 DEV 假結果冒充。交付至 QC201／QC103 既有模組 MD。
+
 ## 家用端最新交付及公司端接續（2026-11-19，QC103／QC107／QC108）
 
 - [x] QC103/QC107/QC108 正式獨立主檔已部署並完成模組 MD 所列 app-browser 操作；請保留 nullable 版本、原子 aggregate、來源狀態規則和共用確認窗。完整共用簽核／算法／下列來源依賴仍未完成。
@@ -256,6 +270,7 @@
 - [x] 新增 QC201 規格、規格索引列、Oracle 查詢紀錄及家用端 schema/API handoff；已將 SPK/ZKT/KYT 顯示差異與正式 ValueList 來源列入 API options 契約。
 - [ ] Plan/Rule/MClass 查找鈕仍是簡化選取器；Production API 選項由家用端提供。未執行 build、測試或瀏覽器驗收。
 - [ ] 未執行 build、測試或瀏覽器驗收。Production schema/API、權限、Issue Job、引用檢查由家用端依 `todolist_homepc.md` 接手；完成後公司端 pull 並對接驗收。
+- [ ] 家用端接手後發現的原生 provider／分支證據缺口，集中依本檔頂部「QC201／QC202 公司端來源補交」處理；已有主表／子表 DDL 不重交，不將家用端 API／部署事項列為公司端來源工作。
 - [ ] QC201 UI 完成後，依功能目錄選下一個尚未完成 Function；不可把功能佔位頁計為完成。
 
 ### QC112 品質原因產品指導書（公司端 2026-11-17）
@@ -281,6 +296,7 @@
 - [x] 對照 `frmQCFactorMaintain`、`wsSYS.LoadMesParameter/LoadMesParameterRef/LoadTablesConstraints`、`wsQC.UpdFactorMaintain`、`clsSYSMesParameter`、`clsQCBasis.UpdFactorMaintain_ArrayBinding`，確認參數篩選、動態 Grid、nullable 欄位底色、新增/編輯/刪除暫存、整表 Save、CSV/XLS Import、Clipboard Paste、離開提示與狀態列。
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess、本機受保護連線唯讀取得 `TBLSYSMESPARAMETER` 與本次 `TableName LIKE 'FC_%'` 的三張來源表 `FC_POSIONLIST`、`FC_QCFORMCALLBACKITEMMAP`、`FC_THICKNESS` 的 DBMS_METADATA table/index DDL、ALL_INDEXES、ALL_CONSTRAINTS；未讀業務列，未在 Oracle 執行 DDL。
 - [x] 建立 Oracle source DDL、PostgreSQL CREATE 參考、`/YMES/QC/FactorMaintain` Vue DEV 頁、QC 基本資料選單/路由、QC109 規格及家用端 API/schema handoff。DEV 僅使用三張表的 DEMO schema/假資料，正式環境由 API metadata 驅動。
+- [ ] QC201／QC202 所需 MES Parameter Reference 的缺少契約集中於本檔頂部來源補交；補到本模組／QC110 既有 MD 供共用，不另建第二份 enum 或 provider 規格。
 - [ ] 尚未執行 build/test/瀏覽器驗收；家用端先核對 YMES `TBLSYSMESPARAMETER`/`FC_*` 表，再依 QC109 handoff 建立必要 migration 與 FunctionKey QC109 的安全動態資料 API。QC110 已完成公司端 UI/規格，待家用端完成 API/schema 後再對接。
 
 ### QC108 計量品管法則基本資料（公司端 2026-11-17）
@@ -873,6 +889,7 @@
 - [x] 已 pull 最新 main；公司端完成 QC202 Vue DEV 頁、三層選單與 WinForms / Service / Core 規格。
 - [x] Oracle TBLSPCATTLIMIT 沿用 QC201 透過 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀查 MESTEST 取得的 DBMS_METADATA/欄位/索引結果；新增 QC202 單表 source DDL reference，未讀業務資料、未在 Oracle 執行 DDL，未將連線秘密寫入 Git。
 - [x] 建立 PostgreSQL JSONB 動態因子空表 CREATE reference；明確標示這是 YMES schema 適配，供家用端比對，不是可直接執行的 migration。
+- [ ] 非自由文字 Factor 的正式 Reference 契約，統一依本檔頂部「QC201／QC202 公司端來源補交」補到 QC109／QC110 共用來源文件；不重交已存在的 QC202 CREATE SQL。QC202 API、JSONB／nullable CAS、部署與 app-browser 驗收仍屬家用端工作，本條不代表已完成正式驗收。
 - [x] 後續接續 QC203 計數品管項目判別法則對應：已先讀 Form/Service/Core，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 從 MESTEST 唯讀取得三張專用表 DDL；完成 Vue DEV 畫面與 API/CREATE SQL handoff。
 
 ## 2026-11-17 QC203 計數品管項目判別法則對應公司端進度
@@ -979,6 +996,7 @@
 - [x] 以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 MESTEST.TBLOPGROUPBASIS、TBLOPGROUPDETAIL DDL 與 ALL_TABLES/ALL_INDEXES/ALL_CONSTRAINTS；兩表僅 PK unique index，無 FK/額外 index。未查業務列、未在 Oracle 執行 DDL/DML。
 - [x] 新增 /YMES/OP/Groups Vue DEV 假資料雙 Grid/表單/lookup/檢核並接上作業站資料→作業站設定→作業站群組資料選單。
 - [x] 新增 OP105 規格、Oracle source DDL、PG CREATE-only SQL、校正 first-phase 新庫 DEFAULT 0，更新 module index、資料庫 provenance 與 todolist_homepc.md。
+- [ ] 補 `frmOPGroupBasisDef` → `LoadPSDefine` 的真實生產區段狀態篩選／缺值規則；家用端對新建／變更 PS 採已核准 state2 的明載 YMES 保守規則並持有引用鎖，未變既有 raw／失效 PS 保留，`*` 沿用來源全區段語意。本條只要程式／系統 metadata 證據，不需重交已有 DDL、連 PostgreSQL 或 SSH，也不阻斷家用端現有 writer。
 - [ ] 尚未連 YMES PostgreSQL、未實作 API/schema；未執行 build、test 或 browser 驗收。已列明 API 路徑與 live schema/defaults 核對項目給家用端。
 - [ ] 推送 OP105 後依 docs/MES_MENU_FUNCTION_INVENTORY.md 接續下一個尚未完成 WinForms 功能；家用端 API/schema push 後 pull 並整合。
 
