@@ -253,6 +253,10 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 - [OE101 訂單基本資料](modules/OE/訂單基本資料.md) 已完成公司端 DEV 操作與 Oracle DDL、家用端 API／schema 交接。
 - [OE102 訂單結案](modules/OE/訂單結案.md) 已完成公司端 DEV 多選結案與家用端 API 交接，共用 OE101 表結構。
 
+## 工單管理 → 工單
+
+- [OE201 工單基本資料](modules/OE/工單基本資料.md) 已完成公司端 DEV 日常維護、核准及發放流程，交付五張 Oracle 表結構與 API／schema 參考。
+
 ## 全 MES 盤點狀態
 
 - Oracle 第一層 Module 清單、排序及功能目錄筆數已查；ModuleNo 翻譯標題與實際使用者權限仍待核實，553 個 Function 的 WinForms/API 遷移狀態尚需逐項追蹤。

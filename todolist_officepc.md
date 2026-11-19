@@ -1323,3 +1323,8 @@
 
 - [x] 核對 `frmROClose` Form／Designer、`wsOE.SetROBasisState` 與 `clsOEBasis`。DEV 支援多選、確認及原訂單轉結案，已結案列保留於清單。
 - [x] [OE102 規格](docs/modules/OE/訂單結案.md) 記錄結案條件、逐筆失敗規則、家用端 API 交接及共用 OE101 DDL。
+
+## OE201 工單基本資料
+
+- [x] 追查 THEIL Form／Designer、標準與客製 Service、Core；DEV 支援主檔與流程、元件、屬性、用料預覽、核准及發放。
+- [x] [OE201 規格](docs/modules/OE/工單基本資料.md) 含五張 MESTEST 表的 DDL、索引及家用端 API／schema 交接。跨模組寫入、正式簽核、挑片與 ERP 相依列為後續。

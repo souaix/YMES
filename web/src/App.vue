@@ -52,6 +52,7 @@ import PackingRuleMapPage from './components/PackingRuleMapPage.vue'
 import UserDefinedRunCardMaster from './components/UserDefinedRunCardMaster.vue'
 import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
 import ReceivingOrderMaster from './components/ReceivingOrderMaster.vue'
+import ManufacturingOrderMaster from './components/ManufacturingOrderMaster.vue'
 import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
 import FtProgramMaster from './components/FtProgramMaster.vue'
@@ -424,6 +425,10 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:OE:RO BASIS', label: '訂單基本資料', tableName: 'tbloerobasis', shortLabel: '基', functionNo: 'RO BASIS', moduleNo: 'OE' },
         { id: 'function:OE:RO CLOSE', label: '訂單結案', tableName: 'tbloerobasis', shortLabel: '結', functionNo: 'RO CLOSE', moduleNo: 'OE' },
       ],
+    }, {
+      id: 'menu:OE:MO', label: '工單', shortLabel: '工', children: [
+        { id: 'function:OE:MO BASIS', label: '工單基本資料', tableName: 'tbloemobasis', shortLabel: '基', functionNo: 'MO BASIS', moduleNo: 'OE' },
+      ],
     }],
   },
 ]
@@ -435,6 +440,7 @@ const menuError = ref('')
 const menuRoutes: Record<string, string> = {
   'function:OE:RO BASIS': appBasePath + '/OE/ReceivingOrders',
   'function:OE:RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
+  'function:OE:MO BASIS': appBasePath + '/OE/ManufacturingOrders',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -651,6 +657,7 @@ const functionRoutes: Record<string, string> = {
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
   'RO BASIS': appBasePath + '/OE/ReceivingOrders',
   'RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
+  'MO BASIS': appBasePath + '/OE/ManufacturingOrders',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -713,6 +720,7 @@ const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'funct
 const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
+const isManufacturingOrderPage = computed(() => activeMasterKey.value === 'function:OE:MO BASIS')
 const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCITEM SPEC IMPORT')
 const isProductGbomBatchImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD GBOM IMPORT')
 const isFtProgramPage = computed(() => activeMasterKey.value === 'function:PRD:FT PROGRAM BASIS')
@@ -2281,6 +2289,13 @@ async function signOut(): Promise<void> {
           v-else-if="isReceivingOrderPage || isReceivingOrderClosePage"
           :key="activeMasterKey"
           :closing-only="isReceivingOrderClosePage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ManufacturingOrderMaster
+          v-else-if="isManufacturingOrderPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
