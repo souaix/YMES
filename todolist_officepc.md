@@ -1310,4 +1310,4 @@
 
 ## PD206 父主檔生命週期來源查證（家用端 2026-11-19 追加）
 
-- [ ] 請公司端從原 WinForms → Service → Core，查產品、設備及作業站的 Delete／硬刪／停用對 `TBLPRDQCRULEBASIS` 實際採 guard、刪除關聯或不處理的規則，提供方法路徑與精確 SQL／條件；特別釐清頻率僅有 ProductNo、沒有 ProductVersion 時，刪單一版、最後存在版、最後已核准版及多版並發／取消核准的來源政策，並區分 literal `*` 與真實編號。僅查來源程式／必要 metadata，不讀業務列或執行 Oracle 寫入；來源沒有或未找到時明列缺口，不猜所有版都禁止刪。家用端目前只有保存當下的父鎖／資格檢核，完整父刪除 hook 尚未完成，詳見 [PD206 維護文件](docs/modules/PRD/產品抽樣頻率規則.md)。
+- [x] 完成產品、設備及站點的 Form → Service → Core 查證，記錄硬刪／停用／取消核准條件、Oracle 約束與觸發器資料字典、WIP 八種範圍比對順序。可讀來源未見 PD206 guard、cascade 或最後版特例。並發與暫無合格父項時的政策仍由 YMES 決定。見 [PD206 維護文件](docs/modules/PRD/產品抽樣頻率規則.md#父主檔生命週期來源查證)。
