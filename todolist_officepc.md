@@ -1260,4 +1260,10 @@
 
 - [x] 核對 WinForms／Designer、PRD Service／Core、WIP 呼叫端與 MESTEST。
 - [x] 完成範圍鍵、三種頻率、班別、CRUD／複製及 [規格與交接](docs/modules/PRD/產品抽樣頻率規則.md)。
-- [ ] 正式候選、抽樣執行與 API 待家用端接續。下一項 PD901 產品作業站標工維護。
+- [ ] 正式候選、抽樣執行與 API 待家用端接續。
+
+## PRD PD901 產品作業站標工維護公司端檢查點（2026-11-19）
+
+- [x] 核對客製 WinForms／Designer、PRD Service／Core、MESTEST 標工主表、歷史與科技類別 view 字典。
+- [x] 完成 DEV 查詢、XLSX 預覽／本機套用、轉 SAP 預覽和 [規格與交接](docs/modules/PRD/產品作業站標工維護.md)。
+- [ ] 正式工時、版次對應、SAP 與 API 待家用端接續。下一項 PRD OVERSTAY 產品作業站 Overstay 維護。

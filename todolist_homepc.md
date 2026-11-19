@@ -1763,3 +1763,7 @@ API 工作：
 ## PRD PD206 產品抽樣頻率規則家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品抽樣頻率規則](docs/modules/PRD/產品抽樣頻率規則.md) 核對 CREATE、萬用範圍鍵、各頻率欄位與 WIP 執行。
+
+## PRD PD901 產品作業站標工維護家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站標工維護](docs/modules/PRD/產品作業站標工維護.md) 核對主表、歷史、SAP_KTEXT 與內部版次、查詢、匯入交易及轉 SAP。
