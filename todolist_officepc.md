@@ -59,12 +59,19 @@
 - [x] 完成 [WP605 規格](docs/modules/WIP/成品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引、資料庫連線查證紀錄與家用端 API/schema handoff；Production API／migration 由家用端接手。
 - [ ] 本輪未執行 build、test 或 browser；完成靜態檢查、更新交接並 push 後接續下一個 WIP 功能。
 
-### 下一功能：WP603 在製品庫帳務維護（FunctionNo WIP INV）
+### WP603 在製品庫帳務維護已交付（FunctionNo WIP INV，2026-11-19）
 
-- [ ] 讀 `docs/MES_MENU_FUNCTION_INVENTORY.md` 的 WIP INV 條目，直接對照 `frmInventory_WIP_THEIL_BU1` 主/定義/轉庫/入庫/出庫相關 WinForms、Designer、Service/Core 與 THEIL 分支；先建立依賴與交易地圖，再決定可完成的 DEV 範圍。
-- [ ] 只讀查 Oracle MESTEST 中尚未有來源 DDL 的相關資料表及 dictionary metadata；沿用已查表，不重複產生 CREATE。缺少可讀來源或客製 DLL 時，把缺件與影響精確記錄，不猜 SQL。
-- [ ] 完成 Vue DEV 畫面與互動、功能規格、Oracle source DDL／PostgreSQL CREATE-only（僅新表）、家用端 API/schema handoff；同步更新 todolist_homepc.md、模組索引、資料庫查證紀錄及公司端交接檔。
-- [ ] 按使用者授權 commit/push GitHub 後持續接續；除非使用者要求驗收，不執行 build、test 或 browser。
+- [x] 依共用 WinForms／Designer、Service／Core 對照 Query、8 個可見分頁、Grid 欄位、列選取、按鈕及跨表交易；THEIL 專用 Form 原始碼缺於目前 checkout，已在規格標明此證據限制。
+- [x] PowerShell 5.1 + Oracle.ManagedDataAccess 受保護唯讀連線查得九張 MESTEST 功能表與索引／constraints／triggers metadata；未讀業務列或執行 Oracle DDL/DML。
+- [x] 完成 Vue DEV `/YMES/WIP/WipInventory`、三層選單及 8 個可見分頁的假資料互動，並建立 [WP603 規格](docs/modules/WIP/在製品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引與 API/schema handoff。
+- [ ] 公司端未連 PostgreSQL，未執行 build、test 或 browser。依授權提交／推送後接續 WP604。
+
+### 下一功能：WP604 半成品庫帳務維護（FunctionNo SEMI INV）
+
+- [ ] 從 `docs/MES_MENU_FUNCTION_INVENTORY.md` 對照 `frmInventory_SEMI` 的 Form／Designer、Service／Core 和相關轉入／轉出表單；先整理畫面、按鈕、簽核與交易資料流。
+- [ ] 以 PowerShell 5.1 + ODP.NET 受保護唯讀 profile 查 MESTEST 中尚未有 DDL 的資料表及 metadata；沿用已查證表，不重複產生 CREATE SQL。不讀業務資料列、不執行 Oracle DDL/DML。
+- [ ] 交付 WP604 Vue DEV 假資料互動、完整規格、Oracle source DDL／缺表 PostgreSQL CREATE-only 及家用端 API/schema handoff；更新本 TODO、home TODO、模組索引與交接檔。
+- [ ] Push 後繼續清單下一項；除非使用者要求驗收，不執行 build、test 或 browser。
 ### 公司端工作範圍
 
 - WinForms／Service／Core 原始碼、Vue DEV 假資料、模組規格與家用端 API／SQL 交接。Vue 環境為 Node.js 22.12+、npm 與 `web/` 套件，筆電沿用自己的既有工具，不依賴桌機的本機安裝路徑。

@@ -1,3 +1,13 @@
+## WIP WP603 在製品庫帳務維護家用端 handoff（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 [WP603 規格](docs/modules/WIP/在製品庫帳務維護.md)、Oracle source DDL `database/reference/mestest_wip_wp603_source_ddl.sql`、CREATE-only `database/reference/mestest_wip_wp603_create.sql` 與資料庫查證紀錄。
+- [ ] 先核對 YMES PostgreSQL live schema、migrations、WP101／WP201 的 Lot/WIP 狀態及已共用的 Raw、SEMI、Scrap、Good Bin、Locator、Inventory、Material、Product、MO、OP、Customer、QC Reason 表；CREATE-only 只參考缺欄／型別／PK／索引，不得整份重建既有表。只對真正缺少的物件建立 forward migration。
+- [ ] 新增登入授權、分頁及參數化 InventoryNo／Lot／INVDate 查詢 API，回傳 8 個 WinForms 可見分頁及 Component、Good Bin、Scrap Error 明細。Bin 欄位必須以既有 BinOrder metadata 動態排序；前端不得傳自由 SQL、AdditionalXML 或受信任庫存結果。
+- [ ] Raw Add/Edit/Delete/Scrap、Scrap／Component Scrap／Fail Bin Delete／ReRun、SEMI Lot／Component／Bin Add/Delete/Merge/Split/Turn Inv 必須依規格接入正式 domain service。重新驗證使用者、Inventory、Locator、Lot／Component／Bin 數量與現況；所有跨表狀態與庫存異動要有明確交易／CAS／鎖定、冪等鍵、操作結果及既有 Log side effects。不能以 CRUD 或 Vue 假操作替代 Core。
+- [ ] `TBLWIPCONT_ERROR` Oracle 無 PK；不得自行猜唯一鍵／刪除範圍。九張功能表及五個 standalone index 詳見兩份 DDL；先與 live schema 對照再新增缺少的 migration。
+- [ ] Label Print 原本依賴客戶端外部程式、Label binary／資料與印表機；定義伺服器端安全產生資料／下載方案。`SEMI_WAFER` 特殊轉庫及 `WP_Inventory_Raw_Split` 外掛為客製依賴；來源／部署契約不足的分支須明確保留不可用，不猜測交易。
+- [ ] 本 Form Designer 預設隱藏 Return／Entrust／Wait Incoming 三頁；只有取得 THEIL Form／部署證據確認啟用後再納入正式 API，勿因 handler 存在就開放功能。
+- [ ] 公司端沒有連 YMES PostgreSQL；migration/API、正式 DB 驗證與部署由家用端執行。API 完成後更新文件、資料庫 migration/deployment 記錄與回歸證據。
 # 家裡電腦接手清單
 
 ## 新交接公司端 WP605 成品庫帳務維護（2026-11-19）

@@ -728,3 +728,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 六張表均只有各自 PK unique index；沒有 FK、額外 index 或 trigger。Oracle 查無 `TBLINVFGDINVENTORYBIN`；WinForms Bin 明細使用 `TBLWIPGOODBINSTATE` 加 `TBLSYSBIN.BINORDER` 動態建欄。
 - Oracle source DDL 與 PostgreSQL CREATE-only 參考為 `database/reference/mestest_wip_wp605_source_ddl.sql`、`mestest_wip_wp605_create.sql`。僅查資料字典與 DDL，未查 MES 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，也未輸出或提交 Oracle 憑證。
 - FGD In Source=30 的服務先建立 TransactionState 並把 Basis 設為 1，同步執行 ExeFGDIn；成功設為 2 並搬移至 TransactionLog，失敗設為 3。此流程依 WinForms／Service／Core 原始碼查證，不由 Oracle metadata 推測。完整來源與 API 限制見 [WP605 規格](modules/WIP/成品庫帳務維護.md)。
+
+### 更新 2026-11-19：WIP WP603 在製品庫帳務維護
+
+- 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，從本機受保護 profile 直連 MESTEST，只讀取得 WP603 九張功能表的 DDL、索引、constraints 與 triggers；未查業務資料列、未執行 Oracle DDL/DML，也未連 YMES PostgreSQL。
+- 九表為 `TBLINVWIPINVENTORY_COMPONENT`、`TBLINVWIP_COMPONENTSCRAP`、`TBLINVWIP_FAILBIN`、`TBLINVWIP_INCOMING`、`TBLWIPCONT_ERROR`、`TBLINVSCRINBASIS`、`TBLINVSCRINDETAIL`、`TBLINVSCRINCOMPONENT`、`TBLINVSCRINFAILBIN`。來源欄位、PK 及五個額外索引見 `database/reference/mestest_wip_wp603_source_ddl.sql`；空表 PostgreSQL CREATE-only 參考見 `database/reference/mestest_wip_wp603_create.sql`。
+- 六張表只有 PK 索引；`TBLWIPCONT_ERROR` 無 PK、另有兩個非唯一索引；Component WIP Inventory 有獨立 unique index；Component Scrap 與 Fail Bin 各有 BaseLotNo 非唯一索引。九表無 FK／trigger。獨立索引 `PK_TBLWIPINV_COMPONENT` 的 GET_DDL 回 ORA-31603，以 ALL_INDEXES／ALL_IND_COLUMNS 重建欄位序。
+- WP603 共用 Form、Designer、Service/Core 有讀取；THEIL 專用 Form 原始碼缺於目前 checkout，故客製差異未宣稱已核實。CREATE-only 不是 migration；家用端需先核對 live schema，沿用 WP101／WP201 共用 Lot/WIP 表。
