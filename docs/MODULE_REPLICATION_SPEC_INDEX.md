@@ -172,6 +172,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PD112 包裝規則設定](modules/PRD/包裝規則設定.md) 已完成 DEV 版次、層級、序號／標籤／配件及七表交接。
 
+[PD113 產品包裝規則對應設定](modules/PRD/產品包裝規則對應設定.md) 已完成獨立 DEV 路徑、共用對應編輯與使用中規則交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

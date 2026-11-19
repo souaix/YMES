@@ -26,12 +26,13 @@ const props = defineProps<{
   relations: Record<string, PackingRelation>
   currentUser: string
   developmentPreview: boolean
-  saveSettings: (keys: string[], settings: PackSettings) => boolean
+  mapOnly?: boolean
+  saveSettings?: (keys: string[], settings: PackSettings) => boolean
   saveRelations: (changes: PackingChange[]) => boolean
 }>()
 const emit = defineEmits<{ close: [] }>()
 
-const mode = ref<'0' | '1'>('0')
+const mode = ref<'0' | '1'>(props.mapOnly ? '1' : '0')
 const legacyTab = ref<'settings' | 'serial' | 'label'>('settings')
 const boxQty = ref('')
 const cartonQty = ref('')
@@ -44,6 +45,7 @@ const accessoryDraft = ref<{ previous: PackAccessory | null; barcode: string; de
 const copyAction = ref<CopyAction | null>(null)
 const copyKeys = ref<string[]>([])
 const mapSelection = ref<string[]>([])
+const mapQuery = ref('')
 const mapDraft = ref<{ action: 'add' | 'edit' | 'copy'; key: string; ruleNo: string; ruleVersion: string; current: boolean } | null>(null)
 const localRules = computed(() => {
   const grouped = new Map<string, { versions: string[]; current: boolean }>()
@@ -61,7 +63,7 @@ const serialRules = computed(() => props.relations[props.product.key]?.packingSe
 const labelRules = computed(() => props.relations[props.product.key]?.packingLabelRules ?? [])
 const mappedProducts = computed(() => props.products.flatMap(product => {
   const mapping = props.relations[product.key]?.packingRuleMap
-  return mapping ? [{ ...product, mapping }] : []
+  return mapping && product.productNo.toUpperCase().includes(mapQuery.value.trim().toUpperCase()) ? [{ ...product, mapping }] : []
 }))
 const selectedMapping = computed(() => mappedProducts.value.find(row => row.key === mapSelection.value[0]))
 const selectedAccessory = computed(() => accessories.value.find(row => row.barcode === accessorySelection.value[0]))
@@ -104,9 +106,9 @@ function savePackSettings(): void {
     error.value = 'CartonQty 為 0 時，PalletQty 必須為 0。'
     return
   }
-  finish('Pack Setting 假資料已儲存。', props.saveSettings([props.product.key], {
+  finish('Pack Setting 假資料已儲存。', props.saveSettings?.([props.product.key], {
     boxQty: box, cartonQty: carton, palletQty: pallet, packOiPath: packOiPath.value.trim() || props.product.settings.packOiPath,
-  }))
+  }) ?? false)
 }
 
 function openAccessory(row: PackAccessory | null): void {
@@ -148,7 +150,7 @@ function openCopy(action: CopyAction): void {
 function copyPacking(): void {
   if (!canEditLegacy.value || !copyAction.value || !copyKeys.value.length) return
   const saved = copyAction.value === 'settings'
-    ? props.saveSettings(copyKeys.value, props.product.settings)
+    ? props.saveSettings?.(copyKeys.value, props.product.settings) ?? false
     : props.saveRelations(copyKeys.value.map(key => ({
       key, packingAccessories: accessories.value.map(({ barcode, description }) => ({ barcode, description, ...audit() })),
     })))
@@ -159,7 +161,7 @@ function openMap(action: 'add' | 'edit' | 'copy'): void {
   const source = action === 'add' ? undefined : selectedMapping.value
   if (action !== 'add' && !source) return
   mapDraft.value = {
-    action, key: source?.key ?? props.product.key, ruleNo: source?.mapping.ruleNo ?? '',
+    action, key: source?.key ?? (props.mapOnly ? '' : props.product.key), ruleNo: source?.mapping.ruleNo ?? '',
     ruleVersion: source?.mapping.ruleVersion === '*' ? '' : source?.mapping.ruleVersion ?? '',
     current: !source || source.mapping.ruleVersion === '*',
   }
@@ -213,15 +215,15 @@ function saveLabelRules(rows: PackingLabelRows): boolean {
 </script>
 
 <template>
-  <section class="pack-window" role="dialog" aria-modal="true" aria-labelledby="pack-title">
+  <section class="pack-window" :role="mapOnly ? undefined : 'dialog'" :aria-modal="mapOnly ? undefined : true" aria-labelledby="pack-title">
     <header class="pack-bar">
-      <h2 id="pack-title">{{ mode === '1' ? 'Product PackingRule Map' : 'Packing Set' }}</h2>
+      <h2 id="pack-title">{{ mapOnly ? '產品包裝規則對應設定' : mode === '1' ? 'Product PackingRule Map' : 'Packing Set' }}</h2>
       <span v-if="developmentPreview" class="pack-muted">DEV 假資料</span>
       <button class="pack-close" type="button" aria-label="關閉 Packing Set" @click="emit('close')">×</button>
     </header>
-    <p v-if="!developmentPreview" class="pack-message">正式 Packing Set API 尚未接線。</p>
+    <p v-if="!developmentPreview" class="pack-message">{{ mapOnly ? '包裝規則對應等待正式 API 接入。' : '正式 Packing Set API 尚未接線。' }}</p>
     <template v-else>
-      <div class="pack-bar">
+      <div v-if="!mapOnly" class="pack-bar">
         <span>{{ product.productNo }} / {{ product.productVersion }}　{{ product.productName }}</span>
         <label class="pack-close">PackOperationMode
           <select v-model="mode" @change="error = ''; notice = ''; accessoryDraft = null; copyAction = null; mapDraft = null">
@@ -270,6 +272,7 @@ function saveLabelRules(rows: PackingLabelRows): boolean {
         <ProductPackingLabelRules v-show="legacyTab === 'label'" :rules="labelRules" :can-edit="canEditLegacy" :product-no="product.productNo" :current-user="currentUser" :save="saveLabelRules" />
       </div>
       <div v-else class="pack-body">
+        <label v-if="mapOnly">ProductNo <input v-model="mapQuery" type="search" @input="mapSelection = []" /></label>
         <div class="pack-actions">
           <button type="button" @click="openMap('add')">Add</button>
           <button type="button" :disabled="!selectedMapping" @click="openMap('edit')">Edit</button>
@@ -306,6 +309,7 @@ function saveLabelRules(rows: PackingLabelRows): boolean {
         <h3>Product PackingRule Map</h3>
         <label>Product / Version
           <select v-model="mapDraft.key" :disabled="mapDraft.action === 'edit'">
+            <option value="">請選擇產品版次</option>
             <option v-for="item in products" :key="item.key" :value="item.key">{{ item.productNo }} / {{ item.productVersion }}</option>
           </select>
         </label>
