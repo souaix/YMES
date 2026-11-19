@@ -1779,3 +1779,7 @@ API 工作：
 ## PRD PDP01 晶圓良率與出貨報告家用端 handoff（2026-11-19）
 
 - [ ] 依 [晶圓良率與出貨報告維護](docs/modules/PRD/晶圓良率與出貨報告維護.md) 核對四表 CREATE、候選、ComboSeqNo、停用及報告檢查。
+
+## PRD PDP02 晶圓測試程式定義家用端 handoff（2026-11-19）
+
+- [ ] 依 [晶圓測試程式定義](docs/modules/PRD/晶圓測試程式定義.md) 核對 CP 程式／Bin CREATE、匯入、簽核、DataStamp 與檔案管理。

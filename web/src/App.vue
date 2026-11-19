@@ -401,6 +401,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:PRD QCRULE BASIS', label: '產品抽樣頻率規則', tableName: 'tblprdqcrulebasis', shortLabel: '頻', functionNo: 'PRD QCRULE BASIS', moduleNo: 'PRD' },
     ] }, { id: 'product-cp-settings', label: 'CP行業設定', shortLabel: 'CP', children: [
       { id: 'function:PRD:P_CP WAFER YIELD SHIP REPORT', label: '晶圓良率與出貨報告維護', tableName: 'tbl_cpsyscombomapbasis', shortLabel: '報', functionNo: 'P_CP WAFER YIELD SHIP REPORT', moduleNo: 'PRD' },
+      { id: 'function:PRD:P_CP PROGRAM DEFINE', label: '晶圓測試程式定義', tableName: 'tbl_cpprdprogrambasis', shortLabel: '測', functionNo: 'P_CP PROGRAM DEFINE', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -540,6 +541,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRD OVERSTAY': `${appBasePath}/PRD/Overstay`,
   'function:PRD:PRD OP RULE': `${appBasePath}/PRD/StationRules`,
   'function:PRD:P_CP WAFER YIELD SHIP REPORT': `${appBasePath}/PRD/CPWaferShipReports`,
+  'function:PRD:P_CP PROGRAM DEFINE': `${appBasePath}/PRD/CPPrograms`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -686,6 +688,7 @@ const isProductWorkTimePage = computed(() => activeMasterKey.value === 'function
 const isProductOverstayPage = computed(() => activeMasterKey.value === 'function:PRD:PRD OVERSTAY')
 const isProductStationRulePage = computed(() => activeMasterKey.value === 'function:PRD:PRD OP RULE')
 const isCpWaferShipReportPage = computed(() => activeMasterKey.value === 'function:PRD:P_CP WAFER YIELD SHIP REPORT')
+const isCpProgramPage = computed(() => activeMasterKey.value === 'function:PRD:P_CP PROGRAM DEFINE')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2258,6 +2261,14 @@ async function signOut(): Promise<void> {
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <FtProgramMaster
+          v-else-if="isCpProgramPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          cp
           @close="navigateHome"
         />
         <EqcSampleRuleMaster
