@@ -21,6 +21,8 @@ COPY --from=build /app/publish ./
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
+    && find /app -type d -exec chmod 755 {} + \
+    && find /app -type f -exec chmod 644 {} + \
     && mkdir -p /data/dpkeys \
     && mkdir -p /data/qc112 \
     && chown "$APP_UID":"$APP_UID" /data/dpkeys /data/qc112

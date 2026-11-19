@@ -59,6 +59,7 @@ if (!localDemoAuth)
     builder.Services.AddSingleton<Qc201Repository>();
     builder.Services.AddSingleton<Qc202Repository>();
     builder.Services.AddSingleton<YMes.Api.Operations.Op105Repository>();
+    builder.Services.AddSingleton<YMes.Api.Operations.OpB02Repository>();
 }
 builder.Services.AddControllers();
 

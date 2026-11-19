@@ -251,7 +251,34 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
                 OR EXISTS (SELECT 1 FROM "YMES".tblprdprsopapssetupdetail WHERE lower(opno) = lower(@operationNo));
             """, connection, transaction);
         AddVarchar(command, "operationNo", operationNo);
-        return (bool)(command.ExecuteScalar() ?? false);
+        return (bool)(command.ExecuteScalar() ?? false) || HasEcnGroupDependents(connection, transaction, operationNo);
+    }
+
+    private static bool HasEcnGroupDependents(NpgsqlConnection connection, NpgsqlTransaction transaction, string operationNo)
+    {
+        // Caller already holds OP UPDATE. Keep this dependency check MVCC-only;
+        // taking a group/global-OP lock here would reverse the ECN writer order.
+        try
+        {
+            using var catalog = new NpgsqlCommand("""
+                SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c
+                  JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+                  WHERE n.nspname='YMES' AND c.relname='tblopecngroupdetail');
+                """, connection, transaction);
+            if (catalog.ExecuteScalar() is not true) return false;
+            using var reference = new NpgsqlCommand("""
+                SELECT EXISTS(SELECT 1 FROM "YMES".tblopecngroupdetail
+                  WHERE lower(btrim(opno))=lower(btrim(@operationNo)));
+                """, connection, transaction);
+            AddVarchar(reference, "operationNo", operationNo);
+            return reference.ExecuteScalar() is true;
+        }
+        catch (NpgsqlException)
+        {
+            // Missing permission/schema on an existing source is not no-reference.
+            // Disposing the outer transaction rolls back; do not leak SQL details.
+            throw new MasterDataRuleException(503, "無法確認 ECN 作業站群組引用，本次未刪除；請檢查來源結構與必要讀取權限。");
+        }
     }
 
     private static OperationDto Map(NpgsqlDataReader reader) => new()

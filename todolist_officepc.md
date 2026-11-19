@@ -1,6 +1,21 @@
 # 公司端待辦
 
-**家用端最新回饋（2026-11-20）**
+## 家用端最新回饋：OPB02已實測，Git待推（2026-11-20）
+
+- 家用端已完成OPB02原生11＋2欄核對、0054／最小權限、正式API `1d09e4febf48` 與Web `cfa5cf288359`。API八組分兩輪及正式IAB 48驗收檢查點通過（含1項SQL清理讀回，不是48純點擊），六群組全GUI建立／刪除，GUI後19項精確計數全0。完整來源、SQL fixture界線、Job候選503未觸發與未提供provider詳見 [ECN模組](docs/modules/OP/ECN作業站群組設定.md)。本批Git待root正常推送，不能把此回饋當成已取得新commit；root本次fetch的origin仍 `395a41a`，無公司新碼。
+- 公司端後續同步保留三層選單、KD配色、正式DEV隔離、ECN raw NULL／parent CAS／字面PS／全域OP唯一與選取owner防護，不以舊DEV流程覆蓋。PostgreSQL核對／migration、API／交易與部署持續由家用端處理；以下只新增原生程式／資源查證，不派公司端連PG或SSH，也不請公司端建表。
+
+### OPB01共享Element：精確來源查證待辦
+
+OPB01為「作業站參數群組設定」，不是OPB02簽核流程。Binding14欄及共用Element21欄原生DDL已完整，**不需重造Element表或重取這兩表DDL**；live欄位／九個參考default差異／權限是否需forward修正由家用端另查，不能以reference差異當作live已缺欄。
+
+- [ ] 從 `STD/MESws_STD/wsSTD/wsSYS/wsSYS.cs` 的 `LoadElementValue`、`ChkElementValueValid` 追到真正SYS Core完整方法，交付呼叫鏈及程式路徑／方法定位。整理DataType／ValueType／InputType／Controlled／AllowNull分支、ValidList與FormatString真正grammar、Min／Max與空值規則、MES Parameter關聯／讀取限制及錯誤回應；實際Core類別由原碼確認，不猜名稱或把DEV validValues當provider。
+- [ ] 從 `frmOPGroupAttrib` 及 `DelOPGroupAttrib` Service／Core查清InputAbortLog實際設定讀取來源、key／default／失敗分支，以及abortLog傳到哪個記錄器、實體及欄位。只交已讀到的程式證據；缺檔／provider要精確標示，不能預設0、只收原因不保存或宣稱刪除流程完整。此項不要求公司端對資料庫執行查改或建表。
+- [ ] 查明 `TBLSYSELEMENTBASIS` 的DataType／TransferType／ValueType／Controlled／InputType／AllowNull等選項在原生程式的真ValueList查找key／provider與繁中resource／常數。可讀源碼／資源直接附出處；若只能依賴DB設定，標出真依賴交家用端判定，不用Vue硬編碼label／fallback補成正式目錄，也不新增公司端DB操作待辦。
+
+家用端可先接既有主表盤點、真Customer／ECN／Element raw metadata reader及交易骨架；未交付的值驗證或作廢記錄分支不得假成功。公司端交付上述來源後更新 [OPB01模組](docs/modules/OP/作業站參數群組設定.md) 及本檔交回；下方其他來源與UI待辦全部保留。
+
+**前次家用端回饋：公司整合歷史（2026-11-20）**
 
 - 已正常合併公司端至 `f68ecea`，保留兩端來源。原 OE／WIP 23 個入口加上 WP303、WP304、WP308 三個，累計 26 個唯一入口已完成正式 app-browser 的路由、不可用提示、無 DEV 業務資料及離開／重進防護；三個新入口實按頁內 Close 返回空白首頁，console 無紀錄。分批版本與精確範圍見 [公司整合 QA](docs/qa/20261120-office-integration.md)。這不是 26 個功能的正式 API 或交易完成。
 - 家用端已修正正式 non-DEV 不可回傳 seed／fixture、查詢／查找及異動入口的 disabled 與 handler guard，並保留公司端 DEV seed、共用 storage 與來源邏輯；WP308 額外修正四個位置欄位交換的 TypeScript 型別錯誤，未改值語意。後續公司端正常同步時請保留這些正式隔離及維護 MD。

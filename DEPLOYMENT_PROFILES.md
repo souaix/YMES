@@ -50,6 +50,14 @@ YMES Vue Web 與 ASP.NET Core API 使用不同容器，部署在同一台主機�
 
 2026-11-20 OP103／PS103 焦點修補 a1 發布曾出現空白頁：tar 只有檔案而未明列目錄，`umask 077` 使隱式建立的 `assets/` 成為 `0700`；Docker `COPY` 保留該權限，非 root nginx 無法讀取。已僅將公開產物調整為上述模式並重建 a2；目前 Web `06d3b149f7cb`、API `16a825af0bea`，JS `index-CaOqfmnb.js`／CSS `index-BPgDSiAI.css` 的外部 MIME、大小及 SHA256 已通過核對。保留 a1 的 immutable source `/opt/ymes/checkpoints/web-op103ps103-focus-20261120-a1` 及原始 provenance，以獨立的 runtime 修復紀錄區分舊映像 `1d9162efc1cf` 與 a2，不覆寫來源快照。此為發布修復紀錄，整體 GUI 仍待驗，不能據此宣稱 OP103／PS103 全部操作已驗收；`releaseComplete=false`。
 
+### API映像內發佈檔權限與切換前讀取檢查
+
+API亦須以映像設定的實際非root使用者驗證，不能由root可讀或Docker build成功推定可啟動。Dockerfile只在映像內將 `/app` 的發佈目錄設0755、非機密發佈檔設0644，再以 `$APP_UID` 執行；至少確認父目錄可進入、`YMes.Api.dll`、deps／runtimeconfig、appsettings及本批必要相容設定檔皆可讀。接著用既有受保護設定啟動候選版本並確認ready，再依本批image ID及前版guard切換。讀取或啟動檢查失敗即停止，不切換正式服務。
+
+這是映像內發佈內容的權限處理，不對主機來源快照、機密環境檔、憑證、資料庫備份或掛載的持久資料遞迴chmod；它們仍依原受保護權限及對應runtime擁有者管理。來源／備份目錄0700與檔案0600不因容器COPY會保留模式而直接放寬；建置映像中的非機密發佈檔需在Dockerfile明確處理。
+
+2026-11-20 OPB02 API a1在切換前因compat候選映像的 `appsettings.json` 為0600而被實際非root讀取檢查攔下，正式API仍保留 `16a825af0bea`。已補上述Dockerfile處理，新的a2映像須重新通過讀取、啟動及版本檢查；此處保留當時修正紀錄，後續a2實際部署及驗收結果見下節OPB02發行紀錄。
+
 - Ubuntu 遠端測試可透過 SSH 操作；IIS 依客戶核准的 Windows Server 管理/部署方式執行。
 - 測試、驗收和正式環境分開；未授權不得以正式資料做破壞性測試或 Migration。
 - 每次部署保留版本、設定差異、Migration 記錄、健康檢查和回復步驟。
@@ -74,3 +82,17 @@ QC201／QC202批API為 `95a153cef1d7`，由同一 `fb22a87` 基底加13份明列
 接續OP105批初版為API `16a825af0bea`／Web `1f2dff75f080`；API來源 `/opt/ymes/releases/op105-20261119-a1/api`，基於品質API加6份SHA覆檔，Web來源 `/opt/ymes/releases/op105-20261119-a2/web`，沿品質a4僅加OP105。兩者同層manifest與 `/opt/ymes/current-checkpoint.json` 記錄實際映像、來源、回歸與pending GUI／GitHub狀態。OP105 API8組145HTTP／501斷言及Web9項路由／完整資產SHA通過，不宣稱GUI已驗收。回復標籤 `ymes-api:before-op105-20261119`／`ymes-web:before-op105-20261119`。保留每批base與delta來源，不把舊 `fb22a87` 誤當已包含後續批次；未驗收的OPB02等草稿不得混入重建。
 
 每批完成 app-browser 操作驗證並清理測試資料後，再正常 fetch/merge GitHub 新提交，解決衝突、重跑受影響檢查後 push；禁止 force push。若公司端同時有新工作，保留雙方提交與變更，合併不等於已部署或已驗收。
+
+### 2026-11-20 OPB02正式發行：API／GUI已驗，本批Git待推
+
+目前API為 `1d09e4febf482433d398a986a3d9458eca693324763a45cbcd468e0d791e2755`，Web為 `cfa5cf288359f1f3bbfdd5dfc9f2dbb5457f4ef0e6537d0fc38c698edb902fd7`，資料庫已到0054。API a2主／相容候選均通過實際nonroot五個發佈檔讀取後才切換main，ready200；本節更新的是後續實況，上方16a／722與a1阻擋紀錄保留為歷史。
+
+- API八組分兩run通過，記錄合計179 HTTP／556斷言，含首輪G7傳輸中止前的部分檢查；原首輪FAIL保留，不稱單輪全通或去重數。兩輪各15scope及holder0。root先完成API-only checkpoint dryvalidate／apply，原Web a3／Git395歷史保留、新API與migration0054更新後才部署Web。
+- Web a2由root完整本機build exit0、206來源前後hash全同後封裝；僅既有 `EcnOperationGroupMaster.vue` 異於office a3。公開封裝SHA `3e5ecf202f0323f19d66fd1913e6ffda1a28553b00195e172ed39aae47114283`，來源封裝SHA `87fca1dda7eae7433408f45f75e392206b3f234dab48c91f09948bece3dc4d95`。root實際部署已通公開兩父目錄0755／六檔0644、候選及運行容器nonroot、正常TLS外部JS／CSS MIME／完整大小／SHA；資產為 `index-fsF33iMR.js`、`index-Cd8G82qp.css`，API在Web切換前後仍為1d09且ready200。
+- API主／相容來源分別在 `/opt/ymes/releases/opb02-api-20261120-a2/main`（139檔）與 `/opt/ymes/releases/opb02-api-20261120-a2/compat`（136檔）；Web映像建置context在 `/opt/ymes/releases/opb02-web-20261120-a2/web`。Web-only updater已dryvalidate／apply，私有206來源安裝於 `/opt/ymes/checkpoints/web-opb02-20261120-a2`，原JSON備份為 `/opt/ymes/backups/current-checkpoint-before-web-opb02-20261120-a2.json`；API／migration與歷史欄位保持，沒有服務、DB或Git異動。來源目錄0700／檔0600，既有archive／source-manifest不因runtime確認而重寫。
+- Web建置時live API仍16a，封裝／切換時綁定新1d09，兩時點已在manifest分開記錄。正式source及checkpoint不能由舊 `/opt/ymes/source` 預設重建取代；重建使用上述已pin來源與本批manifest，Web及API仍獨立處理。
+- 0054之後若需回復API，使用保留ECN引用防護的 `ymes-api:opb02-compat-20261120-a2`（`232cc6e27e34f08c1bb06ea35dc111ee8aa3917252e13e6e6bdbe0bb98c63df3`），不能將舊16a當成相容回復而失去已存在ECN資料的OP引用檢查。Web前版保留標籤 `ymes-web:before-opb02-20261120-a2` 指向722；程式回復不等於DB還原，不DROP0054或清除業務列。
+
+root已在正式IAB自行Demo登入並完成OPB02主檔／明細、Copy、查找／選取、真本地核准、soft／hard刪除、nullable／stale／部分成功、dialog／Close／重進／深路由驗證；48個驗收檢查點含1項SQL提交後清理讀回，不能稱48次純GUI點擊。cleanup前父子已全由GUI刪到0，SQL精確清理9個lookup後19scope全0。最後 `browserLogs=[]` 只限最後reload，未保留整輪跨reload的console歷史。完整IssueJob／通知provider與候選存在503仍未驗，完整範圍及證據見 [ECN模組](docs/modules/OP/ECN作業站群組設定.md)。
+
+本節時點GUI已驗、Git待root正常提交／推送；root最後fetch確認origin仍395a、無公司新碼。保留所有其他模組待辦及來源原文，整體 `releaseComplete=false`，不提前將本批記為GitHub已同步。

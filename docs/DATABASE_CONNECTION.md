@@ -1,5 +1,16 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## OPB02 ECN 作業站群組結構與權限：0054（2026-11-20，schema／本批API及GUI已驗，Git待推）
+
+- root 先以 PPK 唯讀查所有 schema，兩個 ECN 精確表名及已知 workflow candidate 均不存在；原 OP／PS 查找及 row-lock 權限可用。套用前再次確認表／PK index 名稱無衝突，不接管既有物件。
+- 完整 `ymes` 資料庫 custom-format 備份 `/opt/ymes/backups/ymes_before_0054_opb02_20261119T181813Z_kaHec4fs.dump`，**624893 bytes**；目錄700、檔600，`pg_restore --list` 成功且有 **1780** 個非空物件條目，之後才套用0054。備份檔名為UTC時間，本節日期為家用端本地日期。
+- 正式套用的原始 [0054 migration](../database/migrations/0054_opb02_ecn_operation_groups.sql) SHA-256 為 `be53744a0177aaa4b422ddea8f45e93c6a33348d1e24f1d016490d33f470c6cd`；保留原LF bytes及開頭DRAFT歷史註解，正式狀態以本節及 `.tools/opb02-migration-applied-20261120.json` 為準。交易內重查ABSENT後原子CREATE／GRANT／COMMIT成功，沒有DROP、seed或重建共用表。
+- 獨立READ ONLY讀回 `tblopecngroupbasis` 11欄／`tblopecngroupdetail` 2欄，型別／順序／NULL／default差異0；PK各1、PK index各1、user trigger0。Detail主鍵是全表 **OPNo**，不是群組＋OP；不造child stamp／audit或FK。
+- `ymes_app`：Basis CRUD；Detail SELECT／INSERT／DELETE，只有 `UPDATE(opno)` 供row-locking SELECT，沒有表級UPDATE或opgroupno UPDATE。ACL差異0；另 `SET LOCAL ROLE ymes_app` 對兩表 `WHERE false` 真SELECT probe通過，不讀取業務列，也不在READ ONLY做FOR UPDATE。
+- 套用當時正式API仍 `16a825af0bea`、Web仍 `722bc259cc81`，**OPB02 API／Web尚未部署、回歸及app-browser待驗**；本次只完成資料庫基礎，未建立示範Job／PS目錄。來源規則與待驗界線見 [ECN作業站群組設定](modules/OP/ECN作業站群組設定.md)。
+- 後續已正式部署API `1d09e4febf48`／Web `cfa5cf288359`；API八組分兩輪完成，兩輪各15個精確scope及holder全0。root正式IAB再驗48個檢查點（含1項SQL清理讀回）：六個父列全GUI建立／刪除；cleanup前獨立讀回父與兩方向明細已0，只剩9個自有lookup，精確清理後19項計數全0。NULL／state1／字面`*`／stale等是自有SQL前置值，真GUI保存／異動另有記錄，沒有複製Oracle業務列或造全域PS `*`／Job表。
+- API-only及Web-only checkpoint均由root dryvalidate／apply通過：正式metadata的migration已0054；API主來源139檔／相容來源136檔及Web私有來源206檔均保留，Web來源在 `/opt/ymes/checkpoints/web-opb02-20261120-a2`。更新metadata不重啟服務、不改DB；原migration SHA與DRAFT歷史bytes不改。GUI已驗、本批Git待推，完整IssueJob／通知等provider仍未提供，候選存在503分支未實際觸發，不以本節聲稱已驗全部原MES流程。
+
 ## OP105來源預設值與權限：0053（2026-11-19）
 
 - PPK READ ONLY獨立比對 `tblopgroupbasis` 11欄與 `tblopgroupdetail` 9欄，順序／型別／NULL／PK差異0；只缺五個來源DEFAULT0。兩表僅各PK index、無其他constraint／user trigger；app當時Basis無CRUD、Detail只有SELECT。
