@@ -467,6 +467,7 @@ const fallbackMenuTree: MenuNode[] = [
   }, {
     id: 'menu:WIP:PACKAGING', label: '包裝與庫房', shortLabel: '庫', children: [
       { id: 'function:WIP:PACKING_MOLINE', label: '包裝作業', tableName: 'tblwipmolinepackl1', shortLabel: '包裝', functionNo: 'PACKING_MOLINE', moduleNo: 'WIP' },
+      { id: 'function:WIP:PACKING_MOLINE_INV', label: '在製品庫包裝作業', tableName: 'tblinvpackstate', shortLabel: '庫包', functionNo: 'PACKING_MOLINE_INV', moduleNo: 'WIP' },
       { id: 'function:WIP:WIP INV', label: '在製品庫帳務維護', tableName: 'tblinvwipinventory_semi', shortLabel: '在製品庫', functionNo: 'WIP INV', moduleNo: 'WIP' },
       { id: 'function:WIP:SEMI INV', label: '半成品庫帳務維護', tableName: 'tblinvsemiinventory', shortLabel: '半成品庫', functionNo: 'SEMI INV', moduleNo: 'WIP' },
       { id: 'function:WIP:FGD INV', label: '成品庫帳務維護', tableName: 'tblinvfgdinventory', shortLabel: '成品庫', functionNo: 'FGD INV', moduleNo: 'WIP' },
@@ -485,6 +486,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:EXECUTE LOT_COMP': appBasePath + '/WIP/LotExecutionByComponent',
   'function:WIP:EXECUTE LOT_EQP': appBasePath + '/WIP/EquipmentLotState',
   'function:WIP:PACKING_MOLINE': appBasePath + '/WIP/PackingMOLine',
+  'function:WIP:PACKING_MOLINE_INV': appBasePath + '/WIP/PackingMOLineInv',
   'function:WIP:WIP INV': appBasePath + '/WIP/WipInventory',
   'function:WIP:SEMI INV': appBasePath + '/WIP/SemiInventory',
   'function:WIP:FGD INV': appBasePath + '/WIP/FgdInventory',
@@ -797,6 +799,7 @@ const isWipLotExecutionByComponentPage = computed(() => activeMasterKey.value ==
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipFgdInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:FGD INV')
 const isWipPackingMOLinePage = computed(() => activeMasterKey.value === 'function:WIP:PACKING_MOLINE')
+const isWipPackingMOLineInvPage = computed(() => activeMasterKey.value === 'function:WIP:PACKING_MOLINE_INV')
 const isWipInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:WIP INV')
 const isWipSemiInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:SEMI INV')
 const manufacturingOrderPages = {
@@ -2387,7 +2390,8 @@ async function signOut(): Promise<void> {
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipInventory v-else-if="isWipInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdInventory v-else-if="isWipFgdInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <PackingMOLine v-else-if="isWipPackingMOLinePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <PackingMOLine v-else-if="isWipPackingMOLinePage" key="wp601" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <PackingMOLine v-else-if="isWipPackingMOLineInvPage" key="wp629" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" :inventory-mode="true" @close="navigateHome" />
         <SemiInventory v-else-if="isWipSemiInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <ReceivingOrderMaster
           v-else-if="isReceivingOrderPage || isReceivingOrderClosePage"

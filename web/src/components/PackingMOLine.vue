@@ -3,17 +3,20 @@ import { computed, reactive, ref } from 'vue'
 
 type LevelNo = 1 | 2 | 3 | 4 | 5 | 6
 type LevelRule = { level: LevelNo; name: string; enabled: boolean; maxQty: number | null; maxCount: number | null; labelTypes: string[] }
-type Lot = { lotNo: string; productNo: string; productVersion: string; moNo: string; opNo: string; brNo: string; status: number; qty: number; availableQty: number; unitNo: string; componentCount: number; packed: boolean; splitFrom: string }
+type Lot = { lotNo: string; productNo: string; productVersion: string; moNo: string; opNo: string; brNo: string; status: number; qty: number; availableQty: number; unitNo: string; componentCount: number; packed: boolean; splitFrom: string; inventoryNo?: string; fgdIn?: boolean }
 type PackContent = { id: string; itemNo: string; itemType: 'LOT' | 'PACK'; itemLevel: number; packQty: number; unitNo: string }
 type PackBox = { packingNo: string; level: LevelNo; isClosed: boolean; isMerged: boolean; dismantled: boolean; parentPackingNo: string; contents: PackContent[]; qty: number; createdAt: string }
 type Accessory = { barcode: string; name: string }
 type PrintJob = { id: string; packingNo: string; packingLevel: number; labelType: string; labelName: string; printerName: string; path: string; result: string; printCount: number }
 type Snapshot = { version: 1; computerName: string; pdLineNo: string; moNo: string; productNo: string; productVersion: string; packingRuleNo: string; packingRuleVersion: string; levels: LevelRule[]; lots: Lot[]; boxes: PackBox[]; accessories: Accessory[]; printers: Record<string, string>; printJobs: PrintJob[]; nextPackageSeq: number; nextRowSeq: number; logs: string[] }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; inventoryMode?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
-const storageKey = 'ymes.dev.wp601-packing-moline.v1'
+const inventoryMode = computed(() => props.inventoryMode === true)
+const sampleMoNo = inventoryMode.value ? 'MO-26-00629' : 'MO-26-00601'
+const sampleProductNo = inventoryMode.value ? 'PRD-0062901' : 'PRD-0060101'
+const storageKey = inventoryMode.value ? 'ymes.dev.wp629-packing-moline-inv.v1' : 'ymes.dev.wp601-packing-moline.v1'
 const printerChoices = ['DEV-LABEL-01', 'DEV-LABEL-02', 'DEV-ZEBRA-03']
 
 function seedSnapshot(): Snapshot {
@@ -25,6 +28,29 @@ function seedSnapshot(): Snapshot {
     { level: 5, name: 'L5', enabled: false, maxQty: null, maxCount: null, labelTypes: [] },
     { level: 6, name: 'L6', enabled: false, maxQty: null, maxCount: null, labelTypes: [] },
   ]
+  if (inventoryMode.value) {
+    const lots: Lot[] = [
+      { lotNo: 'LOT-629-0001', productNo: sampleProductNo, productVersion: 'A01', moNo: sampleMoNo, opNo: 'WIP-INV', brNo: 'L_CO_PACKING_MOLINE_INV', status: 11, qty: 4, availableQty: 0, unitNo: 'PCS', componentCount: 0, packed: true, splitFrom: '', inventoryNo: 'WIP-INV-629-01' },
+      { lotNo: 'LOT-629-0002', productNo: sampleProductNo, productVersion: 'A01', moNo: sampleMoNo, opNo: 'WIP-INV', brNo: 'L_CO_PACKING_MOLINE_INV', status: 11, qty: 4, availableQty: 0, unitNo: 'PCS', componentCount: 0, packed: true, splitFrom: '', inventoryNo: 'WIP-INV-629-01' },
+      { lotNo: 'LOT-629-0003', productNo: sampleProductNo, productVersion: 'A01', moNo: sampleMoNo, opNo: 'WIP-INV', brNo: 'L_CO_PACKING_MOLINE_INV', status: 11, qty: 6, availableQty: 6, unitNo: 'PCS', componentCount: 0, packed: false, splitFrom: '', inventoryNo: 'WIP-INV-629-01' },
+      { lotNo: 'LOT-629-0004', productNo: sampleProductNo, productVersion: 'A01', moNo: sampleMoNo, opNo: 'WIP-INV', brNo: 'L_CO_PACKING_MOLINE_INV', status: 11, qty: 8, availableQty: 8, unitNo: 'PCS', componentCount: 0, packed: false, splitFrom: '', inventoryNo: 'WIP-INV-629-01' },
+      { lotNo: 'LOT-629-0005', productNo: sampleProductNo, productVersion: 'A01', moNo: sampleMoNo, opNo: 'WIP-INV', brNo: 'L_CO_PACKING_MOLINE_INV', status: 11, qty: 5, availableQty: 5, unitNo: 'PCS', componentCount: 0, packed: false, splitFrom: '', inventoryNo: 'WIP-INV-629-02' },
+      { lotNo: 'LOT-629-0006', productNo: sampleProductNo, productVersion: 'A01', moNo: sampleMoNo, opNo: 'WIP-INV', brNo: 'L_CO_PACKING_MOLINE_INV', status: 11, qty: 3, availableQty: 3, unitNo: 'PCS', componentCount: 0, packed: false, splitFrom: '', inventoryNo: 'WIP-INV-629-01', fgdIn: true },
+      { lotNo: 'LOT-629-0099', productNo: sampleProductNo, productVersion: 'A01', moNo: sampleMoNo, opNo: 'OP-PACK', brNo: 'L_CO_PACKING_MOLINE', status: 1, qty: 5, availableQty: 5, unitNo: 'PCS', componentCount: 0, packed: false, splitFrom: '', inventoryNo: '' },
+    ]
+    const boxes: PackBox[] = [
+      { packingNo: 'PK-L1-629001', level: 1, isClosed: true, isMerged: false, dismantled: false, parentPackingNo: 'PK-L2-629001', contents: [{ id: 'C-629-1', itemNo: 'LOT-629-0001', itemType: 'LOT', itemLevel: 0, packQty: 4, unitNo: 'PCS' }], qty: 4, createdAt: '2026/11/19 10:04:12' },
+      { packingNo: 'PK-L1-629002', level: 1, isClosed: false, isMerged: false, dismantled: false, parentPackingNo: '', contents: [{ id: 'C-629-2', itemNo: 'LOT-629-0002', itemType: 'LOT', itemLevel: 0, packQty: 4, unitNo: 'PCS' }], qty: 4, createdAt: '2026/11/19 10:12:35' },
+      { packingNo: 'PK-L2-629001', level: 2, isClosed: false, isMerged: false, dismantled: false, parentPackingNo: '', contents: [{ id: 'C-629-3', itemNo: 'PK-L1-629001', itemType: 'PACK', itemLevel: 1, packQty: 4, unitNo: 'PCS' }], qty: 4, createdAt: '2026/11/19 10:05:01' },
+    ]
+    return {
+      version: 1, computerName: 'DEV-PACK-629', pdLineNo: 'LINE-WIP-INV-01', moNo: sampleMoNo, productNo: sampleProductNo, productVersion: 'A01',
+      packingRuleNo: 'PKR-00629', packingRuleVersion: '01', levels, lots, boxes,
+      accessories: [{ barcode: 'ACC-ESD-00629', name: '防靜電袋' }, { barcode: 'ACC-LABEL-00629', name: '產品識別標籤' }],
+      printers: { L1_T1: 'DEV-LABEL-01', L1_T2: 'DEV-LABEL-02', L2_T1: 'DEV-ZEBRA-03' }, printJobs: [], nextPackageSeq: 3, nextRowSeq: 4,
+      logs: ['10:12:35　LOT-629-0002 已加入 PK-L1-629002', '10:05:01　PK-L1-629001 已加入 PK-L2-629001', '10:04:12　PK-L1-629001 封箱完成'],
+    }
+  }
   const lots: Lot[] = [
     { lotNo: 'LOT-601-0001', productNo: 'PRD-0060101', productVersion: 'A01', moNo: 'MO-26-00601', opNo: 'OP-PACK', brNo: 'L_CO_PACKING_MOLINE', status: 1, qty: 4, availableQty: 0, unitNo: 'PCS', componentCount: 0, packed: true, splitFrom: '' },
     { lotNo: 'LOT-601-0002', productNo: 'PRD-0060101', productVersion: 'A01', moNo: 'MO-26-00601', opNo: 'OP-PACK', brNo: 'L_CO_PACKING_MOLINE', status: 1, qty: 4, availableQty: 0, unitNo: 'PCS', componentCount: 0, packed: true, splitFrom: '' },
@@ -57,7 +83,7 @@ function loadSnapshot(): Snapshot {
     const raw = localStorage.getItem(storageKey)
     if (raw) {
       const saved = JSON.parse(raw) as Snapshot
-      if (saved.version === 1 && saved.moNo === 'MO-26-00601' && Array.isArray(saved.levels) && Array.isArray(saved.boxes)) return saved
+      if (saved.version === 1 && saved.moNo === sampleMoNo && Array.isArray(saved.levels) && Array.isArray(saved.boxes)) return saved
     }
   } catch { /* use the development seed */ }
   return seedSnapshot()
@@ -91,6 +117,11 @@ const selectedRule = computed(() => state.levels.find(level => level.level === a
 const openBox = computed(() => state.boxes.find(box => box.level === activeLevel.value && !box.isClosed && !box.isMerged && !box.dismantled))
 const currentContents = computed(() => openBox.value?.contents ?? [])
 const currentLot = computed(() => pendingScan.value?.type === 'LOT' ? state.lots.find(lot => lot.lotNo === pendingScan.value?.itemNo) : undefined)
+const currentInventoryNo = computed(() => {
+  if (pendingScan.value?.type === 'LOT') return lotFor(pendingScan.value.itemNo)?.inventoryNo ?? ''
+  if (pendingScan.value?.type === 'PACK') return inventoryNoForBox(boxFor(pendingScan.value.itemNo))
+  return inventoryNoForBox(openBox.value)
+})
 const scannedAccessoryRows = computed(() => state.accessories.map(item => ({ ...item, checked: checkedAccessories.value.includes(item.barcode) })))
 const printJobs = computed(() => state.printJobs.slice().reverse())
 const usableClosedBoxes = computed(() => state.boxes.filter(box => box.isClosed && !box.isMerged && !box.dismantled))
@@ -104,6 +135,15 @@ function formatQty(value: number): string { return Number(value).toLocaleString(
 function levelName(level: number): string { return state.levels.find(item => item.level === level)?.name ?? ('L' + level) }
 function boxFor(no: string): PackBox | undefined { return state.boxes.find(box => box.packingNo === no) }
 function lotFor(no: string): Lot | undefined { return state.lots.find(lot => lot.lotNo === no) }
+function inventoryNoForBox(box: PackBox | undefined): string {
+  if (!box) return ''
+  const lotNos = collectLotNos(box)
+  if (!lotNos.length) return ''
+  const inventoryNosForLots = lotNos.map(no => lotFor(no)?.inventoryNo ?? '')
+  if (inventoryNosForLots.some(inventoryNo => !inventoryNo)) return ''
+  const inventoryNos = [...new Set(inventoryNosForLots)]
+  return inventoryNos.length === 1 ? inventoryNos[0] : ''
+}
 function nextPackageNo(level: number): string {
   const value = String(state.nextPackageSeq++).padStart(6, '0')
   return 'PK-L' + level + '-' + value
@@ -144,7 +184,7 @@ function setActiveLevel(level: number): void {
 
 function openConfig(): void {
   clearFeedback()
-  configMoNo.value = state.moNo || 'MO-26-00601'
+  configMoNo.value = state.moNo || sampleMoNo
   configLevels.value = state.levels.filter(item => item.enabled).map(item => item.level)
   configPrinters.value = { ...state.printers }
   packConfigOpen.value = true
@@ -157,7 +197,7 @@ function toggleConfigLevel(level: number): void {
 }
 function saveConfig(): void {
   const moNo = configMoNo.value.trim().toUpperCase()
-  if (moNo !== 'MO-26-00601') { actionError.value = 'DEV 工單查無資料，請選 MO-26-00601。'; return }
+  if (moNo !== sampleMoNo) { actionError.value = 'DEV 工單查無資料，請選 ' + sampleMoNo + '。'; return }
   if (!configLevels.value.length) { actionError.value = '至少選取一個包裝階層。'; return }
   const first = Math.min(...configLevels.value)
   const last = Math.max(...configLevels.value)
@@ -165,8 +205,8 @@ function saveConfig(): void {
   const openWork = state.boxes.some(box => !box.isClosed && !box.isMerged && !box.dismantled && box.contents.length > 0)
   if (openWork && (moNo !== state.moNo || configLevels.value.join(',') !== enabledLevels.value.map(level => level.level).join(','))) { actionError.value = '目前有未封箱內容；需先完成或封箱，再更換工單／階層。'; return }
   state.moNo = moNo
-  state.pdLineNo = 'LINE-PACK-02'
-  state.productNo = 'PRD-0060101'
+  state.pdLineNo = inventoryMode.value ? 'LINE-WIP-INV-01' : 'LINE-PACK-02'
+  state.productNo = sampleProductNo
   state.productVersion = 'A01'
   state.levels.forEach(level => { level.enabled = configLevels.value.includes(level.level) })
   state.printers = { ...configPrinters.value }
@@ -187,11 +227,15 @@ function scanBarcode(): void {
   if (!code) { actionError.value = '請輸入 LotNo 或 PackingNo。'; return }
   const lot = lotFor(code)
   if (lot) {
+    if (inventoryMode.value && lot.fgdIn) { actionError.value = '此 Lot 已有成品入庫關聯，禁止重複包裝。'; return }
     if (minLevel.value !== 1) { actionError.value = '目前最小包裝階層為 L' + minLevel.value + '，請刷入已封箱的 L' + (minLevel.value - 1) + ' 包裝編號。'; return }
-    if (lot.status !== 1) { actionError.value = 'Lot 狀態不是 Running，禁止包裝。'; return }
-    if (lot.brNo.toUpperCase() !== 'L_CO_PACKING_MOLINE') { actionError.value = 'Lot 所在 BR 不是 L_CO_PACKING_MOLINE。'; return }
+    if (lot.status !== (inventoryMode.value ? 11 : 1)) { actionError.value = inventoryMode.value ? 'Lot 狀態不是 WIP Inventory（Status=11），禁止此功能包裝。' : 'Lot 狀態不是 Running，禁止包裝。'; return }
+    if (!inventoryMode.value && lot.brNo.toUpperCase() !== 'L_CO_PACKING_MOLINE') { actionError.value = 'Lot 所在 BR 不是 L_CO_PACKING_MOLINE。'; return }
+    if (inventoryMode.value && !lot.inventoryNo) { actionError.value = '此 Lot 查無 WIP InventoryNo。'; return }
     if (lot.moNo !== state.moNo || lot.productNo !== state.productNo || lot.productVersion !== state.productVersion) { actionError.value = 'Lot 的工單／產品／版本與目前包裝設定不一致。'; return }
     if (lot.packed || lot.availableQty <= 0) { actionError.value = '此 Lot 已加入包裝關係，不能重複包裝。'; return }
+    const existingOpen = state.boxes.find(box => box.level === minLevel.value && !box.isClosed && !box.isMerged && !box.dismantled)
+    if (inventoryMode.value && existingOpen?.contents.length && inventoryNoForBox(existingOpen) !== lot.inventoryNo) { actionError.value = '目前未封箱包裝的 WIP InventoryNo 不同，不可混庫包裝。'; return }
     const current = getOrCreateOpenBox(1)
     if (current.contents.some(item => item.itemType === 'LOT' && item.itemNo === lot.lotNo)) { actionError.value = '同一 L1 箱內不可重複加入相同 Lot。'; return }
     pendingScan.value = { type: 'LOT', itemNo: lot.lotNo, qty: lot.availableQty }
@@ -201,9 +245,18 @@ function scanBarcode(): void {
   }
   const box = boxFor(code)
   if (!box) { actionError.value = '查無此 LotNo／PackingNo。'; return }
+  if (inventoryMode.value && collectLotNos(box).some(no => lotFor(no)?.fgdIn)) { actionError.value = '此包裝內 Lot 已有成品入庫關聯，禁止拆併或重複包裝。'; return }
   if (!box.isClosed || box.isMerged || box.dismantled) { actionError.value = '只能掃描有效且已封箱的包裝編號。'; return }
   if (box.level !== minLevel.value - 1) { actionError.value = '此包裝階層不能直接加入目前設定的最小階層。'; return }
   if (selectedPackageIsInParent(box.packingNo)) { actionError.value = '此包裝已加入其他外層包裝，不能重複刷入。'; return }
+  if (inventoryMode.value) {
+    const lotNos = collectLotNos(box)
+    const sourceLots = lotNos.map(no => lotFor(no))
+    const inventoryNo = inventoryNoForBox(box)
+    if (!sourceLots.length || sourceLots.some(item => !item || item.status !== 11 || !item.inventoryNo) || !inventoryNo) { actionError.value = '包裝內所有 Lot 必須仍在 WIP Inventory（Status=11），且庫位一致。'; return }
+    const existingOpen = state.boxes.find(item => item.level === minLevel.value && !item.isClosed && !item.isMerged && !item.dismantled)
+    if (existingOpen?.contents.length && inventoryNoForBox(existingOpen) !== inventoryNo) { actionError.value = '目前未封箱包裝的 WIP InventoryNo 不同，不可混庫包裝。'; return }
+  }
   pendingScan.value = { type: 'PACK', itemNo: box.packingNo, qty: box.qty }
   packQtyInput.value = '1'
   actionMessage.value = '已載入封箱資料；按「包裝」加入目前階層。'
@@ -231,6 +284,8 @@ function submitPending(): void {
     const lot = lotFor(pending.itemNo)
     const qty = Number(packQtyInput.value)
     if (!lot || !Number.isFinite(qty) || qty <= 0 || qty > lot.availableQty) { actionError.value = 'PackQty 必須大於 0 且不可超過 Lot 可包數量。'; return }
+    if (inventoryMode.value && lot.fgdIn) { actionError.value = '此 Lot 已有成品入庫關聯，禁止重複包裝。'; return }
+    if (inventoryMode.value && (lot.status !== 11 || !lot.inventoryNo)) { actionError.value = 'Lot 已離開 WIP Inventory 或查無庫位，請重新刷入。'; return }
     if (state.accessories.length && checkedAccessories.value.length !== state.accessories.length) { actionError.value = '此產品需先掃描完成所有 Pack Accessory。'; return }
     const box = getOrCreateOpenBox(level)
     const rule = state.levels.find(item => item.level === level)!
@@ -271,7 +326,10 @@ function submitPending(): void {
   }
   const sourceBox = boxFor(pending.itemNo)
   if (!sourceBox || !sourceBox.isClosed || selectedPackageIsInParent(sourceBox.packingNo)) { actionError.value = '來源包裝狀態已變更或已被其他外箱使用，請重新刷入。'; return }
+  if (inventoryMode.value && collectLotNos(sourceBox).some(no => lotFor(no)?.fgdIn)) { actionError.value = '此包裝內 Lot 已有成品入庫關聯，禁止拆併或重複包裝。'; return }
+  if (inventoryMode.value && (!inventoryNoForBox(sourceBox) || collectLotNos(sourceBox).some(no => lotFor(no)?.status !== 11))) { actionError.value = '包裝內 Lot 已離開 WIP Inventory 或庫位資料不一致，請重新刷入。'; return }
   const target = getOrCreateOpenBox(level)
+  if (inventoryMode.value && target.contents.length && inventoryNoForBox(target) !== inventoryNoForBox(sourceBox)) { actionError.value = '目前未封箱包裝的 WIP InventoryNo 不同，不可混庫包裝。'; return }
   const rule = state.levels.find(item => item.level === level)!
   if (target.contents.length && isFull(target, rule)) { actionError.value = '目前外箱已滿，請先封箱。'; return }
   if (isOverLimit(target, rule, sourceBox.qty)) { actionError.value = '來源包裝會超過目前階層滿箱條件，請先封閉目前外箱。'; return }
@@ -303,6 +361,7 @@ function transferClosedBoxToParent(box: PackBox, forceCloseParent = false): void
   let target = state.boxes.find(item => item.level === next.level && !item.isClosed && !item.isMerged && !item.dismantled)
   const parentRule = state.levels.find(item => item.level === next.level)!
   if (!target) target = createBox(next.level)
+  if (inventoryMode.value && target.contents.length && inventoryNoForBox(target) !== inventoryNoForBox(box)) { actionError.value = '內外層包裝的 WIP InventoryNo 不同，禁止轉入。'; return }
   if (isOverLimit(target, parentRule, box.qty)) {
     if (!target.contents.length) { actionError.value = '單一包裝已超過外層滿箱限制，無法轉入 ' + levelName(next.level) + '。'; return }
     if (!autoClose.value && !forceCloseParent) {
@@ -341,11 +400,15 @@ function closeBox(levelValue: number, automatic = false, forceCloseParent = fals
   }
   log((automatic ? '滿箱自動封箱 ' : '手動封箱 ') + box.packingNo)
   if (level === maxLevel.value) {
-    for (const lotNo of collectLotNos(box)) {
-      const lot = lotFor(lotNo)
-      if (lot) lot.status = 4
+    if (!inventoryMode.value) {
+      for (const lotNo of collectLotNos(box)) {
+        const lot = lotFor(lotNo)
+        if (lot) lot.status = 4
+      }
+      actionMessage.value = box.packingNo + ' 已封箱；DEV 模擬 MaxLevel 完工移轉。'
+    } else {
+      actionMessage.value = box.packingNo + ' 已封箱；在製品庫包裝不改變 Lot 的 Status=11 與庫存位置。'
     }
-    actionMessage.value = box.packingNo + ' 已封箱；DEV 模擬 MaxLevel 完工移轉。'
   } else {
     transferClosedBoxToParent(box, forceCloseParent || resumesWaitingChild)
   }
@@ -408,6 +471,7 @@ function confirmOperation(): void {
   if (operationDialog.value === 'combine') {
     const target = selectedTargetBox.value
     if (!target || target.level !== source.level) { actionError.value = '請選取同階層且未封箱的目標包裝。'; return }
+    if (inventoryMode.value && target.contents.length && inventoryNoForBox(target) !== inventoryNoForBox(source)) { actionError.value = '來源與目標包裝的 WIP InventoryNo 不同，不可合併。'; return }
     const rule = state.levels.find(item => item.level === target.level)!
     if ((rule.maxQty !== null && target.qty + source.qty > rule.maxQty) || (rule.maxCount !== null && target.contents.length + source.contents.length > rule.maxCount)) { actionError.value = '合併後會超過目標包裝規則容量。'; return }
     target.contents.push(...source.contents.map(item => ({ ...item, id: 'C-' + state.nextRowSeq++ })))
@@ -423,7 +487,7 @@ function confirmOperation(): void {
   for (const content of source.contents) {
     if (content.itemType === 'LOT') {
       const lot = lotFor(content.itemNo)
-      if (lot) { lot.availableQty += content.packQty; lot.packed = false; if (lot.status === 4) lot.status = 1 }
+      if (lot) { lot.availableQty += content.packQty; lot.packed = false; if (!inventoryMode.value && lot.status === 4) lot.status = 1 }
     } else {
       const child = boxFor(content.itemNo)
       if (child) child.parentPackingNo = ''
@@ -433,7 +497,7 @@ function confirmOperation(): void {
   log('DEV 模擬 Unboxing ' + source.packingNo)
   persist()
   operationDialog.value = null
-  actionMessage.value = '已完成 DEV 拆箱模擬。正式拆併箱由 INVMOPackingCombineDismantle 外掛與 Core 處理。'
+  actionMessage.value = inventoryMode.value ? '已完成 DEV 拆箱模擬；Lot 保持 WIP Inventory Status=11。正式拆併箱由外掛與 Core 處理。' : '已完成 DEV 拆箱模擬。正式拆併箱由 INVMOPackingCombineDismantle 外掛與 Core 處理。'
 }
 function simulatePrint(job: PrintJob): void {
   clearFeedback()
@@ -452,14 +516,14 @@ function resetDevData(): void {
   pendingTransferPackingNo.value = ''
   pendingTransferTargetLevel.value = null
   clearFeedback()
-  actionMessage.value = '已還原 WP601 DEV 假資料。'
+  actionMessage.value = '已還原 ' + (inventoryMode.value ? 'WP629' : 'WP601') + ' DEV 假資料。'
 }
 </script>
 
 <template>
   <section class="packing-page">
     <header class="page-heading">
-      <div><span class="function-code">WP601 · PACKING_MOLINE</span><h1>包裝作業</h1></div>
+      <div><span class="function-code">{{ inventoryMode ? 'WP629 · PACKING_MOLINE_INV' : 'WP601 · PACKING_MOLINE' }}</span><h1>{{ inventoryMode ? '在製品庫包裝作業' : '包裝作業' }}</h1></div>
       <div class="heading-context"><span>設備 {{ state.computerName || '未設定' }}</span><span>線別 {{ state.pdLineNo || '—' }}</span><span>狀態 {{ dev ? 'DEV 假資料' : 'Production API 尚未接入' }}</span></div>
     </header>
 
@@ -468,7 +532,7 @@ function resetDevData(): void {
       <div class="barcode-grid">
         <label class="scan-field"><span>LotNo</span><input v-model="lotBarcode" :disabled="!dev" autofocus autocomplete="off" @keydown.enter.prevent="scanBarcode"></label>
         <label><span>Cur_LotQty</span><input v-model="packQtyInput" :disabled="!dev || !pendingScan || pendingScan.type !== 'LOT'" inputmode="decimal" @keydown.enter.prevent="submitPending"></label>
-        <label><span>OPNo</span><input :value="currentLot?.opNo || 'OP-PACK'" readonly></label>
+        <label><span>{{ inventoryMode ? 'WIP INV NO' : 'OPNo' }}</span><input :value="inventoryMode ? (currentInventoryNo || '—') : (currentLot?.opNo || 'OP-PACK')" readonly></label>
         <label><span>MONo</span><input :value="state.moNo" readonly></label>
         <label class="accessory-scan"><span>Accessory BarCode</span><input v-model="accessoryBarcode" :disabled="!dev || !pendingScan || !state.accessories.length" autocomplete="off" @keydown.enter.prevent="scanAccessory"></label>
         <label><span>ProductNo</span><input :value="state.productNo" readonly></label>
@@ -525,7 +589,7 @@ function resetDevData(): void {
 
     <div v-if="packConfigOpen" class="modal-backdrop" @click.self="packConfigOpen = false"><section class="modal-card config-modal" role="dialog" aria-modal="true" aria-label="PackConfig">
       <header><h2>PackConfig</h2><button type="button" class="modal-x" @click="packConfigOpen = false">×</button></header>
-      <div class="config-head"><label><span>ComputerName</span><input :value="state.computerName" readonly></label><label><span>MONo</span><select v-model="configMoNo"><option value="MO-26-00601">MO-26-00601 · 控制模組</option></select></label></div>
+      <div class="config-head"><label><span>ComputerName</span><input :value="state.computerName" readonly></label><label><span>MONo</span><select v-model="configMoNo"><option :value="sampleMoNo">{{ sampleMoNo }} · {{ inventoryMode ? '在製品庫包裝 DEV' : '控制模組' }}</option></select></label></div>
       <fieldset class="config-grid"><legend>PackLevel</legend><table class="packing-grid"><thead><tr><th>Select</th><th>PackingLevel</th><th>PackingLevelName</th><th>滿箱箱數</th><th>滿箱數量</th></tr></thead><tbody><tr v-for="rule in state.levels" :key="rule.level"><td><input type="checkbox" :checked="configLevels.includes(rule.level)" @change="toggleConfigLevel(rule.level)"></td><td>L{{ rule.level }}</td><td>{{ rule.name }}</td><td>{{ rule.maxCount ?? '—' }}</td><td>{{ rule.maxQty ?? '—' }}</td></tr></tbody></table></fieldset>
       <fieldset class="config-printers"><legend>Label Printer</legend><div class="table-wrap"><table class="packing-grid"><thead><tr><th>LabelType</th><th>PrinterName</th></tr></thead><tbody><tr v-for="rule in state.levels.filter(item => configLevels.includes(item.level))" :key="rule.level"><template v-for="labelType in rule.labelTypes" :key="labelType"><td>{{ rule.name }}-{{ labelType.slice(-2) }}<span class="type-code">{{ labelType }}</span></td><td><select v-model="configPrinters[labelType]"><option value="">--</option><option v-for="printer in printerChoices" :key="printer" :value="printer">{{ printer }}</option></select></td></template></tr></tbody></table></div></fieldset>
       <p v-if="actionError" class="feedback error" role="alert">{{ actionError }}</p><footer><span>標籤印表機依電腦名稱保存</span><button type="button" @click="packConfigOpen = false">Close</button><button type="button" class="primary-action" @click="saveConfig">Confirm</button></footer>

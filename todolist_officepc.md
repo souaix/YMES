@@ -64,7 +64,7 @@
 - [x] 依共用 WinForms／Designer、Service／Core 對照 Query、8 個可見分頁、Grid 欄位、列選取、按鈕及跨表交易；THEIL 專用 Form 原始碼缺於目前 checkout，已在規格標明此證據限制。
 - [x] PowerShell 5.1 + Oracle.ManagedDataAccess 受保護唯讀連線查得九張 MESTEST 功能表與索引／constraints／triggers metadata；未讀業務列或執行 Oracle DDL/DML。
 - [x] 完成 Vue DEV `/YMES/WIP/WipInventory`、三層選單及 8 個可見分頁的假資料互動，並建立 [WP603 規格](docs/modules/WIP/在製品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引與 API/schema handoff。
-- [ ] 公司端未連 PostgreSQL，未執行 build、test 或 browser。WP601、WP604、WP605 已完成；接續 WP629 在製品庫包裝作業。
+- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser。WP629 在製品庫包裝作業 DEV 與家用端 handoff 已完成。
 
 ### WP604 半成品庫帳務維護已交付（FunctionNo SEMI INV，2026-11-19）
 
@@ -80,11 +80,12 @@
 - [x] 完成 Vue DEV `/YMES/WIP/PackingMOLine` 與 WIP → 包裝與庫房 → 包裝作業三層選單、PackConfig、階層/明細/標籤/配件、Pack Close、Combine、Unboxing、Delete 假互動；建立 [WP601 規格](docs/modules/WIP/包裝作業.md)、Oracle source DDL、PostgreSQL CREATE-only 與 metadata。
 - [x] 家用端 API/schema handoff 已寫入 `todolist_homepc.md`。公司端未連 PostgreSQL，未執行 build、test 或 browser；標籤 COM 與 Combine/Unboxing 外掛正式整合留待家用端依規格處理。
 
-### 下一功能：WP629 在製品庫包裝作業（FunctionNo PACKING_MOLINE_INV）
+### WP629 在製品庫包裝作業已交付（FunctionNo PACKING_MOLINE_INV，2026-11-19）
 
-- [ ] 依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 查 `frmBR_L_CO_Packing_MOLine_INV`、Designer、Service/Core 與其專屬 DLL；區分 WIP Inventory Status=11 分流和 WP601 一般 Lot 包裝規則。
-- [ ] 以 DEV 假資料完成 Vue 畫面與三層選單，逐表只讀查 MESTEST DDL/metadata；不存在的物件如實記錄，不猜 CREATE SQL。完成獨立規格、家用端 API/schema handoff、索引與 TODO 後提交／推送，再接續下一個尚未完成的 WIP FunctionNo。
-- [ ] 公司端不連 PostgreSQL；未經使用者要求不執行 build、test 或 browser。
+- [x] 已對照 `frmBR_L_CO_Packing_MOLine_INV`、`frmMOLinePackConfig`、`wsWIP.ExePacking`／`ExePacking_Close`／`ExePacking_Delete`、`clsLot` InlinePackingFlag 分支及選單 FunctionKey WP629。
+- [x] Vue DEV 已加入 WIP → 包裝與庫房 → 在製品庫包裝作業，重用 WP601 版面，獨立 localStorage 假資料；Status=11、InventoryNo 同庫驗證、已包裝批與封箱後狀態保留均按來源規則模擬。
+- [x] 完成 [WP629 規格](docs/modules/WIP/在製品庫包裝作業.md)、模組索引、Oracle/reference 重用紀錄及 `todolist_homepc.md` API/schema handoff。WP629 無新專屬表；使用 WP601 包裝 DDL 與 WP201 `TBLINVWIPINVENTORY_SEMI` reference，不重複 CREATE SQL。
+- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser；未在 Oracle 執行 DDL/DML。提交並推送後依 TODO 選下一個未完成 MES 功能。
 
 ### 公司端工作範圍
 

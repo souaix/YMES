@@ -9,6 +9,19 @@
 - [ ] `ObjectFileHandler("INVMOPackingCombineDismantle")`、CodeSoft／BarTender 本機 COM 與標籤範本是外部相依；設計授權的 server-side label job／列印代理與補印契約。不可由 browser 任選 server path/printer，也不能假設 WP602（未掛選單的補印 Form）已完成。
 - [ ] 完成後更新 WP601 API/schema/migration、交易回歸／部署證據、規格索引與 TODO。公司端只做 Vue DEV 假資料與 Oracle 唯讀；Production PostgreSQL／API／migration／部署由家用端完成。
 
+## 新交接公司端 WP629 在製品庫包裝作業（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 [WP629 規格](docs/modules/WIP/在製品庫包裝作業.md)、WP601 包裝規格及 `docs/DATABASE_CONNECTION.md` WP629/WP201/WP601 Oracle reference 記錄。
+- [ ] WP629 沒有專屬新表：先核對 YMES PostgreSQL live schema/migrations，重用 WP601 的 L1–L6 包裝表、Detail、Relation、`tblinvpackstate`／`tblinvpacklog`，以及既有 `tblinvwipinventory_semi`、`tblwiplotstate`、MO/Product/Packing Rule/Label Rule。若 live schema 缺少共用物件，只依已核實 Oracle DDL 建缺少的 forward migration；不建立另一套 WP629 表，不重建既有表。
+- [ ] 在共用 packing domain service 加入由授權 FunctionKey/command 決定的 inventory-inline 執行模式。不要信任瀏覽器提交 InlinePackingFlag、Status 或 InventoryNo；伺服器重查 Lot `Status=11`，並由 `tblinvwipinventory_semi` 取得 WIP InventoryNo。
+- [ ] Pack Lot／package command 需重驗 MO、Product/Version、packing rule/層級、Lot/包裝現況、Component、PackQty、CloseFlag、關係和重複掃碼。展開包裝內的 Lot，確保全部仍是 Status=11、同 InventoryNo，並與目前未封箱內容一致；維持 WP601 的容量、下層先封、配件、分批與 package serial 規則。
+- [ ] `TBLINVWIPINVENTORY_SEMI` PK 含 LocatorNo，同一 Lot 可有多個庫位列；舊 Core 只依 LotNo 查、無 `ORDER BY`，WinForms 使用 Rows(0)，無法證明其選庫位為確定規則。API 應偵測多筆有效庫位並明確回報歧義／要求明確庫位規則，不可悄悄依 PostgreSQL row order 任選。
+- [ ] 保留 WinForms 掃 Lot／PackingNo 時的 FGD In 關聯檢查；已建立 FGD In 的來源 Lot／包裝禁止重複包裝與拆併。
+- [ ] `TBLINVWIPINVENTORY_SEMI` PK 含 LocatorNo，同一 Lot 可有多個庫位列；舊 Core 只依 LotNo 查、無 `ORDER BY`，WinForms 使用 Rows(0)，無法證明其選庫位為確定規則。API 應偵測多筆有效庫位並明確回報歧義／要求明確庫位規則，不可悄悄依 PostgreSQL row order 任選。
+- [ ] 依來源把 InventoryNo 作包裝現況 OPNo、NodeID=`N/A`、PkgType=`1`；以交易維護共用包裝 Detail/Relation、PackState/Log。WP629 Pack Close 即使到最高層也不得將 Status=11 改成 Status=4；不要額外改動或扣減 WIP Inventory，除非另有經核實的來源副作用。
+- [ ] Delete 維持 Core 的層級 CloseFlag、Detail、Relation、PackState/Log 副作用；Combine／Unboxing 的來源是 `ObjectFileHandler("INVMOPackingCombineDismantle")`，未取得外掛契約時明確保留不支援，不能以 CRUD 回成功。標籤資料與列印須沿用正式 label job/授權代理，不呼叫 server WinForms COM。
+- [ ] 對每一跨表 command 定義 transaction、鎖／CAS、冪等鍵及可辨識業務錯誤；先比對現有 WP601 API/migration 是否已提供共用服務，再擴充，不要重複建 endpoint 或 schema。部署與 PostgreSQL 驗收留在家用端；公司端 WP629 畫面只有獨立 DEV localStorage 假資料。
+
 
 
 ## WIP WP603 在製品庫帳務維護家用端 handoff（2026-11-19）

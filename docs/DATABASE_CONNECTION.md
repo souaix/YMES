@@ -748,3 +748,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，讀取本機受保護 `DatabaseConfigs.CS.Test.Mes.ConnectionString` 後唯讀直連 MESTEST，取得 WP601 19 張功能表的 DBMS_METADATA DDL 與 ALL_TAB_COLUMNS／ALL_CONSTRAINTS／ALL_INDEXES／ALL_TRIGGERS metadata。19 張 CREATE 欄位數均與 MESTEST dictionary 相符；未讀業務資料列、未執行 Oracle DDL/DML。
 - `TBLWIPMOLINEPACKL` 通用前綴不存在於 MESTEST ALL_OBJECTS／ALL_SYNONYMS；實體為 L1–L6 與各層 Detail。`TBLWIPMOLINEPACKRELATION` 只有兩個非唯一索引、無 PK；`TBLINVPACKMERGELOG` 無 PK／索引。來源 DDL、CREATE-only 與 metadata 分別在 `database/reference/mestest_wip_wp601_source_ddl.sql`、`mestest_wip_wp601_create.sql`、`mestest_wip_wp601_metadata.txt` 及 supplemental metadata。
 - CREATE-only 只供家用端比對 YMES live schema/migrations，不能整批執行；沿用已共用的 WIP／MO／Product／Packing Rule/Label Rule 表。Oracle IP、帳號、密碼及 SID 未輸出或提交；公司端未連 YMES PostgreSQL。
+
+### 更新 2026-11-19：WIP WP629 在製品庫包裝作業來源表重用
+
+- WP629 原始碼使用 `TBLWIPLOTSTATE`、WP601 已核對的包裝層級／Detail／Relation／PackState／PackLog，以及 `TBLINVWIPINVENTORY_SEMI`。本功能沒有新增專屬 Oracle 表，因此本輪沒有重複查 DDL，也沒有另產一份重複 CREATE-only。
+- `TBLINVWIPINVENTORY_SEMI` 的 Oracle source DDL 與 CREATE-only 已由 WP201 來源依賴查證保存於 `database/reference/mestest_wip_wp201_dependency_source_ddl.sql` 及 `mestest_wip_wp201_create.sql`；包裝表保存於 WP601 reference。WP629 規格記載 Status=11、InventoryNo 與 `InlinePackingFlag=1` 行為。
+- 本次只重用既有 Oracle metadata／DDL 與 WinForms、Service、Core 原始碼；未重查業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。家用端仍須核對 live PostgreSQL schema/migrations，不得因 WP629 而建立重複資料表。
