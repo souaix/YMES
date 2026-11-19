@@ -21,6 +21,7 @@ const props = defineProps<{
   psNo: string
   moTypeNo: string
   developmentPreview: boolean
+  moduleMode?: boolean
 }>()
 const emit = defineEmits<{ close: [] }>()
 
@@ -52,14 +53,14 @@ const rows = computed(() => {
 <template>
   <section class="expansion-dialog" role="dialog" aria-modal="true" aria-labelledby="process-expansion-title">
     <header><h2 id="process-expansion-title">流程展開</h2><button type="button" aria-label="關閉" @click="emit('close')">×</button></header>
-    <p>區段 {{ psNo }} · MOType {{ moTypeNo }}<span v-if="developmentPreview"> · {{ psNo === 'DEV-PS-20' ? 'DEV 網狀流程' : 'DEV 一般流程' }}</span></p>
+    <p><span v-if="moduleMode">模組 {{ productNo }} / {{ productVersion }} · </span>區段 {{ psNo }} · MOType {{ moTypeNo }}<span v-if="developmentPreview"> · {{ psNo === 'DEV-PS-20' ? 'DEV 網狀流程' : 'DEV 一般流程' }}</span></p>
     <div v-if="rows.length" class="grid">
       <table>
-        <thead><tr><th>ProductNo</th><th>ProductVersion</th><th>MainProcessNo</th><th>MainProcessVersion</th><th>ItemNo</th><th>ModuleNo</th><th>ModuleVersion</th><th>ProcessNo</th><th>OPNo</th><th>OPShortName</th><th>Description</th><th>StageNo</th></tr></thead>
+        <thead><tr><template v-if="!moduleMode"><th>ProductNo</th><th>ProductVersion</th><th>MainProcessNo</th><th>MainProcessVersion</th></template><th>ItemNo</th><th>ModuleNo</th><th>ModuleVersion</th><th>ProcessNo</th><th>OPNo</th><th>OPShortName</th><th>Description</th><th v-if="!moduleMode">StageNo</th></tr></thead>
         <tbody><tr v-for="row in rows" :key="`${row.itemNo}:${row.opOrder}:${row.opNo}`">
-          <td>{{ productNo }}</td><td>{{ productVersion }}</td><td>{{ processNo }}</td><td>{{ mainVersion }}</td><td>{{ row.itemNo }}</td>
+          <template v-if="!moduleMode"><td>{{ productNo }}</td><td>{{ productVersion }}</td><td>{{ processNo }}</td><td>{{ mainVersion }}</td></template><td>{{ row.itemNo }}</td>
           <td>{{ row.moduleNo ?? '—' }}</td><td>{{ row.moduleVersion ?? '—' }}</td><td>{{ row.processNo ?? processNo }}</td>
-          <td>{{ row.opNo }}</td><td>{{ row.opShortName }}</td><td>{{ row.description }}</td><td>{{ row.stageNo ?? '—' }}</td>
+          <td>{{ row.opNo }}</td><td>{{ row.opShortName }}</td><td>{{ row.description }}</td><td v-if="!moduleMode">{{ row.stageNo ?? '—' }}</td>
         </tr></tbody>
       </table>
     </div>

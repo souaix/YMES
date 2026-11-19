@@ -1695,3 +1695,114 @@ API 工作：
 ## PRD PD102 Expand All 家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品流程展開規格](docs/modules/PRD/產品流程展開.md)，核對共用流程與作業表；按 `IsNetFlow`、產品流程版次和工單類型實作唯讀 API。
+
+## PRD PD101 產品類別資料家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品類別規格](docs/modules/PRD/產品類別資料.md) 核對 `tblprdtype` 和 `ProductVersion='-1'` 共用表，沿用既有 CREATE-only。
+- [ ] 實作類別 API、狀態及 DataStamp、區段權限、交易式完整 Copy 和類別範圍的刪除。
+
+## PRD PD103 製程模組資料家用端 handoff（2026-11-19）
+
+- [ ] 依 [製程模組規格](docs/modules/PRD/製程模組資料.md) 核對 live schema、`tblprdmodulebasis` 與共用子表鍵。
+- [ ] 實作模組版次、簽核與目前版切換、區段權限、完整複製與匯入，確保共用子表可區別模組及產品。
+
+## PRD PD104 產品內容查詢家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品內容查詢規格](docs/modules/PRD/產品內容查詢.md) 對照既有 PD102 schema，實作候選查找、版次內條件交集、分頁、資料權限及欄位設定。
+
+## PRD PD105 產品參數群組家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品參數群組規格](docs/modules/PRD/產品參數群組.md) 核對群組／明細 schema，實作版次、明細、交易式複製、簽核與目前版切換。
+
+## PRD PD106 生產時間限制家用端 handoff（2026-11-19）
+
+- [ ] 依 [生產時間限制規格](docs/modules/PRD/生產時間限制.md) 核對三張表、Hold 原因的版次長度差異和既有 YMES schema。
+- [ ] 實作唯讀候選、複合鍵更新、核准與刪除；交易中保存歷程、限制與 Hold 原因。
+
+## PRD PD107 標籤設定家用端 handoff（2026-11-19）
+
+- [ ] 依 [標籤設定規格](docs/modules/PRD/標籤設定.md) 核對主檔與明細 schema，實作交易式內容更新、權限、具名欄位預覽與正式引擎接入。
+
+## PRD PD108 產品標籤對應設定家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品標籤對應規格](docs/modules/PRD/產品標籤對應設定.md) 核對對應表與作業參數，實作對應 CRUD、候選及批次設定 PrintLabel，處理明確對應優先和逐列交易。
+
+## PRD PD109 產品作業站預設家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站預設規格](docs/modules/PRD/產品作業站預設.md) 沿用 PD102 共用表，實作候選及依作業範圍執行的 Default／Amend、每版交易、進度與取消。
+
+## PRD PD110 產品作業站修正家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站修正規格](docs/modules/PRD/產品作業站修正.md) 沿用 PD109 Amend API、schema 與權限，帶入 PD110 固定六項。
+
+## PRD PD111 產品作業站批次複製家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站批次複製規格](docs/modules/PRD/產品作業站批次複製.md) 沿用共用表，實作版次／ECN 檢查、每版交易、SerialNo 關聯複製與取消。
+
+## PRD PD112 包裝規則設定家用端 handoff（2026-11-19）
+
+- [ ] 依 [包裝規則規格](docs/modules/PRD/包裝規則設定.md) 核對七張表、產品與規則版次鍵及現有遷移，實作主檔、子表、正式用量與標籤引擎。
+
+## PRD PD113 產品包裝規則對應家用端 handoff（2026-11-19）
+
+- [ ] 依 [包裝規則對應規格](docs/modules/PRD/產品包裝規則對應設定.md) 沿用 PD102 對應及 PD112 候選 API，實作 `*` 及 WIP／庫存使用中卡控。
+
+## PRD PD114 自定義流程卡家用端 handoff（2026-11-19）
+
+- [ ] 依 [自定義流程卡](docs/modules/PRD/自定義流程卡.md) 核對主檔與明細 CREATE-only、DataStamp 及 WIP／報表引擎依賴。
+
+## PRD PD115 產品流程卡對應家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品流程卡對應設定](docs/modules/PRD/產品流程卡對應設定.md) 核對 CREATE-only、候選 API、DataStamp、`*` 及正式列印呼叫端。
+
+## PRD PD116 產品品管項目規格匯入家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品品管項目規格匯入](docs/modules/PRD/產品品管項目規格匯入.md) 沿用 PD102／QC302 CREATE，實作業務預檢、整批交易、規格歷史與範本匯出。
+
+## PRD PD117 GBOM 批次匯入家用端 handoff（2026-11-19）
+
+- [ ] 依 [GBOM 批次匯入](docs/modules/PRD/GBOM批次匯入.md) 沿用現有產品、流程與客製表，實作逐檔預檢、每產品版次交易、原檔備份、逐檔結果與 SAP 相依。
+
+## PRD PD202 FT 測試程式家用端 handoff（2026-11-19）
+
+- [ ] 依 [FT 測試程式](docs/modules/PRD/FT測試程式.md) 核對主檔與軟體 Bin CREATE、硬體 Bin、簽核、DataStamp 及檔案管理。
+
+## PRD PD204 電性抽樣規則家用端 handoff（2026-11-19）
+
+- [ ] 依 [電性抽樣規則](docs/modules/PRD/電性抽樣規則.md) 核對主從 CREATE、系統 Bin、DataStamp、簽核和執行函式。
+
+## PRD PD206 產品抽樣頻率規則家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品抽樣頻率規則](docs/modules/PRD/產品抽樣頻率規則.md) 核對 CREATE、萬用範圍鍵、各頻率欄位與 WIP 執行。
+
+## PRD PD901 產品作業站標工維護家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站標工維護](docs/modules/PRD/產品作業站標工維護.md) 核對主表、歷史、SAP_KTEXT 與內部版次、查詢、匯入交易及轉 SAP。
+
+## PRD OVERSTAY 產品作業站 Overstay 家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站 Overstay 維護](docs/modules/PRD/產品作業站Overstay維護.md) 核對主表與歷史、舊匯入三欄範圍和實際六欄主鍵、異常群組及交易。
+
+## PRD OP RULE 產品作業站法則家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站法則維護](docs/modules/PRD/產品作業站法則維護.md) 核對已存在的作業站 DDL、新增的歷史 DDL、CP／FT 條件及批量替換／匯入交易。
+
+## PRD PDP01 晶圓良率與出貨報告家用端 handoff（2026-11-19）
+
+- [ ] 依 [晶圓良率與出貨報告維護](docs/modules/PRD/晶圓良率與出貨報告維護.md) 核對四表 CREATE、候選、ComboSeqNo、停用及報告檢查。
+
+## PRD PDP02 晶圓測試程式定義家用端 handoff（2026-11-19）
+
+- [ ] 依 [晶圓測試程式定義](docs/modules/PRD/晶圓測試程式定義.md) 核對 CP 程式／Bin CREATE、匯入、簽核、DataStamp 與檔案管理。
+
+## PRD PDP03 產品晶圓法則管制家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品晶圓法則管制管理](docs/modules/PRD/產品晶圓法則管制管理.md) 核對摘要／明細 CREATE、合併格、ImportType、原始列欄及正式腳本。
+
+## PRD PDP04 產品晶圓圖疊圖規則家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品晶圓圖疊圖規則設置](docs/modules/PRD/產品晶圓圖疊圖規則設置.md) 核對三表、核准、批次複製、範本及正式疊圖引擎。
+
+## PRD PDB01 挑片規則家用端 handoff（2026-11-19）
+
+- [ ] 依 [挑片規則設定](docs/modules/PRD/挑片規則設定.md) 核對兩張 CREATE、區段欄位、同類倉庫、DataStamp 及條件執行。

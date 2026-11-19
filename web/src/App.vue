@@ -39,6 +39,30 @@ import ProductionLineBasisMaster from './components/ProductionLineBasisMaster.vu
 import PositionBasisMaster from './components/PositionBasisMaster.vue'
 import AreaShowMaster from './components/AreaShowMaster.vue'
 import ProductBasisMaster from './components/ProductBasisMaster.vue'
+import ProductTypeMaster from './components/ProductTypeMaster.vue'
+import ProductModuleMaster from './components/ProductModuleMaster.vue'
+import ProductContentsSearch from './components/ProductContentsSearch.vue'
+import RecipeGroupMaster from './components/RecipeGroupMaster.vue'
+import ProductTimeLimitMaster from './components/ProductTimeLimitMaster.vue'
+import LabelDataMaster from './components/LabelDataMaster.vue'
+import ProductLabelMapMaster from './components/ProductLabelMapMaster.vue'
+import ProductOperationBatch from './components/ProductOperationBatch.vue'
+import PackingRuleBasisMaster from './components/PackingRuleBasisMaster.vue'
+import PackingRuleMapPage from './components/PackingRuleMapPage.vue'
+import UserDefinedRunCardMaster from './components/UserDefinedRunCardMaster.vue'
+import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
+import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
+import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
+import FtProgramMaster from './components/FtProgramMaster.vue'
+import EqcSampleRuleMaster from './components/EqcSampleRuleMaster.vue'
+import ProductQcFrequencyMaster from './components/ProductQcFrequencyMaster.vue'
+import ProductWorkTimeMaster from './components/ProductWorkTimeMaster.vue'
+import ProductOverstayMaster from './components/ProductOverstayMaster.vue'
+import ProductStationRuleMaster from './components/ProductStationRuleMaster.vue'
+import CpWaferShipReportMaster from './components/CpWaferShipReportMaster.vue'
+import CpWaferRuleMaster from './components/CpWaferRuleMaster.vue'
+import CpMergeMapRuleMaster from './components/CpMergeMapRuleMaster.vue'
+import ChooseWaferRuleMaster from './components/ChooseWaferRuleMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -353,7 +377,39 @@ const fallbackMenuTree: MenuNode[] = [
     label: '產品資料',
     shortLabel: '品',
     moduleNo: 'PRD',
-    children: [{ id: 'product-settings', label: '產品設定', shortLabel: '設', children: [{ id: 'product-master', label: '產品主檔', tableName: 'tblprdproductbasis', shortLabel: '主', functionNo: 'PRD BASIS', moduleNo: 'PRD' }] }],
+    children: [{ id: 'product-settings', label: '產品設定', shortLabel: '設', children: [
+      { id: 'function:PRD:PRD TYPE', label: '產品類別資料', tableName: 'tblprdtype', shortLabel: '類', functionNo: 'PRD TYPE', moduleNo: 'PRD' },
+      { id: 'product-master', label: '產品主檔', tableName: 'tblprdproductbasis', shortLabel: '主', functionNo: 'PRD BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:MODULE BASIS', label: '製程模組資料', tableName: 'tblprdmodulebasis', shortLabel: '模', functionNo: 'MODULE BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRODUCT SEARCH', label: '產品內容查詢', tableName: 'tblprdproductbasis', shortLabel: '查', functionNo: 'PRODUCT SEARCH', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD RECIPE BASIS', label: '產品參數群組', tableName: 'tblprdrecipebasis', shortLabel: '參', functionNo: 'PRD RECIPE BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:LIMITED TIME CONTROL', label: '生產時間限制(站與站)', tableName: 'tblprdlimitedtimecontrol', shortLabel: '時', functionNo: 'LIMITED TIME CONTROL', moduleNo: 'PRD' },
+      { id: 'function:PRD:LABEL DATA', label: '標籤設定', tableName: 'tblprdlabelbasis', shortLabel: '標', functionNo: 'LABEL DATA', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRODUCT LABEL MAP BASIS', label: '產品標籤對應設定', tableName: 'tblprdlabelmap', shortLabel: '對', functionNo: 'PRODUCT LABEL MAP BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRODUCT OP DEFAULT', label: '產品作業站預設', tableName: 'tblprdop', shortLabel: '預', functionNo: 'PRODUCT OP DEFAULT', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRODUCT OP AMEND', label: '產品作業站修正', tableName: 'tblprdop', shortLabel: '修', functionNo: 'PRODUCT OP AMEND', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRODUCT OP COPY', label: '產品作業站批次複製', tableName: 'tblprdop', shortLabel: '複', functionNo: 'PRODUCT OP COPY', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD PACKING RULE BASIS', label: '包裝規則設定', tableName: 'tblprdpackingrulebasis', shortLabel: '包', functionNo: 'PRD PACKING RULE BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD PACKINGRULE MAP', label: '產品包裝規則對應設定', tableName: 'tblprdpackingrulemap', shortLabel: '配', functionNo: 'PRD PACKINGRULE MAP', moduleNo: 'PRD' },
+      { id: 'function:PRD:USER DEFINED RUNCARD', label: '自定義流程卡', tableName: 'tblprddefineruncardbasis', shortLabel: '卡', functionNo: 'USER DEFINED RUNCARD', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRODUCT RUN CARD MAP BASIS', label: '產品流程卡對應設定', tableName: 'tblprdruncardmap', shortLabel: '對', functionNo: 'PRODUCT RUN CARD MAP BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD QCITEM SPEC IMPORT', label: '產品品管項目規格匯入', tableName: 'tblprdqcitem', shortLabel: '檢', functionNo: 'PRD QCITEM SPEC IMPORT', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD GBOM IMPORT', label: 'GBOM批次匯入', tableName: 'tblprdbom', shortLabel: '匯', functionNo: 'PRD GBOM IMPORT', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD WORKTIME', label: '產品作業站標工維護', tableName: 'xx_tblprdruntime_theil_bu1', shortLabel: '工', functionNo: 'PRD WORKTIME', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD OVERSTAY', label: '產品作業站Overstay維護', tableName: 'xx_tbloversetup_theil_bu1', shortLabel: '候', functionNo: 'PRD OVERSTAY', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD OP RULE', label: '產品作業站法則維護', tableName: 'tblprdoprule', shortLabel: '則', functionNo: 'PRD OP RULE', moduleNo: 'PRD' },
+    ] }, { id: 'product-bin-settings', label: '等級設定', shortLabel: '級', children: [
+      { id: 'function:PRD:FT PROGRAM BASIS', label: 'FT測試程式', tableName: 'tblprdftprogrambasis', shortLabel: '測', functionNo: 'FT PROGRAM BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:EQC SAMPLE RULE', label: '電性(EQC)抽樣規則', tableName: 'tblprdeqcsamplerule', shortLabel: '抽', functionNo: 'EQC SAMPLE RULE', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD QCRULE BASIS', label: '產品抽樣頻率規則', tableName: 'tblprdqcrulebasis', shortLabel: '頻', functionNo: 'PRD QCRULE BASIS', moduleNo: 'PRD' },
+    ] }, { id: 'product-cp-settings', label: 'CP行業設定', shortLabel: 'CP', children: [
+      { id: 'function:PRD:P_CP WAFER YIELD SHIP REPORT', label: '晶圓良率與出貨報告維護', tableName: 'tbl_cpsyscombomapbasis', shortLabel: '報', functionNo: 'P_CP WAFER YIELD SHIP REPORT', moduleNo: 'PRD' },
+      { id: 'function:PRD:P_CP PROGRAM DEFINE', label: '晶圓測試程式定義', tableName: 'tbl_cpprdprogrambasis', shortLabel: '測', functionNo: 'P_CP PROGRAM DEFINE', moduleNo: 'PRD' },
+      { id: 'function:PRD:P_WAFER RULE MANAGER', label: '產品晶圓法則管制管理', tableName: 'tbl_pprdwaferruleimportsummary', shortLabel: '管', functionNo: 'P_WAFER RULE MANAGER', moduleNo: 'PRD' },
+      { id: 'function:PRD:P_PRD WAFERMAP MERGE RULE', label: '產品晶圓圖疊圖規則設置', tableName: 'tbl_bprdmergemaprule', shortLabel: '疊', functionNo: 'P_PRD WAFERMAP MERGE RULE', moduleNo: 'PRD' },
+    ] }, { id: 'product-wafer-settings', label: '挑片規則', shortLabel: '挑', children: [
+      { id: 'function:PRD:B_CHOOSE WAFER RULES', label: '挑片規則設定', tableName: 'tblprdchoosewaferrules', shortLabel: '挑', functionNo: 'B_CHOOSE WAFER RULES', moduleNo: 'PRD' },
+    ] }],
   },
 ]
 
@@ -469,6 +525,33 @@ const menuRoutes: Record<string, string> = {
   'function:OP:B_OP GROUP ATTRIB': appBasePath + '/OP/OperationGroupAttributes',
   'material-master': `${appBasePath}/MasterData/Materials`,
   'product-master': `${appBasePath}/MasterData/Products`,
+  'function:PRD:PRD TYPE': `${appBasePath}/MasterData/ProductTypes`,
+  'function:PRD:MODULE BASIS': `${appBasePath}/MasterData/ProductModules`,
+  'function:PRD:PRODUCT SEARCH': `${appBasePath}/PRD/ProductSearch`,
+  'function:PRD:PRD RECIPE BASIS': `${appBasePath}/PRD/RecipeGroups`,
+  'function:PRD:LIMITED TIME CONTROL': `${appBasePath}/PRD/TimeLimits`,
+  'function:PRD:LABEL DATA': `${appBasePath}/PRD/LabelData`,
+  'function:PRD:PRODUCT LABEL MAP BASIS': `${appBasePath}/PRD/ProductLabelMap`,
+  'function:PRD:PRODUCT OP DEFAULT': `${appBasePath}/PRD/OperationDefaults`,
+  'function:PRD:PRODUCT OP AMEND': `${appBasePath}/PRD/OperationAmend`,
+  'function:PRD:PRODUCT OP COPY': `${appBasePath}/PRD/OperationCopy`,
+  'function:PRD:PRD PACKING RULE BASIS': `${appBasePath}/PRD/PackingRules`,
+  'function:PRD:PRD PACKINGRULE MAP': `${appBasePath}/PRD/PackingRuleMap`,
+  'function:PRD:USER DEFINED RUNCARD': `${appBasePath}/PRD/RunCards`,
+  'function:PRD:PRODUCT RUN CARD MAP BASIS': `${appBasePath}/PRD/ProductRunCardMap`,
+  'function:PRD:PRD QCITEM SPEC IMPORT': `${appBasePath}/PRD/QCSpecImport`,
+  'function:PRD:PRD GBOM IMPORT': `${appBasePath}/PRD/GbomBatchImport`,
+  'function:PRD:FT PROGRAM BASIS': `${appBasePath}/PRD/FTPrograms`,
+  'function:PRD:EQC SAMPLE RULE': `${appBasePath}/PRD/EQCSampleRules`,
+  'function:PRD:PRD QCRULE BASIS': `${appBasePath}/PRD/QCFrequencyRules`,
+  'function:PRD:PRD WORKTIME': `${appBasePath}/PRD/WorkTime`,
+  'function:PRD:PRD OVERSTAY': `${appBasePath}/PRD/Overstay`,
+  'function:PRD:PRD OP RULE': `${appBasePath}/PRD/StationRules`,
+  'function:PRD:P_CP WAFER YIELD SHIP REPORT': `${appBasePath}/PRD/CPWaferShipReports`,
+  'function:PRD:P_CP PROGRAM DEFINE': `${appBasePath}/PRD/CPPrograms`,
+  'function:PRD:P_WAFER RULE MANAGER': `${appBasePath}/PRD/CPWaferRules`,
+  'function:PRD:P_PRD WAFERMAP MERGE RULE': `${appBasePath}/PRD/CPMergeMapRules`,
+  'function:PRD:B_CHOOSE WAFER RULES': `${appBasePath}/PRD/ChooseWaferRules`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -592,6 +675,33 @@ const activeMasterDataKey = computed<MasterDataKey | null>(() => {
 const isPrsProcessBasisPage = computed(() => activeMasterKey.value === 'function:PRS:PRS BASIS')
 const isPrsProcessTypePage = computed(() => activeMasterKey.value === 'function:PRS:PRS TYPE')
 const isProductionSegmentPage = computed(() => activeMasterKey.value === 'function:PRS:PS BASIS')
+const isProductTypePage = computed(() => activeMasterKey.value === 'function:PRD:PRD TYPE')
+const isProductModulePage = computed(() => activeMasterKey.value === 'function:PRD:MODULE BASIS')
+const isProductContentsSearchPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT SEARCH')
+const isRecipeGroupPage = computed(() => activeMasterKey.value === 'function:PRD:PRD RECIPE BASIS')
+const isProductTimeLimitPage = computed(() => activeMasterKey.value === 'function:PRD:LIMITED TIME CONTROL')
+const isLabelDataPage = computed(() => activeMasterKey.value === 'function:PRD:LABEL DATA')
+const isProductLabelMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT LABEL MAP BASIS')
+const isProductOperationBatchPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT OP DEFAULT')
+const isProductOperationAmendPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT OP AMEND')
+const isProductOperationCopyPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT OP COPY')
+const isPackingRuleBasisPage = computed(() => activeMasterKey.value === 'function:PRD:PRD PACKING RULE BASIS')
+const isPackingRuleMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRD PACKINGRULE MAP')
+const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'function:PRD:USER DEFINED RUNCARD')
+const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
+const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCITEM SPEC IMPORT')
+const isProductGbomBatchImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD GBOM IMPORT')
+const isFtProgramPage = computed(() => activeMasterKey.value === 'function:PRD:FT PROGRAM BASIS')
+const isEqcSampleRulePage = computed(() => activeMasterKey.value === 'function:PRD:EQC SAMPLE RULE')
+const isProductQcFrequencyPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCRULE BASIS')
+const isProductWorkTimePage = computed(() => activeMasterKey.value === 'function:PRD:PRD WORKTIME')
+const isProductOverstayPage = computed(() => activeMasterKey.value === 'function:PRD:PRD OVERSTAY')
+const isProductStationRulePage = computed(() => activeMasterKey.value === 'function:PRD:PRD OP RULE')
+const isCpWaferShipReportPage = computed(() => activeMasterKey.value === 'function:PRD:P_CP WAFER YIELD SHIP REPORT')
+const isCpProgramPage = computed(() => activeMasterKey.value === 'function:PRD:P_CP PROGRAM DEFINE')
+const isCpWaferRulePage = computed(() => activeMasterKey.value === 'function:PRD:P_WAFER RULE MANAGER')
+const isCpMergeMapRulePage = computed(() => activeMasterKey.value === 'function:PRD:P_PRD WAFERMAP MERGE RULE')
+const isChooseWaferRulePage = computed(() => activeMasterKey.value === 'function:PRD:B_CHOOSE WAFER RULES')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2058,6 +2168,178 @@ async function signOut(): Promise<void> {
           v-else-if="isOperationGroupAttribPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductTypeMaster
+          v-else-if="isProductTypePage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductModuleMaster
+          v-else-if="isProductModulePage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductContentsSearch
+          v-else-if="isProductContentsSearchPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <RecipeGroupMaster
+          v-else-if="isRecipeGroupPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductTimeLimitMaster
+          v-else-if="isProductTimeLimitPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <LabelDataMaster
+          v-else-if="isLabelDataPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductLabelMapMaster
+          v-else-if="isProductLabelMapPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductOperationBatch
+          v-else-if="isProductOperationBatchPage || isProductOperationAmendPage || isProductOperationCopyPage"
+          :key="activeMasterKey"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          :amend-only="isProductOperationAmendPage"
+          :copy-only="isProductOperationCopyPage"
+          @close="navigateHome"
+        />
+        <PackingRuleBasisMaster
+          v-else-if="isPackingRuleBasisPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PackingRuleMapPage
+          v-else-if="isPackingRuleMapPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <UserDefinedRunCardMaster
+          v-else-if="isUserDefinedRunCardPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductRunCardMapMaster
+          v-else-if="isProductRunCardMapPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductQCSpecImport
+          v-else-if="isProductQCSpecImportPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductGbomBatchImport
+          v-else-if="isProductGbomBatchImportPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <FtProgramMaster
+          v-else-if="isFtProgramPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <FtProgramMaster
+          v-else-if="isCpProgramPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          cp
+          @close="navigateHome"
+        />
+        <EqcSampleRuleMaster
+          v-else-if="isEqcSampleRulePage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductQcFrequencyMaster
+          v-else-if="isProductQcFrequencyPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductWorkTimeMaster
+          v-else-if="isProductWorkTimePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductOverstayMaster
+          v-else-if="isProductOverstayPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductStationRuleMaster
+          v-else-if="isProductStationRulePage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <CpWaferShipReportMaster
+          v-else-if="isCpWaferShipReportPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <CpWaferRuleMaster
+          v-else-if="isCpWaferRulePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <CpMergeMapRuleMaster
+          v-else-if="isCpMergeMapRulePage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ChooseWaferRuleMaster
+          v-else-if="isChooseWaferRulePage"
+          class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

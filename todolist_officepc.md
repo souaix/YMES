@@ -1156,4 +1156,146 @@
 
 - [x] 核對 Form／Designer、一般與網狀 Service／Core。以 DEV 流程、區段和作業假資料完成唯讀結果表格。
 - [x] Oracle 唯讀核對共用表，沿用產品、區段、流程與作業主檔的 CREATE-only 參考。
-- [ ] 正式流程解析與背景作業 lookup 待接續。下一項 PD101 產品類別資料。
+- [ ] 正式流程解析與背景作業 lookup 待接續。
+
+## PRD PD101 產品類別資料公司端檢查點（2026-11-19）
+
+- [x] 核對主畫面、定義 Form／Designer、Service／Core；完成 DEV 查詢、ADD／EDIT／Copy、刪除／停用／核准及三個子視窗。
+- [x] 唯讀核對 Oracle 主表和共用子表，整理 API/DDL 交接並將 PD102 DEV 類別查找接到已核准類別。
+- [ ] 正式完整副本與資料權限待接續。
+
+## PRD PD103 製程模組資料公司端檢查點（2026-11-19）
+
+- [x] 完成 DEV 主檔、版次、查詢、流程、共用子頁及 XLSX 主檔匯入；核對主 Form／Designer／Service／Core。
+- [x] Oracle 唯讀確認 `TBLPRDMODULEBASIS`，補來源邏輯 DDL、CREATE-only 比對與家用端 API 交接。
+- [ ] 正式權限、簽核、完整匯入與共用資料解析待接續。
+
+## PRD PD104 產品內容查詢公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core，完成 DEV 三類查找、條件交集及唯讀結果。重用 PD102 假資料。
+- [x] Oracle 唯讀確認四張既有表，沿用 PD102 DDL，記錄家用端即時 API 與分頁交接。
+- [ ] 正式查詢、資料權限和完整主檔報表欄位待接入。
+
+## PRD PD105 產品參數群組公司端檢查點（2026-11-19）
+
+- [x] 完成群組版次、明細、複製、狀態與核准目錄，供 PD102／PD103 DEV 指派使用。
+- [x] Oracle 唯讀核對群組與明細，補明細 Oracle DDL 和 CREATE-only。
+- [ ] 正式簽核、完整權限與候選查詢待接續。
+
+## PRD PD106 生產時間限制公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core；完成 DEV Max/Min、參照、起迄站與 BR 檢查、Hold 原因、CRUD 與狀態操作。
+- [x] Oracle 唯讀確認主檔、歷程與 Hold 原因結構；補來源邏輯 DDL、CREATE-only 與 API 交接。
+- [ ] 正式流程展開、簽核、歷程、設備檢核待接續。
+
+## PRD PD107 標籤設定公司端檢查點（2026-11-19）
+
+- [x] 完成 DEV 主檔與明細 CRUD、Copy、順序和欄位值 Test／Preview。核對 Form、Designer、Service 與 Core。
+- [x] Oracle 唯讀核對主／明細，補明細邏輯 DDL、CREATE-only 及 API 交接。
+- [ ] 正式標籤引擎、腳本產值、印表機和格式檔待接續。
+
+## PRD PD108 產品標籤對應設定公司端檢查點（2026-11-19）
+
+- [x] 核對主窗、編輯與批次窗、Service／Core，完成 DEV 對應 CRUD、Copy、來源查找及過帳批次預設。
+- [x] Oracle 唯讀確認對應表；補來源 DDL、CREATE-only 及家用端 API 交接。
+- [ ] 正式跨頁 PrintLabel 參數與權限待接續。
+
+## PRD PD109 產品作業站預設公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core。完成 DEV 前綴查詢、作業範圍、批次 Default／Amend、逐筆進度與取消。
+- [x] Oracle 唯讀核對共用表，沿用既有 DDL 參考。
+- [ ] 正式候選、權限、批次 API、動態作業預設及 APS 待接續。
+
+## PRD PD110 產品作業站修正公司端檢查點（2026-11-19）
+
+- [x] 核對獨立 Form／Designer 與 PD109 共用 Service／Core。完成 DEV 路徑、固定六項 Amend、進度／取消與 handoff。
+- [ ] 正式動態預設、權限與 API 待接續。
+
+## PRD PD111 產品作業站批次複製公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core，完成 DEV 來源／目標版次、可選複製項目、目標參數序號、進度與取消。
+- [x] 沿用 PD109 Oracle 字典及共用表 CREATE-only，整理家用端複製 API 交接。
+- [ ] 正式權限、ECN 開關、APS 與 API 待接入。
+
+## PRD PD112 包裝規則設定公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core，完成 DEV 包裝版次、1–6 層定義、序號／標籤／配件及 PD102 候選串接。
+- [x] Oracle 唯讀核對七張規則表，補來源邏輯 DDL、CREATE-only 與 API 交接。
+- [ ] 正式用量檢查、站點規則及標籤引擎待接續。
+
+## PRD PD113 產品包裝規則對應公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core，完成獨立 DEV 路徑與 PD102 對應資料、PD112 候選共用。
+- [x] Oracle 唯讀核對對應主鍵與 WIP／包裝狀態依賴，沿用既有對應 DDL。
+- [ ] 正式使用中卡控與 API 待家用端接續。
+
+## PRD PD114 自定義流程卡公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、PRD Service／Core 和 MESTEST 字典。
+- [x] 完成主檔、欄位明細、複製、刪除和 DEV 批號欄位預覽，整理 [規格與交接](docs/modules/PRD/自定義流程卡.md)。
+- [ ] 正式 WIP 產值及報表引擎待家用端接續。
+
+## PRD PD115 產品流程卡對應公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、PRD Service／Core、MESTEST 欄位和主鍵。
+- [x] 完成 CRUD、複製、核准產品與主流程卡候選，整理 [規格與交接](docs/modules/PRD/產品流程卡對應設定.md)。
+- [ ] 正式候選及 API 待家用端接續。
+
+## PRD PD116 產品品管項目規格匯入公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、客製 Service／Core、MESTEST 指派與 SPC 表。
+- [x] 完成 DEV 51 欄 XLSX 範本、預覽驗證、New Plan／Override 本機套用，整理 [規格與交接](docs/modules/PRD/產品品管項目規格匯入.md)。
+- [ ] 正式業務檢查與匯入待家用端接續。
+
+## PRD PD117 GBOM 批次匯入公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、客製 Service／Core、MESTEST 流程、BOM 與客製表。
+- [x] 完成 DEV 多檔選取、逐檔預檢、流程連線預覽及本機套用，整理 [規格與交接](docs/modules/PRD/GBOM批次匯入.md)。
+- [ ] 正式節點與 BOM 轉換、原檔管理待家用端接續。
+
+## PRD PD202 FT 測試程式公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、PRD Service／Core 和 MESTEST 程式／Bin 字典。
+- [x] 完成 DEV 主檔、版次、核准、Bin 文字檔預覽／匯入及程式檔名選擇，整理 [規格與交接](docs/modules/PRD/FT測試程式.md)。
+- [ ] 正式簽核、Bin 目錄、檔案及 API 待家用端接續。
+
+## PRD PD204 電性抽樣規則公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、PRD Service／Core 以及 MESTEST 主檔和 Bin 表。
+- [x] 完成兩種抽樣方式、Bin 選取和調序、狀態及 CRUD，整理 [規格與交接](docs/modules/PRD/電性抽樣規則.md)。
+- [ ] 正式抽樣執行、核准流程及選單待家用端接續。
+
+## PRD PD206 產品抽樣頻率規則公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、PRD Service／Core、WIP 呼叫端與 MESTEST。
+- [x] 完成範圍鍵、三種頻率、班別、CRUD／複製及 [規格與交接](docs/modules/PRD/產品抽樣頻率規則.md)。
+- [ ] 正式候選、抽樣執行與 API 待家用端接續。
+
+## PRD PD901 產品作業站標工維護公司端檢查點（2026-11-19）
+
+- [x] 核對客製 WinForms／Designer、PRD Service／Core、MESTEST 標工主表、歷史與科技類別 view 字典。
+- [x] 完成 DEV 查詢、XLSX 預覽／本機套用、轉 SAP 預覽和 [規格與交接](docs/modules/PRD/產品作業站標工維護.md)。
+- [ ] 正式工時、版次對應、SAP 與 API 待家用端接續。
+
+## PRD OVERSTAY 產品作業站 Overstay 公司端檢查點（2026-11-19）
+
+- [x] 核對客製 WinForms／Designer、Service／Core、MESTEST 主表與歷史表。
+- [x] 完成 DEV 查詢、逐列 XLSX 預檢、本機套用與批次刪除，整理 [規格與交接](docs/modules/PRD/產品作業站Overstay維護.md)。
+- [ ] 正式範圍鍵、歷史交易及 Overstay 執行待家用端接續。
+
+## PRD 產品設定後續項目
+
+- [ ] `PD_BATCHMODIFYAREA` 列於功能清冊，Form 為 `frmBatchModifyArea`、執行檔為 `PD_BatchModifyArea_THEIL.dll`。桌機的 `D:\iMES\CSiMES` 找不到該 Form、專案或對應 Service／Core 名稱，需等客製原始碼或業務規格補齊。
+- [x] `PRD OP RULE` 已完成原始碼與字典核對、DEV 法則新增、一般法則批量替換、刪除、XLSX 預檢及 [規格與交接](docs/modules/PRD/產品作業站法則維護.md)。
+- [ ] `PRD OP RULE` 的正式 CP／FT 條件、腳本編輯器與匯入轉換待接續。
+- [ ] `PDCUSTOMERDEVICE`、`PRDGBOMEXPORT_OLD` 與 `PRDGBOMEXPORT` 的獨立 Form 未在桌機來源樹找到。PD102 的 GBOM 匯出子功能另有既有交接。
+- [x] PDP01 晶圓良率與出貨報告維護已完成原始碼、四表 metadata、DEV 出貨規則及 [規格與交接](docs/modules/PRD/晶圓良率與出貨報告維護.md)。
+- [ ] 正式報告產出、候選及檢查待接續。
+- [x] PDP02 已完成 DEV 程式版次、核准、CP Bin 設定／XLSX 匯入及 [規格與交接](docs/modules/PRD/晶圓測試程式定義.md)。
+- [ ] 正式 CP Bin、簽核及檔案管理待家用端接續。
+- [x] PDP03 已完成 DEV 查詢、摘要與明細、XLSX 預檢及 [規格與交接](docs/modules/PRD/產品晶圓法則管制管理.md)。
+- [ ] 正式晶圓腳本與合併資料匯入待家用端接續。
+- [x] PDP04 完成原始碼／MESTEST 核對、DEV 疊圖主檔、條件、核准、批次複製及 [規格與交接](docs/modules/PRD/產品晶圓圖疊圖規則設置.md)。
+- [ ] 正式疊圖與圖譜候選待家用端接續。
+- [x] PDB01 已完成 DEV 主檔、倉庫／供應商、條件與核准，以及 [規格與交接](docs/modules/PRD/挑片規則設定.md)。
+- [ ] 正式條件執行與候選待家用端接續。下一項 PDB02 產品設定_封測。

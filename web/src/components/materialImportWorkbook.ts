@@ -71,7 +71,7 @@ function columnIndex(reference: string): number {
   return Math.max(0, value - 1)
 }
 
-export async function parseWorksheetsXlsx(file: File, count: number): Promise<string[][][]> {
+export async function parseWorksheetsXlsx(file: File, count: number, preserveRowNumbers = false): Promise<string[][][]> {
   const entries = await readZipEntries(await file.arrayBuffer())
   const workbookText = entries.get('xl/workbook.xml')
   const relationsText = entries.get('xl/_rels/workbook.xml.rels')
@@ -93,14 +93,16 @@ export async function parseWorksheetsXlsx(file: File, count: number): Promise<st
     if (!target) throw new Error(`找不到 Excel 第 ${index + 1} 張工作表。`)
     const sheetText = entries.get(normalizePath(target.startsWith('/') ? target : `xl/${target}`))
     if (!sheetText) throw new Error(`無法讀取 Excel 第 ${index + 1} 張工作表。`)
-    return parseWorksheetRows(sheetText, sharedStrings)
+    return parseWorksheetRows(sheetText, sharedStrings, preserveRowNumbers)
   })
 }
 
-function parseWorksheetRows(sheetText: string, sharedStrings: string[]): string[][] {
+function parseWorksheetRows(sheetText: string, sharedStrings: string[], preserveRowNumbers: boolean): string[][] {
   const sheet = parseXml(sheetText, 'Excel 工作表')
   const rows = descendants(sheet, 'row').filter((row) => row.parentElement?.localName === 'sheetData')
-  return rows.map((row) => {
+  const parsed: string[][] = []
+  let implicitRow = 1
+  for (const row of rows) {
     const values: string[] = []
     for (const cell of Array.from(row.children).filter((child) => child.localName === 'c')) {
       const index = columnIndex(cell.getAttribute('r') ?? '')
@@ -112,12 +114,20 @@ function parseWorksheetRows(sheetText: string, sharedStrings: string[]): string[
       while (values.length <= index) values.push('')
       values[index] = text.trim()
     }
-    return values
-  })
+    const rowNumber = Number(row.getAttribute('r') ?? implicitRow)
+    if (preserveRowNumbers) {
+      if (!Number.isInteger(rowNumber) || rowNumber < 1 || rowNumber > 1048576) throw new Error('Excel 工作表列號超出範圍。')
+      parsed[rowNumber - 1] = values
+    } else {
+      parsed.push(values)
+    }
+    implicitRow = rowNumber + 1
+  }
+  return parsed
 }
 
-export async function parseFirstWorksheetXlsx(file: File): Promise<string[][]> {
-  const [first] = await parseWorksheetsXlsx(file, 1)
+export async function parseFirstWorksheetXlsx(file: File, preserveRowNumbers = false): Promise<string[][]> {
+  const [first] = await parseWorksheetsXlsx(file, 1, preserveRowNumbers)
   return first
 }
 

@@ -152,6 +152,60 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [產品流程展開](modules/PRD/產品流程展開.md) 已完成一般／網狀流程的 DEV 唯讀結果與共用 schema 交接。
 
+[PD101 產品類別資料](modules/PRD/產品類別資料.md) 已完成 DEV 清單、CRUD、狀態操作及流程／屬性／參數；與 PD102 DEV 共用核准類別目錄。
+
+[PD103 製程模組資料](modules/PRD/製程模組資料.md) 已完成 DEV 主檔、版次、流程與子頁、XLSX 主檔匯入和 SQL handoff。
+
+[PD104 產品內容查詢](modules/PRD/產品內容查詢.md) 已完成 DEV 條件查找、交集篩選與唯讀結果表格。
+
+[PD105 產品參數群組](modules/PRD/產品參數群組.md) 已完成 DEV 群組版次、明細維護及核准目錄，供 PD102／PD103 查找。
+
+[PD106 生產時間限制](modules/PRD/生產時間限制.md) 已完成 DEV 站與站限制、Hold 選取、狀態操作及三表 SQL 交接。
+
+[PD107 標籤設定](modules/PRD/標籤設定.md) 已完成 DEV 主檔、明細、欄位值預覽及 SQL handoff。
+
+[PD108 產品標籤對應設定](modules/PRD/產品標籤對應設定.md) 已完成 DEV 對應、PD107 目錄查找、批次預設與 SQL 交接。
+
+[PD109 產品作業站預設](modules/PRD/產品作業站預設.md) 已完成 DEV 產品查詢、範圍、批次預設／補缺項與共用表交接。
+
+[PD110 產品作業站修正](modules/PRD/產品作業站修正.md) 已完成獨立 DEV 選單及固定六項補缺流程。
+
+[PD111 產品作業站批次複製](modules/PRD/產品作業站批次複製.md) 已完成 DEV 來源／目標版次、旗標與作業參數關聯複製。
+
+[PD112 包裝規則設定](modules/PRD/包裝規則設定.md) 已完成 DEV 版次、層級、序號／標籤／配件及七表交接。
+
+[PD113 產品包裝規則對應設定](modules/PRD/產品包裝規則對應設定.md) 已完成獨立 DEV 路徑、共用對應編輯與使用中規則交接。
+
+[PD114 自定義流程卡](modules/PRD/自定義流程卡.md) 已完成主檔、欄位明細、DEV 批號欄位預覽與報表相依交接。
+
+[PD115 產品流程卡對應設定](modules/PRD/產品流程卡對應設定.md) 已完成 DEV 對應維護、PD102／PD114 候選與家用端交接。
+
+[PD116 產品品管項目規格匯入](modules/PRD/產品品管項目規格匯入.md) 已完成 DEV 範本、51 欄 XLSX 預覽、本機套用與 SPC 寫入交接。
+
+[PD117 GBOM 批次匯入](modules/PRD/GBOM批次匯入.md) 已完成多檔預檢、流程連線預覽、本機套用與客製流程及 BOM 交接。
+
+[PD202 FT 測試程式](modules/PRD/FT測試程式.md) 已完成 DEV 程式版次、Bin 匯入及檔案管理交接。
+
+[PD204 電性抽樣規則](modules/PRD/電性抽樣規則.md) 已完成 DEV 抽樣模式、Bin 排序、狀態和家用端交接。
+
+[PD206 產品抽樣頻率規則](modules/PRD/產品抽樣頻率規則.md) 已完成 DEV 範圍鍵、三種頻率、班別及家用端交接。
+
+[PD901 產品作業站標工維護](modules/PRD/產品作業站標工維護.md) 已完成 DEV 查詢、XLSX 工時批次與轉 SAP 預覽交接。
+
+[產品作業站 Overstay 維護](modules/PRD/產品作業站Overstay維護.md) 已完成 DEV 查詢、XLSX 預檢、歷史與多列刪除交接。
+
+[產品作業站法則維護](modules/PRD/產品作業站法則維護.md) 已完成 DEV 法則清單、新增、批量替換／刪除及 XLSX 交接。
+
+[PDP01 晶圓良率與出貨報告維護](modules/PRD/晶圓良率與出貨報告維護.md) 已完成 DEV 報告規則、來源站點、停用與四表交接。
+
+[PDP02 晶圓測試程式定義](modules/PRD/晶圓測試程式定義.md) 已完成 DEV 版次、核准、Bin 設定和 XLSX 匯入交接。
+
+[PDP03 產品晶圓法則管制管理](modules/PRD/產品晶圓法則管制管理.md) 已完成 DEV 摘要、明細、XLSX 範本與匯入交接。
+
+[PDP04 產品晶圓圖疊圖規則設置](modules/PRD/產品晶圓圖疊圖規則設置.md) 已完成 DEV 測前／測後主從規則、核准、批次複製與三表交接。
+
+[PDB01 挑片規則設定](modules/PRD/挑片規則設定.md) 已完成 DEV 挑片主檔、同類倉庫、條件工具與資料字典交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定
