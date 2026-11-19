@@ -1,3 +1,16 @@
+## 新交接公司端 WP302 載具現況管理（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP302 規格](docs/modules/WIP/載具現況管理.md)、本段及三張 Oracle source DDL／metadata、CREATE-only reference。
+- [ ] 先核對 YMES PostgreSQL live schema／migration history。WP302 新查證表為 `tblwipcarrierstatedetail`、`tblwipcarrierstatedetaillog`、`tblinvstockerstate`；對 live schema 確實缺少的表才新增 forward migration。不要因 CREATE-only reference 對既有 schema 重跑 CREATE。
+- [ ] `tblwipcarrierstatedetail` 在 Oracle 沒有 PK，僅有 ComponentNo 非唯一 index；`tblwipcarrierstatedetaillog` 沒有 PK／索引。CREATE-only 不可自行補唯一鍵、FK 或額外欄位。`tblinvstockerstate` 的 PK 是 `(StockerNo, LocatorNo, ContentNo)`。`tblwipcarrierstate`、CarrierType、LotBasis/State、ComponentState 沿用既有 reference/schema。
+- [ ] 實作登入授權 GET `/api/wip/carrier-state` 及 `/api/wip/carrier-state/{carrierNo}/details`；回傳欄位依 WinForms：CarrierNo、CarrierCategory、CarrierType、CarrierState、Description；Detail 可見 CarrierPosition、ContentID、BCIP、ComponentNo。完整資料排序需穩定，不能假設 Detail 有主鍵。
+- [ ] 實作登入授權 POST `/api/wip/carrier-state/{carrierNo}/put-in`，body 只接 LotNo、起始 Position。Server 自查載具/type 與 `CarrierLayer*CarrierCapacity`、lot `LotState=1` 且 Status 0–5、Stocker 占用、ComponentState、全球既有 ContentID/ComponentNo、CarrierPosition 容量／重複。Components 由 server 查出；無 Component 時使用 `N/A`。UserNo/BCIP 取登入者。
+- [ ] WinForms 對多 Component 按位置逐筆 Check→Add，後一筆失敗時先前新增不回滾；若維持相容，API 回傳 `insertedCount` 與停止原因。每次單列檢查加寫入需以交易／鎖原子執行：鎖住 CarrierState 與對應 lot state，再查重複與 position，避免不同使用者同時占用相同位置或同一元件掛到多個載具。
+- [ ] 實作 POST `/api/wip/carrier-state/{carrierNo}/take-out`（指定 ContentID，依來源刪掉同 CarrierNo + ContentID 的全部元件列）及 `/clear`（清全部內容）。刪前驗證每個 Lot 都仍符合原 WinForms lot-state 條件；同交易寫 `tblwipcarrierstatedetaillog`、刪 Detail、清除 lot CarrierNo。每個 command 要有冪等性、錯誤碼及並行鎖。
+- [ ] 保留來源權限：WinForms `Carrier Change`、`Lot Change` 按鈕預設隱藏且受 `ExeGroupControlPriv` 控制。為完成同等功能，新增受獨立權限保護的 PUT `/api/wip/carrier-state/{carrierNo}/state`（`carrierState` 僅 0/1）與 PUT `/api/wip/carrier-state/{carrierNo}/details/flag`（`contentId`、`componentNo`、`flag` 僅 0/1）；後端記錄登入者稽核，不信任 browser user number。
+- [ ] 記錄來源相容性問題：Core 在刪除前查舊 Detail 數量，只有舊數量 <=1 才把 CarrierState 設為 0；Clear 多列後可能留在狀態 1。DEV 已重現。API 若修正為依刪除後內容更新狀態，列為明確行為修正並保留回歸案例。
+- [ ] Log DDL 雖有 PutInTime/TakeOutTime，`AddCarrierStateDetailLog` 此流程未寫這兩欄，metadata 沒有 trigger；未經其他來源證據不要自行填入。公司端未連 PostgreSQL、不做 migration；由家用端完成 API/schema/deployment。
+
 ## 新交接公司端 WP601 包裝作業家用端接手（2026-11-19）
 
 - [ ] Pull 最新 `main`，閱讀 [WP601 規格](docs/modules/WIP/包裝作業.md)、`database/reference/mestest_wip_wp601_source_ddl.sql`、`mestest_wip_wp601_create.sql`、metadata 與 `docs/DATABASE_CONNECTION.md` 的 WP601 查證紀錄。

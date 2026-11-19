@@ -95,6 +95,14 @@
 - [x] DEV 支援物料、物料(元件)、半成品輸入、設備／MO 查找、上下移序與下料確認，使用獨立 localStorage 假資料。家用端待核對 PostgreSQL live schema，實作庫存扣還、設備現況、元件映射及序號交易 API。
 - [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser；本輪 Oracle 僅讀 metadata／DDL。
 
+### WP302 載具現況管理已交付（FunctionNo CARRIER STATE，2026-11-20）
+
+- [x] 直接對照 `frmCarrierState` inline Designer／事件、`wsEQP`、`wsWIP`、`wsINV`、`clsCarrierBasis`、`clsLot`、`clsInventory`；核實上下層 Grid、Put In／Takes Out／Clear Carrier 與兩個預設隱藏且受權限控管的狀態按鈕。
+- [x] 使用受保護 Oracle profile，以 Windows PowerShell 5.1／ODP.NET 直連唯讀取得 `TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCARRIERSTATEDETAILLOG`、`TBLINVSTOCKERSTATE` DDL／metadata。確認 Detail 無 PK、僅 ComponentNo 非唯一索引；DetailLog 無 PK/index；StockerState 有三欄複合 PK；未讀業務資料、未執行 Oracle DDL/DML。
+- [x] 完成 Vue DEV `/YMES/WIP/CarrierState`、設備與載具三層選單、假 Lot／Component／Stocker 資料、放入／取出／清空確認、容量／位置／批次狀態驗證、權限控制區及獨立 localStorage；完成 [WP302 規格](docs/modules/WIP/載具現況管理.md)、Oracle source DDL、metadata、PostgreSQL CREATE-only 與 home TODO。
+- [x] 按來源保留多元件逐筆放入的部分成功語意、取出整個 ContentID、Clear 前 lot-state 驗證、隱藏狀態按鈕；將 Clear 多列可能留 CarrierState=1 的 Core 行為記為 legacy quirk，沒有暗中修正。
+- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser；資料表比較、API、migration 與部署由家用端依 `todolist_homepc.md` 接手。
+
 ### 公司端工作範圍
 
 - WinForms／Service／Core 原始碼、Vue DEV 假資料、模組規格與家用端 API／SQL 交接。Vue 環境為 Node.js 22.12+、npm 與 `web/` 套件，筆電沿用自己的既有工具，不依賴桌機的本機安裝路徑。

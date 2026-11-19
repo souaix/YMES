@@ -760,3 +760,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 及本機受保護 Oracle profile 直連 MESTEST，唯讀取得四張原先未有 reference 的表 DDL 與 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS` metadata：`TBLWIPEQPMATERIALSTATE`、`TBLWIPEQPMTLSTATE_COMP`、`TBL_BINKLESSMAPSTATE`、`TBL_BSUBSTRATEMAPSTATE`。
 - 四表皆只有複合 PK unique index，沒有 FK、額外 index 或 trigger。欄位、Oracle source DDL 與 metadata 分別見 `database/reference/mestest_wip_wp301_source_ddl.sql`、`mestest_wip_wp301_metadata.txt`；家用端 PostgreSQL CREATE-only 見 `database/reference/mestest_wip_wp301_create.sql`。其他 13 張功能相依表沿用 WP101/WP201、OE、MTL、OP/SMD 既有 reference，不在此重複產生 CREATE。
 - 僅查結構 metadata／DDL，未讀 MES 業務資料列、未在 Oracle 執行 DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。CREATE-only 不代表 migration；家用端須先比較 YMES PostgreSQL live schema／migration history，再只為缺表新增 forward migration。
+
+### 更新 2026-11-20：WIP WP302 載具現況管理
+
+- 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 Oracle profile 直連 MESTEST，只讀取得 `TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCARRIERSTATEDETAILLOG`、`TBLINVSTOCKERSTATE` 的 DBMS_METADATA DDL、欄位／constraint／index／trigger metadata。未查業務資料列，未執行 Oracle DDL/DML，未連 YMES PostgreSQL。
+- Detail 有 11 欄、7 個 NOT NULL constraint、1 個 ComponentNo 非唯一 index，沒有 PK/FK/Trigger；DetailLog 有 18 欄、9 個 NOT NULL constraint，沒有 PK/index/FK/Trigger；StockerState 有 8 欄、三欄複合 PK unique index，沒有 FK/Trigger。Oracle source DDL、metadata 與 PostgreSQL CREATE-only 見 `database/reference/mestest_wip_wp302_*`。既有 CarrierState／CarrierType／Lot/Component references 重用，不重複 CREATE。
+- 受保護 profile／PowerShell 只在公司本機使用；Oracle IP、帳號、密碼、SID 未輸出或提交。CREATE-only 不是 migration；家用端需先查 YMES PostgreSQL live schema／migration history，僅為實際缺少的物件新增 forward migration。
