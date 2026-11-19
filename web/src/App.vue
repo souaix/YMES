@@ -53,6 +53,17 @@ import UserDefinedRunCardMaster from './components/UserDefinedRunCardMaster.vue'
 import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
 import ReceivingOrderMaster from './components/ReceivingOrderMaster.vue'
 import ManufacturingOrderMaster from './components/ManufacturingOrderMaster.vue'
+import WipLotBasisCreate from './components/WipLotBasisCreate.vue'
+import WipLotBasisBatch from './components/WipLotBasisBatch.vue'
+import WipLotExecution from './components/WipLotExecution.vue'
+import WipLotExecutionByComponent from './components/WipLotExecutionByComponent.vue'
+import WipEquipmentLotState from './components/WipEquipmentLotState.vue'
+import WipEquipmentMaterialLoading from './components/WipEquipmentMaterialLoading.vue'
+import WipCarrierState from './components/WipCarrierState.vue'
+import WipFgdInventory from './components/WipFgdInventory.vue'
+import SemiInventory from './components/SemiInventory.vue'
+import PackingMOLine from './components/PackingMOLine.vue'
+import WipInventory from './components/WipInventory.vue'
 import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
 import FtProgramMaster from './components/FtProgramMaster.vue'
@@ -432,9 +443,43 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:OE:MO QUERY', label: '工單查詢', tableName: 'tbloemobasis', shortLabel: '查', functionNo: 'MO QUERY', moduleNo: 'OE' },
         { id: 'function:OE:MO QUERY2', label: '工單達交率（準時開工）', tableName: 'tbloemobasis', shortLabel: '開', functionNo: 'MO QUERY2', moduleNo: 'OE' },
         { id: 'function:OE:MO QUERY3', label: '工單達交率（準時完工）', tableName: 'tbloemobasis', shortLabel: '完', functionNo: 'MO QUERY3', moduleNo: 'OE' },
+        { id: 'function:OE:MO MATERIAL LIST', label: '工單用料清單', tableName: 'tbloemomateriallist', shortLabel: '料', functionNo: 'MO MATERIAL LIST', moduleNo: 'OE' },
+        { id: 'function:OE:MO MATERIAL STATUS', label: '工單存料現況', tableName: 'tbloemomaterialstate', shortLabel: '存', functionNo: 'MO MATERIAL STATUS', moduleNo: 'OE' },
+        { id: 'function:OE:MO CLOSE', label: '工單結案', tableName: 'tbloemobasis', shortLabel: '結', functionNo: 'MO CLOSE', moduleNo: 'OE' },
+        { id: 'function:OE:MO COMPDATA MAINTAIN', label: '工單元件資料維護作業', tableName: 'tbloemocomponent', shortLabel: '元', functionNo: 'MO COMPDATA MAINTAIN', moduleNo: 'OE' },
+      ],
+    }, {
+      id: 'menu:OE:INDUSTRY', label: '行業包', shortLabel: '行', children: [
+        { id: 'function:OE:B_MO CHOOSE WAFER', label: '工單挑片資料查詢', tableName: 'tbloemocomponent', shortLabel: '挑', functionNo: 'B_MO CHOOSE WAFER', moduleNo: 'OE' },
+        { id: 'function:OE:P_MO BASIS PKG', label: '工單開立_晶片測試', tableName: 'tbloemobasis', shortLabel: '晶', functionNo: 'P_MO BASIS PKG', moduleNo: 'OE' },
       ],
     }],
   },
+  { id: 'module:WIP', label: '在製品管理', shortLabel: '製', moduleNo: 'WIP', children: [{
+    id: 'menu:WIP:IN PROCESS', label: '在製品', shortLabel: '製', children: [
+      { id: 'function:WIP:CREATE LOT', label: '生產批開立', tableName: 'tblwiplotbasis', shortLabel: '批', functionNo: 'CREATE LOT', moduleNo: 'WIP' },
+      { id: 'function:WIP:CREATE LOT_BATCH', label: '生產批開立_批次', tableName: 'tblwiplotbasis', shortLabel: '批次', functionNo: 'CREATE LOT_BATCH', moduleNo: 'WIP' },
+    ],
+  }, {
+    id: 'menu:WIP:PRODUCTION REPORTING', label: '生產報工', shortLabel: '報', children: [
+      { id: 'function:WIP:EXECUTE LOT', label: '生產批執行', tableName: 'tblwiplotstate', shortLabel: '執', functionNo: 'EXECUTE LOT', moduleNo: 'WIP' },
+      { id: 'function:WIP:EXECUTE LOT_COMP', label: '生產批執行_元件', tableName: 'tblwipcomponentstate', shortLabel: '元', functionNo: 'EXECUTE LOT_COMP', moduleNo: 'WIP' },
+      { id: 'function:WIP:EXECUTE LOT_EQP', label: '生產批執行_設備', tableName: 'tbleqpfavorite', shortLabel: '設備', functionNo: 'EXECUTE LOT_EQP', moduleNo: 'WIP' },
+    ],
+  }, {
+    id: 'menu:WIP:EQUIPMENT AND CARRIER', label: '設備與載具', shortLabel: '設備', children: [
+      { id: 'function:WIP:EQP MOUNT MATERIAL', label: '設備上料', tableName: 'tblwipeqpmaterialstate', shortLabel: '上料', functionNo: 'EQP MOUNT MATERIAL', moduleNo: 'WIP' },
+      { id: 'function:WIP:CARRIER STATE', label: '載具現況管理', tableName: 'tblwipcarrierstate', shortLabel: '載具', functionNo: 'CARRIER STATE', moduleNo: 'WIP' },
+    ],
+  }, {
+    id: 'menu:WIP:PACKAGING', label: '包裝與庫房', shortLabel: '庫', children: [
+      { id: 'function:WIP:PACKING_MOLINE', label: '包裝作業', tableName: 'tblwipmolinepackl1', shortLabel: '包裝', functionNo: 'PACKING_MOLINE', moduleNo: 'WIP' },
+      { id: 'function:WIP:PACKING_MOLINE_INV', label: '在製品庫包裝作業', tableName: 'tblinvpackstate', shortLabel: '庫包', functionNo: 'PACKING_MOLINE_INV', moduleNo: 'WIP' },
+      { id: 'function:WIP:WIP INV', label: '在製品庫帳務維護', tableName: 'tblinvwipinventory_semi', shortLabel: '在製品庫', functionNo: 'WIP INV', moduleNo: 'WIP' },
+      { id: 'function:WIP:SEMI INV', label: '半成品庫帳務維護', tableName: 'tblinvsemiinventory', shortLabel: '半成品庫', functionNo: 'SEMI INV', moduleNo: 'WIP' },
+      { id: 'function:WIP:FGD INV', label: '成品庫帳務維護', tableName: 'tblinvfgdinventory', shortLabel: '成品庫', functionNo: 'FGD INV', moduleNo: 'WIP' },
+    ],
+  }] },
 ]
 
 const menuTree = ref<MenuNode[]>(fallbackMenuTree)
@@ -442,6 +487,18 @@ const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
 const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
+  'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
+  'function:WIP:CREATE LOT_BATCH': appBasePath + '/WIP/LotBasisBatch',
+  'function:WIP:EXECUTE LOT': appBasePath + '/WIP/LotExecution',
+  'function:WIP:EXECUTE LOT_COMP': appBasePath + '/WIP/LotExecutionByComponent',
+  'function:WIP:EXECUTE LOT_EQP': appBasePath + '/WIP/EquipmentLotState',
+  'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
+  'function:WIP:CARRIER STATE': appBasePath + '/WIP/CarrierState',
+  'function:WIP:PACKING_MOLINE': appBasePath + '/WIP/PackingMOLine',
+  'function:WIP:PACKING_MOLINE_INV': appBasePath + '/WIP/PackingMOLineInv',
+  'function:WIP:WIP INV': appBasePath + '/WIP/WipInventory',
+  'function:WIP:SEMI INV': appBasePath + '/WIP/SemiInventory',
+  'function:WIP:FGD INV': appBasePath + '/WIP/FgdInventory',
   'function:OE:RO BASIS': appBasePath + '/OE/ReceivingOrders',
   'function:OE:RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
   'function:OE:MO BASIS': appBasePath + '/OE/ManufacturingOrders',
@@ -449,6 +506,12 @@ const menuRoutes: Record<string, string> = {
   'function:OE:MO QUERY': appBasePath + '/OE/ManufacturingOrderQuery',
   'function:OE:MO QUERY2': appBasePath + '/OE/ManufacturingOrderStartRate',
   'function:OE:MO QUERY3': appBasePath + '/OE/ManufacturingOrderFinishRate',
+  'function:OE:MO MATERIAL LIST': appBasePath + '/OE/ManufacturingOrderMaterials',
+  'function:OE:MO MATERIAL STATUS': appBasePath + '/OE/ManufacturingOrderMaterialStock',
+  'function:OE:MO CLOSE': appBasePath + '/OE/ManufacturingOrderClose',
+  'function:OE:MO COMPDATA MAINTAIN': appBasePath + '/OE/ManufacturingOrderComponents',
+  'function:OE:B_MO CHOOSE WAFER': appBasePath + '/OE/ManufacturingOrderWaferQuery',
+  'function:OE:P_MO BASIS PKG': appBasePath + '/OE/ChipTestManufacturingOrders',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -589,6 +652,7 @@ const menuRoutes: Record<string, string> = {
 }
 
 const functionRoutes: Record<string, string> = {
+  'CARRIER STATE': appBasePath + '/WIP/CarrierState',
   'BROKER BASIS': brokerBasisRoute,
   'FORWARDER BASIS': forwarderBasisRoute,
   'TAKER BASIS': takerBasisRoute,
@@ -670,6 +734,12 @@ const functionRoutes: Record<string, string> = {
   'MO QUERY': appBasePath + '/OE/ManufacturingOrderQuery',
   'MO QUERY2': appBasePath + '/OE/ManufacturingOrderStartRate',
   'MO QUERY3': appBasePath + '/OE/ManufacturingOrderFinishRate',
+  'MO MATERIAL LIST': appBasePath + '/OE/ManufacturingOrderMaterials',
+  'MO MATERIAL STATUS': appBasePath + '/OE/ManufacturingOrderMaterialStock',
+  'MO CLOSE': appBasePath + '/OE/ManufacturingOrderClose',
+  'MO COMPDATA MAINTAIN': appBasePath + '/OE/ManufacturingOrderComponents',
+  'B_MO CHOOSE WAFER': appBasePath + '/OE/ManufacturingOrderWaferQuery',
+  'P_MO BASIS PKG': appBasePath + '/OE/ChipTestManufacturingOrders',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -732,12 +802,30 @@ const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'funct
 const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
+const isWipLotBasisCreatePage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT')
+const isWipLotBasisBatchPage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT_BATCH')
+const isWipLotExecutionPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT')
+const isWipLotExecutionByComponentPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_COMP')
+const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
+const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
+const isWipCarrierStatePage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER STATE')
+const isWipFgdInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:FGD INV')
+const isWipPackingMOLinePage = computed(() => activeMasterKey.value === 'function:WIP:PACKING_MOLINE')
+const isWipPackingMOLineInvPage = computed(() => activeMasterKey.value === 'function:WIP:PACKING_MOLINE_INV')
+const isWipInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:WIP INV')
+const isWipSemiInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:SEMI INV')
 const manufacturingOrderPages = {
   'function:OE:MO BASIS': undefined,
   'function:OE:MO DELETE': 'delete',
   'function:OE:MO QUERY': 'query',
   'function:OE:MO QUERY2': 'start-report',
   'function:OE:MO QUERY3': 'finish-report',
+  'function:OE:MO MATERIAL LIST': 'materials',
+  'function:OE:MO MATERIAL STATUS': 'material-stock',
+  'function:OE:MO CLOSE': 'close',
+  'function:OE:MO COMPDATA MAINTAIN': 'components',
+  'function:OE:B_MO CHOOSE WAFER': 'wafer-query',
+  'function:OE:P_MO BASIS PKG': 'chip-test',
 } as const
 const manufacturingOrderPage = computed(() => {
   const key = activeMasterKey.value
@@ -2310,6 +2398,18 @@ async function signOut(): Promise<void> {
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
+        <WipLotBasisCreate v-else-if="isWipLotBasisCreatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotBasisBatch v-else-if="isWipLotBasisBatchPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotExecution v-else-if="isWipLotExecutionPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotExecutionByComponent v-else-if="isWipLotExecutionByComponentPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipCarrierState v-else-if="isWipCarrierStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipInventory v-else-if="isWipInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipFgdInventory v-else-if="isWipFgdInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <PackingMOLine v-else-if="isWipPackingMOLinePage" key="wp601" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <PackingMOLine v-else-if="isWipPackingMOLineInvPage" key="wp629" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" :inventory-mode="true" @close="navigateHome" />
+        <SemiInventory v-else-if="isWipSemiInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <ReceivingOrderMaster
           v-else-if="isReceivingOrderPage || isReceivingOrderClosePage"
           :key="activeMasterKey"

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, toRaw } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import ManufacturingOrderMaterials from './ManufacturingOrderMaterials.vue'
+import ManufacturingOrderComponents, { type WorkOrderComponent } from './ManufacturingOrderComponents.vue'
 import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2
 type MoSource = 0 | 1 | 2 | 3
 interface Process { psNo: string; processNo: string; processVersion: string; opNo: string; haveComponent: boolean }
-interface Component { componentNo: string; goodQty: number; unitNo: string }
 interface Property { propertyNo: string; propertyValue: string }
 interface WorkOrder {
   moNo: string; moSource: MoSource; roNo: string; itemNo: number; returnNo: string; customerNo: string
@@ -14,24 +15,34 @@ interface WorkOrder {
   moTypeNo: number; priority: number; factoryNo: string; customerLotNo: string; planFinishDate: string
   description: string; belongToMoNo: string; issueState: IssueState; moState: number; dataStamp: number
   creator: string; createDate: string; reviser: string; reviseDate: string
-  processes: Process[]; components: Component[]; properties: Property[]
+  processes: Process[]; components: WorkOrderComponent[]; properties: Property[]
   fromErp?: boolean; hasLots?: boolean; hasIssuedMaterial?: boolean
   unreleaseLotQty?: number; erpMoLineNo?: string
   productType?: string; planStartDate?: string; actualStartDate?: string; actualFinishDate?: string
+  orgMoState?: number; hasOpenWip?: boolean
+  waferSource?: number
+  moClass?: string; incomingKey?: string; releaseUnitNo?: string; componentFromInventory?: boolean
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' | 'material-stock' | 'close' | 'components' | 'wafer-query' | 'chip-test' }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const deletionOnly = computed(() => props.pageMode === 'delete')
+const closingOnly = computed(() => props.pageMode === 'close')
+const batchSelection = computed(() => deletionOnly.value || closingOnly.value)
 const startReport = computed(() => props.pageMode === 'start-report')
 const finishReport = computed(() => props.pageMode === 'finish-report')
 const report = computed(() => startReport.value || finishReport.value)
-const queryOnly = computed(() => props.pageMode === 'query' || report.value)
+const waferQuery = computed(() => props.pageMode === 'wafer-query')
+const chipTest = computed(() => props.pageMode === 'chip-test')
+const queryOnly = computed(() => props.pageMode === 'query' || report.value || waferQuery.value)
 const reportAction = computed(() => finishReport.value ? '完工' : '開工')
 const pageTitle = computed(() => {
   if (report.value) return '工單達交率（準時' + reportAction.value + '）'
+  if (waferQuery.value) return '工單挑片資料查詢'
+  if (chipTest.value) return '工單開立_晶片測試'
   if (queryOnly.value) return '工單查詢'
+  if (closingOnly.value) return '工單結案'
   return deletionOnly.value ? '工單刪除' : '工單基本資料'
 })
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
@@ -46,6 +57,13 @@ const products = ['DEV-PRD-1001', 'DEV-PRD-1002']
 const productTypes: Record<string, string> = { 'DEV-PRD-1001': 'DEV-IC', 'DEV-PRD-1002': 'DEV-WAFER' }
 const moStateLabels: Record<number, string> = { 0: '未確認', 1: '簽核中', 2: '已確認', 3: '已發放', 6: '在製品退回', 99: '結案' }
 const defaultProcess = (): Process => ({ psNo: '', processNo: '', processVersion: '01', opNo: '', haveComponent: false })
+const chipWafers: WorkOrderComponent[] = [
+  { componentNo: 'DEV-CP-WAFER-01', goodQty: 1, unitNo: 'PCS', inventoryNo: 'DEV-RAW', materialNo: 'DEV-MTL-001', materialLotNo: 'DEV-WF-LOT-A', cassetteNo: 'DEV-CAS-01', slotNo: '01' },
+  { componentNo: 'DEV-CP-WAFER-02', goodQty: 1, unitNo: 'PCS', inventoryNo: 'DEV-RAW', materialNo: 'DEV-MTL-001', materialLotNo: 'DEV-WF-LOT-A', cassetteNo: 'DEV-CAS-01', slotNo: '02' },
+]
+const needsWafer = (row: WorkOrder) => row.processes.some(process => process.psNo.toUpperCase() === 'DEV-CP')
+const requiresComponentCount = (row: WorkOrder) => row.processes.some(process => process.haveComponent) &&
+  (needsWafer(row) || productTypes[row.productNo] !== 'DEV-WAFER')
 const operator = () => props.currentUserNo || 'DEV001'
 const now = () => new Date().toISOString()
 
@@ -76,12 +94,30 @@ function readLocal(): WorkOrder[] {
   return [
     { ...seed, moNo: 'DEV-MO-001' },
     { ...seed, moNo: 'DEV-MO-002', issueState: 1, moState: 1 },
-    { ...seed, moNo: 'DEV-MO-003', issueState: 2, moState: 2, fromErp: true, actualStartDate: '2026-11-12' },
+    {
+      ...seed, moNo: 'DEV-MO-003', issueState: 2, moState: 2, fromErp: true, actualStartDate: '2026-11-12',
+      processes: seed.processes.map(process => ({ ...process, haveComponent: true })),
+      components: [
+        { componentNo: 'DEV-CP-EXAMPLE-01', goodQty: 1, unitNo: 'PCS', releaseState: 0 },
+        { componentNo: 'DEV-CP-EXAMPLE-02', goodQty: 1, unitNo: 'PCS', releaseState: 1 },
+      ],
+    },
     { ...seed, moNo: 'DEV-MO-004', issueState: -1 },
     { ...seed, moNo: 'DEV-MO-005', hasLots: true },
     { ...seed, moNo: 'DEV-MO-006', issueState: 2, moState: 99, unreleaseLotQty: 0, actualStartDate: '2026-11-13', actualFinishDate: '2026-11-15' },
     { ...seed, moNo: 'DEV-MO-007', issueState: 2, moState: 99, actualStartDate: '2026-11-11', actualFinishDate: '2026-11-14' },
     { ...seed, moNo: 'DEV-MO-008', issueState: 2, moState: 99, actualStartDate: '2026-11-12', actualFinishDate: '2026-11-16' },
+    { ...seed, moNo: 'DEV-MO-009', issueState: 2, moState: 3 },
+    { ...seed, moNo: 'DEV-MO-010', issueState: 2, moState: 3, fromErp: true },
+    { ...seed, moNo: 'DEV-MO-011', issueState: 2, moState: 3, hasOpenWip: true },
+    {
+      ...seed, moNo: 'DEV-MO-012', issueState: 2, moState: 3, waferSource: 1,
+      components: [{
+        componentNo: 'DEV-WAFER-001', goodQty: 1, unitNo: 'PCS', inventoryNo: 'DEV-RAW', materialNo: 'DEV-MTL-001',
+        materialLotNo: 'DEV-ML-01', vendorNo: 'DEV-VENDOR', cassetteNo: 'DEV-CAS-01', slotNo: '01', laserMark: 'DEV-LASER-01',
+        testResults: { 'DEV_CP_Yield': 97.5, 'DEV_CP_Grade': 'A' },
+      }],
+    },
   ]
 }
 
@@ -89,11 +125,14 @@ const rows = ref(readLocal())
 const currentState = ref<IssueState>(0)
 const search = ref('')
 const appliedSearch = ref('')
+const searchBy = ref<'moNo' | 'belongToMoNo'>('moNo')
+const appliedSearchBy = ref<'moNo' | 'belongToMoNo'>('moNo')
 const activeNo = ref('')
 const error = ref('')
 const notice = ref('')
 const editError = ref('')
 const editor = ref<WorkOrder>()
+const selectedChipWafers = ref<string[]>([])
 const mode = ref<'add' | 'edit' | 'copy' | 'property'>('add')
 const section = ref<'basis' | 'process' | 'components' | 'property'>('basis')
 const materials = ref<WorkOrder>()
@@ -108,6 +147,9 @@ const queryStates = computed(() => Object.entries(moStateLabels)
   .map(([value, label]) => ({ value: Number(value), label }))
   .filter(state => queryOnly.value || state.value <= 3))
 const visible = computed(() => rows.value.filter(row => {
+  if (chipTest.value) return (!row.moClass || row.moClass === 'PKG') && row.moState >= 0 && row.moState <= 2 &&
+    row.issueState === currentState.value && row[appliedSearchBy.value].toUpperCase().includes(appliedSearch.value)
+  if (closingOnly.value) return row.issueState === 2 && row.moState === 3 && row.moNo.toUpperCase().includes(appliedSearch.value)
   if (!props.pageMode) return row.issueState === currentState.value && row.moNo.toUpperCase().includes(appliedSearch.value)
   const query = appliedFilters.value
   if (!query) return false
@@ -125,6 +167,8 @@ const visible = computed(() => rows.value.filter(row => {
     (query.states.length ? query.states.includes(row.moState) : queryOnly.value || row.moState >= 0 && row.moState <= 3)
 }).sort((a, b) => a.moNo.localeCompare(b.moNo)))
 const active = computed(() => visible.value.find(row => row.moNo === activeNo.value) ?? visible.value[0])
+const selectedWafers = computed(() => [1, 2, 3].includes(active.value?.waferSource ?? 0) ? active.value?.components ?? [] : [])
+const waferColumns = computed(() => [...new Set(selectedWafers.value.flatMap(row => Object.keys(row.testResults ?? {})))])
 
 function dayDifference(actual?: string, planned?: string): number | null {
   if (!actual || !planned) return null
@@ -178,8 +222,39 @@ function applyQueryFilters(): void {
   error.value = ''
 }
 
-function toggleDeletionSelection(event: Event): void {
+function searchOrders(): void {
+  appliedSearch.value = search.value.trim().toUpperCase()
+  appliedSearchBy.value = searchBy.value
+  activeNo.value = ''
+  selectedNos.value = []
+  error.value = ''
+  notice.value = ''
+}
+
+function toggleSelection(event: Event): void {
   selectedNos.value = (event.target as HTMLInputElement).checked ? visible.value.map(row => row.moNo) : []
+}
+
+async function closeSelected(): Promise<void> {
+  if (!closingOnly.value || !isDev.value) return
+  const selection = visible.value.filter(row => selectedNos.value.includes(row.moNo))
+  if (!selection.length || !await requestConfirmation('確定結案 ' + selection.length + ' 筆工單？')) return
+  const completed = new Set<string>()
+  error.value = ''
+  notice.value = ''
+  for (const row of selection) {
+    if (row.fromErp || row.hasOpenWip) {
+      error.value = row.moNo + (row.fromErp ? ' 為 ERP 工單，無法手動結案。' : ' 仍有在製品，無法結案。')
+      break
+    }
+    completed.add(row.moNo)
+  }
+  const next = rows.value.map(row => completed.has(row.moNo) ? {
+    ...row, moState: 99, orgMoState: row.moState, dataStamp: row.dataStamp + 1, reviser: operator(), reviseDate: now(),
+  } : row)
+  if (completed.size && !saveLocal(next)) { error.value = '無法儲存本機工單。'; return }
+  notice.value = '已結案 ' + completed.size + ' 筆。'
+  selectedNos.value = selectedNos.value.filter(no => !completed.has(no))
 }
 
 async function deleteSelected(): Promise<void> {
@@ -221,6 +296,14 @@ function saveLocal(next: WorkOrder[]): boolean {
   }
 }
 
+function saveComponents(moNo: string, dataStamp: number, components: WorkOrderComponent[]): boolean {
+  const row = rows.value.find(item => item.moNo === moNo)
+  if (!row || row.dataStamp !== dataStamp || row.issueState !== 2 || (row.moState !== 2 && row.moState !== 3)) return false
+  return saveLocal(rows.value.map(item => item === row ? {
+    ...item, components, dataStamp: item.dataStamp + 1, reviser: operator(), reviseDate: now(),
+  } : item))
+}
+
 function open(nextMode: typeof mode.value): void {
   const row = active.value
   if (nextMode !== 'add' && !row) return
@@ -231,12 +314,48 @@ function open(nextMode: typeof mode.value): void {
       creator: operator(), createDate: now(), reviser: '', reviseDate: '', belongToMoNo: 'N/A',
       fromErp: false, hasLots: false, hasIssuedMaterial: false,
       unreleaseLotQty: undefined, erpMoLineNo: undefined, actualStartDate: undefined, actualFinishDate: undefined,
+      orgMoState: undefined, hasOpenWip: false,
+      waferSource: undefined,
     }
   } else {
     editor.value = nextMode === 'add' || !row ? blank() : structuredClone(toRaw(row))
   }
   mode.value = nextMode
   section.value = nextMode === 'property' ? 'property' : 'basis'
+  editError.value = ''
+  selectedChipWafers.value = []
+}
+
+function obtainChipProcess(): void {
+  const draft = editor.value
+  if (!draft?.productNo || draft.processes.length) return
+  draft.processes.push({
+    ...defaultProcess(), psNo: productTypes[draft.productNo] === 'DEV-WAFER' ? 'DEV-CP' : 'DEV-PS01',
+    processNo: 'DEV-CHIP-TEST', opNo: 'DEV-TEST', haveComponent: true,
+  })
+  editError.value = ''
+}
+
+const availableChipWafers = computed(() => {
+  const used = new Set([
+    ...rows.value.filter(row => row.moNo !== editor.value?.moNo).flatMap(row => row.components.map(component => component.componentNo)),
+    ...(editor.value?.components ?? []).map(component => component.componentNo),
+  ])
+  return chipWafers.filter(row => !used.has(row.componentNo))
+})
+
+function addChipWafers(): void {
+  if (!editor.value) return
+  const draft = editor.value
+  const choices = availableChipWafers.value.filter(row => selectedChipWafers.value.includes(row.componentNo) &&
+    !draft.components.some(component => component.componentNo === row.componentNo))
+  if (draft.components.length + choices.length > draft.moQty) {
+    editError.value = '元件筆數不可超過工單量。'; return
+  }
+  draft.components.push(...choices.map(row => ({ ...row })))
+  draft.componentFromInventory = draft.components.some(component => !!component.inventoryNo)
+  draft.waferSource = 1
+  selectedChipWafers.value = []
   editError.value = ''
 }
 
@@ -279,6 +398,23 @@ function save(close: boolean): void {
   )) {
     editError.value = '請輸入有效的元件良品量及單位。'; return
   }
+  if (chipTest.value) {
+    row.moClass = 'PKG'
+    row.componentFromInventory = row.components.some(component => !!component.inventoryNo)
+    row.waferSource = needsWafer(row) ? row.waferSource ?? 0 : 2
+    if (!row.processes.length) { editError.value = '晶片測試工單至少需要一項製程。'; return }
+    if (needsWafer(row) && row.components.length && row.waferSource === 0) {
+      editError.value = '有挑片元件時請選擇晶圓來源。'; return
+    }
+    const assignedElsewhere = rows.value.filter(order => order.moNo !== row.moNo)
+      .flatMap(order => order.components.map(component => component.componentNo.toUpperCase()))
+    if (row.components.some((component, index) => component.inventoryNo && assignedElsewhere.includes(componentNos[index]!))) {
+      editError.value = '有來料晶圓已分派給其他工單。'; return
+    }
+    if (requiresComponentCount(row) && (row.components.length !== row.moQty || row.components.some(component => component.goodQty <= 0))) {
+      editError.value = '元件筆數須等於工單量，且每筆良品量須大於零。'; return
+    }
+  }
   row.components.forEach((component, index) => { component.componentNo = componentNos[index]! })
   row.properties.forEach((property, index) => { property.propertyNo = propertyNos[index]! })
   const existing = rows.value.find(item => item.moNo === row.moNo)
@@ -318,6 +454,10 @@ async function changeState(action: 'delete' | 'approve' | 'release'): Promise<vo
       error.value = '需要元件的流程尚未指定元件。'; return
     }
     if (row.components.length > row.moQty) { error.value = '元件數量不可超過工單量。'; return }
+    if (chipTest.value && needsWafer(row) && (!row.waferSource || row.components.length !== row.moQty)) {
+      error.value = '工單需要完整挑片資料後才能' + (isApproval ? '核准。' : '發放。')
+      return
+    }
   }
   const label = isApproval ? '核准' : isRelease ? '發放' : hardDelete ? '刪除' : '停用'
   if (!await requestConfirmation('確定' + label + '工單 ' + row.moNo + '？')) return
@@ -339,10 +479,14 @@ function apply(event: MouseEvent): void {
 </script>
 
 <template>
-  <section class="mo-page">
+  <ManufacturingOrderMaterials v-if="pageMode === 'materials' || pageMode === 'material-stock'" class="mo-page"
+    :orders="rows" :development-preview="isDev" :stock-only="pageMode === 'material-stock'" @close="emit('close')" />
+  <ManufacturingOrderComponents v-else-if="pageMode === 'components'" class="mo-page" :orders="rows"
+    :development-preview="isDev" :save-components="saveComponents" @close="emit('close')" />
+  <section v-else class="mo-page">
     <h2>{{ pageTitle }}</h2>
     <template v-if="isDev">
-      <form v-if="pageMode" class="filter-form" @submit.prevent="applyQueryFilters">
+      <form v-if="pageMode && !closingOnly" class="filter-form" @submit.prevent="applyQueryFilters">
         <div class="toolbar">
           <label>工單編號 <input v-model="queryFilters.moNo" maxlength="50"></label>
           <label>訂單編號 <input v-model="queryFilters.roNo" maxlength="25"></label>
@@ -350,9 +494,11 @@ function apply(event: MouseEvent): void {
           <label>客戶編號 <input v-model="queryFilters.customerNo" maxlength="50"></label>
           <label>產品 <input v-model="queryFilters.productNo" maxlength="50"></label>
           <label>產品版本 <input v-model="queryFilters.productVersion" maxlength="5"></label>
-          <label>工程編號 <input v-model="queryFilters.engNo" maxlength="30"></label>
-          <label>工程版本 <input v-model="queryFilters.engVersion" maxlength="3"></label>
-          <label>工單類別 <input v-model="queryFilters.moTypeNo" type="text" inputmode="numeric" maxlength="2"></label>
+          <template v-if="!waferQuery">
+            <label>工程編號 <input v-model="queryFilters.engNo" maxlength="30"></label>
+            <label>工程版本 <input v-model="queryFilters.engVersion" maxlength="3"></label>
+            <label>工單類別 <input v-model="queryFilters.moTypeNo" type="text" inputmode="numeric" maxlength="2"></label>
+          </template>
         </div>
         <div class="toolbar">
           <template v-if="report">
@@ -360,18 +506,21 @@ function apply(event: MouseEvent): void {
             <label>計畫{{ reportAction }}迄日 <input v-model="queryFilters.dateTo" type="date"></label>
             <label>產品類別 <select v-model="queryFilters.productTypes" multiple><option v-for="type in Object.values(productTypes)" :key="type">{{ type }}</option></select></label>
           </template>
-          <fieldset class="toolbar"><legend>來源</legend>
+          <fieldset v-if="!waferQuery" class="toolbar"><legend>來源</legend>
             <label v-for="source in sources" :key="source.value"><input v-model="queryFilters.sources" :value="source.value" type="checkbox"> {{ source.label }}</label>
           </fieldset>
-          <fieldset class="toolbar"><legend>工單狀態</legend>
+          <fieldset v-if="!waferQuery" class="toolbar"><legend>工單狀態</legend>
             <label v-for="state in queryStates" :key="state.value"><input v-model="queryFilters.states" :value="state.value" type="checkbox"> {{ state.label }}</label>
           </fieldset>
           <button type="submit">查詢</button>
         </div>
       </form>
-      <form v-else class="toolbar" @submit.prevent="appliedSearch = search.trim().toUpperCase(); activeNo = ''; error = ''">
-        <label>工單編號 <input v-model="search" maxlength="50"></label><button type="submit">查詢</button>
-        <button v-for="state in states" :key="state.value" type="button" :aria-pressed="currentState === state.value" @click="currentState = state.value; activeNo = ''; error = ''">{{ state.label }}</button>
+      <form v-else class="toolbar" @submit.prevent="searchOrders">
+        <label v-if="chipTest">查詢欄位 <select v-model="searchBy"><option value="moNo">工單編號</option><option value="belongToMoNo">父工單</option></select></label>
+        <label>{{ chipTest ? '查詢值' : '工單編號' }} <input v-model="search" maxlength="50"></label><button type="submit">查詢</button>
+        <template v-if="!closingOnly">
+          <button v-for="state in states" :key="state.value" type="button" :aria-pressed="currentState === state.value" @click="currentState = state.value; activeNo = ''; error = ''">{{ state.label }}</button>
+        </template>
       </form>
       <p v-if="error" role="alert">{{ error }}</p>
       <p v-if="notice" role="status">{{ notice }}</p>
@@ -387,10 +536,10 @@ function apply(event: MouseEvent): void {
         <div class="grid"><table>
           <thead><tr>
             <th>
-              <input v-if="deletionOnly" type="checkbox" aria-label="選取查詢結果" :disabled="!visible.length" :checked="visible.length > 0 && selectedNos.length === visible.length" @change="toggleDeletionSelection">
+              <input v-if="batchSelection" type="checkbox" aria-label="選取查詢結果" :disabled="!visible.length" :checked="visible.length > 0 && selectedNos.length === visible.length" @change="toggleSelection">
               <template v-else>選取</template>
             </th>
-            <th>工單編號</th><th>來源</th><th>訂單</th><th>廠別</th><th>客戶</th><th>產品</th><th>版本</th><th>工單量</th><th>單位</th><th>工單狀態</th><th v-if="pageMode">簽核狀態</th><th>計畫完工</th><th>說明</th>
+            <th>工單編號</th><th>來源</th><th>訂單</th><th>廠別</th><th>客戶</th><th>產品</th><th>版本</th><th>工單量</th><th>單位</th><th>工單狀態</th><th v-if="pageMode">簽核狀態</th><th>計畫完工</th><th>說明</th><th v-if="chipTest">父工單</th>
             <template v-if="queryOnly">
               <th>訂單項次</th><th>未開批量</th><th>工程編號</th><th>工程版本</th><th>工單類別</th><th>優先序</th><th>父工單</th><th>客戶批號</th><th>ERP 行號</th>
             </template>
@@ -398,14 +547,15 @@ function apply(event: MouseEvent): void {
             <th v-if="finishReport">生產天數</th>
           </tr></thead>
           <tbody>
-            <tr v-for="row in visible" :key="row.moNo" :class="{ selected: deletionOnly ? selectedNos.includes(row.moNo) : active?.moNo === row.moNo }" @click="activeNo = row.moNo">
+            <tr v-for="row in visible" :key="row.moNo" :class="{ selected: batchSelection ? selectedNos.includes(row.moNo) : active?.moNo === row.moNo }" @click="activeNo = row.moNo">
               <td>
-                <input v-if="deletionOnly" v-model="selectedNos" type="checkbox" :value="row.moNo" :aria-label="'選取 ' + row.moNo">
+                <input v-if="batchSelection" v-model="selectedNos" type="checkbox" :value="row.moNo" :aria-label="'選取 ' + row.moNo">
                 <input v-else type="radio" name="selected-work-order" :checked="active?.moNo === row.moNo" :aria-label="'選取 ' + row.moNo" @change="activeNo = row.moNo">
               </td>
               <td>{{ row.moNo }}</td><td>{{ sources.find(item => item.value === row.moSource)?.label }}</td><td>{{ row.roNo }}</td><td>{{ row.factoryNo }}</td><td>{{ row.customerNo }}</td><td>{{ row.productNo }}</td><td>{{ row.productVersion }}</td><td>{{ row.moQty }}</td><td>{{ row.moUnitNo }}</td><td>{{ moStateLabels[row.moState] }}</td>
               <td v-if="pageMode">{{ states.find(item => item.value === row.issueState)?.label }}</td>
               <td>{{ row.planFinishDate }}</td><td>{{ row.description }}</td>
+              <td v-if="chipTest">{{ row.belongToMoNo }}</td>
               <template v-if="queryOnly">
                 <td>{{ row.itemNo }}</td><td>{{ row.unreleaseLotQty ?? row.moQty }}</td><td>{{ row.engNo }}</td><td>{{ row.engVersion }}</td>
                 <td>{{ row.moTypeNo }}</td><td>{{ row.priority }}</td><td>{{ row.belongToMoNo }}</td><td>{{ row.customerLotNo }}</td><td>{{ row.erpMoLineNo }}</td>
@@ -416,14 +566,17 @@ function apply(event: MouseEvent): void {
               </template>
               <td v-if="finishReport">{{ displayDays(leadTime(row)) }}</td>
             </tr>
-            <tr v-if="!visible.length"><td :colspan="finishReport ? 29 : startReport ? 28 : queryOnly ? 23 : deletionOnly ? 14 : 13">{{ pageMode && !appliedFilters ? '請輸入查詢條件或查詢全部' : '沒有符合條件的工單' }}</td></tr>
+            <tr v-if="!visible.length"><td :colspan="finishReport ? 29 : startReport ? 28 : queryOnly ? 23 : chipTest ? 15 : batchSelection ? 14 : 13">{{ pageMode && !closingOnly && !chipTest && !appliedFilters ? '請輸入查詢條件或查詢全部' : '沒有符合條件的工單' }}</td></tr>
           </tbody>
         </table></div>
         <div v-if="deletionOnly" class="actions">
           <button type="button" :disabled="!selectedNos.length" @click="deleteSelected">刪除</button>
         </div>
+        <div v-else-if="closingOnly" class="actions">
+          <button type="button" :disabled="!selectedNos.length" @click="closeSelected">工單結案</button>
+        </div>
         <div v-else-if="queryOnly" class="actions">
-          <button type="button" :disabled="!active" @click="open('property')">屬性</button>
+          <button v-if="!waferQuery" type="button" :disabled="!active" @click="open('property')">屬性</button>
         </div>
         <div v-else class="actions">
           <button type="button" @click="open('add')">新增</button>
@@ -436,6 +589,22 @@ function apply(event: MouseEvent): void {
           <button type="button" :disabled="!active" @click="open('property')">屬性</button>
         </div>
       </div>
+      <template v-if="waferQuery">
+        <h3>挑片資料 {{ active?.moNo }}</h3>
+        <div class="grid"><table>
+          <thead><tr><th>元件</th><th>庫房</th><th>料號</th><th>物料批號</th><th>供應商</th><th>載具</th><th>槽位</th><th>雷刻</th>
+            <th v-for="column in waferColumns" :key="column">{{ column }}</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="row in selectedWafers" :key="row.componentNo">
+              <td>{{ row.componentNo }}</td><td>{{ row.inventoryNo }}</td><td>{{ row.materialNo }}</td><td>{{ row.materialLotNo }}</td>
+              <td>{{ row.vendorNo }}</td><td>{{ row.cassetteNo }}</td><td>{{ row.slotNo }}</td><td>{{ row.laserMark }}</td>
+              <td v-for="column in waferColumns" :key="column">{{ row.testResults?.[column] ?? '' }}</td>
+            </tr>
+            <tr v-if="!selectedWafers.length"><td :colspan="8 + waferColumns.length">{{ active ? '此工單沒有挑片資料' : '請查詢並選擇工單' }}</td></tr>
+          </tbody>
+        </table></div>
+      </template>
       <p>資料總筆數 {{ visible.length }}</p>
     </template>
     <p v-else role="status">此功能尚未接入正式服務。</p>
@@ -466,6 +635,11 @@ function apply(event: MouseEvent): void {
           <label>工程版本 <input v-model="editor.engVersion" maxlength="3"></label>
           <label>工單量 <input v-model.number="editor.moQty" type="number" min="0.0001" max="99999999.9999" step="0.0001"></label>
           <label>工單單位 <select v-model="editor.moUnitNo"><option>PCS</option><option>SET</option></select></label>
+          <template v-if="chipTest">
+            <label>發放單位 <select v-model="editor.releaseUnitNo"><option value="">沿用工單單位</option><option>PCS</option><option>SET</option></select></label>
+            <label>來料批識別 <input v-model="editor.incomingKey" maxlength="55"></label>
+            <label>ERP 行號 <input :value="editor.erpMoLineNo" readonly></label>
+          </template>
           <label>工單類別 <input v-model.number="editor.moTypeNo" type="number" min="0" max="99"></label>
           <label>優先序 <input v-model.number="editor.priority" type="number" min="0" max="99"></label>
           <label>客戶批號 <input v-model="editor.customerLotNo" maxlength="50"></label>
@@ -475,6 +649,7 @@ function apply(event: MouseEvent): void {
         </div>
         <fieldset v-if="section === 'process'">
           <legend>流程（依加入次序）</legend>
+          <button v-if="chipTest" type="button" :disabled="!editor.productNo || editor.processes.length > 0" @click="obtainChipProcess">取得 DEV 產品流程</button>
           <div v-for="(process, index) in editor.processes" :key="index" class="child-row">
             <label>生產區段 <input v-model="process.psNo" maxlength="50"></label><label>流程 <input v-model="process.processNo" maxlength="30"></label>
             <label>版本 <input v-model="process.processVersion" maxlength="3"></label><label>作業站 <input v-model="process.opNo" maxlength="50"></label>
@@ -484,6 +659,15 @@ function apply(event: MouseEvent): void {
         </fieldset>
         <fieldset v-if="section === 'components'">
           <legend>元件</legend>
+          <div v-if="chipTest" class="toolbar">
+            <label>晶圓來源 <select :value="editor.waferSource ?? 0" @change="editor.waferSource = Number(($event.target as HTMLSelectElement).value)">
+              <option :value="0">未挑片</option><option :value="1">來料</option><option :value="2">廠內</option><option :value="3">自製</option>
+            </select></label>
+            <label>DEV 來料晶圓 <select v-model="selectedChipWafers" multiple>
+              <option v-for="wafer in availableChipWafers" :key="wafer.componentNo">{{ wafer.componentNo }}</option>
+            </select></label>
+            <button type="button" :disabled="!selectedChipWafers.length" @click="addChipWafers">加入選取晶圓</button>
+          </div>
           <div v-for="(component, index) in editor.components" :key="index" class="child-row">
             <label>元件編號 <input v-model="component.componentNo" maxlength="50"></label><label>良品量 <input v-model.number="component.goodQty" type="number" min="0" max="99999999.9999" step="0.0001"></label>
             <label>單位 <input v-model="component.unitNo" maxlength="30"></label><button type="button" @click="editor.components.splice(index, 1)">移除</button>
@@ -505,13 +689,8 @@ function apply(event: MouseEvent): void {
       </form>
     </div>
     <div v-if="materials" class="overlay">
-      <section class="dialog" role="dialog" aria-modal="true" aria-label="工單用料清單">
-        <h3>工單用料清單 {{ materials.moNo }}</h3>
-        <table><thead><tr><th>料號</th><th>標準用量</th><th>需求量</th><th>單位</th></tr></thead>
-          <tbody><tr><td>DEV-MTL-001</td><td>1</td><td>{{ materials.moQty }}</td><td>{{ materials.moUnitNo }}</td></tr></tbody>
-        </table>
-        <p>DEV 示範用料</p><footer><button type="button" @click="materials = undefined">關閉</button></footer>
-      </section>
+      <ManufacturingOrderMaterials class="dialog materials-dialog" role="dialog" aria-modal="true" aria-label="工單用料清單"
+        :orders="rows" :initial-mo-no="materials.moNo" :development-preview="isDev" @close="materials = undefined" />
     </div>
     <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </section>
@@ -539,6 +718,7 @@ button:disabled { opacity: .55; }
 .actions button { width: 100%; }
 .overlay { position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; background: #21334b55; padding: 18px; }
 .dialog { width: min(760px, 100%); max-height: 90vh; overflow: auto; display: grid; gap: 14px; background: white; padding: 18px; border: 1px solid #8fa4bf; border-radius: 6px; }
+.materials-dialog { width: min(1050px, 100%); }
 .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .fields label { display: grid; gap: 3px; }
 .wide { grid-column: 1 / -1; }

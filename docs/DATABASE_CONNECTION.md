@@ -741,3 +741,71 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - Windows PowerShell 5.1 + ODP.NET 唯讀查 `TBLPRDEQUIPMENTSPEC` 與設備參數目錄。主表 `GET_DDL` 回 `ORA-03135`，依字典重建 10 欄、四欄 PK，四個數值欄均為 `NUMBER(12,6)`。[EquipmentSpec 規格](modules/PRD/產品設備參數規格.md)
 
+
+### 更新 2026-11-19：WIP WP102 生產批開立_批次
+
+- 公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，從本機受保護 profile 讀取 DatabaseConfigs.CS.Test.Mes.ConnectionString，唯讀直連 MESTEST，取得 TBLWIPLOTPROPERTY_TEMP、TBLWIPLOTPROPERTY 的 DBMS_METADATA.GET_DDL，並查 ALL_CONSTRAINTS、ALL_INDEXES、ALL_TRIGGERS。未查業務列、未執行 Oracle DDL/DML，未輸出連線秘密。
+- TBLWIPLOTPROPERTY_TEMP 以 (LOTNO, PROPERTYNO) 為 PK，只有 PK unique index，無 FK、trigger、其他 index。欄位為 LOTNO NVARCHAR2(50)、PROPERTYNO NVARCHAR2(20)、PROPERTYVALUE NVARCHAR2(255)、LOTSERIAL NVARCHAR2(55)；前兩欄 NOT NULL。
+- TBLWIPLOTPROPERTY 亦以 (LOTNO, PROPERTYNO) 為 PK，無 FK/trigger/額外 index；其 Oracle DDL 已由 WP101 保存，WP102 不重複建立。
+- Oracle source DDL：database/reference/mestest_wip_wp102_source_ddl.sql；PostgreSQL CREATE-only 僅含 TEMP：database/reference/mestest_wip_wp102_create.sql。家用端先核對 live schema/migrations，缺表才新增 migration。
+
+### 更新 2026-11-19：WIP WP201 生產批執行
+
+- 依 FunctionNo EXECUTE LOT 的 THEIL Form、標準 Service/Core、THEIL 分支追查執行／TriggerOP／TransferLot 依賴；Windows PowerShell 5.1 + ODP.NET 使用本機受保護 Oracle 設定唯讀取得 39 張 MESTEST 表 DDL 與 ALL_TAB_COLUMNS 欄位 metadata。欄位數逐表與 PostgreSQL CREATE-only 參考吻合。
+- TBLWIPECNLOTBASIS、VIEW_TBLWIPPACK_LOT 在 MESTEST/PUBLIC 的 ALL_OBJECTS/ALL_SYNONYMS 均不存在；不生成猜測 DDL。完整來源與限制見 database/reference/mestest_wip_wp201_*.sql 及 docs/modules/WIP/生產批執行.md。
+- 只查資料字典與 DDL，未讀業務列、未執行 Oracle DDL/DML、未輸出或提交連線秘密。未連 YMES PostgreSQL。
+
+### 更新 2026-11-19：WIP WP202 生產批執行_元件
+
+- WP202 的 Component JOIN 查詢使用 `TBLWIPLOTSTATE`、`TBLWIPCOMPONENTSTATE`、`TBLWIPLOTBASIS`；三表 Oracle DDL／欄位／索引與 PostgreSQL CREATE-only 已由 WP101 唯讀查證並保存於 `database/reference/mestest_wip_wp101_source_ddl.sql`、`mestest_wip_wp101_create.sql`。
+- 本次對照 WinForms／Service／Core 後確認沒有 WP202 專屬表，故不重複直連或產出 CREATE SQL。未讀業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，連線秘密未輸出或提交。API/schema handoff 見 `docs/modules/WIP/生產批執行_元件.md` 與 `todolist_homepc.md`。
+
+### 更新 2026-11-19：WIP WP204 生產批執行_設備
+
+- 使用既有受保護 Oracle profile，以 Windows PowerShell 5.1 + STD/MES_S_DLL/Oracle.ManagedDataAccess.dll 直連 MESTEST，唯讀取得 TBLEQPFAVORITE、TBLWIPLOTGPEQUIPMENT、TBLPRDSTAGESTEPSET、TBLPRDSTAGESTEPSETDETAIL 的 DBMS_METADATA.GET_DDL 與該批表的索引 DDL。
+- 僅查 metadata／DDL，未讀業務資料列、未執行 Oracle DDL/DML，未輸出連線字串或憑證。來源與 CREATE-only 參考為 database/reference/mestest_wip_wp204_source_ddl.sql、mestest_wip_wp204_create.sql；家用端須先核 PostgreSQL live schema／migrations。
+
+### 更新 2026-11-19：WIP WP605 成品庫帳務維護
+
+- 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，使用本機受保護的 `DatabaseConfigs.CS.Test.Mes.ConnectionString` 直連 MESTEST，只讀取得 `TBLINVFGDINVENTORYCOMPONENT`、`TBLINVFGDINBASIS`、`TBLINVFGDINDETAIL`、`TBLINVFGDINCOMPONENT`、`TBLINVTRANSACTIONSTATE`、`TBLINVTRANSACTIONLOG` 的 DBMS_METADATA DDL、ALL_INDEXES、ALL_CONSTRAINTS、ALL_TRIGGERS。
+- 六張表均只有各自 PK unique index；沒有 FK、額外 index 或 trigger。Oracle 查無 `TBLINVFGDINVENTORYBIN`；WinForms Bin 明細使用 `TBLWIPGOODBINSTATE` 加 `TBLSYSBIN.BINORDER` 動態建欄。
+- Oracle source DDL 與 PostgreSQL CREATE-only 參考為 `database/reference/mestest_wip_wp605_source_ddl.sql`、`mestest_wip_wp605_create.sql`。僅查資料字典與 DDL，未查 MES 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，也未輸出或提交 Oracle 憑證。
+- FGD In Source=30 的服務先建立 TransactionState 並把 Basis 設為 1，同步執行 ExeFGDIn；成功設為 2 並搬移至 TransactionLog，失敗設為 3。此流程依 WinForms／Service／Core 原始碼查證，不由 Oracle metadata 推測。完整來源與 API 限制見 [WP605 規格](modules/WIP/成品庫帳務維護.md)。
+
+### 更新 2026-11-19：WIP WP603 在製品庫帳務維護
+
+- 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，從本機受保護 profile 直連 MESTEST，只讀取得 WP603 九張功能表的 DDL、索引、constraints 與 triggers；未查業務資料列、未執行 Oracle DDL/DML，也未連 YMES PostgreSQL。
+- 九表為 `TBLINVWIPINVENTORY_COMPONENT`、`TBLINVWIP_COMPONENTSCRAP`、`TBLINVWIP_FAILBIN`、`TBLINVWIP_INCOMING`、`TBLWIPCONT_ERROR`、`TBLINVSCRINBASIS`、`TBLINVSCRINDETAIL`、`TBLINVSCRINCOMPONENT`、`TBLINVSCRINFAILBIN`。來源欄位、PK 及五個額外索引見 `database/reference/mestest_wip_wp603_source_ddl.sql`；空表 PostgreSQL CREATE-only 參考見 `database/reference/mestest_wip_wp603_create.sql`。
+- 六張表只有 PK 索引；`TBLWIPCONT_ERROR` 無 PK、另有兩個非唯一索引；Component WIP Inventory 有獨立 unique index；Component Scrap 與 Fail Bin 各有 BaseLotNo 非唯一索引。九表無 FK／trigger。獨立索引 `PK_TBLWIPINV_COMPONENT` 的 GET_DDL 回 ORA-31603，以 ALL_INDEXES／ALL_IND_COLUMNS 重建欄位序。
+- WP603 共用 Form、Designer、Service/Core 有讀取；THEIL 專用 Form 原始碼缺於目前 checkout，故客製差異未宣稱已核實。CREATE-only 不是 migration；家用端需先核對 live schema，沿用 WP101／WP201 共用 Lot/WIP 表。
+
+### 更新 2026-11-19：WIP WP604 半成品庫帳務維護
+
+- 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，從本機受保護設定直連 MESTEST，只讀取得 `TBLINVSEMIINBASIS`、`TBLINVSEMIINDETAIL`、`TBLINVSEMIINCOMPONENT`、`TBLINVSEMIINVENTORYCOMPONENT` 的 DBMS_METADATA DDL 與 ALL_INDEXES／ALL_CONSTRAINTS／ALL_TRIGGERS metadata。
+- 四表均只有各自 PK unique index，沒有 FK、額外 index 或 trigger。`TBLINVSEMIINVENTORYCOMPONENT` 未包含於既有 WP201 additional reference，本次補查；`TBLINVSEMIINVENTORY` 與 `TBLINVTRANSACTIONSTATE/LOG` 沿用既有 WP201／WP605 reference，不重複建立。
+- Oracle source DDL、PostgreSQL CREATE-only 參考為 `database/reference/mestest_wip_wp604_source_ddl.sql`、`mestest_wip_wp604_create.sql`。CREATE-only 不是 migration；家用端須先核對 YMES live schema 與 migrations。
+- 僅查 metadata／DDL，未讀 MES 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。Basis Source `0=手動外購、1=From WIPInventory_SEMI` 與交易引擎 Source `20=SEMI In` 由 Core／Service 原始碼確認，不是從 DDL 推斷。
+
+### 更新 2026-11-19：WIP WP601 包裝作業 Oracle metadata
+
+- 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，讀取本機受保護 `DatabaseConfigs.CS.Test.Mes.ConnectionString` 後唯讀直連 MESTEST，取得 WP601 19 張功能表的 DBMS_METADATA DDL 與 ALL_TAB_COLUMNS／ALL_CONSTRAINTS／ALL_INDEXES／ALL_TRIGGERS metadata。19 張 CREATE 欄位數均與 MESTEST dictionary 相符；未讀業務資料列、未執行 Oracle DDL/DML。
+- `TBLWIPMOLINEPACKL` 通用前綴不存在於 MESTEST ALL_OBJECTS／ALL_SYNONYMS；實體為 L1–L6 與各層 Detail。`TBLWIPMOLINEPACKRELATION` 只有兩個非唯一索引、無 PK；`TBLINVPACKMERGELOG` 無 PK／索引。來源 DDL、CREATE-only 與 metadata 分別在 `database/reference/mestest_wip_wp601_source_ddl.sql`、`mestest_wip_wp601_create.sql`、`mestest_wip_wp601_metadata.txt` 及 supplemental metadata。
+- CREATE-only 只供家用端比對 YMES live schema/migrations，不能整批執行；沿用已共用的 WIP／MO／Product／Packing Rule/Label Rule 表。Oracle IP、帳號、密碼及 SID 未輸出或提交；公司端未連 YMES PostgreSQL。
+
+### 更新 2026-11-19：WIP WP629 在製品庫包裝作業來源表重用
+
+- WP629 原始碼使用 `TBLWIPLOTSTATE`、WP601 已核對的包裝層級／Detail／Relation／PackState／PackLog，以及 `TBLINVWIPINVENTORY_SEMI`。本功能沒有新增專屬 Oracle 表，因此本輪沒有重複查 DDL，也沒有另產一份重複 CREATE-only。
+- `TBLINVWIPINVENTORY_SEMI` 的 Oracle source DDL 與 CREATE-only 已由 WP201 來源依賴查證保存於 `database/reference/mestest_wip_wp201_dependency_source_ddl.sql` 及 `mestest_wip_wp201_create.sql`；包裝表保存於 WP601 reference。WP629 規格記載 Status=11、InventoryNo 與 `InlinePackingFlag=1` 行為。
+- 本次只重用既有 Oracle metadata／DDL 與 WinForms、Service、Core 原始碼；未重查業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。家用端仍須核對 live PostgreSQL schema/migrations，不得因 WP629 而建立重複資料表。
+
+### 更新 2026-11-20：WIP WP301 設備上料
+
+- 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 及本機受保護 Oracle profile 直連 MESTEST，唯讀取得四張原先未有 reference 的表 DDL 與 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS` metadata：`TBLWIPEQPMATERIALSTATE`、`TBLWIPEQPMTLSTATE_COMP`、`TBL_BINKLESSMAPSTATE`、`TBL_BSUBSTRATEMAPSTATE`。
+- 四表皆只有複合 PK unique index，沒有 FK、額外 index 或 trigger。欄位、Oracle source DDL 與 metadata 分別見 `database/reference/mestest_wip_wp301_source_ddl.sql`、`mestest_wip_wp301_metadata.txt`；家用端 PostgreSQL CREATE-only 見 `database/reference/mestest_wip_wp301_create.sql`。其他 13 張功能相依表沿用 WP101/WP201、OE、MTL、OP/SMD 既有 reference，不在此重複產生 CREATE。
+- 僅查結構 metadata／DDL，未讀 MES 業務資料列、未在 Oracle 執行 DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。CREATE-only 不代表 migration；家用端須先比較 YMES PostgreSQL live schema／migration history，再只為缺表新增 forward migration。
+
+### 更新 2026-11-20：WIP WP302 載具現況管理
+
+- 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 Oracle profile 直連 MESTEST，只讀取得 `TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCARRIERSTATEDETAILLOG`、`TBLINVSTOCKERSTATE` 的 DBMS_METADATA DDL、欄位／constraint／index／trigger metadata。未查業務資料列，未執行 Oracle DDL/DML，未連 YMES PostgreSQL。
+- Detail 有 11 欄、7 個 NOT NULL constraint、1 個 ComponentNo 非唯一 index，沒有 PK/FK/Trigger；DetailLog 有 18 欄、9 個 NOT NULL constraint，沒有 PK/index/FK/Trigger；StockerState 有 8 欄、三欄複合 PK unique index，沒有 FK/Trigger。Oracle source DDL、metadata 與 PostgreSQL CREATE-only 見 `database/reference/mestest_wip_wp302_*`。既有 CarrierState／CarrierType／Lot/Component references 重用，不重複 CREATE。
+- 受保護 profile／PowerShell 只在公司本機使用；Oracle IP、帳號、密碼、SID 未輸出或提交。CREATE-only 不是 migration；家用端需先查 YMES PostgreSQL live schema／migration history，僅為實際缺少的物件新增 forward migration。

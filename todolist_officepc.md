@@ -1,3 +1,114 @@
+# 公司端待辦
+
+## 公司桌機交回原公司筆電（2026-11-19）
+
+### 先同步
+
+1. 在公司筆電的 YMES 工作目錄執行 `git status --short --branch`，保留筆電既有改動，再以 `git pull --ff-only origin main` 同步。功能交接以包含 `a1f382f` 的版本為準。該提交包含先前的 `09349eb`（OEB01）及 `c9de376`（OEP01）。桌機曾遇到 GitHub HTTPS 連線重置，請用 `git log -1 --oneline` 和 `git merge-base --is-ancestor a1f382f HEAD` 確認已取得最新一批桌機功能。
+2. 以本節為起點，配合 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)、[原 MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md)、[模組規格索引](docs/MODULE_REPLICATION_SPEC_INDEX.md) 及 [家用端待辦](todolist_homepc.md)。切換電腦後從 Git 和本文件接續即可。
+
+### 已完成與驗證
+
+- [x] PRD 已從 PD102 RunTime 接續至各子功能及產品設定、封測功能。PDI01、PDI03、PRDGBOMEXPORT／OLD、PD_BATCHMODIFYAREA、PDCUSTOMERDEVICE 缺可讀的獨立客製來源，具體缺件記於本檔後段，可平行等資料。
+- [x] PD206 已交付父主檔刪除／停用和八種萬用鍵優先順序。QC103 已核對 FUNSA、Type 4／6 ShowFlag、QC301 一般／Wafer 分流，並更新 DEV 定義窗。QC107 已核對 provider，實際選項與 UserDefineAQL 部署值待補。QC108 四個標準 FUNQR 回傳 null，正式可執行版本仍需客製來源。
+- [x] OE 完成 13 項公司端 DEV 功能，OE101／OE102、OE201–OE209、OEB01、OEP01。Vue 入口集中在 `web/src/App.vue`，各項規格在 `docs/modules/OE/`，Oracle DDL 與 PostgreSQL CREATE-only 參考在 `database/reference/mestest_oe_*.sql`。製程、發料、挑片、ERP 與正式簽核的簡化已分項記錄。
+- [x] 截至 `c9de376`，Vue `vue-tsc --noEmit` 通過。各批提交均通過 `git diff --check`，13 份 OE 模組文件的本機連結已檢查。公司端本輪採靜態驗證，瀏覽器操作與正式 API 驗收由各自後續流程處理。
+
+### WP101 生產批開立已交付（2026-11-19）
+
+- [x] 直接核對主／定義 WinForms、wsWIP 與 clsLot；查明工單條件、LotState=0 清單、CRUD、CloseLot 刪除、批次明細與下線交易。
+- [x] 使用本機受保護 Oracle MESTEST 連線唯讀取得七張 WIP 表 DBMS_METADATA DDL 與資料字典；未查業務列、未執行 Oracle DDL/DML。來源 DDL 和 PostgreSQL CREATE-only 參考在 database/reference/mestest_wip_wp101_*.sql。
+- [x] Vue DEV 假資料頁已加入 web/src/components/WipLotBasisCreate.vue，選單路由為 /YMES/WIP/LotBasisCreate；含工單查找、狀態／批號查詢、新增／修改／複製／刪除／下線、基本欄位與流程／元件／略過 OP／Lot Property 頁籤。DEV 列使用 localStorage，不接正式 API。
+- [x] 規格與 API/schema handoff：docs/modules/WIP/生產批開立.md；索引與家用端待辦已更新。明確記錄物料扣帳、StartLot、CloseLot、屬性動態目標、ECN、自動 BR／OP 等正式限制。
+- [ ] 本輪未執行 build、test 或 browser；後續需要驗收時再依使用者指示執行。
+
+### WP102 生產批開立_批次已交付（2026-11-19）
+
+- [x] 直接對照 Form／Designer、工單／流程／BOM／LotBase／序號載入、Add/View/Tuning、Expand、Confirm 及 THEIL Service/Core；規格記錄兩種分批、序號重查／保留、批次逐筆寫入與部分成功語意。
+- [x] PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得 TBLWIPLOTPROPERTY_TEMP 與 TBLWIPLOTPROPERTY DDL/constraints/indexes/triggers。WP102 新增需求僅 TEMP；正式屬性表與其他 WIP 表沿用 WP101，不重複建 SQL。未查業務列、未執行 Oracle DDL/DML。
+- [x] 完成 Vue DEV 頁 /YMES/WIP/LotBasisBatch、三層選單、by Count/by Qty、批次 Grid、BOM/Process、Add/View/Tuning 假視窗、確認驗證及專屬 localStorage。
+- [x] 新增 WP102 模組規格、Oracle source DDL、PostgreSQL CREATE-only（僅 TEMP）及家用端 API/schema handoff；未連 YMES PostgreSQL，未實作 API/migration。
+- [x] WP102 靜態檢查並推送 GitHub；其後已接續完成 WP201、WP202。
+
+### WP201 生產批執行已交付（2026-11-19）
+
+- [x] 對照 THEIL WinForm／Designer、Service/Core；完成 Execute 與五個查詢條件、lookup、20 欄 Grid、狀態、掃描優先序、LMS/QTime、Group OP、BR／TransferLot 的規格。
+- [x] 以本機受保護 Oracle profile + PowerShell 5.1/ODP.NET 唯讀取得 39 張 MESTEST 表的 Oracle DDL／欄位 metadata；39 張 CREATE 欄位數逐表符合 ALL_TAB_COLUMNS。TBLWIPECNLOTBASIS、VIEW_TBLWIPPACK_LOT 在 MESTEST/PUBLIC 均未找到，未虛構 DDL。
+- [x] 完成 /YMES/WIP/LotExecution Vue DEV 假資料畫面、WP201 模組規格、39 表 PostgreSQL CREATE-only 參考與家用端 API/schema handoff；未連 YMES PostgreSQL、未建立正式 API/migration。
+- [x] 依本輪規則未執行 build、test、browser；完成靜態檢查與 GitHub push 後繼續下一個功能。
+
+### WP202 生產批執行_元件已交付（2026-11-19）
+
+- [x] 依 `frmWIPLotSelectbyComp.vb`、標準 `wsWIP`、`tcWIP_IC.clsLot` 與 `clsLot.LoadComponentState` 核實三欄輸入、Component JOIN LotState 查詢、元件解析、七欄 Grid、Find 與共用 ExecuteLot 流程。
+- [x] 查詢只讀 TBLWIPLOTSTATE、TBLWIPCOMPONENTSTATE、TBLWIPLOTBASIS；Oracle DDL／PostgreSQL CREATE-only 已由 WP101 查證，沒有新表，未重複產生 CREATE SQL。
+- [x] 完成 Vue DEV 頁 `/YMES/WIP/LotExecutionByComponent`、FunctionNo EXECUTE LOT_COMP 三層選單路由、[WP202 規格](docs/modules/WIP/生產批執行_元件.md)與家用端 API/schema handoff。
+- [x] 公司端未連 YMES PostgreSQL、未實作 API／migration；未執行 build、test、browser。靜態檢查後推送 GitHub。
+
+### WP204 生產批執行_設備已交付（2026-11-19）
+
+- [x] 對照 frmEquipmentLotState Form／Designer、CI／CO／設備狀態子視窗、wsEQP／wsEMS／wsWIP 與 Core；完成設備收藏頁、5×3 看板、LoadPort、推薦及底部操作流程規格。
+- [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess 透過受保護 profile 唯讀取得 TBLEQPFAVORITE、TBLWIPLOTGPEQUIPMENT、TBLPRDSTAGESTEPSET、TBLPRDSTAGESTEPSETDETAIL DDL/index；未讀業務列、未執行 Oracle DDL/DML。
+- [x] 完成 /YMES/WIP/EquipmentLotState DEV 假資料畫面、FunctionNo EXECUTE LOT_EQP fallback 三層選單／路由、WP204 模組規格、Oracle source DDL 與 PostgreSQL CREATE-only handoff。
+- [x] DEV 僅寫專屬 localStorage，不連 YMES PostgreSQL、不實作正式 API／migration；未執行 build、test、browser。
+
+### WP605 成品庫帳務維護已交付（FunctionNo FGD INV，2026-11-19）
+
+- [x] 對照 frmInventory_FGD／Def／Turn／FGDIn WinForms、Designer、wsINV／wsWIP／wsSYS 及 clsInventory／clsLot；核實庫存查詢、Component/Bin 切換、人工調整、逐筆刪除、三種轉庫與 FGD In 交易狀態。
+- [x] Oracle MESTEST 只讀核實六張功能表 DDL、index、constraints、triggers：FGD Inventory Component、FGD In Basis/Detail/Component、Transaction State/Log；六表各只有 PK unique index，無 FK、額外 index 或 trigger。TBLINVFGDINVENTORYBIN 不存在，不列為本頁依賴。
+- [x] 完成 Vue DEV `/YMES/WIP/FgdInventory`、三層選單與動態 Bin 欄位、Add／逐筆 Del、FGD／SEMI／WIP 轉庫和 FGD In Confirm 假資料互動。
+- [x] 完成 [WP605 規格](docs/modules/WIP/成品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引、資料庫連線查證紀錄與家用端 API/schema handoff；Production API／migration 由家用端接手。
+- [ ] 本輪未執行 build、test 或 browser；完成靜態檢查、更新交接並 push 後接續下一個 WIP 功能。
+
+### WP603 在製品庫帳務維護已交付（FunctionNo WIP INV，2026-11-19）
+
+- [x] 依共用 WinForms／Designer、Service／Core 對照 Query、8 個可見分頁、Grid 欄位、列選取、按鈕及跨表交易；THEIL 專用 Form 原始碼缺於目前 checkout，已在規格標明此證據限制。
+- [x] PowerShell 5.1 + Oracle.ManagedDataAccess 受保護唯讀連線查得九張 MESTEST 功能表與索引／constraints／triggers metadata；未讀業務列或執行 Oracle DDL/DML。
+- [x] 完成 Vue DEV `/YMES/WIP/WipInventory`、三層選單及 8 個可見分頁的假資料互動，並建立 [WP603 規格](docs/modules/WIP/在製品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引與 API/schema handoff。
+- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser。WP629 在製品庫包裝作業 DEV 與家用端 handoff 已完成。
+
+### WP604 半成品庫帳務維護已交付（FunctionNo SEMI INV，2026-11-19）
+
+- [x] 對照 `frmInventory_SEMI`、`frmInventory_SEMITurn`、`frmINVSEMIInConfirm` 的 Form／Designer、wsINV／wsWIP／wsSYS 與 clsInventory／clsLot；核對查詢欄位、Component/Bin 切換、SEMI In 交易種類、Basis Source 與 WIP/FGD/SEMI 轉庫副作用。
+- [x] PowerShell 5.1 + Oracle.ManagedDataAccess 受保護唯讀連線取得四張 SEMI 專用表 DDL、索引／constraints／triggers metadata；四表只有 PK unique index，無 FK／額外 index／trigger。未讀業務列、未執行 Oracle DDL/DML；SEMI Inventory 主表與交易 State/Log 沿用先前 reference。
+- [x] 完成 Vue DEV `/YMES/WIP/SemiInventory`，含庫房 lookup、庫存查詢、選列即時 Component/Bin 明細、未確認 SEMI In 假確認、多 Lot/Component 轉庫、目的庫與容量驗證；建立 [WP604 規格](docs/modules/WIP/半成品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引及家用端 API/schema handoff。
+- [x] DEV 假資料存於專屬 localStorage，不接 API／資料庫；正式庫存／Lot transaction 與特殊 `SEMI_WAFER` 分支仍由家用端依規格接手。公司端不連 PostgreSQL，未執行 build、test 或 browser。
+
+### WP601 包裝作業已交付（FunctionNo PACKING_MOLINE，2026-11-19）
+
+- [x] 對照 `frmBR_L_CO_Packing_MOLine`／PackConfig WinForms 與 Designer、`wsWIP`、`clsLot.ExePacking*`；整理畫面欄位、設定、Lot/包裝掃碼、滿箱/強制封箱、拆批、刪除、標籤、Combine/Unboxing 與跨表副作用。
+- [x] 使用受保護 Oracle profile + PowerShell 5.1/ODP.NET 直連 MESTEST 唯讀取得 19 張 WP601 功能表 DDL 與 constraints/indexes/triggers metadata；逐表欄位數對上 ALL_TAB_COLUMNS。`TBLWIPMOLINEPACKL` 通用前綴物件不存在；Relation 與 PackMergeLog 沒有 PK，未猜鍵。
+- [x] 完成 Vue DEV `/YMES/WIP/PackingMOLine` 與 WIP → 包裝與庫房 → 包裝作業三層選單、PackConfig、階層/明細/標籤/配件、Pack Close、Combine、Unboxing、Delete 假互動；建立 [WP601 規格](docs/modules/WIP/包裝作業.md)、Oracle source DDL、PostgreSQL CREATE-only 與 metadata。
+- [x] 家用端 API/schema handoff 已寫入 `todolist_homepc.md`。公司端未連 PostgreSQL，未執行 build、test 或 browser；標籤 COM 與 Combine/Unboxing 外掛正式整合留待家用端依規格處理。
+
+### WP629 在製品庫包裝作業已交付（FunctionNo PACKING_MOLINE_INV，2026-11-19）
+
+- [x] 已對照 `frmBR_L_CO_Packing_MOLine_INV`、`frmMOLinePackConfig`、`wsWIP.ExePacking`／`ExePacking_Close`／`ExePacking_Delete`、`clsLot` InlinePackingFlag 分支及選單 FunctionKey WP629。
+- [x] Vue DEV 已加入 WIP → 包裝與庫房 → 在製品庫包裝作業，重用 WP601 版面，獨立 localStorage 假資料；Status=11、InventoryNo 同庫驗證、已包裝批與封箱後狀態保留均按來源規則模擬。
+- [x] 完成 [WP629 規格](docs/modules/WIP/在製品庫包裝作業.md)、模組索引、Oracle/reference 重用紀錄及 `todolist_homepc.md` API/schema handoff。WP629 無新專屬表；使用 WP601 包裝 DDL 與 WP201 `TBLINVWIPINVENTORY_SEMI` reference，不重複 CREATE SQL。
+- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser；未在 Oracle 執行 DDL/DML。其後已接續完成 WP301 設備上料。
+
+### WP301 設備上料已交付（FunctionNo EQP MOUNT MATERIAL，2026-11-20）
+
+- [x] 對照 `frmEQPMaterialLoading` Form／Designer、`wsWIP_Material` 與 `clsMaterialHandler`；核實設備與 MO 查找條件、三種上料模式、階層現況、CheckMTL、Mount／Unmount、Component map 及 Seq 交換。
+- [x] 受保護 Oracle profile + PowerShell 5.1／ODP.NET 唯讀取得四張未有既有 reference 的 MESTEST 表 DDL／metadata：`TBLWIPEQPMATERIALSTATE`、`TBLWIPEQPMTLSTATE_COMP`、`TBL_BINKLESSMAPSTATE`、`TBL_BSUBSTRATEMAPSTATE`。四表各只有 PK unique index，無 FK／額外 index／trigger；未讀業務列、未執行 Oracle DDL/DML。
+- [x] 完成 Vue DEV `/YMES/WIP/EquipmentMaterialLoading`、三層選單與 [WP301 規格](docs/modules/WIP/設備上料.md)。Oracle source DDL／metadata／PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp301_*`；另 13 張相依表沿用已存在 references。
+- [x] DEV 支援物料、物料(元件)、半成品輸入、設備／MO 查找、上下移序與下料確認，使用獨立 localStorage 假資料。家用端待核對 PostgreSQL live schema，實作庫存扣還、設備現況、元件映射及序號交易 API。
+- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser；本輪 Oracle 僅讀 metadata／DDL。
+
+### WP302 載具現況管理已交付（FunctionNo CARRIER STATE，2026-11-20）
+
+- [x] 直接對照 `frmCarrierState` inline Designer／事件、`wsEQP`、`wsWIP`、`wsINV`、`clsCarrierBasis`、`clsLot`、`clsInventory`；核實上下層 Grid、Put In／Takes Out／Clear Carrier 與兩個預設隱藏且受權限控管的狀態按鈕。
+- [x] 使用受保護 Oracle profile，以 Windows PowerShell 5.1／ODP.NET 直連唯讀取得 `TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCARRIERSTATEDETAILLOG`、`TBLINVSTOCKERSTATE` DDL／metadata。確認 Detail 無 PK、僅 ComponentNo 非唯一索引；DetailLog 無 PK/index；StockerState 有三欄複合 PK；未讀業務資料、未執行 Oracle DDL/DML。
+- [x] 完成 Vue DEV `/YMES/WIP/CarrierState`、設備與載具三層選單、假 Lot／Component／Stocker 資料、放入／取出／清空確認、容量／位置／批次狀態驗證、權限控制區及獨立 localStorage；完成 [WP302 規格](docs/modules/WIP/載具現況管理.md)、Oracle source DDL、metadata、PostgreSQL CREATE-only 與 home TODO。
+- [x] 按來源保留多元件逐筆放入的部分成功語意、取出整個 ContentID、Clear 前 lot-state 驗證、隱藏狀態按鈕；將 Clear 多列可能留 CarrierState=1 的 Core 行為記為 legacy quirk，沒有暗中修正。
+- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser；資料表比較、API、migration 與部署由家用端依 `todolist_homepc.md` 接手。
+
+### 公司端工作範圍
+
+- WinForms／Service／Core 原始碼、Vue DEV 假資料、模組規格與家用端 API／SQL 交接。Vue 環境為 Node.js 22.12+、npm 與 `web/` 套件，筆電沿用自己的既有工具，不依賴桌機的本機安裝路徑。
+- Oracle MESTEST 使用筆電自己的本機受保護 profile，以 Windows PowerShell 5.1 + ODP.NET 唯讀查 DDL／資料字典。桌機 DPAPI 設定繫結桌機帳號，筆電應使用原有安全設定。沒有 profile 時再安全設定，勿將連線資料寫進 Git 或交接檔。
+- 正式 PostgreSQL、`ConnectionStrings__YMes`、.NET API、migration、SSH 與部署由家用端處理。每完成一項，做靜態檢查、更新待辦並單獨 commit，GitHub 可連時再推送。
+
 ## 家用端交付及公司端待補來源（2026-11-19）
 
 ### OP103／OP BASIS 公司端來源補件（家用端追加）
@@ -1372,4 +1483,34 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 
 - [x] 依 `frmMOQuery3` 及原 Core 完成 DEV 計畫完工日期、產品類別、完工達交率與平均生產天數。
 - [x] [OE205 規格](docs/modules/OE/工單達交率_準時完工.md) 記錄 NULL、比率及生產天數分母，DDL 共用 OE201。
-- [ ] 接續 OE206 工單用料清單。已確認 `STD/MESWin/OE/OE_MOMaterialList/frmMOMaterialList.vb` 及用料現況、替代料與出料入口。
+
+## OE206 工單用料清單
+
+- [x] 核對 Form／Designer、替代料、發料入口及 Service／Core。DEV 支援兩種用料層級、增修、批次刪除、替代料與模擬發料。
+- [x] [OE206 規格](docs/modules/OE/工單用料清單.md) 交付兩張表的 Oracle DDL、CREATE-only 與庫房 API handoff。
+
+## OE207 工單存料現況
+
+- [x] 依 Form／Designer、Service 與 Core 交付 DEV 存料與元件雙表。上層與 OE206 模擬發料共用資料。
+- [x] [OE207 規格](docs/modules/OE/工單存料現況.md) 補元件表 Oracle DDL、CREATE-only 與唯讀 API 交接。
+
+## OE208 工單結案
+
+- [x] 依 Form／Designer、Service 與 Core 交付 DEV 選取、確認、WIP／ERP 阻擋及結案。
+- [x] [OE208 規格](docs/modules/OE/工單結案.md) 記錄結案 CAS 和在製品、半成品、報廢等守門。DDL 共用 OE201。
+
+## OE209 工單元件資料維護
+
+- [x] 依 Form／Designer、Service、Core 交付 DEV 工單資格查詢、元件編號、草稿增刪與確認。
+- [x] [OE209 規格](docs/modules/OE/工單元件資料維護作業.md) 記錄發放狀態及序號規則，補 Oracle 異動紀錄 DDL、CREATE-only 與 API handoff。
+
+## OEB01 工單挑片資料查詢
+
+- [x] 依 Industry Base Form／Service／Core 交付 DEV 工單主查詢、挑片明細及動態測項示例。
+- [x] [OEB01 規格](docs/modules/OE/工單挑片資料查詢.md) 補政策來源、測試 Recipe Oracle DDL 與正式唯讀 API handoff。
+
+## OEP01 工單開立_晶片測試
+
+- [x] 依 IC_CP_PKG Form／Designer、Industry Base Service、Core 交付 DEV 晶片測試工單及流程、模擬挑片、元件驗證與發放。
+- [x] [OEP01 規格](docs/modules/OE/工單開立_晶片測試.md) 交付半成品批次關聯表 Oracle DDL、CREATE-only 及 PSS API handoff。
+- [x] WP101、WP102、WP201、WP202 已完成；接續功能為 WP204，進度記錄於上方。

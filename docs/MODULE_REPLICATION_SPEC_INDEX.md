@@ -22,6 +22,19 @@
 - OPB02「ECN 作業站群組設定」：[功能規格](modules/OP/ECN作業站群組設定.md)。已直接閱讀主/Def WinForms、`wsOP`、`clsOpBasis`、DataStamp update 並以 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查得兩表 DDL/constraints/indexes；公司端完成行業包三層選單、Vue DEV 主/明細 Grid、CRUD/Copy/核准、狀態刪除與 lookup。Detail 的 PK 是全表唯一 OPNo；Oracle source DDL/PG CREATE handoff 已保存，家用端待核對 YMES live schema 並實作共享簽核與 API。
 - OPB03「客戶站點對應設定」：[功能規格](modules/OP/客戶站點對應設定.md)。已逐段閱讀三個 WinForms Form/Designer、wsOP、clsOpBasis、clsB_Basis_UPD；PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得兩表 DDL 並查 PK/index/constraint；完成行業包三層選單與 Vue DEV 雙 Grid、主/明細編輯/lookup/CRUD。Oracle source DDL 與 PostgreSQL CREATE-only handoff 已保存；家用端待比對 live schema 並實作 lookup/API/交易刪除。
 
+ - WP101「生產批開立」：[功能規格](modules/WIP/生產批開立.md)。已核對 WinForms／wsWIP／clsLot、七張 Oracle WIP 表與下線／刪除交易；Vue DEV 路由 /YMES/WIP/LotBasisCreate 完成。Oracle source DDL 與 PostgreSQL CREATE-only 參考已交付；家用端需比對 live schema/migrations 並實作含物料扣帳、CloseLot、StartLot 和逐批下線的正式 API。
+- WP102「生產批開立_批次」：[功能規格](modules/WIP/生產批開立_批次.md)。已對照 WinForms／THEIL Service／Core，唯讀查得 Lot Property TEMP 與正式表 DDL；Vue DEV 路由 /YMES/WIP/LotBasisBatch 完成。WP102 CREATE-only 僅含新增需求 TBLWIPLOTPROPERTY_TEMP，正式 TBLWIPLOTPROPERTY 沿用 WP101；家用端待核對 live schema 並實作逐批結果、序號保留與交易式下線 API。
+- WP201「生產批執行」：[功能規格](modules/WIP/生產批執行.md)。已對照 WinForms／Service／Core，Oracle 唯讀查得 39 張執行相依表 DDL，39 表欄位數符合 ALL_TAB_COLUMNS；兩個缺失客製引用已註記。Vue DEV 路由 /YMES/WIP/LotExecution 完成；家用端待核對 live schema 並決定動態 BR、QTime/LMS、Group OP 與元件批次 API。
+- WP202「生產批執行_元件」：[功能規格](modules/WIP/生產批執行_元件.md)。已對照標準 WinForms／Service／Core；Component 查詢沿用 WP101 已查證的 TBLWIPLOTSTATE、TBLWIPCOMPONENTSTATE、TBLWIPLOTBASIS，不新增重複 DDL。Vue DEV 路由 /YMES/WIP/LotExecutionByComponent 完成；家用端需比對 live schema，並將元件查詢接入 WP201 共用的 Lot Execute command。
+- WP204「生產批執行_設備」：[功能規格](modules/WIP/生產批執行_設備.md)。依 frmEquipmentLotState／CI／CO／狀態控制 Form、wsEQP／wsEMS／wsWIP 與 Core 完成 DEV 設備看板；唯讀取得四張缺少的 MESTEST DDL，提供 CREATE-only 參考。家用端需先比對 PostgreSQL schema，再將看板、設備／LoadPort、候選批次、CI／CO、Hold 及狀態控制接入 WP201 共用執行 API。
+- WP601「包裝作業」：[功能規格](modules/WIP/包裝作業.md)。依 `frmBR_L_CO_Packing_MOLine`／PackConfig、`wsWIP`／`clsLot` 完成 Vue DEV 包裝設定、掃 Lot/包裝、階層滿箱、封箱、標籤及拆併箱模擬；Oracle MESTEST 唯讀查證 19 張功能表 DDL/metadata 並提供 CREATE-only。家用端需先比對 live schema，實作 Lot split、L1–L6 Relation/PackState/Log、庫存狀態與 label job 的一致交易；Combine/Unboxing 外掛契約仍需處理。
+- WP629「在製品庫包裝作業」：[功能規格](modules/WIP/在製品庫包裝作業.md)。依 `frmBR_L_CO_Packing_MOLine_INV`、`wsWIP.ExePacking` 與 `clsLot` 完成獨立路由及 WP601 共用 WinForms 版型的 Vue DEV 頁；強制 Status=11、WIP InventoryNo 一致，封箱保持在製品狀態。沒有專屬新表；沿用 WP601 包裝表與 WP201 的 `TBLINVWIPINVENTORY_SEMI` Oracle DDL／CREATE reference。家用端須核對 live schema並以 inline inventory mode 接入相同交易核心，不新增重複表。
+- WP301「設備上料」：[功能規格](modules/WIP/設備上料.md)。依 `frmEQPMaterialLoading`、`wsWIP_Material` 與 `clsMaterialHandler` 完成設備／工單查找、物料／元件／半成品三模式、階層現況、上下移序及下料 DEV；PowerShell 5.1 + ODP.NET 唯讀取得四張未有現成 reference 的 MESTEST 表 DDL／metadata，提供 Oracle source DDL、PostgreSQL CREATE-only。其餘 13 張相依表沿用既有 references；家用端待核對 live schema並實作跨庫存／設備現況交易 API。
+- WP302「載具現況管理」：[功能規格](modules/WIP/載具現況管理.md)。依 `frmCarrierState`／`wsEQP`／`wsWIP`／`wsINV` 與 `clsCarrierBasis` 完成 CarrierState／Detail 雙 Grid、Lot／Component 放入、整批取出、清空及受權限控管的隱藏狀態切換 DEV。PowerShell 5.1 + ODP.NET 唯讀查得 Detail、DetailLog、StockerState 三表 DDL／metadata，提供 source DDL 與 CREATE-only；Detail/Log 無 PK 的限制與刪除後可能留舊 CarrierState 的來源行為均已註明。家用端待比對 live schema、完成鎖定交易與 API。
+- WP603「在製品庫帳務維護」：[功能規格](modules/WIP/在製品庫帳務維護.md)。依共用 WinForms／Service／Core 完成 8 個 Designer 可見分頁、DEV 假資料操作及九張來源表 DDL／CREATE-only。THEIL 專用 Form 原始碼未在公司來源樹，差異與限制已標註；家用端待比對 PostgreSQL schema 並實作庫存、報廢、轉庫、拆併批及入庫交易 API。
+- WP604「半成品庫帳務維護」：[功能規格](modules/WIP/半成品庫帳務維護.md)。已對照 `frmInventory_SEMI`／Turn／SEMI In Form、Designer、wsINV／wsWIP／wsSYS 與 clsInventory／clsLot；完成 Vue DEV 庫存查詢、Component/Bin 明細、SEMI In 假確認及 WIP/FGD/SEMI 轉庫互動。Oracle 唯讀核實四張 SEMI 專用表 DDL／索引／約束／Trigger，提供 CREATE-only 與家用端 API/schema handoff。
+- WP605「成品庫帳務維護」：[功能規格](modules/WIP/成品庫帳務維護.md)。依 frmInventory_FGD／FGDIn／Turn／Define、wsINV／wsWIP／wsSYS 與 Core 完成 Vue DEV 庫存、動態 Bin、人工調整、轉庫及入庫確認畫面。Oracle 唯讀核對六張新增表，含交易 Log；DDL／CREATE-only handoff 已建立。家用端需先核對 PostgreSQL live schema，再建置完整交易、庫存過帳及 WIP／SEMI／Lot history API。WP603、WP604 已完成公司端 DEV 與交接。
+
 ## 規格產出原則
 
 - 以 WinForms Form、Service/Core 類別及 MES Oracle 資料字典為依據；截圖用於核對版面，不取代程式碼與資料表證據。
@@ -260,6 +273,15 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 - [OE203 工單查詢](modules/OE/工單查詢.md) 已完成公司端 DEV 多條件查詢、六種工單狀態與屬性查看，沿用 OE201 DDL。
 - [OE204 工單達交率（準時開工）](modules/OE/工單達交率_準時開工.md) 已完成 DEV 開工差異、查詢、總筆數及準時／提前／延遲統計。
 - [OE205 工單達交率（準時完工）](modules/OE/工單達交率_準時完工.md) 已完成 DEV 完工率與平均生產天數，沿用 OE201 DDL。
+- [OE206 工單用料清單](modules/OE/工單用料清單.md) 已完成 DEV 用料、替代料、模擬發料及兩張表的 Oracle DDL。
+- [OE207 工單存料現況](modules/OE/工單存料現況.md) 已完成 DEV 存料與元件唯讀檢視及元件表 DDL。
+- [OE208 工單結案](modules/OE/工單結案.md) 已完成 DEV 待結案查詢、多選結案與正式 WIP／ERP 守門規格。
+- [OE209 工單元件資料維護作業](modules/OE/工單元件資料維護作業.md) 已完成 DEV 暫存增刪、取號示範與 Oracle 異動紀錄 DDL。
+
+## 工單管理 → 行業包
+
+- [OEB01 工單挑片資料查詢](modules/OE/工單挑片資料查詢.md) 已完成 DEV 主表篩選、挑片明細、測項動態欄位及 Oracle 交接。
+- [OEP01 工單開立_晶片測試](modules/OE/工單開立_晶片測試.md) 已完成 DEV 晶片測試工單、挑片與元件規則，以及半成品關聯表 Oracle 交接。
 
 ## 全 MES 盤點狀態
 

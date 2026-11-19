@@ -4,7 +4,7 @@
 
 此段為目前狀態；下方保留交接當時的待辦原文，歷史未勾選項不表示本段已完成內容又變回缺表。家用端管理 YMES PostgreSQL／API／PPK SSH；公司端持續提供原生 Oracle 的唯讀結構、來源邏輯與 UI。
 
-目前運行 API `16a825af0bea`／Web `83f3426007c2`，migration 已到 0053。本輪 PD101／PD206／OP103／OP105／PS103／QC201／QC202／QC301／QC302 的已開放主要操作已用正式 app-browser 實際驗證；自行 Demo 登入、預設正式區、空白首頁、三層選單與收合圖示亦已重驗。修正四頁彈窗焦點、選單圖示裁切與公開資產權限；各模組 MD 保留未實作 provider 和未測分支，不把 API 回歸或 SQL fixture 當成 GUI 通過。所有專用測試資料已精確清理。已 fetch 公司端最新 `4e0bae1`，接續正常合併、建置與受影響畫面重驗後再 push。下一批 OPB02 草稿與 0054 尚未發行，須獨立保存，不混入本批。
+目前運行 API `16a825af0bea`／Web `61166de65bf6`，migration 已到 0053。本輪 PD101／PD206／OP103／OP105／PS103／QC201／QC202／QC301／QC302 的已開放主要操作已用正式 app-browser 實際驗證；自行 Demo 登入、預設正式區、空白首頁、三層選單與收合圖示亦已重驗。修正四頁彈窗焦點、選單圖示裁切與公開資產權限；各模組 MD 保留未實作 provider 和未測分支，不把 API 回歸或 SQL fixture 當成 GUI 通過。所有專用測試資料已精確清理。公司端最新 `4e0bae1` 的二十筆 OE／WIP 提交已正常合併、建置；受影響的 23 個唯一入口已全部完成正式 app-browser 路由、不可用提示、無 DEV 資料及離開／重進防護驗證，詳見 [公司整合 QA](docs/qa/20261120-office-integration.md)。這 23/23 不是 API 或生產交易完成；各模組原有 API／schema 待辦仍保留，接續同步已驗版本至 GitHub。下一批 OPB02 草稿與 0054 尚未發行，須獨立保存，不混入本批。
 
 - [x] 已正常合併公司端至 `3192964`，保留新 OE 頁、DDL 與 QC／PD206 來源。PD206 文件衝突同時保留雙方內容；沒有 force push 或捨棄任一端開發。家用端本批仍在正式 GUI 驗收，尚未以完成版本推到 main。
 - [x] 0042–0050 已逐份備份、驗證 pg_restore --list 後套用並獨立讀回。0046／0047／0048 僅補既存引用表 SELECT；0049／0050建立來源核對的OP Type／共用Property空表，無FK或多餘index，詳見 docs/DATABASE_CONNECTION.md。沒有搬移Oracle業務資料。
@@ -18,7 +18,8 @@
 - [x] QC301／QC302 已完成本輪實際 Rule 保存／重複／清空、Add／Copy／Apply、核准／取消核准／停用／硬刪、一般 Plan、Copy2、NULL stamp Rule／stale，以及真 Excel 逐列匯入。原 `CODUI301N-1119-*` 與新測試範圍一併清理，含九個 GUI 產生識別碼的十三項提交後計數全零；詳見兩模組 MD。
 - [x] PD101／PD206／OP103／PS103 的主要 CRUD、套用、查找、狀態與日期顯示已補實際 GUI；四頁的取消／套用焦點與正反 Tab 修補已發布重驗。使用 app-browser 自行按 Demo，無須再次等待使用者登入。缺少來源的 Copy／Property／WIP／Simulation 等分支保持明確未開放，不回假成功。
 - [x] 驗證後正常 fetch，最新公司端為 `4e0bae1`（本機基底 `3192964` 之後二十筆 OE／WIP 提交）。接續正常 merge，保留兩端來源；合併完成前不以舊版覆蓋公司端。
-- [ ] 僅提交已驗收來源與維護 MD，正常 merge 公司新版本並重驗受影響功能後 push main；同步精確版本至遠端來源。OPB02 未驗草稿另存，維持不 force push。
+- [x] 公司整合正式入口防護 23/23：OE 11 個、WIP 12 個。前 22 個於 Web `5959083456ce` 實測，a2 僅修改 SemiInventory.vue 並以 Web `61166de65bf6` 補驗 WP604。18 個有頁內 Close 的入口實按關閉，5 個基本 WIP 正式 fallback 由框架首頁離開，所有入口均重進通過；WP601／WP629 模式往返及無 currentLot 時 OPNo／Unit 不套 DEV 預設值亦已確認。這是未提供服務時的正確防護，不勾選下方正式 API／交易待辦。
+- [ ] 僅提交已驗收來源與維護 MD，正常同步 GitHub；若公司端再有新提交，先正常合併並重驗受影響功能後 push main，同步精確版本至遠端來源。OPB02 未驗草稿另存，維持不 force push。
 
 ## 家用端接續：QC201／QC202（2026-11-19）
 
@@ -31,10 +32,117 @@
 - [x] OP105：兩表20欄比對及0053備份／套用／readback完成，僅補5defaults與owner CRUD；API隔離.NET9 Release 0警告／0錯誤、16a825af0bea已啟動ready200。正式8組145HTTP／501斷言一次通過，5owner表／group ref及其他7引用表精準鍵／holder0，metadata保持、登出204。包含真OP引用鎖與padded舊member防實刪。最終Web a2已修7項peer邊界、build exit0，23:14部署1f2dff75f080（DY_b-9Fr.js／BCM0CnE5.css），9項靜態HTTP及完整資產SHA通過；GUI仍待。
 - [x] 可重建來源／發行界線已補 `DEPLOYMENT_PROFILES.md`：遠端 `/opt/ymes/checkpoints/fb22a87` 與本機checkpoint保留已部署來源；共用 `/opt/ymes/source` 尚有舊碼，不可直接預設重建退回舊版。
 
+## 新交接公司端 WP302 載具現況管理（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP302 規格](docs/modules/WIP/載具現況管理.md)、本段及三張 Oracle source DDL／metadata、CREATE-only reference。
+- [ ] 先核對 YMES PostgreSQL live schema／migration history。WP302 新查證表為 `tblwipcarrierstatedetail`、`tblwipcarrierstatedetaillog`、`tblinvstockerstate`；對 live schema 確實缺少的表才新增 forward migration。不要因 CREATE-only reference 對既有 schema 重跑 CREATE。
+- [ ] `tblwipcarrierstatedetail` 在 Oracle 沒有 PK，僅有 ComponentNo 非唯一 index；`tblwipcarrierstatedetaillog` 沒有 PK／索引。CREATE-only 不可自行補唯一鍵、FK 或額外欄位。`tblinvstockerstate` 的 PK 是 `(StockerNo, LocatorNo, ContentNo)`。`tblwipcarrierstate`、CarrierType、LotBasis/State、ComponentState 沿用既有 reference/schema。
+- [ ] 實作登入授權 GET `/api/wip/carrier-state` 及 `/api/wip/carrier-state/{carrierNo}/details`；回傳欄位依 WinForms：CarrierNo、CarrierCategory、CarrierType、CarrierState、Description；Detail 可見 CarrierPosition、ContentID、BCIP、ComponentNo。完整資料排序需穩定，不能假設 Detail 有主鍵。
+- [ ] 實作登入授權 POST `/api/wip/carrier-state/{carrierNo}/put-in`，body 只接 LotNo、起始 Position。Server 自查載具/type 與 `CarrierLayer*CarrierCapacity`、lot `LotState=1` 且 Status 0–5、Stocker 占用、ComponentState、全球既有 ContentID/ComponentNo、CarrierPosition 容量／重複。Components 由 server 查出；無 Component 時使用 `N/A`。UserNo/BCIP 取登入者。
+- [ ] WinForms 對多 Component 按位置逐筆 Check→Add，後一筆失敗時先前新增不回滾；若維持相容，API 回傳 `insertedCount` 與停止原因。每次單列檢查加寫入需以交易／鎖原子執行：鎖住 CarrierState 與對應 lot state，再查重複與 position，避免不同使用者同時占用相同位置或同一元件掛到多個載具。
+- [ ] 實作 POST `/api/wip/carrier-state/{carrierNo}/take-out`（指定 ContentID，依來源刪掉同 CarrierNo + ContentID 的全部元件列）及 `/clear`（清全部內容）。刪前驗證每個 Lot 都仍符合原 WinForms lot-state 條件；同交易寫 `tblwipcarrierstatedetaillog`、刪 Detail、清除 lot CarrierNo。每個 command 要有冪等性、錯誤碼及並行鎖。
+- [ ] 保留來源權限：WinForms `Carrier Change`、`Lot Change` 按鈕預設隱藏且受 `ExeGroupControlPriv` 控制。為完成同等功能，新增受獨立權限保護的 PUT `/api/wip/carrier-state/{carrierNo}/state`（`carrierState` 僅 0/1）與 PUT `/api/wip/carrier-state/{carrierNo}/details/flag`（`contentId`、`componentNo`、`flag` 僅 0/1）；後端記錄登入者稽核，不信任 browser user number。
+- [ ] 記錄來源相容性問題：Core 在刪除前查舊 Detail 數量，只有舊數量 <=1 才把 CarrierState 設為 0；Clear 多列後可能留在狀態 1。DEV 已重現。API 若修正為依刪除後內容更新狀態，列為明確行為修正並保留回歸案例。
+- [ ] Log DDL 雖有 PutInTime/TakeOutTime，`AddCarrierStateDetailLog` 此流程未寫這兩欄，metadata 沒有 trigger；未經其他來源證據不要自行填入。公司端未連 PostgreSQL、不做 migration；由家用端完成 API/schema/deployment。
+
+## 新交接公司端 WP601 包裝作業家用端接手（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 [WP601 規格](docs/modules/WIP/包裝作業.md)、`database/reference/mestest_wip_wp601_source_ddl.sql`、`mestest_wip_wp601_create.sql`、metadata 與 `docs/DATABASE_CONNECTION.md` 的 WP601 查證紀錄。
+- [ ] 先核對 YMES PostgreSQL live schema、migrations、資料、PK／nullable/default；WP601 的 19 張 Oracle 功能表逐張比對。CREATE-only 只是來源結構參考，不可整批執行；只替 live schema 確認缺少的表／索引新增 forward migration。不可建立不存在的通用 `TBLWIPMOLINEPACKL`。
+- [ ] 共用 `TBLWIPLOTSTATE`、MO／Product／Packing Rule／Label Rule／Lot Component 與 `TBLINVWIPINVENTORY_SEMI` 等沿用既有 YMES schema/API；不要重複建表。`TBLWIPMOLINEPACKRELATION` Oracle 沒有 PK、只有兩個非唯一索引；`TBLINVPACKMERGELOG` 沒有 PK／index。保留 Oracle key/nullable/precision，不能自行猜 PK/FK。
+- [ ] 建登入者授權的設定／查詢 API：ComputerName 的 PackConfig、LabelPrinter；MO／產線／產品 packing rule、L1–L6 level、滿箱箱數及數量、配件、LabelType/printer；查詢每層未封箱箱與 detail、relation 展開的 Lot／packing 明細。參數化、排序及分頁；服務端自行取得電腦與登入者資訊，不信任前端規則。
+- [ ] POST command 實作 Pack Lot、Pack closed package、Pack Close、Delete、Combine、Unboxing；伺服器重驗 MO/PDLine/ProductVersion、LotStamp/狀態/OP/BR、重複關係、Status=11 庫存分流、Component、可用數量、上下層 CloseFlag 與各層容量。保留 `CloseFlag=1` 自動封箱／`2` 強制封箱、Lot split、L1–L6 主/明細、Relation、PackState/Log、WIP Lot State、FGD In 關聯及 merge/dismantle log side effects。
+- [ ] 所有相關表更新必須在明確交易與適當鎖定/CAS 下原子提交；定義重送 idempotency、防止重複掃碼扣量與並發超容量。不能用 CRUD 或只寫包裝明細取代 `clsLot.ExePacking*` domain 行為。失敗需明確回滾或留下可重試交易狀態。
+- [ ] `ObjectFileHandler("INVMOPackingCombineDismantle")`、CodeSoft／BarTender 本機 COM 與標籤範本是外部相依；設計授權的 server-side label job／列印代理與補印契約。不可由 browser 任選 server path/printer，也不能假設 WP602（未掛選單的補印 Form）已完成。
+- [ ] 完成後更新 WP601 API/schema/migration、交易回歸／部署證據、規格索引與 TODO。公司端只做 Vue DEV 假資料與 Oracle 唯讀；Production PostgreSQL／API／migration／部署由家用端完成。
+
+## 新交接公司端 WP301 設備上料（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP301 規格](docs/modules/WIP/設備上料.md)、`docs/DATABASE_CONNECTION.md` WP301 段落與四張 Oracle source DDL／metadata。
+- [ ] 先核對 YMES PostgreSQL live schema／migrations。WP301 新交接四張表為 `tblwipeqpmaterialstate`、`tblwipeqpmtlstate_comp`、`tbl_binklessmapstate`、`tbl_bsubstratemapstate`；對缺表才新增 forward migration。其餘 13 張相依表沿用 WP101／WP201、OE、MTL、OP/SMD 既有 reference，不重複建表。
+- [ ] 建登入授權 GET 查詢：已核准且非 VIRTUAL 設備、狀態 0/1/2/3/6 工單、設備上料階層與元件明細。保持 WinForms NewType=1 語意：指定 MO 時現況 Grid 仍載入該設備全部已上料；指定 MO 影響 mount 投料點與 BOM 主物料。
+- [ ] 建 POST `mount`、`unmount`、`sequence-change` commands；不得以 GET 修改。Server 重查設備 IssueState/Class、MO state/BOM、物料／產品有效狀態、CheckLotNo、庫存可用量、投料點、MaterialLevel、半成品批號、元件／基板／晶圓映射、效期／解凍／上料順序。不可信任 client 傳入 CheckLotNo、PutInPlaceType、MaterialLevel、庫存量或 Seq 結果。
+- [ ] `mount` 交易需協調投料點扣帳、`tblwipeqpmaterialstate` 新增／累加、`tblwipeqpmtlstate_comp` 與 map states、OpenDate／ExpireDate／AcclimationDate，以及必要 Inventory Raw Log。`unmount` 需按全部物料或單一 Component 語意還原庫存、維護現況／map states、處理 ResetOpenDate 與 Raw Log。`sequence-change` 以設備現況完整鍵原子交換兩列 Seq。
+- [ ] 唯一鍵請依 Oracle source：設備現況 `(EquipmentNo, MaterialNo, InputMaterialNo, MaterialLotNo, MONo)`；元件現況 `(MONo, EquipmentNo, MaterialNo, InputMaterialNo, MaterialLotNo, ComponentNo)`；兩個 map table 依規格中各自的完整複合 PK。定義重複請求、跨表交易、鎖／CAS 與明確錯誤碼。
+- [ ] Core 有些庫存／半成品查詢僅依 LotNo 並讀第一列；同 Lot 跨 Inventory/Locator 有多列時，API 必須依 InventoryNo／LocatorNo／MO 完整限定或回傳歧義，不可依 DB row order 任選。
+- [ ] Vue DEV 使用 `ymes.dev.wp301-eqp-material-loading.v1` localStorage 假資料，沒有接正式 API。公司端不連 PostgreSQL、不做 migration；家用端完成正式 API、schema 比對與部署驗收。
+
+## 新交接公司端 WP629 在製品庫包裝作業（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 [WP629 規格](docs/modules/WIP/在製品庫包裝作業.md)、WP601 包裝規格及 `docs/DATABASE_CONNECTION.md` WP629/WP201/WP601 Oracle reference 記錄。
+- [ ] WP629 沒有專屬新表：先核對 YMES PostgreSQL live schema/migrations，重用 WP601 的 L1–L6 包裝表、Detail、Relation、`tblinvpackstate`／`tblinvpacklog`，以及既有 `tblinvwipinventory_semi`、`tblwiplotstate`、MO/Product/Packing Rule/Label Rule。若 live schema 缺少共用物件，只依已核實 Oracle DDL 建缺少的 forward migration；不建立另一套 WP629 表，不重建既有表。
+- [ ] 在共用 packing domain service 加入由授權 FunctionKey/command 決定的 inventory-inline 執行模式。不要信任瀏覽器提交 InlinePackingFlag、Status 或 InventoryNo；伺服器重查 Lot `Status=11`，並由 `tblinvwipinventory_semi` 取得 WIP InventoryNo。
+- [ ] Pack Lot／package command 需重驗 MO、Product/Version、packing rule/層級、Lot/包裝現況、Component、PackQty、CloseFlag、關係和重複掃碼。展開包裝內的 Lot，確保全部仍是 Status=11、同 InventoryNo，並與目前未封箱內容一致；維持 WP601 的容量、下層先封、配件、分批與 package serial 規則。
+- [ ] `TBLINVWIPINVENTORY_SEMI` PK 含 LocatorNo，同一 Lot 可有多個庫位列；舊 Core 只依 LotNo 查、無 `ORDER BY`，WinForms 使用 Rows(0)，無法證明其選庫位為確定規則。API 應偵測多筆有效庫位並明確回報歧義／要求明確庫位規則，不可悄悄依 PostgreSQL row order 任選。
+- [ ] 保留 WinForms 掃 Lot／PackingNo 時的 FGD In 關聯檢查；已建立 FGD In 的來源 Lot／包裝禁止重複包裝與拆併。
+- [ ] `TBLINVWIPINVENTORY_SEMI` PK 含 LocatorNo，同一 Lot 可有多個庫位列；舊 Core 只依 LotNo 查、無 `ORDER BY`，WinForms 使用 Rows(0)，無法證明其選庫位為確定規則。API 應偵測多筆有效庫位並明確回報歧義／要求明確庫位規則，不可悄悄依 PostgreSQL row order 任選。
+- [ ] 依來源把 InventoryNo 作包裝現況 OPNo、NodeID=`N/A`、PkgType=`1`；以交易維護共用包裝 Detail/Relation、PackState/Log。WP629 Pack Close 即使到最高層也不得將 Status=11 改成 Status=4；不要額外改動或扣減 WIP Inventory，除非另有經核實的來源副作用。
+- [ ] Delete 維持 Core 的層級 CloseFlag、Detail、Relation、PackState/Log 副作用；Combine／Unboxing 的來源是 `ObjectFileHandler("INVMOPackingCombineDismantle")`，未取得外掛契約時明確保留不支援，不能以 CRUD 回成功。標籤資料與列印須沿用正式 label job/授權代理，不呼叫 server WinForms COM。
+- [ ] 對每一跨表 command 定義 transaction、鎖／CAS、冪等鍵及可辨識業務錯誤；先比對現有 WP601 API/migration 是否已提供共用服務，再擴充，不要重複建 endpoint 或 schema。部署與 PostgreSQL 驗收留在家用端；公司端 WP629 畫面只有獨立 DEV localStorage 假資料。
+
+
+
+## WIP WP603 在製品庫帳務維護家用端 handoff（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 [WP603 規格](docs/modules/WIP/在製品庫帳務維護.md)、Oracle source DDL `database/reference/mestest_wip_wp603_source_ddl.sql`、CREATE-only `database/reference/mestest_wip_wp603_create.sql` 與資料庫查證紀錄。
+- [ ] 先核對 YMES PostgreSQL live schema、migrations、WP101／WP201 的 Lot/WIP 狀態及已共用的 Raw、SEMI、Scrap、Good Bin、Locator、Inventory、Material、Product、MO、OP、Customer、QC Reason 表；CREATE-only 只參考缺欄／型別／PK／索引，不得整份重建既有表。只對真正缺少的物件建立 forward migration。
+- [ ] 新增登入授權、分頁及參數化 InventoryNo／Lot／INVDate 查詢 API，回傳 8 個 WinForms 可見分頁及 Component、Good Bin、Scrap Error 明細。Bin 欄位必須以既有 BinOrder metadata 動態排序；前端不得傳自由 SQL、AdditionalXML 或受信任庫存結果。
+- [ ] Raw Add/Edit/Delete/Scrap、Scrap／Component Scrap／Fail Bin Delete／ReRun、SEMI Lot／Component／Bin Add/Delete/Merge/Split/Turn Inv 必須依規格接入正式 domain service。重新驗證使用者、Inventory、Locator、Lot／Component／Bin 數量與現況；所有跨表狀態與庫存異動要有明確交易／CAS／鎖定、冪等鍵、操作結果及既有 Log side effects。不能以 CRUD 或 Vue 假操作替代 Core。
+- [ ] `TBLWIPCONT_ERROR` Oracle 無 PK；不得自行猜唯一鍵／刪除範圍。九張功能表及五個 standalone index 詳見兩份 DDL；先與 live schema 對照再新增缺少的 migration。
+- [ ] Label Print 原本依賴客戶端外部程式、Label binary／資料與印表機；定義伺服器端安全產生資料／下載方案。`SEMI_WAFER` 特殊轉庫及 `WP_Inventory_Raw_Split` 外掛為客製依賴；來源／部署契約不足的分支須明確保留不可用，不猜測交易。
+- [ ] 本 Form Designer 預設隱藏 Return／Entrust／Wait Incoming 三頁；只有取得 THEIL Form／部署證據確認啟用後再納入正式 API，勿因 handler 存在就開放功能。
+- [ ] 公司端沒有連 YMES PostgreSQL；migration/API、正式 DB 驗證與部署由家用端執行。API 完成後更新文件、資料庫 migration/deployment 記錄與回歸證據。
+
+## 新交接公司端 WP604 半成品庫帳務維護（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 [WP604 規格](docs/modules/WIP/半成品庫帳務維護.md)、`database/reference/mestest_wip_wp604_source_ddl.sql`、`mestest_wip_wp604_create.sql` 及 WP604 資料庫查證紀錄。
+- [ ] 逐表核對 YMES PostgreSQL live schema、migrations、欄位型別、nullable/default、PK、索引與現有資料；CREATE-only 僅供比對，缺表才新增 forward migration。Oracle 查到的功能表為 `tblinvsemiinbasis`、`tblinvsemiindetail`、`tblinvsemiincomponent`、`tblinvsemiinventorycomponent`；`tblinvsemiinventory` 和 `tblinvtransactionstate/log` 沿用 WP201／WP605，不重複建表。
+- [ ] 實作登入保護的 InventoryType=2 lookup、SEMI Inventory 查詢、Component 優先／Good Bin fallback 明細 API；保留 LocQty>0、排序及 TBLSYSBIN.BINORDER 動態欄位規則。
+- [ ] SEMI In 單據僅查 State=0，Confirm 需以服務端固定交易種類 Source=20 執行。注意 `TBLINVSEMIINBASIS.Source` 是另一欄：0=手動外購、1=From WIPInventory_SEMI；Source=1 需同交易扣來源庫存。重用 `TBLINVTRANSACTIONSTATE/LOG`，處理 Basis 0→1→2/3、防重、並發鎖、庫存/Component/Lot State、容量與 release log。
+- [ ] Turn API 需檢查來源數量與狀態、目的庫別/核准 Locator、容量及並發；WIP/FGD/SEMI 三向搬動的 Inventory、Component、Lot/Component State、reverse state 與 release log 同交易保存。檢查 `SEMI_WAFER`、`TBLWIPCOMPRULEMAP_*`、`TBLINVTemp_Component` 及外部 release-log handler 相依，缺乏來源時標示不可用，不略過副作用。
+- [ ] 公司端 Vue 頁 `/YMES/WIP/SemiInventory` 目前僅用 localStorage DEV 假資料，沒有 Production API/migration；家用端完成後更新規格與共用交易契約。公司電腦不連 YMES PostgreSQL。
+
+## 新交接公司端 WP605 成品庫帳務維護（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/WIP/成品庫帳務維護.md`、`database/reference/mestest_wip_wp605_source_ddl.sql`、`mestest_wip_wp605_create.sql` 及公司端 Oracle 查證紀錄。
+- [ ] 先比對 YMES PostgreSQL live schema／migrations，再決定 forward migration。Oracle MESTEST 本次確認存在且需要評估的六張表：`tblinvfgdinventorycomponent`、`tblinvfgdinbasis`、`tblinvfgdindetail`、`tblinvfgdincomponent`、`tblinvtransactionstate`、`tblinvtransactionlog`。逐表檢查，不可直接執行 CREATE-only 覆蓋既有表。
+- [ ] 共用表沿用 WP201／WP101、SMD、PRD、OE references；重用 `tblinvfgdinventory`、`tblinvlocatorbasis`、WIP Lot／Component、`tblwipgoodbinstate`、`tblsysbin`、`tblinvwipinventory_component`、`tblinvwipinventory_semi` 與 `tbloemobasis`，禁止重複建表。Oracle 未找到 `TBLINVFGDINVENTORYBIN`，UI Bin 來源是 `TBLWIPGOODBINSTATE` 的動態 Bin 欄位。
+- [ ] 實作登入保護 WIP FGD Inventory API：庫別／儲位 lookup、庫存查詢、component/bin 明細、Add upsert、逐筆 Del、容量／並發檢查及 FGD→FGD／SEMI／WIP 轉庫。服務端重查 IssueState、Lot 狀態、容量和庫存；依 spec 保留各 Core 路徑的庫存／Lot／Component／release log side effects，釐清外部 `iMESWIPReleaseLogHandler.dll` 契約。
+- [ ] FGD In Source=30 必須一次涵蓋 TransactionID 產生、TransactionState、Basis 0→1→2/3、ExeFGDIn 過帳、State→Log 搬移及防重送；Source=1 還需扣來源 SEMI/WIP inventory。不可僅新增 queue row 或只改 Basis 狀態。`TBLINVTRANSACTIONLOG` 是成功交易必要表，Oracle 查證只有 PK unique index、無 FK／trigger／額外 index。
+- [ ] DEV localStorage 並不實際過帳庫存；Production API／schema 完成後依模組規格更新索引、handoff、測試／部署紀錄，公司端再 pull 核對 WinForms 契約。公司端不連 PostgreSQL。
+
+## 前置家用端交接（歷史待辦）
+
+## 新交接公司端 WP102 生產批開立_批次（2026-11-19）
+
+- [ ] Pull 最新 main，讀 docs/modules/WIP/生產批開立_批次.md、database/reference/mestest_wip_wp102_source_ddl.sql 與 mestest_wip_wp102_create.sql。
+- [ ] 比對 YMES PostgreSQL live schema/migrations：WP102 新增需求只有 ymes.tblwiplotproperty_temp；tblwiplotproperty 已列於 WP101 schema/reference。工單、WIP LotBasis/State/Process 與 BOM/Process/Serial lookup 都是共用表，禁止重建或覆蓋。
+- [ ] 若 TEMP table 不存在，先驗證備份再新增 forward migration；欄位為 LOTNO varchar(50) NOT NULL、PROPERTYNO varchar(20) NOT NULL、PROPERTYVALUE varchar(255) NULL、LOTSERIAL varchar(55) NULL，PK (LOTNO, PROPERTYNO)，無 FK/額外索引。Create-only SQL 僅是空表參考。
+- [ ] 接登入保護 WP102 批次 API：重查 MOState=3、UnReleaseLotQty、Product LotBase、MO Process、BOM 及 SYS serial mode；不可信任 UI 顯示欄位，也不能使用 DEV 批號。自動序號由 server 驗證並原子保留，沿用 WP101 LotBasis/State/Process/Property domain logic，不重複實作 CRUD。
+- [ ] 一次批次請求逐筆回報結果；每筆交易需鎖定／條件扣減 MO 餘量，執行建批、StartLot、LotCreate material deduction、狀態 0→1、Property/SAP data。保留舊 Core 前批已提交、後批失敗可能部分成功的語意；不可錯誤宣稱全回滾。
+- [ ] 處理 Service 的 TEMP staging 生命週期：若使用 tblwiplotproperty_temp，依 LOTNO/PROPERTYNO 隔離並於失敗時清理；亦可採 transaction 內 staging，但要保留逐批結果。檢查 WIP_BIGQTY/WIP_SORTQTY、WIP_CIMLOTNO/WIP_INSP_NO/WIP_M_LOTNO property 對應及 SAP_PCSQTY/SAP_ARGQTY/SAP_PRDQTY 欄位。
+- [ ] API 完成後更新 WP102 規格、TODO、forward migration、交易回歸及部署紀錄；公司端 pull 後再接 Vue contract。公司端不連 PostgreSQL；Oracle CREATE-only 不可直接執行到 YMES。
+
+## 新交接公司端 WP101 生產批開立（2026-11-19）
+
+- [ ] 先 pull 最新 main，再讀 docs/modules/WIP/生產批開立.md 與 database/reference/mestest_wip_wp101_source_ddl.sql / mestest_wip_wp101_create.sql。
+- [ ] 對 YMES live schema、migration 與現有資料逐一比對七張來源表；表已存在就沿用，不重建、不覆蓋資料。只在確認缺物件且完成備份後新增 forward migration。工單／產品／流程／元件／Lot Property metadata 都是共用資料，禁止重複建表。
+- [ ] 實作工單候選與批次查詢、Add/Edit/Copy/Delete/Release API。新增／修改須交易性保存 lot basis、流程、起始站、元件、略過 OP、Property 與 MO component booking。
+- [ ] Delete 必須做 CloseLot 等價 WIP 狀態與關聯清理，不可直接刪主表。Release 需交易內鎖定並重查 MO 未下線量、LotState、元件 ReleaseState，再處理扣料、StartLot、lot state/WIPDate、MO 扣量與 property transfer。
+- [ ] 動態 Lot Property 寫入須使用 metadata table/field 白名單；未下線量歸零時委外庫存、ECN 及自動 BR/OP/TransferLot 的後續語意依規格補齊。批次 API 每列獨立結果、第一筆失敗後先前成功不可謊稱回滾。
+- [ ] 防止並發超量開批：以 DB row lock 或條件式扣量／影響筆數 CAS 保護，不能只做無鎖讀取後比較。補 API／schema 變更、交易回歸與部署紀錄。
+- [ ] CREATE-only SQL 僅作型別／約束參考，不可整份直接執行取代 live schema；不得把 Oracle 連線秘密寫入 repo。
+
 ## 公司端新交接（2026-11-19，OE／QC／PRD）
 
 - [ ] [OE101／OE102](docs/MODULE_REPLICATION_SPEC_INDEX.md#工單管理--訂單) 訂單主檔、明細、屬性與結案。已提供四張表的 Oracle DDL 及 CREATE-only 參考。先核對 live schema，再實作正式 API、資料驗證及狀態互斥。
 - [ ] [OE201–OE205](docs/MODULE_REPLICATION_SPEC_INDEX.md#工單管理--工單) 工單基本資料、刪除、查詢及兩種達交率。先核對五張工單表和後續用料、ERP、挑片、簽核等相依表的現況。保留兩個報表對缺日期分母與 LeadTime 的各自規則。
+- [ ] [OE206](docs/modules/OE/工單用料清單.md) 工單用料與存料 DDL 已交付。正式 API 須跟工單刪除、發放、庫房扣料及 OE207 存料現況共用鎖與狀態。
+- [ ] [OE207](docs/modules/OE/工單存料現況.md) 衍生存料查詢及元件唯讀查詢。元件表 Oracle DDL 和 CREATE-only 已備妥。
+- [ ] [OE208](docs/modules/OE/工單結案.md) 工單結案共用 OE201 DDL。正式 API 需以 WIP／庫房與 ERP 資料檢查結案，保留舊狀態與版本條件。
+- [ ] [OE209](docs/modules/OE/工單元件資料維護作業.md) 工單元件維護共用 OE201 元件 DDL，新增異動紀錄表參考。正式 API 須處理序號、同秒異動、單位轉換及同交易保存稽核。
+- [ ] [OEB01](docs/modules/OE/工單挑片資料查詢.md) 正式唯讀挑片資料與安全的動態測項欄位。已提供測試 Recipe 表及既有挑片配置 DDL 連結。
+- [ ] [OEP01](docs/modules/OE/工單開立_晶片測試.md) 共用工單表，補半成品關聯表的 Oracle DDL 及 CREATE-only。正式 PKG 交易需覆蓋挑片、元件分派、發料及版本驗證。
 - [ ] [QC103](docs/modules/QC/抽樣計劃.md#公司端-formcore-與函式目錄查證2026-11-19) 已有 FUNSA、Type 4／6 旗標及 QC301 一般／Wafer 選表來源。QC107 實際字典值與部署開關仍待交付，QC108 標準 FUNQR 方法名單均對應空實作。
 - [ ] [PD206](docs/modules/PRD/產品抽樣頻率規則.md#父主檔生命週期來源查證) 已補產品、設備與站點刪除／停用及 WIP 萬用鍵順序。父資料暫不存在及競態處理仍須由 YMES 明定。
 
@@ -1862,3 +1970,29 @@ API 工作：
 ## PRD PDB05 測試程式檔案管理家用端 handoff（2026-11-19）
 
 - [ ] 依 [測試程式檔案管理](docs/modules/PRD/測試程式檔案管理.md) 核對檔案／歷程 CREATE、程式版本鍵、核准類型、傳輸與交易一致性。
+
+## WIP WP201 生產批執行家用端 handoff（2026-11-19）
+
+- [ ] 先 pull 最新 main，閱讀 WP201 規格、Oracle source DDL 三檔與 database/reference/mestest_wip_wp201_create.sql。此 CREATE-only 有 39 張來源表，不代表要新增 39 張 schema。
+- [ ] 對照 YMES PostgreSQL live schema/migrations，沿用 WP101/WP102、OE、PRS、EQP、QC/SPC、INV 共用物件；只替缺表補 forward migration。Create reference 不含 FK、Check、secondary index 與 Oracle storage/index tablespace clauses。
+- [ ] 規劃登入保護的 Lot 查詢、lookup 與 POST ExecuteLot command；不得 GET 修改在製狀態。後端重新驗證 Employee、LotStamp、批次狀態、NetFlow、Wait/Hold、Complete/OS、QTime/LMS、OP Group、Business Rule、設備／元件／SPC/QC 門檻。
+- [ ] 交易性接續 wsWIP.ExecuteLot → Core TriggerOP／TransferLot。明確定義 ERF、Future Hold/Wait/OS、StopFlag、Complete+HOLD、狀態 11/12/31/99、Component RunBatchCO、動態 Manual BR DLL 的 YMES 對應與錯誤結果；不要假裝用單純 lot status CRUD 替代。
+- [ ] TBLWIPECNLOTBASIS 與 VIEW_TBLWIPPACK_LOT 在公司端 MESTEST/PUBLIC 無表、view 或 synonym；確認 YMES 現況／替代客製物件後再決定是否實作該可選分支，不要建立猜測的 CREATE SQL。
+- [ ] 依規格保留 API 錯誤碼、幂等鍵、CAS/LotStamp、operation log 與權限邊界；正式驗收需針對 status、併發、服務中斷／部分成功及自動／手動 BR 做回歸，成功後更新 migration/deploy record。
+
+## WIP WP202 生產批執行_元件家用端 handoff（2026-11-19）
+
+- [ ] Pull 最新 main，閱讀 [WP202 規格](docs/modules/WIP/生產批執行_元件.md)、[WP201 共用執行規格](docs/modules/WIP/生產批執行.md)，以及 `docs/DATABASE_CONNECTION.md` WP202 段落。
+- [ ] Component JOIN 查詢使用 WP101 已交付的 `TBLWIPLOTSTATE`、`TBLWIPCOMPONENTSTATE`、`TBLWIPLOTBASIS`；先核對 YMES PostgreSQL live schema 與 migrations，不新增重複表。Oracle source／CREATE-only 參考為 `database/reference/mestest_wip_wp101_source_ddl.sql`、`mestest_wip_wp101_create.sql`。
+- [ ] 建立登入保護的 Area／PS／OP Component JOIN 查詢，狀態限定 0／1／4／5，回傳 ComponentNo、OPNo、BRNo、StatusShow、BaseLotNo、LotNo、MoNo，參數化、分頁並依 ComponentNo 排序。OP lookup 可依 PS 限縮。
+- [ ] ComponentNo 可對應多個 ComponentState 列／LotNo 時，確認實際唯一性；有歧義時回候選，不可無排序取第一筆。Execute 使用 POST，若 LotNo 有值維持 LotNo 優先，否則伺服器解析 ComponentNo，再接 WP201 共用 ExecuteLot command；重驗登入身份、權限、批次狀態與 LotStamp/CAS。
+- [ ] API 必須沿用 WP201 的 TriggerOP、動態 BR、TransferLot、Future Hold／Wait／OS、StopFlag、ERF、幂等鍵及 operation log 決策；WP202 只增加元件選批入口，不建立簡化的獨立 Lot 狀態更新流程。完成後更新 API/schema、部署及驗收紀錄。
+
+## WIP WP204 生產批執行_設備家用端 handoff（2026-11-19）
+
+- [ ] Pull 最新 main，閱讀 docs/modules/WIP/生產批執行_設備.md、WP201 共用執行規格及 docs/DATABASE_CONNECTION.md WP204 段落。
+- [ ] Oracle source DDL／CREATE-only：database/reference/mestest_wip_wp204_source_ddl.sql、mestest_wip_wp204_create.sql。先核對 PostgreSQL live schema/migrations；設備、狀態、WIP 與產品流程表沿用既有 WP101/WP201／主檔資源，只對缺表做 forward migration，不得照單全建四張。
+- [ ] 建登入者授權的設備收藏／頁面查詢、設備狀態及顏色、LoadPort／在機批次、Lot Info、候選批次／Recommand、EQP／Lot log、QC List API；工作站與設備收藏需定義權限範圍及分頁。
+- [ ] Check In／Out、Carrier Check In／Out、設備 Hold、全域 Hold、Eqp Change State 使用 POST command。不可 GET 寫入，也不可接受前端傳入的可派批次結果作為資格；伺服器重驗登入者、Equipment、LoadPort、Lot、LotStamp／狀態及關聯。
+- [ ] CI／CO 接 WP201 的共用 ExecuteLot、TriggerOP、Business Rule、TransferLot 交易；保留 QTime/LMS、ERF、SPC/QC、設備／Carrier 與 operation log side effects。定義 CAS/鎖定、冪等、部分失敗與錯誤碼，不用簡化的 LotStatus 更新替代。
+- [ ] 四張 CREATE SQL 為原生 Oracle 結構參考；來源中 TBLEQPFAVORITE 及 TBLPRDSTAGESTEPSET、DETAIL 沒有 PK，TBLWIPLOTGPEQUIPMENT 只有 LOTNO/OPNO 非唯一索引。不可自行補猜測 PK/FK。
