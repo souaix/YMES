@@ -1806,3 +1806,7 @@ API 工作：
 ## PRD PDB01 挑片規則家用端 handoff（2026-11-19）
 
 - [ ] 依 [挑片規則設定](docs/modules/PRD/挑片規則設定.md) 核對兩張 CREATE、區段欄位、同類倉庫、DataStamp 及條件執行。
+
+## PRD PDB02 產品設定_封測家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品設定_封測](docs/modules/PRD/產品設定封測.md) 核對既有產品主檔、ECN 六表、正式 WIP 清線、SEN 批號及封測 API。

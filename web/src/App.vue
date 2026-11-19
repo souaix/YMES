@@ -380,6 +380,7 @@ const fallbackMenuTree: MenuNode[] = [
     children: [{ id: 'product-settings', label: '產品設定', shortLabel: '設', children: [
       { id: 'function:PRD:PRD TYPE', label: '產品類別資料', tableName: 'tblprdtype', shortLabel: '類', functionNo: 'PRD TYPE', moduleNo: 'PRD' },
       { id: 'product-master', label: '產品主檔', tableName: 'tblprdproductbasis', shortLabel: '主', functionNo: 'PRD BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:B_PRD BASIS_IC', label: '產品設定_封測', tableName: 'tblprdproductbasis', shortLabel: '封', functionNo: 'B_PRD BASIS_IC', moduleNo: 'PRD' },
       { id: 'function:PRD:MODULE BASIS', label: '製程模組資料', tableName: 'tblprdmodulebasis', shortLabel: '模', functionNo: 'MODULE BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:PRODUCT SEARCH', label: '產品內容查詢', tableName: 'tblprdproductbasis', shortLabel: '查', functionNo: 'PRODUCT SEARCH', moduleNo: 'PRD' },
       { id: 'function:PRD:PRD RECIPE BASIS', label: '產品參數群組', tableName: 'tblprdrecipebasis', shortLabel: '參', functionNo: 'PRD RECIPE BASIS', moduleNo: 'PRD' },
@@ -552,6 +553,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:P_WAFER RULE MANAGER': `${appBasePath}/PRD/CPWaferRules`,
   'function:PRD:P_PRD WAFERMAP MERGE RULE': `${appBasePath}/PRD/CPMergeMapRules`,
   'function:PRD:B_CHOOSE WAFER RULES': `${appBasePath}/PRD/ChooseWaferRules`,
+  'function:PRD:B_PRD BASIS_IC': `${appBasePath}/PRD/PackagingProducts`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -702,6 +704,7 @@ const isCpProgramPage = computed(() => activeMasterKey.value === 'function:PRD:P
 const isCpWaferRulePage = computed(() => activeMasterKey.value === 'function:PRD:P_WAFER RULE MANAGER')
 const isCpMergeMapRulePage = computed(() => activeMasterKey.value === 'function:PRD:P_PRD WAFERMAP MERGE RULE')
 const isChooseWaferRulePage = computed(() => activeMasterKey.value === 'function:PRD:B_CHOOSE WAFER RULES')
+const isPackagingProductPage = computed(() => activeMasterKey.value === 'function:PRD:B_PRD BASIS_IC')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2344,6 +2347,16 @@ async function signOut(): Promise<void> {
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
+        <ProductBasisMaster
+          v-else-if="isPackagingProductPage && isDevelopmentPreview"
+          class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          packaging
+          @close="navigateHome"
+        />
+        <main v-else-if="isPackagingProductPage" class="framework-content">封測產品服務待接續。</main>
         <ProductBasisMaster
           v-else-if="activeMasterDataKey === 'product-master'"
           class="framework-content"
