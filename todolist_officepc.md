@@ -1200,4 +1200,10 @@
 ## PRD PD110 產品作業站修正公司端檢查點（2026-11-19）
 
 - [x] 核對獨立 Form／Designer 與 PD109 共用 Service／Core。完成 DEV 路徑、固定六項 Amend、進度／取消與 handoff。
-- [ ] 正式動態預設、權限與 API 待接續。下一項 PD111 產品作業站批次複製。
+- [ ] 正式動態預設、權限與 API 待接續。
+
+## PRD PD111 產品作業站批次複製公司端檢查點（2026-11-19）
+
+- [x] 核對 Form／Designer、Service／Core，完成 DEV 來源／目標版次、可選複製項目、目標參數序號、進度與取消。
+- [x] 沿用 PD109 Oracle 字典及共用表 CREATE-only，整理家用端複製 API 交接。
+- [ ] 正式權限、ECN 開關、APS 與 API 待接入。下一項 PD112 包裝規則設定。

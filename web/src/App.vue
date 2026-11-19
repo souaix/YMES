@@ -372,6 +372,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:PRODUCT LABEL MAP BASIS', label: '產品標籤對應設定', tableName: 'tblprdlabelmap', shortLabel: '對', functionNo: 'PRODUCT LABEL MAP BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:PRODUCT OP DEFAULT', label: '產品作業站預設', tableName: 'tblprdop', shortLabel: '預', functionNo: 'PRODUCT OP DEFAULT', moduleNo: 'PRD' },
       { id: 'function:PRD:PRODUCT OP AMEND', label: '產品作業站修正', tableName: 'tblprdop', shortLabel: '修', functionNo: 'PRODUCT OP AMEND', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRODUCT OP COPY', label: '產品作業站批次複製', tableName: 'tblprdop', shortLabel: '複', functionNo: 'PRODUCT OP COPY', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -497,6 +498,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRODUCT LABEL MAP BASIS': `${appBasePath}/PRD/ProductLabelMap`,
   'function:PRD:PRODUCT OP DEFAULT': `${appBasePath}/PRD/OperationDefaults`,
   'function:PRD:PRODUCT OP AMEND': `${appBasePath}/PRD/OperationAmend`,
+  'function:PRD:PRODUCT OP COPY': `${appBasePath}/PRD/OperationCopy`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -629,6 +631,7 @@ const isLabelDataPage = computed(() => activeMasterKey.value === 'function:PRD:L
 const isProductLabelMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT LABEL MAP BASIS')
 const isProductOperationBatchPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT OP DEFAULT')
 const isProductOperationAmendPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT OP AMEND')
+const isProductOperationCopyPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT OP COPY')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2148,11 +2151,12 @@ async function signOut(): Promise<void> {
           @close="navigateHome"
         />
         <ProductOperationBatch
-          v-else-if="isProductOperationBatchPage || isProductOperationAmendPage"
+          v-else-if="isProductOperationBatchPage || isProductOperationAmendPage || isProductOperationCopyPage"
           :key="activeMasterKey"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           :amend-only="isProductOperationAmendPage"
+          :copy-only="isProductOperationCopyPage"
           @close="navigateHome"
         />
         <ProductBasisMaster

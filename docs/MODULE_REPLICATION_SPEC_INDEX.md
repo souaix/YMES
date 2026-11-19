@@ -168,6 +168,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PD110 產品作業站修正](modules/PRD/產品作業站修正.md) 已完成獨立 DEV 選單及固定六項補缺流程。
 
+[PD111 產品作業站批次複製](modules/PRD/產品作業站批次複製.md) 已完成 DEV 來源／目標版次、旗標與作業參數關聯複製。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

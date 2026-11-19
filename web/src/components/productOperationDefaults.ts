@@ -67,3 +67,30 @@ export function applyOperationDefaults(product: ProductRow, relation: ProductRel
     structuredClone((template.businessRules?.operations ?? []).filter(scoped)), scoped, opKey, mode) }
   return next
 }
+
+export function copyOperationSettings(product: ProductRow, source: ProductRelation, target: ProductRelation, flags: DefaultSelection, copyProcess: boolean): ProductRelation {
+  const next = { ...target }
+  const identity = { productNo: product.productNo, productVersion: product.productVersion }
+  const copyRows = (rows?: ProductRow[]): ProductRow[] => (rows ?? []).map(row => ({ ...structuredClone(row), ...identity }))
+  if (copyProcess) next.processes = copyRows(source.processes)
+  if (flags.parameter) {
+    const parameters = source.parameters
+    const serials = new Map<string, string>()
+    const ops = copyRows(parameters?.ops).map((row, index) => {
+      const serialNo = `DEV:${product.productNo}:${product.productVersion}:${index + 1}`
+      serials.set(String(row.serialNo), serialNo)
+      return { ...row, serialNo }
+    })
+    const details = (rows: ProductRow[] = []): ProductRow[] => rows.flatMap(row => {
+      const serialNo = serials.get(String(row.serialNo))
+      return serialNo ? [{ ...structuredClone(row), serialNo }] : []
+    })
+    next.parameters = { ops, attributes: details(parameters?.attributes), rules: details(parameters?.rules), equipments: details(parameters?.equipments) }
+  }
+  if (flags.description) next.opDescriptions = copyRows(source.opDescriptions)
+  if (flags.resource) next.opAreas = copyRows(source.opAreas)
+  if (flags.qc) next.qcItems = copyRows(source.qcItems)
+  if (flags.subOp) next.subOps = copyRows(source.subOps)
+  if (flags.businessRule) next.businessRules = { operations: structuredClone(source.businessRules?.operations ?? []) }
+  return next
+}

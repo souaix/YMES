@@ -1723,3 +1723,7 @@ API 工作：
 ## PRD PD110 產品作業站修正家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品作業站修正規格](docs/modules/PRD/產品作業站修正.md) 沿用 PD109 Amend API、schema 與權限，帶入 PD110 固定六項。
+
+## PRD PD111 產品作業站批次複製家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站批次複製規格](docs/modules/PRD/產品作業站批次複製.md) 沿用共用表，實作版次／ECN 檢查、每版交易、SerialNo 關聯複製與取消。
