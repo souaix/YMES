@@ -85,7 +85,15 @@
 - [x] 已對照 `frmBR_L_CO_Packing_MOLine_INV`、`frmMOLinePackConfig`、`wsWIP.ExePacking`／`ExePacking_Close`／`ExePacking_Delete`、`clsLot` InlinePackingFlag 分支及選單 FunctionKey WP629。
 - [x] Vue DEV 已加入 WIP → 包裝與庫房 → 在製品庫包裝作業，重用 WP601 版面，獨立 localStorage 假資料；Status=11、InventoryNo 同庫驗證、已包裝批與封箱後狀態保留均按來源規則模擬。
 - [x] 完成 [WP629 規格](docs/modules/WIP/在製品庫包裝作業.md)、模組索引、Oracle/reference 重用紀錄及 `todolist_homepc.md` API/schema handoff。WP629 無新專屬表；使用 WP601 包裝 DDL 與 WP201 `TBLINVWIPINVENTORY_SEMI` reference，不重複 CREATE SQL。
-- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser；未在 Oracle 執行 DDL/DML。提交並推送後依 TODO 選下一個未完成 MES 功能。
+- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser；未在 Oracle 執行 DDL/DML。其後已接續完成 WP301 設備上料。
+
+### WP301 設備上料已交付（FunctionNo EQP MOUNT MATERIAL，2026-11-20）
+
+- [x] 對照 `frmEQPMaterialLoading` Form／Designer、`wsWIP_Material` 與 `clsMaterialHandler`；核實設備與 MO 查找條件、三種上料模式、階層現況、CheckMTL、Mount／Unmount、Component map 及 Seq 交換。
+- [x] 受保護 Oracle profile + PowerShell 5.1／ODP.NET 唯讀取得四張未有既有 reference 的 MESTEST 表 DDL／metadata：`TBLWIPEQPMATERIALSTATE`、`TBLWIPEQPMTLSTATE_COMP`、`TBL_BINKLESSMAPSTATE`、`TBL_BSUBSTRATEMAPSTATE`。四表各只有 PK unique index，無 FK／額外 index／trigger；未讀業務列、未執行 Oracle DDL/DML。
+- [x] 完成 Vue DEV `/YMES/WIP/EquipmentMaterialLoading`、三層選單與 [WP301 規格](docs/modules/WIP/設備上料.md)。Oracle source DDL／metadata／PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp301_*`；另 13 張相依表沿用已存在 references。
+- [x] DEV 支援物料、物料(元件)、半成品輸入、設備／MO 查找、上下移序與下料確認，使用獨立 localStorage 假資料。家用端待核對 PostgreSQL live schema，實作庫存扣還、設備現況、元件映射及序號交易 API。
+- [x] 公司端未連 PostgreSQL，未執行 build、test 或 browser；本輪 Oracle 僅讀 metadata／DDL。
 
 ### 公司端工作範圍
 

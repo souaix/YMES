@@ -754,3 +754,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - WP629 原始碼使用 `TBLWIPLOTSTATE`、WP601 已核對的包裝層級／Detail／Relation／PackState／PackLog，以及 `TBLINVWIPINVENTORY_SEMI`。本功能沒有新增專屬 Oracle 表，因此本輪沒有重複查 DDL，也沒有另產一份重複 CREATE-only。
 - `TBLINVWIPINVENTORY_SEMI` 的 Oracle source DDL 與 CREATE-only 已由 WP201 來源依賴查證保存於 `database/reference/mestest_wip_wp201_dependency_source_ddl.sql` 及 `mestest_wip_wp201_create.sql`；包裝表保存於 WP601 reference。WP629 規格記載 Status=11、InventoryNo 與 `InlinePackingFlag=1` 行為。
 - 本次只重用既有 Oracle metadata／DDL 與 WinForms、Service、Core 原始碼；未重查業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。家用端仍須核對 live PostgreSQL schema/migrations，不得因 WP629 而建立重複資料表。
+
+### 更新 2026-11-20：WIP WP301 設備上料
+
+- 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 及本機受保護 Oracle profile 直連 MESTEST，唯讀取得四張原先未有 reference 的表 DDL 與 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_CONS_COLUMNS`、`ALL_INDEXES`、`ALL_IND_COLUMNS`、`ALL_TRIGGERS` metadata：`TBLWIPEQPMATERIALSTATE`、`TBLWIPEQPMTLSTATE_COMP`、`TBL_BINKLESSMAPSTATE`、`TBL_BSUBSTRATEMAPSTATE`。
+- 四表皆只有複合 PK unique index，沒有 FK、額外 index 或 trigger。欄位、Oracle source DDL 與 metadata 分別見 `database/reference/mestest_wip_wp301_source_ddl.sql`、`mestest_wip_wp301_metadata.txt`；家用端 PostgreSQL CREATE-only 見 `database/reference/mestest_wip_wp301_create.sql`。其他 13 張功能相依表沿用 WP101/WP201、OE、MTL、OP/SMD 既有 reference，不在此重複產生 CREATE。
+- 僅查結構 metadata／DDL，未讀 MES 業務資料列、未在 Oracle 執行 DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。CREATE-only 不代表 migration；家用端須先比較 YMES PostgreSQL live schema／migration history，再只為缺表新增 forward migration。

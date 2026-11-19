@@ -9,6 +9,17 @@
 - [ ] `ObjectFileHandler("INVMOPackingCombineDismantle")`、CodeSoft／BarTender 本機 COM 與標籤範本是外部相依；設計授權的 server-side label job／列印代理與補印契約。不可由 browser 任選 server path/printer，也不能假設 WP602（未掛選單的補印 Form）已完成。
 - [ ] 完成後更新 WP601 API/schema/migration、交易回歸／部署證據、規格索引與 TODO。公司端只做 Vue DEV 假資料與 Oracle 唯讀；Production PostgreSQL／API／migration／部署由家用端完成。
 
+## 新交接公司端 WP301 設備上料（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP301 規格](docs/modules/WIP/設備上料.md)、`docs/DATABASE_CONNECTION.md` WP301 段落與四張 Oracle source DDL／metadata。
+- [ ] 先核對 YMES PostgreSQL live schema／migrations。WP301 新交接四張表為 `tblwipeqpmaterialstate`、`tblwipeqpmtlstate_comp`、`tbl_binklessmapstate`、`tbl_bsubstratemapstate`；對缺表才新增 forward migration。其餘 13 張相依表沿用 WP101／WP201、OE、MTL、OP/SMD 既有 reference，不重複建表。
+- [ ] 建登入授權 GET 查詢：已核准且非 VIRTUAL 設備、狀態 0/1/2/3/6 工單、設備上料階層與元件明細。保持 WinForms NewType=1 語意：指定 MO 時現況 Grid 仍載入該設備全部已上料；指定 MO 影響 mount 投料點與 BOM 主物料。
+- [ ] 建 POST `mount`、`unmount`、`sequence-change` commands；不得以 GET 修改。Server 重查設備 IssueState/Class、MO state/BOM、物料／產品有效狀態、CheckLotNo、庫存可用量、投料點、MaterialLevel、半成品批號、元件／基板／晶圓映射、效期／解凍／上料順序。不可信任 client 傳入 CheckLotNo、PutInPlaceType、MaterialLevel、庫存量或 Seq 結果。
+- [ ] `mount` 交易需協調投料點扣帳、`tblwipeqpmaterialstate` 新增／累加、`tblwipeqpmtlstate_comp` 與 map states、OpenDate／ExpireDate／AcclimationDate，以及必要 Inventory Raw Log。`unmount` 需按全部物料或單一 Component 語意還原庫存、維護現況／map states、處理 ResetOpenDate 與 Raw Log。`sequence-change` 以設備現況完整鍵原子交換兩列 Seq。
+- [ ] 唯一鍵請依 Oracle source：設備現況 `(EquipmentNo, MaterialNo, InputMaterialNo, MaterialLotNo, MONo)`；元件現況 `(MONo, EquipmentNo, MaterialNo, InputMaterialNo, MaterialLotNo, ComponentNo)`；兩個 map table 依規格中各自的完整複合 PK。定義重複請求、跨表交易、鎖／CAS 與明確錯誤碼。
+- [ ] Core 有些庫存／半成品查詢僅依 LotNo 並讀第一列；同 Lot 跨 Inventory/Locator 有多列時，API 必須依 InventoryNo／LocatorNo／MO 完整限定或回傳歧義，不可依 DB row order 任選。
+- [ ] Vue DEV 使用 `ymes.dev.wp301-eqp-material-loading.v1` localStorage 假資料，沒有接正式 API。公司端不連 PostgreSQL、不做 migration；家用端完成正式 API、schema 比對與部署驗收。
+
 ## 新交接公司端 WP629 在製品庫包裝作業（2026-11-19）
 
 - [ ] Pull 最新 `main`，閱讀 [WP629 規格](docs/modules/WIP/在製品庫包裝作業.md)、WP601 包裝規格及 `docs/DATABASE_CONNECTION.md` WP629/WP201/WP601 Oracle reference 記錄。
