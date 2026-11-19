@@ -1,5 +1,15 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## ENT ET102 客戶連絡人結構與權限：0056（2026-11-20）
+
+- HOME PC root先以PPK SSH唯讀核對，Contact表／PK index／同名type在所有schema缺少；既有Customer真表41欄、無RLS，0055提供的SELECT及 `UPDATE(customerno)` 實際可用。本批不重建Customer、不擴充其權限。
+- 完整 `ymes` custom-format備份 `/opt/ymes/backups/ymes_before_0056_et102_20261119T215151Z_YfRMIaQl.dump`，631972 bytes；目錄700、檔600，`pg_restore --list` 成功、有1799個非空條目，之後才套 [0056 migration](../database/migrations/0056_et102_customer_contactor.sql)。備份檔名採UTC，本節日期採家用端本地日期。
+- 原SQL SHA256 `735e8942311c7ab897f9206071229f3e691ee22f14638be0cfdb5e17fdb6356b`；私有凍結副本在備份後先preflight，原BEGIN內再檢不存在後CREATE／GRANT／COMMIT。保留原source與NOT APPLIED歷史註解bytes；實際已套用狀態以本節和root receipt為準，不能直接重跑。
+- 提交後獨立READ ONLY讀回 `"YMES".tblentcustomercontactor` 十三欄型別／順序／NULL／default差異0，物理首欄ContactorName、次欄CustomerNo；唯一PK順序 `(customerno,contactorname)`，一個PK index、user triggers0、RLS policies0、ACL差異0。DataStamp原生nullable DEFAULT0，沒有IssueState、FK或額外index。只有新Contact表授app CRUD；Customer完整catalog／ACL、schema／defaultACL／roles／membership前後保持，未seed或匯入業務資料。
+- app實際role對Contact十三欄及Customer四個reader欄作 `WHERE false` SELECT probe通過；SHARE所需Customer key UPDATE只讀metadata確認，不在READ ONLY做row-lock。原始證據位於 `/opt/ymes/backups/et102_0056_reviewed_fxGCeyi4`，本機收據 `.tools/et102-migration-applied-20261120.json`、`et102-migration-apply-20261120.log`。
+- 隨後ET102 API實際部署為 `0339807d5b7e13be6efeec1ed72cdbaef71619af3f7c3fe46cd88ce9f0d87c2a`，切換前五個runtime檔案通過真nonroot讀取gate，readiness200；切API當時Web仍fc83。之後不可變API145／Web206來源建置與打包均通過，Web實際換為 `6a4f390f37b80c1579b79579dba625a702e753f11f52e71638dbbb8cdb3b3f67`。API八組單輪98HTTP／406斷言通過，七個自有資料scope＋holder0、metadata保持、logout204，獨立七項再讀0。
+- Root正式app-browser完成53個通過檢查點（52GUI＋1SQL清理讀回），另兩次過早讀表／空提示tr計數觀察保留，不算產品修正或55次全部通過。六Customer只作SQL lookup，11筆Contact均GUI建立／刪除；A／C stamp與N raw／NULL為自有SQL測試條件，Customer不改。GUI刪完92為 `[]`、91只剩六Customer，90-cleanup後再獨立91七項全0；fresh reload logs `[]` 僅該範圍。**Git同步／來源綁定仍待完成**。完整操作、SQL條件及未GUI分支見 [ET102模組](modules/ENT/客戶連絡人資料.md)及 [ET102 QA](qa/20261120-et102.md)，不擴稱完整MES驗收。
+
 ## OPB03 客戶站點對應結構與最小查找權限：0055（2026-11-20）
 
 - HOME PC root 以 PPK SSH 唯讀核對所有 schema：`tbl_bopcustopmapbasis`、`tbl_bopcustopmapdetail`、兩個 PK index 名稱均不存在，type 衝突0；真 Customer／PS／OP 已存在。Customer 原無 SELECT／row-lock UPDATE，PS／OP 必要權限原已可用，未另建 lookup 表。

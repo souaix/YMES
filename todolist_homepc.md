@@ -1,5 +1,19 @@
 # 家裡電腦接手清單
 
+## 最新接手：ET102 客戶連絡人正式驗收完成（2026-11-20，Git 待同步）
+
+本機為 HOME PC，負責 PostgreSQL 復刻資料庫、API、PPK SSH、部署與正式驗收；公司端負責原生 Oracle 唯讀來源與 UI。最新正式 API `0339807d5b7e`／Web `6a4f390f37b8`，migration **0056**；下方 OPB03 及更早狀態保留歷史。
+
+- [x] 已備份並驗證 restore-list，僅新增來源核對的 Contact 13 欄／複合 PK／預設值與本表 CRUD 權限；沒有 seed、FK、額外 index 或父表權限擴張。
+- [x] 145 API／206 Web 固定來源完整建置、正式部署、nonroot 與公開資產驗證通過；保留前一版 OPB03 API 作相容回復，不移除已建的 Contact 表與資料。
+- [x] API 單輪八組 98 HTTP／406 斷言通過，七個精確範圍及 holder 全零、metadata 不變、登出 204。
+- [x] 正式 app-browser 自行 Demo 登入，53 個檢查點通過（52 GUI、1 SQL）。涵蓋查找／全客戶狀態、新增／修改／複製、連續套用／確定、必填／重複、dirty／雙向 Tab、50 字元與字面特殊鍵、多選／部分刪除 1/2、stale、舊 raw 鍵及 NULL、關閉空首頁、21 個收合圖示、重進與深路由重載。兩次驗證器觀測錯誤與後續成功重驗完整保留，沒有改寫原始事件。
+- [x] 11 筆 Contact 全由 GUI 建立及刪除；獨立 SQL 確認 Contact 為空後才清理六筆 lookup，七個範圍獨立讀回全零。最終重載 console 無紀錄，僅適用該次採集範圍。
+- [ ] 正常同步 GitHub 並核對 352 份來源綁定。2026-11-20 驗收後 fetch，當時 HEAD 與 origin/main 均為 `c2c49301b7a90a4454fbc1da064da0a84161454f`，公司端沒有新增提交；尚未推送本批，不能把 OPB03 提交當成 ET102 完成。
+- [ ] 同步後再 fetch 檢查下一項來源完整的家用端交接，持續接手；未提供的交易 provider 與其他模組保持待辦。
+
+完整契約、限制與驗證證據見 [ET102 模組](docs/modules/ENT/客戶連絡人資料.md) 與 [ET102 QA](docs/qa/20261120-et102.md)。本批沒有交付 ET101 父客戶 writer 或角色引擎。
+
 ## 最新接手：OPB03 客戶站點對應已驗收並同步 main caae71d（2026-11-20）
 
 本機是 **HOME PC**，操作 YMES PostgreSQL 復刻資料庫、API、PPK SSH 與部署；公司端的 Oracle 是 MES 原生來源，用來提供唯讀結構、原型邏輯及 UI。以下 OPB02 與更早的版本狀態保留為歷史，現在正式版本以本段為準。

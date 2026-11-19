@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 家用端最新回饋：ET102 正式驗收完成（2026-11-20，Git 待同步）
+
+HOME PC 已完成 ET102 客戶連絡人 PostgreSQL 0056、正式 API `0339807d5b7e`／Web `6a4f390f37b8`；API 單輪八組 98 HTTP／406 斷言、正式 app-browser 53 個檢查點（52 GUI、1 SQL）通過。11 筆 Contact 全由 GUI 建立／刪除，清理 lookup 後七個精確範圍獨立讀回全零。完整限制見 [模組](docs/modules/ENT/客戶連絡人資料.md) 與 [QA](docs/qa/20261120-et102.md)。Git 尚待本批正常同步；驗收後 fetch 時 origin/main 仍為 `c2c4930`，未以舊程式覆蓋公司端。
+
+公司端同步時保留真 Customer 全狀態 lookup、唯讀原始 owner／name、nullable token／audit、Apply 轉 Edit 與續存，以及正式區不使用 DEV seed 的隔離。每次異動須重查父客戶存在；父缺時回 422 並保留資料。這些與 OPB03 的父表規則不同，不可直接套用 OPB03 限制。公司端不需連 PostgreSQL、建表或 SSH；本批不新增公司端資料庫任務，原有原生來源查證待辦繼續保留。
+
 ## 家用端最新回饋：OPB03 已驗收並同步 main caae71d（2026-11-20）
 
 HOME PC 已依原生 DDL 建立 YMES PostgreSQL 的 OPB03 兩表、完成 API／Web 與正式 app-browser 驗收。現在 API `2a2291cc1163`／Web `fc83e8bc5484`／0055；API 八組單輪 162／578，GUI 67 項含 SQL 讀回一項，測試資料精確清零。公司端無需操作家用 PostgreSQL、SSH 或部署；原生 Oracle 與 Vue 來源工作仍由公司端進行。正式程式提交 `caae71d25ed3b88274aeddc5095806e286b5816e` 已正常快轉推到 main，349 檔來源核對通過；當時公司端沒有新提交。後續純文件狀態提交另記，保留兩端歷史、不 force push。
