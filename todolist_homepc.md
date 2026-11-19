@@ -1735,3 +1735,7 @@ API 工作：
 ## PRD PD113 產品包裝規則對應家用端 handoff（2026-11-19）
 
 - [ ] 依 [包裝規則對應規格](docs/modules/PRD/產品包裝規則對應設定.md) 沿用 PD102 對應及 PD112 候選 API，實作 `*` 及 WIP／庫存使用中卡控。
+
+## PRD PD114 自定義流程卡家用端 handoff（2026-11-19）
+
+- [ ] 依 [自定義流程卡](docs/modules/PRD/自定義流程卡.md) 核對主檔與明細 CREATE-only、DataStamp 及 WIP／報表引擎依賴。
