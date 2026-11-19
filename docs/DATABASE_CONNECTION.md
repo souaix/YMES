@@ -742,3 +742,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 四表均只有各自 PK unique index，沒有 FK、額外 index 或 trigger。`TBLINVSEMIINVENTORYCOMPONENT` 未包含於既有 WP201 additional reference，本次補查；`TBLINVSEMIINVENTORY` 與 `TBLINVTRANSACTIONSTATE/LOG` 沿用既有 WP201／WP605 reference，不重複建立。
 - Oracle source DDL、PostgreSQL CREATE-only 參考為 `database/reference/mestest_wip_wp604_source_ddl.sql`、`mestest_wip_wp604_create.sql`。CREATE-only 不是 migration；家用端須先核對 YMES live schema 與 migrations。
 - 僅查 metadata／DDL，未讀 MES 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。Basis Source `0=手動外購、1=From WIPInventory_SEMI` 與交易引擎 Source `20=SEMI In` 由 Core／Service 原始碼確認，不是從 DDL 推斷。
+
+### 更新 2026-11-19：WIP WP601 包裝作業 Oracle metadata
+
+- 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，讀取本機受保護 `DatabaseConfigs.CS.Test.Mes.ConnectionString` 後唯讀直連 MESTEST，取得 WP601 19 張功能表的 DBMS_METADATA DDL 與 ALL_TAB_COLUMNS／ALL_CONSTRAINTS／ALL_INDEXES／ALL_TRIGGERS metadata。19 張 CREATE 欄位數均與 MESTEST dictionary 相符；未讀業務資料列、未執行 Oracle DDL/DML。
+- `TBLWIPMOLINEPACKL` 通用前綴不存在於 MESTEST ALL_OBJECTS／ALL_SYNONYMS；實體為 L1–L6 與各層 Detail。`TBLWIPMOLINEPACKRELATION` 只有兩個非唯一索引、無 PK；`TBLINVPACKMERGELOG` 無 PK／索引。來源 DDL、CREATE-only 與 metadata 分別在 `database/reference/mestest_wip_wp601_source_ddl.sql`、`mestest_wip_wp601_create.sql`、`mestest_wip_wp601_metadata.txt` 及 supplemental metadata。
+- CREATE-only 只供家用端比對 YMES live schema/migrations，不能整批執行；沿用已共用的 WIP／MO／Product／Packing Rule/Label Rule 表。Oracle IP、帳號、密碼及 SID 未輸出或提交；公司端未連 YMES PostgreSQL。

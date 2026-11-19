@@ -1,3 +1,16 @@
+## 新交接公司端 WP601 包裝作業家用端接手（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 [WP601 規格](docs/modules/WIP/包裝作業.md)、`database/reference/mestest_wip_wp601_source_ddl.sql`、`mestest_wip_wp601_create.sql`、metadata 與 `docs/DATABASE_CONNECTION.md` 的 WP601 查證紀錄。
+- [ ] 先核對 YMES PostgreSQL live schema、migrations、資料、PK／nullable/default；WP601 的 19 張 Oracle 功能表逐張比對。CREATE-only 只是來源結構參考，不可整批執行；只替 live schema 確認缺少的表／索引新增 forward migration。不可建立不存在的通用 `TBLWIPMOLINEPACKL`。
+- [ ] 共用 `TBLWIPLOTSTATE`、MO／Product／Packing Rule／Label Rule／Lot Component 與 `TBLINVWIPINVENTORY_SEMI` 等沿用既有 YMES schema/API；不要重複建表。`TBLWIPMOLINEPACKRELATION` Oracle 沒有 PK、只有兩個非唯一索引；`TBLINVPACKMERGELOG` 沒有 PK／index。保留 Oracle key/nullable/precision，不能自行猜 PK/FK。
+- [ ] 建登入者授權的設定／查詢 API：ComputerName 的 PackConfig、LabelPrinter；MO／產線／產品 packing rule、L1–L6 level、滿箱箱數及數量、配件、LabelType/printer；查詢每層未封箱箱與 detail、relation 展開的 Lot／packing 明細。參數化、排序及分頁；服務端自行取得電腦與登入者資訊，不信任前端規則。
+- [ ] POST command 實作 Pack Lot、Pack closed package、Pack Close、Delete、Combine、Unboxing；伺服器重驗 MO/PDLine/ProductVersion、LotStamp/狀態/OP/BR、重複關係、Status=11 庫存分流、Component、可用數量、上下層 CloseFlag 與各層容量。保留 `CloseFlag=1` 自動封箱／`2` 強制封箱、Lot split、L1–L6 主/明細、Relation、PackState/Log、WIP Lot State、FGD In 關聯及 merge/dismantle log side effects。
+- [ ] 所有相關表更新必須在明確交易與適當鎖定/CAS 下原子提交；定義重送 idempotency、防止重複掃碼扣量與並發超容量。不能用 CRUD 或只寫包裝明細取代 `clsLot.ExePacking*` domain 行為。失敗需明確回滾或留下可重試交易狀態。
+- [ ] `ObjectFileHandler("INVMOPackingCombineDismantle")`、CodeSoft／BarTender 本機 COM 與標籤範本是外部相依；設計授權的 server-side label job／列印代理與補印契約。不可由 browser 任選 server path/printer，也不能假設 WP602（未掛選單的補印 Form）已完成。
+- [ ] 完成後更新 WP601 API/schema/migration、交易回歸／部署證據、規格索引與 TODO。公司端只做 Vue DEV 假資料與 Oracle 唯讀；Production PostgreSQL／API／migration／部署由家用端完成。
+
+
+
 ## WIP WP603 在製品庫帳務維護家用端 handoff（2026-11-19）
 
 - [ ] Pull 最新 `main`，閱讀 [WP603 規格](docs/modules/WIP/在製品庫帳務維護.md)、Oracle source DDL `database/reference/mestest_wip_wp603_source_ddl.sql`、CREATE-only `database/reference/mestest_wip_wp603_create.sql` 與資料庫查證紀錄。

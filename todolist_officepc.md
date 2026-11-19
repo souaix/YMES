@@ -64,7 +64,7 @@
 - [x] 依共用 WinForms／Designer、Service／Core 對照 Query、8 個可見分頁、Grid 欄位、列選取、按鈕及跨表交易；THEIL 專用 Form 原始碼缺於目前 checkout，已在規格標明此證據限制。
 - [x] PowerShell 5.1 + Oracle.ManagedDataAccess 受保護唯讀連線查得九張 MESTEST 功能表與索引／constraints／triggers metadata；未讀業務列或執行 Oracle DDL/DML。
 - [x] 完成 Vue DEV `/YMES/WIP/WipInventory`、三層選單及 8 個可見分頁的假資料互動，並建立 [WP603 規格](docs/modules/WIP/在製品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引與 API/schema handoff。
-- [ ] 公司端未連 PostgreSQL，未執行 build、test 或 browser。WP604 已完成，提交／推送後依 menu inventory 接續 WP601。
+- [ ] 公司端未連 PostgreSQL，未執行 build、test 或 browser。WP601、WP604、WP605 已完成；接續 WP629 在製品庫包裝作業。
 
 ### WP604 半成品庫帳務維護已交付（FunctionNo SEMI INV，2026-11-19）
 
@@ -73,11 +73,18 @@
 - [x] 完成 Vue DEV `/YMES/WIP/SemiInventory`，含庫房 lookup、庫存查詢、選列即時 Component/Bin 明細、未確認 SEMI In 假確認、多 Lot/Component 轉庫、目的庫與容量驗證；建立 [WP604 規格](docs/modules/WIP/半成品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引及家用端 API/schema handoff。
 - [x] DEV 假資料存於專屬 localStorage，不接 API／資料庫；正式庫存／Lot transaction 與特殊 `SEMI_WAFER` 分支仍由家用端依規格接手。公司端不連 PostgreSQL，未執行 build、test 或 browser。
 
-### 下一功能：WP601 包裝作業（FunctionNo PACKING_MOLINE）
+### WP601 包裝作業已交付（FunctionNo PACKING_MOLINE，2026-11-19）
 
-- [ ] 先依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 對照 WinForms／Designer、Service/Core、標籤／包裝明細與工單庫存交易；若獨立客製原始碼或 DDL 缺失，記錄具體缺項後先完成可核實部分。
-- [ ] 以 DEV 假資料完成 Vue 操作與三層選單，整理規格、Oracle source DDL／必要的 CREATE-only 及家用端 API/schema handoff；更新 TODO、模組索引與公司端交接。
-- [ ] 依使用者已授權的流程提交／推送後接續下一個尚未完成的 menu FunctionNo；除非使用者要求驗收，不執行 build、test 或 browser。
+- [x] 對照 `frmBR_L_CO_Packing_MOLine`／PackConfig WinForms 與 Designer、`wsWIP`、`clsLot.ExePacking*`；整理畫面欄位、設定、Lot/包裝掃碼、滿箱/強制封箱、拆批、刪除、標籤、Combine/Unboxing 與跨表副作用。
+- [x] 使用受保護 Oracle profile + PowerShell 5.1/ODP.NET 直連 MESTEST 唯讀取得 19 張 WP601 功能表 DDL 與 constraints/indexes/triggers metadata；逐表欄位數對上 ALL_TAB_COLUMNS。`TBLWIPMOLINEPACKL` 通用前綴物件不存在；Relation 與 PackMergeLog 沒有 PK，未猜鍵。
+- [x] 完成 Vue DEV `/YMES/WIP/PackingMOLine` 與 WIP → 包裝與庫房 → 包裝作業三層選單、PackConfig、階層/明細/標籤/配件、Pack Close、Combine、Unboxing、Delete 假互動；建立 [WP601 規格](docs/modules/WIP/包裝作業.md)、Oracle source DDL、PostgreSQL CREATE-only 與 metadata。
+- [x] 家用端 API/schema handoff 已寫入 `todolist_homepc.md`。公司端未連 PostgreSQL，未執行 build、test 或 browser；標籤 COM 與 Combine/Unboxing 外掛正式整合留待家用端依規格處理。
+
+### 下一功能：WP629 在製品庫包裝作業（FunctionNo PACKING_MOLINE_INV）
+
+- [ ] 依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 查 `frmBR_L_CO_Packing_MOLine_INV`、Designer、Service/Core 與其專屬 DLL；區分 WIP Inventory Status=11 分流和 WP601 一般 Lot 包裝規則。
+- [ ] 以 DEV 假資料完成 Vue 畫面與三層選單，逐表只讀查 MESTEST DDL/metadata；不存在的物件如實記錄，不猜 CREATE SQL。完成獨立規格、家用端 API/schema handoff、索引與 TODO 後提交／推送，再接續下一個尚未完成的 WIP FunctionNo。
+- [ ] 公司端不連 PostgreSQL；未經使用者要求不執行 build、test 或 browser。
 
 ### 公司端工作範圍
 
