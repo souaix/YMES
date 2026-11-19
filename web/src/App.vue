@@ -53,6 +53,7 @@ import UserDefinedRunCardMaster from './components/UserDefinedRunCardMaster.vue'
 import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
 import ReceivingOrderMaster from './components/ReceivingOrderMaster.vue'
 import ManufacturingOrderMaster from './components/ManufacturingOrderMaster.vue'
+import WipLotBasisCreate from './components/WipLotBasisCreate.vue'
 import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
 import FtProgramMaster from './components/FtProgramMaster.vue'
@@ -444,6 +445,11 @@ const fallbackMenuTree: MenuNode[] = [
       ],
     }],
   },
+  { id: 'module:WIP', label: '在製品管理', shortLabel: '製', moduleNo: 'WIP', children: [{
+    id: 'menu:WIP:IN PROCESS', label: '在製品', shortLabel: '製', children: [
+      { id: 'function:WIP:CREATE LOT', label: '生產批開立', tableName: 'tblwiplotbasis', shortLabel: '批', functionNo: 'CREATE LOT', moduleNo: 'WIP' },
+    ],
+  }] },
 ]
 
 const menuTree = ref<MenuNode[]>(fallbackMenuTree)
@@ -451,6 +457,7 @@ const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
 const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
+  'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
   'function:OE:RO BASIS': appBasePath + '/OE/ReceivingOrders',
   'function:OE:RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
   'function:OE:MO BASIS': appBasePath + '/OE/ManufacturingOrders',
@@ -753,6 +760,7 @@ const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'funct
 const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
+const isWipLotBasisCreatePage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT')
 const manufacturingOrderPages = {
   'function:OE:MO BASIS': undefined,
   'function:OE:MO DELETE': 'delete',
@@ -2334,6 +2342,7 @@ async function signOut(): Promise<void> {
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
+        <WipLotBasisCreate v-else-if="isWipLotBasisCreatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <ReceivingOrderMaster
           v-else-if="isReceivingOrderPage || isReceivingOrderClosePage"
           :key="activeMasterKey"

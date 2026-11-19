@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 新交接公司端 WP101 生產批開立（2026-11-19）
+
+- [ ] 先 pull 最新 main，再讀 docs/modules/WIP/生產批開立.md 與 database/reference/mestest_wip_wp101_source_ddl.sql / mestest_wip_wp101_create.sql。
+- [ ] 對 YMES live schema、migration 與現有資料逐一比對七張來源表；表已存在就沿用，不重建、不覆蓋資料。只在確認缺物件且完成備份後新增 forward migration。工單／產品／流程／元件／Lot Property metadata 都是共用資料，禁止重複建表。
+- [ ] 實作工單候選與批次查詢、Add/Edit/Copy/Delete/Release API。新增／修改須交易性保存 lot basis、流程、起始站、元件、略過 OP、Property 與 MO component booking。
+- [ ] Delete 必須做 CloseLot 等價 WIP 狀態與關聯清理，不可直接刪主表。Release 需交易內鎖定並重查 MO 未下線量、LotState、元件 ReleaseState，再處理扣料、StartLot、lot state/WIPDate、MO 扣量與 property transfer。
+- [ ] 動態 Lot Property 寫入須使用 metadata table/field 白名單；未下線量歸零時委外庫存、ECN 及自動 BR/OP/TransferLot 的後續語意依規格補齊。批次 API 每列獨立結果、第一筆失敗後先前成功不可謊稱回滾。
+- [ ] 防止並發超量開批：以 DB row lock 或條件式扣量／影響筆數 CAS 保護，不能只做無鎖讀取後比較。補 API／schema 變更、交易回歸與部署紀錄。
+- [ ] CREATE-only SQL 僅作型別／約束參考，不可整份直接執行取代 live schema；不得把 Oracle 連線秘密寫入 repo。
+
 ## 公司端新交接（2026-11-19，OE／QC／PRD）
 
 - [ ] [OE101／OE102](docs/MODULE_REPLICATION_SPEC_INDEX.md#工單管理--訂單) 訂單主檔、明細、屬性與結案。已提供四張表的 Oracle DDL 及 CREATE-only 參考。先核對 live schema，再實作正式 API、資料驗證及狀態互斥。

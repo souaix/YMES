@@ -14,11 +14,20 @@
 - [x] OE 完成 13 項公司端 DEV 功能，OE101／OE102、OE201–OE209、OEB01、OEP01。Vue 入口集中在 `web/src/App.vue`，各項規格在 `docs/modules/OE/`，Oracle DDL 與 PostgreSQL CREATE-only 參考在 `database/reference/mestest_oe_*.sql`。製程、發料、挑片、ERP 與正式簽核的簡化已分項記錄。
 - [x] 截至 `c9de376`，Vue `vue-tsc --noEmit` 通過。各批提交均通過 `git diff --check`，13 份 OE 模組文件的本機連結已檢查。公司端本輪採靜態驗證，瀏覽器操作與正式 API 驗收由各自後續流程處理。
 
-### 筆電從 WP101 生產批開立繼續
+### WP101 生產批開立已交付（2026-11-19）
 
-- [ ] 選單 FunctionNo 為 `CREATE LOT`、FunctionKey 為 `WP101`。原始碼入口是 `STD/MESWin/WIP/WP_LotBasis/frmLotBasis.vb` 和 `STD/MESWin/WIP/WP_LotBasisDef/frmLotBasisDef.vb`，Designer 內嵌。已定位 `STD/MESws_STD/wsSTD/wsWIP/wsWIP.cs` 的 Load／Add／Edit／DelLotBasis、SetLotBasisLotState，以及 `STD/MESkc/kcWIP/clsLot.cs` 對應 ArrayBinding 和 `ChkLotBasisConfirm`。尚未建立 WP101 Vue、模組規格或 SQL 檔。
-- [ ] 已核對清單工單條件為 MOState 3／6，加上未下線量大於 0 或仍有 LotState=0 的批；明細只載入所選工單的 LotState=0。開立與修改涉及流程、元件、略過作業站、屬性和工單元件預約；核准／下線重查未下線量、扣量及轉態。先依這些來源完成 DEV 假資料操作，再記錄正式交易邊界。
-- [ ] 桌機已透過 MESTEST 字典確認 `TBLWIPLOTBASIS`、`TBLWIPLOTPROCESS`、`TBLWIPLOTNOTEXECUTEOP`、`TBLWIPLOTPROPERTY_RECIVE`、`TBLWIPCOMPONENTSTATE` 存在，可在筆電重跑唯讀 DDL；Core 開立另寫 `TBLWIPLOTSTATE`，本輪尚未擷取這張表。先把完整 WP101 來源 DDL 與 CREATE-only 交接入 Git，再依功能順序接 WP102。
+- [x] 直接核對主／定義 WinForms、wsWIP 與 clsLot；查明工單條件、LotState=0 清單、CRUD、CloseLot 刪除、批次明細與下線交易。
+- [x] 使用本機受保護 Oracle MESTEST 連線唯讀取得七張 WIP 表 DBMS_METADATA DDL 與資料字典；未查業務列、未執行 Oracle DDL/DML。來源 DDL 和 PostgreSQL CREATE-only 參考在 database/reference/mestest_wip_wp101_*.sql。
+- [x] Vue DEV 假資料頁已加入 web/src/components/WipLotBasisCreate.vue，選單路由為 /YMES/WIP/LotBasisCreate；含工單查找、狀態／批號查詢、新增／修改／複製／刪除／下線、基本欄位與流程／元件／略過 OP／Lot Property 頁籤。DEV 列使用 localStorage，不接正式 API。
+- [x] 規格與 API/schema handoff：docs/modules/WIP/生產批開立.md；索引與家用端待辦已更新。明確記錄物料扣帳、StartLot、CloseLot、屬性動態目標、ECN、自動 BR／OP 等正式限制。
+- [ ] 本輪未執行 build、test 或 browser；後續需要驗收時再依使用者指示執行。
+
+### 下一功能：WP102 生產批開立_批次
+
+- [ ] WinForms 入口已定位於 STD/MESWin/WIP/WP_LotBasisDef_Batch/frmLotBasisDef_Batch.vb；專案與方案在同目錄 WP_LotBasisDef_Batch.vbproj／.sln。畫面標題 Batch Create Lot and Release，含依數量／批數建立、流程調整及批次確認。
+- [ ] 直接對照完整 Form、Designer、InvokeSrv("wsWIP.AddLotBasis_Batch")、Service/Core 的 AddLotBasis_Batch，整理批號分配、尾批數量、一次確認多筆與逐筆失敗語意。
+- [ ] 依程式實際呼叫與 Oracle metadata 判定額外資料表；若無獨立表則明記共用 WP101 schema，不先猜或新增 CREATE SQL。
+- [ ] 完成 WP102 DEV UI、規格與家用端 API/SQL handoff，再依原授權 commit/push；公司端仍不連 PostgreSQL、不建 API。
 
 ### 公司端工作範圍
 

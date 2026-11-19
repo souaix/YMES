@@ -22,6 +22,8 @@
 - OPB02「ECN 作業站群組設定」：[功能規格](modules/OP/ECN作業站群組設定.md)。已直接閱讀主/Def WinForms、`wsOP`、`clsOpBasis`、DataStamp update 並以 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀查得兩表 DDL/constraints/indexes；公司端完成行業包三層選單、Vue DEV 主/明細 Grid、CRUD/Copy/核准、狀態刪除與 lookup。Detail 的 PK 是全表唯一 OPNo；Oracle source DDL/PG CREATE handoff 已保存，家用端待核對 YMES live schema 並實作共享簽核與 API。
 - OPB03「客戶站點對應設定」：[功能規格](modules/OP/客戶站點對應設定.md)。已逐段閱讀三個 WinForms Form/Designer、wsOP、clsOpBasis、clsB_Basis_UPD；PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得兩表 DDL 並查 PK/index/constraint；完成行業包三層選單與 Vue DEV 雙 Grid、主/明細編輯/lookup/CRUD。Oracle source DDL 與 PostgreSQL CREATE-only handoff 已保存；家用端待比對 live schema 並實作 lookup/API/交易刪除。
 
+ - WP101「生產批開立」：[功能規格](modules/WIP/生產批開立.md)。已核對 WinForms／wsWIP／clsLot、七張 Oracle WIP 表與下線／刪除交易；Vue DEV 路由 /YMES/WIP/LotBasisCreate 完成。Oracle source DDL 與 PostgreSQL CREATE-only 參考已交付；家用端需比對 live schema/migrations 並實作含物料扣帳、CloseLot、StartLot 和逐批下線的正式 API。
+
 ## 規格產出原則
 
 - 以 WinForms Form、Service/Core 類別及 MES Oracle 資料字典為依據；截圖用於核對版面，不取代程式碼與資料表證據。
