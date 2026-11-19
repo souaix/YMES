@@ -1,7 +1,7 @@
 -- PostgreSQL create-only reference for OE201 aggregate tables.
 -- Check live schema before writing a migration. Oracle DATE maps to timestamp without time zone.
 
-CREATE TABLE tbloemobasis
+CREATE TABLE "YMES".tbloemobasis
 
 (
 	mono varchar(50) NOT NULL,
@@ -125,7 +125,7 @@ CREATE TABLE tbloemobasis
 	 CONSTRAINT pk_tbloemobasis PRIMARY KEY (mono)
 );
 
-CREATE TABLE tbloemocomponent
+CREATE TABLE "YMES".tbloemocomponent
 
 (
 	mono varchar(50) NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE tbloemocomponent
 	 CONSTRAINT pk_tbloemocomponent PRIMARY KEY (mono, componentno)
 );
 
-CREATE TABLE tbloemoprocess
+CREATE TABLE "YMES".tbloemoprocess
 
 (
 	mono varchar(50) NOT NULL,
@@ -168,7 +168,7 @@ CREATE TABLE tbloemoprocess
 	 CONSTRAINT pk_tbloemoprocess PRIMARY KEY (mono, processorder)
 );
 
-CREATE TABLE tbloemoproperty
+CREATE TABLE "YMES".tbloemoproperty
 
 (
 	mono varchar(50) NOT NULL,
@@ -178,7 +178,7 @@ CREATE TABLE tbloemoproperty
 	 CONSTRAINT pk_tbloemoproperty PRIMARY KEY (mono, propertyno)
 );
 
-CREATE TABLE tbloemoproperty_recive
+CREATE TABLE "YMES".tbloemoproperty_recive
 
 (
 	mono varchar(50) NOT NULL,
@@ -192,4 +192,4 @@ CREATE TABLE tbloemoproperty_recive
 	 CONSTRAINT pk_tbloemoproperty_recive PRIMARY KEY (mono, propertyno)
 );
 
-CREATE INDEX i_tbloemobasis_01 ON tbloemobasis (belongtomono);
+CREATE INDEX i_tbloemobasis_01 ON "YMES".tbloemobasis (belongtomono);

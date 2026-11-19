@@ -1,6 +1,6 @@
 -- PostgreSQL create-only reference. Compare with live schema before writing a migration.
 
-CREATE TABLE tbloemomtlstate_component
+CREATE TABLE "YMES".tbloemomtlstate_component
 
 (
 	mono varchar(50) NOT NULL,

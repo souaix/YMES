@@ -1,6 +1,6 @@
 -- PostgreSQL create-only reference. Compare with live schema before writing a migration.
 
-CREATE TABLE tbloemomateriallist
+CREATE TABLE "YMES".tbloemomateriallist
 
 (
 	mono varchar(50) NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE tbloemomateriallist
 	 CONSTRAINT pk_tbloemomateriallist PRIMARY KEY (mono, materialno, opno, substitutematerialno)
 );
 
-CREATE TABLE tbloemomaterialstate
+CREATE TABLE "YMES".tbloemomaterialstate
 
 (
 	mono varchar(50) NOT NULL,

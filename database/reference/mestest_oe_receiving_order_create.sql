@@ -1,7 +1,7 @@
 -- PostgreSQL create-only reference for home PC schema review.
 -- No source rows or deployment instructions. Oracle DATE maps to timestamp without time zone.
 
-CREATE TABLE tbloerobasis
+CREATE TABLE "YMES".tbloerobasis
 (
 	rono varchar(25) NOT NULL,
 	customerno varchar(50) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE tbloerobasis
 	 CONSTRAINT pk_tbloerobasis PRIMARY KEY (rono)
 );
 
-CREATE TABLE tbloerodetail
+CREATE TABLE "YMES".tbloerodetail
 (
 	rono varchar(25) NOT NULL,
 	itemno numeric(2,0) NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE tbloerodetail
 	 CONSTRAINT pk_tbloerodetail PRIMARY KEY (rono, itemno)
 );
 
-CREATE TABLE tbloeroproperty
+CREATE TABLE "YMES".tbloeroproperty
 (
 	rono varchar(25) NOT NULL,
 	propertyno varchar(20) NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE tbloeroproperty
 	 CONSTRAINT pk_tbloeroproperty PRIMARY KEY (rono, propertyno)
 );
 
-CREATE TABLE tbloeroproperty_recive
+CREATE TABLE "YMES".tbloeroproperty_recive
 (
 	rono varchar(25) NOT NULL,
 	propertyno varchar(20) NOT NULL,

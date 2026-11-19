@@ -1,6 +1,6 @@
 -- PostgreSQL create-only reference. Compare with live schema before writing a migration.
 
-CREATE TABLE tbloemocompmantainlog
+CREATE TABLE "YMES".tbloemocompmantainlog
 
 (
 	mono varchar(50) NOT NULL,

@@ -1,6 +1,6 @@
 -- PostgreSQL create-only reference. Compare with live schema before writing a migration.
 
-CREATE TABLE tblsystestrecipebasis
+CREATE TABLE "YMES".tblsystestrecipebasis
 
 (
 	testrecipetype varchar(20) NOT NULL,
