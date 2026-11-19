@@ -440,6 +440,7 @@ const fallbackMenuTree: MenuNode[] = [
     }, {
       id: 'menu:OE:INDUSTRY', label: '行業包', shortLabel: '行', children: [
         { id: 'function:OE:B_MO CHOOSE WAFER', label: '工單挑片資料查詢', tableName: 'tbloemocomponent', shortLabel: '挑', functionNo: 'B_MO CHOOSE WAFER', moduleNo: 'OE' },
+        { id: 'function:OE:P_MO BASIS PKG', label: '工單開立_晶片測試', tableName: 'tbloemobasis', shortLabel: '晶', functionNo: 'P_MO BASIS PKG', moduleNo: 'OE' },
       ],
     }],
   },
@@ -462,6 +463,7 @@ const menuRoutes: Record<string, string> = {
   'function:OE:MO CLOSE': appBasePath + '/OE/ManufacturingOrderClose',
   'function:OE:MO COMPDATA MAINTAIN': appBasePath + '/OE/ManufacturingOrderComponents',
   'function:OE:B_MO CHOOSE WAFER': appBasePath + '/OE/ManufacturingOrderWaferQuery',
+  'function:OE:P_MO BASIS PKG': appBasePath + '/OE/ChipTestManufacturingOrders',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -688,6 +690,7 @@ const functionRoutes: Record<string, string> = {
   'MO CLOSE': appBasePath + '/OE/ManufacturingOrderClose',
   'MO COMPDATA MAINTAIN': appBasePath + '/OE/ManufacturingOrderComponents',
   'B_MO CHOOSE WAFER': appBasePath + '/OE/ManufacturingOrderWaferQuery',
+  'P_MO BASIS PKG': appBasePath + '/OE/ChipTestManufacturingOrders',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -761,6 +764,7 @@ const manufacturingOrderPages = {
   'function:OE:MO CLOSE': 'close',
   'function:OE:MO COMPDATA MAINTAIN': 'components',
   'function:OE:B_MO CHOOSE WAFER': 'wafer-query',
+  'function:OE:P_MO BASIS PKG': 'chip-test',
 } as const
 const manufacturingOrderPage = computed(() => {
   const key = activeMasterKey.value

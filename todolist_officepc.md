@@ -1373,3 +1373,9 @@
 
 - [x] 依 Industry Base Form／Service／Core 交付 DEV 工單主查詢、挑片明細及動態測項示例。
 - [x] [OEB01 規格](docs/modules/OE/工單挑片資料查詢.md) 補政策來源、測試 Recipe Oracle DDL 與正式唯讀 API handoff。
+
+## OEP01 工單開立_晶片測試
+
+- [x] 依 IC_CP_PKG Form／Designer、Industry Base Service、Core 交付 DEV 晶片測試工單及流程、模擬挑片、元件驗證與發放。
+- [x] [OEP01 規格](docs/modules/OE/工單開立_晶片測試.md) 交付半成品批次關聯表 Oracle DDL、CREATE-only 及 PSS API handoff。
+- [ ] 接續 WIP 的 WP101 生產批開立。

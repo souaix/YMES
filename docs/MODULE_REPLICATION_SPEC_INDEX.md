@@ -268,6 +268,7 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 ## 工單管理 → 行業包
 
 - [OEB01 工單挑片資料查詢](modules/OE/工單挑片資料查詢.md) 已完成 DEV 主表篩選、挑片明細、測項動態欄位及 Oracle 交接。
+- [OEP01 工單開立_晶片測試](modules/OE/工單開立_晶片測試.md) 已完成 DEV 晶片測試工單、挑片與元件規則，以及半成品關聯表 Oracle 交接。
 
 ## 全 MES 盤點狀態
 
