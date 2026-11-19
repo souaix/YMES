@@ -10,6 +10,15 @@
 - [ ] 公司端沒有連 YMES PostgreSQL；migration/API、正式 DB 驗證與部署由家用端執行。API 完成後更新文件、資料庫 migration/deployment 記錄與回歸證據。
 # 家裡電腦接手清單
 
+## 新交接公司端 WP604 半成品庫帳務維護（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 [WP604 規格](docs/modules/WIP/半成品庫帳務維護.md)、`database/reference/mestest_wip_wp604_source_ddl.sql`、`mestest_wip_wp604_create.sql` 及 WP604 資料庫查證紀錄。
+- [ ] 逐表核對 YMES PostgreSQL live schema、migrations、欄位型別、nullable/default、PK、索引與現有資料；CREATE-only 僅供比對，缺表才新增 forward migration。Oracle 查到的功能表為 `tblinvsemiinbasis`、`tblinvsemiindetail`、`tblinvsemiincomponent`、`tblinvsemiinventorycomponent`；`tblinvsemiinventory` 和 `tblinvtransactionstate/log` 沿用 WP201／WP605，不重複建表。
+- [ ] 實作登入保護的 InventoryType=2 lookup、SEMI Inventory 查詢、Component 優先／Good Bin fallback 明細 API；保留 LocQty>0、排序及 TBLSYSBIN.BINORDER 動態欄位規則。
+- [ ] SEMI In 單據僅查 State=0，Confirm 需以服務端固定交易種類 Source=20 執行。注意 `TBLINVSEMIINBASIS.Source` 是另一欄：0=手動外購、1=From WIPInventory_SEMI；Source=1 需同交易扣來源庫存。重用 `TBLINVTRANSACTIONSTATE/LOG`，處理 Basis 0→1→2/3、防重、並發鎖、庫存/Component/Lot State、容量與 release log。
+- [ ] Turn API 需檢查來源數量與狀態、目的庫別/核准 Locator、容量及並發；WIP/FGD/SEMI 三向搬動的 Inventory、Component、Lot/Component State、reverse state 與 release log 同交易保存。檢查 `SEMI_WAFER`、`TBLWIPCOMPRULEMAP_*`、`TBLINVTemp_Component` 及外部 release-log handler 相依，缺乏來源時標示不可用，不略過副作用。
+- [ ] 公司端 Vue 頁 `/YMES/WIP/SemiInventory` 目前僅用 localStorage DEV 假資料，沒有 Production API/migration；家用端完成後更新規格與共用交易契約。公司電腦不連 YMES PostgreSQL。
+
 ## 新交接公司端 WP605 成品庫帳務維護（2026-11-19）
 
 - [ ] Pull 最新 `main`，閱讀 `docs/modules/WIP/成品庫帳務維護.md`、`database/reference/mestest_wip_wp605_source_ddl.sql`、`mestest_wip_wp605_create.sql` 及公司端 Oracle 查證紀錄。

@@ -735,3 +735,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 九表為 `TBLINVWIPINVENTORY_COMPONENT`、`TBLINVWIP_COMPONENTSCRAP`、`TBLINVWIP_FAILBIN`、`TBLINVWIP_INCOMING`、`TBLWIPCONT_ERROR`、`TBLINVSCRINBASIS`、`TBLINVSCRINDETAIL`、`TBLINVSCRINCOMPONENT`、`TBLINVSCRINFAILBIN`。來源欄位、PK 及五個額外索引見 `database/reference/mestest_wip_wp603_source_ddl.sql`；空表 PostgreSQL CREATE-only 參考見 `database/reference/mestest_wip_wp603_create.sql`。
 - 六張表只有 PK 索引；`TBLWIPCONT_ERROR` 無 PK、另有兩個非唯一索引；Component WIP Inventory 有獨立 unique index；Component Scrap 與 Fail Bin 各有 BaseLotNo 非唯一索引。九表無 FK／trigger。獨立索引 `PK_TBLWIPINV_COMPONENT` 的 GET_DDL 回 ORA-31603，以 ALL_INDEXES／ALL_IND_COLUMNS 重建欄位序。
 - WP603 共用 Form、Designer、Service/Core 有讀取；THEIL 專用 Form 原始碼缺於目前 checkout，故客製差異未宣稱已核實。CREATE-only 不是 migration；家用端需先核對 live schema，沿用 WP101／WP201 共用 Lot/WIP 表。
+
+### 更新 2026-11-19：WIP WP604 半成品庫帳務維護
+
+- 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，從本機受保護設定直連 MESTEST，只讀取得 `TBLINVSEMIINBASIS`、`TBLINVSEMIINDETAIL`、`TBLINVSEMIINCOMPONENT`、`TBLINVSEMIINVENTORYCOMPONENT` 的 DBMS_METADATA DDL 與 ALL_INDEXES／ALL_CONSTRAINTS／ALL_TRIGGERS metadata。
+- 四表均只有各自 PK unique index，沒有 FK、額外 index 或 trigger。`TBLINVSEMIINVENTORYCOMPONENT` 未包含於既有 WP201 additional reference，本次補查；`TBLINVSEMIINVENTORY` 與 `TBLINVTRANSACTIONSTATE/LOG` 沿用既有 WP201／WP605 reference，不重複建立。
+- Oracle source DDL、PostgreSQL CREATE-only 參考為 `database/reference/mestest_wip_wp604_source_ddl.sql`、`mestest_wip_wp604_create.sql`。CREATE-only 不是 migration；家用端須先核對 YMES live schema 與 migrations。
+- 僅查 metadata／DDL，未讀 MES 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。Basis Source `0=手動外購、1=From WIPInventory_SEMI` 與交易引擎 Source `20=SEMI In` 由 Core／Service 原始碼確認，不是從 DDL 推斷。

@@ -28,7 +28,8 @@
 - WP202「生產批執行_元件」：[功能規格](modules/WIP/生產批執行_元件.md)。已對照標準 WinForms／Service／Core；Component 查詢沿用 WP101 已查證的 TBLWIPLOTSTATE、TBLWIPCOMPONENTSTATE、TBLWIPLOTBASIS，不新增重複 DDL。Vue DEV 路由 /YMES/WIP/LotExecutionByComponent 完成；家用端需比對 live schema，並將元件查詢接入 WP201 共用的 Lot Execute command。
 - WP204「生產批執行_設備」：[功能規格](modules/WIP/生產批執行_設備.md)。依 frmEquipmentLotState／CI／CO／狀態控制 Form、wsEQP／wsEMS／wsWIP 與 Core 完成 DEV 設備看板；唯讀取得四張缺少的 MESTEST DDL，提供 CREATE-only 參考。家用端需先比對 PostgreSQL schema，再將看板、設備／LoadPort、候選批次、CI／CO、Hold 及狀態控制接入 WP201 共用執行 API。
 - WP603「在製品庫帳務維護」：[功能規格](modules/WIP/在製品庫帳務維護.md)。依共用 WinForms／Service／Core 完成 8 個 Designer 可見分頁、DEV 假資料操作及九張來源表 DDL／CREATE-only。THEIL 專用 Form 原始碼未在公司來源樹，差異與限制已標註；家用端待比對 PostgreSQL schema 並實作庫存、報廢、轉庫、拆併批及入庫交易 API。
-- WP605「成品庫帳務維護」：[功能規格](modules/WIP/成品庫帳務維護.md)。依 frmInventory_FGD／FGDIn／Turn／Define、wsINV／wsWIP／wsSYS 與 Core 完成 Vue DEV 庫存、動態 Bin、人工調整、轉庫及入庫確認畫面。Oracle 唯讀核對六張新增表，含交易 Log；DDL／CREATE-only handoff 已建立。家用端需先核對 PostgreSQL live schema，再建置完整交易、庫存過帳及 WIP／SEMI／Lot history API。WP603 已完成公司端 DEV 與交接，下一個功能為 WP604 半成品庫帳務維護。
+- WP604「半成品庫帳務維護」：[功能規格](modules/WIP/半成品庫帳務維護.md)。已對照 `frmInventory_SEMI`／Turn／SEMI In Form、Designer、wsINV／wsWIP／wsSYS 與 clsInventory／clsLot；完成 Vue DEV 庫存查詢、Component/Bin 明細、SEMI In 假確認及 WIP/FGD/SEMI 轉庫互動。Oracle 唯讀核實四張 SEMI 專用表 DDL／索引／約束／Trigger，提供 CREATE-only 與家用端 API/schema handoff。
+- WP605「成品庫帳務維護」：[功能規格](modules/WIP/成品庫帳務維護.md)。依 frmInventory_FGD／FGDIn／Turn／Define、wsINV／wsWIP／wsSYS 與 Core 完成 Vue DEV 庫存、動態 Bin、人工調整、轉庫及入庫確認畫面。Oracle 唯讀核對六張新增表，含交易 Log；DDL／CREATE-only handoff 已建立。家用端需先核對 PostgreSQL live schema，再建置完整交易、庫存過帳及 WIP／SEMI／Lot history API。WP603、WP604 已完成公司端 DEV 與交接。
 
 ## 規格產出原則
 

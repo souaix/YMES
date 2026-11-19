@@ -64,14 +64,21 @@
 - [x] 依共用 WinForms／Designer、Service／Core 對照 Query、8 個可見分頁、Grid 欄位、列選取、按鈕及跨表交易；THEIL 專用 Form 原始碼缺於目前 checkout，已在規格標明此證據限制。
 - [x] PowerShell 5.1 + Oracle.ManagedDataAccess 受保護唯讀連線查得九張 MESTEST 功能表與索引／constraints／triggers metadata；未讀業務列或執行 Oracle DDL/DML。
 - [x] 完成 Vue DEV `/YMES/WIP/WipInventory`、三層選單及 8 個可見分頁的假資料互動，並建立 [WP603 規格](docs/modules/WIP/在製品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引與 API/schema handoff。
-- [ ] 公司端未連 PostgreSQL，未執行 build、test 或 browser。依授權提交／推送後接續 WP604。
+- [ ] 公司端未連 PostgreSQL，未執行 build、test 或 browser。WP604 已完成，提交／推送後依 menu inventory 接續 WP601。
 
-### 下一功能：WP604 半成品庫帳務維護（FunctionNo SEMI INV）
+### WP604 半成品庫帳務維護已交付（FunctionNo SEMI INV，2026-11-19）
 
-- [ ] 從 `docs/MES_MENU_FUNCTION_INVENTORY.md` 對照 `frmInventory_SEMI` 的 Form／Designer、Service／Core 和相關轉入／轉出表單；先整理畫面、按鈕、簽核與交易資料流。
-- [ ] 以 PowerShell 5.1 + ODP.NET 受保護唯讀 profile 查 MESTEST 中尚未有 DDL 的資料表及 metadata；沿用已查證表，不重複產生 CREATE SQL。不讀業務資料列、不執行 Oracle DDL/DML。
-- [ ] 交付 WP604 Vue DEV 假資料互動、完整規格、Oracle source DDL／缺表 PostgreSQL CREATE-only 及家用端 API/schema handoff；更新本 TODO、home TODO、模組索引與交接檔。
-- [ ] Push 後繼續清單下一項；除非使用者要求驗收，不執行 build、test 或 browser。
+- [x] 對照 `frmInventory_SEMI`、`frmInventory_SEMITurn`、`frmINVSEMIInConfirm` 的 Form／Designer、wsINV／wsWIP／wsSYS 與 clsInventory／clsLot；核對查詢欄位、Component/Bin 切換、SEMI In 交易種類、Basis Source 與 WIP/FGD/SEMI 轉庫副作用。
+- [x] PowerShell 5.1 + Oracle.ManagedDataAccess 受保護唯讀連線取得四張 SEMI 專用表 DDL、索引／constraints／triggers metadata；四表只有 PK unique index，無 FK／額外 index／trigger。未讀業務列、未執行 Oracle DDL/DML；SEMI Inventory 主表與交易 State/Log 沿用先前 reference。
+- [x] 完成 Vue DEV `/YMES/WIP/SemiInventory`，含庫房 lookup、庫存查詢、選列即時 Component/Bin 明細、未確認 SEMI In 假確認、多 Lot/Component 轉庫、目的庫與容量驗證；建立 [WP604 規格](docs/modules/WIP/半成品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引及家用端 API/schema handoff。
+- [x] DEV 假資料存於專屬 localStorage，不接 API／資料庫；正式庫存／Lot transaction 與特殊 `SEMI_WAFER` 分支仍由家用端依規格接手。公司端不連 PostgreSQL，未執行 build、test 或 browser。
+
+### 下一功能：WP601 包裝作業（FunctionNo PACKING_MOLINE）
+
+- [ ] 先依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 對照 WinForms／Designer、Service/Core、標籤／包裝明細與工單庫存交易；若獨立客製原始碼或 DDL 缺失，記錄具體缺項後先完成可核實部分。
+- [ ] 以 DEV 假資料完成 Vue 操作與三層選單，整理規格、Oracle source DDL／必要的 CREATE-only 及家用端 API/schema handoff；更新 TODO、模組索引與公司端交接。
+- [ ] 依使用者已授權的流程提交／推送後接續下一個尚未完成的 menu FunctionNo；除非使用者要求驗收，不執行 build、test 或 browser。
+
 ### 公司端工作範圍
 
 - WinForms／Service／Core 原始碼、Vue DEV 假資料、模組規格與家用端 API／SQL 交接。Vue 環境為 Node.js 22.12+、npm 與 `web/` 套件，筆電沿用自己的既有工具，不依賴桌機的本機安裝路徑。

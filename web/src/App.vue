@@ -59,6 +59,7 @@ import WipLotExecution from './components/WipLotExecution.vue'
 import WipLotExecutionByComponent from './components/WipLotExecutionByComponent.vue'
 import WipEquipmentLotState from './components/WipEquipmentLotState.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
+import SemiInventory from './components/SemiInventory.vue'
 import WipInventory from './components/WipInventory.vue'
 import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
@@ -465,6 +466,7 @@ const fallbackMenuTree: MenuNode[] = [
   }, {
     id: 'menu:WIP:PACKAGING', label: '包裝與庫房', shortLabel: '庫', children: [
       { id: 'function:WIP:WIP INV', label: '在製品庫帳務維護', tableName: 'tblinvwipinventory_semi', shortLabel: '在製品庫', functionNo: 'WIP INV', moduleNo: 'WIP' },
+      { id: 'function:WIP:SEMI INV', label: '半成品庫帳務維護', tableName: 'tblinvsemiinventory', shortLabel: '半成品庫', functionNo: 'SEMI INV', moduleNo: 'WIP' },
       { id: 'function:WIP:FGD INV', label: '成品庫帳務維護', tableName: 'tblinvfgdinventory', shortLabel: '成品庫', functionNo: 'FGD INV', moduleNo: 'WIP' },
     ],
   }] },
@@ -481,6 +483,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:EXECUTE LOT_COMP': appBasePath + '/WIP/LotExecutionByComponent',
   'function:WIP:EXECUTE LOT_EQP': appBasePath + '/WIP/EquipmentLotState',
   'function:WIP:WIP INV': appBasePath + '/WIP/WipInventory',
+  'function:WIP:SEMI INV': appBasePath + '/WIP/SemiInventory',
   'function:WIP:FGD INV': appBasePath + '/WIP/FgdInventory',
   'function:OE:RO BASIS': appBasePath + '/OE/ReceivingOrders',
   'function:OE:RO CLOSE': appBasePath + '/OE/ReceivingOrderClose',
@@ -791,6 +794,7 @@ const isWipLotExecutionByComponentPage = computed(() => activeMasterKey.value ==
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipFgdInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:FGD INV')
 const isWipInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:WIP INV')
+const isWipSemiInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:SEMI INV')
 const manufacturingOrderPages = {
   'function:OE:MO BASIS': undefined,
   'function:OE:MO DELETE': 'delete',
@@ -2379,6 +2383,7 @@ async function signOut(): Promise<void> {
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipInventory v-else-if="isWipInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdInventory v-else-if="isWipFgdInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <SemiInventory v-else-if="isWipSemiInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <ReceivingOrderMaster
           v-else-if="isReceivingOrderPage || isReceivingOrderClosePage"
           :key="activeMasterKey"
