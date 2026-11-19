@@ -10,6 +10,10 @@ export interface WorkOrderComponent {
   materialNo?: string
   materialLotNo?: string
   componentLotNo?: string
+  vendorNo?: string
+  cassetteNo?: string
+  laserMark?: string
+  testResults?: Record<string, string | number | null>
 }
 </script>
 

@@ -265,6 +265,10 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 - [OE208 工單結案](modules/OE/工單結案.md) 已完成 DEV 待結案查詢、多選結案與正式 WIP／ERP 守門規格。
 - [OE209 工單元件資料維護作業](modules/OE/工單元件資料維護作業.md) 已完成 DEV 暫存增刪、取號示範與 Oracle 異動紀錄 DDL。
 
+## 工單管理 → 行業包
+
+- [OEB01 工單挑片資料查詢](modules/OE/工單挑片資料查詢.md) 已完成 DEV 主表篩選、挑片明細、測項動態欄位及 Oracle 交接。
+
 ## 全 MES 盤點狀態
 
 - Oracle 第一層 Module 清單、排序及功能目錄筆數已查；ModuleNo 翻譯標題與實際使用者權限仍待核實，553 個 Function 的 WinForms/API 遷移狀態尚需逐項追蹤。

@@ -20,9 +20,10 @@ interface WorkOrder {
   unreleaseLotQty?: number; erpMoLineNo?: string
   productType?: string; planStartDate?: string; actualStartDate?: string; actualFinishDate?: string
   orgMoState?: number; hasOpenWip?: boolean
+  waferSource?: number
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' | 'material-stock' | 'close' | 'components' }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' | 'material-stock' | 'close' | 'components' | 'wafer-query' }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const deletionOnly = computed(() => props.pageMode === 'delete')
@@ -31,10 +32,12 @@ const batchSelection = computed(() => deletionOnly.value || closingOnly.value)
 const startReport = computed(() => props.pageMode === 'start-report')
 const finishReport = computed(() => props.pageMode === 'finish-report')
 const report = computed(() => startReport.value || finishReport.value)
-const queryOnly = computed(() => props.pageMode === 'query' || report.value)
+const waferQuery = computed(() => props.pageMode === 'wafer-query')
+const queryOnly = computed(() => props.pageMode === 'query' || report.value || waferQuery.value)
 const reportAction = computed(() => finishReport.value ? '完工' : '開工')
 const pageTitle = computed(() => {
   if (report.value) return '工單達交率（準時' + reportAction.value + '）'
+  if (waferQuery.value) return '工單挑片資料查詢'
   if (queryOnly.value) return '工單查詢'
   if (closingOnly.value) return '工單結案'
   return deletionOnly.value ? '工單刪除' : '工單基本資料'
@@ -97,6 +100,14 @@ function readLocal(): WorkOrder[] {
     { ...seed, moNo: 'DEV-MO-009', issueState: 2, moState: 3 },
     { ...seed, moNo: 'DEV-MO-010', issueState: 2, moState: 3, fromErp: true },
     { ...seed, moNo: 'DEV-MO-011', issueState: 2, moState: 3, hasOpenWip: true },
+    {
+      ...seed, moNo: 'DEV-MO-012', issueState: 2, moState: 3, waferSource: 1,
+      components: [{
+        componentNo: 'DEV-WAFER-001', goodQty: 1, unitNo: 'PCS', inventoryNo: 'DEV-RAW', materialNo: 'DEV-MTL-001',
+        materialLotNo: 'DEV-ML-01', vendorNo: 'DEV-VENDOR', cassetteNo: 'DEV-CAS-01', slotNo: '01', laserMark: 'DEV-LASER-01',
+        testResults: { 'DEV_CP_Yield': 97.5, 'DEV_CP_Grade': 'A' },
+      }],
+    },
   ]
 }
 
@@ -141,6 +152,8 @@ const visible = computed(() => rows.value.filter(row => {
     (query.states.length ? query.states.includes(row.moState) : queryOnly.value || row.moState >= 0 && row.moState <= 3)
 }).sort((a, b) => a.moNo.localeCompare(b.moNo)))
 const active = computed(() => visible.value.find(row => row.moNo === activeNo.value) ?? visible.value[0])
+const selectedWafers = computed(() => [1, 2, 3].includes(active.value?.waferSource ?? 0) ? active.value?.components ?? [] : [])
+const waferColumns = computed(() => [...new Set(selectedWafers.value.flatMap(row => Object.keys(row.testResults ?? {})))])
 
 function dayDifference(actual?: string, planned?: string): number | null {
   if (!actual || !planned) return null
@@ -286,6 +299,7 @@ function open(nextMode: typeof mode.value): void {
       fromErp: false, hasLots: false, hasIssuedMaterial: false,
       unreleaseLotQty: undefined, erpMoLineNo: undefined, actualStartDate: undefined, actualFinishDate: undefined,
       orgMoState: undefined, hasOpenWip: false,
+      waferSource: undefined,
     }
   } else {
     editor.value = nextMode === 'add' || !row ? blank() : structuredClone(toRaw(row))
@@ -409,9 +423,11 @@ function apply(event: MouseEvent): void {
           <label>客戶編號 <input v-model="queryFilters.customerNo" maxlength="50"></label>
           <label>產品 <input v-model="queryFilters.productNo" maxlength="50"></label>
           <label>產品版本 <input v-model="queryFilters.productVersion" maxlength="5"></label>
-          <label>工程編號 <input v-model="queryFilters.engNo" maxlength="30"></label>
-          <label>工程版本 <input v-model="queryFilters.engVersion" maxlength="3"></label>
-          <label>工單類別 <input v-model="queryFilters.moTypeNo" type="text" inputmode="numeric" maxlength="2"></label>
+          <template v-if="!waferQuery">
+            <label>工程編號 <input v-model="queryFilters.engNo" maxlength="30"></label>
+            <label>工程版本 <input v-model="queryFilters.engVersion" maxlength="3"></label>
+            <label>工單類別 <input v-model="queryFilters.moTypeNo" type="text" inputmode="numeric" maxlength="2"></label>
+          </template>
         </div>
         <div class="toolbar">
           <template v-if="report">
@@ -419,10 +435,10 @@ function apply(event: MouseEvent): void {
             <label>計畫{{ reportAction }}迄日 <input v-model="queryFilters.dateTo" type="date"></label>
             <label>產品類別 <select v-model="queryFilters.productTypes" multiple><option v-for="type in Object.values(productTypes)" :key="type">{{ type }}</option></select></label>
           </template>
-          <fieldset class="toolbar"><legend>來源</legend>
+          <fieldset v-if="!waferQuery" class="toolbar"><legend>來源</legend>
             <label v-for="source in sources" :key="source.value"><input v-model="queryFilters.sources" :value="source.value" type="checkbox"> {{ source.label }}</label>
           </fieldset>
-          <fieldset class="toolbar"><legend>工單狀態</legend>
+          <fieldset v-if="!waferQuery" class="toolbar"><legend>工單狀態</legend>
             <label v-for="state in queryStates" :key="state.value"><input v-model="queryFilters.states" :value="state.value" type="checkbox"> {{ state.label }}</label>
           </fieldset>
           <button type="submit">查詢</button>
@@ -487,7 +503,7 @@ function apply(event: MouseEvent): void {
           <button type="button" :disabled="!selectedNos.length" @click="closeSelected">工單結案</button>
         </div>
         <div v-else-if="queryOnly" class="actions">
-          <button type="button" :disabled="!active" @click="open('property')">屬性</button>
+          <button v-if="!waferQuery" type="button" :disabled="!active" @click="open('property')">屬性</button>
         </div>
         <div v-else class="actions">
           <button type="button" @click="open('add')">新增</button>
@@ -500,6 +516,22 @@ function apply(event: MouseEvent): void {
           <button type="button" :disabled="!active" @click="open('property')">屬性</button>
         </div>
       </div>
+      <template v-if="waferQuery">
+        <h3>挑片資料 {{ active?.moNo }}</h3>
+        <div class="grid"><table>
+          <thead><tr><th>元件</th><th>庫房</th><th>料號</th><th>物料批號</th><th>供應商</th><th>載具</th><th>槽位</th><th>雷刻</th>
+            <th v-for="column in waferColumns" :key="column">{{ column }}</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="row in selectedWafers" :key="row.componentNo">
+              <td>{{ row.componentNo }}</td><td>{{ row.inventoryNo }}</td><td>{{ row.materialNo }}</td><td>{{ row.materialLotNo }}</td>
+              <td>{{ row.vendorNo }}</td><td>{{ row.cassetteNo }}</td><td>{{ row.slotNo }}</td><td>{{ row.laserMark }}</td>
+              <td v-for="column in waferColumns" :key="column">{{ row.testResults?.[column] ?? '' }}</td>
+            </tr>
+            <tr v-if="!selectedWafers.length"><td :colspan="8 + waferColumns.length">{{ active ? '此工單沒有挑片資料' : '請查詢並選擇工單' }}</td></tr>
+          </tbody>
+        </table></div>
+      </template>
       <p>資料總筆數 {{ visible.length }}</p>
     </template>
     <p v-else role="status">此功能尚未接入正式服務。</p>
