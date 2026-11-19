@@ -1,8 +1,10 @@
 # 公司端待辦
 
-## 家用端最新回饋：OPB02已實測，Git待推（2026-11-20）
+> **本批完成（2026-11-20）：已正常同步GitHub main `487e9d1`。** release code commit為 `487e9d1d15489be5d864c54abc832b81724f579d`；root核對1份migration／139份API／206份Web後正常推送395a→487，保留兩端歷史、沒有force push或公司新增提交。公司端可依既有安全合併流程同步；後續純文件狀態提交另記，不取代此release code。下方推送前pending保留歷史，未提供的共享Element／Job規則仍依原待辦查證。
 
-- 家用端已完成OPB02原生11＋2欄核對、0054／最小權限、正式API `1d09e4febf48` 與Web `cfa5cf288359`。API八組分兩輪及正式IAB 48驗收檢查點通過（含1項SQL清理讀回，不是48純點擊），六群組全GUI建立／刪除，GUI後19項精確計數全0。完整來源、SQL fixture界線、Job候選503未觸發與未提供provider詳見 [ECN模組](docs/modules/OP/ECN作業站群組設定.md)。本批Git待root正常推送，不能把此回饋當成已取得新commit；root本次fetch的origin仍 `395a41a`，無公司新碼。
+## 家用端最新回饋：OPB02已實測並正常同步main487e9d1（2026-11-20）
+
+- 家用端已完成OPB02原生11＋2欄核對、0054／最小權限、正式API `1d09e4febf48` 與Web `cfa5cf288359`。API八組分兩輪及正式IAB 48驗收檢查點通過（含1項SQL清理讀回，不是48純點擊），六群組全GUI建立／刪除，GUI後19項精確計數全0。完整來源、SQL fixture界線、Job候選503未觸發與未提供provider詳見 [ECN模組](docs/modules/OP/ECN作業站群組設定.md)。本批程式已正常推送main `487e9d1`，root確認origin相同；此前395a及Git待推為同步前歷史。
 - 公司端後續同步保留三層選單、KD配色、正式DEV隔離、ECN raw NULL／parent CAS／字面PS／全域OP唯一與選取owner防護，不以舊DEV流程覆蓋。PostgreSQL核對／migration、API／交易與部署持續由家用端處理；以下只新增原生程式／資源查證，不派公司端連PG或SSH，也不請公司端建表。
 
 ### OPB01共享Element：精確來源查證待辦

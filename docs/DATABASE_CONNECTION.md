@@ -1,6 +1,8 @@
 # YMES / MES 資料庫連線與憑證處理
 
-## OPB02 ECN 作業站群組結構與權限：0054（2026-11-20，schema／本批API及GUI已驗，Git待推）
+> **本批完成（2026-11-20）：已正常同步GitHub main `487e9d1`。** release code commit為 `487e9d1d15489be5d864c54abc832b81724f579d`；0054、API1d09／Webcfa及實際API／GUI／精確清理證據已與1份migration／139份API／206份Web核對一致後正常推送。下方Git待推保留為同步前歷史；本次純文件狀態補充不改schema、產物或release code，完整Job provider仍未提供。
+
+## OPB02 ECN 作業站群組結構與權限：0054（2026-11-20，schema／本批API及GUI已驗並同步main487e9d1）
 
 - root 先以 PPK 唯讀查所有 schema，兩個 ECN 精確表名及已知 workflow candidate 均不存在；原 OP／PS 查找及 row-lock 權限可用。套用前再次確認表／PK index 名稱無衝突，不接管既有物件。
 - 完整 `ymes` 資料庫 custom-format 備份 `/opt/ymes/backups/ymes_before_0054_opb02_20261119T181813Z_kaHec4fs.dump`，**624893 bytes**；目錄700、檔600，`pg_restore --list` 成功且有 **1780** 個非空物件條目，之後才套用0054。備份檔名為UTC時間，本節日期為家用端本地日期。

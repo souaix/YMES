@@ -1,5 +1,7 @@
 # ECN 作業站群組設定（OPB02）
 
+> **本批完成（2026-11-20）：已正常同步GitHub main `487e9d1`。** 正式程式版本（release code commit）為 `487e9d1d15489be5d864c54abc832b81724f579d`；root已核對1份migration／139份API／206份Web與已驗收來源一致，正常推送395a→487，沒有force push。API1d09／Webcfa、0054、48個驗收檢查點（含SQL讀回1項）及19scope全0的實證不變。下方Git待推文字保留為同步前歷史；後續純文件狀態提交另記，不取代本release code或重建產物。未提供的Job／通知provider仍待來源。
+
 ## 功能識別
 
 | 欄位 | 值 |
@@ -11,7 +13,7 @@
 | Vue 頁面 / URL | `web/src/components/EcnOperationGroupMaster.vue` / `/YMES/OP/ECNOperationGroups` |
 | Oracle 主表 / 明細表 | `MESTEST.TBLOPECNGROUPBASIS` / `MESTEST.TBLOPECNGROUPDETAIL` |
 | 主鍵 | Basis: `OPGROUPNO`；Detail: `OPNO`（單欄、全表唯一） |
-| 公司端／家用端狀態 | 公司端Vue DEV假資料頁與原生來源已交付；家用端API／schema／Web已部署、正式GUI已驗，本批Git待推，詳見本檔本輪驗收段 |
+| 公司端／家用端狀態 | 公司端Vue DEV假資料頁與原生來源已交付；家用端API／schema／Web已部署、正式GUI已驗，已正常同步main487e9d1，詳見本檔本輪驗收段 |
 
 ## WinForms 來源與 Oracle 結構
 

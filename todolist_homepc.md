@@ -1,8 +1,10 @@
 # 家裡電腦接手清單
 
-## 最新接手：OPB02 API／正式GUI已驗（2026-11-20，本批Git待推）
+> **本批完成（2026-11-20）：已正常同步GitHub main `487e9d1`。** release code commit固定為 `487e9d1d15489be5d864c54abc832b81724f579d`；root核對1份migration／139份API／206份Web與已驗收來源一致後，正常推送395a→487，沒有force push或公司端新增提交。後續純文件狀態提交另記，不改本release code、不重建產物；歷史pending與其他未完成provider／模組待辦保留。
 
-目前正式API **`1d09e4febf48`**／Web **`cfa5cf288359`**；資料庫migration已到 **0054**。OPB02 API八組分兩輪、正式IAB主從操作與精確清理均已取得通過證據；本批Git同步待root提交／推送。以下原「家用端最新進度」保留0053整合版發行當時的歷史快照，最新狀態以本段及模組文件為準；完整Job／通知等未提供能力仍不列為完成。
+## 最新接手：OPB02 API／正式GUI已驗並同步main487e9d1（2026-11-20）
+
+目前正式API **`1d09e4febf48`**／Web **`cfa5cf288359`**；資料庫migration已到 **0054**。OPB02 API八組分兩輪、正式IAB主從操作與精確清理均已取得通過證據，本批程式已正常同步main `487e9d1`。以下原「家用端最新進度」保留0053整合版發行當時的歷史快照，最新狀態以本段及模組文件為準；完整Job／通知等未提供能力仍不列為完成。
 
 - [x] root完成全DB custom備份與restore-list驗證，0054原子套用並獨立核對13欄／兩PK／兩index／trigger0／欄與ACL差異0、Detail全表OPNo PK及app-role讀取probe；沒有seed。正式記錄見 `.tools/opb02-migration-applied-20261120.json`、[ECN模組](docs/modules/OP/ECN作業站群組設定.md) 與 [資料庫紀錄](docs/DATABASE_CONNECTION.md)。
 - [x] root完成OPB02 API a2獨立建置／實際nonroot讀取與啟動gate，正式API為 `1d09e4febf482433d398a986a3d9458eca693324763a45cbcd468e0d791e2755`；相容回復映像保留ECN引用防護。API程式在兩輪回歸間未改。
@@ -10,7 +12,7 @@
 - [x] root API-only checkpoint dryvalidate／apply完成，再部署Web a2 `cfa5cf288359f1f3bbfdd5dfc9f2dbb5457f4ef0e6537d0fc38c698edb902fd7`；nonroot、公開0755／0644與正常HTTPS資產MIME／大小／SHA全通。Web-only checkpoint亦dry／apply完成，206來源安裝於 `/opt/ymes/checkpoints/web-opb02-20261120-a2`；API1d09及migration0054原值、舊Web a3／Git395歷史保留。
 - [x] root正式IAB驗收48個檢查點全部通過，其中1項是SQL cleanup讀回，不稱48次純GUI點擊。六個Group A／B／C／N／P／S全由GUI Add／Copy並GUI刪除；NULL／order／日期／raw空白PS、Copy必填、stale及批次1/2、0→2→-1→hard、SQL state1後真明細Add／Delete、SQL字面`*`後真lookup／CRUD、Tab／dirty及Close／重進／深路由reload皆有實證。SQL設定與真GUI核准分開；最後logs空陣列只限該reload。
 - [x] GUI cleanup前獨立92／91已證Group與兩方向Detail全0、只剩9個lookup；精確90清理後獨立91的19項scope全0。模組MD已補全部實證與未提供／未測界線；Job候選存在503仍未實際觸發，不造假provider。
-- [ ] root正常提交／推送本批，保持兩端歷史、不force push。root最後fetch的origin仍 `395a41a`，無公司新碼；本批GUI已驗但Git待推，整體 `releaseComplete=false`。後續OPB01共享Element來源查證只派公司端程式／資源閱讀，見 [公司端待辦](todolist_officepc.md)；原家用schema／API與其餘模組待辦全部保留。
+- [x] root已正常提交／推送本批程式至main `487e9d1`，origin確認相同，保留兩端歷史、沒有force push或公司新碼；同步前395a／pending記錄保留為歷史。後續純文件狀態提交另記，不取代release code。OPB01共享Element來源查證只派公司端程式／資源閱讀，見 [公司端待辦](todolist_officepc.md)；原家用schema／API與其餘模組待辦全部保留。
 
 ## 家用端最新進度（2026-11-20，正式 GUI 驗收完成，已正常同步 main）
 

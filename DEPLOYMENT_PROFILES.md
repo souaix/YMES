@@ -1,5 +1,7 @@
 # 部署設定檔
 
+> **本批完成（2026-11-20）：OPB02已正常同步GitHub main `487e9d1`。** 正式程式版本（release code commit）為 `487e9d1d15489be5d864c54abc832b81724f579d`；root核對1份migration／139份API／206份Web與已部署、已驗收來源一致，正常推送395a→487，沒有force push。API1d09／Webcfa／0054、GUI48項（含SQL讀回1項）及19scope全0狀態不變。下方pending為發行歷史；後續純文件狀態提交另記，不取代release code或重建產物，未提供的Job等provider繼續保留限制。
+
 ## 1. 共通原則
 
 同一套 Web/API 程式碼可部署至不同主機；執行產物、反向代理、機密注入、服務管理和腳本依目標環境準備。部署差異留在設定和 Infrastructure，不進入 Domain/Application 業務規則。
