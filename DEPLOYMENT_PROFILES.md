@@ -1,12 +1,12 @@
 # 部署設定檔
 
-## 目前正式版本：ET102（2026-11-20，正式驗收完成，Git 待同步）
+## 目前正式版本：ET102（2026-11-20，已驗收並同步 main 7b6771e）
 
 API `0339807d5b7e13be6efeec1ed72cdbaef71619af3f7c3fe46cd88ce9f0d87c2a`；Web `6a4f390f37b80c1579b79579dba625a702e753f11f52e71638dbbb8cdb3b3f67`；migration **0056**。Web `/YMES/` 與 API `/YMES/API/` 分開運行在同一 server，只更新 YMES 容器。下方 OPB03 與更早資訊是歷史，不作現在的重建來源。
 
 固定 API 來源 `/opt/ymes/releases/et102-api-20261120-a1/main` 共 145 檔，canonical SHA256 `727efc3ce2e381e2279c0e782560cf05c1d06edc12269dded5e85dff3edc0c82`；Web `/opt/ymes/checkpoints/web-et102-20261120-a1` 共 206 檔，canonical `77bcd69d082a61dd0422efd5dc8763954b8314852bd35e687fc59b7a72cb8d26`。私有來源目錄 0700／檔案 0600，公開 Web 0755／0644，API 發布檔實際 nonroot 可讀。
 
-本批 Web JS `index-BituN-HM.js`／CSS `index-Mgc9yX5L.css` 已通過正常 HTTPS MIME／大小／SHA 與正式 app-browser。API 八組 98 HTTP／406 斷言；GUI 53 項（52 GUI、1 SQL）及七個精確清理範圍全零。詳見 [ET102 QA](docs/qa/20261120-et102.md)。Git／完成 checkpoint 尚待本批正常同步與 352 份來源綁定，不能提前標成已推送。
+本批 Web JS `index-BituN-HM.js`／CSS `index-Mgc9yX5L.css` 已通過正常 HTTPS MIME／大小／SHA 與正式 app-browser。API 八組 98 HTTP／406 斷言；GUI 53 項（52 GUI、1 SQL）及七個精確清理範圍全零。詳見 [ET102 QA](docs/qa/20261120-et102.md)。352 份來源綁定通過後已正常推送 release code `7b6771e4718a56a950f4a4de5c61564ea8ed4137`，origin/main 再 fetch 相同；後續純文件狀態提交不改產物。完成 checkpoint 仍須依實際狀態提交與證據 dryvalidate／apply，保留整份前版 metadata 與備份，不能由推送成功推定已寫入。
 
 已驗證回復映像是前一版 OPB03 API `2a2291cc11630c3ff151f0821fe5ef4a789e63cf1933c319069da379765b1b2f`，來源 `/opt/ymes/releases/opb03-api-20261120-a1/main`（142 檔），保留 OPB02／OPB03 引用防護且不提供 Customer 父 writer；回復 API 時保留 Contact 表與業務資料。前 Web `fc83e8bc548411500ba11d32da94d20fd0d8b1921d0a7f5cd912d38f7e75f9c9` 亦保留。共用 `/opt/ymes/source` 不作重建基底。
 

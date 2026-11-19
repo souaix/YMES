@@ -1,8 +1,8 @@
 # 公司端待辦
 
-## 家用端最新回饋：ET102 正式驗收完成（2026-11-20，Git 待同步）
+## 家用端最新回饋：ET102 已驗收並同步 main 7b6771e（2026-11-20）
 
-HOME PC 已完成 ET102 客戶連絡人 PostgreSQL 0056、正式 API `0339807d5b7e`／Web `6a4f390f37b8`；API 單輪八組 98 HTTP／406 斷言、正式 app-browser 53 個檢查點（52 GUI、1 SQL）通過。11 筆 Contact 全由 GUI 建立／刪除，清理 lookup 後七個精確範圍獨立讀回全零。完整限制見 [模組](docs/modules/ENT/客戶連絡人資料.md) 與 [QA](docs/qa/20261120-et102.md)。Git 尚待本批正常同步；驗收後 fetch 時 origin/main 仍為 `c2c4930`，未以舊程式覆蓋公司端。
+HOME PC 已完成 ET102 客戶連絡人 PostgreSQL 0056、正式 API `0339807d5b7e`／Web `6a4f390f37b8`；API 單輪八組 98 HTTP／406 斷言、正式 app-browser 53 個檢查點（52 GUI、1 SQL）通過。11 筆 Contact 全由 GUI 建立／刪除，清理 lookup 後七個精確範圍獨立讀回全零。完整限制見 [模組](docs/modules/ENT/客戶連絡人資料.md) 與 [QA](docs/qa/20261120-et102.md)。352 份來源核對通過後，release code `7b6771e4718a56a950f4a4de5c61564ea8ed4137` 已從 c2c4930 正常推到 main，再次 fetch 確認相同；保留兩端歷史，沒有 force push。後續純文件狀態提交不取代本 release code。
 
 公司端同步時保留真 Customer 全狀態 lookup、唯讀原始 owner／name、nullable token／audit、Apply 轉 Edit 與續存，以及正式區不使用 DEV seed 的隔離。每次異動須重查父客戶存在；父缺時回 422 並保留資料。這些與 OPB03 的父表規則不同，不可直接套用 OPB03 限制。公司端不需連 PostgreSQL、建表或 SSH；本批不新增公司端資料庫任務，原有原生來源查證待辦繼續保留。
 
