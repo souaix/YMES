@@ -210,6 +210,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PDB04 檔案上傳基本資料](modules/PRD/檔案上傳基本資料.md) 已完成 DEV 檔案類型、FTP 欄位預檢、核准與資料字典交接。
 
+[PDB05 測試程式檔案管理](modules/PRD/測試程式檔案管理.md) 已完成 DEV 程式與檔案設定共用、檔案更新歷程及雙表交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

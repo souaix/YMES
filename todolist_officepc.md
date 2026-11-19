@@ -1288,7 +1288,7 @@
 - [ ] `PD_BATCHMODIFYAREA` 列於功能清冊，Form 為 `frmBatchModifyArea`、執行檔為 `PD_BatchModifyArea_THEIL.dll`。桌機的 `D:\iMES\CSiMES` 找不到該 Form、專案或對應 Service／Core 名稱，需等客製原始碼或業務規格補齊。
 - [x] `PRD OP RULE` 已完成原始碼與字典核對、DEV 法則新增、一般法則批量替換、刪除、XLSX 預檢及 [規格與交接](docs/modules/PRD/產品作業站法則維護.md)。
 - [ ] `PRD OP RULE` 的正式 CP／FT 條件、腳本編輯器與匯入轉換待接續。
-- [ ] `PDCUSTOMERDEVICE`、`PRDGBOMEXPORT_OLD` 與 `PRDGBOMEXPORT` 的獨立 Form 未在桌機來源樹找到。PD102 的 GBOM 匯出子功能另有既有交接。
+- [ ] `PDCUSTOMERDEVICE`、`PRDGBOMEXPORT_OLD` 與 `PRDGBOMEXPORT` 的獨立 Form 原始碼未在桌機來源樹找到。部署目錄的 `UR_GBOMEx.dll` 包含 `frmGBOMEx`。PD102 的 GBOM 匯出子功能另有既有交接。
 - [x] PDP01 晶圓良率與出貨報告維護已完成原始碼、四表 metadata、DEV 出貨規則及 [規格與交接](docs/modules/PRD/晶圓良率與出貨報告維護.md)。
 - [ ] 正式報告產出、候選及檢查待接續。
 - [x] PDP02 已完成 DEV 程式版次、核准、CP Bin 設定／XLSX 匯入及 [規格與交接](docs/modules/PRD/晶圓測試程式定義.md)。
@@ -1302,7 +1302,11 @@
 - [x] PDB02 完成共用封測主檔入口、DEV 工程變更與清線查詢，以及 [規格與六表交接](docs/modules/PRD/產品設定封測.md)。
 - [ ] PDB02 封測專用 BOM、EquipmentRelease、產線清線執行與正式 ECN 明細待接續。
 - [x] PDB04 已完成 DEV 設定、欄位檢查、核准與 [規格及 Oracle 交接](docs/modules/PRD/檔案上傳基本資料.md)。
-- [ ] 正式檔案服務及憑證管理待家用端接續。下一項 PDB05 測試程式檔案管理。
+- [ ] 正式檔案服務及憑證管理待家用端接續。
+- [x] PDB05 完成 DEV 程式查詢、檔案登錄、更新歷程與本頁下載，以及 [規格與雙表交接](docs/modules/PRD/測試程式檔案管理.md)。
+- [ ] PDI01 產品設備限制維護已找到部署用 `PD_I_PRD_EquipmentRelease.dll` 與 PDB02 的查詢呼叫。公司端來源樹尚未找到 `frmPRDEquipmentRelease` 或獨立專案，正式維護欄位待補 Form／Designer 或業務規格。
+- [ ] PDI03 配件群組維護已找到部署用 `PD_I_PRD_ACCGroupMaintain.dll`，公司端來源樹尚未找到 `frmPRDACCGroupMaintain` 或獨立專案。待補 Form／Designer 或業務規格。
+- 靜態核對 `D:\iMES\CSiMES\Customer\Production\MESClient` 部署檔，PDI01 可見 `LoadEquipmentReleaseDetail`、`LoadAccessoryRelease`、`EditAccessoryRelease`、`DelAccessoryReleaseOneRow`；PDI03 可見 `LoadACCGroupRelationACCType` 與 `LoadPRDAccessoryGroup_Sub`。公司端可讀來源樹未找到這些方法的 Service 定義。另有 `Customer\Production\MES_C_DLL` 目錄在檔案清點時回傳 Windows 錯誤 1392，未能檢閱。
 
 ## PD206 父主檔生命週期來源查證（家用端 2026-11-19 追加）
 
