@@ -1783,3 +1783,7 @@ API 工作：
 ## PRD PDP02 晶圓測試程式定義家用端 handoff（2026-11-19）
 
 - [ ] 依 [晶圓測試程式定義](docs/modules/PRD/晶圓測試程式定義.md) 核對 CP 程式／Bin CREATE、匯入、簽核、DataStamp 與檔案管理。
+
+## PRD PDP03 產品晶圓法則管制家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品晶圓法則管制管理](docs/modules/PRD/產品晶圓法則管制管理.md) 核對摘要／明細 CREATE、合併格、ImportType、原始列欄及正式腳本。

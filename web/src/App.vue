@@ -60,6 +60,7 @@ import ProductWorkTimeMaster from './components/ProductWorkTimeMaster.vue'
 import ProductOverstayMaster from './components/ProductOverstayMaster.vue'
 import ProductStationRuleMaster from './components/ProductStationRuleMaster.vue'
 import CpWaferShipReportMaster from './components/CpWaferShipReportMaster.vue'
+import CpWaferRuleMaster from './components/CpWaferRuleMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -402,6 +403,7 @@ const fallbackMenuTree: MenuNode[] = [
     ] }, { id: 'product-cp-settings', label: 'CP行業設定', shortLabel: 'CP', children: [
       { id: 'function:PRD:P_CP WAFER YIELD SHIP REPORT', label: '晶圓良率與出貨報告維護', tableName: 'tbl_cpsyscombomapbasis', shortLabel: '報', functionNo: 'P_CP WAFER YIELD SHIP REPORT', moduleNo: 'PRD' },
       { id: 'function:PRD:P_CP PROGRAM DEFINE', label: '晶圓測試程式定義', tableName: 'tbl_cpprdprogrambasis', shortLabel: '測', functionNo: 'P_CP PROGRAM DEFINE', moduleNo: 'PRD' },
+      { id: 'function:PRD:P_WAFER RULE MANAGER', label: '產品晶圓法則管制管理', tableName: 'tbl_pprdwaferruleimportsummary', shortLabel: '管', functionNo: 'P_WAFER RULE MANAGER', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -542,6 +544,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRD OP RULE': `${appBasePath}/PRD/StationRules`,
   'function:PRD:P_CP WAFER YIELD SHIP REPORT': `${appBasePath}/PRD/CPWaferShipReports`,
   'function:PRD:P_CP PROGRAM DEFINE': `${appBasePath}/PRD/CPPrograms`,
+  'function:PRD:P_WAFER RULE MANAGER': `${appBasePath}/PRD/CPWaferRules`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -689,6 +692,7 @@ const isProductOverstayPage = computed(() => activeMasterKey.value === 'function
 const isProductStationRulePage = computed(() => activeMasterKey.value === 'function:PRD:PRD OP RULE')
 const isCpWaferShipReportPage = computed(() => activeMasterKey.value === 'function:PRD:P_CP WAFER YIELD SHIP REPORT')
 const isCpProgramPage = computed(() => activeMasterKey.value === 'function:PRD:P_CP PROGRAM DEFINE')
+const isCpWaferRulePage = computed(() => activeMasterKey.value === 'function:PRD:P_WAFER RULE MANAGER')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2308,6 +2312,12 @@ async function signOut(): Promise<void> {
           v-else-if="isCpWaferShipReportPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <CpWaferRuleMaster
+          v-else-if="isCpWaferRulePage"
+          class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
