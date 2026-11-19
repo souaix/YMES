@@ -17,13 +17,15 @@ interface WorkOrder {
   processes: Process[]; components: Component[]; properties: Property[]
   fromErp?: boolean; hasLots?: boolean; hasIssuedMaterial?: boolean
   unreleaseLotQty?: number; erpMoLineNo?: string
+  productType?: string; planStartDate?: string; actualStartDate?: string; actualFinishDate?: string
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const deletionOnly = computed(() => props.pageMode === 'delete')
-const queryOnly = computed(() => props.pageMode === 'query')
+const startReport = computed(() => props.pageMode === 'start-report')
+const queryOnly = computed(() => props.pageMode === 'query' || startReport.value)
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const storageKey = 'ymes-dev-oe201-work-orders-v1'
 const sources: { value: MoSource; label: string }[] = [
@@ -33,6 +35,7 @@ const states: { value: IssueState; label: string }[] = [
   { value: 0, label: '未簽核' }, { value: 1, label: '簽核中' }, { value: 2, label: '已簽核' }, { value: -1, label: '不使用' },
 ]
 const products = ['DEV-PRD-1001', 'DEV-PRD-1002']
+const productTypes: Record<string, string> = { 'DEV-PRD-1001': 'DEV-IC', 'DEV-PRD-1002': 'DEV-WAFER' }
 const moStateLabels: Record<number, string> = { 0: '未確認', 1: '簽核中', 2: '已確認', 3: '已發放', 6: '在製品退回', 99: '結案' }
 const defaultProcess = (): Process => ({ psNo: '', processNo: '', processVersion: '01', opNo: '', haveComponent: false })
 const operator = () => props.currentUserNo || 'DEV001'
@@ -61,14 +64,15 @@ function readLocal(): WorkOrder[] {
   }
   const seed = { ...blank(), productNo: 'DEV-PRD-1001', moQty: 25, processes: [
     { ...defaultProcess(), psNo: 'DEV-PS01', processNo: 'DEV-PROC01', opNo: 'DEV-OP01' },
-  ] }
+  ], planStartDate: '2026-11-12', planFinishDate: '2026-11-15' }
   return [
     { ...seed, moNo: 'DEV-MO-001' },
     { ...seed, moNo: 'DEV-MO-002', issueState: 1, moState: 1 },
-    { ...seed, moNo: 'DEV-MO-003', issueState: 2, moState: 2, fromErp: true },
+    { ...seed, moNo: 'DEV-MO-003', issueState: 2, moState: 2, fromErp: true, actualStartDate: '2026-11-12' },
     { ...seed, moNo: 'DEV-MO-004', issueState: -1 },
     { ...seed, moNo: 'DEV-MO-005', hasLots: true },
-    { ...seed, moNo: 'DEV-MO-006', issueState: 2, moState: 99, unreleaseLotQty: 0 },
+    { ...seed, moNo: 'DEV-MO-006', issueState: 2, moState: 99, unreleaseLotQty: 0, actualStartDate: '2026-11-13', actualFinishDate: '2026-11-15' },
+    { ...seed, moNo: 'DEV-MO-007', issueState: 2, moState: 3, actualStartDate: '2026-11-11' },
   ]
 }
 
@@ -88,6 +92,7 @@ const selectedNos = ref<string[]>([])
 const queryFilters = ref({
   moNo: '', roNo: '', itemNo: '', customerNo: '', productNo: '', productVersion: '',
   engNo: '', engVersion: '', moTypeNo: '', sources: [] as number[], states: [] as number[],
+  dateFrom: '', dateTo: '', productTypes: [] as string[],
 })
 const appliedFilters = ref<typeof queryFilters.value>()
 const queryStates = computed(() => Object.entries(moStateLabels)
@@ -97,6 +102,13 @@ const visible = computed(() => rows.value.filter(row => {
   if (!props.pageMode) return row.issueState === currentState.value && row.moNo.toUpperCase().includes(appliedSearch.value)
   const query = appliedFilters.value
   if (!query) return false
+  if (startReport.value) {
+    const planDate = row.planStartDate?.slice(0, 10) ?? ''
+    if (query.dateFrom && planDate < query.dateFrom) return false
+    if (query.dateTo && (!planDate || planDate > query.dateTo)) return false
+    const type = row.productType ?? productTypes[row.productNo] ?? ''
+    if (query.productTypes.length && !query.productTypes.includes(type)) return false
+  }
   const fields = ['roNo', 'itemNo', 'customerNo', 'productNo', 'productVersion', 'engNo', 'engVersion', 'moTypeNo'] as const
   return row.moNo.toUpperCase().startsWith(query.moNo) &&
     fields.every(key => !query[key] || String(row[key]).toUpperCase() === query[key]) &&
@@ -105,8 +117,39 @@ const visible = computed(() => rows.value.filter(row => {
 }).sort((a, b) => a.moNo.localeCompare(b.moNo)))
 const active = computed(() => visible.value.find(row => row.moNo === activeNo.value) ?? visible.value[0])
 
+function dayDifference(actual?: string, planned?: string): number | null {
+  if (!actual || !planned) return null
+  const days = (Date.parse(actual) - Date.parse(planned)) / 86_400_000
+  return Number.isFinite(days) ? days : null
+}
+
+const deliverySummary = computed(() => {
+  const counts = { early: 0, onTime: 0, late: 0, missing: 0 }
+  for (const row of visible.value) {
+    const days = dayDifference(row.actualStartDate, row.planStartDate)
+    if (days === null) counts.missing++
+    else if (days < 0) counts.early++
+    else if (days > 0) counts.late++
+    else counts.onTime++
+  }
+  return counts
+})
+
+function displayRate(count: number): string {
+  return visible.value.length ? (100 * count / visible.value.length).toFixed(1) + '%' : '0%'
+}
+
+function displayDays(days: number | null): string {
+  if (days === null) return '—'
+  return String(Number(days.toFixed(2)))
+}
+
 function applyQueryFilters(): void {
   const query = structuredClone(toRaw(queryFilters.value))
+  if (query.dateFrom && query.dateTo && query.dateFrom > query.dateTo) {
+    error.value = '起日不可晚於迄日。'
+    return
+  }
   const fields = ['moNo', 'roNo', 'itemNo', 'customerNo', 'productNo', 'productVersion', 'engNo', 'engVersion', 'moTypeNo'] as const
   for (const key of fields) query[key] = query[key].trim().toUpperCase()
   appliedFilters.value = query
@@ -167,6 +210,7 @@ function open(nextMode: typeof mode.value): void {
       ...structuredClone(toRaw(row)), moNo: '', issueState: 0, moState: 0, dataStamp: 0,
       creator: operator(), createDate: now(), reviser: '', reviseDate: '', belongToMoNo: 'N/A',
       fromErp: false, hasLots: false, hasIssuedMaterial: false,
+      unreleaseLotQty: undefined, erpMoLineNo: undefined, actualStartDate: undefined, actualFinishDate: undefined,
     }
   } else {
     editor.value = nextMode === 'add' || !row ? blank() : structuredClone(toRaw(row))
@@ -276,7 +320,7 @@ function apply(event: MouseEvent): void {
 
 <template>
   <section class="mo-page">
-    <h2>{{ queryOnly ? '工單查詢' : deletionOnly ? '工單刪除' : '工單基本資料' }}</h2>
+    <h2>{{ startReport ? '工單達交率（準時開工）' : queryOnly ? '工單查詢' : deletionOnly ? '工單刪除' : '工單基本資料' }}</h2>
     <template v-if="isDev">
       <form v-if="pageMode" class="filter-form" @submit.prevent="applyQueryFilters">
         <div class="toolbar">
@@ -291,6 +335,11 @@ function apply(event: MouseEvent): void {
           <label>工單類別 <input v-model="queryFilters.moTypeNo" type="text" inputmode="numeric" maxlength="2"></label>
         </div>
         <div class="toolbar">
+          <template v-if="startReport">
+            <label>計畫開工起日 <input v-model="queryFilters.dateFrom" type="date"></label>
+            <label>計畫開工迄日 <input v-model="queryFilters.dateTo" type="date"></label>
+            <label>產品類別 <select v-model="queryFilters.productTypes" multiple><option v-for="type in Object.values(productTypes)" :key="type">{{ type }}</option></select></label>
+          </template>
           <fieldset class="toolbar"><legend>來源</legend>
             <label v-for="source in sources" :key="source.value"><input v-model="queryFilters.sources" :value="source.value" type="checkbox"> {{ source.label }}</label>
           </fieldset>
@@ -306,6 +355,13 @@ function apply(event: MouseEvent): void {
       </form>
       <p v-if="error" role="alert">{{ error }}</p>
       <p v-if="notice" role="status">{{ notice }}</p>
+      <dl v-if="startReport && appliedFilters" class="summary" aria-label="開工統計">
+        <div><dt>工單總數</dt><dd>{{ visible.length }}</dd></div>
+        <div><dt>準時</dt><dd>{{ deliverySummary.onTime }} 筆（{{ displayRate(deliverySummary.onTime) }}）</dd></div>
+        <div><dt>提前</dt><dd>{{ deliverySummary.early }} 筆（{{ displayRate(deliverySummary.early) }}）</dd></div>
+        <div><dt>延遲</dt><dd>{{ deliverySummary.late }} 筆（{{ displayRate(deliverySummary.late) }}）</dd></div>
+        <div><dt>缺少計畫或實際日期</dt><dd>{{ deliverySummary.missing }}</dd></div>
+      </dl>
       <div class="workspace">
         <div class="grid"><table>
           <thead><tr>
@@ -317,6 +373,7 @@ function apply(event: MouseEvent): void {
             <template v-if="queryOnly">
               <th>訂單項次</th><th>未開批量</th><th>工程編號</th><th>工程版本</th><th>工單類別</th><th>優先序</th><th>父工單</th><th>客戶批號</th><th>ERP 行號</th>
             </template>
+            <template v-if="startReport"><th>計畫開工</th><th>實際開工</th><th>開工差異天數</th><th>實際完工</th><th>完工差異天數</th></template>
           </tr></thead>
           <tbody>
             <tr v-for="row in visible" :key="row.moNo" :class="{ selected: deletionOnly ? selectedNos.includes(row.moNo) : active?.moNo === row.moNo }" @click="activeNo = row.moNo">
@@ -331,8 +388,12 @@ function apply(event: MouseEvent): void {
                 <td>{{ row.itemNo }}</td><td>{{ row.unreleaseLotQty ?? row.moQty }}</td><td>{{ row.engNo }}</td><td>{{ row.engVersion }}</td>
                 <td>{{ row.moTypeNo }}</td><td>{{ row.priority }}</td><td>{{ row.belongToMoNo }}</td><td>{{ row.customerLotNo }}</td><td>{{ row.erpMoLineNo }}</td>
               </template>
+              <template v-if="startReport">
+                <td>{{ row.planStartDate }}</td><td>{{ row.actualStartDate }}</td><td>{{ displayDays(dayDifference(row.actualStartDate, row.planStartDate)) }}</td>
+                <td>{{ row.actualFinishDate }}</td><td>{{ displayDays(dayDifference(row.actualFinishDate, row.planFinishDate)) }}</td>
+              </template>
             </tr>
-            <tr v-if="!visible.length"><td :colspan="queryOnly ? 23 : deletionOnly ? 14 : 13">{{ pageMode && !appliedFilters ? '請輸入查詢條件或查詢全部' : '沒有符合條件的工單' }}</td></tr>
+            <tr v-if="!visible.length"><td :colspan="startReport ? 28 : queryOnly ? 23 : deletionOnly ? 14 : 13">{{ pageMode && !appliedFilters ? '請輸入查詢條件或查詢全部' : '沒有符合條件的工單' }}</td></tr>
           </tbody>
         </table></div>
         <div v-if="deletionOnly" class="actions">
@@ -385,6 +446,7 @@ function apply(event: MouseEvent): void {
           <label>工單類別 <input v-model.number="editor.moTypeNo" type="number" min="0" max="99"></label>
           <label>優先序 <input v-model.number="editor.priority" type="number" min="0" max="99"></label>
           <label>客戶批號 <input v-model="editor.customerLotNo" maxlength="50"></label>
+          <label>計畫開工日 <input v-model="editor.planStartDate" type="date"></label>
           <label>計畫完工日 <input v-model="editor.planFinishDate" type="date"></label>
           <label class="wide">說明 <textarea v-model="editor.description" maxlength="1000"></textarea></label>
         </div>
@@ -437,6 +499,9 @@ function apply(event: MouseEvent): void {
 h2, h3, p { margin: 0; }
 .toolbar, .child-row, footer { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .filter-form { display: grid; gap: 8px; }
+.summary { display: flex; gap: 12px; flex-wrap: wrap; margin: 0; }
+.summary div { min-width: 110px; border: 1px solid #bcc7d7; border-radius: 4px; padding: 8px 12px; }
+.summary dd { margin: 4px 0 0; font-weight: 600; }
 .child-row { margin-bottom: 10px; }
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
 .actions { display: flex; flex-direction: column; gap: 8px; }

@@ -1338,3 +1338,8 @@
 
 - [x] 依 `frmMOQuery` Form／Designer、`wsOE.LoadMOBasis` 及 Core 完成 DEV 多條件查詢、屬性唯讀及六種工單狀態篩選。
 - [x] [OE203 規格](docs/modules/OE/工單查詢.md) 記錄來源參數、欄位、手動查找差異與正式 API 交接。DDL 共用 OE201。
+
+## OE204 工單達交率（準時開工）
+
+- [x] 依 `frmMOQuery2` 及原 Core 完成 DEV 起迄日、產品類別、開工差異與實際比率規則。
+- [x] [OE204 規格](docs/modules/OE/工單達交率_準時開工.md) 核實缺日期分母、產品版本關聯及家用端查詢交接。DDL 共用 OE201。
