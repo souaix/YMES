@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { rowsKey, seedRows } from './productBasisDevelopment'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 import { useActionConfirmation } from '../composables/useActionConfirmation'
@@ -41,6 +41,9 @@ const lookupNotice = ref('')
 const busy = ref(false)
 const lookupBusy = ref(false)
 const confirmingClose = ref(false)
+const page = ref<HTMLElement | null>(null)
+const editor = ref<HTMLFormElement | null>(null)
+let previousEditorFocus: HTMLElement | null = null
 const key = (row: Rule) => JSON.stringify([row.product, row.equipment, row.operation])
 const filtered = computed(() => rows.value.filter(row =>
   [row.product, row.equipment, row.operation, row.description ?? ''].some(value => value.toUpperCase().includes(filter.value.trim().toUpperCase())),
@@ -112,11 +115,13 @@ async function loadOptions(): Promise<void> {
     })
   }
   lookupBusy.value = false
+  if (mode.value && !editor.value?.contains(document.activeElement)) await restoreEditorFocus()
 }
 async function begin(next: Exclude<Mode, ''>): Promise<void> {
   if (busy.value || confirmingClose.value || mode.value) return
   const row = active.value
   if (next !== 'add' && !row) return
+  previousEditorFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   busy.value = true; error.value = ''; notice.value = ''
   try {
     let value = next === 'add' || !row ? blank() : clone(row)
@@ -125,7 +130,7 @@ async function begin(next: Exclude<Mode, ''>): Promise<void> {
     if (next === 'copy') { value.module = 'WIP'; value.item = null; value.itemType = null; value.stamp = null; value.creator = null; value.reviser = null }
     draft.value = value; original.value = JSON.stringify(value); mode.value = next
   } catch (reason) { error.value = reason instanceof Error ? reason.message : '讀取目前資料失敗。' }
-  finally { busy.value = false }
+  finally { busy.value = false; await restoreEditorFocus() }
 }
 function validShift(value: string | null): boolean { return /^(?:[01]\d|2[0-4]):[0-5]\d$/.test(value ?? '') }
 function validation(value: Rule): string {
@@ -175,7 +180,7 @@ async function save(close: boolean): Promise<void> {
   } catch (reason) {
     error.value = reason instanceof Error ? reason.message : '保存抽樣頻率失敗。'
     try { await loadRows() } catch { /* Keep original failure; no automatic write retry. */ }
-  } finally { busy.value = false }
+  } finally { busy.value = false; await restoreEditorFocus() }
 }
 async function remove(): Promise<void> {
   const row = active.value
@@ -206,20 +211,50 @@ async function allowClose(): Promise<boolean> {
   } finally { confirmingClose.value = false }
 }
 async function closeEditor(): Promise<void> {
-  if (!await allowClose()) return
-  mode.value = ''; error.value = ''
+  if (await allowClose()) { mode.value = ''; error.value = '' }
+  await restoreEditorFocus()
 }
 async function closePage(): Promise<void> {
+  if (mode.value || confirmationMessage.value !== null) return
   if (!await allowClose()) return
   mode.value = ''; error.value = ''; emit('close')
 }
-onMounted(() => { void query(); void loadOptions() })
+function canFocus(element: HTMLElement): boolean {
+  return element.isConnected && element.getClientRects().length > 0 && !element.matches(':disabled') && !element.closest('[inert]')
+}
+function editorControls(): HTMLElement[] {
+  return Array.from(editor.value?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]') ?? []).filter(canFocus)
+}
+async function restoreEditorFocus(): Promise<void> {
+  await nextTick()
+  if (busy.value || confirmingClose.value || confirmationMessage.value !== null) return
+  if (mode.value && editor.value) {
+    const preferred = Array.from(editor.value.querySelectorAll<HTMLElement>('input:not([readonly]):not(:disabled),select:not(:disabled),textarea:not(:disabled)')).find(canFocus)
+    ;(preferred ?? editorControls()[0] ?? editor.value).focus()
+  } else if (previousEditorFocus && page.value?.contains(previousEditorFocus) && canFocus(previousEditorFocus)) previousEditorFocus.focus()
+  else {
+    const first = Array.from(page.value?.querySelectorAll<HTMLElement>('input:not(:disabled),button:not(:disabled),[tabindex="0"]') ?? []).find(canFocus)
+    ;(first ?? page.value)?.focus()
+  }
+}
+function keepEditorFocus(event: KeyboardEvent): void {
+  if (event.key !== 'Tab' || !mode.value || confirmationMessage.value !== null) return
+  if (busy.value || confirmingClose.value) { event.preventDefault(); return }
+  const controls = editorControls(), first = controls[0], last = controls[controls.length - 1]
+  if (!first || !last) { event.preventDefault(); editor.value?.focus(); return }
+  const active = document.activeElement
+  if (!editor.value?.contains(active) || active === editor.value) { event.preventDefault(); (event.shiftKey ? last : first).focus() }
+  else if (event.shiftKey && active === first) { event.preventDefault(); last.focus() }
+  else if (!event.shiftKey && active === last) { event.preventDefault(); first.focus() }
+}
+onMounted(() => { document.addEventListener('keydown', keepEditorFocus, true); void query(); void loadOptions() })
+onBeforeUnmount(() => { document.removeEventListener('keydown', keepEditorFocus, true) })
 </script>
 
 <template>
-  <main class="frequency">
-    <header><h1>產品抽樣頻率規則 <small v-if="mock">DEV 假資料</small></h1><button :disabled="busy || confirmingClose" @click="closePage">關閉</button></header>
-    <div class="toolbar">
+  <main ref="page" class="frequency" tabindex="-1">
+    <header :inert="!!mode || confirmationMessage !== null"><h1>產品抽樣頻率規則 <small v-if="mock">DEV 假資料</small></h1><button :disabled="busy || confirmingClose || !!mode" @click="closePage">關閉</button></header>
+    <div class="toolbar" :inert="!!mode || confirmationMessage !== null">
       <label>產品、設備、作業站或說明 <input v-model="filter" :disabled="busy || !!mode || confirmingClose" @keyup.enter="query" /></label>
       <button :disabled="busy || !!mode || confirmingClose" @click="query">重新查詢</button>
       <button :disabled="busy || !!mode || confirmingClose" @click="begin('add')">新增</button>
@@ -229,7 +264,7 @@ onMounted(() => { void query(); void loadOptions() })
     </div>
     <p v-if="notice" role="status">{{ notice }}</p>
     <p v-if="error && !mode" role="alert">{{ error }}</p>
-    <div class="grid">
+    <div class="grid" :inert="!!mode || confirmationMessage !== null">
       <table>
         <thead><tr><th>產品</th><th>設備</th><th>作業站</th><th>模組</th><th>頻率</th><th>抽樣批次數</th><th>A 班</th><th>B 班</th><th>說明</th></tr></thead>
         <tbody>
@@ -242,7 +277,7 @@ onMounted(() => { void query(); void loadOptions() })
       </table>
     </div>
     <div v-if="mode" class="overlay">
-      <form class="editor" role="dialog" aria-modal="true" aria-label="抽樣頻率規則" @submit.prevent="save(true)">
+      <form ref="editor" class="editor" role="dialog" aria-modal="true" aria-label="抽樣頻率規則" tabindex="-1" :inert="confirmingClose || confirmationMessage !== null" @submit.prevent="save(true)">
         <header><h2>抽樣頻率規則</h2><button type="button" :disabled="busy || confirmingClose" @click="closeEditor">關閉</button></header>
         <p v-if="lookupBusy" role="status">候選載入中…</p>
         <p v-if="lookupNotice" role="alert">{{ lookupNotice }}<button type="button" :disabled="busy || lookupBusy" @click="loadOptions">重試候選</button></p>

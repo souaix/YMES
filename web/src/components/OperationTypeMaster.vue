@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import OperationFeatureDialog from './OperationFeatureDialog.vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 import { useActionConfirmation } from '../composables/useActionConfirmation'
@@ -25,7 +25,9 @@ const error = ref(''), notice = ref('')
 const dialogMode = ref<Mode | ''>('')
 const draft = ref({ opType: '', description: '' }), originalDraft = ref('')
 const editing = ref<OperationTypeRow | null>(null)
+const page = ref<HTMLElement | null>(null)
 const editor = ref<HTMLFormElement | null>(null)
+let previousEditorFocus: HTMLElement | null = null
 const dialogOpen = computed(() => dialogMode.value !== '')
 const propertyOpen = ref(false), propertyTarget = ref('')
 const blocked = computed(() => busy.value || loading.value || closing.value || dialogOpen.value || propertyOpen.value)
@@ -101,6 +103,7 @@ function setDraft(row: OperationTypeRow | null): void {
 }
 async function openDialog(mode: Mode, row: OperationTypeRow | null = null): Promise<void> {
   if (blocked.value || (mode !== 'new' && !row)) return
+  previousEditorFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   busy.value = true; error.value = ''; notice.value = ''
   try {
     const fresh = row ? mock.value ? clone(row) : await api<OperationTypeRow>('/item', 'GET', undefined, row.opType) : null
@@ -108,8 +111,8 @@ async function openDialog(mode: Mode, row: OperationTypeRow | null = null): Prom
     if (mode === 'edit' && fresh?.issueState !== 0) throw new Error('僅未簽核資料可修改。')
     editing.value = fresh; setDraft(fresh); dialogMode.value = mode
     busy.value = false
-    await nextTick(); editor.value?.querySelector<HTMLInputElement>('input:not([readonly]):not([disabled])')?.focus()
-  } catch (reason) { error.value = failure(reason) } finally { busy.value = false }
+    await restoreEditorFocus()
+  } catch (reason) { error.value = failure(reason) } finally { busy.value = false; await restoreEditorFocus() }
 }
 async function saveForm(closeAfter: boolean): Promise<void> {
   if (busy.value || loading.value || closing.value || !dialogMode.value) return
@@ -135,7 +138,7 @@ async function saveForm(closeAfter: boolean): Promise<void> {
     issueState.value = saved.issueState; keyword.value = ''; selected.value = saved.opType; selectedKeys.value = []
     dialogMode.value = closeAfter ? '' : 'edit'; notice.value = '作業站類別已儲存。'
     try { await loadRows(saved.opType) } catch (reason) { error.value = '保存已完成，但清單重查失敗：' + failure(reason) }
-  } catch (reason) { error.value = failure(reason) } finally { busy.value = false }
+  } catch (reason) { error.value = failure(reason) } finally { busy.value = false; await restoreEditorFocus() }
 }
 async function mutate(action: 'delete' | 'approve'): Promise<void> {
   if (blocked.value) return
@@ -172,25 +175,55 @@ async function allowClose(): Promise<boolean> {
   try { return !dialogOpen.value || JSON.stringify(draft.value) === originalDraft.value || await requestConfirmation('尚有未儲存的修改，確定放棄？') }
   finally { closing.value = false }
 }
-async function closeDialog(): Promise<void> { if (await allowClose()) { dialogMode.value = ''; editing.value = null; error.value = '' } }
-async function closePage(): Promise<void> { if (await allowClose()) emit('close') }
+async function closeDialog(): Promise<void> {
+  if (await allowClose()) { dialogMode.value = ''; editing.value = null; error.value = '' }
+  await restoreEditorFocus()
+}
+async function closePage(): Promise<void> {
+  if (await allowClose()) emit('close')
+  else await restoreEditorFocus()
+}
 function openProperty(): void {
   if (blocked.value || !selectedRow.value) return
   if (!mock.value) { error.value = 'Property 子功能的正式服務尚未提供。'; return }
   propertyTarget.value = selectedRow.value.opType; propertyOpen.value = true
 }
+function canFocus(element: HTMLElement): boolean {
+  return element.isConnected && element.getClientRects().length > 0 && !element.matches(':disabled') && !element.closest('[inert]')
+}
+async function restoreEditorFocus(): Promise<void> {
+  await nextTick()
+  if (confirmationMessage.value !== null || propertyOpen.value) return
+  if (dialogOpen.value) {
+    if (busy.value || loading.value || closing.value || !editor.value) return
+    const first = Array.from(editor.value.querySelectorAll<HTMLElement>('input:not([readonly]):not(:disabled),textarea:not(:disabled),button:not(:disabled)')).find(canFocus)
+    ;(first ?? editor.value).focus()
+  } else if (previousEditorFocus && page.value?.contains(previousEditorFocus) && canFocus(previousEditorFocus)) previousEditorFocus.focus()
+  else {
+    const first = Array.from(page.value?.querySelectorAll<HTMLElement>('input:not(:disabled),button:not(:disabled),[tabindex="0"]') ?? []).find(canFocus)
+    ;(first ?? page.value)?.focus()
+  }
+}
+function keepEditorFocus(event: KeyboardEvent): void {
+  if (event.key !== 'Tab' || !dialogOpen.value || propertyOpen.value || confirmationMessage.value !== null) return
+  if (busy.value || loading.value || closing.value) { event.preventDefault(); return }
+  if (!editor.value?.contains(document.activeElement)) { event.preventDefault(); void restoreEditorFocus() }
+}
 function trapTab(event: KeyboardEvent): void {
-  const controls = Array.from(editor.value?.querySelectorAll<HTMLElement>('input:not(:disabled),textarea:not(:disabled),button:not(:disabled)') ?? [])
+  if (busy.value || loading.value || closing.value || confirmationMessage.value !== null) { event.preventDefault(); return }
+  const controls = Array.from(editor.value?.querySelectorAll<HTMLElement>('input:not(:disabled),textarea:not(:disabled),button:not(:disabled)') ?? []).filter(canFocus)
   const first = controls[0], last = controls[controls.length - 1]
+  if (!first || !last) { event.preventDefault(); editor.value?.focus(); return }
   if ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) { event.preventDefault(); (event.shiftKey ? last : first)?.focus() }
 }
 watch(visibleRows, () => syncSelection())
-watch(issueState, () => { selectedKeys.value = []; syncSelection() })
-onMounted(async () => { loading.value = true; try { await loadRows() } catch (reason) { error.value = failure(reason) } finally { loading.value = false } })
+watch(issueState, () => { selectedKeys.value = []; notice.value = ''; syncSelection() })
+onMounted(async () => { document.addEventListener('keydown', keepEditorFocus, true); loading.value = true; try { await loadRows() } catch (reason) { error.value = failure(reason) } finally { loading.value = false } })
+onBeforeUnmount(() => { document.removeEventListener('keydown', keepEditorFocus, true) })
 </script>
 
 <template>
-  <div class="operation-type-page">
+  <div ref="page" class="operation-type-page" tabindex="-1">
     <header class="page-title"><h1>作業站類別資料</h1><span>OP TYPE · TBLOPTYPE</span></header>
     <form class="query-panel" @submit.prevent="queryRows" :inert="dialogOpen || propertyOpen">
       <fieldset class="state-filter"><legend>作業站類別</legend>
@@ -226,7 +259,7 @@ onMounted(async () => { loading.value = true; try { await loadRows() } catch (re
     </section>
 
     <div v-if="dialogOpen" class="dialog-backdrop" @click.self="closeDialog">
-      <form ref="editor" class="definition-dialog" role="dialog" aria-modal="true" aria-labelledby="op-type-dialog-title" @submit.prevent="saveForm(true)" @keydown.esc.stop.prevent="closeDialog" @keydown.tab="trapTab">
+      <form ref="editor" class="definition-dialog" role="dialog" aria-modal="true" aria-labelledby="op-type-dialog-title" tabindex="-1" :inert="confirmationMessage !== null" @submit.prevent="saveForm(true)" @keydown.esc.stop.prevent="closeDialog" @keydown.tab="trapTab">
         <h2 id="op-type-dialog-title">作業站類別資料 {{ dialogMode === 'new' ? '(新增)' : dialogMode === 'edit' ? '(修改)' : '(複製)' }}</h2>
         <fieldset class="data-group" :disabled="busy || closing"><legend>OP Type Data</legend>
           <label class="form-row"><span>OP Type</span><input v-model="draft.opType" class="kd-field" maxlength="20" :readonly="dialogMode === 'edit'" @blur="dialogMode !== 'edit' && (draft.opType = draft.opType.trim().toUpperCase())" /></label>

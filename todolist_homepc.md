@@ -1,10 +1,10 @@
 # 家裡電腦接手清單
 
-## 家用端最新進度（2026-11-19，PRD／PRS／QC／OP105）
+## 家用端最新進度（2026-11-20，正式 GUI 驗收完成，合併同步中）
 
 此段為目前狀態；下方保留交接當時的待辦原文，歷史未勾選項不表示本段已完成內容又變回缺表。家用端管理 YMES PostgreSQL／API／PPK SSH；公司端持續提供原生 Oracle 的唯讀結構、來源邏輯與 UI。
 
-目前運行API `16a825af0bea`／Web `1f2dff75f080`（OP105批，含已部署品質頁），migration已到0053。QC201／QC202／OP105的API、建置與靜態資產驗證已通過，GUI仍因平台控制停止待補，不以此當成已驗收main；程式以本機WIP checkpoint與遠端固定來源保存。下一批OPB02已做唯讀來源／缺表核對並準備獨立草稿，未套0054／未發行，不能混入已驗證批次。
+目前運行 API `16a825af0bea`／Web `83f3426007c2`，migration 已到 0053。本輪 PD101／PD206／OP103／OP105／PS103／QC201／QC202／QC301／QC302 的已開放主要操作已用正式 app-browser 實際驗證；自行 Demo 登入、預設正式區、空白首頁、三層選單與收合圖示亦已重驗。修正四頁彈窗焦點、選單圖示裁切與公開資產權限；各模組 MD 保留未實作 provider 和未測分支，不把 API 回歸或 SQL fixture 當成 GUI 通過。所有專用測試資料已精確清理。已 fetch 公司端最新 `4e0bae1`，接續正常合併、建置與受影響畫面重驗後再 push。下一批 OPB02 草稿與 0054 尚未發行，須獨立保存，不混入本批。
 
 - [x] 已正常合併公司端至 `3192964`，保留新 OE 頁、DDL 與 QC／PD206 來源。PD206 文件衝突同時保留雙方內容；沒有 force push 或捨棄任一端開發。家用端本批仍在正式 GUI 驗收，尚未以完成版本推到 main。
 - [x] 0042–0050 已逐份備份、驗證 pg_restore --list 後套用並獨立讀回。0046／0047／0048 僅補既存引用表 SELECT；0049／0050建立來源核對的OP Type／共用Property空表，無FK或多餘index，詳見 docs/DATABASE_CONNECTION.md。沒有搬移Oracle業務資料。
@@ -15,10 +15,10 @@
 - [x] 一般抽樣來源／ShowFlag子集18項HTTP通過；QC301／302的chart、Plan引用鎖、Create/Update/Approve與Import、反向Copy及alias十組分三輪共88項預期HTTP斷言通過。新因子目錄歧義／重複輸入／NULL stamp與Rule舊snapshot四組分兩輪共39項取得成功證據；每輪11表及本機／DB holder0。細節及各輪helper錯誤保留於QC301／302 MD，不冒稱單次全通或GUI通過。
 - [x] QC一般source與因子防護已合入目前發行來源，OP103隔離API／Razor建置0警告／0錯誤、Web vue-tsc／Vite通過。21:19已啟動API `260dfd2ff2bb`／Web `760d6055e519`（`index-DI-geD67.js`），ready200；僅更新YMES容器，未清除其他專案或orphan。
 - [x] OP103正式API十組回歸通過：run54BC802、112次HTTP、234項斷言，包含四態、nullable CAS、精準Property清理、namespace競爭及Type引用鎖雙方向。最後Type／OP／Property／自有PS／holder皆0。兩表Source19欄／PK／NULL/default/grants已核對；GUI與完整Property provider仍待，不猜路由或回空成功。
-- [ ] QC301 nullable契約已有85項API與0045後16項真量測引用／硬刪回歸通過、各輪API fixtures清空。新GUI已確認實際NULL建立日期留空、NULL stamp首次Apply及沿回傳版本再次保存；Rule、其餘狀態／新增／複製／刪除仍接續驗證，`CODUI301N-1119-*`是尚未清理的明確自有GUI fixtures。
-- [ ] 完成PD101／PD206／OP103的正式GUI逐項操作、PS103日期顯示、QC301其餘操作與一般Plan查找回歸。原生確認窗曾恢復；之後app-browser工具移除，Windows備援又因平台無法確認目前網址而停止本輪CU。已請使用者方便時在Chrome開YMES；已有Demo授權，恢復後自行登入，不再等登入許可。平台停止期間不改用其他UI技術繞過；API與其他工作繼續，不將GUI標通過。
-- [ ] 只讀fetch已看見公司端 `954e4a5`（新增OE/WP交接），目前已整合之公司端基底仍`3192964`。此新差異尚未合併／部署；本機另以codex分支保留API檢查點，GUI待驗，不以本機舊版覆蓋遠端或當成完成版本推送。
-- [ ] 全部本批必要GUI／API驗證完成後，僅提交已驗收來源與維護MD，正常fetch／merge公司新版本再push main；將精確提交同步遠端source，避免後續compose rebuild回到舊版。保留QC201/QC202等未驗收草稿，不誤夾入發行。
+- [x] QC301／QC302 已完成本輪實際 Rule 保存／重複／清空、Add／Copy／Apply、核准／取消核准／停用／硬刪、一般 Plan、Copy2、NULL stamp Rule／stale，以及真 Excel 逐列匯入。原 `CODUI301N-1119-*` 與新測試範圍一併清理，含九個 GUI 產生識別碼的十三項提交後計數全零；詳見兩模組 MD。
+- [x] PD101／PD206／OP103／PS103 的主要 CRUD、套用、查找、狀態與日期顯示已補實際 GUI；四頁的取消／套用焦點與正反 Tab 修補已發布重驗。使用 app-browser 自行按 Demo，無須再次等待使用者登入。缺少來源的 Copy／Property／WIP／Simulation 等分支保持明確未開放，不回假成功。
+- [x] 驗證後正常 fetch，最新公司端為 `4e0bae1`（本機基底 `3192964` 之後二十筆 OE／WIP 提交）。接續正常 merge，保留兩端來源；合併完成前不以舊版覆蓋公司端。
+- [ ] 僅提交已驗收來源與維護 MD，正常 merge 公司新版本並重驗受影響功能後 push main；同步精確版本至遠端來源。OPB02 未驗草稿另存，維持不 force push。
 
 ## 家用端接續：QC201／QC202（2026-11-19）
 
@@ -27,7 +27,7 @@
 - [ ] 完成QC201狀態／nullable CAS、共用identifier／參照鎖、子資源snapshot版本、Copy預覽選擇、真實lookup與Vue對接。未交付的WIP刪除檢查、IssueJob、Simulation、ValueList／Table／Function provider不以空資料或成功替代；來源不足交公司端補證據。
 - [x] QC201／QC202固定API快照13檔SHA一致，.NET9 Release 0警告／0錯誤，遠端API `95a153cef1d7` 已啟動ready200。QC202十組一次通過103項HTTP／444斷言、6表／holder0；QC201前六組175HTTP／544斷言、12scope／holder0，Op第7組另49HTTP／227斷言、14scope／holder0，合計七組分兩輪224HTTP／771斷言。每輪schema metadata保持、登出204。不是GUI驗收；Web仍 `760d6055e519`，新畫面尚未部署。
 - [x] 兩頁最終Web a4固定快照vue-tsc／Vite exit0；只含QC201／QC202覆檔、不含OP105草稿。已部署Web `1c9b82c00343`（`index-M6-uxH7Y.js`／`index-GktQBV6c.css`），封裝907350 bytes；遠端8項HTTP確認入口／兩頁SPA／JS3331109與CSS875532 bytes及SHA／小寫404／API ready200全過。API當時為已驗證95a153cef1d7，沒有更動其他專案。
-- [ ] QC201與QC202的實際app-browser全流程待工具可用後補驗；未完成前不標完成或推送為已驗收main。API／Web建置、實際HTTP與程式碼審查均不能替代GUI操作。
+- [x] QC201／QC202 的本輪已開放主要功能已在 2026-11-20 用正式 app-browser 補驗，包含四種明細、參數來源 Copy、實際核准／Op、NULL／stale、管制內容 CRUD／規則／失效 Options。十六個精確資料範圍與 holder 全零；未提供及未 GUI 測的分支列於模組 MD。
 - [x] OP105：兩表20欄比對及0053備份／套用／readback完成，僅補5defaults與owner CRUD；API隔離.NET9 Release 0警告／0錯誤、16a825af0bea已啟動ready200。正式8組145HTTP／501斷言一次通過，5owner表／group ref及其他7引用表精準鍵／holder0，metadata保持、登出204。包含真OP引用鎖與padded舊member防實刪。最終Web a2已修7項peer邊界、build exit0，23:14部署1f2dff75f080（DY_b-9Fr.js／BCM0CnE5.css），9項靜態HTTP及完整資產SHA通過；GUI仍待。
 - [x] 可重建來源／發行界線已補 `DEPLOYMENT_PROFILES.md`：遠端 `/opt/ymes/checkpoints/fb22a87` 與本機checkpoint保留已部署來源；共用 `/opt/ymes/source` 尚有舊碼，不可直接預設重建退回舊版。
 

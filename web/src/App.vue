@@ -1452,14 +1452,16 @@ async function signOut(): Promise<void> {
         <div class="framework-brand">
           <img class="brand-logo" :src="brandLogoUrl" alt="KD 科定企業" />
         </div>
-        <button class="sidebar-toggle" type="button" :aria-label="sidebarOpen ? '收合選單' : '展開選單'" @click="sidebarOpen = !sidebarOpen">
+        <button class="sidebar-toggle" type="button" :aria-label="sidebarOpen ? '收合選單' : '展開選單'" :title="sidebarOpen ? '收合選單' : '展開選單'" @click="sidebarOpen = !sidebarOpen">
           {{ sidebarOpen ? '‹' : '›' }}
         </button>
-        <nav>
+        <nav aria-label="主選單">
           <button
             type="button"
             class="framework-menu-item"
             :class="{ active: selectedMenuKey === null }"
+            aria-label="主選單"
+            title="主選單"
             @click="navigateHome"
           >
             <MenuIcon kind="home" />
@@ -1478,7 +1480,7 @@ async function signOut(): Promise<void> {
             <span class="framework-avatar">{{ (currentUser?.displayName || currentUser?.userNo || 'Y').slice(0, 1) }}</span>
             <span class="framework-user-name">{{ currentUser?.displayName || currentUser?.userNo }}</span>
           </div>
-          <button type="button" class="framework-logout" @click="signOut"><MenuIcon kind="logout" /><span class="menu-full-label">登出</span></button>
+          <button type="button" class="framework-logout" aria-label="登出" title="登出" @click="signOut"><MenuIcon kind="logout" /><span class="menu-full-label">登出</span></button>
         </div>
       </aside>
 
@@ -1487,7 +1489,7 @@ async function signOut(): Promise<void> {
           <h1>{{ currentMasterTitle }}</h1>
           <div class="framework-header-user">
             <span>{{ currentUser?.displayName || currentUser?.userNo }}</span>
-            <button type="button" @click="signOut">登出</button>
+            <button type="button" aria-label="登出" title="登出" @click="signOut">登出</button>
           </div>
         </header>
         <div v-if="menuSource === 'fallback'" class="framework-menu-note" role="status">

@@ -37,6 +37,19 @@ YMES Vue Web 與 ASP.NET Core API 使用不同容器，部署在同一台主機�
 
 建置必須等待程序實際以 exit code 0 結束才可打包；工具回傳 session ID 代表仍在執行，不能當成成功。發行快照只包含本批已驗證內容，避免混入下一批草稿。打包前確認 `dist/index.html` 引用的 JS/CSS 存在且非空，封裝後再查 archive 大小與內容；不可將 Vite 建置期間已清空的 dist 部署上線。切換後檢查入口及同名 JS/CSS 的 HTTP 200 與實際下載大小，再做 app-browser 冒煙確認；失敗先切回保留的完整 image。
 
+### 公開靜態資產權限與四項發行檢查
+
+公開的 `dist/` 各層目錄使用 `0755`，其中檔案與發行用 `nginx.conf` 使用 `0644`。tar 必須明列 `dist/`、`dist/assets/` 及其他父目錄項目，並指定上述模式；不可只放檔案，依賴解壓時隱式建立目錄。發布流程仍採 `umask 077`，只有公開產物套用這些權限；機密 `.env`、備份及來源快照的目錄維持 `0700`、私密檔案維持 `0600`，不得對整個發行目錄遞迴放寬。
+
+每次切換 Web 必須完成以下四項檢查，結果記入本批 manifest：
+
+1. **封裝與權限**：確認 tar 明列所有父目錄，目錄為 `0755`、一般檔案為 `0644`；解壓後、Docker build 前再次核對公開產物權限，並確認內容與本機建置的檔案清單、大小及 SHA256 相同。
+2. **容器可讀**：`COPY` 會保留來源權限，須以容器實際的非 root nginx 使用者確認公開目錄可進入、JS/CSS 與設定檔可讀；以 root 讀取成功不能取代此項檢查。
+3. **外部資產**：從正式 HTTPS 入口下載 `index.html` 引用的 JS/CSS，核對 HTTP 200、正確 MIME、完整位元組數及 SHA256 均與本批 manifest 一致。API ready 200 或入口 HTML 200 不能取代資產檢查。
+4. **全新瀏覽器載入**：使用 app-browser 重新載入正式入口，確認新版本資產實際執行、畫面正常且無資產載入錯誤，再逐項驗證本批操作；不可沿用舊分頁記憶體中的畫面判定上版成功。入口正常也不等於各模組操作已全部驗收。
+
+2026-11-20 OP103／PS103 焦點修補 a1 發布曾出現空白頁：tar 只有檔案而未明列目錄，`umask 077` 使隱式建立的 `assets/` 成為 `0700`；Docker `COPY` 保留該權限，非 root nginx 無法讀取。已僅將公開產物調整為上述模式並重建 a2；目前 Web `06d3b149f7cb`、API `16a825af0bea`，JS `index-CaOqfmnb.js`／CSS `index-BPgDSiAI.css` 的外部 MIME、大小及 SHA256 已通過核對。保留 a1 的 immutable source `/opt/ymes/checkpoints/web-op103ps103-focus-20261120-a1` 及原始 provenance，以獨立的 runtime 修復紀錄區分舊映像 `1d9162efc1cf` 與 a2，不覆寫來源快照。此為發布修復紀錄，整體 GUI 仍待驗，不能據此宣稱 OP103／PS103 全部操作已驗收；`releaseComplete=false`。
+
 - Ubuntu 遠端測試可透過 SSH 操作；IIS 依客戶核准的 Windows Server 管理/部署方式執行。
 - 測試、驗收和正式環境分開；未授權不得以正式資料做破壞性測試或 Migration。
 - 每次部署保留版本、設定差異、Migration 記錄、健康檢查和回復步驟。
@@ -58,6 +71,6 @@ OP103回復標籤為 `ymes-api:before-op103-20261119` 與 `ymes-web:before-op103
 
 QC201／QC202批API為 `95a153cef1d7`，由同一 `fb22a87` 基底加13份明列覆檔建立；完整API建置來源在 `/opt/ymes/releases/qc201202-20261119-a1/api`，同層 `api-source-manifest.json` 保存SHA與建置／部署狀態。本機及遠端 .NET9 Release均成功，本機0警告／0錯誤，啟動ready200；QC201七組分兩輪224HTTP／771斷言、QC202十組103HTTP／444斷言通過，各自exact fixtures／holder均0。品質Web最終a4已部署1c9b82c00343並通過完整資產HTTP核對，app-browser仍待；此批API回復標籤為 `ymes-api:before-qc201202-20261119`。
 
-接續OP105批目前運行API `16a825af0bea`／Web `1f2dff75f080`；API來源 `/opt/ymes/releases/op105-20261119-a1/api`，基於品質API加6份SHA覆檔，Web來源 `/opt/ymes/releases/op105-20261119-a2/web`，沿品質a4僅加OP105。兩者同層manifest與 `/opt/ymes/current-checkpoint.json` 記錄實際映像、來源、回歸與pending GUI／GitHub狀態。OP105 API8組145HTTP／501斷言及Web9項路由／完整資產SHA通過，不宣稱GUI已驗收。回復標籤 `ymes-api:before-op105-20261119`／`ymes-web:before-op105-20261119`。保留每批base與delta來源，不把舊 `fb22a87` 誤當已包含後續批次；未驗收的OPB02等草稿不得混入重建。
+接續OP105批初版為API `16a825af0bea`／Web `1f2dff75f080`；API來源 `/opt/ymes/releases/op105-20261119-a1/api`，基於品質API加6份SHA覆檔，Web來源 `/opt/ymes/releases/op105-20261119-a2/web`，沿品質a4僅加OP105。兩者同層manifest與 `/opt/ymes/current-checkpoint.json` 記錄實際映像、來源、回歸與pending GUI／GitHub狀態。OP105 API8組145HTTP／501斷言及Web9項路由／完整資產SHA通過，不宣稱GUI已驗收。回復標籤 `ymes-api:before-op105-20261119`／`ymes-web:before-op105-20261119`。保留每批base與delta來源，不把舊 `fb22a87` 誤當已包含後續批次；未驗收的OPB02等草稿不得混入重建。
 
 每批完成 app-browser 操作驗證並清理測試資料後，再正常 fetch/merge GitHub 新提交，解決衝突、重跑受影響檢查後 push；禁止 force push。若公司端同時有新工作，保留雙方提交與變更，合併不等於已部署或已驗收。

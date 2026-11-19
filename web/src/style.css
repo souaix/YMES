@@ -565,9 +565,25 @@ button {
 .framework-sidebar.collapsed .framework-menu-item,
 .framework-sidebar.collapsed .menu-tree-button,
 .framework-sidebar.collapsed .framework-logout {
+  min-width: 0;
   justify-content: center;
+  gap: 0;
   padding-right: 0;
   padding-left: 0;
+}
+
+.framework-sidebar.collapsed .menu-tree,
+.framework-sidebar.collapsed .menu-tree-node {
+  width: 100%;
+  min-width: 0;
+}
+
+.framework-sidebar.collapsed .menu-tree-children {
+  min-width: 0;
+  margin-right: 0;
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
 }
 
 .framework-sidebar.collapsed .menu-tree-chevron {

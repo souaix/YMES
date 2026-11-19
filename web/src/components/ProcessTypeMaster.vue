@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 import { useActionConfirmation } from '../composables/useActionConfirmation'
 
@@ -80,6 +80,10 @@ const editorSource = ref<ProcessTypeRow | null>(null)
 const editorCreateDate = ref('')
 const typeInput = ref<HTMLInputElement | null>(null)
 const descriptionInput = ref<HTMLTextAreaElement | null>(null)
+const page = ref<HTMLElement | null>(null)
+const editor = ref<HTMLElement | null>(null)
+const propertyWindow = ref<HTMLElement | null>(null)
+let previousModalFocus: HTMLElement | null = null
 const draft = ref({ processType: '', description: '' })
 const draftDirty = ref(false)
 const propertyWindowOpen = ref(false)
@@ -90,6 +94,7 @@ const propertyDraft = ref<ProcessPropertyRow | null>(null)
 const busy = ref(false)
 const error = ref('')
 const notice = ref('')
+const modalOpen = computed(() => editorOpen.value || propertyWindowOpen.value)
 
 const visibleRows = computed(() => rows.value.filter((row) =>
   row.issueState === issueState.value
@@ -184,24 +189,28 @@ async function load(): Promise<void> {
   }
 }
 
+function queryRows(): void { if (!busy.value && !modalOpen.value) void load() }
+function closePage(): void { if (!busy.value && !modalOpen.value) emit('close') }
+
 function selectRow(row: ProcessTypeRow): void {
-  if (busy.value || !visibleRows.value.some(item => item.processType === row.processType)) return
+  if (busy.value || modalOpen.value || !visibleRows.value.some(item => item.processType === row.processType)) return
   activeType.value = row.processType
   selectedTypes.value = [row.processType]
 }
 function toggleRow(row: ProcessTypeRow): void {
-  if (busy.value || !visibleRows.value.some(item => item.processType === row.processType)) return
+  if (busy.value || modalOpen.value || !visibleRows.value.some(item => item.processType === row.processType)) return
   selectedTypes.value = selectedTypes.value.includes(row.processType)
     ? selectedTypes.value.filter((value) => value !== row.processType)
     : [...selectedTypes.value, row.processType]
   activeType.value = row.processType
 }
 function openEditor(next: Exclude<EditMode, ''>): void {
-  if (busy.value) return
+  if (busy.value || modalOpen.value || confirmationMessage.value !== null) return
   const row = activeRow.value
   error.value = ''
   if (next !== 'add' && !row) { error.value = '請先選取流程類別。'; return }
   if (next === 'edit' && row?.issueState !== 0) { error.value = '只有未核准資料可修改。'; return }
+  previousModalFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   mode.value = next
   sourceType.value = row?.processType ?? ''
   editorSource.value = next === 'edit' && row ? copy(row) : null
@@ -211,8 +220,51 @@ function openEditor(next: Exclude<EditMode, ''>): void {
     ? { processType: '', description: '' }
     : { processType: row?.processType ?? '', description: row?.description ?? '' }
   editorOpen.value = true
+  void restoreModalFocus()
 }
-function closeEditor(): void { if (!busy.value) editorOpen.value = false }
+async function closeEditor(): Promise<void> {
+  if (busy.value || confirmationMessage.value !== null) return
+  editorOpen.value = false
+  await restoreModalFocus()
+}
+
+function canFocus(element: HTMLElement): boolean {
+  return element.isConnected && element.getClientRects().length > 0 && !element.matches(':disabled') && !element.closest('[inert]')
+}
+function modalControls(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),[tabindex="0"]')).filter(canFocus)
+}
+async function restoreModalFocus(): Promise<void> {
+  await nextTick()
+  if (confirmationMessage.value !== null || busy.value) return
+  const container = propertyWindowOpen.value ? propertyWindow.value : editorOpen.value ? editor.value : null
+  if (container) {
+    const preferred = editorOpen.value ? mode.value === 'edit' ? descriptionInput.value : typeInput.value : null
+    ;(preferred && canFocus(preferred) ? preferred : modalControls(container)[0] ?? container).focus()
+  } else if (previousModalFocus && page.value?.contains(previousModalFocus) && canFocus(previousModalFocus)) previousModalFocus.focus()
+  else {
+    const first = Array.from(page.value?.querySelectorAll<HTMLElement>('input:not(:disabled),button:not(:disabled),[tabindex="0"]') ?? []).find(canFocus)
+    ;(first ?? page.value)?.focus()
+  }
+}
+function keepModalFocus(event: KeyboardEvent): void {
+  if (event.key !== 'Tab' || !modalOpen.value || confirmationMessage.value !== null) return
+  if (busy.value) { event.preventDefault(); return }
+  const container = propertyWindowOpen.value ? propertyWindow.value : editor.value
+  if (!container) { event.preventDefault(); return }
+  const controls = modalControls(container)
+  const first = controls[0]; const last = controls[controls.length - 1]
+  if (!first || !last) { event.preventDefault(); container.focus(); return }
+  const active = document.activeElement
+  if (!container.contains(active) || active === container) { event.preventDefault(); (event.shiftKey ? last : first).focus() }
+  else if (event.shiftKey && active === first) { event.preventDefault(); last.focus() }
+  else if (!event.shiftKey && active === last) { event.preventDefault(); first.focus() }
+}
+async function closeProperties(): Promise<void> {
+  if (busy.value || confirmationMessage.value !== null) return
+  propertyWindowOpen.value = false
+  await restoreModalFocus()
+}
 
 function validateDraft(): string {
   const processType = draft.value.processType.trim().toUpperCase()
@@ -232,6 +284,7 @@ async function save(keepOpen: boolean): Promise<void> {
   if (mode.value === 'edit' && !draftDirty.value) {
     if (!keepOpen) editorOpen.value = false
     notice.value = '資料未變更。'
+    await restoreModalFocus()
     return
   }
   const processType = draft.value.processType.trim().toUpperCase()
@@ -279,16 +332,16 @@ async function save(keepOpen: boolean): Promise<void> {
       editorOpen.value = false
       notice.value = mock.value ? '開發假資料已更新。' : '已儲存。'
     }
-    if (keepOpen) { await nextTick(); if (mode.value === 'edit') descriptionInput.value?.focus(); else typeInput.value?.focus() }
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '儲存流程類別失敗。'
   } finally {
     busy.value = false
+    await restoreModalFocus()
   }
 }
 
 async function deleteSelected(): Promise<void> {
-  if (busy.value) return
+  if (busy.value || modalOpen.value || confirmationMessage.value !== null) return
   if (!selectedRows.value.length && activeRow.value) selectedTypes.value = [activeRow.value.processType]
   const targets = selectedRows.value.map(row => copy(row))
   if (!targets.length) { error.value = '請先選取流程類別。'; return }
@@ -330,7 +383,7 @@ async function deleteSelected(): Promise<void> {
 }
 
 async function approveSelected(): Promise<void> {
-  if (busy.value) return
+  if (busy.value || modalOpen.value || confirmationMessage.value !== null) return
   const targets = (selectedRows.value.length ? selectedRows.value : activeRow.value ? [activeRow.value] : []).map(row => copy(row))
   if (!targets.length || targets.some((row) => row.issueState !== 0)) { error.value = '請選取未核准的流程類別。'; return }
   if (!await requestConfirmation(`送出 ${targets.length} 筆流程類別核准？`)) return
@@ -365,16 +418,19 @@ async function approveSelected(): Promise<void> {
 }
 
 async function openProperties(): Promise<void> {
-  if (busy.value) return
+  if (busy.value || editorOpen.value || confirmationMessage.value !== null) return
   if (!activeRow.value) { error.value = '請先選取流程類別。'; return }
-  if (!propertyWindowOpen.value) propertyState.value = 0
+  if (!propertyWindowOpen.value) {
+    previousModalFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    propertyState.value = 0
+  }
   propertyWindowOpen.value = true
   propertyDraft.value = null
   selectedPropertyKey.value = ''
   selectedPropertyKeys.value = []
   // No shared ProcessProperty/Element provider exists yet. Do not present DEV
   // choices or pretend an absent service is an empty production data set.
-  if (!mock.value) { propertyRows.value = []; error.value = ''; return }
+  if (!mock.value) { propertyRows.value = []; error.value = ''; await restoreModalFocus(); return }
   try {
     if (mock.value) loadMock()
     else {
@@ -385,6 +441,8 @@ async function openProperties(): Promise<void> {
     }
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '載入流程屬性失敗。'
+  } finally {
+    await restoreModalFocus()
   }
 }
 
@@ -488,33 +546,34 @@ function deleteSelectedProperty(): void {
   void deleteSelectedProperties()
 }
 
-onMounted(load)
+onMounted(() => { document.addEventListener('keydown', keepModalFocus, true); void load() })
+onBeforeUnmount(() => { document.removeEventListener('keydown', keepModalFocus, true) })
 </script>
 
 <template>
-  <main class="process-type-master">
-    <header class="page-title">
+  <main ref="page" class="process-type-master" tabindex="-1">
+    <header class="page-title" :inert="modalOpen || confirmationMessage !== null">
       <div><h2>流程類別資料</h2><small>流程資料 / 流程設定 / PRS TYPE / PS103</small></div>
       <b v-if="mock" class="dev-badge">開發假資料</b>
-      <button type="button" :disabled="busy" @click="emit('close')">關閉</button>
+      <button type="button" :disabled="busy || modalOpen" @click="closePage">關閉</button>
     </header>
     <p v-if="mock" class="dev-note">資料只存在這台電腦的 localStorage，不會寫入正式資料庫。</p>
-    <section class="filters">
+    <section class="filters" :inert="modalOpen || confirmationMessage !== null">
       <label v-for="state in states" :key="state.value" class="state-option">
-        <input v-model="issueState" type="radio" :value="state.value" :disabled="busy" @change="load">{{ state.label }}
+        <input v-model="issueState" type="radio" :value="state.value" :disabled="busy || modalOpen" @change="queryRows">{{ state.label }}
       </label>
-      <label class="search">Process Type <input v-model="searchText" maxlength="20" :disabled="busy" @keyup.enter="load"></label>
-      <button type="button" class="primary" :disabled="busy" @click="load">查詢</button>
+      <label class="search">Process Type <input v-model="searchText" maxlength="20" :disabled="busy || modalOpen" @keyup.enter="queryRows"></label>
+      <button type="button" class="primary" :disabled="busy || modalOpen" @click="queryRows">查詢</button>
     </section>
     <p v-if="error" class="message error" role="alert">{{ error }}</p>
     <p v-else-if="notice" class="message" role="status">{{ notice }}</p>
-    <section class="main-layout">
+    <section class="main-layout" :inert="modalOpen || confirmationMessage !== null">
       <div class="grid-wrap">
         <table>
           <thead><tr><th class="select-cell"></th><th>Process Type</th><th>Description</th><th>Creator</th><th>CreateDate</th><th>Reviser</th><th>ReviseDate</th></tr></thead>
           <tbody>
             <tr v-for="row in visibleRows" :key="row.processType" :class="{ selected: activeType === row.processType }" @click="selectRow(row)">
-              <td class="select-cell"><input type="checkbox" :checked="selectedTypes.includes(row.processType)" @click.stop="toggleRow(row)"></td>
+              <td class="select-cell"><input type="checkbox" :checked="selectedTypes.includes(row.processType)" :disabled="busy || modalOpen" @click.stop="toggleRow(row)"></td>
               <td>{{ row.processType }}</td><td class="description">{{ row.description }}</td><td>{{ row.creator }}</td>
               <td>{{ formatDate(row.createDate) }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.reviseDate) }}</td>
             </tr>
@@ -523,18 +582,18 @@ onMounted(load)
         </table>
       </div>
       <aside class="actions">
-        <button type="button" class="primary" :disabled="busy" @click="openEditor('add')">ADD (A)</button>
-        <button type="button" :disabled="busy || activeRow?.issueState !== 0" @click="openEditor('edit')">EDIT (E)</button>
-        <button type="button" :disabled="busy || !activeRow" @click="openEditor('copy')">Copy (C)</button>
-        <button type="button" :disabled="busy" @click="approveSelected">Approve (Y)</button>
-        <button type="button" :disabled="busy" @click="deleteSelected">DEL (D)</button>
-        <button type="button" :disabled="busy || !activeRow" @click="openProperties">Property (S)</button>
+        <button type="button" class="primary" :disabled="busy || modalOpen" @click="openEditor('add')">ADD (A)</button>
+        <button type="button" :disabled="busy || modalOpen || activeRow?.issueState !== 0" @click="openEditor('edit')">EDIT (E)</button>
+        <button type="button" :disabled="busy || modalOpen || !activeRow" @click="openEditor('copy')">Copy (C)</button>
+        <button type="button" :disabled="busy || modalOpen" @click="approveSelected">Approve (Y)</button>
+        <button type="button" :disabled="busy || modalOpen" @click="deleteSelected">DEL (D)</button>
+        <button type="button" :disabled="busy || modalOpen || !activeRow" @click="openProperties">Property (S)</button>
       </aside>
     </section>
     <footer class="grid-footer"><span>資料總筆數 {{ visibleRows.length }}<template v-if="activeRow">　{{ issueLabel(activeRow.issueState) }}</template></span></footer>
 
     <div v-if="editorOpen" class="overlay" @click.self="closeEditor">
-      <section class="dialog" role="dialog" aria-modal="true" aria-label="Process Type Define">
+      <section ref="editor" class="dialog" role="dialog" aria-modal="true" aria-label="Process Type Define" tabindex="-1" :inert="confirmationMessage !== null">
         <header><h3>Process Type Define ({{ mode === 'add' ? 'ADD' : mode === 'edit' ? 'EDIT' : 'Copy' }})</h3><button type="button" :disabled="busy" @click="closeEditor">×</button></header>
         <fieldset><legend>Process Type Data</legend>
           <label>Process Type<input ref="typeInput" v-model.trim="draft.processType" maxlength="20" :disabled="busy" :readonly="mode === 'edit'" @input="draftDirty = true" @blur="draft.processType = draft.processType.toUpperCase()"></label>
@@ -546,9 +605,9 @@ onMounted(load)
       </section>
     </div>
 
-    <div v-if="propertyWindowOpen" class="overlay" @click.self="propertyWindowOpen = false">
-      <section class="dialog property-dialog" role="dialog" aria-modal="true" aria-label="Process Property">
-        <header><div><h3>Process Property</h3><small>ProcessNo = {{ activeType }}</small></div><button type="button" @click="propertyWindowOpen = false">×</button></header>
+    <div v-if="propertyWindowOpen" class="overlay" @click.self="closeProperties">
+      <section ref="propertyWindow" class="dialog property-dialog" role="dialog" aria-modal="true" aria-label="Process Property" tabindex="-1" :inert="confirmationMessage !== null">
+        <header><div><h3>Process Property</h3><small>ProcessNo = {{ activeType }}</small></div><button type="button" :disabled="busy" @click="closeProperties">×</button></header>
         <p v-if="!mock" class="message error" role="alert">流程屬性維護尚未開放；主檔功能可正常使用。</p>
         <div class="property-states"><label v-for="state in states" :key="state.value"><input v-model="propertyState" type="radio" :value="state.value" :disabled="!mock" @change="openProperties">{{ state.label }}</label></div>
         <div class="grid-wrap property-grid"><table><thead><tr><th class="select-cell"></th><th>ProcessVersion</th><th>PropertyNo</th><th>DefaultValue</th><th>Sequence</th><th>Description</th></tr></thead><tbody>
@@ -564,7 +623,7 @@ onMounted(load)
           <label class="wide">Description<input v-model="propertyDraft.description" maxlength="255"></label>
           <p class="dev-note wide">PropertyNo 正式選項取自核准的 System Element；此處只列 DEV 假值。</p>
         </div>
-        <footer><button type="button" class="primary" @click="propertyWindowOpen = false">關閉</button></footer>
+        <footer><button type="button" class="primary" :disabled="busy" @click="closeProperties">關閉</button></footer>
       </section>
     </div>
     <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />

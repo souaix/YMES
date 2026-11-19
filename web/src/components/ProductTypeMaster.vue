@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import ProductParameterSetup from './ProductParameterSetup.vue'
 import ProductProcessEditor from './ProductProcessEditor.vue'
 import ProductPropertyMaster from './ProductPropertyMaster.vue'
@@ -32,7 +32,9 @@ const editable = computed(() => active.value?.issueState === 0)
 const draft = ref<Draft>({ productType: '', productTypeCode: '', description: '' })
 const originalDraft = ref('')
 const editTarget = ref<TypeRow>()
+const page = ref<HTMLElement | null>(null)
 const editor = ref<HTMLFormElement | null>(null)
+let previousEditorFocus: HTMLElement | null = null
 const error = ref(''), notice = ref('')
 const currentUser = computed(() => props.currentUserNo || 'DEV001')
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
@@ -98,6 +100,7 @@ async function openEditor(nextMode: 'add' | 'edit' | 'copy'): Promise<void> {
   if (blocked.value || (nextMode === 'edit' && !editable.value) || (nextMode === 'copy' && !mock.value)) return
   const source = nextMode === 'add' ? undefined : active.value
   if (nextMode !== 'add' && !source) return
+  previousEditorFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   busy.value = true; error.value = ''; notice.value = ''
   try {
     const fresh = source ? mock.value ? clone(source) : await request<TypeRow>('/item', 'GET', undefined, source.productType) : undefined
@@ -107,8 +110,8 @@ async function openEditor(nextMode: 'add' | 'edit' | 'copy'): Promise<void> {
     rememberDraft(fresh)
     mode.value = nextMode
     busy.value = false
-    await nextTick(); editor.value?.querySelector<HTMLInputElement>('input:not([readonly])')?.focus()
-  } catch (reason) { error.value = message(reason) } finally { busy.value = false }
+    await restoreEditorFocus()
+  } catch (reason) { error.value = message(reason) } finally { busy.value = false; await restoreEditorFocus() }
 }
 async function saveEditor(close: boolean): Promise<void> {
   if (busy.value || loading.value || closing.value || !mode.value) return
@@ -145,7 +148,7 @@ async function saveEditor(close: boolean): Promise<void> {
     notice.value = '產品類別已儲存。'
     try { await loadRows(saved.productType) }
     catch (reason) { error.value = '已儲存，但清單重新查詢失敗：' + message(reason) }
-  } catch (reason) { error.value = message(reason) } finally { busy.value = false }
+  } catch (reason) { error.value = message(reason) } finally { busy.value = false; await restoreEditorFocus() }
 }
 async function changeState(action: 'approve' | 'delete'): Promise<void> {
   if (blocked.value || !active.value || issueState.value === 1 || (action === 'approve' && !editable.value)) return
@@ -185,8 +188,14 @@ async function allowClose(): Promise<boolean> {
   try { return !mode.value || JSON.stringify(draft.value) === originalDraft.value || await requestConfirmation('尚有未儲存的修改，確定放棄？') }
   finally { closing.value = false }
 }
-async function closeEditor(): Promise<void> { if (await allowClose()) { mode.value = ''; error.value = '' } }
-async function closePage(): Promise<void> { if (await allowClose()) emit('close') }
+async function closeEditor(): Promise<void> {
+  if (await allowClose()) { mode.value = ''; error.value = '' }
+  await restoreEditorFocus()
+}
+async function closePage(): Promise<void> {
+  if (await allowClose()) emit('close')
+  else await restoreEditorFocus()
+}
 function openChild(value: 'process' | 'property' | 'parameter'): void {
   if (!mock.value || blocked.value || !active.value || (value === 'process' && !editable.value)) return
   child.value = value
@@ -198,21 +207,46 @@ function saveDetail(detail: Partial<Pick<TypeRow, 'processes' | 'properties' | '
     catch (reason) { error.value = message(reason) }
   }
 }
+function canFocus(element: HTMLElement): boolean {
+  return element.isConnected && element.getClientRects().length > 0 && !element.matches(':disabled') && !element.closest('[inert]')
+}
+async function restoreEditorFocus(): Promise<void> {
+  await nextTick()
+  if (confirmationMessage.value !== null || child.value) return
+  if (mode.value) {
+    if (busy.value || loading.value || closing.value || !editor.value) return
+    const first = Array.from(editor.value.querySelectorAll<HTMLElement>('input:not([readonly]):not([disabled]),textarea:not([disabled]),button:not([disabled])')).find(canFocus)
+    ;(first ?? editor.value).focus()
+  } else if (previousEditorFocus && page.value?.contains(previousEditorFocus) && canFocus(previousEditorFocus)) previousEditorFocus.focus()
+  else {
+    const first = Array.from(page.value?.querySelectorAll<HTMLElement>('input:not([disabled]),button:not([disabled])') ?? []).find(canFocus)
+    ;(first ?? page.value)?.focus()
+  }
+}
+function keepEditorFocus(event: KeyboardEvent): void {
+  if (event.key !== 'Tab' || !mode.value || child.value || confirmationMessage.value !== null) return
+  if (busy.value || loading.value || closing.value) { event.preventDefault(); return }
+  if (!editor.value?.contains(document.activeElement)) { event.preventDefault(); void restoreEditorFocus() }
+}
 function trapTab(event: KeyboardEvent): void {
-  const controls = Array.from(editor.value?.querySelectorAll<HTMLElement>('input:not([disabled]),textarea:not([disabled]),button:not([disabled])') ?? [])
+  if (busy.value || loading.value || closing.value || confirmationMessage.value !== null) { event.preventDefault(); return }
+  const controls = Array.from(editor.value?.querySelectorAll<HTMLElement>('input:not([disabled]),textarea:not([disabled]),button:not([disabled])') ?? []).filter(canFocus)
   const first = controls[0], last = controls[controls.length - 1]
+  if (!first || !last) { event.preventDefault(); editor.value?.focus(); return }
   if ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
     event.preventDefault(); (event.shiftKey ? last : first)?.focus()
   }
 }
 onMounted(async () => {
+  document.addEventListener('keydown', keepEditorFocus, true)
   loading.value = true
   try { await loadRows() } catch (reason) { error.value = message(reason) } finally { loading.value = false }
 })
+onBeforeUnmount(() => { document.removeEventListener('keydown', keepEditorFocus, true) })
 </script>
 
 <template>
-  <main class="type-master">
+  <main ref="page" class="type-master" tabindex="-1">
     <header><h1>產品類別資料</h1><button type="button" :disabled="busy || loading || closing || !!child" @click="closePage">關閉</button></header>
     <section :inert="!!mode || !!child" class="content">
       <form class="toolbar" @submit.prevent="search">
@@ -247,7 +281,7 @@ onMounted(async () => {
     </section>
     <p v-if="error && !mode" class="error" role="alert">{{ error }}</p><p v-if="notice" role="status">{{ notice }}</p>
     <div v-if="mode" class="overlay">
-      <form ref="editor" class="editor" role="dialog" aria-modal="true" aria-labelledby="product-type-edit-title" @submit.prevent="saveEditor(true)" @keydown.esc.stop.prevent="closeEditor" @keydown.tab="trapTab">
+      <form ref="editor" class="editor" role="dialog" aria-modal="true" aria-labelledby="product-type-edit-title" tabindex="-1" :inert="confirmationMessage !== null" @submit.prevent="saveEditor(true)" @keydown.esc.stop.prevent="closeEditor" @keydown.tab="trapTab">
         <h2 id="product-type-edit-title">產品類別 {{ mode.toUpperCase() }}</h2>
         <label>ProductType <input v-model="draft.productType" :readonly="mode === 'edit'" :disabled="busy || closing" maxlength="50" required /></label>
         <label>ProductTypeCode <input v-model="draft.productTypeCode" :disabled="busy || closing" maxlength="10" /></label>

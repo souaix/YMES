@@ -17,8 +17,10 @@ const props = withDefaults(defineProps<{
   expandedIds: string[]
   selectedId: string | null
   depth?: number
+  ancestorLabels?: string[]
 }>(), {
   depth: 1,
+  ancestorLabels: () => [],
 })
 
 const emit = defineEmits<{
@@ -30,6 +32,9 @@ function iconKind(item: MenuNode): string {
   if (props.depth === 1 || !item.children?.length) return item.moduleNo?.toUpperCase() ?? 'folder'
   return 'folder'
 }
+function menuLabel(item: MenuNode): string {
+  return [...props.ancestorLabels, item.label].join(' / ')
+}
 </script>
 
 <template>
@@ -40,6 +45,8 @@ function iconKind(item: MenuNode): string {
         class="menu-tree-button"
         :class="{ active: selectedId === item.id, expandable: item.children?.length }"
         :style="{ '--menu-depth': depth - 1 }"
+        :aria-label="menuLabel(item)"
+        :title="menuLabel(item)"
         :aria-current="selectedId === item.id ? 'page' : undefined"
         :aria-expanded="item.children?.length ? expandedIds.includes(item.id) : undefined"
         @click="item.children?.length ? emit('toggle', item.id) : emit('select', item.id)"
@@ -61,6 +68,7 @@ function iconKind(item: MenuNode): string {
           :expanded-ids="expandedIds"
           :selected-id="selectedId"
           :depth="depth + 1"
+          :ancestor-labels="[...ancestorLabels, item.label]"
           @toggle="emit('toggle', $event)"
           @select="emit('select', $event)"
         />
