@@ -1976,4 +1976,14 @@ API 工作：
 - [ ] 實作 Reset POST command：以資料庫最新 Status/Basis 重算，於同一交易 INSERT 舊 ConsumeSeq 至 Log（Creator、CreateDate、AccQty、AccPeriod），再 CAS 更新 Status 的新 ConsumeSeq、CurQty=0、CurPeriod=0、Revisor、ReviseDate。任何步驟失敗都回滾；禁止以 GET 執行重置。
 - [ ] ConsumeSeq 重複檢查在來源以 ConsumeNo 為範圍查 Log，跨設備共用序號時也拒絕；此規則未由 PK 保證，需解決併發重複（資料庫鎖／交易級一致性檢查），但不可擅自新增 Oracle 不存在的唯一約束。編輯不更新 Revisor/ReviseDate 是 Core 來源行為。
 - [ ] 保留並評估來源的重置邊界瑕疵：Period=-1 代表不限；RemainPeriod 不足顯示時用 ToleranceQty（疑似應為 TolerancePeriod）；達用量／週期上限時 Reset 視窗會把 AccQty／AccPeriod 輸入清為 0。若修正，記為產品規則變更並取得辦公室確認。
-- [ ] CREATE-only 與 WinForms 假資料不構成正式 schema/API。完成 migration（若缺）、API／DTO、授權、錯誤碼、交易回歸與部署紀錄後更新此交接；開始下一功能 WP304 設備耗品現況履歷。
+- [ ] CREATE-only 與 WinForms 假資料不構成正式 schema/API。完成 migration（若缺）、API／DTO、授權、錯誤碼、交易回歸與部署紀錄後更新此交接；WP304 設備耗品歷程交接列於下一節。
+
+## WIP WP304 設備耗品歷程家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/WIP/設備耗品歷程.md`、WP303 `docs/modules/WIP/設備耗品現況.md`，以及 `docs/DATABASE_CONNECTION.md` WP303/WP304 段落。
+- [ ] WP304 沒有新增 Oracle table／CREATE-only。只讀 WP303 已交付的 `ymes.tblwipeqpconsumelog`；先核對 PostgreSQL live schema／migration history，不要新增重複 migration。來源 DDL、metadata、CREATE-only 在 `database/reference/mestest_wip_wp303_*`。
+- [ ] 建立登入保護的唯讀 GET 查詢，支援 EquipmentNo、ConsumeNo、StartTime、EndTime；StartTime 使用 `CreateDate >=`，EndTime 使用 `CreateDate <=`，均含界值。WinForms 頁沒有 ConsumeSeq 欄位，即使底層 Service 支援，也不擴大此頁 UI。
+- [ ] 來源頁不帶條件也會查完整 log。正式 API 必須以使用者權限限制可見資料、參數化查詢、穩定排序與伺服器端分頁／最大筆數；不可讓 UI 一次下載全表。可要求日期區間或提供安全的預設範圍，但需將其記錄為相對 WinForms 的明確效能／安全調整。
+- [ ] Equipment lookup 限 IssueState=2；ConsumeNo lookup 讀全部 Equipment Type Consume Basis，不隨設備類別縮小。DTO 至少提供 EquipmentNo、ConsumeNo、ConsumeSeq、AccQty、AccPeriod、Creator、CreateDate。
+- [ ] WP304 Vue DEV 會在開頁時讀取 WP303 共用假 log localStorage；正式端改為 GET API，勿把 localStorage 假資料當成伺服器資料或授權依據。
+- [ ] 完成 API、查詢權限、分頁、空條件保護及部署紀錄後更新 TODO；接續公司端 WP305 設備線上點檢。

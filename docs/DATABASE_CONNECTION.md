@@ -778,3 +778,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - Status 有 9 欄、5 個 NOT NULL 欄位約束及 EquipmentNo/ConsumeNo 複合 PK；Log 有 7 欄、3 個 NOT NULL 欄位約束及 EquipmentNo/ConsumeNo/ConsumeSeq 複合 PK。兩表均無 FK、額外索引或 trigger。Oracle source DDL、metadata、PostgreSQL CREATE-only 位於 `database/reference/mestest_wip_wp303_*`。
 - `TBLEQPCONSUMEBASIS` 已由設備類別資料查證並收錄於既有 `database/reference/mestest_equipment_type_*`；`TBLEQPEQUIPMENTBASIS` 沿用設備主檔 reference，不重複產生 CREATE-only。
 - 僅讀結構 metadata／DDL，未輸出或提交受保護 profile、連線字串或秘密，未連 YMES PostgreSQL。CREATE-only 不是 migration；家用端需先比對 live schema／migration history，只為實際缺少的表新增 forward migration。
+
+### 更新 2026-11-20：WIP WP304 設備耗品歷程
+
+- WP304 僅以設備、耗品及建立時間讀取 `TBLWIPEQPCONSUMELOG`；此表已由 WP303 直連 MESTEST Oracle dictionary 取得 DDL／metadata，source、metadata 與 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp303_*`。
+- 本功能沒有新表，不重複 query Oracle metadata 或產生 CREATE-only；設備及耗品 lookup 沿用既有 WP303／設備主檔 references。本頁未查 Oracle 業務資料列、未執行 Oracle DDL/DML，亦未連 YMES PostgreSQL。
+- WinForms 允許不帶條件查整張歷程；家用端 API 必須登入保護、參數化及分頁，限制單次回傳量，並核對使用者可查詢範圍。

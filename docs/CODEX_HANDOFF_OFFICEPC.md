@@ -70,4 +70,10 @@
 
 - WP303「設備耗品現況」已依 `frmEQPConsumeStatus`、`frmEQPConsumeStatusDef`、`WP_EQPConsumeReset/frmEQPConsumeReset`、wsWIP/wsEQP 與 clsWIP/clsEQPBasis 完成 DEV 主頁及維護、設備 lookup、ConsumReset 視窗。規格：`docs/modules/WIP/設備耗品現況.md`；頁面 `/YMES/WIP/EquipmentConsumeStatus`。
 - 兩張新表 `TBLWIPEQPCONSUMESTATUS`、`TBLWIPEQPCONSUMELOG` 的 Oracle source DDL／metadata／PostgreSQL CREATE-only 已建立於 `database/reference/mestest_wip_wp303_*`。設備耗品基準沿用既有設備類別 reference，設備主檔沿用既有 reference。
-- 下一功能接續 WP304「設備耗品現況履歷」。公司端仍只做 Vue DEV 假資料、WinForms／Service／Core 核對及 DDL metadata handoff；不做 YMES API／migration、不連 PostgreSQL、不執行 build/test/browser。
+- WP304「設備耗品歷程」已接續完成，詳見下方檢查點。公司端仍只做 Vue DEV 假資料、WinForms／Service／Core 核對及 DDL metadata handoff；不做 YMES API／migration、不連 PostgreSQL、不執行 build/test/browser。
+
+## 2026-11-20 WIP WP304 接續檢查點
+
+- WP304 依 `frmEQPConsumeStatusLog`、`wsWIP.LoadEQPConsumeLog`、`wsEQP` lookup 與 `clsWIP.LoadEQPConsumeLog` 完成唯讀查詢頁；設備／耗品核取篩選、兩個 lookup、From/End Date、Query、七欄 Grid 與 Close 均已實作。頁面 `/YMES/WIP/EquipmentConsumeStatusLog`。
+- 本功能只讀 WP303 已核對的 `TBLWIPEQPCONSUMELOG`，沒有新 Oracle DDL／CREATE-only；DEV 與 WP303 共用假 log storage。
+- 下一功能接續 WP305「設備線上點檢」。公司端不連 YMES PostgreSQL、不實作 API/migration、不部署、不執行 build/test/browser。
