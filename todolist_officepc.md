@@ -28,14 +28,21 @@
 - [x] PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得 TBLWIPLOTPROPERTY_TEMP 與 TBLWIPLOTPROPERTY DDL/constraints/indexes/triggers。WP102 新增需求僅 TEMP；正式屬性表與其他 WIP 表沿用 WP101，不重複建 SQL。未查業務列、未執行 Oracle DDL/DML。
 - [x] 完成 Vue DEV 頁 /YMES/WIP/LotBasisBatch、三層選單、by Count/by Qty、批次 Grid、BOM/Process、Add/View/Tuning 假視窗、確認驗證及專屬 localStorage。
 - [x] 新增 WP102 模組規格、Oracle source DDL、PostgreSQL CREATE-only（僅 TEMP）及家用端 API/schema handoff；未連 YMES PostgreSQL，未實作 API/migration。
-- [ ] 依規則未執行 build/test/browser；完成靜態檢查及 GitHub push 後，接續 WP201「生產批執行」（FunctionNo EXECUTE LOT，Form frmWIPLotSelect_THEIL_BU1），並持續清冊內其他未完成功能。
+- [x] WP102 靜態檢查並推送 GitHub；本輪接續 WP201 完成，下一個功能為 WP202。
 
-### 下一功能：WP201 生產批執行（FunctionNo EXECUTE LOT）
+### WP201 生產批執行已交付（2026-11-19）
 
-- [ ] 依 docs/MES_MENU_FUNCTION_INVENTORY.md 核對第三層 MenuItem／FunctionKey，直接閱讀 THEIL frmWIPLotSelect_THEIL_BU1、Designer、Service/Core；確認主畫面與批次／操作站執行子流程。
-- [ ] 列出程式實際讀寫表，使用本機受保護 MESTEST profile 直連唯讀取得缺少表的 DDL/metadata；WP101/WP102 共用表不重複產生 CREATE SQL。
-- [ ] 完成 WP201 DEV UI、模組規格與家用端 API/schema handoff；公司端不連 YMES PostgreSQL、不建 API/migration。
-- [ ] 依規則不執行 build/test/browser；完成靜態檢查、更新 TODO、commit/push 後，繼續清冊中其他未完成功能。
+- [x] 對照 THEIL WinForm／Designer、Service/Core；完成 Execute 與五個查詢條件、lookup、20 欄 Grid、狀態、掃描優先序、LMS/QTime、Group OP、BR／TransferLot 的規格。
+- [x] 以本機受保護 Oracle profile + PowerShell 5.1/ODP.NET 唯讀取得 39 張 MESTEST 表的 Oracle DDL／欄位 metadata；39 張 CREATE 欄位數逐表符合 ALL_TAB_COLUMNS。TBLWIPECNLOTBASIS、VIEW_TBLWIPPACK_LOT 在 MESTEST/PUBLIC 均未找到，未虛構 DDL。
+- [x] 完成 /YMES/WIP/LotExecution Vue DEV 假資料畫面、WP201 模組規格、39 表 PostgreSQL CREATE-only 參考與家用端 API/schema handoff；未連 YMES PostgreSQL、未建立正式 API/migration。
+- [x] 依本輪規則未執行 build、test、browser；完成靜態檢查與 GitHub push 後繼續下一個功能。
+
+### 下一功能：WP202 生產批執行_元件（FunctionNo EXECUTE LOT_COMP）
+
+- [ ] 閱讀 frmWIPLotSelectbyComp、Designer、相關 Service/Core 和元件批次執行路徑；核對 FunctionKey WP202、選單與畫面操作。
+- [ ] 列出元件查詢／執行實際讀寫表，唯讀查 MESTEST 缺少的 DDL/metadata；重用既有 CREATE 參考，不重複建立共用表。
+- [ ] 完成 WP202 Vue DEV、規格、家用端 API/schema handoff；公司端不連 YMES PostgreSQL、不實作正式 API/migration。
+- [ ] 靜態檢查、更新兩端 TODO，commit/push 後接續下一個未完成 FunctionNo；不執行 build/test/browser，除非使用者要求驗收。
 
 ### 公司端工作範圍
 

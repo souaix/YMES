@@ -24,6 +24,7 @@
 
  - WP101「生產批開立」：[功能規格](modules/WIP/生產批開立.md)。已核對 WinForms／wsWIP／clsLot、七張 Oracle WIP 表與下線／刪除交易；Vue DEV 路由 /YMES/WIP/LotBasisCreate 完成。Oracle source DDL 與 PostgreSQL CREATE-only 參考已交付；家用端需比對 live schema/migrations 並實作含物料扣帳、CloseLot、StartLot 和逐批下線的正式 API。
 - WP102「生產批開立_批次」：[功能規格](modules/WIP/生產批開立_批次.md)。已對照 WinForms／THEIL Service／Core，唯讀查得 Lot Property TEMP 與正式表 DDL；Vue DEV 路由 /YMES/WIP/LotBasisBatch 完成。WP102 CREATE-only 僅含新增需求 TBLWIPLOTPROPERTY_TEMP，正式 TBLWIPLOTPROPERTY 沿用 WP101；家用端待核對 live schema 並實作逐批結果、序號保留與交易式下線 API。
+- WP201「生產批執行」：[功能規格](modules/WIP/生產批執行.md)。已對照 WinForms／Service／Core，Oracle 唯讀查得 39 張執行相依表 DDL，39 表欄位數符合 ALL_TAB_COLUMNS；兩個缺失客製引用已註記。Vue DEV 路由 /YMES/WIP/LotExecution 完成；家用端待核對 live schema 並決定動態 BR、QTime/LMS、Group OP 與元件批次 API。
 
 ## 規格產出原則
 

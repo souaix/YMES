@@ -1851,3 +1851,12 @@ API 工作：
 ## PRD PDB05 測試程式檔案管理家用端 handoff（2026-11-19）
 
 - [ ] 依 [測試程式檔案管理](docs/modules/PRD/測試程式檔案管理.md) 核對檔案／歷程 CREATE、程式版本鍵、核准類型、傳輸與交易一致性。
+
+## WIP WP201 生產批執行家用端 handoff（2026-11-19）
+
+- [ ] 先 pull 最新 main，閱讀 WP201 規格、Oracle source DDL 三檔與 database/reference/mestest_wip_wp201_create.sql。此 CREATE-only 有 39 張來源表，不代表要新增 39 張 schema。
+- [ ] 對照 YMES PostgreSQL live schema/migrations，沿用 WP101/WP102、OE、PRS、EQP、QC/SPC、INV 共用物件；只替缺表補 forward migration。Create reference 不含 FK、Check、secondary index 與 Oracle storage/index tablespace clauses。
+- [ ] 規劃登入保護的 Lot 查詢、lookup 與 POST ExecuteLot command；不得 GET 修改在製狀態。後端重新驗證 Employee、LotStamp、批次狀態、NetFlow、Wait/Hold、Complete/OS、QTime/LMS、OP Group、Business Rule、設備／元件／SPC/QC 門檻。
+- [ ] 交易性接續 wsWIP.ExecuteLot → Core TriggerOP／TransferLot。明確定義 ERF、Future Hold/Wait/OS、StopFlag、Complete+HOLD、狀態 11/12/31/99、Component RunBatchCO、動態 Manual BR DLL 的 YMES 對應與錯誤結果；不要假裝用單純 lot status CRUD 替代。
+- [ ] TBLWIPECNLOTBASIS 與 VIEW_TBLWIPPACK_LOT 在公司端 MESTEST/PUBLIC 無表、view 或 synonym；確認 YMES 現況／替代客製物件後再決定是否實作該可選分支，不要建立猜測的 CREATE SQL。
+- [ ] 依規格保留 API 錯誤碼、幂等鍵、CAS/LotStamp、operation log 與權限邊界；正式驗收需針對 status、併發、服務中斷／部分成功及自動／手動 BR 做回歸，成功後更新 migration/deploy record。
