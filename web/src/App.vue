@@ -433,6 +433,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:OE:MO QUERY2', label: '工單達交率（準時開工）', tableName: 'tbloemobasis', shortLabel: '開', functionNo: 'MO QUERY2', moduleNo: 'OE' },
         { id: 'function:OE:MO QUERY3', label: '工單達交率（準時完工）', tableName: 'tbloemobasis', shortLabel: '完', functionNo: 'MO QUERY3', moduleNo: 'OE' },
         { id: 'function:OE:MO MATERIAL LIST', label: '工單用料清單', tableName: 'tbloemomateriallist', shortLabel: '料', functionNo: 'MO MATERIAL LIST', moduleNo: 'OE' },
+        { id: 'function:OE:MO MATERIAL STATUS', label: '工單存料現況', tableName: 'tbloemomaterialstate', shortLabel: '存', functionNo: 'MO MATERIAL STATUS', moduleNo: 'OE' },
       ],
     }],
   },
@@ -451,6 +452,7 @@ const menuRoutes: Record<string, string> = {
   'function:OE:MO QUERY2': appBasePath + '/OE/ManufacturingOrderStartRate',
   'function:OE:MO QUERY3': appBasePath + '/OE/ManufacturingOrderFinishRate',
   'function:OE:MO MATERIAL LIST': appBasePath + '/OE/ManufacturingOrderMaterials',
+  'function:OE:MO MATERIAL STATUS': appBasePath + '/OE/ManufacturingOrderMaterialStock',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -673,6 +675,7 @@ const functionRoutes: Record<string, string> = {
   'MO QUERY2': appBasePath + '/OE/ManufacturingOrderStartRate',
   'MO QUERY3': appBasePath + '/OE/ManufacturingOrderFinishRate',
   'MO MATERIAL LIST': appBasePath + '/OE/ManufacturingOrderMaterials',
+  'MO MATERIAL STATUS': appBasePath + '/OE/ManufacturingOrderMaterialStock',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -742,6 +745,7 @@ const manufacturingOrderPages = {
   'function:OE:MO QUERY2': 'start-report',
   'function:OE:MO QUERY3': 'finish-report',
   'function:OE:MO MATERIAL LIST': 'materials',
+  'function:OE:MO MATERIAL STATUS': 'material-stock',
 } as const
 const manufacturingOrderPage = computed(() => {
   const key = activeMasterKey.value

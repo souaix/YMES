@@ -21,7 +21,7 @@ interface WorkOrder {
   productType?: string; planStartDate?: string; actualStartDate?: string; actualFinishDate?: string
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' | 'material-stock' }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const deletionOnly = computed(() => props.pageMode === 'delete')
@@ -340,7 +340,8 @@ function apply(event: MouseEvent): void {
 </script>
 
 <template>
-  <ManufacturingOrderMaterials v-if="pageMode === 'materials'" class="mo-page" :orders="rows" :development-preview="isDev" @close="emit('close')" />
+  <ManufacturingOrderMaterials v-if="pageMode === 'materials' || pageMode === 'material-stock'" class="mo-page"
+    :orders="rows" :development-preview="isDev" :stock-only="pageMode === 'material-stock'" @close="emit('close')" />
   <section v-else class="mo-page">
     <h2>{{ pageTitle }}</h2>
     <template v-if="isDev">

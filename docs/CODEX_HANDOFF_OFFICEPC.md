@@ -27,7 +27,7 @@
 
 ## 目前檢查點與下一步
 
-- 公司端已接續 OE101、OE102、OE201 至 OE206 的 DEV 訂單與工單操作。各功能及 Oracle DDL／API 交接見 [模組索引](MODULE_REPLICATION_SPEC_INDEX.md#工單管理--訂單)。接續項目為 OE207「工單存料現況」，沿用 OE206 已查證的 Oracle 存料表。
+- 公司端已接續 OE101、OE102、OE201 至 OE207 的 DEV 訂單與工單操作。各功能及 Oracle DDL／API 交接見 [模組索引](MODULE_REPLICATION_SPEC_INDEX.md#工單管理--訂單)。接續項目為 OE208「工單結案」。
 
 - PD102 DEV 子視窗已分段完成 Property、Parameter、Business Rule、OPDescription、RecipeGroup、Accessory、Resource、SubOP、Program、Default、RunTime、QC Item。各功能的 WinForms 證據、DDL 及 API handoff 在 `docs/modules/PRD/` 與兩份 TODO。
 - RunTime 已完成單列／表格編輯與套用。QC Item 已完成依 OP 指派與檢驗類型，QC Import／QC Chart 的 Excel 流程待接續。兩項 DDL 依 MESTEST 字典實查重建，Production API 由家用端接續。

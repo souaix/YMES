@@ -9,10 +9,13 @@ interface Material {
   standardQty: number; substituteQty: number; decreaseRate: number; putInPlaceType: number
   unitNo: string; specified: boolean; description: string
 }
-interface Issue { moNo: string; actualMaterialNo: string; lotNo: string; qty: number; unitNo: string }
+interface Issue {
+  moNo: string; actualMaterialNo: string; lotNo: string; qty: number; unitNo: string
+  materialLevel?: number; inputDate?: string; openDate?: string; expireDate?: string
+}
 interface Preview { materials: Material[]; issues: Issue[] }
 
-const props = defineProps<{ orders: WorkOrderChoice[]; initialMoNo?: string; developmentPreview: boolean }>()
+const props = defineProps<{ orders: WorkOrderChoice[]; initialMoNo?: string; developmentPreview: boolean; stockOnly?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview)
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
@@ -23,14 +26,22 @@ const fixtures: Preview = {
     { moNo: 'DEV-MO-003', materialNo: 'DEV-MTL-001', substituteNo: 'DEV-MTL-002', opNo: 'DEV-OP01', materialLevel: 0, standardQty: 2, substituteQty: 2, decreaseRate: 0, putInPlaceType: 3, unitNo: 'PCS', specified: false, description: '' },
     { moNo: 'DEV-MO-003', materialNo: 'DEV-PRD-1002', substituteNo: 'N/A', opNo: 'DEV-OP01', materialLevel: 1, standardQty: 1, substituteQty: 1, decreaseRate: 0, putInPlaceType: 3, unitNo: 'PCS', specified: false, description: '' },
   ],
-  issues: [],
+  issues: [{
+    moNo: 'DEV-MO-003', actualMaterialNo: 'DEV-PRD-1002', lotNo: 'DEV-STOCK-01', qty: 2, unitNo: 'PCS',
+    materialLevel: 1, inputDate: '2026-11-18', openDate: '2026-11-18', expireDate: '2027-11-18',
+  }],
 }
-const choices = computed(() => props.orders.filter(order => [0, 1, 2, 3, 6].includes(order.moState))
+const componentFixtures = [{
+  moNo: 'DEV-MO-003', materialNo: 'DEV-PRD-1002', lotNo: 'DEV-STOCK-01', componentNo: 'DEV-COMP-001',
+  componentLotNo: 'DEV-COMPL-001', laserMark: 'DEV-LM-01', cassetteNo: 'DEV-CST-01', slotNo: 1, goodQty: 2, scrapQty: 0,
+}]
+const choices = computed(() => props.orders.filter(order => props.stockOnly || [0, 1, 2, 3, 6].includes(order.moState))
   .sort((a, b) => a.moNo.localeCompare(b.moNo)))
 const selectedMo = ref(props.initialMoNo ?? '')
 const level = ref<0 | 1>(0)
 const storage = ref<Preview>(readPreview())
 const selectedKeys = ref<string[]>([])
+const selectedLot = ref('')
 const error = ref('')
 const dialogError = ref('')
 const editor = ref<Material>()
@@ -44,6 +55,15 @@ const actionMessage = ref('')
 const order = computed(() => choices.value.find(item => item.moNo === selectedMo.value))
 const rowKey = (row: Material) => JSON.stringify([row.moNo, row.materialNo, row.opNo, row.substituteNo])
 const rowMaterial = (row: Material) => row.substituteNo === 'N/A' ? row.materialNo : row.substituteNo
+const stockKey = (issue: Issue) => JSON.stringify([issue.moNo, issue.actualMaterialNo, issue.lotNo])
+const stockRows = computed(() => storage.value.issues.filter(issue => issue.moNo === order.value?.moNo)
+  .sort((a, b) => a.actualMaterialNo.localeCompare(b.actualMaterialNo) || a.lotNo.localeCompare(b.lotNo)))
+const activeStock = computed(() => stockRows.value.find(issue => selectedLot.value === stockKey(issue)))
+const components = computed(() => {
+  const issue = activeStock.value
+  return componentFixtures.filter(row => row.moNo === order.value?.moNo &&
+    (!issue || row.materialNo === issue.actualMaterialNo && row.lotNo === issue.lotNo))
+})
 const visible = computed(() => storage.value.materials.filter(row => row.moNo === order.value?.moNo && row.materialLevel === level.value)
   .sort((a, b) => a.materialNo.localeCompare(b.materialNo) || a.opNo.localeCompare(b.opNo)))
 const active = computed(() => visible.value.find(row => selectedKeys.value.includes(rowKey(row))) ?? visible.value[0])
@@ -82,6 +102,7 @@ function currentQty(row: Material): number {
 
 function changeSelection(): void {
   selectedKeys.value = []
+  selectedLot.value = ''
   error.value = ''
   actionMessage.value = ''
 }
@@ -170,7 +191,10 @@ function issueMaterial(): void {
   )
   const qty = Number(((matching?.qty ?? 0) + issuedQty.value).toFixed(8))
   if (qty > 99_999_999.99999999) { dialogError.value = '此批累計存料量超出允許範圍。'; return }
-  const issued: Issue = { moNo: row.moNo, actualMaterialNo: rowMaterial(row), lotNo: target, qty, unitNo: row.unitNo }
+  const issued: Issue = {
+    ...matching, moNo: row.moNo, actualMaterialNo: rowMaterial(row), lotNo: target, qty, unitNo: row.unitNo,
+    materialLevel: row.materialLevel, inputDate: matching?.inputDate ?? new Date().toISOString().slice(0, 10),
+  }
   const issues = matching ? storage.value.issues.map(issue => issue === matching ? issued : issue) : [...storage.value.issues, issued]
   if (!persist({ ...storage.value, issues })) { dialogError.value = '無法儲存本機發料。'; return }
   issueFrom.value = undefined
@@ -180,18 +204,47 @@ function issueMaterial(): void {
 
 <template>
   <section class="material-page">
-    <h2>工單用料清單</h2>
+    <h2>{{ stockOnly ? '工單存料現況' : '工單用料清單' }}</h2>
     <template v-if="isDev">
       <div class="toolbar">
         <label>工單 <select v-model="selectedMo" @change="changeSelection">
           <option value="">請選擇</option><option v-for="item in choices" :key="item.moNo">{{ item.moNo }}</option>
         </select></label>
-        <fieldset class="toolbar">
+        <fieldset v-if="!stockOnly" class="toolbar">
           <legend>用料類別</legend>
           <label><input v-model="level" type="radio" :value="0" @change="changeSelection"> 原物料</label>
           <label><input v-model="level" type="radio" :value="1" @change="changeSelection"> 半成品</label>
         </fieldset>
       </div>
+      <template v-if="stockOnly">
+        <div class="grid"><table>
+          <thead><tr><th scope="col">選取</th><th>料號</th><th>批號</th><th>單位</th><th>數量</th><th>物料層級</th><th>入料日</th><th>開封日</th><th>到期日</th></tr></thead>
+          <tbody>
+            <tr v-for="issue in stockRows" :key="stockKey(issue)" :class="{ selected: selectedLot === stockKey(issue) }" @click="selectedLot = stockKey(issue)">
+              <td><input v-model="selectedLot" type="radio" name="selected-stock" :value="stockKey(issue)" :aria-label="'選取 ' + issue.actualMaterialNo + ' ' + issue.lotNo"></td>
+              <td>{{ issue.actualMaterialNo }}</td><td>{{ issue.lotNo }}</td><td>{{ issue.unitNo }}</td><td>{{ issue.qty }}</td>
+              <td>{{ issue.materialLevel === 0 ? '原物料' : issue.materialLevel === 1 ? '半成品' : '' }}</td>
+              <td>{{ issue.inputDate }}</td><td>{{ issue.openDate }}</td><td>{{ issue.expireDate }}</td>
+            </tr>
+            <tr v-if="!stockRows.length"><td colspan="9">{{ order ? '此工單沒有存料' : '請選擇工單' }}</td></tr>
+          </tbody>
+        </table></div>
+        <div class="toolbar">
+          <h3>元件資料</h3>
+          <button type="button" :disabled="!activeStock" @click="selectedLot = ''">顯示該工單全部元件</button>
+        </div>
+        <div class="grid"><table>
+          <thead><tr><th>元件</th><th>元件批號</th><th>雷刻</th><th>載具</th><th>槽位</th><th>良品量</th><th>報廢量</th></tr></thead>
+          <tbody>
+            <tr v-for="component in components" :key="component.componentNo">
+              <td>{{ component.componentNo }}</td><td>{{ component.componentLotNo }}</td><td>{{ component.laserMark }}</td>
+              <td>{{ component.cassetteNo }}</td><td>{{ component.slotNo }}</td><td>{{ component.goodQty }}</td><td>{{ component.scrapQty }}</td>
+            </tr>
+            <tr v-if="!components.length"><td colspan="7">沒有元件資料</td></tr>
+          </tbody>
+        </table></div>
+      </template>
+      <template v-else>
       <div class="toolbar">
         <button type="button" :disabled="!order" @click="openEditor('add')">新增</button>
         <button type="button" :disabled="!active" @click="openEditor('edit')">修改</button>
@@ -211,8 +264,9 @@ function issueMaterial(): void {
         </tbody>
       </table></div>
       <p>用料筆數 {{ visible.length }}</p>
+      </template>
     </template>
-    <p v-else role="status">工單用料清單尚未接入正式服務。</p>
+    <p v-else role="status">此功能尚未接入正式服務。</p>
     <button type="button" @click="emit('close')">關閉</button>
 
     <div v-if="editor" class="overlay">
@@ -256,6 +310,7 @@ h2, h3, p { margin: 0; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th, td { padding: 7px 9px; border-bottom: 1px solid #dce4ed; white-space: nowrap; text-align: left; }
 th { background: #eef3f9; }
+.selected td { background: #d5e7fa; }
 button { width: max-content; min-height: 30px; }
 .overlay { position: fixed; inset: 0; z-index: 151; display: grid; place-items: center; background: #21334b55; padding: 18px; }
 .dialog { width: min(600px, 100%); display: grid; gap: 12px; max-height: 90vh; overflow: auto; background: white; padding: 18px; border: 1px solid #8fa4bf; border-radius: 6px; }

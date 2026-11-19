@@ -1352,4 +1352,9 @@
 ## OE206 工單用料清單
 
 - [x] 核對 Form／Designer、替代料、發料入口及 Service／Core。DEV 支援兩種用料層級、增修、批次刪除、替代料與模擬發料。
-- [x] [OE206 規格](docs/modules/OE/工單用料清單.md) 交付兩張表的 Oracle DDL、CREATE-only 與庫房 API handoff。下一項 OE207 工單存料現況沿用已查證的存料表。
+- [x] [OE206 規格](docs/modules/OE/工單用料清單.md) 交付兩張表的 Oracle DDL、CREATE-only 與庫房 API handoff。
+
+## OE207 工單存料現況
+
+- [x] 依 Form／Designer、Service 與 Core 交付 DEV 存料與元件雙表。上層與 OE206 模擬發料共用資料。
+- [x] [OE207 規格](docs/modules/OE/工單存料現況.md) 補元件表 Oracle DDL、CREATE-only 與唯讀 API 交接。

@@ -261,6 +261,7 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 - [OE204 工單達交率（準時開工）](modules/OE/工單達交率_準時開工.md) 已完成 DEV 開工差異、查詢、總筆數及準時／提前／延遲統計。
 - [OE205 工單達交率（準時完工）](modules/OE/工單達交率_準時完工.md) 已完成 DEV 完工率與平均生產天數，沿用 OE201 DDL。
 - [OE206 工單用料清單](modules/OE/工單用料清單.md) 已完成 DEV 用料、替代料、模擬發料及兩張表的 Oracle DDL。
+- [OE207 工單存料現況](modules/OE/工單存料現況.md) 已完成 DEV 存料與元件唯讀檢視及元件表 DDL。
 
 ## 全 MES 盤點狀態
 
