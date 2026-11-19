@@ -721,3 +721,10 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - 使用既有受保護 Oracle profile，以 Windows PowerShell 5.1 + STD/MES_S_DLL/Oracle.ManagedDataAccess.dll 直連 MESTEST，唯讀取得 TBLEQPFAVORITE、TBLWIPLOTGPEQUIPMENT、TBLPRDSTAGESTEPSET、TBLPRDSTAGESTEPSETDETAIL 的 DBMS_METADATA.GET_DDL 與該批表的索引 DDL。
 - 僅查 metadata／DDL，未讀業務資料列、未執行 Oracle DDL/DML，未輸出連線字串或憑證。來源與 CREATE-only 參考為 database/reference/mestest_wip_wp204_source_ddl.sql、mestest_wip_wp204_create.sql；家用端須先核 PostgreSQL live schema／migrations。
+
+### 更新 2026-11-19：WIP WP605 成品庫帳務維護
+
+- 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，使用本機受保護的 `DatabaseConfigs.CS.Test.Mes.ConnectionString` 直連 MESTEST，只讀取得 `TBLINVFGDINVENTORYCOMPONENT`、`TBLINVFGDINBASIS`、`TBLINVFGDINDETAIL`、`TBLINVFGDINCOMPONENT`、`TBLINVTRANSACTIONSTATE`、`TBLINVTRANSACTIONLOG` 的 DBMS_METADATA DDL、ALL_INDEXES、ALL_CONSTRAINTS、ALL_TRIGGERS。
+- 六張表均只有各自 PK unique index；沒有 FK、額外 index 或 trigger。Oracle 查無 `TBLINVFGDINVENTORYBIN`；WinForms Bin 明細使用 `TBLWIPGOODBINSTATE` 加 `TBLSYSBIN.BINORDER` 動態建欄。
+- Oracle source DDL 與 PostgreSQL CREATE-only 參考為 `database/reference/mestest_wip_wp605_source_ddl.sql`、`mestest_wip_wp605_create.sql`。僅查資料字典與 DDL，未查 MES 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，也未輸出或提交 Oracle 憑證。
+- FGD In Source=30 的服務先建立 TransactionState 並把 Basis 設為 1，同步執行 ExeFGDIn；成功設為 2 並搬移至 TransactionLog，失敗設為 3。此流程依 WinForms／Service／Core 原始碼查證，不由 Oracle metadata 推測。完整來源與 API 限制見 [WP605 規格](modules/WIP/成品庫帳務維護.md)。

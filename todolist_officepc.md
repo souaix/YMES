@@ -51,10 +51,20 @@
 - [x] 完成 /YMES/WIP/EquipmentLotState DEV 假資料畫面、FunctionNo EXECUTE LOT_EQP fallback 三層選單／路由、WP204 模組規格、Oracle source DDL 與 PostgreSQL CREATE-only handoff。
 - [x] DEV 僅寫專屬 localStorage，不連 YMES PostgreSQL、不實作正式 API／migration；未執行 build、test、browser。
 
-### 下一功能：WP605 成品庫帳務維護（FunctionNo FGD INV）
+### WP605 成品庫帳務維護已交付（FunctionNo FGD INV，2026-11-19）
 
-- [ ] 依 docs/MES_MENU_FUNCTION_INVENTORY.md 的 FGD INV 功能列，先核對 frmInventory_FGD Form／Designer、Service／Core、讀寫表及庫存交易，再完成 DEV 與 API/schema handoff。
-- [ ] 保持本檔及 todolist_homepc.md 隨每個功能更新；依使用者授權 commit/push GitHub 後持續接續，不執行 build、test 或 browser，除非使用者要求驗收。
+- [x] 對照 frmInventory_FGD／Def／Turn／FGDIn WinForms、Designer、wsINV／wsWIP／wsSYS 及 clsInventory／clsLot；核實庫存查詢、Component/Bin 切換、人工調整、逐筆刪除、三種轉庫與 FGD In 交易狀態。
+- [x] Oracle MESTEST 只讀核實六張功能表 DDL、index、constraints、triggers：FGD Inventory Component、FGD In Basis/Detail/Component、Transaction State/Log；六表各只有 PK unique index，無 FK、額外 index 或 trigger。TBLINVFGDINVENTORYBIN 不存在，不列為本頁依賴。
+- [x] 完成 Vue DEV `/YMES/WIP/FgdInventory`、三層選單與動態 Bin 欄位、Add／逐筆 Del、FGD／SEMI／WIP 轉庫和 FGD In Confirm 假資料互動。
+- [x] 完成 [WP605 規格](docs/modules/WIP/成品庫帳務維護.md)、Oracle source DDL、PostgreSQL CREATE-only、模組索引、資料庫連線查證紀錄與家用端 API/schema handoff；Production API／migration 由家用端接手。
+- [ ] 本輪未執行 build、test 或 browser；完成靜態檢查、更新交接並 push 後接續下一個 WIP 功能。
+
+### 下一功能：WP603 在製品庫帳務維護（FunctionNo WIP INV）
+
+- [ ] 讀 `docs/MES_MENU_FUNCTION_INVENTORY.md` 的 WIP INV 條目，直接對照 `frmInventory_WIP_THEIL_BU1` 主/定義/轉庫/入庫/出庫相關 WinForms、Designer、Service/Core 與 THEIL 分支；先建立依賴與交易地圖，再決定可完成的 DEV 範圍。
+- [ ] 只讀查 Oracle MESTEST 中尚未有來源 DDL 的相關資料表及 dictionary metadata；沿用已查表，不重複產生 CREATE。缺少可讀來源或客製 DLL 時，把缺件與影響精確記錄，不猜 SQL。
+- [ ] 完成 Vue DEV 畫面與互動、功能規格、Oracle source DDL／PostgreSQL CREATE-only（僅新表）、家用端 API/schema handoff；同步更新 todolist_homepc.md、模組索引、資料庫查證紀錄及公司端交接檔。
+- [ ] 按使用者授權 commit/push GitHub 後持續接續；除非使用者要求驗收，不執行 build、test 或 browser。
 ### 公司端工作範圍
 
 - WinForms／Service／Core 原始碼、Vue DEV 假資料、模組規格與家用端 API／SQL 交接。Vue 環境為 Node.js 22.12+、npm 與 `web/` 套件，筆電沿用自己的既有工具，不依賴桌機的本機安裝路徑。

@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## 新交接公司端 WP605 成品庫帳務維護（2026-11-19）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/WIP/成品庫帳務維護.md`、`database/reference/mestest_wip_wp605_source_ddl.sql`、`mestest_wip_wp605_create.sql` 及公司端 Oracle 查證紀錄。
+- [ ] 先比對 YMES PostgreSQL live schema／migrations，再決定 forward migration。Oracle MESTEST 本次確認存在且需要評估的六張表：`tblinvfgdinventorycomponent`、`tblinvfgdinbasis`、`tblinvfgdindetail`、`tblinvfgdincomponent`、`tblinvtransactionstate`、`tblinvtransactionlog`。逐表檢查，不可直接執行 CREATE-only 覆蓋既有表。
+- [ ] 共用表沿用 WP201／WP101、SMD、PRD、OE references；重用 `tblinvfgdinventory`、`tblinvlocatorbasis`、WIP Lot／Component、`tblwipgoodbinstate`、`tblsysbin`、`tblinvwipinventory_component`、`tblinvwipinventory_semi` 與 `tbloemobasis`，禁止重複建表。Oracle 未找到 `TBLINVFGDINVENTORYBIN`，UI Bin 來源是 `TBLWIPGOODBINSTATE` 的動態 Bin 欄位。
+- [ ] 實作登入保護 WIP FGD Inventory API：庫別／儲位 lookup、庫存查詢、component/bin 明細、Add upsert、逐筆 Del、容量／並發檢查及 FGD→FGD／SEMI／WIP 轉庫。服務端重查 IssueState、Lot 狀態、容量和庫存；依 spec 保留各 Core 路徑的庫存／Lot／Component／release log side effects，釐清外部 `iMESWIPReleaseLogHandler.dll` 契約。
+- [ ] FGD In Source=30 必須一次涵蓋 TransactionID 產生、TransactionState、Basis 0→1→2/3、ExeFGDIn 過帳、State→Log 搬移及防重送；Source=1 還需扣來源 SEMI/WIP inventory。不可僅新增 queue row 或只改 Basis 狀態。`TBLINVTRANSACTIONLOG` 是成功交易必要表，Oracle 查證只有 PK unique index、無 FK／trigger／額外 index。
+- [ ] DEV localStorage 並不實際過帳庫存；Production API／schema 完成後依模組規格更新索引、handoff、測試／部署紀錄，公司端再 pull 核對 WinForms 契約。公司端不連 PostgreSQL。
+
+## 前置家用端交接（歷史待辦）
+
 ## 新交接公司端 WP102 生產批開立_批次（2026-11-19）
 
 - [ ] Pull 最新 main，讀 docs/modules/WIP/生產批開立_批次.md、database/reference/mestest_wip_wp102_source_ddl.sql 與 mestest_wip_wp102_create.sql。

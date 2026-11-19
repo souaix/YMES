@@ -27,6 +27,7 @@
 - WP201「生產批執行」：[功能規格](modules/WIP/生產批執行.md)。已對照 WinForms／Service／Core，Oracle 唯讀查得 39 張執行相依表 DDL，39 表欄位數符合 ALL_TAB_COLUMNS；兩個缺失客製引用已註記。Vue DEV 路由 /YMES/WIP/LotExecution 完成；家用端待核對 live schema 並決定動態 BR、QTime/LMS、Group OP 與元件批次 API。
 - WP202「生產批執行_元件」：[功能規格](modules/WIP/生產批執行_元件.md)。已對照標準 WinForms／Service／Core；Component 查詢沿用 WP101 已查證的 TBLWIPLOTSTATE、TBLWIPCOMPONENTSTATE、TBLWIPLOTBASIS，不新增重複 DDL。Vue DEV 路由 /YMES/WIP/LotExecutionByComponent 完成；家用端需比對 live schema，並將元件查詢接入 WP201 共用的 Lot Execute command。
 - WP204「生產批執行_設備」：[功能規格](modules/WIP/生產批執行_設備.md)。依 frmEquipmentLotState／CI／CO／狀態控制 Form、wsEQP／wsEMS／wsWIP 與 Core 完成 DEV 設備看板；唯讀取得四張缺少的 MESTEST DDL，提供 CREATE-only 參考。家用端需先比對 PostgreSQL schema，再將看板、設備／LoadPort、候選批次、CI／CO、Hold 及狀態控制接入 WP201 共用執行 API。
+- WP605「成品庫帳務維護」：[功能規格](modules/WIP/成品庫帳務維護.md)。依 frmInventory_FGD／FGDIn／Turn／Define、wsINV／wsWIP／wsSYS 與 Core 完成 Vue DEV 庫存、動態 Bin、人工調整、轉庫及入庫確認畫面。Oracle 唯讀核對六張新增表，含交易 Log；DDL／CREATE-only handoff 已建立。家用端需先核對 PostgreSQL live schema，再建置完整交易、庫存過帳及 WIP／SEMI／Lot history API。下一個公司端功能為 WP603。
 
 ## 規格產出原則
 
