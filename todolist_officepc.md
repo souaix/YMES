@@ -1177,4 +1177,10 @@
 
 - [x] 核對 Form／Designer、Service／Core；完成 DEV Max/Min、參照、起迄站與 BR 檢查、Hold 原因、CRUD 與狀態操作。
 - [x] Oracle 唯讀確認主檔、歷程與 Hold 原因結構；補來源邏輯 DDL、CREATE-only 與 API 交接。
-- [ ] 正式流程展開、簽核、歷程、設備檢核待接續。下一項 PD107 標籤設定。
+- [ ] 正式流程展開、簽核、歷程、設備檢核待接續。
+
+## PRD PD107 標籤設定公司端檢查點（2026-11-19）
+
+- [x] 完成 DEV 主檔與明細 CRUD、Copy、順序和欄位值 Test／Preview。核對 Form、Designer、Service 與 Core。
+- [x] Oracle 唯讀核對主／明細，補明細邏輯 DDL、CREATE-only 及 API 交接。
+- [ ] 正式標籤引擎、腳本產值、印表機和格式檔待接續。下一項 PD108 產品標籤對應設定。
