@@ -176,6 +176,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PD114 自定義流程卡](modules/PRD/自定義流程卡.md) 已完成主檔、欄位明細、DEV 批號欄位預覽與報表相依交接。
 
+[PD115 產品流程卡對應設定](modules/PRD/產品流程卡對應設定.md) 已完成 DEV 對應維護、PD102／PD114 候選與家用端交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

@@ -1739,3 +1739,7 @@ API 工作：
 ## PRD PD114 自定義流程卡家用端 handoff（2026-11-19）
 
 - [ ] 依 [自定義流程卡](docs/modules/PRD/自定義流程卡.md) 核對主檔與明細 CREATE-only、DataStamp 及 WIP／報表引擎依賴。
+
+## PRD PD115 產品流程卡對應家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品流程卡對應設定](docs/modules/PRD/產品流程卡對應設定.md) 核對 CREATE-only、候選 API、DataStamp、`*` 及正式列印呼叫端。

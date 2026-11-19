@@ -1224,4 +1224,10 @@
 
 - [x] 核對 WinForms／Designer、PRD Service／Core 和 MESTEST 字典。
 - [x] 完成主檔、欄位明細、複製、刪除和 DEV 批號欄位預覽，整理 [規格與交接](docs/modules/PRD/自定義流程卡.md)。
-- [ ] 正式 WIP 產值及報表引擎待接續。下一項 PD115 產品流程卡對應設定。
+- [ ] 正式 WIP 產值及報表引擎待家用端接續。
+
+## PRD PD115 產品流程卡對應公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、PRD Service／Core、MESTEST 欄位和主鍵。
+- [x] 完成 CRUD、複製、核准產品與主流程卡候選，整理 [規格與交接](docs/modules/PRD/產品流程卡對應設定.md)。
+- [ ] 正式候選及 API 待家用端接續。下一項 PD116 產品品管項目規格匯入。

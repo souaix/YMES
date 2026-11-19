@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { loadDevelopmentRunCards, newCardField, runCardStorageKey, type CardField, type RunCard } from './runCardDevelopment'
+import { loadDevelopmentRunCardMappings, loadDevelopmentRunCards, newCardField, runCardStorageKey, type CardField, type RunCard } from './runCardDevelopment'
 
 type Mode = 'add' | 'edit' | 'copy' | ''
 const props = defineProps<{ developmentPreview: boolean; currentUserNo: string }>()
@@ -41,6 +41,7 @@ function open(next: Mode): void {
 
 function validate(card: RunCard): string {
   if (!card.no || !card.fileName) return '流程卡編號與格式檔名必填。'
+  if (!card.main && loadDevelopmentRunCardMappings().some(mapping => mapping.runCardNo === card.no)) return '產品對應仍在使用此主流程卡。'
   if (card.type === 1 && (card.headerStart || card.headerEnd)) {
     if (![card.headerStart, card.headerEnd].every(text => /^\d{1,5}$/.test(text)) || Number(card.headerStart) > Number(card.headerEnd)) return '表頭起訖需一起填寫，且起始不可大於結束。'
   }
@@ -82,6 +83,7 @@ function remove(): void {
   const card = active.value
   if (!card) return
   if (rows.value.some(row => row.fields.some(field => field.source === 'SR' && field.value === card.no))) { error.value = '此流程卡目前被另一張流程卡引用。'; return }
+  if (loadDevelopmentRunCardMappings().some(mapping => mapping.runCardNo === card.no)) { error.value = '此流程卡目前被產品流程卡對應引用。'; return }
   if (window.confirm(`確定刪除 ${card.no} 與欄位明細？`) && saveRows(rows.value.filter(row => row.no !== card.no))) notice.value = '流程卡已刪除。'
 }
 

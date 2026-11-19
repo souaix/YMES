@@ -50,6 +50,7 @@ import ProductOperationBatch from './components/ProductOperationBatch.vue'
 import PackingRuleBasisMaster from './components/PackingRuleBasisMaster.vue'
 import PackingRuleMapPage from './components/PackingRuleMapPage.vue'
 import UserDefinedRunCardMaster from './components/UserDefinedRunCardMaster.vue'
+import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -379,6 +380,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:PRD PACKING RULE BASIS', label: '包裝規則設定', tableName: 'tblprdpackingrulebasis', shortLabel: '包', functionNo: 'PRD PACKING RULE BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:PRD PACKINGRULE MAP', label: '產品包裝規則對應設定', tableName: 'tblprdpackingrulemap', shortLabel: '配', functionNo: 'PRD PACKINGRULE MAP', moduleNo: 'PRD' },
       { id: 'function:PRD:USER DEFINED RUNCARD', label: '自定義流程卡', tableName: 'tblprddefineruncardbasis', shortLabel: '卡', functionNo: 'USER DEFINED RUNCARD', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRODUCT RUN CARD MAP BASIS', label: '產品流程卡對應設定', tableName: 'tblprdruncardmap', shortLabel: '對', functionNo: 'PRODUCT RUN CARD MAP BASIS', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -508,6 +510,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRD PACKING RULE BASIS': `${appBasePath}/PRD/PackingRules`,
   'function:PRD:PRD PACKINGRULE MAP': `${appBasePath}/PRD/PackingRuleMap`,
   'function:PRD:USER DEFINED RUNCARD': `${appBasePath}/PRD/RunCards`,
+  'function:PRD:PRODUCT RUN CARD MAP BASIS': `${appBasePath}/PRD/ProductRunCardMap`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -644,6 +647,7 @@ const isProductOperationCopyPage = computed(() => activeMasterKey.value === 'fun
 const isPackingRuleBasisPage = computed(() => activeMasterKey.value === 'function:PRD:PRD PACKING RULE BASIS')
 const isPackingRuleMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRD PACKINGRULE MAP')
 const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'function:PRD:USER DEFINED RUNCARD')
+const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2187,6 +2191,13 @@ async function signOut(): Promise<void> {
         />
         <UserDefinedRunCardMaster
           v-else-if="isUserDefinedRunCardPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductRunCardMapMaster
+          v-else-if="isProductRunCardMapPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
