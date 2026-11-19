@@ -83,7 +83,7 @@ async function chooseFile(event: Event): Promise<void> {
   busy.value = true
   try {
     if (!file.name.toLowerCase().endsWith('.xlsx')) throw new Error('DEV 支援 .xlsx 格式。')
-    const rows = await parseFirstWorksheetXlsx(file)
+    const rows = await parseFirstWorksheetXlsx(file, true)
     imported.value = rows.slice(1).map((row, index) => ({
       line: index + 2,
       fields: Object.fromEntries(columns.map((column, fieldIndex) => [column, row[fieldIndex]?.trim() ?? ''])),

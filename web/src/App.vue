@@ -52,6 +52,7 @@ import PackingRuleMapPage from './components/PackingRuleMapPage.vue'
 import UserDefinedRunCardMaster from './components/UserDefinedRunCardMaster.vue'
 import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
 import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
+import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -383,6 +384,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:USER DEFINED RUNCARD', label: '自定義流程卡', tableName: 'tblprddefineruncardbasis', shortLabel: '卡', functionNo: 'USER DEFINED RUNCARD', moduleNo: 'PRD' },
       { id: 'function:PRD:PRODUCT RUN CARD MAP BASIS', label: '產品流程卡對應設定', tableName: 'tblprdruncardmap', shortLabel: '對', functionNo: 'PRODUCT RUN CARD MAP BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:PRD QCITEM SPEC IMPORT', label: '產品品管項目規格匯入', tableName: 'tblprdqcitem', shortLabel: '檢', functionNo: 'PRD QCITEM SPEC IMPORT', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD GBOM IMPORT', label: 'GBOM批次匯入', tableName: 'tblprdbom', shortLabel: '匯', functionNo: 'PRD GBOM IMPORT', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -514,6 +516,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:USER DEFINED RUNCARD': `${appBasePath}/PRD/RunCards`,
   'function:PRD:PRODUCT RUN CARD MAP BASIS': `${appBasePath}/PRD/ProductRunCardMap`,
   'function:PRD:PRD QCITEM SPEC IMPORT': `${appBasePath}/PRD/QCSpecImport`,
+  'function:PRD:PRD GBOM IMPORT': `${appBasePath}/PRD/GbomBatchImport`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -652,6 +655,7 @@ const isPackingRuleMapPage = computed(() => activeMasterKey.value === 'function:
 const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'function:PRD:USER DEFINED RUNCARD')
 const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
 const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCITEM SPEC IMPORT')
+const isProductGbomBatchImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD GBOM IMPORT')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2209,6 +2213,12 @@ async function signOut(): Promise<void> {
         />
         <ProductQCSpecImport
           v-else-if="isProductQCSpecImportPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductGbomBatchImport
+          v-else-if="isProductGbomBatchImportPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

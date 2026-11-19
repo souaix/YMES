@@ -1236,4 +1236,10 @@
 
 - [x] 核對 WinForms／Designer、客製 Service／Core、MESTEST 指派與 SPC 表。
 - [x] 完成 DEV 51 欄 XLSX 範本、預覽驗證、New Plan／Override 本機套用，整理 [規格與交接](docs/modules/PRD/產品品管項目規格匯入.md)。
-- [ ] 正式業務檢查與匯入待家用端接續。下一項 PD117 GBOM 批次匯入。
+- [ ] 正式業務檢查與匯入待家用端接續。
+
+## PRD PD117 GBOM 批次匯入公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、客製 Service／Core、MESTEST 流程、BOM 與客製表。
+- [x] 完成 DEV 多檔選取、逐檔預檢、流程連線預覽及本機套用，整理 [規格與交接](docs/modules/PRD/GBOM批次匯入.md)。
+- [ ] 正式節點與 BOM 轉換、原檔管理待家用端接續。下一項 PD202 FT 測試程式。
