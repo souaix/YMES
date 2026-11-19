@@ -1719,3 +1719,7 @@ API 工作：
 ## PRD PD109 產品作業站預設家用端 handoff（2026-11-19）
 
 - [ ] 依 [產品作業站預設規格](docs/modules/PRD/產品作業站預設.md) 沿用 PD102 共用表，實作候選及依作業範圍執行的 Default／Amend、每版交易、進度與取消。
+
+## PRD PD110 產品作業站修正家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品作業站修正規格](docs/modules/PRD/產品作業站修正.md) 沿用 PD109 Amend API、schema 與權限，帶入 PD110 固定六項。

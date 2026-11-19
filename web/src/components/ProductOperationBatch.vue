@@ -3,10 +3,10 @@ import { computed, ref } from 'vue'
 import { rowsKey, relationKey, seedRows, seedRelations, type ProductRow, type ProductRelation } from './productBasisDevelopment'
 import { applyOperationDefaults, defaultOperations, operationTargets, type DefaultMode, type DefaultSelection } from './productOperationDefaults'
 
-const props = defineProps<{ developmentPreview: boolean }>()
+const props = defineProps<{ developmentPreview: boolean; amendOnly?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const filter = ref({ productNo: '', processNo: '', opNo: '' })
-const flags = ref<DefaultSelection>({ parameter: true, description: true, qc: false, businessRule: true, resource: true, subOp: true })
+const flags = ref<DefaultSelection>({ parameter: true, description: true, qc: Boolean(props.amendOnly), businessRule: true, resource: true, subOp: true })
 const flagFields: { key: keyof DefaultSelection; label: string }[] = [
   { key: 'parameter', label: 'Parameter' }, { key: 'description', label: 'Description' }, { key: 'qc', label: 'QC Item' },
   { key: 'businessRule', label: 'Business Rule' }, { key: 'resource', label: 'OP Resource' }, { key: 'subOp', label: 'SubOP' },
@@ -83,14 +83,16 @@ async function run(mode: DefaultMode): Promise<void> {
 
 <template>
   <main class="batch-page">
-    <header><h1>產品作業站預設</h1><button :disabled="processing" @click="emit('close')">關閉</button></header>
+    <header><h1>{{ amendOnly ? '產品作業站修正' : '產品作業站預設' }}</h1><button :disabled="processing" @click="emit('close')">關閉</button></header>
     <p v-if="!developmentPreview">批次作業站設定等待正式 API 接入。</p>
     <template v-else>
       <form class="toolbar" @submit.prevent="search"><label>ProductNo <input v-model="filter.productNo" :disabled="processing" /></label><label>ProcessNo <input v-model="filter.processNo" :disabled="processing" /></label><label>OPNo <input v-model="filter.opNo" :disabled="processing" /></label><button :disabled="processing">查詢</button></form>
-      <fieldset class="toolbar" :disabled="processing"><legend>更新項目</legend><label v-for="item in flagFields" :key="item.key"><input v-model="flags[item.key]" type="checkbox" />{{ item.label }}</label></fieldset>
-      <fieldset class="toolbar" :disabled="processing"><legend>Default OP</legend><label><input v-model="allSegment" type="radio" :value="false" />Product Process OP</label><label><input v-model="allSegment" type="radio" :value="true" />All PS OP</label></fieldset>
-      <fieldset class="toolbar" :disabled="processing"><legend>指定作業站</legend><label v-for="op in defaultOperations" :key="op.opNo"><input v-model="selectedOperations" type="checkbox" :value="op.opNo" />{{ op.opNo }} {{ op.opName }}</label><span v-if="!selectedOperations.length">套用至範圍內全部作業站</span></fieldset>
-      <div class="toolbar"><button :disabled="processing || !results?.length" @click="selected = results?.map(keyOf) ?? []">全選</button><button :disabled="processing || !selected.length" @click="selected = []">取消全選</button><button :disabled="!canRun" @click="run('default')">Default</button><button :disabled="!canRun" @click="run('amend')">Amend</button><button v-if="processing" @click="cancelled = true">取消</button></div>
+      <template v-if="!amendOnly">
+        <fieldset class="toolbar" :disabled="processing"><legend>更新項目</legend><label v-for="item in flagFields" :key="item.key"><input v-model="flags[item.key]" type="checkbox" />{{ item.label }}</label></fieldset>
+        <fieldset class="toolbar" :disabled="processing"><legend>Default OP</legend><label><input v-model="allSegment" type="radio" :value="false" />Product Process OP</label><label><input v-model="allSegment" type="radio" :value="true" />All PS OP</label></fieldset>
+        <fieldset class="toolbar" :disabled="processing"><legend>指定作業站</legend><label v-for="op in defaultOperations" :key="op.opNo"><input v-model="selectedOperations" type="checkbox" :value="op.opNo" />{{ op.opNo }} {{ op.opName }}</label><span v-if="!selectedOperations.length">套用至範圍內全部作業站</span></fieldset>
+      </template>
+      <div class="toolbar"><button :disabled="processing || !results?.length" @click="selected = results?.map(keyOf) ?? []">全選</button><button :disabled="processing || !selected.length" @click="selected = []">取消全選</button><button v-if="!amendOnly" :disabled="!canRun" @click="run('default')">Default</button><button :disabled="!canRun" @click="run('amend')">Amend</button><button v-if="processing" @click="cancelled = true">取消</button></div>
       <div v-if="total" class="progress" role="status"><progress :value="done" :max="total" /> {{ done }} / {{ total }}</div>
       <p v-if="error" role="alert" class="error">{{ error }}</p>
       <div class="grid"><table><thead><tr><th>選取</th><th>ProductNo</th><th>ProductVersion</th><th>ProductName</th><th>目前版</th><th>Message</th></tr></thead><tbody>

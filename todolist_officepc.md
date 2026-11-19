@@ -1195,4 +1195,9 @@
 
 - [x] 核對 Form／Designer、Service／Core。完成 DEV 前綴查詢、作業範圍、批次 Default／Amend、逐筆進度與取消。
 - [x] Oracle 唯讀核對共用表，沿用既有 DDL 參考。
-- [ ] 正式候選、權限、批次 API、動態作業預設及 APS 待接續。下一項 PD110 產品作業站修正。
+- [ ] 正式候選、權限、批次 API、動態作業預設及 APS 待接續。
+
+## PRD PD110 產品作業站修正公司端檢查點（2026-11-19）
+
+- [x] 核對獨立 Form／Designer 與 PD109 共用 Service／Core。完成 DEV 路徑、固定六項 Amend、進度／取消與 handoff。
+- [ ] 正式動態預設、權限與 API 待接續。下一項 PD111 產品作業站批次複製。
