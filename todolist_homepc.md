@@ -7,6 +7,7 @@
 - [ ] [OE206](docs/modules/OE/工單用料清單.md) 工單用料與存料 DDL 已交付。正式 API 須跟工單刪除、發放、庫房扣料及 OE207 存料現況共用鎖與狀態。
 - [ ] [OE207](docs/modules/OE/工單存料現況.md) 衍生存料查詢及元件唯讀查詢。元件表 Oracle DDL 和 CREATE-only 已備妥。
 - [ ] [OE208](docs/modules/OE/工單結案.md) 工單結案共用 OE201 DDL。正式 API 需以 WIP／庫房與 ERP 資料檢查結案，保留舊狀態與版本條件。
+- [ ] [OE209](docs/modules/OE/工單元件資料維護作業.md) 工單元件維護共用 OE201 元件 DDL，新增異動紀錄表參考。正式 API 須處理序號、同秒異動、單位轉換及同交易保存稽核。
 - [ ] [QC103](docs/modules/QC/抽樣計劃.md#公司端-formcore-與函式目錄查證2026-11-19) 已有 FUNSA、Type 4／6 旗標及 QC301 一般／Wafer 選表來源。QC107 實際字典值與部署開關仍待交付，QC108 標準 FUNQR 方法名單均對應空實作。
 - [ ] [PD206](docs/modules/PRD/產品抽樣頻率規則.md#父主檔生命週期來源查證) 已補產品、設備與站點刪除／停用及 WIP 萬用鍵順序。父資料暫不存在及競態處理仍須由 YMES 明定。
 

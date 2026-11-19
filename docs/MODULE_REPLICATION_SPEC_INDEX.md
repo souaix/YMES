@@ -263,6 +263,7 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 - [OE206 工單用料清單](modules/OE/工單用料清單.md) 已完成 DEV 用料、替代料、模擬發料及兩張表的 Oracle DDL。
 - [OE207 工單存料現況](modules/OE/工單存料現況.md) 已完成 DEV 存料與元件唯讀檢視及元件表 DDL。
 - [OE208 工單結案](modules/OE/工單結案.md) 已完成 DEV 待結案查詢、多選結案與正式 WIP／ERP 守門規格。
+- [OE209 工單元件資料維護作業](modules/OE/工單元件資料維護作業.md) 已完成 DEV 暫存增刪、取號示範與 Oracle 異動紀錄 DDL。
 
 ## 全 MES 盤點狀態
 

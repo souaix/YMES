@@ -435,6 +435,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:OE:MO MATERIAL LIST', label: '工單用料清單', tableName: 'tbloemomateriallist', shortLabel: '料', functionNo: 'MO MATERIAL LIST', moduleNo: 'OE' },
         { id: 'function:OE:MO MATERIAL STATUS', label: '工單存料現況', tableName: 'tbloemomaterialstate', shortLabel: '存', functionNo: 'MO MATERIAL STATUS', moduleNo: 'OE' },
         { id: 'function:OE:MO CLOSE', label: '工單結案', tableName: 'tbloemobasis', shortLabel: '結', functionNo: 'MO CLOSE', moduleNo: 'OE' },
+        { id: 'function:OE:MO COMPDATA MAINTAIN', label: '工單元件資料維護作業', tableName: 'tbloemocomponent', shortLabel: '元', functionNo: 'MO COMPDATA MAINTAIN', moduleNo: 'OE' },
       ],
     }],
   },
@@ -455,6 +456,7 @@ const menuRoutes: Record<string, string> = {
   'function:OE:MO MATERIAL LIST': appBasePath + '/OE/ManufacturingOrderMaterials',
   'function:OE:MO MATERIAL STATUS': appBasePath + '/OE/ManufacturingOrderMaterialStock',
   'function:OE:MO CLOSE': appBasePath + '/OE/ManufacturingOrderClose',
+  'function:OE:MO COMPDATA MAINTAIN': appBasePath + '/OE/ManufacturingOrderComponents',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -679,6 +681,7 @@ const functionRoutes: Record<string, string> = {
   'MO MATERIAL LIST': appBasePath + '/OE/ManufacturingOrderMaterials',
   'MO MATERIAL STATUS': appBasePath + '/OE/ManufacturingOrderMaterialStock',
   'MO CLOSE': appBasePath + '/OE/ManufacturingOrderClose',
+  'MO COMPDATA MAINTAIN': appBasePath + '/OE/ManufacturingOrderComponents',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -750,6 +753,7 @@ const manufacturingOrderPages = {
   'function:OE:MO MATERIAL LIST': 'materials',
   'function:OE:MO MATERIAL STATUS': 'material-stock',
   'function:OE:MO CLOSE': 'close',
+  'function:OE:MO COMPDATA MAINTAIN': 'components',
 } as const
 const manufacturingOrderPage = computed(() => {
   const key = activeMasterKey.value

@@ -1363,3 +1363,8 @@
 
 - [x] 依 Form／Designer、Service 與 Core 交付 DEV 選取、確認、WIP／ERP 阻擋及結案。
 - [x] [OE208 規格](docs/modules/OE/工單結案.md) 記錄結案 CAS 和在製品、半成品、報廢等守門。DDL 共用 OE201。
+
+## OE209 工單元件資料維護
+
+- [x] 依 Form／Designer、Service、Core 交付 DEV 工單資格查詢、元件編號、草稿增刪與確認。
+- [x] [OE209 規格](docs/modules/OE/工單元件資料維護作業.md) 記錄發放狀態及序號規則，補 Oracle 異動紀錄 DDL、CREATE-only 與 API handoff。

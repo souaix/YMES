@@ -2,12 +2,12 @@
 import { computed, ref, toRaw } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 import ManufacturingOrderMaterials from './ManufacturingOrderMaterials.vue'
+import ManufacturingOrderComponents, { type WorkOrderComponent } from './ManufacturingOrderComponents.vue'
 import { useActionConfirmation } from '../composables/useActionConfirmation'
 
 type IssueState = -1 | 0 | 1 | 2
 type MoSource = 0 | 1 | 2 | 3
 interface Process { psNo: string; processNo: string; processVersion: string; opNo: string; haveComponent: boolean }
-interface Component { componentNo: string; goodQty: number; unitNo: string }
 interface Property { propertyNo: string; propertyValue: string }
 interface WorkOrder {
   moNo: string; moSource: MoSource; roNo: string; itemNo: number; returnNo: string; customerNo: string
@@ -15,14 +15,14 @@ interface WorkOrder {
   moTypeNo: number; priority: number; factoryNo: string; customerLotNo: string; planFinishDate: string
   description: string; belongToMoNo: string; issueState: IssueState; moState: number; dataStamp: number
   creator: string; createDate: string; reviser: string; reviseDate: string
-  processes: Process[]; components: Component[]; properties: Property[]
+  processes: Process[]; components: WorkOrderComponent[]; properties: Property[]
   fromErp?: boolean; hasLots?: boolean; hasIssuedMaterial?: boolean
   unreleaseLotQty?: number; erpMoLineNo?: string
   productType?: string; planStartDate?: string; actualStartDate?: string; actualFinishDate?: string
   orgMoState?: number; hasOpenWip?: boolean
 }
 
-const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' | 'material-stock' | 'close' }>()
+const props = defineProps<{ currentUserNo?: string; developmentPreview?: boolean; pageMode?: 'delete' | 'query' | 'start-report' | 'finish-report' | 'materials' | 'material-stock' | 'close' | 'components' }>()
 const emit = defineEmits<{ close: [] }>()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
 const deletionOnly = computed(() => props.pageMode === 'delete')
@@ -81,7 +81,14 @@ function readLocal(): WorkOrder[] {
   return [
     { ...seed, moNo: 'DEV-MO-001' },
     { ...seed, moNo: 'DEV-MO-002', issueState: 1, moState: 1 },
-    { ...seed, moNo: 'DEV-MO-003', issueState: 2, moState: 2, fromErp: true, actualStartDate: '2026-11-12' },
+    {
+      ...seed, moNo: 'DEV-MO-003', issueState: 2, moState: 2, fromErp: true, actualStartDate: '2026-11-12',
+      processes: seed.processes.map(process => ({ ...process, haveComponent: true })),
+      components: [
+        { componentNo: 'DEV-CP-EXAMPLE-01', goodQty: 1, unitNo: 'PCS', releaseState: 0 },
+        { componentNo: 'DEV-CP-EXAMPLE-02', goodQty: 1, unitNo: 'PCS', releaseState: 1 },
+      ],
+    },
     { ...seed, moNo: 'DEV-MO-004', issueState: -1 },
     { ...seed, moNo: 'DEV-MO-005', hasLots: true },
     { ...seed, moNo: 'DEV-MO-006', issueState: 2, moState: 99, unreleaseLotQty: 0, actualStartDate: '2026-11-13', actualFinishDate: '2026-11-15' },
@@ -260,6 +267,14 @@ function saveLocal(next: WorkOrder[]): boolean {
   }
 }
 
+function saveComponents(moNo: string, dataStamp: number, components: WorkOrderComponent[]): boolean {
+  const row = rows.value.find(item => item.moNo === moNo)
+  if (!row || row.dataStamp !== dataStamp || row.issueState !== 2 || (row.moState !== 2 && row.moState !== 3)) return false
+  return saveLocal(rows.value.map(item => item === row ? {
+    ...item, components, dataStamp: item.dataStamp + 1, reviser: operator(), reviseDate: now(),
+  } : item))
+}
+
 function open(nextMode: typeof mode.value): void {
   const row = active.value
   if (nextMode !== 'add' && !row) return
@@ -381,6 +396,8 @@ function apply(event: MouseEvent): void {
 <template>
   <ManufacturingOrderMaterials v-if="pageMode === 'materials' || pageMode === 'material-stock'" class="mo-page"
     :orders="rows" :development-preview="isDev" :stock-only="pageMode === 'material-stock'" @close="emit('close')" />
+  <ManufacturingOrderComponents v-else-if="pageMode === 'components'" class="mo-page" :orders="rows"
+    :development-preview="isDev" :save-components="saveComponents" @close="emit('close')" />
   <section v-else class="mo-page">
     <h2>{{ pageTitle }}</h2>
     <template v-if="isDev">
