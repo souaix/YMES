@@ -158,6 +158,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PD105 產品參數群組](modules/PRD/產品參數群組.md) 已完成 DEV 群組版次、明細維護及核准目錄，供 PD102／PD103 查找。
 
+[PD106 生產時間限制](modules/PRD/生產時間限制.md) 已完成 DEV 站與站限制、Hold 選取、狀態操作及三表 SQL 交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

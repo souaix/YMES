@@ -43,6 +43,7 @@ import ProductTypeMaster from './components/ProductTypeMaster.vue'
 import ProductModuleMaster from './components/ProductModuleMaster.vue'
 import ProductContentsSearch from './components/ProductContentsSearch.vue'
 import RecipeGroupMaster from './components/RecipeGroupMaster.vue'
+import ProductTimeLimitMaster from './components/ProductTimeLimitMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -363,6 +364,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:MODULE BASIS', label: '製程模組資料', tableName: 'tblprdmodulebasis', shortLabel: '模', functionNo: 'MODULE BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:PRODUCT SEARCH', label: '產品內容查詢', tableName: 'tblprdproductbasis', shortLabel: '查', functionNo: 'PRODUCT SEARCH', moduleNo: 'PRD' },
       { id: 'function:PRD:PRD RECIPE BASIS', label: '產品參數群組', tableName: 'tblprdrecipebasis', shortLabel: '參', functionNo: 'PRD RECIPE BASIS', moduleNo: 'PRD' },
+      { id: 'function:PRD:LIMITED TIME CONTROL', label: '生產時間限制(站與站)', tableName: 'tblprdlimitedtimecontrol', shortLabel: '時', functionNo: 'LIMITED TIME CONTROL', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -483,6 +485,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:MODULE BASIS': `${appBasePath}/MasterData/ProductModules`,
   'function:PRD:PRODUCT SEARCH': `${appBasePath}/PRD/ProductSearch`,
   'function:PRD:PRD RECIPE BASIS': `${appBasePath}/PRD/RecipeGroups`,
+  'function:PRD:LIMITED TIME CONTROL': `${appBasePath}/PRD/TimeLimits`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -610,6 +613,7 @@ const isProductTypePage = computed(() => activeMasterKey.value === 'function:PRD
 const isProductModulePage = computed(() => activeMasterKey.value === 'function:PRD:MODULE BASIS')
 const isProductContentsSearchPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT SEARCH')
 const isRecipeGroupPage = computed(() => activeMasterKey.value === 'function:PRD:PRD RECIPE BASIS')
+const isProductTimeLimitPage = computed(() => activeMasterKey.value === 'function:PRD:LIMITED TIME CONTROL')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2102,6 +2106,13 @@ async function signOut(): Promise<void> {
         />
         <RecipeGroupMaster
           v-else-if="isRecipeGroupPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductTimeLimitMaster
+          v-else-if="isProductTimeLimitPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
