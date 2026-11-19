@@ -215,7 +215,7 @@
 - [x] 使用 PowerShell 5.1 + Oracle.ManagedDataAccess，經本機受保護連線唯讀取得 `TBLQCINSPECTIONBASIS`、`TBLQCINSPECTIONDETAIL` Oracle table/index DDL；確認兩張表只有 PK unique index、無 FK/其他索引，未查業務列或執行 Oracle DDL。
 - [x] 新增 `/YMES/QC/Inspection` Vue DEV 頁、QC 三層選單及獨立 localStorage 假資料；保留 EQP「設備點檢表設定」獨立路由。新增 QC217 規格、Oracle DDL、PG CREATE-only 參考及家用端 API/SQL handoff。
 - [x] 記錄舊程式 Delete 會依 OP/設備/檢查類型清除共用明細；Issue Job callback SQL 將 InspWeek 誤寫 InspType，家用端 API 必須用完整正確複合鍵修正。
-- [ ] 家用端已完成 QC217 schema/API 與 Production 部署；正式 `/YMES/QC/Inspection` 的選單路由、Options/空清單查詢及新增表單已由家用端驗證。公司端尚未執行 build/test/CRUD 驗收；家用端 commit push 後請先 pull 並對接 Production API，待共用資料來源補齊後再驗證寫入流程。QC218 UI/spec/DDL handoff 已於上節完成；公司端接續按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 選擇下一個尚未遷移功能。
+- [ ] 家用端 QC217 commit `2730c7f` 與公司端 `43079d6` 已 merge 為 `0b0f434` 並 push；Production `/YMES/QC/Inspection` 選單路由、Options/空清單查詢及新增表單已由家用端驗證。公司端請 pull `main`，尚待 build/CRUD 驗收；待共用資料來源補齊後驗證寫入流程。QC218 UI/spec/DDL handoff 已於上節完成；公司端接續按 `docs/MES_MENU_FUNCTION_INVENTORY.md` 選擇下一個尚未遷移功能。
 
 ### QC216 計量品管項目群組_減項（公司端 2026-11-17）
 
@@ -1303,3 +1303,7 @@
 - [ ] PDB02 封測專用 BOM、EquipmentRelease、產線清線執行與正式 ECN 明細待接續。
 - [x] PDB04 已完成 DEV 設定、欄位檢查、核准與 [規格及 Oracle 交接](docs/modules/PRD/檔案上傳基本資料.md)。
 - [ ] 正式檔案服務及憑證管理待家用端接續。下一項 PDB05 測試程式檔案管理。
+
+## PD206 父主檔生命週期來源查證（家用端 2026-11-19 追加）
+
+- [ ] 請公司端從原 WinForms → Service → Core，查產品、設備及作業站的 Delete／硬刪／停用對 `TBLPRDQCRULEBASIS` 實際採 guard、刪除關聯或不處理的規則，提供方法路徑與精確 SQL／條件；特別釐清頻率僅有 ProductNo、沒有 ProductVersion 時，刪單一版、最後存在版、最後已核准版及多版並發／取消核准的來源政策，並區分 literal `*` 與真實編號。僅查來源程式／必要 metadata，不讀業務列或執行 Oracle 寫入；來源沒有或未找到時明列缺口，不猜所有版都禁止刪。家用端目前只有保存當下的父鎖／資格檢核，完整父刪除 hook 尚未完成，詳見 [PD206 維護文件](docs/modules/PRD/產品抽樣頻率規則.md)。
