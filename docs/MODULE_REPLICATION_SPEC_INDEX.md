@@ -248,6 +248,10 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 | ML106 物料品管項目設定 | Form/Service/Core、catalog 與 bind log 結構已核對 | [規格](modules/MTL/物料品管項目設定.md)、Oracle DDL/PG CREATE 與 Vue DEV 頁已建立；Production API 待家用端 |
 | ML107 物料標籤對應設定 | Form/Service/Core；TBLMTLLABELMAP 與 TBLPRDLABELBASIS Oracle DDL 已由 PowerShell 直連核對 | [規格](modules/MTL/物料標籤對應設定.md)、兩張表 CREATE 參考與 Vue DEV 頁已建立；Production API 待家用端 |
 
+## 工單管理 → 訂單
+
+- [OE101 訂單基本資料](modules/OE/訂單基本資料.md) 已完成公司端 DEV 操作與 Oracle DDL、家用端 API／schema 交接。
+
 ## 全 MES 盤點狀態
 
 - Oracle 第一層 Module 清單、排序及功能目錄筆數已查；ModuleNo 翻譯標題與實際使用者權限仍待核實，553 個 Function 的 WinForms/API 遷移狀態尚需逐項追蹤。

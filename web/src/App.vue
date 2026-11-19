@@ -51,6 +51,7 @@ import PackingRuleBasisMaster from './components/PackingRuleBasisMaster.vue'
 import PackingRuleMapPage from './components/PackingRuleMapPage.vue'
 import UserDefinedRunCardMaster from './components/UserDefinedRunCardMaster.vue'
 import ProductRunCardMapMaster from './components/ProductRunCardMapMaster.vue'
+import ReceivingOrderMaster from './components/ReceivingOrderMaster.vue'
 import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
 import FtProgramMaster from './components/FtProgramMaster.vue'
@@ -417,6 +418,13 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:PRD:B_TEST PROGRAM FILE MANAGEMENT', label: '測試程式檔案管理', tableName: 'tbl_bprdmesfilemanagement', shortLabel: '檔', functionNo: 'B_TEST PROGRAM FILE MANAGEMENT', moduleNo: 'PRD' },
     ] }],
   },
+  {
+    id: 'module:OE', label: '工單管理', shortLabel: '單', moduleNo: 'OE', children: [{
+      id: 'menu:OE:RO', label: '訂單', shortLabel: '訂', children: [
+        { id: 'function:OE:RO BASIS', label: '訂單基本資料', tableName: 'tbloerobasis', shortLabel: '基', functionNo: 'RO BASIS', moduleNo: 'OE' },
+      ],
+    }],
+  },
 ]
 
 const menuTree = ref<MenuNode[]>(fallbackMenuTree)
@@ -424,6 +432,7 @@ const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
 const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
+  'function:OE:RO BASIS': appBasePath + '/OE/ReceivingOrders',
   'function:ENT:BROKER BASIS': brokerBasisRoute,
   'function:ENT:FORWARDER BASIS': forwarderBasisRoute,
   'function:ENT:TAKER BASIS': takerBasisRoute,
@@ -638,6 +647,7 @@ const functionRoutes: Record<string, string> = {
   'PS BASIS': `${appBasePath}/PRS/ProductionSegments`,
   'STAGE BASIS': `${appBasePath}/PRS/FabPrsStageBasis`,
   'PRD BASIS': `${appBasePath}/MasterData/Products`,
+  'RO BASIS': appBasePath + '/OE/ReceivingOrders',
   'INSPMACHINE PARAMETER TYPE': appBasePath + '/QC/InspectionMachineParameterType',
   'INSPMACHINE PARAMETER': appBasePath + '/QC/InspectionMachine',
   'INSPMACHINE DRIVER': appBasePath + '/QC/InspectionDrivers',
@@ -698,6 +708,7 @@ const isPackingRuleBasisPage = computed(() => activeMasterKey.value === 'functio
 const isPackingRuleMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRD PACKINGRULE MAP')
 const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'function:PRD:USER DEFINED RUNCARD')
 const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
+const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCITEM SPEC IMPORT')
 const isProductGbomBatchImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD GBOM IMPORT')
 const isFtProgramPage = computed(() => activeMasterKey.value === 'function:PRD:FT PROGRAM BASIS')
@@ -2257,6 +2268,13 @@ async function signOut(): Promise<void> {
         />
         <UserDefinedRunCardMaster
           v-else-if="isUserDefinedRunCardPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ReceivingOrderMaster
+          v-else-if="isReceivingOrderPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"

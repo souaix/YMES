@@ -1313,3 +1313,8 @@
 ## PD206 父主檔生命週期來源查證（家用端 2026-11-19 追加）
 
 - [x] 完成產品、設備及站點的 Form → Service → Core 查證，記錄硬刪／停用／取消核准條件、Oracle 約束與觸發器資料字典、WIP 八種範圍比對順序。可讀來源未見 PD206 guard、cascade 或最後版特例。並發與暫無合格父項時的政策仍由 YMES 決定。見 [PD206 維護文件](docs/modules/PRD/產品抽樣頻率規則.md#父主檔生命週期來源查證)。
+
+## OE101 訂單基本資料
+
+- [x] 以 Form／Designer、wsOE、Core 完成 DEV 訂單、屬性與明細操作，並核對 MESTEST 主檔、明細及兩張屬性表的 DDL。
+- [x] [OE101 規格](docs/modules/OE/訂單基本資料.md) 含 API／schema handoff 及 CREATE-only 參考。正式字典、屬性映射、Issue Control／Job 及廠別差異列為後續。
