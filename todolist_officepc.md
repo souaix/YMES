@@ -1490,3 +1490,11 @@
 - [x] 依 IC_CP_PKG Form／Designer、Industry Base Service、Core 交付 DEV 晶片測試工單及流程、模擬挑片、元件驗證與發放。
 - [x] [OEP01 規格](docs/modules/OE/工單開立_晶片測試.md) 交付半成品批次關聯表 Oracle DDL、CREATE-only 及 PSS API handoff。
 - [x] WP101、WP102、WP201、WP202 已完成；接續功能為 WP204，進度記錄於上方。
+
+## WP308 載具管理_元件已完成公司端 DEV（FunctionKey WP308，2026-11-20）
+
+- [x] 依 frmCarrierManagement、frmCarrierIn、frmCarrierChange 及 Service/Core 完成 CarrierState / Detail 雙 Grid、查詢、Carrier In / Out / Change Carrier 子視窗、Carrier lookup、掃 Lot、容量／狀態驗證、位置 Up/Down 與確認互動。
+- [x] Vue DEV 路徑 /YMES/WIP/CarrierManagement，掛入 WIP → 設備與載具 → 載具管理_元件；和 WP302 共用 localStorage 假資料。
+- [x] 完成 docs/modules/WIP/載具管理_元件.md、模組索引、資料庫連線紀錄與兩端 TODO。WP308 沒有新資料表，沿用 WP302、WP101、Carrier Basis/Type 已查證 DDL；不重複產生 CREATE SQL。
+- [x] 本輪未連 PostgreSQL，未執行 Oracle DDL/DML、build、test 或 browser。未改動 YMES API。
+- [ ] 接續 WP303 設備耗品現況；依 MES menu inventory 與 WinForms／Service／Core 繼續逐頁完成 DEV 規格，遇到缺失 Oracle DDL 時用公司本機 PowerShell 5.1 + 受保護 Oracle profile 唯讀查取。

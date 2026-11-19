@@ -766,3 +766,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 Oracle profile 直連 MESTEST，只讀取得 `TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCARRIERSTATEDETAILLOG`、`TBLINVSTOCKERSTATE` 的 DBMS_METADATA DDL、欄位／constraint／index／trigger metadata。未查業務資料列，未執行 Oracle DDL/DML，未連 YMES PostgreSQL。
 - Detail 有 11 欄、7 個 NOT NULL constraint、1 個 ComponentNo 非唯一 index，沒有 PK/FK/Trigger；DetailLog 有 18 欄、9 個 NOT NULL constraint，沒有 PK/index/FK/Trigger；StockerState 有 8 欄、三欄複合 PK unique index，沒有 FK/Trigger。Oracle source DDL、metadata 與 PostgreSQL CREATE-only 見 `database/reference/mestest_wip_wp302_*`。既有 CarrierState／CarrierType／Lot/Component references 重用，不重複 CREATE。
 - 受保護 profile／PowerShell 只在公司本機使用；Oracle IP、帳號、密碼、SID 未輸出或提交。CREATE-only 不是 migration；家用端需先查 YMES PostgreSQL live schema／migration history，僅為實際缺少的物件新增 forward migration。
+
+### 更新 2026-11-20：WIP WP308 載具管理_元件
+
+- WP308 依 frmCarrierManagement、CarrierIn/CarrierChange、wsEQP/wsWIP/wsINV 與 clsLot 使用載具、載具狀態／明細／歷程、Lot／Component、Stocker 現況；所有資料表均已有 Carrier Basis/Type、WP302 或 WP101 Oracle source DDL、metadata 與 CREATE-only reference。
+- 本功能沒有新增 Oracle 專屬資料表，故沒有重複產生 source DDL 或 CREATE-only。公司端未重查業務資料列、未執行 Oracle DDL/DML，未連 YMES PostgreSQL。家用端先對照 live schema/migration history，僅為確實缺失表新增 migration；正式放入、卸載、更換都應是登入保護的 POST command，並在交易內重驗 Carrier/Lot/Component/Stocker 與容量。

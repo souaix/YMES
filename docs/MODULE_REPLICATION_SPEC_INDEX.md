@@ -302,3 +302,4 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 - QC209「計量品管項目管制法則對應」：[功能規格](modules/QC/計量品管項目管制法則對應.md)。標準 QC_ItemRule Form/Service/Core 已核對；Vue DEV 頁已接三層選單。Oracle `TBLQCITEMRULE` DDL 沿用 QC205 前次 PowerShell/ODP.NET 直連擷取，QCRuleBasis 沿用 QC108；新增 QC209 PostgreSQL CREATE 參考與整組替換 API handoff，家用端待核 live schema/實作 API。
 
 - QC409「OCAP異常單處置調整」：[功能規格](modules/QC/OCAP異常單處置調整.md)。直接核對 WinForms Form/流程圖選擇 Form、wsWIP/clsLot 業務交易，取得 3 張 OCAP WIP 表及 11 張共用 ERF/WIP side-effect Oracle DDL；Vue DEV 頁與專用表 PG CREATE/API handoff 已完成。此頁是生產異常單處置交易，不是三表 CRUD；Production API 需保留 LotStamp、ERF final disposition、WIP 狀態及 extension/通知副作用。
+- WP308「載具管理_元件」：[功能規格](modules/WIP/載具管理_元件.md)。依 frmCarrierManagement／CarrierIn／CarrierChange、wsEQP／wsWIP／wsINV 與 clsLot 完成雙 Grid、載具放入／整載具卸載／更換載具的 Vue DEV；資料與 WP302 共用。重用 WP302、WP101、CarrierBasis/Type 已查證表，沒有新增 Oracle table 或 CREATE-only；家用端待核對 PostgreSQL live schema 並完成登入保護的 lookup、POST command 及一致交易。

@@ -1957,3 +1957,12 @@ API 工作：
 - [ ] Check In／Out、Carrier Check In／Out、設備 Hold、全域 Hold、Eqp Change State 使用 POST command。不可 GET 寫入，也不可接受前端傳入的可派批次結果作為資格；伺服器重驗登入者、Equipment、LoadPort、Lot、LotStamp／狀態及關聯。
 - [ ] CI／CO 接 WP201 的共用 ExecuteLot、TriggerOP、Business Rule、TransferLot 交易；保留 QTime/LMS、ERF、SPC/QC、設備／Carrier 與 operation log side effects。定義 CAS/鎖定、冪等、部分失敗與錯誤碼，不用簡化的 LotStatus 更新替代。
 - [ ] 四張 CREATE SQL 為原生 Oracle 結構參考；來源中 TBLEQPFAVORITE 及 TBLPRDSTAGESTEPSET、DETAIL 沒有 PK，TBLWIPLOTGPEQUIPMENT 只有 LOTNO/OPNO 非唯一索引。不可自行補猜測 PK/FK。
+
+## WIP WP308 載具管理_元件家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 main，閱讀 docs/modules/WIP/載具管理_元件.md、docs/modules/WIP/載具現況管理.md 與 docs/DATABASE_CONNECTION.md 的 WP302/WP308 段落。
+- [ ] WP308 沒有新增 Oracle 表或 CREATE-only。先核對 YMES PostgreSQL live schema／migration history；重用 Carrier Basis/Type、CarrierState、Detail/DetailLog、LotBasis/State、ComponentState、StockerState。只有實際缺表才新增 forward migration，不要重建 reference 已覆蓋的表。
+- [ ] 建登入保護的載具查詢、明細、CarrierType、可用載具、Lot/Component/Stocker 驗證 lookup；遵守查詢權限範圍、參數化、分頁。
+- [ ] Carrier In、Carrier Out、Change Carrier 全用 POST command。交易內重新檢查 Carrier IssueState/UseLayer/容量、LotState/status/CarrierNo、Component SlotNo、StockerState 與 Carrier Detail；為兩個載具及 Lot/Component 關聯定義鎖定/CAS，確保歷程、明細、Lot carrier no、Component SlotNo、CarrierState 一致回滾。
+- [ ] 保留來源差異：Carrier Out 目前不清 ComponentState.SlotNo；Change Carrier 會清舊值並設新值；Carrier Change 的候選以 IssueState=2、無 Detail 與 UseLayer 過濾，不以 CarrierState 單獨判空；Carrier Change Lot 掃描沒有 Stocker 檢核。若正式端改行為，需明確記為功能修正。
+- [ ] 共享 WP302 假資料的 DEV localStorage 不是正式 DTO/schema；正式 API 需從資料庫重讀 serial、component 與 slot，再寫 Detail/DetailLog。完成 API、migration（若確有缺表）、錯誤碼與交易回歸後更新 API/schema/deploy records。
