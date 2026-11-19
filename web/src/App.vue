@@ -42,6 +42,7 @@ import ProductBasisMaster from './components/ProductBasisMaster.vue'
 import ProductTypeMaster from './components/ProductTypeMaster.vue'
 import ProductModuleMaster from './components/ProductModuleMaster.vue'
 import ProductContentsSearch from './components/ProductContentsSearch.vue'
+import RecipeGroupMaster from './components/RecipeGroupMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -361,6 +362,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'product-master', label: '產品主檔', tableName: 'tblprdproductbasis', shortLabel: '主', functionNo: 'PRD BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:MODULE BASIS', label: '製程模組資料', tableName: 'tblprdmodulebasis', shortLabel: '模', functionNo: 'MODULE BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:PRODUCT SEARCH', label: '產品內容查詢', tableName: 'tblprdproductbasis', shortLabel: '查', functionNo: 'PRODUCT SEARCH', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD RECIPE BASIS', label: '產品參數群組', tableName: 'tblprdrecipebasis', shortLabel: '參', functionNo: 'PRD RECIPE BASIS', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -480,6 +482,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRD TYPE': `${appBasePath}/MasterData/ProductTypes`,
   'function:PRD:MODULE BASIS': `${appBasePath}/MasterData/ProductModules`,
   'function:PRD:PRODUCT SEARCH': `${appBasePath}/PRD/ProductSearch`,
+  'function:PRD:PRD RECIPE BASIS': `${appBasePath}/PRD/RecipeGroups`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -606,6 +609,7 @@ const isProductionSegmentPage = computed(() => activeMasterKey.value === 'functi
 const isProductTypePage = computed(() => activeMasterKey.value === 'function:PRD:PRD TYPE')
 const isProductModulePage = computed(() => activeMasterKey.value === 'function:PRD:MODULE BASIS')
 const isProductContentsSearchPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT SEARCH')
+const isRecipeGroupPage = computed(() => activeMasterKey.value === 'function:PRD:PRD RECIPE BASIS')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2093,6 +2097,13 @@ async function signOut(): Promise<void> {
         <ProductContentsSearch
           v-else-if="isProductContentsSearchPage"
           class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <RecipeGroupMaster
+          v-else-if="isRecipeGroupPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { loadDevelopmentRecipeGroups, type RecipeGroup } from './recipeGroupDevelopment'
 
 type RecipeGroupRow = Record<string, any>
-type RecipeCatalogRow = { recipeGroup: string; recipeVersion: number; description: string; issueState: number; curVersion: number }
 
 const browserWindow = globalThis.window
 const props = defineProps<{
@@ -27,12 +27,8 @@ const productNo = computed(() => String(props.product.productNo ?? props.product
 const productVersion = computed(() => String(props.product.productVersion ?? props.product.ProductVersion ?? ''))
 
 // Only current, approved product recipe groups are selectable by the legacy Add dialog.
-const recipeCatalog: RecipeCatalogRow[] = [
-  { recipeGroup: 'DEV-RG-01', recipeVersion: 1, description: 'DEV 產品配方範例 A', issueState: 2, curVersion: 1 },
-  { recipeGroup: 'DEV-RG-02', recipeVersion: 3, description: 'DEV 產品配方範例 B', issueState: 2, curVersion: 1 },
-  { recipeGroup: 'DEV-RG-DRAFT', recipeVersion: 1, description: 'DEV 未核准，不應出現在查找清單', issueState: 0, curVersion: 0 },
-]
-const approvedCurrentCatalog = computed(() => recipeCatalog.filter(row => row.issueState === 2 && row.curVersion === 1))
+const approvedCurrentCatalog = computed(() => props.developmentPreview
+  ? loadDevelopmentRecipeGroups().filter(row => row.issueState === 2 && row.curVersion === 1) : [])
 const displayRows = computed(() => working.value.map(row => ({
   ...row,
   key: String(row.recipeGroup ?? row.RecipeGroup ?? ''),
@@ -75,7 +71,7 @@ function openAdd(): void {
   lookupOpen.value = false
   definitionOpen.value = true
 }
-function chooseRecipeGroup(row: RecipeCatalogRow): void {
+function chooseRecipeGroup(row: RecipeGroup): void {
   draftRecipeGroup.value = row.recipeGroup
   dirty.value = true
   appliedRecipeGroup.value = ''
