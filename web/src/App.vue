@@ -55,6 +55,7 @@ import ProductQCSpecImport from './components/ProductQCSpecImport.vue'
 import ProductGbomBatchImport from './components/ProductGbomBatchImport.vue'
 import FtProgramMaster from './components/FtProgramMaster.vue'
 import EqcSampleRuleMaster from './components/EqcSampleRuleMaster.vue'
+import ProductQcFrequencyMaster from './components/ProductQcFrequencyMaster.vue'
 import MasterDataMaster from './components/MasterDataMaster.vue'
 import OperationTypeMaster from './components/OperationTypeMaster.vue'
 import OperationControlRuleMaster from './components/OperationControlRuleMaster.vue'
@@ -390,6 +391,7 @@ const fallbackMenuTree: MenuNode[] = [
     ] }, { id: 'product-bin-settings', label: '等級設定', shortLabel: '級', children: [
       { id: 'function:PRD:FT PROGRAM BASIS', label: 'FT測試程式', tableName: 'tblprdftprogrambasis', shortLabel: '測', functionNo: 'FT PROGRAM BASIS', moduleNo: 'PRD' },
       { id: 'function:PRD:EQC SAMPLE RULE', label: '電性(EQC)抽樣規則', tableName: 'tblprdeqcsamplerule', shortLabel: '抽', functionNo: 'EQC SAMPLE RULE', moduleNo: 'PRD' },
+      { id: 'function:PRD:PRD QCRULE BASIS', label: '產品抽樣頻率規則', tableName: 'tblprdqcrulebasis', shortLabel: '頻', functionNo: 'PRD QCRULE BASIS', moduleNo: 'PRD' },
     ] }],
   },
 ]
@@ -524,6 +526,7 @@ const menuRoutes: Record<string, string> = {
   'function:PRD:PRD GBOM IMPORT': `${appBasePath}/PRD/GbomBatchImport`,
   'function:PRD:FT PROGRAM BASIS': `${appBasePath}/PRD/FTPrograms`,
   'function:PRD:EQC SAMPLE RULE': `${appBasePath}/PRD/EQCSampleRules`,
+  'function:PRD:PRD QCRULE BASIS': `${appBasePath}/PRD/QCFrequencyRules`,
 }
 
 const functionRoutes: Record<string, string> = {
@@ -665,6 +668,7 @@ const isProductQCSpecImportPage = computed(() => activeMasterKey.value === 'func
 const isProductGbomBatchImportPage = computed(() => activeMasterKey.value === 'function:PRD:PRD GBOM IMPORT')
 const isFtProgramPage = computed(() => activeMasterKey.value === 'function:PRD:FT PROGRAM BASIS')
 const isEqcSampleRulePage = computed(() => activeMasterKey.value === 'function:PRD:EQC SAMPLE RULE')
+const isProductQcFrequencyPage = computed(() => activeMasterKey.value === 'function:PRD:PRD QCRULE BASIS')
 const isFabPrsStageBasisPage = computed(() => activeMasterKey.value === 'function:PRS:STAGE BASIS')
 const isEquipmentPage = computed(() => activeMasterKey.value === 'equipment-master')
 const isOperationTypePage = computed(() => activeMasterKey.value === 'function:OP:OP TYPE')
@@ -2241,6 +2245,13 @@ async function signOut(): Promise<void> {
         />
         <EqcSampleRuleMaster
           v-else-if="isEqcSampleRulePage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ProductQcFrequencyMaster
+          v-else-if="isProductQcFrequencyPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"

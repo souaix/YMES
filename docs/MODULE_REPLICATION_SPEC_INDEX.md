@@ -186,6 +186,8 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 
 [PD204 電性抽樣規則](modules/PRD/電性抽樣規則.md) 已完成 DEV 抽樣模式、Bin 排序、狀態和家用端交接。
 
+[PD206 產品抽樣頻率規則](modules/PRD/產品抽樣頻率規則.md) 已完成 DEV 範圍鍵、三種頻率、班別及家用端交接。
+
 其餘 15 個 Module 的 476 個 Function 尚未逐一遷移。先以 MES_MENU_FUNCTION_INVENTORY.md 為工作目錄，再按 ModuleOrder、MenuNo、FunctionNo 追 WinForms Form/Service、相關表、API、Create SQL 及 DEV 畫面。
 
 ## 設備資料 → 設備設定

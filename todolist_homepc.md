@@ -1759,3 +1759,7 @@ API 工作：
 ## PRD PD204 電性抽樣規則家用端 handoff（2026-11-19）
 
 - [ ] 依 [電性抽樣規則](docs/modules/PRD/電性抽樣規則.md) 核對主從 CREATE、系統 Bin、DataStamp、簽核和執行函式。
+
+## PRD PD206 產品抽樣頻率規則家用端 handoff（2026-11-19）
+
+- [ ] 依 [產品抽樣頻率規則](docs/modules/PRD/產品抽樣頻率規則.md) 核對 CREATE、萬用範圍鍵、各頻率欄位與 WIP 執行。

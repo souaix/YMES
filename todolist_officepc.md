@@ -1254,4 +1254,10 @@
 
 - [x] 核對 WinForms／Designer、PRD Service／Core 以及 MESTEST 主檔和 Bin 表。
 - [x] 完成兩種抽樣方式、Bin 選取和調序、狀態及 CRUD，整理 [規格與交接](docs/modules/PRD/電性抽樣規則.md)。
-- [ ] 正式抽樣執行、核准流程及選單待家用端接續。下一項 PD206 產品抽樣頻率規則。
+- [ ] 正式抽樣執行、核准流程及選單待家用端接續。
+
+## PRD PD206 產品抽樣頻率規則公司端檢查點（2026-11-19）
+
+- [x] 核對 WinForms／Designer、PRD Service／Core、WIP 呼叫端與 MESTEST。
+- [x] 完成範圍鍵、三種頻率、班別、CRUD／複製及 [規格與交接](docs/modules/PRD/產品抽樣頻率規則.md)。
+- [ ] 正式候選、抽樣執行與 API 待家用端接續。下一項 PD901 產品作業站標工維護。
