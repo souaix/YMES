@@ -1497,4 +1497,13 @@
 - [x] Vue DEV 路徑 /YMES/WIP/CarrierManagement，掛入 WIP → 設備與載具 → 載具管理_元件；和 WP302 共用 localStorage 假資料。
 - [x] 完成 docs/modules/WIP/載具管理_元件.md、模組索引、資料庫連線紀錄與兩端 TODO。WP308 沒有新資料表，沿用 WP302、WP101、Carrier Basis/Type 已查證 DDL；不重複產生 CREATE SQL。
 - [x] 本輪未連 PostgreSQL，未執行 Oracle DDL/DML、build、test 或 browser。未改動 YMES API。
-- [ ] 接續 WP303 設備耗品現況；依 MES menu inventory 與 WinForms／Service／Core 繼續逐頁完成 DEV 規格，遇到缺失 Oracle DDL 時用公司本機 PowerShell 5.1 + 受保護 Oracle profile 唯讀查取。
+- [x] WP303 設備耗品現況已接續完成，詳見下一節；下一功能為 WP304 設備耗品現況履歷。
+
+## WP303 設備耗品現況已完成公司端 DEV（FunctionKey WP303，2026-11-20）
+
+- [x] 依 frmEQPConsumeStatus／Define、WP_EQPConsumeReset 外掛、wsWIP/wsEQP、clsWIP/clsEQPBasis 完成主 Grid、Add/Edit/Copy/Delete、Equipment/ConsumeBasis lookup 與 ConsumReset 模擬。
+- [x] Vue DEV `/YMES/WIP/EquipmentConsumeStatus`，掛入 WIP → 設備與載具 → 設備耗品現況；假資料只寫 localStorage `ymes.dev.wp303-consume-status.v1`。
+- [x] PowerShell 5.1 + 受保護 Oracle profile 直連取得 Status/Log 兩張表 DDL 與 metadata；新增 source DDL、metadata、PostgreSQL CREATE-only、模組規格、索引、DB 記錄與家用端 API handoff。
+- [x] ConsumeBasis 與 EquipmentBasis 沿用已存在 reference；未重複輸出 Create SQL。標明 Reset 的 ToleranceQty fallback／達上限清零行為，以及 WinForms 多筆逐列刪除的部分成功可能。
+- [x] 本輪未查業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未部署／修改 API，未執行 build/test/browser。
+- [ ] 接續 WP304「設備耗品現況履歷」，重新閱讀對應 WinForms／Designer、Service/Core 與資料表 reference；若缺 DDL，直連 MESTEST Oracle dictionary 唯讀查取。

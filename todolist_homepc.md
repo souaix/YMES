@@ -1966,3 +1966,14 @@ API 工作：
 - [ ] Carrier In、Carrier Out、Change Carrier 全用 POST command。交易內重新檢查 Carrier IssueState/UseLayer/容量、LotState/status/CarrierNo、Component SlotNo、StockerState 與 Carrier Detail；為兩個載具及 Lot/Component 關聯定義鎖定/CAS，確保歷程、明細、Lot carrier no、Component SlotNo、CarrierState 一致回滾。
 - [ ] 保留來源差異：Carrier Out 目前不清 ComponentState.SlotNo；Change Carrier 會清舊值並設新值；Carrier Change 的候選以 IssueState=2、無 Detail 與 UseLayer 過濾，不以 CarrierState 單獨判空；Carrier Change Lot 掃描沒有 Stocker 檢核。若正式端改行為，需明確記為功能修正。
 - [ ] 共享 WP302 假資料的 DEV localStorage 不是正式 DTO/schema；正式 API 需從資料庫重讀 serial、component 與 slot，再寫 Detail/DetailLog。完成 API、migration（若確有缺表）、錯誤碼與交易回歸後更新 API/schema/deploy records。
+
+## WIP WP303 設備耗品現況家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 main，閱讀 `docs/modules/WIP/設備耗品現況.md`、本段 `docs/DATABASE_CONNECTION.md` 與 `database/reference/mestest_wip_wp303_*`。
+- [ ] 兩張 Oracle 專用表已交付 PostgreSQL CREATE-only：`ymes.tblwipeqpconsumestatus`、`ymes.tblwipeqpconsumelog`。先查 PostgreSQL live schema／migration history；只為缺表建立 forward migration，不可把 CREATE-only 直接套用到既有環境。`ymes.tbleqpconsumebasis` 與設備主檔沿用既有 reference。
+- [ ] 實作登入保護、權限範圍明確、分頁排序的設備耗品現況列表；Equipment lookup 限 IssueState=2，ConsumeNo lookup 依 EquipmentType 查 ConsumeBasis。
+- [ ] 實作新增／編輯／刪除：Status PK 為 EquipmentNo+ConsumeNo；新增 Creator/CreateDate；編輯依 WinForms 只改 ConsumeSeq/CurQty/CurPeriod；刪除支援多選。來源多選刪除逐列執行，須明確選擇相容逐列部分成功或採原子 bulk-delete。
+- [ ] 實作 Reset POST command：以資料庫最新 Status/Basis 重算，於同一交易 INSERT 舊 ConsumeSeq 至 Log（Creator、CreateDate、AccQty、AccPeriod），再 CAS 更新 Status 的新 ConsumeSeq、CurQty=0、CurPeriod=0、Revisor、ReviseDate。任何步驟失敗都回滾；禁止以 GET 執行重置。
+- [ ] ConsumeSeq 重複檢查在來源以 ConsumeNo 為範圍查 Log，跨設備共用序號時也拒絕；此規則未由 PK 保證，需解決併發重複（資料庫鎖／交易級一致性檢查），但不可擅自新增 Oracle 不存在的唯一約束。編輯不更新 Revisor/ReviseDate 是 Core 來源行為。
+- [ ] 保留並評估來源的重置邊界瑕疵：Period=-1 代表不限；RemainPeriod 不足顯示時用 ToleranceQty（疑似應為 TolerancePeriod）；達用量／週期上限時 Reset 視窗會把 AccQty／AccPeriod 輸入清為 0。若修正，記為產品規則變更並取得辦公室確認。
+- [ ] CREATE-only 與 WinForms 假資料不構成正式 schema/API。完成 migration（若缺）、API／DTO、授權、錯誤碼、交易回歸與部署紀錄後更新此交接；開始下一功能 WP304 設備耗品現況履歷。

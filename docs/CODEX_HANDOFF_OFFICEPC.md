@@ -62,6 +62,12 @@
 
 ## 2026-11-20 WIP WP308 接續檢查點
 
-- WP308「載具管理_元件」已依 WinForms frmCarrierManagement／frmCarrierIn／frmCarrierChange、Service 與 Core 完成 Vue DEV 主頁與兩個子視窗；與 WP302 共用 DEV 假資料。規格為 docs/modules/WIP/載具管理_元件.md，下一個公司端功能接續 WP303 設備耗品現況。
+- WP308「載具管理_元件」已依 WinForms frmCarrierManagement／frmCarrierIn／frmCarrierChange、Service 與 Core 完成 Vue DEV 主頁與兩個子視窗；與 WP302 共用 DEV 假資料。規格為 docs/modules/WIP/載具管理_元件.md；WP303 設備耗品現況已接續完成，詳見下方檢查點。
 - WP308 沒有新表；沿用 WP302、WP101、Carrier Basis/Type 的 Oracle reference。家用端需比對 PostgreSQL live schema，再實作 Carrier In/Out/Change 的登入保護 POST command、lookup 與原子交易。
 - 這輪未連 YMES PostgreSQL、未部署 API、未執行 build/test/browser；詳見 todolist_officepc.md 與 todolist_homepc.md。
+
+## 2026-11-20 WIP WP303 接續檢查點
+
+- WP303「設備耗品現況」已依 `frmEQPConsumeStatus`、`frmEQPConsumeStatusDef`、`WP_EQPConsumeReset/frmEQPConsumeReset`、wsWIP/wsEQP 與 clsWIP/clsEQPBasis 完成 DEV 主頁及維護、設備 lookup、ConsumReset 視窗。規格：`docs/modules/WIP/設備耗品現況.md`；頁面 `/YMES/WIP/EquipmentConsumeStatus`。
+- 兩張新表 `TBLWIPEQPCONSUMESTATUS`、`TBLWIPEQPCONSUMELOG` 的 Oracle source DDL／metadata／PostgreSQL CREATE-only 已建立於 `database/reference/mestest_wip_wp303_*`。設備耗品基準沿用既有設備類別 reference，設備主檔沿用既有 reference。
+- 下一功能接續 WP304「設備耗品現況履歷」。公司端仍只做 Vue DEV 假資料、WinForms／Service／Core 核對及 DDL metadata handoff；不做 YMES API／migration、不連 PostgreSQL、不執行 build/test/browser。
