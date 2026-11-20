@@ -1125,3 +1125,11 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 ### 更新 2026-11-20：WIP WP508 ERF Info 補查
 
 - `WP_ERFInformation` 的 Lot Disposition 直接表 `TBLWIPERFLOTDISPOSITION`，公司端由受保護 MESTEST profile 以 PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp508info_source_ddl.sql`、`mestest_wip_wp508info_source_indexes.sql`、`mestest_wip_wp508info_metadata.txt`；16 欄，PK `(ERFNO, LOTDISPORDER)`，另有非唯一 `LOTSERIAL` 索引，無 trigger。PG CREATE-only `mestest_wip_wp508info_create.sql` 包含 LotDisposition 與 `TBLWIPERFOCAP_ATTACHFILE`。後者 Oracle source 已在 QC409 refs，11 欄，PK `(LOTNO,ERFNO,ATTACHNAME,OCAPNO)`，原先欠 PG CREATE。一般 ERF 附件 PG CREATE 在 WP501，NodeBasis 在 PRS104。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證/受保護附件路徑未提交。家用端先比對 live schema/history，僅對缺項做 forward migration。
+
+### 更新 2026-11-20：WIP WP801 廠內 8D 矯正單
+
+- 直接主表 `TBLWIP8DBASIS_FACTORY` 及 ERF 關聯表已有 WP508/QC409 source+CREATE。流水號 `8DNO_FACTORY` 讀 `TBLSYSSERIALRULEBASIS` 與 `TBLSYSSERIALRULEDETAIL`；公司端從受保護 MESTEST 以 PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp801_serial_source_ddl.sql`、`mestest_wip_wp801_serial_source_indexes.sql`、`mestest_wip_wp801_serial_metadata.txt`。Basis 9 欄、Detail 13 欄，PK 各為 `(SERIALTYPE,SERIALTYPENO)` 與 `(SERIALTYPE,SERIALTYPENO,ITEMNO)`，無其他 index/trigger。`mestest_first_phase_create_tables.sql` 兩表欄位/PK 已有，但少 Oracle 五個 default；精確 PG CREATE-only 在 `mestest_wip_wp801_serial_create.sql`。家用端核 live schema/history，缺 default 時 forward ALTER，不直接因 `CREATE IF NOT EXISTS` 推定現有表已對齊。未查 Oracle 業務列、未執行 Oracle DDL/DML、未連 PostgreSQL，憑證/受保護附件路徑未提交。
+
+### 更新 2026-11-20：WIP WP802 8D 矯正單維護作業
+
+- `WP_8DMaintainDef`/`clsWIP` 直接使用 `TBLWIP8D_ACTION`、`ACTIONDETAIL`、`ATTACHFILE`、`DISPOSITION`、`PREVENTION`、`PREVENTIONTRACK`、`QA`、`QUESTION`、`RELEASE`、`RELEASELOG`、`ROOTCAUSE`、`TEAMMEMBER` 共 12 表。公司端用既有受保護 MESTEST profile，以 PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**查得全部 12 表 DDL、欄位/constraints/index/trigger metadata，檔案 `database/reference/mestest_wip_wp802_source_ddl.sql`、`mestest_wip_wp802_source_indexes.sql`、`mestest_wip_wp802_metadata.txt`；PG CREATE-only 是 `mestest_wip_wp802_create.sql`。12 表皆無 trigger；TeamMember 有 `(QRSNO,MEMBERTYPE,MEMBERNO)` 唯一索引但無主鍵約束，原表 `PMFLAG DEFAULT 0`。家用端先核 live schema/history，僅缺表/欄/索引才 forward migration，不因 `CREATE IF NOT EXISTS` 假設既有 schema 已一致。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證未提交。
