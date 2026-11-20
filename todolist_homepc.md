@@ -2300,3 +2300,11 @@ API 工作：
 - [ ] 核 YMES PostgreSQL live schema／migration history。Core 直接更新 `TBLWIPLOTBASIS`，WP101 已有 Oracle source DDL／PostgreSQL CREATE-only；查詢 LotState 和 RO／Area／OP／Product lookup 表也有既有 source refs。沒有本功能新表，不重建現存表；若 helper 另有間接表再核對。
 - [ ] 做登入授權的六欄候選 Lot 查詢與四類 lookup。固定 Status=0–5、LotState=1，至少一篩選條件；回傳 BaseLotNo、HotLot、Priority、LotNo、Status、18 欄顯示資料及可供衝突檢查的版本。排序 HotLot 降、Priority 升、LotNo 升；限制查詢量／分頁。掃描選取只對目前可見結果生效。
 - [ ] 做原子批次 Set API：必須至少一個有效選取、HotLot 0／1、Priority 整數 0–99；server 重讀／鎖定每個 BaseLotNo 及對應 Lot 歸屬、狀態、版本／權限，對同一 BaseLotNo 去重，參數化更新 `TBLWIPLOTBASIS.HotLot/Priority`，明確回報每個基礎批及影響 Lot、審計／衝突／重試結果。原 Form 逐列呼叫 `EditLotBasis_Confirm`，中途失敗可能部分完成；不要讓 browser 或 localStorage 決定已過帳狀態。正式部署與驗收由家用端負責。
+
+## WIP WP501 立即異常設定家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP501 規格](docs/modules/WIP/立即異常設定.md) 與 `docs/DATABASE_CONNECTION.md` WP501 段。公司端 `/YMES/WIP/ImmediateHoldSet` 是 DEV 假交易，正式環境不可讀 `ymes-dev-mock:wip-immediate-hold:state:v1`、使用本機 ERFNo 或把附件檔名當上傳成功。
+- [ ] 核 YMES PostgreSQL live schema、migration history、資料與權限。新增 Oracle source DDL/metadata 的 `TBLWIPERFCREATEDATA`、`TBLWIPERFHOLDREASON`、`BKTBLWIPERFCREATEDATA`，另三張 `TBLWIPERFBASIS`、`TBLWIPERFHOLDREASONDISP`、`TBLWIPERF_ATTACHFILE` 的 source DDL 已在 QC409 reference；六表 CREATE-only 是 `database/reference/mestest_wip_wp501_create.sql`。只對 live 確認缺少的結構做 forward migration，不直接執行整份 CREATE-only；Backup 表無 PK，不要自行補。Lot、QC、OCAP 及 System 既有表先重用，追 Reverse/ReleaseLog/User Define hook 間接依賴。
+- [ ] 提供有登入/功能權限的六欄 Lot 候選查詢、前五類 lookup、ERF 主次分類/HoldItem/元件/Area/OCAP/EquipmentState 查詢，限制查詢量或分頁。至少一個 filter；按 `ERFMultipleHold` 選 Status 0/1/4 或 0/1/3/4，固定 CurQty>0、LotState<>0；Partial 非 Queue 排除。Set 前與 POST 時重查包裝、批與 OP/Status/LotStamp，拒絕已 Final 處置及未處理 Dummy 衝突。
+- [ ] 做單一原子 Immediate Hold POST：server 保留 ERFNo、取登入使用者，驗證 MClass、HoldDescription、原因非空、Qty 四位精度、原因複合鍵唯一、OCAP 全有/全空、Release EQP 狀態及其他 Lot 使用；按原窗有元件時分派 Component+T1–T5，無元件用 N/A。寫 ERFBasis、兩張 HoldReason、LotState/Log/LoginState、Reverse/ReleaseLog、OCAP 及必要附件關聯，依 CreateERF/既有狀態與系統參數處理多重 Hold。重送/版本衝突應有明確回應；參數化 SQL，不能沿用舊 Core 拼字串。
+- [ ] 附件實際上傳/BLOB、PDF、郵件/訊息與交易內外的失敗補償或 outbox 一起設計。`TBLWIPERFCREATEDATA` 有資料時，原 Core 會複製到 BK 表再刪除；是否需要此流程由 live 狀態與 API 契約確認。完成 migration/API 後才接正式 Vue、做部署與驗收；公司端未連 PostgreSQL、未執行 build/test/browser。

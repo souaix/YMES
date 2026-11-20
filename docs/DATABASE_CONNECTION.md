@@ -1002,3 +1002,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - 原生 `frmWIPLot_HotLotAndPriorityChange` 的 Set 呼叫 `wsWIP.EditLotBasis_Confirm`，Core `clsLot.EditLotBasis` 只直接 UPDATE `TBLWIPLOTBASIS.HotLot/Priority`，以 `BaseLotNo` 定位。表的 Oracle source DDL 和 PostgreSQL CREATE-only 已在 `database/reference/mestest_wip_wp101_*`。查詢／lookup 所需 LotState、`TBLOEROBASIS`、`TBLSMDAREABASIS`、`TBLOPBASIS`、`TBLPRDPRODUCTBASIS` 也已有 source／CREATE 參考。本功能沒有新直接表、無新 CREATE SQL；家用端先核 live PG schema/history，追 helper 間接表與權限／版本再做正式 API。
 - 公司端只讀 WinForms／Service／Core 與已交付 SQL reference，未連 Oracle 查業務資料、未執行 Oracle DDL/DML、未連 YMES PostgreSQL。原生逐列更新可能部分成功，正式整批交易／回應見 `docs/modules/WIP/生產批緊急狀態與優先權調整.md`。
+
+### 更新 2026-11-20：WIP WP501 立即異常設定
+
+- 公司端以 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 和受保護 MESTEST profile，唯讀 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。新增查證 `TBLWIPERFCREATEDATA`（15 欄、PK RepairNo）、`TBLWIPERFHOLDREASON`（9 欄、複合 PK ERFNo+ComponentNo+HoldItemNo+AreaNo、LotSerial 非唯一 index）、`BKTBLWIPERFCREATEDATA`（15 欄、無 PK、LotNo 非唯一 index）。三表均無 trigger；Backup.HoldUser 長 50，原表長 10。Oracle source DDL／index DDL／metadata 在 `database/reference/mestest_wip_wp501_*`。
+- `TBLWIPERFBASIS`、`TBLWIPERFHOLDREASONDISP`、`TBLWIPERF_ATTACHFILE` 的 Oracle source DDL 已在 `database/reference/mestest_qc409_wip_disposition_dependencies_source_ddl.sql`，本次補六表的 PostgreSQL CREATE-only 參考 `database/reference/mestest_wip_wp501_create.sql`。其他 Lot／QC／OCAP 共用表沿用既存 refs；正式 API 仍須追 Reverse/ReleaseLog/User Define hook 間接表。
+- CREATE-only 僅供家用端比對 YMES PostgreSQL live schema/history；若已存在不得重建或覆蓋資料，缺項才做 forward migration。公司端未查 Oracle 業務列、未執行 DDL/DML、未連 PostgreSQL，連線秘密未寫入 repo。來源與交易細節見 `docs/modules/WIP/立即異常設定.md`。

@@ -85,6 +85,7 @@ import WipLotMergeBin from './components/WipLotMergeBin.vue'
 import WipLotMergeCarrier from './components/WipLotMergeCarrier.vue'
 import WipComponentSplit from './components/WipComponentSplit.vue'
 import WipHotLotPriority from './components/WipHotLotPriority.vue'
+import WipImmediateHoldSet from './components/WipImmediateHoldSet.vue'
 import WipAreaShow from './components/AreaShowMaster.vue'
 import WipEquipmentFavorite from './components/WipEquipmentFavorite.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
@@ -555,6 +556,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:LOT MERGE_CARRIER': appBasePath + '/WIP/LotMergeCarrier',
   'function:WIP:LOT COMP SPLIT': appBasePath + '/WIP/ComponentSplit',
   'function:WIP:LOT HOTLOT AND PRIPORITY CHANGE': appBasePath + '/WIP/HotLotPriority',
+  'function:WIP:IMMEDIATE HOLD SET': appBasePath + '/WIP/ImmediateHoldSet',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
   'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
   'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
@@ -734,6 +736,7 @@ const functionRoutes: Record<string, string> = {
   'LOT MERGE_CARRIER': appBasePath + '/WIP/LotMergeCarrier',
   'LOT COMP SPLIT': appBasePath + '/WIP/ComponentSplit',
   'LOT HOTLOT AND PRIPORITY CHANGE': appBasePath + '/WIP/HotLotPriority',
+  'IMMEDIATE HOLD SET': appBasePath + '/WIP/ImmediateHoldSet',
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -907,6 +910,7 @@ const isWipLotMergeBinPage = computed(() => activeMasterKey.value === 'function:
 const isWipLotMergeCarrierPage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE_CARRIER')
 const isWipComponentSplitPage = computed(() => activeMasterKey.value === 'function:WIP:LOT COMP SPLIT')
 const isWipHotLotPriorityPage = computed(() => activeMasterKey.value === 'function:WIP:LOT HOTLOT AND PRIPORITY CHANGE')
+const isWipImmediateHoldSetPage = computed(() => activeMasterKey.value === 'function:WIP:IMMEDIATE HOLD SET')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
 const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
@@ -2532,6 +2536,7 @@ async function signOut(): Promise<void> {
         <WipLotMergeCarrier v-else-if="isWipLotMergeCarrierPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipComponentSplit v-else-if="isWipComponentSplitPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipHotLotPriority v-else-if="isWipHotLotPriorityPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipImmediateHoldSet v-else-if="isWipImmediateHoldSetPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
