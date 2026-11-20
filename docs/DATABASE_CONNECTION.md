@@ -1,5 +1,15 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 公司WIP Web220整合（2026-11-20；資料庫維持0058）
+
+本輪正常合併公司b3f0f06與家用A1至基底7e71e38，已建置並部署Web `823d0571d6dc82436ae5eeace7a68b8c22e8baf15dcbf0b478260d7a15224194`／220檔canonical `8071ec80f982071775cdcbd40be6d4b0509cf725e2662468bad17b19df049c46`。API仍6d2501…／151份、DB `ymes`／schema `YMES`仍migration0058，這次Web部署沒有新增DDL、grant或backfill；公司新增reference CREATE SQL僅是來源，不代表已在復刻庫套用，GUI若需自有fixture另依實證記錄。
+
+WP203設備收藏與WP307區域WIP等正式provider仍待家用端接手，頁面先明確隔離DEV資料並停用未提供業務操作，不以空畫面宣稱資料庫／API已完成。ET105僅來源及metadata唯讀稽核，尚無API或migration。公司端仍為Oracle唯讀來源／UI角色，不新增公司端PG／SSH任務。
+
+原ET104 A1的0058備份／權限／API169／621／GUI87及featurebranch X65f17a0／Yb015e51、完整9cbe checkpoint保留。新Web限定GUI已封存86通過檢查點／87events／1已解harness觀察，smoke兩筆全GUI建刪、無SQLfixture寫入，獨立精準broker／forwarder皆0；不是重跑A1整套或交付WIP providers。372來源綁定與本版featurebranch推送仍待實際完成，mainSyncPending=true。
+
+Office後續dbebd0f／12c6a2e尚未納本次220部署／驗收，後續另做Web222整合；維持API6d／schema0058及220原始proof，不能為同步新版重寫既有證據或繞過真正main gate。詳見[整合QA](qa/20261120-office-wip-integration.md)。
+
 ## ET104 A1 正式驗收：0058既有貨運行預設值與權限（2026-11-20）
 
 ET104 A1 release code `65f17a0c347acd4b5df2a1be1cad712138ececd6` 已正常推送 `refs/heads/codex/homepc-et104-20261120`，直接 `ls-remote` 讀回相同。358份來源綁定通過（SQL1／API151／Web206，未允許差異0；舊API131份僅representation、Web188份僅Git EOL差異），無force push。後續純文件狀態提交不改此release code；actual status SHA與遠端讀回另封存於checkpoint。mainSyncPending=true：公司b3f0f06的14個新WIP Vue／App／AreaShow將正常合併、另建新Web與驗收後再同步main，不能把A1的87項證據套用新產物。

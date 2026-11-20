@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 interface EquipmentOption { equipmentNo: string; equipmentType: string; equipmentName: string; chamberFlag: number; issueState: number }
 interface EquipmentFavoriteOptions { equipmentTypes: string[]; equipment: EquipmentOption[] }
@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ close: [] }>()
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const mockMode = computed(() => import.meta.env.DEV && props.developmentPreview)
+const unavailableMessage = '正式環境尚未開放此功能。'
 const pagesKey = 'ymes-dev-mock:wip-eqp-favorite:pages:v1'
 const equipmentKey = 'ymes-dev-mock:wip-eqp-favorite:equipment:v1'
 const seedEquipment: EquipmentOption[] = [
@@ -60,17 +61,27 @@ const selectedEquipmentRows = computed(() => editorSelectedEquipmentNos.value
 const activePage = computed(() => pages.value.find(row => row.pageNo === selectedPageNo.value) ?? null)
 const editorTitle = computed(() => editorMode.value === 'add' ? 'Equipment Favorite (ADD)' : editorMode.value === 'copy' ? 'Equipment Favorite (COPY)' : 'Equipment Favorite (EDIT)')
 
+function allowFavoriteOperations(): boolean {
+  if (mockMode.value) return true
+  errorMessage.value = unavailableMessage
+  return false
+}
 function readStorage<T>(key: string, fallback: T): T {
+  if (!mockMode.value) throw new Error(unavailableMessage)
   try { const raw = window.localStorage.getItem(key); return raw ? JSON.parse(raw) as T : structuredClone(fallback) }
   catch { return structuredClone(fallback) }
 }
-function writeStorage<T>(key: string, value: T): void { window.localStorage.setItem(key, JSON.stringify(value)) }
+function writeStorage<T>(key: string, value: T): void {
+  if (!mockMode.value) throw new Error(unavailableMessage)
+  window.localStorage.setItem(key, JSON.stringify(value))
+}
 function apiUrl(path: string): string {
   const base = props.apiBaseUrl.trim()
   if (!base) throw new Error('目前環境尚未設定 API 位址。')
   return new URL(path.replace(/^\/+/, ''), new URL(base.replace(/\/+$/, '') + '/', window.location.origin)).toString()
 }
 async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  if (!mockMode.value) throw new Error(unavailableMessage)
   const response = await fetch(apiUrl(path), { credentials: 'include', ...init, headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) } })
   if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
   if (!response.ok) {
@@ -83,6 +94,12 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
 function getMockPages(): FavoritePage[] { return readStorage(pagesKey, seedPages) }
 function getMockEquipment(): EquipmentOption[] { return readStorage(equipmentKey, seedEquipment) }
 async function loadMain(): Promise<void> {
+  if (!allowFavoriteOperations()) {
+    pages.value = []; equipmentOptions.value = []; equipmentTypeOptions.value = []
+    selectedPageNo.value = ''; selectedPageEquipmentNos.value = []; checkedPageNos.value = []
+    editorMode.value = null; replaceConfirmOpen.value = false; deleteConfirmOpen.value = false
+    return
+  }
   loading.value = true
   errorMessage.value = ''
   try {
@@ -108,6 +125,7 @@ async function loadMain(): Promise<void> {
   finally { loading.value = false }
 }
 async function selectPage(pageNo: string): Promise<void> {
+  if (!allowFavoriteOperations()) return
   selectedPageNo.value = pageNo
   errorMessage.value = ''
   try {
@@ -119,9 +137,11 @@ async function selectPage(pageNo: string): Promise<void> {
   } catch (error) { errorMessage.value = error instanceof Error ? error.message : '設備收藏明細載入失敗。'; selectedPageEquipmentNos.value = [] }
 }
 function togglePage(pageNo: string, checked: boolean): void {
+  if (!allowFavoriteOperations()) return
   checkedPageNos.value = checked ? [...new Set([...checkedPageNos.value, pageNo])] : checkedPageNos.value.filter(value => value !== pageNo)
 }
 function openEditor(mode: EditorMode): void {
+  if (!allowFavoriteOperations()) return
   errorMessage.value = ''
   editorMode.value = mode
   const current = mode === 'add' ? null : { pageNo: selectedPageNo.value, equipmentNos: [...selectedPageEquipmentNos.value] }
@@ -135,11 +155,13 @@ function openEditor(mode: EditorMode): void {
 }
 function closeEditor(): void { editorMode.value = null; replaceConfirmOpen.value = false }
 function toggleEditorEquipment(equipmentNo: string, checked: boolean): void {
+  if (!allowFavoriteOperations()) return
   editorCheckedEquipmentNos.value = checked
     ? [...new Set([...editorCheckedEquipmentNos.value, equipmentNo])]
     : editorCheckedEquipmentNos.value.filter(value => value !== equipmentNo)
 }
 function moveEquipmentToSelected(): void {
+  if (!allowFavoriteOperations()) return
   const checked = equipmentOptions.value.filter(row => editorCheckedEquipmentNos.value.includes(row.equipmentNo) && row.issueState === 2 && row.chamberFlag === 0).map(row => row.equipmentNo)
   if (!checked.length) { errorMessage.value = '請先勾選設備。'; return }
   if (checked.length > 15) { errorMessage.value = '設備數量不可超過 15 台。'; return }
@@ -147,6 +169,7 @@ function moveEquipmentToSelected(): void {
   errorMessage.value = ''
 }
 function removeSelectedEquipment(): void {
+  if (!allowFavoriteOperations()) return
   let removeNos = editorRemoveNos.value
   if (!removeNos.length && editorSelectedEquipmentNos.value.length) removeNos = [editorSelectedEquipmentNos.value[0]]
   editorSelectedEquipmentNos.value = editorSelectedEquipmentNos.value.filter(no => !removeNos.includes(no))
@@ -154,6 +177,7 @@ function removeSelectedEquipment(): void {
   editorRemoveNos.value = []
 }
 async function saveEditor(closeAfterSave: boolean, confirmedReplace = false): Promise<void> {
+  if (!allowFavoriteOperations()) return
   if (!editorMode.value) return
   const pageNo = editorPageNo.value.trim()
   if (!pageNo) { errorMessage.value = 'PageNo 不可空白。'; return }
@@ -182,8 +206,12 @@ async function saveEditor(closeAfterSave: boolean, confirmedReplace = false): Pr
   } catch (error) { errorMessage.value = error instanceof Error ? error.message : '收藏頁儲存失敗。' }
   finally { saving.value = false; replaceConfirmOpen.value = false }
 }
-async function confirmReplace(): Promise<void> { await saveEditor(pendingSaveClose.value, true) }
+async function confirmReplace(): Promise<void> {
+  if (!allowFavoriteOperations()) return
+  await saveEditor(pendingSaveClose.value, true)
+}
 async function deleteSelectedPages(): Promise<void> {
+  if (!allowFavoriteOperations()) return
   const targets = checkedPageNos.value.length ? [...checkedPageNos.value] : activePage.value ? [activePage.value.pageNo] : []
   if (!targets.length) { errorMessage.value = '請先選取要刪除的 PageNo。'; deleteConfirmOpen.value = false; return }
   loading.value = true
@@ -207,6 +235,7 @@ async function deleteSelectedPages(): Promise<void> {
   finally { loading.value = false }
 }
 
+watch(mockMode, () => { void loadMain() })
 onMounted(() => { void loadMain() })
 </script>
 
@@ -218,7 +247,7 @@ onMounted(() => { void loadMain() })
         <fieldset class="favorite-pane page-pane"><legend class="sr-only">Equipment Favorite Pages</legend>
           <div class="favorite-table"><table><thead><tr><th class="check-col"></th><th>PageNo</th></tr></thead><tbody>
             <tr v-for="row in pages" :key="row.pageNo" :class="{ active: selectedPageNo === row.pageNo }" @click="selectPage(row.pageNo)">
-              <td class="check-col"><input type="checkbox" :checked="checkedPageNos.includes(row.pageNo)" @click.stop @change="togglePage(row.pageNo, ($event.target as HTMLInputElement).checked)"></td><td>{{ row.pageNo }}</td>
+              <td class="check-col"><input type="checkbox" :disabled="!mockMode" :checked="checkedPageNos.includes(row.pageNo)" @click.stop @change="togglePage(row.pageNo, ($event.target as HTMLInputElement).checked)"></td><td>{{ row.pageNo }}</td>
             </tr><tr v-if="!pages.length"><td colspan="2" class="empty">沒有收藏頁面</td></tr>
           </tbody></table></div>
         </fieldset>
@@ -228,13 +257,13 @@ onMounted(() => { void loadMain() })
             <tr v-if="!selectedPageEquipmentNos.length"><td class="empty">請選取左側 PageNo</td></tr>
           </tbody></table></div>
         </fieldset>
-        <aside class="favorite-actions"><button type="button" class="win-btn primary" @click="openEditor('add')">ADD (&amp;A)</button><button type="button" class="win-btn" :disabled="!activePage" @click="openEditor('edit')">EDIT (&amp;E)</button><button type="button" class="win-btn danger" :disabled="!checkedPageNos.length && !activePage" @click="deleteConfirmOpen = true">DEL (&amp;D)</button><button type="button" class="win-btn" :disabled="!activePage" @click="openEditor('copy')">Copy (&amp;C)</button><button type="button" class="win-btn close-button" @click="emit('close')">Close (&amp;X)</button></aside>
+        <aside class="favorite-actions"><button type="button" class="win-btn primary" :disabled="!mockMode" @click="openEditor('add')">ADD (&amp;A)</button><button type="button" class="win-btn" :disabled="!mockMode || !activePage" @click="openEditor('edit')">EDIT (&amp;E)</button><button type="button" class="win-btn danger" :disabled="!mockMode || (!checkedPageNos.length && !activePage)" @click="deleteConfirmOpen = true">DEL (&amp;D)</button><button type="button" class="win-btn" :disabled="!mockMode || !activePage" @click="openEditor('copy')">Copy (&amp;C)</button><button type="button" class="win-btn close-button" @click="emit('close')">Close (&amp;X)</button></aside>
       </div>
       <p v-if="errorMessage && !editorMode" class="message error">{{ errorMessage }}</p>
       <div v-if="loading" class="loading-mask">載入中…</div>
     </div>
 
-    <div v-if="editorMode" class="backdrop" @click.self="closeEditor">
+    <div v-if="mockMode && editorMode" class="backdrop" @click.self="closeEditor">
       <section class="dialog favorite-editor">
         <header class="dialog-title"><h2>{{ editorTitle }}</h2><button type="button" class="x-button" @click="closeEditor">×</button></header>
         <div class="editor-body">
@@ -249,8 +278,8 @@ onMounted(() => { void loadMain() })
         <footer class="dialog-actions"><button type="button" class="win-btn primary" :disabled="saving" @click="saveEditor(true)">Confirm</button><button type="button" class="win-btn" :disabled="saving" @click="closeEditor">Close</button><button type="button" class="win-btn" :disabled="saving" @click="saveEditor(false)">Apply</button></footer>
       </section>
     </div>
-    <div v-if="replaceConfirmOpen" class="backdrop nested" @click.self="replaceConfirmOpen = false"><section class="dialog confirm-dialog"><header class="dialog-title"><h2>Replace Favorite Page?</h2><button type="button" class="x-button" @click="replaceConfirmOpen = false">×</button></header><p>PageNo「{{ editorPageNo }}」已存在。確定要以目前設備清單取代？</p><footer class="dialog-actions"><button type="button" class="win-btn primary" :disabled="saving" @click="confirmReplace">Yes</button><button type="button" class="win-btn" @click="replaceConfirmOpen = false">No</button></footer></section></div>
-    <div v-if="deleteConfirmOpen" class="backdrop nested" @click.self="deleteConfirmOpen = false"><section class="dialog confirm-dialog"><header class="dialog-title"><h2>Delete Favorite Page?</h2><button type="button" class="x-button" @click="deleteConfirmOpen = false">×</button></header><p>確定刪除 {{ checkedPageNos.length || 1 }} 個收藏頁面？</p><footer class="dialog-actions"><button type="button" class="win-btn danger" :disabled="loading" @click="deleteSelectedPages">Yes</button><button type="button" class="win-btn" @click="deleteConfirmOpen = false">No</button></footer></section></div>
+    <div v-if="mockMode && replaceConfirmOpen" class="backdrop nested" @click.self="replaceConfirmOpen = false"><section class="dialog confirm-dialog"><header class="dialog-title"><h2>Replace Favorite Page?</h2><button type="button" class="x-button" @click="replaceConfirmOpen = false">×</button></header><p>PageNo「{{ editorPageNo }}」已存在。確定要以目前設備清單取代？</p><footer class="dialog-actions"><button type="button" class="win-btn primary" :disabled="saving" @click="confirmReplace">Yes</button><button type="button" class="win-btn" @click="replaceConfirmOpen = false">No</button></footer></section></div>
+    <div v-if="mockMode && deleteConfirmOpen" class="backdrop nested" @click.self="deleteConfirmOpen = false"><section class="dialog confirm-dialog"><header class="dialog-title"><h2>Delete Favorite Page?</h2><button type="button" class="x-button" @click="deleteConfirmOpen = false">×</button></header><p>確定刪除 {{ checkedPageNos.length || 1 }} 個收藏頁面？</p><footer class="dialog-actions"><button type="button" class="win-btn danger" :disabled="loading" @click="deleteSelectedPages">Yes</button><button type="button" class="win-btn" @click="deleteConfirmOpen = false">No</button></footer></section></div>
   </section>
 </template>
 

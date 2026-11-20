@@ -517,6 +517,12 @@ const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
 const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
+  'function:WIP:RUN CARD': appBasePath + '/WIP/RunCard',
+  'function:WIP:LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
+  'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
+  'function:WIP:EQP QCLIST ONLINE CHECK': appBasePath + '/WIP/EquipmentOnlineQC',
+  'function:WIP:EQP QCLIST LOG': appBasePath + '/WIP/EquipmentQcListLog',
+  'function:WIP:PRODUCTION STATE BY AREA': appBasePath + '/WIP/AreaShow',
   'function:WIP:OPERATOR LOGIN': appBasePath + '/WIP/OperatorLogin',
   'function:WIP:OPERATOR LOGIN_LOT': appBasePath + '/WIP/OperatorLoginLot',
   'function:WIP:OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
@@ -2479,25 +2485,25 @@ async function signOut(): Promise<void> {
         <WipLotBasisBatch v-else-if="isWipLotBasisBatchPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotExecution v-else-if="isWipLotExecutionPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotExecutionByComponent v-else-if="isWipLotExecutionByComponentPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipLotChoiceEquipment v-else-if="isWipLotChoiceEquipmentPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipIpqc v-else-if="isWipIpqcPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipLotSplit v-else-if="isWipLotSplitPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotChoiceEquipment v-else-if="isWipLotChoiceEquipmentPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipIpqc v-else-if="isWipIpqcPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotSplit v-else-if="isWipLotSplitPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatusLog v-else-if="isWipEquipmentConsumeStatusLogPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipEquipmentOnlineQc v-else-if="isWipEquipmentOnlineQcPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipEquipmentQcListLog v-else-if="isWipEquipmentQcListLogPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipAreaShow v-else-if="isWipAreaShowPage" class="framework-content" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :current-user-no="currentUser?.userNo || ''" :enterprise-no="currentUser?.enterpriseNo || ''" :development-preview="isDevelopmentPreview" :work-area-mode="true" @close="navigateHome" />
-        <WipRunCard v-else-if="isWipRunCardPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipLotSheetPrint v-else-if="isWipLotSheetPrintPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipOperatorClockOut v-else-if="isWipOperatorClockOutPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentOnlineQc v-else-if="isWipEquipmentOnlineQcPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentQcListLog v-else-if="isWipEquipmentQcListLogPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipAreaShow v-else-if="isWipAreaShowPage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :current-user-no="currentUser?.userNo || ''" :enterprise-no="currentUser?.enterpriseNo || ''" :development-preview="isDevelopmentPreview" :work-area-mode="true" @close="navigateHome" />
+        <WipRunCard v-else-if="isWipRunCardPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotSheetPrint v-else-if="isWipLotSheetPrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorClockOut v-else-if="isWipOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipCarrierState v-else-if="isWipCarrierStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipCarrierManagement v-else-if="isWipCarrierManagementPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipInventory v-else-if="isWipInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />

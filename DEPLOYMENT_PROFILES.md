@@ -1,5 +1,17 @@
 # 部署設定檔
 
+## 公司WIP整合Web220（2026-11-20；限定GUI完成，main待同步）
+
+已正常合併公司b3f0f06與ET104 A1的Yb015e51，整合基底7e71e38；完整Web型別／Vite建置exit0後已部署 `823d0571d6dc82436ae5eeace7a68b8c22e8baf15dcbf0b478260d7a15224194`。固定220檔來源canonical `8071ec80f982071775cdcbd40be6d4b0509cf725e2662468bad17b19df049c46`，私有來源 `/opt/ymes/checkpoints/web-office-wip-20261120-a1` 保持700／600；公開755／644、實際nonroot讀取與正常TLS的七項HTTP檢查已通過。
+
+本輪只切換Web。API仍 `6d2501aad008b6b5ca0c11abae0700d1f7a00b74933645c83d3a4c183dd0c171`／151份來源，資料庫仍0058，沒有API重建、資料庫結構／權限異動或其他專案服務變更。JS `index-CDsIJQNj.js`／CSS `index-DFtv264V.css` 的實際MIME、大小與SHA見[本輪QA](docs/qa/20261120-office-wip-integration.md)。
+
+Root正式app-browser已封存86個通過檢查點／87原始events，保留1個WP104 readonly判斷的已解harness誤判；14原生＋1direct的防護／Close／重進、WP307 Grid／顏色／四種縮放及ET104新Web smoke通過。共用SD108因沒有核准Base Area，只驗picker／grid／zoom／Close，未驗populated layout。2筆smoke資料全由GUI建刪、獨立broker／forwarder皆0，freshreload logs[]；詳見本輪QA，不把不可用入口當成WIP provider已交付。
+
+本版尚待372來源綁定及正常featurebranch推送，**main仍未同步**。Root後續另見Office dbebd0f／12c6a2e，兩版未納本次220部署／驗收；保持220來源與proof81245a0a…不動，先正常同步本版featurebranch，再正常merge公司新版並另做Web222。mainSyncPending=true，不以未推送commit或未驗新版補齊發行紀錄。
+
+下方ET104 A1及更早段落保留各版歷史：A1已完成9cbe checkpoint及featurebranch X65f17a0／Yb015e51，不將其API169／621或GUI87重新標成本輪新Web驗收。ET105目前僅唯讀稽核，無新API／migration。
+
 ## ET104 A1 正式驗收版本（2026-11-20；分支同步後續記錄）
 
 ET104 A1 release code `65f17a0c347acd4b5df2a1be1cad712138ececd6` 已正常推送 `refs/heads/codex/homepc-et104-20261120`，直接 `ls-remote` 讀回相同。358份來源綁定通過（SQL1／API151／Web206，未允許差異0；舊API131份僅representation、Web188份僅Git EOL差異），無force push。後續純文件狀態提交不改此release code；actual status SHA與遠端讀回另封存於checkpoint。mainSyncPending=true：公司b3f0f06的14個新WIP Vue／App／AreaShow將正常合併、另建新Web與驗收後再同步main，不能把A1的87項證據套用新產物。

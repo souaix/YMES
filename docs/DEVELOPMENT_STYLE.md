@@ -51,6 +51,8 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 - 字型使用 `Segoe UI`、`Microsoft JhengHei` 與系統 sans-serif fallback。
 - 畫面以白色內容卡片、淺暖色背景、細邊框和清楚留白為主。互動焦點使用 KD 黃色系；錯誤與成功訊息只用必要的語意色，不擴大成裝飾色塊。
 - GitHub 主檔原型的欄位、資料表、按鈕邏輯和業務資訊優先保留；套用 KD 色票時，不改變其資料欄位意義、狀態語意或 API 行為。
+- 公司端新增 WIP 頁面由 App 在指定的 15 個新 render 入口加上 `framework-content office-wip-module`；`web/src/style.css` 只在此 class 與框架內統一灰米表頭、墨色主要按鈕、淡黃可輸入欄位與 KD 黃焦點／選取。共用 SD108 不加此 class，不改其他頁面色彩或原型邏輯。
+- 框架已顯示頁面名稱時，這批 WIP 頁面僅隱藏根部純標題；保留 DEV 提示、對話框標題與按鈕。OP/Area 登入頁的動態 Login／Logout 屬功能狀態，保留為小型次要文字。
 - 避免使用與 KD 主色競爭的亮粉、亮藍作為全站品牌色。既有主檔原型中的狀態提示只保留必要的語意區分，後續樣式整理時應轉為共用色票。
 
 ## 登入、主選單與首頁
@@ -118,3 +120,5 @@ API 從 YMES 復刻資料庫的 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunct
 5. 修改部署路徑時，同步檢查 `deploy/compose.yaml` 和 `deploy/nginx-ymes.locations.conf`。
 
 相關文件：[GitHub 原型整合](GITHUB_INTEGRATION.md)、[共用系統架構](../ARCHITECTURE_BASE.md)、[部署設定](../DEPLOYMENT_PROFILES.md)。
+
+2026-11-20公司WIP Web220只對15個新入口套KD主題，保留DEV／不可用提示與業務按鈕，限定GUI86項已封存；原SD108與資料契約保持。main尚待正常同步、後續Office新版另做Web222；狀態見[QA](qa/20261120-office-wip-integration.md)，套色與入口防護不代表provider交付。

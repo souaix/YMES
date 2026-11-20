@@ -745,3 +745,74 @@ button {
   background: #fff6f4;
   color: #812f25;
 }
+
+/* Office WIP additions use the framework KD theme; shared SD108 has no opt-in class. */
+.framework-main .framework-content.office-wip-module {
+  background: #f7f5ee;
+  color: var(--ink);
+  font-family: inherit;
+}
+
+.framework-main .framework-content.office-wip-module table th {
+  background: #eeeae0;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.framework-main .framework-content.office-wip-module table tbody tr:is(.active, .selected),
+.framework-main .framework-content.office-wip-module table tbody tr:is(.active, .selected) > td {
+  background: color-mix(in srgb, var(--yellow) 18%, white);
+}
+
+.framework-main .framework-content.office-wip-module :is(button.primary, button.confirm-button, button.query-button) {
+  background: #3b3930;
+  border-color: #3b3930;
+  color: #fff;
+}
+
+.framework-main .framework-content.office-wip-module :is(button.primary, button.confirm-button, button.query-button):hover:not(:disabled) {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.framework-main .framework-content.office-wip-module :is(input, select, textarea):not([type=checkbox]):not([type=radio]):not([type=color]):not([readonly]):not(:disabled) {
+  background: #fff1bf;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.framework-main .framework-content.office-wip-module :is(input, select, textarea):is([readonly], :disabled):not([type=checkbox]):not([type=radio]):not([type=color]) {
+  background: #efeeeb;
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.framework-main .framework-content.office-wip-module :is(input[type=checkbox], input[type=radio]) {
+  accent-color: var(--yellow);
+}
+
+.framework-main .framework-content.office-wip-module :is(input, select, textarea, button):focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* The framework owns page titles. Keep dialog controls and DEV badges visible. */
+.framework-main .framework-content.office-wip-module:is(.operator-login-lot-page, .wp205-page, .wp206-page, .wp207-page) > h1,
+.framework-main .framework-content.office-wip-module.area-show-page > header.page-title,
+.framework-main .framework-content.office-wip-module.favorite-page > header.page-heading > h1 {
+  display: none;
+}
+
+.framework-main .framework-content.office-wip-module.favorite-page > header.page-heading {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* This is the current login/logout state, rather than a duplicate page title. */
+.framework-main .framework-content.office-wip-module.operator-login-page > h1.page-title {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+}

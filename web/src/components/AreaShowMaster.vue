@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 interface AreaRow { areaNo: string; areaName: string; departmentNo: string | null; issueState?: number; dataStamp?: number | null }
 interface LayoutNode {
@@ -26,6 +26,8 @@ const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: str
 const emit = defineEmits<{ close: [] }>()
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const mockMode = computed(() => import.meta.env.DEV && props.developmentPreview)
+const workAreaUnavailable = computed(() => props.workAreaMode && !mockMode.value)
+const unavailableMessage = '正式環境尚未開放此功能。'
 const workAreaActionsVisible = computed(() => !props.workAreaMode || mockMode.value || props.enterpriseNo.trim().toUpperCase() === 'IMESTECH')
 const areasKey = 'ymes-dev-mock:smd-area-show:areas:v1'
 const layoutsKey = 'ymes-dev-mock:smd-area-show:layouts:v1'
@@ -75,7 +77,7 @@ const gridSettingsError = ref('')
 const gridSettings = ref({ draw: true, snap: true, color: '#e9e7e2', style: 'Lines' as 'Pixels' | 'Lines' | 'DottedLines', sizeX: 20, sizeY: 20 })
 const gridSettingsDraft = ref({ ...gridSettings.value })
 const canvasGridVisible = computed(() => props.workAreaMode ? gridSettings.value.draw : gridVisible.value)
-const canvasGridStyle = computed<Record<string, string>>(() => {
+const canvasGridStyle = computed((): Record<string, string> => {
   if (!props.workAreaMode || !gridSettings.value.draw) return {}
   const { color, style, sizeX, sizeY } = gridSettings.value
   const backgroundImage = style === 'Pixels'
@@ -150,22 +152,32 @@ const assignedUsers = computed(() => operatorRows.value.map(operator => ({
 const remainingUsers = computed(() => availableUsers.value.filter(user => !operatorRows.value.some(operator => operator.userNo === user.userNo)))
 const shiftFormTitle = computed(() => shiftFormMode.value === 'add' ? '班別設定 (新增)' : shiftFormMode.value === 'copy' ? '班別設定 (複製)' : '班別設定 (修改)')
 
+function allowWorkAreaOperations(): boolean {
+  if (!workAreaUnavailable.value) return true
+  errorMessage.value = unavailableMessage
+  return false
+}
 function readStorage<T>(key: string, fallback: T): T {
+  if (workAreaUnavailable.value) throw new Error(unavailableMessage)
   try { const value = window.localStorage.getItem(key); return value ? JSON.parse(value) as T : structuredClone(fallback) }
   catch { return structuredClone(fallback) }
 }
-function writeStorage<T>(key: string, value: T): void { window.localStorage.setItem(key, JSON.stringify(value)) }
+function writeStorage<T>(key: string, value: T): void {
+  if (workAreaUnavailable.value) throw new Error(unavailableMessage)
+  window.localStorage.setItem(key, JSON.stringify(value))
+}
 function apiUrl(path: string): string {
   const base = props.apiBaseUrl.trim()
   if (!base) throw new Error('目前環境尚未設定 API 位址。')
   return new URL(path.replace(/^\/+/, ''), new URL(base.replace(/\/+$/, '') + '/', window.location.origin)).toString()
 }
 async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  if (workAreaUnavailable.value) throw new Error(unavailableMessage)
   const response = await fetch(apiUrl(path), { credentials: 'include', ...init })
   if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
   if (!response.ok) {
     const problem = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
-    if (response.status === 404) throw new Error(props.workAreaMode && path.includes('/api/wip/areas/') ? 'WP307 區域作業 API 尚未建立；請依 todolist_homepc.md 完成 WIP WP307。' : '區域配置或班別 API 尚未建立；請依 todolist_homepc.md 完成 SMD SD108。')
+    if (response.status === 404) throw new Error(props.workAreaMode && path.replace(/^\/+/, '').startsWith('api/wip/areas/') ? unavailableMessage : '區域配置或班別 API 尚未建立；請依 todolist_homepc.md 完成 SMD SD108。')
     throw new Error(problem?.detail || problem?.message || problem?.title || ('API 回應錯誤 (' + response.status + ')。'))
   }
   if (response.status === 204) return undefined as T
@@ -189,7 +201,7 @@ function nodeShape(node: LayoutNode): string {
 }
 function nodeClass(node: LayoutNode): string { return 'node-' + node.objectType }
 function areaNode(node: LayoutNode): boolean { return node.objectType === 0 }
-function openAreaPicker(): void { areaPickerOpen.value = true; areaSearch.value = '' }
+function openAreaPicker(): void { if (!allowWorkAreaOperations()) return; areaPickerOpen.value = true; areaSearch.value = '' }
 function openGridProperties(): void { gridSettingsDraft.value = { ...gridSettings.value }; gridSettingsError.value = ''; gridSettingsOpen.value = true }
 function saveGridProperties(): void {
   const { sizeX, sizeY } = gridSettingsDraft.value
@@ -202,6 +214,7 @@ function saveGridProperties(): void {
   gridSettingsOpen.value = false
 }
 async function loadBaseAreas(): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   loading.value = true; errorMessage.value = ''
   try {
     areas.value = mockMode.value
@@ -212,6 +225,7 @@ async function loadBaseAreas(): Promise<void> {
   finally { loading.value = false }
 }
 async function chooseArea(row: AreaRow): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   activeArea.value = row
   areaPickerOpen.value = false
   contextMenu.value = null
@@ -226,15 +240,18 @@ async function chooseArea(row: AreaRow): Promise<void> {
   finally { loading.value = false }
 }
 function showContext(event: MouseEvent, node: LayoutNode): void {
+  if (!allowWorkAreaOperations()) return
   if (!areaNode(node) || !workAreaActionsVisible.value) return
   contextMenu.value = { x: event.clientX, y: event.clientY, node }
 }
 function openShiftFor(node: LayoutNode): void {
+  if (!allowWorkAreaOperations()) return
   contextMenu.value = null
   if (!activeArea.value) return
   void openShift(node.objectNo, node.objectText)
 }
 async function openShift(areaNo: string, areaLabel: string): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   shiftOpen.value = true; shiftBusy.value = true; shiftError.value = ''
   try {
     if (mockMode.value) {
@@ -259,6 +276,7 @@ async function openShift(areaNo: string, areaLabel: string): Promise<void> {
   finally { shiftBusy.value = false }
 }
 async function loadOperators(row: AreaShift): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   if (mockMode.value) {
     const store = readStorage<Record<string, Operator[]>>(operatorsKey, seedOperators)
     operatorRows.value = structuredClone(store[shiftKey(row)] ?? [])
@@ -270,6 +288,7 @@ async function loadOperators(row: AreaShift): Promise<void> {
   checkedOperatorNos.value = []; checkedAvailableNos.value = []
 }
 async function activateShift(row: AreaShift): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   selectedShiftKey.value = shiftKey(row)
   shiftBusy.value = true; shiftError.value = ''
   try { await loadOperators(row) }
@@ -277,11 +296,13 @@ async function activateShift(row: AreaShift): Promise<void> {
   finally { shiftBusy.value = false }
 }
 function toggleShift(row: AreaShift, checked: boolean): void {
+  if (!allowWorkAreaOperations()) return
   const key = shiftKey(row)
   checkedShiftKeys.value = checked ? [...new Set([...checkedShiftKeys.value, key])] : checkedShiftKeys.value.filter(item => item !== key)
   void activateShift(row)
 }
 function openShiftForm(mode: ShiftFormMode): void {
+  if (!allowWorkAreaOperations()) return
   const row = activeShift.value
   if ((mode !== 'add') && !row) return
   shiftFormMode.value = mode
@@ -297,6 +318,7 @@ function openShiftForm(mode: ShiftFormMode): void {
 }
 function closeShiftForm(): void { shiftFormMode.value = null; shiftOriginal.value = null; shiftFormError.value = '' }
 async function saveShift(closeAfter: boolean): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   if (!shiftFormMode.value || !shiftArea.value) return
   shiftFormError.value = ''
   shiftForm.value.shiftNo = shiftForm.value.shiftNo.trim().toUpperCase()
@@ -344,6 +366,7 @@ async function saveShift(closeAfter: boolean): Promise<void> {
   finally { shiftBusy.value = false }
 }
 async function deleteShifts(): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   if (!activeShift.value || !shiftArea.value) return
   if (!checkedShiftKeys.value.includes(selectedShiftKey.value)) checkedShiftKeys.value = [selectedShiftKey.value]
   const targets = shiftRows.value.filter(row => checkedShiftKeys.value.includes(shiftKey(row)))
@@ -364,6 +387,7 @@ async function deleteShifts(): Promise<void> {
   finally { shiftBusy.value = false }
 }
 function moveUsers(direction: 'add' | 'remove'): void {
+  if (!allowWorkAreaOperations()) return
   if (!activeShift.value) return
   if (direction === 'add') {
     const selected = availableUsers.value.filter(user => checkedAvailableNos.value.includes(user.userNo))
@@ -375,6 +399,7 @@ function moveUsers(direction: 'add' | 'remove'): void {
   }
 }
 async function saveOperators(): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   if (!activeShift.value || !shiftArea.value) return
   shiftBusy.value = true; shiftError.value = ''
   try {
@@ -403,6 +428,7 @@ async function saveOperators(): Promise<void> {
   finally { shiftBusy.value = false }
 }
 async function openInfo(mode: Exclude<InfoMode, null>, node: LayoutNode): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   contextMenu.value = null; infoMode.value = mode; infoNode.value = node; infoRows.value = []
   infoSourceRows.value = []
   infoDateTab.value = 'filter'
@@ -442,6 +468,7 @@ async function openInfo(mode: Exclude<InfoMode, null>, node: LayoutNode): Promis
 }
 
 function filterWorkInfoRows(): void {
+  if (!allowWorkAreaOperations()) return
   const filter = infoFilter.value
   const shiftNo = filter.shiftNo.trim().toUpperCase()
   const userNo = filter.userNo.trim().toUpperCase()
@@ -483,6 +510,7 @@ function normalizeWorkInfoRows(rows: Array<Record<string, unknown>>, history: bo
   })
 }
 async function queryWorkInfo(): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   if (!infoNode.value || !infoMode.value) return
   if (mockMode.value) { filterWorkInfoRows(); return }
   infoBusy.value = true
@@ -512,6 +540,7 @@ const filteredInfoLookupRows = computed(() => {
   return infoLookupRows.value.filter(row => !search || row.value.toLocaleLowerCase().includes(search) || row.label.toLocaleLowerCase().includes(search))
 })
 async function openInfoLookup(kind: 'shift' | 'user'): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   infoLookupKind.value = kind
   infoLookupRows.value = []
   infoLookupSearch.value = ''
@@ -541,6 +570,7 @@ async function openInfoLookup(kind: 'shift' | 'user'): Promise<void> {
   } finally { infoLookupBusy.value = false }
 }
 function chooseInfoLookup(row: LookupOption): void {
+  if (!allowWorkAreaOperations()) return
   if (infoLookupKind.value === 'shift') {
     infoFilter.value.shiftNo = row.value
     infoFilter.value.shiftEnabled = true
@@ -553,6 +583,7 @@ function chooseInfoLookup(row: LookupOption): void {
 
 function currentDevShiftNo(): string { const hour = new Date().getHours(); return hour >= 8 && hour < 20 ? 'DAY' : 'NIGHT' }
 function openWorkAreaDialog(node: LayoutNode): void {
+  if (!allowWorkAreaOperations()) return
   contextMenu.value = null
   workAreaDialogOpen.value = true
   workAreaBusy.value = false
@@ -563,6 +594,7 @@ function openWorkAreaDialog(node: LayoutNode): void {
   workAreaState.value = mockMode.value ? readStorage<WipAreaOperatorState[]>(workAreaStateKey, seedWorkAreaStates) : []
 }
 function resetWorkAreaVerification(): void {
+  if (!allowWorkAreaOperations()) return
   workAreaVerified.value = false
   workAreaShiftOptions.value = []
   workAreaForm.value.departmentNo = ''
@@ -570,6 +602,7 @@ function resetWorkAreaVerification(): void {
   workAreaError.value = ''
 }
 async function confirmWorkAreaUser(): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   const userNo = workAreaForm.value.userNo.trim().toUpperCase()
   workAreaForm.value.userNo = userNo
   workAreaVerified.value = false
@@ -623,6 +656,7 @@ async function confirmWorkAreaUser(): Promise<void> {
   finally { workAreaBusy.value = false }
 }
 async function loginWorkArea(): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   if (!workAreaVerified.value || !workAreaForm.value.departmentNo || !workAreaForm.value.shiftNo) { workAreaError.value = '請先確認使用者及目前班別。'; return }
   workAreaBusy.value = true; workAreaError.value = ''
   try {
@@ -644,6 +678,7 @@ async function loginWorkArea(): Promise<void> {
   finally { workAreaBusy.value = false }
 }
 async function logoutWorkArea(): Promise<void> {
+  if (!allowWorkAreaOperations()) return
   const userNo = workAreaForm.value.userNo.trim().toUpperCase()
   if (!userNo) { workAreaError.value = '請輸入使用者編號並確認目前登入狀態。'; return }
   workAreaBusy.value = true; workAreaError.value = ''
@@ -668,13 +703,21 @@ async function logoutWorkArea(): Promise<void> {
   finally { workAreaBusy.value = false }
 }
 
+watch(workAreaUnavailable, unavailable => {
+  if (!unavailable) return
+  areas.value = []; activeArea.value = null; nodes.value = []; contextMenu.value = null
+  areaPickerOpen.value = false; shiftOpen.value = false; shiftFormMode.value = null
+  infoMode.value = null; infoLookupKind.value = null; infoRows.value = []; infoSourceRows.value = []
+  workAreaDialogOpen.value = false; workAreaVerified.value = false; workAreaState.value = []
+  errorMessage.value = unavailableMessage
+}, { immediate: true })
 </script>
 
 <template>
   <section class="area-show-page" @click="contextMenu = null">
     <header class="page-title"><h1>設備狀態監控_區域</h1></header>
     <div class="toolbar">
-      <label class="base-select"><span>Base Area</span><input :value="activeArea ? activeArea.areaNo + '　' + activeArea.areaName : ''" readonly class="kd-input"><button class="win-btn picker" :disabled="loading" @click="loadBaseAreas">...</button></label>
+      <label class="base-select"><span>Base Area</span><input :value="activeArea ? activeArea.areaNo + '　' + activeArea.areaName : ''" readonly class="kd-input"><button class="win-btn picker" :disabled="loading || workAreaUnavailable" @click="loadBaseAreas">...</button></label>
       <span class="toolbar-spacer"></span>
       <label>縮放 <select v-model.number="zoom" class="plain-input"><option v-for="level in zoomLevels" :key="level" :value="level">{{ level }}%</option></select></label>
       <button v-if="workAreaMode" class="win-btn" @click="openGridProperties">Grid</button>
@@ -682,7 +725,7 @@ async function logoutWorkArea(): Promise<void> {
     </div>
     <p v-if="errorMessage" class="message error">{{ errorMessage }}</p>
     <main class="canvas-frame" :class="{ 'with-grid': canvasGridVisible }" :style="canvasGridStyle">
-      <div v-if="!activeArea && !loading" class="canvas-empty">請選擇 Base Area 載入區域配置</div>
+      <div v-if="!activeArea && !loading" class="canvas-empty">{{ workAreaUnavailable ? unavailableMessage : '請選擇 Base Area 載入區域配置' }}</div>
       <div v-else-if="loading" class="canvas-empty">載入中...</div>
       <svg v-else :width="984 * zoom / 100" :height="469 * zoom / 100" viewBox="0 0 984 469" class="layout-canvas" role="img" aria-label="區域配置圖">
         <g v-for="node in nodes" :key="node.objectType + ':' + node.objectNo" class="layout-node" :class="nodeClass(node)" @click.stop="contextMenu = null" @contextmenu.prevent.stop="showContext($event, node)" @dblclick.stop="areaNode(node) && workAreaActionsVisible && (workAreaMode ? openWorkAreaDialog(node) : openShiftFor(node))">
@@ -697,20 +740,20 @@ async function logoutWorkArea(): Promise<void> {
       </svg>
       <div v-if="contextMenu" class="context-menu" :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }" @click.stop>
         <template v-if="workAreaMode">
-          <button @click="openWorkAreaDialog(contextMenu.node)">Login/Logout</button>
-          <button @click="openInfo('state', contextMenu.node)">State</button>
-          <button @click="openInfo('history', contextMenu.node)">History</button>
+          <button :disabled="workAreaUnavailable" @click="openWorkAreaDialog(contextMenu.node)">Login/Logout</button>
+          <button :disabled="workAreaUnavailable" @click="openInfo('state', contextMenu.node)">State</button>
+          <button :disabled="workAreaUnavailable" @click="openInfo('history', contextMenu.node)">History</button>
         </template>
         <template v-else>
           <button @click="openShiftFor(contextMenu.node)">班別設定</button>
-          <button @click="openInfo('state', contextMenu.node)">目前作業人員</button>
-          <button @click="openInfo('history', contextMenu.node)">歷史紀錄</button>
+          <button :disabled="workAreaUnavailable" @click="openInfo('state', contextMenu.node)">目前作業人員</button>
+          <button :disabled="workAreaUnavailable" @click="openInfo('history', contextMenu.node)">歷史紀錄</button>
         </template>
       </div>
     </main>
     <footer class="status-line"><span>{{ activeArea ? activeArea.areaNo + '　' + activeArea.areaName : '未選擇區域' }}</span><span>節點數：{{ nodes.length }}</span><span>縮放 {{ zoom }}%</span><button class="win-btn footer-close" @click="emit('close')">關閉</button></footer>
 
-    <div v-if="areaPickerOpen" class="backdrop" @click.self="areaPickerOpen = false">
+    <div v-if="areaPickerOpen && !workAreaUnavailable" class="backdrop" @click.self="areaPickerOpen = false">
       <section class="dialog area-dialog">
         <header class="dialog-title"><h2>選擇 Base Area</h2><button class="x-button" @click="areaPickerOpen = false">×</button></header>
         <div class="picker-search"><label>區域編號 / 名稱 <input v-model="areaSearch" class="kd-input"></label></div>
@@ -735,7 +778,7 @@ async function logoutWorkArea(): Promise<void> {
         <footer class="dialog-actions"><button class="win-btn primary" @click="saveGridProperties">OK</button><button class="win-btn" @click="gridSettingsOpen = false">Close</button></footer>
       </section>
     </div>
-    <div v-if="workAreaMode && workAreaDialogOpen" class="backdrop" @click.self="workAreaDialogOpen = false">
+    <div v-if="workAreaMode && workAreaDialogOpen && !workAreaUnavailable" class="backdrop" @click.self="workAreaDialogOpen = false">
       <section class="dialog work-area-login-dialog">
         <header class="dialog-title"><h2>區域 Login / Logout｜{{ workAreaForm.areaName }}</h2><button class="x-button" @click="workAreaDialogOpen = false">×</button></header>
         <fieldset class="work-area-fields"><legend>作業區域人員</legend>
@@ -750,7 +793,7 @@ async function logoutWorkArea(): Promise<void> {
         <footer class="dialog-actions"><button class="win-btn primary" :disabled="workAreaBusy || !workAreaVerified || workAreaCanLogout" @click="loginWorkArea">Login</button><button class="win-btn" :disabled="workAreaBusy || !workAreaCanLogout" @click="logoutWorkArea">Logout</button><button class="win-btn" :disabled="workAreaBusy" @click="workAreaDialogOpen = false">Close</button></footer>
       </section>
     </div>
-    <div v-if="shiftOpen" class="backdrop" @click.self="shiftOpen = false">
+    <div v-if="shiftOpen && !workAreaUnavailable" class="backdrop" @click.self="shiftOpen = false">
       <section class="dialog shift-dialog">
         <header class="dialog-title"><h2>區域班別設定｜{{ shiftArea?.areaNo }}　{{ shiftArea?.areaName }}</h2><button class="x-button" @click="shiftOpen = false">×</button></header>
         <div class="area-fields"><label>區域編號<input :value="shiftArea?.areaNo" readonly></label><label>部門編號<input :value="areaDepartmentNo" readonly></label></div>
@@ -774,7 +817,7 @@ async function logoutWorkArea(): Promise<void> {
         <footer class="dialog-actions"><button class="win-btn" @click="shiftOpen = false">關閉</button></footer>
       </section>
     </div>
-    <div v-if="shiftFormMode" class="backdrop nested" @click.self="closeShiftForm">
+    <div v-if="shiftFormMode && !workAreaUnavailable" class="backdrop nested" @click.self="closeShiftForm">
       <form class="dialog shift-editor" @submit.prevent="saveShift(true)">
         <header class="dialog-title"><h2>{{ shiftFormTitle }}</h2><button type="button" class="x-button" @click="closeShiftForm">×</button></header>
         <fieldset class="shift-fields"><legend>班別資料</legend>
@@ -790,7 +833,7 @@ async function logoutWorkArea(): Promise<void> {
         <footer class="dialog-actions"><button class="win-btn primary" :disabled="shiftBusy">確定</button><button type="button" class="win-btn" @click="closeShiftForm">關閉</button><button type="button" class="win-btn" :disabled="shiftBusy" @click="saveShift(false)">套用</button></footer>
       </form>
     </div>
-    <div v-if="infoMode && infoNode" class="backdrop" @click.self="infoMode = null">
+    <div v-if="infoMode && infoNode && !workAreaUnavailable" class="backdrop" @click.self="infoMode = null">
       <section class="dialog info-dialog" :class="{ 'work-info-dialog': workAreaMode }">
         <header class="dialog-title"><h2>{{ infoMode === 'state' ? '目前作業人員' : '作業歷史紀錄' }}｜{{ infoNode.objectText }}</h2><button class="x-button" @click="infoMode = null">×</button></header>
         <div v-if="workAreaMode" class="work-info-filters">
@@ -820,7 +863,7 @@ async function logoutWorkArea(): Promise<void> {
         <div class="table-wrap"><table><thead><tr><th v-for="key in infoColumns" :key="key">{{ key }}</th></tr></thead><tbody><tr v-for="(row, index) in infoRows" :key="index"><td v-for="key in infoColumns" :key="key">{{ row[key] }}</td></tr><tr v-if="!infoRows.length"><td :colspan="Math.max(infoColumns.length, 1)" class="empty">目前沒有資料</td></tr></tbody></table></div>
         <footer class="dialog-actions"><button class="win-btn" @click="infoMode = null">{{ workAreaMode ? 'Close' : '關閉' }}</button></footer>
       </section>
-      <div v-if="infoLookupKind" class="backdrop nested lookup-backdrop" @click.self="infoLookupKind = null">
+      <div v-if="infoLookupKind && !workAreaUnavailable" class="backdrop nested lookup-backdrop" @click.self="infoLookupKind = null">
         <section class="dialog info-lookup-dialog">
           <header class="dialog-title"><h2>{{ infoLookupKind === 'shift' ? '選擇班別' : '選擇使用者' }}</h2><button type="button" class="x-button" @click="infoLookupKind = null">×</button></header>
           <input v-model="infoLookupSearch" class="kd-input info-lookup-search" :placeholder="infoLookupKind === 'shift' ? '搜尋班別' : '搜尋編號或姓名'" autofocus>

@@ -1,5 +1,19 @@
 # 家裡電腦接手清單
 
+## 最新接手：公司WIP整合Web220（2026-11-20；限定GUI完成／main待同步）
+
+本機是HOME PC，負責PostgreSQL復刻、API、PPK SSH與發行；公司端維護Oracle唯讀來源及UI。公司b3f0f06已與家用A1正常合併至基底7e71e38，兩端原始工作保留。
+
+- [x] 整合公司14個新增WIP Vue；其中13個維持公司原Git blob，收藏頁與WP307新增正式未提供防護，補六個原生route並限定15個新入口套KD共用風格。
+- [x] Web220完整型別／Vite建置exit0，已實際部署Web `823d0571d6dc`／canonical8071ec80…；七項HTTP與資產MIME／bytes／SHA／nonroot檢查通過。
+- [x] API仍6d2501…／151份、PostgreSQL仍0058；本輪不重建API、不套新表或權限。A1完整checkpoint9cbe、featurebranch X65f17a0／Yb015e51與原API169／621、GUI87證據保留。
+- [x] Root封存限定GUI86通過檢查點／87原始events／1個readonly harness誤判保留並真復驗；14原生＋1direct、Close／重進、WP307 Grid／顏色／四縮放及ET104新Web smoke通過。SD108無核准Area，只驗picker／grid／zoom／Close、不宣稱populated layout；2筆smoke全GUI建刪，獨立B/F皆0、freshreload logs[]，見本輪QA與proof81245a0a…。
+- [ ] 核對372份來源（SQL1＋API151＋Web220），先正常同步本版featurebranch；actual commit／binding／push尚待實證，不假填main同步。
+- [ ] Root另fetch到Office dbebd0f／最新12c6a2e；兩版未在本次220部署／驗收。接續正常merge新版、另做Web222及新驗收後才同步main，保持mainSyncPending=true及220來源／proof不動。
+- [ ] WIP正式providers／HostId與人員交易等仍由家用端依來源逐項接手，不把DEV UI或不可用防護當成API完成；ET105僅唯讀audit done，API／migration未實作。
+
+維護紀錄：[整合QA](docs/qa/20261120-office-wip-integration.md)。既有所有模組待辦及A1完成歷史繼續保留。
+
 ## ET104 A1 正式驗收（2026-11-20；分支已同步65f17a0）
 
 本機是 HOME PC：PostgreSQL復刻庫／API／PPK SSH／部署；公司端是原生Oracle唯讀來源／UI。正式 API `6d2501aad008`、Web `56c31765e2af`、0058；路由 `/YMES/` 與 `/YMES/API/` 維持分離。

@@ -1,5 +1,15 @@
 # 公司端待辦
 
+## 家用端整合進度：公司WIP Web220（2026-11-20；限定GUI完成／main待同步）
+
+已正常合併公司b3f0f06的14個新WIP Vue／App／AreaShow及原生來源文件，保留雙方工作，未force push。家用端新Web220已建置並部署 `823d0571d6dc`（canonical8071ec80…），公開七項HTTP與資產檢查通過；API6d2501…／151份與PostgreSQL0058維持原版。
+
+本輪補六個原生menu route、WP203／WP307正式provider未交付防護與15入口限定KD風格；13個其他新增Vue維持公司原Git blob。Root已封存限定GUI86通過檢查點／87events／1個已解readonly harness觀察，14原生＋1direct／Close重進、WP307 Grid／顏色／四縮放及ET104 smoke通過；SD108無核准Area，只驗picker／grid／zoom／Close，未驗populated layout。2筆smoke全GUI建刪、獨立B/F0、freshreload logs[]。**目前尚未完成本輪main同步**，實證與界線見[整合QA](docs/qa/20261120-office-wip-integration.md)。
+
+ET104 A1的featurebranch X65f17a0／Yb015e51、checkpoint9cbe與API169／621／GUI87是已完成歷史，不套用成Web220新驗收。新增UI、DEV互動或正式不可用提示都不代表WIP API已交付；家用端會繼續依原生來源實作provider。ET105目前僅readonly audit，無API／migration。
+
+公司端持續處理原生Oracle唯讀來源、UI與模組規格；本節不新增公司端PostgreSQL、建表、SSH或部署任務，既有來源查證待辦保留。Root另取得Office dbebd0f／12c6a2e，兩版未在本次220部署／驗收；先完成220的372綁定及featurebranch正常推送，再正常merge新版、另做Web222驗收後才同步main。mainSyncPending=true，保留兩端工作，不重寫220的封存來源與證據。
+
 ## ET104 A1 正式驗收回饋（2026-11-20；main整合另記）
 
 ET104 A1 release code `65f17a0c347acd4b5df2a1be1cad712138ececd6` 已正常推送 `refs/heads/codex/homepc-et104-20261120`，直接 `ls-remote` 讀回相同。358份來源綁定通過（SQL1／API151／Web206，未允許差異0；舊API131份僅representation、Web188份僅Git EOL差異），無force push。後續純文件狀態提交不改此release code；actual status SHA與遠端讀回另封存於checkpoint。mainSyncPending=true：公司b3f0f06的14個新WIP Vue／App／AreaShow將正常合併、另建新Web與驗收後再同步main，不能把A1的87項證據套用新產物。
