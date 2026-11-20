@@ -59,7 +59,8 @@ Code X ebc03a1已409來源綁定PASS、正常feature推送／ref讀回；文件Y
 - [x] [WP907 生產批數量調整](docs/modules/WIP/生產批數量調整.md) 完成整批、Bin、元件三種 Vue DEV 與 Oracle 調整歷程兩表的 metadata／CREATE-only。
 - [x] [WP908 標籤列印](docs/modules/WIP/標籤列印.md) 完成 DEV 多批對應、預覽與模擬列印，補列印歷程 metadata。
 - [x] [WP909 換廠作業](docs/modules/WIP/換廠作業.md) 完成 DEV 查詢、靜電箱整組檢查、目的區驗證及換廠。選單清冊未列 WP910。
-- [ ] 依選單清冊接 WP911 生產批作業站用料記錄調整。
+- [x] [WP911 生產批作業站用料記錄調整](docs/modules/WIP/生產批作業站用料記錄調整.md) 完成 DEV 報工／用料主明細、加改刪與合計，沿用現有表。
+- [ ] 依選單清冊接 WP912 生產批作業站製程特性值調整。
 
 ## 2026-11-20 桌機再接手：從 WP401 開始
 
