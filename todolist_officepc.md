@@ -2,7 +2,9 @@
 
 ## 家用端最新整合進度：Web224 C1（2026-11-20；限定GUI完成／main待同步）
 
-Office最新df10bd08的載具拆批／併批已正常合併至3f99c172，保留雙方來源。Web224來源f9bb9566…完整建置exit0、封裝／部署e2df5e3d…與公開HTTP七項已通過；Root封存限定GUI73通過檢查點／73events／0observations，含自行Demo登入、18native＋1direct、新兩頁guard／19KD／無假metadata／單一主標題／Close／重進／direct fresh、WP307／SD108空lookup界線及ET104真CRUD。2筆全GUI建刪、SQL fixture writes0、獨立精準B/F皆0，fresh reload21收合選單／空首頁／logs[]；376綁定／新Git與main仍pending。API6d／151份與DB0058未動，所有WIP正式providers仍由家用端接手。
+Office最新df10bd08的載具拆批／併批已正常合併至3f99c172，保留雙方來源。Web224來源f9bb9566…完整建置exit0、封裝／部署e2df5e3d…與公開HTTP七項已通過；Root封存限定GUI73通過檢查點／73events／0observations，含自行Demo登入、18native＋1direct、新兩頁guard／19KD／無假metadata／單一主標題／Close／重進／direct fresh、WP307／SD108空lookup界線及ET104真CRUD。2筆全GUI建刪、SQL fixture writes0、獨立精準B/F皆0，fresh reload21收合選單／空首頁／logs[]。C1 code bacf0ee5已完成376綁定399f648b…及featurebranch正常推送／遠端讀回，main仍pending。API6d／151份與DB0058未動，所有WIP正式providers仍由家用端接手。
+
+兩頁驗收解決automatic review先前限制，後續main正常push被Git遠端新增Office0b342616／d5a8bd13以nonFF拒絕，沒有force或改寫main。Office新元件／等級併批兩頁未合併本次worktree、未建置／部署／驗收，另列後續；家用先完成C1 feature-only checkpoint並接ET105 API。mainSyncPending=true，狀態文件提交尚待實證，不要求公司端做PG／SSH或停下UI開發。
 
 220 dc34／372及222 3953／374已正常同步featurebranch並讀回相同，各版86／69項proof不改。先前新兩頁未驗的main push遭automatic review拒絕且未執行，Root會完成C1驗證後再正常同步；mainSyncPending=true。ET105僅隔離候選與純讀peer，尚未build或migration；本節不新增公司端PG／SSH／部署工作，既有Oracle唯讀來源與UI待辦保留。見[Web224 QA](docs/qa/20261120-office-wip-carrier-merge-integration.md)。
 

@@ -121,7 +121,7 @@ API 從 YMES 復刻資料庫的 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunct
 
 相關文件：[GitHub 原型整合](GITHUB_INTEGRATION.md)、[共用系統架構](../ARCHITECTURE_BASE.md)、[部署設定](../DEPLOYMENT_PROFILES.md)。
 
-2026-11-20最新Web224 C1沿原KD色票擴至19個入口，新增WP210載具拆批／WP211併批，只套既有框架主題並保留各頁DEV banner、dialog與正式不可用界線。來源f9bb9566…完整建置exit0並部署e2df5e3d…，Root限定GUI73檢查點／73events／0observations已封存，含新兩頁19入口KD／無假metadata／單一主標題與Close／重進；376綁定及main仍pending，見[Web224 QA](qa/20261120-office-wip-carrier-merge-integration.md)。不將舊17入口proof改配19入口，樣式不代表WIP provider或原生交易交付。
+2026-11-20最新Web224 C1沿原KD色票擴至19個入口，新增WP210載具拆批／WP211併批，只套既有框架主題並保留各頁DEV banner、dialog與正式不可用界線。來源f9bb9566…完整建置exit0並部署e2df5e3d…，Root限定GUI73檢查點／73events／0observations已封存，含新兩頁19入口KD／無假metadata／單一主標題與Close／重進；code bacf0ee5的376綁定及featurebranch正常同步已完成，main仍pending，見[Web224 QA](qa/20261120-office-wip-carrier-merge-integration.md)。不將舊17入口proof改配19入口，樣式不代表WIP provider或原生交易交付。
 
 前版歷史：Web222沿KD色票擴至17個入口，新增WP208／WP209；限定GUI69項已封存，兩新頁無DEV Bin、單一框架主標題及Close／重進均實測。release3953bbad已完成374綁定與featurebranch正常推送，當時main待同步，見[Web222 QA](qa/20261120-office-wip-split-integration.md)。既有SD108資料契約不變。
 

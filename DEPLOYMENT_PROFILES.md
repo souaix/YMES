@@ -2,7 +2,9 @@
 
 ## 公司WIP載具拆批／併批Web224 C1（2026-11-20；限定GUI完成，main待同步）
 
-Office最新df10bd08已與已驗Web222 release3953bbad正常合併至3f99c172。224檔來源canonical `f9bb95660175064e2b0c989df9f09dbe52adf18f85c3a0650bf5753960c072e7` 已完成完整建置exit0、封裝與實際部署Web `e2df5e3df9884894f3805f5f454053c8e748c6256314ddc41f0ee4cf27988375`，公開HTTP七項通過。Root封存限定GUI73通過檢查點／73events／0observations：自行Demo登入、18native＋1direct、新兩頁guard／19入口KD／無假metadata／單一主標題／Close／重進／direct fresh、WP307 Grid30×40／四zoom、SD108空lookup及ET104新Web真CRUD均通過。2筆全GUI建刪、SQL fixture writes0、獨立Broker／Forwarder精準兩鍵皆0；fresh reload空首頁21收合選單／logs[]。376綁定／新commit與main同步仍pending。
+Office最新df10bd08已與已驗Web222 release3953bbad正常合併至3f99c172。224檔來源canonical `f9bb95660175064e2b0c989df9f09dbe52adf18f85c3a0650bf5753960c072e7` 已完成完整建置exit0、封裝與實際部署Web `e2df5e3df9884894f3805f5f454053c8e748c6256314ddc41f0ee4cf27988375`，公開HTTP七項通過。Root封存限定GUI73通過檢查點／73events／0observations：自行Demo登入、18native＋1direct、新兩頁guard／19入口KD／無假metadata／單一主標題／Close／重進／direct fresh、WP307 Grid30×40／四zoom、SD108空lookup及ET104新Web真CRUD均通過。2筆全GUI建刪、SQL fixture writes0、獨立Broker／Forwarder精準兩鍵皆0；fresh reload空首頁21收合選單／logs[]。release code `bacf0ee58288d1a4f1bec41a5a6bde00053d02bf` 已完成376綁定（399f648b…）與featurebranch正常推送／遠端讀回，main仍待同步。
+
+兩新頁驗收後automatic review已允許normal main push，但Git遠端因Office最新d5a8bd13拒絕non-fast-forward；沒有force或改寫main。C1固定已驗224來源，mainSyncPending=true；Office新增元件／等級併批未合併、建置或部署本版，列後續接手，先續ET105 API。C1 feature-only checkpoint及本次狀態文件Git仍待實際紀錄，不把分支同步當main同步。
 
 本版預定只切Web，API6d2501…／151份及PostgreSQL0058不變。新增WP210載具拆批／WP211併批入口與19入口KD樣式，正式provider仍未交付。先前main push因新兩頁未驗遭automatic review拒絕且未執行；Root依完整C1驗證再同步，不繞過。220 dc34／372及222 3953／374正常featurebranch推送已完成，保留各版86／69項proof及main待同步歷史；C1進度見[Web224 QA](docs/qa/20261120-office-wip-carrier-merge-integration.md)。
 

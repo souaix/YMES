@@ -6,7 +6,9 @@
 - [x] 正常合併Office最新df10bd08至3f99c172，凍結Web224 canonical f9bb9566…；新WP210／WP211只補正式隔離與既有KD框架，Bin只保留Office rawRecords alias，正式providers未交付。
 - [x] C1完整建置exit0、封裝／部署Web e2df5e3d…與公開HTTP七項通過，224來源f9bb9566…保持；Root已Demo登入操作新兩頁guard／19入口KD／無假metadata／單一主標題／Close／重進／direct fresh、舊16native／direct OP、WP30730×40／四zoom與SD108空lookup。
 - [x] 封存限定GUI73通過檢查點／73events／0observations：18native＋1direct、新兩頁重進／direct fresh、19KD／無假metadata／單一主標題、WP307／SD108空lookup界線與ET104真CRUD均通過；2筆全GUI建刪、SQL fixture writes0、獨立精準B/F皆0，fresh reload21收合選單／空首頁／logs[]。proof f2fa8af9…／receipt87802ec4…／cleanup3a5c9a4a…保持原檔。
-- [ ] 執行376來源綁定及正常main推送；新Git與main仍pending。先前automatic review拒絕未驗兩新頁的main push且未執行；目前完成C1限定GUI後依安全流程再重試，不繞過。
+- [x] C1 code `bacf0ee58288d1a4f1bec41a5a6bde00053d02bf` 完成376綁定（receipt399f648b…）並正常推送 `refs/heads/codex/homepc-office-wip-integration-20261120`，遠端讀回相同；73項proof保持不動，peer bba6f0d6…通過。
+- [ ] 完成C1 feature-only checkpoint與本次狀態文件提交／綁定／分支同步；mainSyncPending=true。兩頁驗收後automatic review已允許normal main push，Git遠端因Office d5a8bd13拒絕nonFF，未force、未改main。
+- [ ] Office 0b342616／d5a8bd13新增元件／等級併批兩頁另列待接手，尚未合併本輪worktree／建置／部署／驗收；C1先維持已驗224與feature同步，接續ET105 API工作，不將未驗新頁混入376來源。
 - [ ] API6d／151份及DB0058保持，不重建API或套新schema；WIP providers持續由HOME接手。ET105僅隔離候選與純讀peer，尚未build／migration／正式部署。
 
 本機仍為HOME（PostgreSQL clone／API／SSH），公司端為Oracle唯讀來源與UI；[Web224 QA](docs/qa/20261120-office-wip-carrier-merge-integration.md)記本版證據，mainSyncPending=true。下方220／222最新段為當次歷史，不將其proof改配224。
