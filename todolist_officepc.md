@@ -4,7 +4,8 @@
 
 - [x] 桌機乾淨工作樹 fast-forward 至筆電交接 `d87c731`。依 Form／Designer、Service、Core 完成 Vue DEV 主明細、參考批／刷入批號、回貨站、增修、刪除與作廢。
 - [x] [WP401 規格](docs/modules/WIP/外包單開立.md) 交付交易和 API 契約；三張直接表均有 Oracle DDL／CREATE-only。
-- [ ] 下一項 WP402 外包單確認，按選單清冊接續。
+- [x] [WP402 外包單確認](docs/modules/WIP/外包單確認.md) 已依 Form／Service／Core 做 Vue DEV 單筆確認及共用單據，交付 FutureOSLog 與 ERP 設定表結構及正式 ERP API 規格。
+- [ ] 下一項 WP403 外包回貨，按選單清冊接續。
 
 ## 2026-11-20 桌機再接手：從 WP401 開始
 

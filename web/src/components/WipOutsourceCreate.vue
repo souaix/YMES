@@ -24,13 +24,15 @@ interface Order {
   description: string
   returnNode: string
   lots: Lot[]
-  status: 0 | -1
+  status: 0 | 1 | -1
   creator: string
   createdAt: string
   stamp: number
+  shippedAt?: string
+  shippedBy?: string
 }
 
-const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string }>()
+const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; confirmationOnly?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
@@ -151,8 +153,8 @@ function useNumber(): void {
 }
 
 function isAvailable(lot: Lot): boolean {
-  return !orders.value.some(row => row.status === 0 && (mode.value !== 'edit' || row.osNo !== draft.value?.osNo) &&
-    row.opNo === draft.value?.opNo && row.lots.some(item => item.lotNo === lot.lotNo))
+  return !orders.value.some(row => row.status !== -1 && (mode.value !== 'edit' || row.osNo !== draft.value?.osNo) &&
+    (row.status === 1 || row.opNo === draft.value?.opNo) && row.lots.some(item => item.lotNo === lot.lotNo))
 }
 
 function searchReference(): void {
@@ -247,11 +249,37 @@ async function remove(action: 'delete' | 'abort'): Promise<void> {
   selectedNo.value = ''
   notice.value = '已' + verb + ' ' + keys.size + ' 筆 DEV 外包單。'
 }
+
+async function confirmShipment(): Promise<void> {
+  const order = active.value
+  if (!isDev.value || !props.confirmationOnly || !order) return
+  error.value = ''
+  notice.value = ''
+  const blockedLot = order.lots.find(lot => lot.opNo !== order.opNo)
+  if (!order.lots.length || blockedLot) {
+    error.value = blockedLot ? blockedLot.lotNo + ' 不在指定外包站。' : '外包單未設定批號。'
+    return
+  }
+  if (!await requestConfirmation('確定模擬確認外包單 ' + order.osNo + '？')) return
+  const current = orders.value.find(row => row.osNo === order.osNo)
+  if (!current || current.status !== 0 || current.stamp !== order.stamp) {
+    error.value = '外包單已變更，請重新查詢。'
+    return
+  }
+  const updated: Order = { ...current, status: 1, stamp: current.stamp + 1,
+    shippedAt: today(), shippedBy: props.currentUserNo || 'DEV001' }
+  if (!persist(orders.value.map(row => row.osNo === updated.osNo ? updated : row))) {
+    error.value = '無法儲存 DEV 確認。'
+    return
+  }
+  selectedNo.value = ''
+  notice.value = '已模擬確認 ' + updated.osNo + '。'
+}
 </script>
 
 <template>
   <section class="outsource">
-    <h2>外包單開立</h2>
+    <h2>{{ confirmationOnly ? '外包單確認' : '外包單開立' }}</h2>
     <template v-if="isDev">
       <form class="toolbar" @submit.prevent="search">
         <label v-for="field in mainFields" :key="field.key">{{ field.label }} <input v-model="filters[field.key]" maxlength="20"></label>
@@ -259,7 +287,10 @@ async function remove(action: 'delete' | 'abort'): Promise<void> {
         <label>建立迄日 <input v-model="filters.to" type="date"></label>
         <button type="submit">查詢</button>
       </form>
-      <div class="toolbar">
+      <div v-if="confirmationOnly" class="toolbar">
+        <button type="button" :disabled="!active" @click="confirmShipment">確認</button>
+      </div>
+      <div v-else class="toolbar">
         <button type="button" @click="openEditor('add')">新增</button>
         <button type="button" :disabled="!active" @click="openEditor('edit')">修改</button>
         <button type="button" :disabled="!active" @click="remove('delete')">刪除</button>
@@ -270,7 +301,10 @@ async function remove(action: 'delete' | 'abort'): Promise<void> {
         <thead><tr><th>選取</th><th>外包單號</th><th>外包站</th><th>項目</th><th>外包商</th><th>承辦人</th><th>需求日</th><th>外包量</th><th>狀態</th><th>建立人員</th><th>建立日</th><th>說明</th></tr></thead>
         <tbody>
           <tr v-for="row in visibleOrders" :key="row.osNo" :class="{ active: active?.osNo === row.osNo }" @click="selectedNo = row.osNo">
-            <td><input v-model="selected" :aria-label="'選取 ' + row.osNo" type="checkbox" :value="row.osNo"></td>
+            <td>
+              <input v-if="confirmationOnly" name="os-confirm-order" type="radio" :aria-label="'選取 ' + row.osNo" :checked="active?.osNo === row.osNo" @change="selectedNo = row.osNo">
+              <input v-else v-model="selected" :aria-label="'選取 ' + row.osNo" type="checkbox" :value="row.osNo">
+            </td>
             <td><button type="button" class="link" @click="selectedNo = row.osNo">{{ row.osNo }}</button></td>
             <td>{{ row.opNo }}</td><td>{{ row.itemNo }}</td><td>{{ row.vendorNo }}</td><td>{{ row.preparer }}</td><td>{{ row.due }}</td>
             <td>{{ lotTotal(row.lots) }}</td><td>未確認</td><td>{{ row.creator }}</td><td>{{ row.createdAt }}</td><td>{{ row.description }}</td>
@@ -287,7 +321,7 @@ async function remove(action: 'delete' | 'abort'): Promise<void> {
         </tbody>
       </table></div>
     </template>
-    <p v-else role="status">外包單開立尚未接入正式服務。</p>
+    <p v-else role="status">此功能尚未接入正式服務。</p>
     <button type="button" @click="emit('close')">關閉</button>
 
     <div v-if="draft" class="overlay">
