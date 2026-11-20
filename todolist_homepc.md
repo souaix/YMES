@@ -1,5 +1,25 @@
 # 家裡電腦接手清單
 
+## ET106前置相容已正式驗證（2026-11-20；最新實況）
+
+Root已正式啟用API155 `466ff88469c70ce08cfd13b6210f986796aa848b8f24d62ee3470da939402487`，canonical `7e795d7013a804b6f8ab848f4d0a5454ec613744ca2c68b6010e6a2273368202`；Web維持E1 Web237 `5ff068fc556b6449485dc40ea5b399ff2f773609c59ee19ee529aab1fbd9faae`。本批只改三個既有主檔的未來出貨地址引用相容性，schema仍0059、ET106兩表／types仍absent，地址／報關writer未交，a2 schema wrapper只是prepared，沒有新增migration／seed或WIP provider。
+
+新466單輪API run `1C17A2F07E944C96AEB072DC13BE25F6`：45HTTP／248assertions PASS，B/F/T三筆全API建刪，獨立九範圍0（receipt `96b8830f…`）。正式app-browser封存43raw／40有效＝39GUI＋1SQL，原3／7／38三個harness false保留並由4／8／39復驗，未修改產品source。三主檔真NewApply／EditApply／Approve／Retire／HardDelete、Forwarder真Broker lookup與引用硬刪409後正確次序刪除、各四態query0均完成；GUI三自有鍵全GUI建刪、SQL fixture／cleanup0、獨立九範圍0（receipt `8535eb0b…`）。fresh穩定Home21、收合72px/icons、展開與該fresh logs[]通過。正常TLS七項、runtime／currenttag／nonroot必要讀檔／ready200與metadata-only缺表讀回PASS（receipt `44a757c1…`）。這不是重用ET105184／1853或E1原proof。
+
+E1完整checkpoint `11bcf89f001a050bd170231bea851e8428eb596d6c2fd863080716f0b193123e`已完成並保留當時API8db／Web5ff歷史；現在live/current API是466，新compat metadata收尾仍pending，不能把舊checkpoint內容改稱已記466。393份來源（SQL1／API155／Web237）綁定已實際PASS，receipt SHA `7bf25a2e1f0b973baeb0bd3f100eba4c97d92e9ee55db65b32c9ef10342a4bab`；code X `817794f07d14e64a4ad1022a5c289aeac00fa9f2` 已正常推送 `refs/heads/codex/homepc-et106-compat-live-20261120` 並直接讀回同值。文件狀態提交與compat metadata收尾仍待完成，main仍待整合公司新提交。Office最新7df39ce的WP803／804另輪接手；WP801／802僅獨立guard來源freeze、未fullbuild／commit／部署，不能混入本批155/237證據。以下E1／D1／ET105及原生source完整保留為當時歷史。
+
+完整實證與限制見 [ET106相容QA](docs/qa/20261120-et106-compat.md)。HOME維持PostgreSQL復刻／PPK SSH／API與DB發行；Office維持MES原生Oracle唯讀來源與UI，不派Office連PG／SSH。
+
+下一步（HOME）：
+
+- [x] 精確整合API155四份C#、啟用466，完成新缺表API與三主檔app-browser實測／精準清理。
+- [x] code X393來源綁定、正常feature推送及直接讀回已完成。
+- [ ] 文件狀態提交與compat metadata收尾；main仍待公司8D新頁整合及驗證，不覆公司提交。
+- [ ] 以真source CREATE／freshmetadata／備份及已review allowlist，在相容API之後另版建立ET106兩表；本批未套用。
+- [ ] 接完整ET106地址／報關API：保留raw NULL／audit／source鍵，Declaration無PK與重複列用核實multiset並發契約，不造ID／unique/FK／假provider；完成後再做獨立API／GUI驗收。
+- [ ] Office WP801／802／803／804另輪正常整合、build與guard驗證，正式序號／Issue／8D交易provider仍待HOME按source落實。
+
+
 ## E1 四個 WIP 入口已部署與限定驗收（2026-11-20；最新實況）
 
 Root 已實際部署 Web `5ff068fc556b6449485dc40ea5b399ff2f773609c59ee19ee529aab1fbd9faae`，237份來源 canonical `25bd965ebc6e71dc41468b9a11102d53a4444a82aadc48ac12985dfdd76dde8a`，API154 `8db4b84024af86a82cac448f38492bfba0122a24b3e0a3369fa90b649af9d04e`／PostgreSQL `ymes` schema `YMES` migration `0059` 保持；本輪只改 Web，不套 WIP CREATE-only、不加權限或完成交易 provider。D1 metadata 已實際套用與獨立下載，checkpoint SHA `8918a1748840b791ac63a618222fc60b7f71465864bf8980a4fdb0439faf4037`，保留原 API154 snapshot／regression／ET105105及所有歷史；下方舊 pending 文字都是當時快照。
