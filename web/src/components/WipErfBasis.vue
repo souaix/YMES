@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 type ErfRow = Record<string, string | number | null | string[]> & {
   erfNo: string; lotNo: string; opNo: string; customerNo: string; mClassNo: string; curGroupNo: string;
@@ -12,8 +12,8 @@ type DateKey = 'createdAt' | 'releaseAt'
 type DetailRecord = Record<string, string | number>
 type MockAttachment = { source: 'ERF' | 'OCAP'; name: string; attachType: number; creator: string; createdAt: string; ocapNo: string }
 
-const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string }>()
-const emit = defineEmits<{ close: [] }>()
+const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; initialErfNo?: string }>()
+const emit = defineEmits<{ close: []; create8d: [erf: { erfNo: string; lotNo: string; productNo: string; opNo: string; customerNo: string; lotQty: number; errorQty: number; holdDescription: string }] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
 const filters = reactive<Record<FilterKey, string>>({ lotNo: '', opNo: '', customerNo: '', mClassNo: '', curGroupNo: '', erfNo: '' })
 const checked = reactive<Record<FilterKey, boolean>>({ lotNo: false, opNo: false, customerNo: false, mClassNo: false, curGroupNo: false, erfNo: false })
@@ -35,6 +35,7 @@ const columns = [
   ['erfNo','ERF No'],['lotNo','Lot No'],['productNo','Product No'],['productName','Product Name'],['customerLotNo','Customer Lot No'],['status','Status'],['opNo','OPNo'],['customerNo','CustomerNo'],['customerName','Customer Name'],['mClassNo','MClassNo'],['holdDescription','HoldDescription'],['curGroupNo','CurGroupNo'],['dispDescription','DispDescription'],['ruleNo','RuleNo'],['createQty','CreateQty'],['createdAt','Create Date'],['erfRecordQty','ERF Record Qty'],['curQty','CurQty'],['releaseQty','Release Qty'],['releaser','Release UserNo'],['releaseAt','Release Date'],['calHoldTime','Cal Hold Time'],['priority','Priority'],['batchLot','BatchLot'],['qrsNo','QRSNo'],
 ] as const
 const detailTabs = ['Create Hold Code', 'Hold Code Disposition', 'ERF Disposition', 'Lot Disposition', 'ERF Attach']
+const linkKey = 'ymes-dev-mock:wip-8d-erf-links:v1'
 const attachmentSources = ['ERF', 'OCAP'] as const
 const nextDispTypeLabels: Record<number, string> = { 0: 'Next Group', 1: 'Notice Customer', 2: 'Final', 3: 'Waive' }
 const lotDispTypeLabels: Record<number, string> = { 0: 'GO', 1: 'Jump OP', 2: 'Jump Process', 3: 'WIP Semi Inventory', 4: 'Process Tuning', 5: 'Change ENGNo', 6: 'Jump Module', 7: 'WIP Scrap Inventory', 8: 'Jump Main', 11: 'Back To ERF Disposition', 12: 'Split', 13: 'Merge', 14: 'Qty Adjust' }
@@ -95,7 +96,7 @@ function confirmDeleteAttachment(): void {
 
 const fixtures: ErfRow[] = [
   { erfNo:'DEV-ERF-001', lotNo:'DEV-LOT-001', opNo:'OP-CUT', customerNo:'CUS-A', mClassNo:'M-QUALITY', curGroupNo:'QA-01', createdAt:'2026-11-19T08:00:00', releaseAt:null, status:0, erfSource:0, batchLotNos:[], qrsNo:'', qrsIssueState:0, holdItems:['H-001 外觀異常'], productNo:'PRD-A', productName:'示範產品 A', customerLotNo:'CL-001', customerName:'示範客戶 A', holdDescription:'外觀檢查異常', dispDescription:'', ruleNo:'', createQty:8, scrapQty:0, curQty:8, releaseQty:0, releaser:'', priority:1, batchLot:'' },
-  { erfNo:'DEV-ERF-002', lotNo:'DEV-LOT-002', opNo:'OP-TEST', customerNo:'CUS-B', mClassNo:'M-EQUIPMENT', curGroupNo:'ENG-01', createdAt:'2026-11-18T10:00:00', releaseAt:'2026-11-19T12:30:00', status:21, erfSource:0, batchLotNos:[], qrsNo:'QRS-DEV-002', qrsIssueState:1, holdItems:['H-003 設備異常'], productNo:'PRD-B', productName:'示範產品 B', customerLotNo:'CL-002', customerName:'示範客戶 B', holdDescription:'設備點檢異常', dispDescription:'完成處置', ruleNo:'RULE-02', createQty:6, scrapQty:1, curQty:5, releaseQty:5, releaser:'DEV', priority:2, batchLot:'' },
+  { erfNo:'DEV-ERF-002', lotNo:'DEV-LOT-002', opNo:'OP-TEST', customerNo:'CUS-B', mClassNo:'M-EQUIPMENT', curGroupNo:'ENG-01', createdAt:'2026-11-18T10:00:00', releaseAt:'2026-11-19T12:30:00', status:21, erfSource:0, batchLotNos:[], qrsNo:'QRS-DEV-002', qrsIssueState:2, holdItems:['H-003 設備異常'], productNo:'PRD-B', productName:'示範產品 B', customerLotNo:'CL-002', customerName:'示範客戶 B', holdDescription:'設備點檢異常', dispDescription:'完成處置', ruleNo:'RULE-02', createQty:6, scrapQty:1, curQty:5, releaseQty:5, releaser:'DEV', priority:2, batchLot:'' },
   { erfNo:'DEV-ERF-003', lotNo:'DEV-LOT-003', opNo:'OP-CUT', customerNo:'CUS-A', mClassNo:'M-QUALITY', curGroupNo:'QA-01', createdAt:'2026-11-20T07:00:00', releaseAt:null, status:1, erfSource:0, batchLotNos:['DEV-LOT-003','DEV-LOT-004'], qrsNo:'', qrsIssueState:0, holdItems:['H-002 尺寸異常'], productNo:'PRD-A', productName:'示範產品 A', customerLotNo:'CL-003', customerName:'示範客戶 A', holdDescription:'批次尺寸異常', dispDescription:'待判定', ruleNo:'', createQty:12, scrapQty:2, curQty:10, releaseQty:0, releaser:'', priority:1, batchLot:'DEV-LOT-003,DEV-LOT-004' },
 ]
 
@@ -108,12 +109,17 @@ function dateMatches(value: string | null, range: { from: string; to: string }):
   const instant = Date.parse(value)
   return (!range.from || instant >= Date.parse(range.from)) && (!range.to || instant <= Date.parse(range.to))
 }
+function load8dLinks(): Record<string, string> { try { const data = JSON.parse(window.localStorage.getItem(linkKey) || '{}') as unknown; return data && typeof data === 'object' && !Array.isArray(data) ? data as Record<string, string> : {} } catch { return {} } }
+function load8dIssueStates(): Record<string, number> { try { const rows = JSON.parse(window.localStorage.getItem('ymes-dev-mock:wip-8d-basis-factory:state:v1') || '[]') as unknown; return Array.isArray(rows) ? Object.fromEntries(rows.filter(row => row && typeof row.qrsNo === 'string' && typeof row.issueState === 'number').map(row => [row.qrsNo, row.issueState])) : {} } catch { return {} } }
 function query(): void {
   errorText.value = ''; lookupField.value = null
   if (!dev.value) { errorText.value = '此頁目前僅提供 DEV 假資料預覽。'; return }
   for (const key of Object.keys(filters) as FilterKey[]) filters[key] = filters[key].trim().toUpperCase()
   if (!(Object.keys(filters) as FilterKey[]).some(key => checked[key] && filters[key]) && !(Object.keys(dateChecked) as DateKey[]).some(key => dateChecked[key])) { errorText.value = '請至少選一個查詢條件。'; return }
   for (const key of Object.keys(dateChecked) as DateKey[]) if (dateChecked[key] && (!dates[key].from || !dates[key].to || !Number.isFinite(Date.parse(dates[key].from)) || !Number.isFinite(Date.parse(dates[key].to)) || Date.parse(dates[key].from) > Date.parse(dates[key].to))) { errorText.value = `${key === 'createdAt' ? 'Create Date' : 'Release Date'} 起迄時間不正確。`; return }
+  const links = load8dLinks()
+  const issueStates = load8dIssueStates()
+  const hasSaved8dState = window.localStorage.getItem('ymes-dev-mock:wip-8d-basis-factory:state:v1') !== null
   rows.value = fixtures.filter(row => row.erfSource === 0 &&
     (Object.keys(filters) as FilterKey[]).every(key => {
       if (!checked[key] || !filters[key]) return true
@@ -122,6 +128,7 @@ function query(): void {
     }) &&
     (!dateChecked.createdAt || dateMatches(row.createdAt, dates.createdAt)) &&
     (!dateChecked.releaseAt || dateMatches(row.releaseAt, dates.releaseAt)))
+    .map(row => { const candidate = links[row.erfNo] || row.qrsNo; const qrsNo = hasSaved8dState && candidate && !Object.prototype.hasOwnProperty.call(issueStates, candidate) ? '' : candidate; return { ...row, qrsNo, qrsIssueState: qrsNo ? issueStates[qrsNo] ?? row.qrsIssueState : 0 } })
     .sort((a,b) => a.erfNo.localeCompare(b.erfNo))
   activeNo.value = ''; searched.value = true; message.value = `查得 ${rows.value.length} 筆 WIP 異常單。`
 }
@@ -134,8 +141,22 @@ function formatCell(row: ErfRow, key: string): string | number {
 }
 function openInfo(): void { if (!active.value) return; infoTab.value = detailTabs[0]; infoMessage.value = ''; pendingDeleteAttachment.value = null; dialog.value = 'info' }
 function closeDialog(): void { pendingDeleteAttachment.value = null; dialog.value = null }
-function open8d(): void { if (!active.value) return; if (active.value.qrsNo && active.value.qrsIssueState === -1) { errorText.value = '此 8D 單已作廢，來源畫面不開啟。'; return }; dialog.value = '8d' }
+function open8d(): void {
+  const row = active.value
+  if (!row) return
+  if (!row.qrsNo) {
+    emit('create8d', { erfNo: row.erfNo, lotNo: row.lotNo, productNo: String(row.productNo || ''), opNo: row.opNo, customerNo: row.customerNo, lotQty: Number(row.curQty || 0), errorQty: Number(row.scrapQty || 0), holdDescription: String(row.holdDescription || '') })
+    return
+  }
+  if (row.qrsIssueState === -1) { errorText.value = '此 8D 單已作廢，來源畫面不開啟。'; return }
+  dialog.value = '8d'
+}
 watch(dev, enabled => { if (!enabled) { rows.value = []; activeNo.value = ''; closeDialog(); searched.value = false } })
+onMounted(() => {
+  if (!dev.value || !props.initialErfNo) return
+  checked.erfNo = true; filters.erfNo = props.initialErfNo; query()
+  if (rows.value.length) { activeNo.value = rows.value[0].erfNo; openInfo() }
+})
 </script>
 
 <template>
@@ -156,7 +177,7 @@ watch(dev, enabled => { if (!enabled) { rows.value = []; activeNo.value = ''; cl
     <div v-if="dialog && active" class="dialog-backdrop" @click.self="closeDialog"><div class="dialog" role="dialog" aria-modal="true" :aria-label="dialog === 'info' ? 'ERF Information' : '8D'">
       <header><strong>{{ dialog === 'info' ? 'ERF Information' : '8D' }} · {{ active.erfNo }}</strong><button type="button" class="mes-button" @click="closeDialog">Close</button></header>
       <template v-if="dialog === 'info'"><fieldset><legend>ERFBasis</legend><div class="detail-grid"><span>ERF No: {{ active.erfNo }}</span><span>Lot No: {{ active.lotNo }}</span><span>Product No: {{ active.productNo }}</span><span>OP No: {{ active.opNo }}</span><span>Customer No: {{ active.customerNo }}</span><span>MClass No: {{ active.mClassNo }}</span><span>Cur GroupNo: {{ active.curGroupNo }}</span><span>ERF Type: {{ active.erfType || 'DEV' }}</span><span>Rule No: {{ active.ruleNo || '—' }}</span><span>Creator: {{ active.creator || 'DEV' }}</span><span>Create Date: {{ formatCell(active,'createdAt') }}</span><span>ERF Record Qty: {{ formatCell(active,'erfRecordQty') }}</span><span class="wide">Hold Description: {{ active.holdDescription }}</span></div></fieldset><fieldset><legend>ERF Detail</legend><div class="tabs"><button v-for="tab in detailTabs" :key="tab" type="button" class="mes-button" :class="{selected: infoTab === tab}" @click="infoTab = tab; pendingDeleteAttachment = null; infoMessage = ''">{{ tab }}</button></div><div class="tab-body"><div v-if="infoTab !== 'ERF Attach'" class="detail-table-wrap"><table class="detail-table"><thead><tr><th v-for="column in currentDetailColumns" :key="column">{{ column }}</th></tr></thead><tbody><tr v-for="(row, index) in detailRows" :key="index"><td v-for="column in currentDetailColumns" :key="column">{{ formatDetailCell(row, column) }}</td></tr><tr v-if="!detailRows.length"><td :colspan="currentDetailColumns.length || 1">無資料</td></tr></tbody></table></div><template v-else><div v-for="source in attachmentSources" :key="source" class="attachment-group"><strong>{{ source }} Attach</strong><div class="detail-table-wrap"><table class="detail-table"><thead><tr><th>AttachName</th><th>Attach File</th><th>DelAttachFile</th><th>Creator</th><th>CreateDate</th><th v-if="source === 'OCAP'">OCAPNO</th></tr></thead><tbody><tr v-for="row in attachmentRows.filter(item => item.source === source)" :key="row.name + row.ocapNo"><td>{{ row.name }}</td><td><button type="button" class="mes-button" @click="viewAttachment(row)">View</button></td><td><button type="button" class="mes-button" :disabled="isGeneratedErfFile(row.name)" @click="requestDeleteAttachment(row)">Delete</button></td><td>{{ row.creator }}</td><td>{{ row.createdAt }}</td><td v-if="source === 'OCAP'">{{ row.ocapNo }}</td></tr><tr v-if="!attachmentRows.some(item => item.source === source)"><td :colspan="source === 'OCAP' ? 6 : 5">無附件</td></tr></tbody></table></div></div><p v-if="infoMessage" class="info-message" role="status">{{ infoMessage }}</p><div v-if="pendingDeleteAttachment" class="delete-confirm" role="alertdialog" aria-label="確認刪除假附件"><span>確定從 DEV 假資料移除 {{ pendingDeleteAttachment.name }}？</span><button type="button" class="mes-button" @click="confirmDeleteAttachment">確定</button><button type="button" class="mes-button" @click="pendingDeleteAttachment = null">取消</button></div></template></div></fieldset></template>
-      <template v-else><p v-if="active.qrsNo">已關聯 8D：{{ active.qrsNo }}。原畫面會依 IssueState 開啟 WP_8DMaintainDef。</p><p v-else>此異常單尚未關聯 8D。原畫面會開啟 WP_8DBasis_Factory 建立流程。</p><p>WP801 的建立／維護交易尚待獨立移植；DEV 不建立 8D 單，也不更新 ERF。</p></template>
+      <template v-else><p>已關聯 8D：{{ active.qrsNo }}。原畫面會依 IssueState 開啟 WP_8DMaintainDef。</p><p>WP802 的維護交易尚待獨立移植；此處僅顯示 DEV 關聯資訊。</p></template>
     </div></div>
   </section>
 </template>
