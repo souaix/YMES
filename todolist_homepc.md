@@ -1,6 +1,6 @@
 # 家裡電腦接手清單
 
-## WP401 外包單開立（2026-11-20）
+## 桌機交付 WP401–WP404、WP901–WP906（2026-11-20）
 
 - [ ] 讀 [WP401 規格](docs/modules/WIP/外包單開立.md)，比對既有 OS Basis、OS Detail、Future OS references 與 live schema。完成正式 WP401 權限、參考批 lookup、取號及跨表原子增修／刪除／作廢。
 - [ ] 讀 [WP402 規格](docs/modules/WIP/外包單確認.md)，比對 FutureOSLog 和 ERP settings 結構，實作出貨確認、Lot/流程/Reverse 原子更新及可復原的 ERP 請購與回寫。
@@ -13,7 +13,7 @@
 - [ ] 讀 [WP905 規格](docs/modules/WIP/產品版本變更.md)，將目前版本、基礎批、包裝守門與回復歷程提交做成可稽核交易。
 - [ ] 讀 [WP906 規格](docs/modules/WIP/ECN設定精靈.md)，完成 Setup 特性／批次預覽及 ECN 三表交易，驗證有效期、條件與 IssueState。
 
-## 最新公司端交付：WP112 工單撤派工（2026-11-20）
+## 筆電交付：WP112 工單撤派工（2026-11-20）
 
 公司端完成 `/YMES/WIP/UndoDispatch` Vue DEV 示意與 [WP112 原始碼規格](docs/modules/WIP/工單撤派工.md)；未連 YMES PostgreSQL 或 SAP、未執行正式 API/部署。這個功能有外部 SAP DB link 與 Lot/Inventory 副作用，**不能只做狀態 UPDATE 就標示完成**。
 
