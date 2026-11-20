@@ -1018,3 +1018,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - `frmImmediateHoldSet_Batch`／`frmBRERFCreate_Batch`／`wsWIP.Exe_ERF_Create_Batch`／`clsLot.UpdERF_Create_Batch` 的 `ERFBatchHoldGenType=0` 寫 `TBLWIPERFBATCHLOT`，`1` 改 `ERFType=2` 且不寫此表。BatchLot 的六欄 Oracle source DDL 已在 `database/reference/mestest_qc409_wip_disposition_dependencies_source_ddl.sql`；本批 `database/reference/mestest_wip_wp503_create.sql` 提供 PostgreSQL CREATE-only。其他 Lot/ERF/QC/設備查詢直接表沿用 WP101/WP201/WP305/WP501/QC refs，家用端須先核 live schema/history。
 - 同一 Core 的 `ERFType=3` Future Hold 分支使用 `TBLWIPFUTUREHOLDLOG`／`TBLWIPFUTUREHOLDREASON`。公司端以既有受保護 Oracle profile、PowerShell 5.1/ODP.NET **唯讀**取得這兩表的 DDL、欄位及索引供後續 Future Hold 規格；WP503 傳入 `6` 或轉 `2`，不執行該分支，兩表不可錯列為 WP503 migration。未查業務列、未寫 Oracle、未連 YMES PostgreSQL，也未保存連線字串或密碼。完整規格見 `docs/modules/WIP/批次立即異常設定.md`。
+
+### 更新 2026-11-20：WIP WP504 預先異常設定
+
+- `frmFutureHoldSet`／`wsWIP.Exe_FutureHold_Set`／`clsLot.UpdFutureHold_Set` 的 Set 直接替換 `TBLWIPFUTUREHOLD`、`TBLWIPFUTUREHOLDREASON`；後續 `ERFType=3` 生效才使用 `TBLWIPFUTUREHOLDLOG`。主表 source/CREATE 已在 WP201；Reason/Log 由受保護 MESTEST 唯讀 `DBMS_METADATA`、ALL_TAB_COLUMNS/CONSTRAINTS/INDEXES/TRIGGERS 取得，原始檔 `database/reference/mestest_wip_wp504_source_ddl.sql`、`mestest_wip_wp504_source_indexes.sql`、`mestest_wip_wp504_metadata.txt`。PostgreSQL **CREATE-only** 在 `mestest_wip_wp504_create.sql`：Reason 八欄七鍵 PK；Log 十欄、無 PK、LotNo 非唯一 index。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL；憑證仍只在受保護本機設定，不提交。家用端先核 live schema/history，缺項才 forward migration。
+- 原 Form 多批包裝預檢傳逗號字串而 Service 當一個 LotNo，正式端須逐批重查。`UpdFutureHold_Set` 刪除鍵未含 FutureHoldSerial，會覆蓋同鍵其他 Serial；此語義與後續 ERFType3 Log 的 NOT NULL 欄位需在正式 API 交易設計確認。詳見 `docs/modules/WIP/預先異常設定.md`。
