@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## HOME新查證：WP109 LotBasis來源版本差（2026-11-21）
+
+已收到8ff的取號、Lot／Device／MONo、參數與稽核補證；HOME三張SWR表0062及引用相容已上線，不重索這三張DDL。下一個精確來源需求是：
+
+- [ ] 補同一來源版本MESTEST.TBLWIPLOTBASIS完整DBMS_METADATA.GET_DDL、COLUMN_ID順序的型別／長度／NULL／DATA_DEFAULT、constraint與index欄序、trigger清單。8ff lookup metadata為39欄：DESCRIPTION400且有XX_MARKING1024；舊WP101 sourceDDL為38欄、DESCRIPTION255且沒有XX_MARKING。標示來源環境／擷取時間並解釋版本差，不查業務列、不執行DDL。
+- [ ] 若可核，補原應用伺服器DateTime.Now實際時區與ExecuteSQLNoneQuery_AttachFile本體。HOME會自行定義新服務的業務時區、每日上限與明確原子交易，不把未知原helper當已證實rollback。
+
+HOME正正常整合八個新WIP頁，保留原DEV、正式隔離未交付provider；完整建置／正式驗收後才同步main。Office維持Oracle原生唯讀／UI，不需連HOME PostgreSQL、SSH或部署。
+
 本輪讀取版已完成metadata結案及獨立下載核對。新current-checkpoint SHA `7d0bc62f032e2e24f243fe5b016fa629ec781ed603202d5a082770db4492a4b3`，獨立回條SHA `5da236c29ef699108996d31a5946155b67345d47e07e9f762cbfc114098d607e`；完整保留原496 raw備份、50項既有保護資料與歷史前綴。發行對應code X `50cf3a6dfb3cd6b310c35c4e98310b59c30eab0d`、status Y `f0d26dfb1d414786b483faabae545de1d075ce0f` 均通過436來源綁定、正常feature推送與直接ref讀回。此後純文件補記不改本次X／Y發行對應。main仍含Office新8ff工作，`mainSyncPending=true`；下一輪正常整合與新頁驗收，不以force覆寫。下方496／未封存／收尾待辦等段落保留為前一時點；本段是目前狀態。SWR writer與global MES QA未因此完成。
 
 已驗證程式提交 X `50cf3a6dfb3cd6b310c35c4e98310b59c30eab0d` 完成436份來源綁定（SQL6／API172／Web258，回條SHA `2c04f82d3ba5de2e6c2f1f57c14921643160efdbbd8b100e6e59ccd315ed0759`），已正常推送 `codex/homepc-wp109-read-20261120` 並直接讀回GitHub ref一致，未force。驗收後fetch發現Office main已到 `8ff405290a7f55bfd1e2261f8d85dec97f363409`，新增9提交／8個WIP DEV入口與WP109來源；這些尚未混入本輪正式c828。接著正常合併並驗新入口，保留兩端成果；本輪status／metadata收尾與main整合分開記錄。
@@ -37,14 +46,16 @@ HOME已正常整合Office e5f與ET106完成歷史，API167／3f0b與Web256／ade
 
 Office維持MES原生Oracle唯讀來源／UI／規格；HOME維持復刻PostgreSQL／PPK SSH／API／部署／正式驗收。下方原生查證及尚未交付provider待辦完整保留，不要求Office操作HOME資料庫或上版。
 
-### WP109下一批：待補的精確原生來源（尚未實作完成）
+### WP109 精確原生來源補證
+
+已補 [WP109 取號、Lot／Device／工單、參數與作廢稽核](docs/modules/WIP/特殊生產需求維護.md)。附件 SQL helper 本體及實際時區未見可核來源，已在規格註明。
 
 三張SWR Basis15／Detail2／共用Serial2的Oracle DDL、index與metadata已交，不重複要求；HOME本機只讀readiness確認captured catalog缺這三表及LotBasis，沒有建表或接provider。Office請僅補下列原碼摘錄／必要Oracle唯讀metadata，不操作HOME PG、SSH、部署或業務列：
 
-- [ ] `wsWIP.InitSWRNo/AddSWRBasis`及`clsWIP.cs`約11213–11825的實際serial body：新日缺列怎麼起始、存last還是next、配置／rollback時點、超999與日期時區。DEV cap999不可當原生政策，既有SerialRule配置也不可當真counter。
-- [ ] Lot lookup的`TBLWIPLOTBASIS`原生DDL及`BASELOTNO`對CustomerNo的精確ownership join；Device／MO lookup的實體表、鍵、投影與資格條件。不可從DEV options猜表名或先假設state2。
-- [ ] `AbortSWRBasis/DelSWRBasis`寫SYS EventLog的Service/Core參數、實體／欄位DDL、SWRNo／reason／actor／時間映射及交易失敗分支；現有auth audit不能直接視為此provider。
-- [ ] `FileSizeLimit`與`InputAbortLog`的原生參數讀取表／row key／型別／單位／default及失敗分支；只知道名稱和MB尚不足以安全上傳或完整作廢。原生附件讀取少最後1 byte的問題不沿用。
+- [x] 補 next counter、初始化、建立交接及超 999 行為。
+- [x] 補 LotBasis DDL、客戶同表比對、Device 來源及 MONo 自由輸入。
+- [x] 補作廢及單獨刪除差異、EventLog metadata 與失敗交易。
+- [x] 補 FileSizeLimit／InputAbortLog 文字參數、單位與 fallback。
 
 HOME在任何SWR建表前須先補ET101 CustomerNo registry absent/present相容與防orphan；開放SWR寫入前補OP引用／鎖協作。這是HOME下一批責任，尚未完成；本輪ET101／Web256驗收不代表WP109正式交易交付。原生`issueoption=0/issuetable=NULL`，Approve為直接0→2，不新增無據SAP／generic IssueJob需求。
 
@@ -70,7 +81,15 @@ Code X ebc03a1已409來源綁定PASS、正常feature推送／ref讀回；文件Y
 - [x] [WP904 生產批作業區變更](docs/modules/WIP/生產批作業區變更.md) 完成 DEV 選批、主子流程、變更與清除。沿用現有 DDL／CREATE-only 參考並交接整批替換交易。
 - [x] [WP905 產品版本變更](docs/modules/WIP/產品版本變更.md) 完成 DEV 產品與舊版查詢、基礎批選取、包裝守門與版本變更。正式交易沿用既有表。
 - [x] [WP906 ECN 設定精靈](docs/modules/WIP/ECN設定精靈.md) 完成 Vue DEV 六步、條件及受影響批。三張正式表沿用 WP201。
-- [ ] 依選單清冊接 WP907 生產批數量調整。
+- [x] [WP907 生產批數量調整](docs/modules/WIP/生產批數量調整.md) 完成整批、Bin、元件三種 Vue DEV 與 Oracle 調整歷程兩表的 metadata／CREATE-only。
+- [x] [WP908 標籤列印](docs/modules/WIP/標籤列印.md) 完成 DEV 多批對應、預覽與模擬列印，補列印歷程 metadata。
+- [x] [WP909 換廠作業](docs/modules/WIP/換廠作業.md) 完成 DEV 查詢、靜電箱整組檢查、目的區驗證及換廠。選單清冊未列 WP910。
+- [x] [WP911 生產批作業站用料記錄調整](docs/modules/WIP/生產批作業站用料記錄調整.md) 完成 DEV 報工／用料主明細、加改刪與合計，沿用現有表。
+- [x] [WP912 生產批作業站製程特性值調整](docs/modules/WIP/生產批作業站製程特性值調整.md) 完成 DEV 批／元件特性值編輯、唯讀守門與稽核表 metadata。
+- [x] [WP913 生產批屬性調整](docs/modules/WIP/生產批屬性調整.md) 完成 DEV 批／元件屬性查詢及增刪改。WP914 已有公司端交付。
+- [x] [WP915 生產批產品變更作業](docs/modules/WIP/生產批產品變更作業.md) 完成 DEV 篩選、聯產品、包裝預檢、逐批結果。正式 ERP 和流程改掛已交接。
+- [x] [WP916 生產批強制結批作業](docs/modules/WIP/生產批強制結批作業.md) 完成 DEV 單批結批、包裝守門與共同 CloseLot 依賴的唯讀結構交接。
+- [x] WP901–WP916 公司端選單已齊；另已補本頁 HOME 指明的 WP109 精確原生來源。
 
 ## 2026-11-20 桌機再接手：從 WP401 開始
 

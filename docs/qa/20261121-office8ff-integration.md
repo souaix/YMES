@@ -1,0 +1,13 @@
+# Office 8ff 正常合併與正式入口隔離（進行中）
+
+HOME負責PostgreSQL復刻／API／PPK SSH／發行，Office負責MES原生Oracle唯讀來源與UI。沿用KD配色、三層選單、預設折疊及空白首頁。
+
+本輪正常合併Office `8ff405290a7f55bfd1e2261f8d85dec97f363409` 九提交與HOME `6e9ee9127a19d47a926db6b5a871684ad4adeaf6`；唯一衝突在WP109模組MD的同位置新增，已完整保留HOME驗收紀錄與Office原生契約。沒有force、重設或刪除另一端提交。
+
+八個入口是WP907／908／909／911／912／913／915／916。原Office元件逐bytes保留為各自DevPreview；新wrapper只在DEV且preview嚴格為true時延遲載入，正式不實例化假資料、查找、異動或彈窗。正式僅有短狀態與Close回首頁，沒有將入口交付宣稱為交易API完成。各模組MD保留原規格並附本輪範圍。
+
+候選Web274 raw canonical `9f5d13f8fac0d93ffa3f91be3da2059338854a778ee2332738b49f21432e1bb9`；App僅六組48行新增，原257份來源保持原值，包含已驗證的WP109讀取頁及共享樣式。Root已全文讀wrapper及App差異，完整typecheck／Vite正在另輪執行；尚未部署或完成本輪GUI。
+
+目前正式仍API172 `502f88704b928ffcfd0b5dedf6e3c469707e301ac7d04e961be59ce19ca8c614`、Web258 `c8284e0ed4482a35ebdebc6de53c5ce5ad063ce517d62fa03604c5a40f677871`、DB0062、checkpoint `7d0bc62f032e2e24f243fe5b016fa629ec781ed603202d5a082770db4492a4b3`。本輪未變API、PG結構或業務列。舊WP109 proof0982190b僅涵蓋已交付讀取範圍，不能借用為本輪八頁的GUI證據。
+
+後續依序完成全來源建置、Web-only新封包與正常TLS／檔案核對、八個原生入口及direct reload／Close、自行Demo／框架與WP109讀取回歸；封存本輪實證後才正常推送整合分支與main，並再讀GitHub確認Office是否有新交接。

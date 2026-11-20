@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 正在接手：Office 8ff整合（2026-11-21）
+
+已正常合併HOME6e9與Office8ff九提交，保留八個新WIP原型與WP109來源補證；唯一模組文件衝突完整保留雙方。Web274候選已採用原型lazy DEV隔離及App六組新增，原257來源／WP109讀取功能保持。完整建置、部署、本輪app-browser與main同步仍待完成，詳[本輪QA](docs/qa/20261121-office8ff-integration.md)。現行正式仍API502／Webc828／DB0062／checkpoint7d0。
+
+- [ ] 完成八入口及深連結／reload／Close、KD／選單、自行Demo與WP109讀取回歸，驗證後正常同步main，再檢查新交接。
+- [ ] ET202外包項目來源完整，先補Process硬刪引用與協作鎖，完成真API／PG／UI；候選正獨立準備，尚未採用／建表／部署。
+- [ ] WP109 writer可先完成原生允許的空Lot分支、原子取號／附件／核准／作廢；非空Lot缺真provider明確503。先核EventLog7／Parameter25現況與原生SQL，不猜Lot39與舊DDL38的差異。Office只補精確來源，HOME自行完成API／DB。
+
+使用者已授權自行Demo與所有開發、驗收及正常發行；工具確實無法操作時寫具體待辦並繼續其他工作，不等使用者登入。
+
 本輪讀取版已完成metadata結案及獨立下載核對。新current-checkpoint SHA `7d0bc62f032e2e24f243fe5b016fa629ec781ed603202d5a082770db4492a4b3`，獨立回條SHA `5da236c29ef699108996d31a5946155b67345d47e07e9f762cbfc114098d607e`；完整保留原496 raw備份、50項既有保護資料與歷史前綴。發行對應code X `50cf3a6dfb3cd6b310c35c4e98310b59c30eab0d`、status Y `f0d26dfb1d414786b483faabae545de1d075ce0f` 均通過436來源綁定、正常feature推送與直接ref讀回。此後純文件補記不改本次X／Y發行對應。main仍含Office新8ff工作，`mainSyncPending=true`；下一輪正常整合與新頁驗收，不以force覆寫。下方496／未封存／收尾待辦等段落保留為前一時點；本段是目前狀態。SWR writer與global MES QA未因此完成。
 
 已驗證程式提交 X `50cf3a6dfb3cd6b310c35c4e98310b59c30eab0d` 完成436份來源綁定（SQL6／API172／Web258，回條SHA `2c04f82d3ba5de2e6c2f1f57c14921643160efdbbd8b100e6e59ccd315ed0759`），已正常推送 `codex/homepc-wp109-read-20261120` 並直接讀回GitHub ref一致，未force。驗收後fetch發現Office main已到 `8ff405290a7f55bfd1e2261f8d85dec97f363409`，新增9提交／8個WIP DEV入口與WP109來源；這些尚未混入本輪正式c828。接著正常合併並驗新入口，保留兩端成果；本輪status／metadata收尾與main整合分開記錄。
@@ -76,6 +86,15 @@ Code X `ebc03a106ebd5d47a1a47bf6dcc172fc3bdb8ef1` 已409來源綁定PASS、正�
 - [ ] 讀 [WP904 規格](docs/modules/WIP/生產批作業區變更.md)，比對現有 batch override／流程／區域 schema，做有身分複核與版本保護的整批變更，排隊時按 Core 規則更新現況區及廠別。
 - [ ] 讀 [WP905 規格](docs/modules/WIP/產品版本變更.md)，將目前版本、基礎批、包裝守門與回復歷程提交做成可稽核交易。
 - [ ] 讀 [WP906 規格](docs/modules/WIP/ECN設定精靈.md)，完成 Setup 特性／批次預覽及 ECN 三表交易，驗證有效期、條件與 IssueState。
+- [ ] 讀 [WP907 規格](docs/modules/WIP/生產批數量調整.md)，核對 AdjustLog／AdjustDetail schema，完成三種數量調整和庫存、原因、稽核與回復交易。
+- [ ] 讀 [WP908 規格](docs/modules/WIP/標籤列印.md)，比對列印歷程 CLOB、受控樣板、印表機整合與列印回執。
+- [ ] 讀 [WP909 規格](docs/modules/WIP/換廠作業.md)，實作目的區對應、批與靜電箱版本鎖定和同一交易。
+- [ ] 讀 [WP911 規格](docs/modules/WIP/生產批作業站用料記錄調整.md)，實作用料與料批聚合交易、舊量／日期並發檢查和逐筆刪除回應。
+- [ ] 讀 [WP912 規格](docs/modules/WIP/生產批作業站製程特性值調整.md)，核對特性值、並發版本與調整稽核資料，實作兩種原子交易。
+- [ ] 讀 [WP913 規格](docs/modules/WIP/生產批屬性調整.md)，比對既有屬性表，完成批／元件 CRUD、舊值鎖定與理由稽核。
+- [ ] 讀 [WP915 規格](docs/modules/WIP/生產批產品變更作業.md)，依來源模式、產品流程／ECN、庫存與回復規則完成正式逐批交易。
+- [ ] 讀 [WP916 規格](docs/modules/WIP/生產批強制結批作業.md)，依 Service／Core 完成排隊批 EndOP、301、工單／物料／載具／儲位及回復版本同一交易。
+- [ ] 讀 [WP109 原生來源補證](docs/modules/WIP/特殊生產需求維護.md)，接 next counter 原子配置、Lot 所有權、Device、參數與作廢稽核。底層附件 helper rollback 及伺服器時區仍待確認。
 
 ## 筆電交付：WP112 工單撤派工（2026-11-20）
 
