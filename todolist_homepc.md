@@ -1,5 +1,19 @@
 # 家裡電腦接手清單
 
+## 最新進度：ET106 writer A2指定驗收與清理通過（2026-11-20）
+
+Root已完成API161／976單輪121 HTTP／961 assertions、獨立API13全0；Web246 A2／eb1已正式部署，GUI36 raw／32有效＝30GUI＋2SQL、四工具觀察已復驗，兩A1產品缺陷在A2真復驗。GUI地址／報關／BFT全GUI建刪，只有Customer SQL前置／清理各1；獨立13範圍全0，native35及完整catalog保持。A1 proof／缺陷、A2 proof／工具觀察及失敗log全部保留，不把API或pure測試當GUI。
+
+Code X `ebc03a106ebd5d47a1a47bf6dcc172fc3bdb8ef1` 已409來源綁定PASS、正常feature推送與直接ref讀回同值。Post-GUI Office main已到e5f4466（d96後15提交／12新入口）；獨立361199be…合併目前source-only，未建置／防護／部署／GUI，不混本批246證據。
+
+- [ ] Root完成文件Y／409綁定與feature同步、combined checkpoint及後續main整合；目前不預填Y／main／metadata完成。
+- [ ] 下一ET101客戶owner writer：來源／backend A3及UI候選已本機準備，尚未正式整合、migration／API回歸／GUI／部署；UI原生驗證窄修及no-Job核准邊界依Root最新決策另存候選，先完成本批ET106。
+- [ ] 未交付WIP／Issue／import等provider繼續依各模組來源接手，入口防護通過不等於真交易完成。
+
+完整範圍見[ET106 writer QA](docs/qa/20261120-et106-writer.md)；下方所有既有歷史標題／待辦保留。
+
+
+
 ## 最新：F1 Web241四8D正式隔離與限定驗收完成（2026-11-20；status／metadata待Root）
 
 HOME仍負責PG復刻／API／PPK／部署，Office負責原生Oracle唯讀source與UI。Root已完成schema0060 metadata SHA `7f4c5ae33a72c9dd3b9599840523d5e89f600ca61998990b408c399ddf350e47`，schema statusY521／394來源綁定與正常feature同步已完成；下方舊pending均為歷史快照。兩表已present，禁止再absent-only或回不相容8db。
