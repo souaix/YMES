@@ -2331,3 +2331,10 @@ API 工作：
 - [ ] 建登入/Function ACL 的六欄候選查詢、五種 lookup、PS→有效 OP、QC M/S Class/Hold Description/HoldItem/FirstGroup 的正式讀取 API，限制結果量；Status `0|1|4`、ShowPartialLot=false、至少一個 filter。Selected Lot 是已勾列過濾，Lot/HoldItem 掃描在當前查詢或分類結果勾選。SClass 是 UI 必填與候選依據，原 Service 只收 MClass，不把 SClass 誤當主表欄。
 - [ ] Set POST 對每**一筆**所選 Lot 重查包裝、狀態、Partial、版本與權限；原 Form 把多筆 LotNo 逗號串送給單值 `CheckLotPackage`，有漏檢風險。確認選 PS/OP、MClass/SClass/HoldItem 合法、HoldTime 只能 0/1、說明非空。FirstGroup 缺對應 OP 而無 `*` 時提供可取消確認，不能把它當硬拒或忽略警示。
 - [ ] 按 Lot×OP 與 `(LotNo,OPNo,HoldTime,ModuleNo,ModuleVersion)` 在同一交易替換 FutureHold/Reason；此入口 ModuleNo/Version=`N/A`，`FutureHoldSerial` default=`N/A`，原刪除鍵**不含 Serial**，須確認不同 Serial 舊資料的覆蓋政策。Set 不立刻改 Lot/開 ERF；後續 Start/End 命中、ERFType3、FutureHoldLog、Reverse/ReleaseLog 與 WP506 Release 要設計一致。交易使用參數化 SQL、冪等鍵、server Creator/時間與並發衝突處理；API 完成後才接正式 Vue／部署/驗收。公司端未連 PG、未執行 build/test/browser。
+
+## WIP WP505 預先等待設定家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，讀 [WP505 規格](docs/modules/WIP/預先等待設定.md)。公司 `/YMES/WIP/FutureWaitSet` 只用 DEV 假資料，正式環境不可讀 `ymes-dev-mock:wip-future-wait-set:state:v1` 或回報假 Set 成功。
+- [ ] 核 YMES PostgreSQL live schema/history、資料與權限。`TBLWIPFUTUREWAIT` 七欄、PK `(LOTNO,OPNO,WAITTIME)`，Oracle source `mestest_wip_wp201_dependency_source_ddl.sql`、PG CREATE-only `mestest_wip_wp201_create.sql` 已存在；無新直接表，缺項才 forward migration，別重建 WP201 既有結構。
+- [ ] 建有登入/Function ACL 的六欄候選查詢、五類 lookup、PS→有效 OP；至少一個 filter、Status `0|1|4`、ShowPartialLot=false、結果分頁/上限。Selected Lot 是檢視過濾，掃描只勾當前查詢列。
+- [ ] Set POST 逐批重查包裝、Status、Partial、版本、Lot/OP 和權限；原 Form 的多筆 LotNo 逗號串被 `CheckLotPackage` 當單值，不能沿用。WaitTime 只允許 Start=0/End=1，OP 至少一個，Description **可空**且最多 3000 字元。以參數化 SQL 交易按 Lot×OP×WaitTime 刪舊再插新 FutureWait，server 決定 Creator/日期、明確處理併發/冪等；Set 不直接改 LotState/WaitBasis。後續 `ChkFutureWait` 命中、WP502 等待交易及 WP507 Release 需生命週期一致。完成 API 才接正式 Vue/部署驗收；公司端未連 PG、未執行 build/test/browser。

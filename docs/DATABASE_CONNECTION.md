@@ -1023,3 +1023,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - `frmFutureHoldSet`／`wsWIP.Exe_FutureHold_Set`／`clsLot.UpdFutureHold_Set` 的 Set 直接替換 `TBLWIPFUTUREHOLD`、`TBLWIPFUTUREHOLDREASON`；後續 `ERFType=3` 生效才使用 `TBLWIPFUTUREHOLDLOG`。主表 source/CREATE 已在 WP201；Reason/Log 由受保護 MESTEST 唯讀 `DBMS_METADATA`、ALL_TAB_COLUMNS/CONSTRAINTS/INDEXES/TRIGGERS 取得，原始檔 `database/reference/mestest_wip_wp504_source_ddl.sql`、`mestest_wip_wp504_source_indexes.sql`、`mestest_wip_wp504_metadata.txt`。PostgreSQL **CREATE-only** 在 `mestest_wip_wp504_create.sql`：Reason 八欄七鍵 PK；Log 十欄、無 PK、LotNo 非唯一 index。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL；憑證仍只在受保護本機設定，不提交。家用端先核 live schema/history，缺項才 forward migration。
 - 原 Form 多批包裝預檢傳逗號字串而 Service 當一個 LotNo，正式端須逐批重查。`UpdFutureHold_Set` 刪除鍵未含 FutureHoldSerial，會覆蓋同鍵其他 Serial；此語義與後續 ERFType3 Log 的 NOT NULL 欄位需在正式 API 交易設計確認。詳見 `docs/modules/WIP/預先異常設定.md`。
+
+### 更新 2026-11-20：WIP WP505 預先等待設定
+
+- `frmFutureWaitSet`／`wsWIP.Exe_FutureWait_Set`／`clsLot.UpdFutureWait_Set` 直接替換 `TBLWIPFUTUREWAIT`，Set 不立即更新 LotState 或 WaitBasis。主表七欄、PK `(LOTNO,OPNO,WAITTIME)`，Oracle source DDL 已在 `database/reference/mestest_wip_wp201_dependency_source_ddl.sql`，PostgreSQL CREATE-only 在 `mestest_wip_wp201_create.sql`；沒有新缺的直接表，不重複產生 CREATE SQL。公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL。家用端仍須核 live schema/history、後續生效與 WP507 Release 依賴；原 Form 多批包裝預檢有逗號單值缺陷，正式 API 逐批重查。詳見 `docs/modules/WIP/預先等待設定.md`。
