@@ -2,37 +2,43 @@
 import { computed, ref } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 
-defineProps<{ developmentPreview: boolean }>()
+const props = defineProps<{ developmentPreview: boolean }>()
+const dev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const unavailableMessage = "正式環境尚未開放此功能。"
 defineEmits<{ close: [] }>()
 
-const products = [
+const products = dev.value ? ([
   { no: 'DEV-IC1', version: 'C', previous: ['A', 'B'] },
   { no: 'DEV-IC2', version: 'B', previous: ['A'] },
-]
-const lots = ref([
+]) : ([])
+const lots = ref(dev.value ? ([
   { no: 'DEV-VER001', product: 'DEV-IC1', version: 'A', mo: 'DEV-MO1', ro: 'DEV-RO1', item: '1', customer: 'DEV-C01' },
   { no: 'DEV-VER002', product: 'DEV-IC1', version: 'B', mo: 'DEV-MO1', ro: 'DEV-RO1', item: '2', customer: 'DEV-C01', packaged: true },
   { no: 'DEV-VER003', product: 'DEV-IC1', version: 'C', mo: 'DEV-MO2', ro: 'DEV-RO2', item: '1', customer: 'DEV-C02' },
   { no: 'DEV-VER004', product: 'DEV-IC2', version: 'A', mo: 'DEV-MO3', ro: 'DEV-RO3', item: '1', customer: 'DEV-C02' },
-])
+]) : ([]))
 const productNo = ref('')
 const oldVersion = ref('')
-const product = computed(() => products.find(row => row.no === productNo.value))
+const product = computed(() => dev.value ? (products.find(row => row.no === productNo.value)) : (undefined))
 const query = ref<{ no: string; version: string }>()
-const visible = computed(() => lots.value.filter(row => row.product === query.value?.no &&
-  (!query.value.version || row.version === query.value.version)))
+const visible = computed(() => dev.value ? (lots.value.filter(row => row.product === query.value?.no &&
+  (!query.value.version || row.version === query.value.version))) : ([]))
 const selected = ref<string[]>([])
 const confirmation = ref<string | null>(null)
 const error = ref('')
 const result = ref('')
 
 function resetQuery(): void {
+  if (!dev.value) return
+
   query.value = undefined
   selected.value = []
   error.value = result.value = ''
 }
 
 function search(): void {
+  if (!dev.value) return
+
   resetQuery()
   if (!product.value) {
     error.value = '請選擇產品。'
@@ -42,6 +48,8 @@ function search(): void {
 }
 
 function requestChange(): void {
+  if (!dev.value) return
+
   const target = product.value
   if (!target || !selected.value.length) return
   error.value = result.value = ''
@@ -49,6 +57,8 @@ function requestChange(): void {
 }
 
 function resolve(accepted: boolean): void {
+  if (!dev.value) return
+
   confirmation.value = null
   const target = product.value
   if (!accepted || !target) return
@@ -70,7 +80,7 @@ function resolve(accepted: boolean): void {
 <template>
   <section class="version-change" aria-labelledby="version-change-title">
     <h2 id="version-change-title">產品版本變更</h2>
-    <template v-if="developmentPreview">
+    <template v-if="dev">
       <form class="toolbar" @submit.prevent="search">
         <label>產品
           <select v-model="productNo" @change="oldVersion = ''; resetQuery()">
@@ -108,7 +118,7 @@ function resolve(accepted: boolean): void {
       <ActionConfirmationDialog :message="confirmation" @resolve="resolve" />
     </template>
     <template v-else>
-      <p>產品版本變更 API 待接續。</p>
+      <p role="status">{{ unavailableMessage }}</p>
       <button type="button" @click="$emit('close')">關閉</button>
     </template>
   </section>

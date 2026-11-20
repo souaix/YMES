@@ -2,25 +2,27 @@
 import { computed, reactive, ref, watch } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 
-defineProps<{ developmentPreview: boolean }>()
+const props = defineProps<{ developmentPreview: boolean }>()
+const dev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const unavailableMessage = "正式環境尚未開放此功能。"
 const emit = defineEmits<{ close: [] }>()
 
-const defaultBasics = { no: '', op: 'WB', source: 'op', product: 'DEV-IC/A', start: '', end: '' }
+const defaultBasics = { no: '', op: dev.value ? 'WB' : '', source: 'op', product: dev.value ? 'DEV-IC/A' : '', start: '', end: '' }
 const basics = reactive({ ...defaultBasics })
-const operations = ['WB', 'FT']
-const products = ['DEV-IC/A', 'DEV-IC/B', 'DEV-PKG/A']
-const lots = [
+const operations = dev.value ? (['WB', 'FT']) : ([])
+const products = dev.value ? (['DEV-IC/A', 'DEV-IC/B', 'DEV-PKG/A']) : ([])
+const lots = dev.value ? ([
   { no: 'DEV-ECN001', customer: 'DEV-C1', mo: 'DEV-MO1', product: 'DEV-IC/A' },
   { no: 'DEV-ECN002', customer: 'DEV-C1', mo: 'DEV-MO2', product: 'DEV-IC/B' },
   { no: 'DEV-ECN003', customer: 'DEV-C2', mo: 'DEV-MO3', product: 'DEV-PKG/A' },
-]
+]) : ([])
 const factorFields = [
   { key: 'customer', label: '客戶' }, { key: 'mo', label: '工單' }, { key: 'product', label: '產品／版本' },
 ] as const
 const factors = reactive({ customer: '', mo: '', product: '' })
 const enabled = reactive({ customer: false, mo: false, product: false })
 const attrs = ref<{ no: string; initial: string; value: string; checked: boolean }[]>([])
-const candidates = computed(() => lots.filter(lot => factorFields.every(({ key }) => !enabled[key] || lot[key] === factors[key])))
+const candidates = computed(() => dev.value ? (lots.filter(lot => factorFields.every(({ key }) => !enabled[key] || lot[key] === factors[key]))) : ([]))
 const selectedLots = ref<string[]>([])
 const step = ref(1)
 const titles = ['歡迎', 'ECN 基本資料', '設定特性', '影響條件', '受影響生產批', '完成']
@@ -31,6 +33,8 @@ const recorded = new Set<string>()
 const again = ref(false)
 
 function loadAttrs(): void {
+  if (!dev.value) return
+
   const numeric = basics.op === 'WB' ? 'BOND_FORCE' : 'TEST_LIMIT'
   const initial = basics.op === 'WB' ? '25' : '80'
   attrs.value = [
@@ -42,6 +46,8 @@ watch(() => [basics.op, basics.source, basics.product], loadAttrs)
 loadAttrs()
 
 function next(): void {
+  if (!dev.value) return
+
   error.value = ''
   if (step.value === 2) {
     if (!basics.no.trim() || !basics.op || (basics.source === 'product' && !basics.product)) {
@@ -70,12 +76,16 @@ function next(): void {
 }
 
 function close(): void {
+  if (!dev.value) return emit('close')
+
   if (step.value === 1 || step.value === 6) return emit('close')
   confirmAction.value = 'close'
   confirmation.value = '結束 ECN 設定並捨棄本次輸入？'
 }
 
 function resolve(accepted: boolean): void {
+  if (!dev.value) return
+
   confirmation.value = null
   if (!accepted) return
   if (confirmAction.value === 'close') return emit('close')
@@ -90,6 +100,8 @@ function resolve(accepted: boolean): void {
 }
 
 function finish(): void {
+  if (!dev.value) return
+
   if (!again.value) return emit('close')
   Object.assign(basics, defaultBasics)
   for (const { key } of factorFields) {
@@ -106,7 +118,7 @@ function finish(): void {
 <template>
   <section class="ecn-wizard" aria-labelledby="ecn-title">
     <h2 id="ecn-title">ECN 設定精靈</h2>
-    <template v-if="developmentPreview">
+    <template v-if="dev">
       <ol class="toolbar">
         <li v-for="(title, i) in titles" :key="title" :aria-current="step === i + 1 ? 'step' : undefined">{{ title }}</li>
       </ol>
@@ -170,7 +182,7 @@ function finish(): void {
       <ActionConfirmationDialog :message="confirmation" @resolve="resolve" />
     </template>
     <template v-else>
-      <p>ECN 設定精靈 API 待接續。</p>
+      <p role="status">{{ unavailableMessage }}</p>
       <button type="button" @click="emit('close')">關閉</button>
     </template>
   </section>

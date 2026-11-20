@@ -2,7 +2,9 @@
 import { computed, ref } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 
-defineProps<{ developmentPreview: boolean }>()
+const props = defineProps<{ developmentPreview: boolean }>()
+const dev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const unavailableMessage = "正式環境尚未開放此功能。"
 defineEmits<{ close: [] }>()
 
 interface ReverseStep {
@@ -22,21 +24,21 @@ interface Lot {
   steps: ReverseStep[]
 }
 
-const steps: ReverseStep[] = [
+const steps: ReverseStep[] = dev.value ? ([
   { id: 3, type: 0, op: 'FT', description: '測試站進站', createdAt: '2026-11-20 10:20:00' },
   { id: 2, type: 9, op: 'FT', description: '解除等待', createdAt: '2026-11-20 10:10:00' },
   { id: 1, type: 0, op: 'WB', description: '打線站出站', createdAt: '2026-11-20 09:30:00' },
-]
-const lots = ref<Lot[]>([
+]) : ([])
+const lots = ref<Lot[]>(dev.value ? ([
   { no: 'DEV-RV001', status: 1, stamp: 3, steps },
   { no: 'DEV-RV002', status: 3, stamp: 2, packaged: true, steps },
   { no: 'DEV-RV003', status: 2, stamp: 3, steps: steps.map(step => ({ ...step, committed: step.id === 2 })) },
   { no: 'DEV-RV004', status: 1, stamp: 3, steps: steps.map(step => step.id === 3 ? { ...step, type: 2, description: '分批轉入' } : step) },
-])
+]) : ([]))
 const typeNames: Record<number, string> = { 0: 'Trigger OP', 2: 'Split_To', 9: 'Wait_Release' }
 const singleStepTypes = new Set([1, 2, 3, 4, 10, 21])
 const candidateStatuses = new Set([0, 1, 2, 3, 11, 4])
-const candidates = computed(() => lots.value.filter(lot => candidateStatuses.has(lot.status)))
+const candidates = computed(() => dev.value ? (lots.value.filter(lot => candidateStatuses.has(lot.status))) : ([]))
 const lotInput = ref('')
 const loaded = ref<{ no: string; stamp: number }>()
 const selectedId = ref<number>()
@@ -44,10 +46,12 @@ const reason = ref('')
 const confirmation = ref<string | null>(null)
 const message = ref('')
 const error = ref('')
-const currentLot = computed(() => lots.value.find(lot => lot.no === loaded.value?.no))
-const selected = computed(() => currentLot.value?.steps.find(step => step.id === selectedId.value))
+const currentLot = computed(() => dev.value ? (lots.value.find(lot => lot.no === loaded.value?.no)) : (undefined))
+const selected = computed(() => dev.value ? (currentLot.value?.steps.find(step => step.id === selectedId.value)) : (undefined))
 
 function loadLot(): void {
+  if (!dev.value) return
+
   const lot = candidates.value.find(candidate => candidate.no === lotInput.value.trim().toUpperCase())
   loaded.value = lot && { no: lot.no, stamp: lot.stamp }
   selectedId.value = undefined
@@ -58,6 +62,8 @@ function loadLot(): void {
 }
 
 function validate(lot: Lot, step: ReverseStep): string {
+  if (!dev.value) return unavailableMessage
+
   if (lot.no !== lotInput.value.trim().toUpperCase() || lot.stamp !== loaded.value?.stamp) return '批號或資料版本已變更，請重新查詢。'
   if (lot.packaged) return '此批已包裝，無法回復。'
   const affected = lot.steps.filter(row => row.id >= step.id)
@@ -69,6 +75,8 @@ function validate(lot: Lot, step: ReverseStep): string {
 }
 
 function requestReverse(): void {
+  if (!dev.value) return
+
   const lot = currentLot.value
   const step = selected.value
   message.value = ''
@@ -81,6 +89,8 @@ function requestReverse(): void {
 }
 
 function resolveReverse(accepted: boolean): void {
+  if (!dev.value) return
+
   confirmation.value = null
   const lot = currentLot.value
   const step = selected.value
@@ -101,7 +111,7 @@ function resolveReverse(accepted: boolean): void {
 <template>
   <section class="reverse-page" aria-labelledby="lot-reverse-title">
     <h2 id="lot-reverse-title">回復處理</h2>
-    <template v-if="developmentPreview">
+    <template v-if="dev">
       <form class="toolbar" @submit.prevent="loadLot">
         <label>生產批號 <input v-model="lotInput" list="reverse-dev-lots" maxlength="50" autocomplete="off"></label>
         <datalist id="reverse-dev-lots"><option v-for="lot in candidates" :key="lot.no" :value="lot.no" /></datalist>
@@ -131,7 +141,7 @@ function resolveReverse(accepted: boolean): void {
       <ActionConfirmationDialog :message="confirmation" @resolve="resolveReverse" />
     </template>
     <template v-else>
-      <p>回復處理 API 待接續。</p>
+      <p role="status">{{ unavailableMessage }}</p>
       <button type="button" @click="$emit('close')">關閉</button>
     </template>
   </section>

@@ -15,12 +15,13 @@ type Saved = { lots: Lot[]; history: History[] }
 const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string }>()
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const unavailableMessage = "正式環境尚未開放此功能。"
 const storageKey = 'ymes-dev-mock:wip-undo-dispatch:state:v1'
-const mos: Mo[] = [
+const mos: Mo[] = dev.value ? ([
   { moNo: 'DEV-MO-001', moState: 3 },
   { moNo: 'DEV-MO-002', moState: 6 },
   { moNo: 'DEV-MO-CLOSED', moState: 99 },
-]
+]) : ([])
 const columns: { key: keyof Lot; label: string }[] = [
   { key: 'lotNo', label: 'LotNo' }, { key: 'moNo', label: 'MONo' },
   { key: 'status', label: 'Status' }, { key: 'productNo', label: 'ProductNo' },
@@ -37,12 +38,14 @@ const queried = ref(false)
 const selectedNos = ref<string[]>([])
 const confirmOpen = ref(false)
 const error = ref('')
-const message = ref('請選擇工單並查詢。')
-const saved = ref<Saved>(fixtures())
-const eligibleMos = computed(() => mos.filter(item => [3, 6].includes(item.moState) && item.moNo.includes(lookupText.value.trim().toUpperCase())))
-const rows = computed(() => queried.value ? saved.value.lots.filter(item => item.moNo === moNo.value && (mode.value === 'undo' ? item.status === 3 : item.status === 99 && item.exLotState1)) : [])
+const message = ref(dev.value ? '請選擇工單並查詢。' : unavailableMessage)
+const saved = ref<Saved>(dev.value ? (fixtures()) : ({ lots: [], history: [] }))
+const eligibleMos = computed(() => dev.value ? (mos.filter(item => [3, 6].includes(item.moState) && item.moNo.includes(lookupText.value.trim().toUpperCase()))) : ([]))
+const rows = computed(() => dev.value ? (queried.value ? saved.value.lots.filter(item => item.moNo === moNo.value && (mode.value === 'undo' ? item.status === 3 : item.status === 99 && item.exLotState1)) : []) : ([]))
 
-function fixtures(): Saved { return { lots: [
+function fixtures(): Saved {
+  if (!dev.value) return { lots: [], history: [] }
+ return { lots: [
   { lotNo: 'DEV-LOT-001', moNo: 'DEV-MO-001', status: 3, exLotState1: false, productNo: 'DEV-PRD-1001', productName: '示意產品 A', productVersion: '01', psNo: 'DEV-PS-01', processNo: 'DEV-PROC-01', opNo: 'DEV-OP-01', opName: '示意作業站', curQty: 100, curUnitNo: 'PCS', areaNo: 'DEV-AREA-A', inventoryNo: 'DEV-INV-A', hasReport: true, sapReady: true },
   { lotNo: 'DEV-LOT-002', moNo: 'DEV-MO-001', status: 3, exLotState1: false, productNo: 'DEV-PRD-1001', productName: '示意產品 A', productVersion: '01', psNo: 'DEV-PS-01', processNo: 'DEV-PROC-01', opNo: 'DEV-OP-02', opName: '示意測試站', curQty: 50, curUnitNo: 'PCS', areaNo: 'DEV-AREA-A', inventoryNo: 'DEV-INV-A', hasReport: true, sapReady: true },
   { lotNo: 'DEV-LOT-003', moNo: 'DEV-MO-002', status: 99, exLotState1: true, productNo: 'DEV-PRD-1002', productName: '示意產品 B', productVersion: '02', psNo: 'DEV-PS-02', processNo: 'DEV-PROC-02', opNo: 'DEV-OP-03', opName: '示意包裝站', curQty: 25, curUnitNo: 'PCS', areaNo: 'DEV-AREA-B', inventoryNo: 'DEV-INV-B', hasReport: true, sapReady: true },
@@ -57,19 +60,25 @@ function load(): void {
   } catch { saved.value = fixtures(); error.value = 'DEV 假資料無法讀取，已使用初始資料。' }
 }
 function persist(): boolean {
+  if (!dev.value) return false
+
   try { window.localStorage.setItem(storageKey, JSON.stringify(saved.value)); return true }
   catch { error.value = 'DEV 假資料無法儲存。'; return false }
 }
 function changeMode(value: Mode): void {
+  if (!dev.value) return
+
   mode.value = value; queried.value = false; selectedNos.value = []; error.value = ''
   message.value = '模式已切換，請重新 Query。'
 }
 function chooseMo(value: string): void {
+  if (!dev.value) return
+
   moNo.value = value; lookupOpen.value = false; queried.value = false; selectedNos.value = []
 }
 function query(): void {
   error.value = ''
-  if (!dev.value) { error.value = '此頁尚無正式 API，只提供 DEV 假資料。'; return }
+  if (!dev.value) { error.value = unavailableMessage; return }
   if (!moNo.value) { error.value = '請先選擇 MONo。'; return }
   load()
   const mo = mos.find(item => item.moNo === moNo.value)
@@ -79,15 +88,23 @@ function query(): void {
   message.value = `DEV 查得 ${rows.value.length} 筆${mode.value === 'undo' ? '可撤派工' : '可取消撤派工'} Lot。`
 }
 function toggle(no: string): void {
+  if (!dev.value) return
+
   selectedNos.value = selectedNos.value.includes(no) ? selectedNos.value.filter(value => value !== no) : [...selectedNos.value, no]
 }
-function selectAll(value: boolean): void { selectedNos.value = value ? rows.value.map(row => row.lotNo) : [] }
+function selectAll(value: boolean): void {
+  if (!dev.value) return
+ selectedNos.value = value ? rows.value.map(row => row.lotNo) : [] }
 function openConfirm(): void {
+  if (!dev.value) return
+
   error.value = ''
   if (!selectedNos.value.length) { error.value = '至少勾選一筆 Lot。'; return }
   confirmOpen.value = true
 }
 function confirm(): void {
+  if (!dev.value) return
+
   confirmOpen.value = false; error.value = ''
   if (!dev.value) return
   const action = mode.value
@@ -113,26 +130,27 @@ function confirm(): void {
   if (failure) error.value = failure
   message.value = `DEV 已${action === 'undo' ? '撤派工' : '取消撤派工'} ${done} 筆；逐批假狀態，未寫 SAP 或資料庫。`
 }
+function openMoLookup(): void { if (!dev.value) return; lookupText.value = ''; lookupOpen.value = true }
 onMounted(load)
 </script>
 
 <template>
   <section class="undo-page">
     <h1>工單撤派工 <small>UNDO DISPATCH · WP112</small></h1>
-    <p class="note">DEV 假資料：Confirm 僅示意 Lot 狀態；SAP 中間表、庫房、Log 與正式交易待 API。</p>
+    <p class="note">{{ dev ? 'DEV 假資料：Confirm 僅示意 Lot 狀態；SAP 中間表、庫房、Log 與正式交易待 API。' : unavailableMessage }}</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <fieldset class="query"><legend>Undo Dispatch Query</legend>
+    <fieldset class="query" :disabled="!dev"><legend>Undo Dispatch Query</legend>
       <div class="query-top"><label><input :checked="mode === 'undo'" type="radio" name="undo-mode" @change="changeMode('undo')"> Undo Dispatch</label><label><input :checked="mode === 'cancel'" type="radio" name="undo-mode" @change="changeMode('cancel')"> Cancel Undo Dispatch</label></div>
-      <div class="query-bottom"><label>MONo <input :value="moNo" readonly class="yellow"></label><button type="button" class="button" :disabled="!dev" @click="lookupText = ''; lookupOpen = true">...</button><button type="button" class="button query-button" :disabled="!dev" @click="query">Query</button></div>
+      <div class="query-bottom"><label>MONo <input :value="moNo" readonly class="yellow"></label><button type="button" class="button" :disabled="!dev" @click="openMoLookup">...</button><button type="button" class="button query-button" :disabled="!dev" @click="query">Query</button></div>
     </fieldset>
     <div class="select-bar"><button type="button" class="button" :disabled="!rows.length" @click="selectAll(true)">SelectAll</button><button type="button" class="button" :disabled="!rows.length" @click="selectAll(false)">UnSelectAll</button></div>
-    <fieldset class="data"><legend>Undo Dispatch Data</legend><div class="data-head"><span>{{ message }}</span><button type="button" class="button" :disabled="!selectedNos.length || !dev" @click="openConfirm">Confirm</button></div>
-      <div class="scroll"><table><thead><tr><th>Select</th><th v-for="column in columns" :key="column.key">{{ column.label }}</th></tr></thead><tbody><tr v-for="row in rows" :key="row.lotNo" :class="{ selected: selectedNos.includes(row.lotNo) }" @click="toggle(row.lotNo)"><td><input type="checkbox" :checked="selectedNos.includes(row.lotNo)" aria-label="選取 Lot" @click.stop="toggle(row.lotNo)"></td><td v-for="column in columns" :key="column.key">{{ row[column.key] }}</td></tr><tr v-if="!rows.length"><td colspan="13" class="empty">{{ queried ? '沒有符合條件的 Lot。' : '請先 Query。' }}</td></tr></tbody></table></div>
+    <fieldset class="data" :disabled="!dev"><legend>Undo Dispatch Data</legend><div class="data-head"><span>{{ message }}</span><button type="button" class="button" :disabled="!selectedNos.length || !dev" @click="openConfirm">Confirm</button></div>
+      <div class="scroll"><table><thead><tr><th>Select</th><th v-for="column in columns" :key="column.key">{{ column.label }}</th></tr></thead><tbody><tr v-for="row in rows" :key="row.lotNo" :class="{ selected: selectedNos.includes(row.lotNo) }" @click="toggle(row.lotNo)"><td><input type="checkbox" :checked="selectedNos.includes(row.lotNo)" aria-label="選取 Lot" @click.stop="toggle(row.lotNo)"></td><td v-for="column in columns" :key="column.key">{{ row[column.key] }}</td></tr><tr v-if="!rows.length"><td colspan="13" class="empty">{{ !dev ? unavailableMessage : queried ? '沒有符合條件的 Lot。' : '請先 Query。' }}</td></tr></tbody></table></div>
       <div class="status-bar">資料總筆數 {{ rows.length }} <span>已選 {{ selectedNos.length }}</span></div>
     </fieldset>
     <div class="footer"><button type="button" class="button" @click="emit('close')">Close</button></div>
-    <div v-if="lookupOpen" class="overlay"><div class="dialog" role="dialog" aria-modal="true"><h2>MONo 查找</h2><input v-model="lookupText" placeholder="搜尋 MONo" autofocus><div class="lookup-list"><button v-for="mo in eligibleMos" :key="mo.moNo" type="button" class="button" @click="chooseMo(mo.moNo)">{{ mo.moNo }} · MOState {{ mo.moState }}</button><p v-if="!eligibleMos.length">沒有 MOState 3／6 的工單。</p></div><button type="button" class="button" @click="lookupOpen = false">Close</button></div></div>
-    <div v-if="confirmOpen" class="overlay"><div class="dialog" role="alertdialog" aria-modal="true"><h2>{{ mode === 'undo' ? 'Undo Dispatch' : 'Cancel Undo Dispatch' }}</h2><p>將逐筆處理 {{ selectedNos.length }} 個 Lot；遇錯停止。</p><p class="note">正式 SAP／MES 交易尚未接入，本次只改 DEV 假資料。</p><div class="dialog-actions"><button type="button" class="button" @click="confirmOpen = false">Cancel</button><button type="button" class="button primary" @click="confirm">Confirm</button></div></div></div>
+    <div v-if="dev && lookupOpen" class="overlay"><div class="dialog" role="dialog" aria-modal="true"><h2>MONo 查找</h2><input v-model="lookupText" placeholder="搜尋 MONo" autofocus><div class="lookup-list"><button v-for="mo in eligibleMos" :key="mo.moNo" type="button" class="button" @click="chooseMo(mo.moNo)">{{ mo.moNo }} · MOState {{ mo.moState }}</button><p v-if="!eligibleMos.length">沒有 MOState 3／6 的工單。</p></div><button type="button" class="button" @click="lookupOpen = false">Close</button></div></div>
+    <div v-if="dev && confirmOpen" class="overlay"><div class="dialog" role="alertdialog" aria-modal="true"><h2>{{ mode === 'undo' ? 'Undo Dispatch' : 'Cancel Undo Dispatch' }}</h2><p>將逐筆處理 {{ selectedNos.length }} 個 Lot；遇錯停止。</p><p class="note">正式 SAP／MES 交易尚未接入，本次只改 DEV 假資料。</p><div class="dialog-actions"><button type="button" class="button" @click="confirmOpen = false">Cancel</button><button type="button" class="button primary" @click="confirm">Confirm</button></div></div></div>
   </section>
 </template>
 

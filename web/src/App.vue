@@ -1967,6 +1967,7 @@ async function signOut(): Promise<void> {
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
         />
         <CustomerContactorMaster
           v-else-if="isCustomerContactorPage"
@@ -2783,15 +2784,15 @@ async function signOut(): Promise<void> {
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockOut v-else-if="isWipOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorOnline v-else-if="isWipOperatorOnlinePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipSwrBasis v-else-if="isWipSwrBasisPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
-        <WipUndoDispatch v-else-if="isWipUndoDispatchPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
-        <WipOutsourceCreate v-else-if="isWipOutsourceCreatePage || isWipOutsourceConfirmPage || isWipOutsourceReturnPage || isWipOutsourceCancelPage" :key="activeMasterKey" class="framework-content" :development-preview="isDevelopmentPreview" :page-mode="isWipOutsourceConfirmPage ? 'confirm' : isWipOutsourceReturnPage ? 'return' : isWipOutsourceCancelPage ? 'cancel' : undefined" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
-        <WipLotReverse v-else-if="isWipLotReversePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipReleasedLotDelete v-else-if="isWipReleasedLotDeletePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipReleasedLotBatchDelete v-else-if="isWipReleasedLotBatchDeletePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipLotAreaChange v-else-if="isWipLotAreaChangePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipProductVersionChange v-else-if="isWipProductVersionChangePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipEcnWizard v-else-if="isWipEcnWizardPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipSwrBasis v-else-if="isWipSwrBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipUndoDispatch v-else-if="isWipUndoDispatchPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipOutsourceCreate v-else-if="isWipOutsourceCreatePage || isWipOutsourceConfirmPage || isWipOutsourceReturnPage || isWipOutsourceCancelPage" :key="activeMasterKey" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :page-mode="isWipOutsourceConfirmPage ? 'confirm' : isWipOutsourceReturnPage ? 'return' : isWipOutsourceCancelPage ? 'cancel' : undefined" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipLotReverse v-else-if="isWipLotReversePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipReleasedLotDelete v-else-if="isWipReleasedLotDeletePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipReleasedLotBatchDelete v-else-if="isWipReleasedLotBatchDeletePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotAreaChange v-else-if="isWipLotAreaChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipProductVersionChange v-else-if="isWipProductVersionChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEcnWizard v-else-if="isWipEcnWizardPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />

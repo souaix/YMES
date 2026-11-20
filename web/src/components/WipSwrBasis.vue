@@ -14,6 +14,7 @@ type Action = 'approve' | 'void'
 const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string }>()
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const unavailableMessage = "正式環境尚未開放此功能。"
 const storageKey = 'ymes-dev-mock:wip-swr-basis:state:v1'
 const statusLabels: Record<number, string> = { 0: 'UNFROZEN', 1: 'PENDING', 2: 'ACTIVE', 99: 'UNUSED' }
 const typeLabels = ['作業站指示', '包裝作業說明']
@@ -30,11 +31,11 @@ const columns: { label: string; key: keyof Swr | 'lotNo' | 'haveAttachFile' }[] 
   { key: 'endTime', label: 'ENDTIME' }, { key: 'customerLotNo', label: 'CUSTOMERLOTNO' },
   { key: 'creator', label: 'CREATOR' }, { key: 'createDate', label: 'CREATEDATE' }, { key: 'haveAttachFile', label: 'HaveAttachFile' },
 ]
-const lookupData: Record<string, string[]> = {
+const lookupData: Record<string, string[]> = dev.value ? ({
   customerNo: ['CUS-A', 'CUS-B'], deviceNo: ['DEVICE-A', 'DEVICE-B'], opNo: ['OP-CUT', 'OP-TEST'],
   moNo: ['MO-001', 'MO-002'], lotNo: ['DEV-LOT-001', 'DEV-LOT-002', 'DEV-LOT-005'],
-}
-const lotCustomer: Record<string, string> = { 'DEV-LOT-001': 'CUS-A', 'DEV-LOT-002': 'CUS-B', 'DEV-LOT-005': 'CUS-A' }
+}) : ({})
+const lotCustomer: Record<string, string> = dev.value ? ({ 'DEV-LOT-001': 'CUS-A', 'DEV-LOT-002': 'CUS-B', 'DEV-LOT-005': 'CUS-A' }) : ({})
 const flags = reactive<Record<FilterKey, boolean>>({ swrType: false, customerNo: false, lotNo: false, deviceNo: false, opNo: false, customerLotNo: false, moNo: false })
 const filters = reactive<Record<FilterKey, string>>({ swrType: '', customerNo: '', lotNo: '', deviceNo: '', opNo: '', customerLotNo: '', moNo: '' })
 const status = ref(0)
@@ -48,15 +49,17 @@ const action = ref<Action | null>(null)
 const abortReason = ref('')
 const lookup = ref<{ key: string; target: 'query' | 'form' } | null>(null)
 const error = ref('')
-const message = ref('查詢條件可單獨勾選；Grid 以 Ctrl+點擊多選核准／作廢。')
+const message = ref(dev.value ? '查詢條件可單獨勾選；Grid 以 Ctrl+點擊多選核准／作廢。' : unavailableMessage)
 const draft = reactive<Swr>({ swrNo: '', swrType: 0, status: 0, customerNo: '', opNo: '', deviceNo: '', startTime: '', endTime: '', customerLotNo: '', moNo: '', swrDesc: '', creator: '', createDate: '', attachmentName: '', lotNos: [] })
 const draftLots = ref('')
 const startChecked = ref(false)
 const endChecked = ref(false)
-const active = computed(() => saved.value.items.find(item => item.swrNo === activeNo.value) || null)
-const lookupOptions = computed(() => lookup.value ? lookupData[lookup.value.key] || [] : [])
+const active = computed(() => dev.value ? (saved.value.items.find(item => item.swrNo === activeNo.value) || null) : (null))
+const lookupOptions = computed(() => dev.value ? (lookup.value ? lookupData[lookup.value.key] || [] : []) : ([]))
 
-function fixtures(): Swr[] { return [
+function fixtures(): Swr[] {
+  if (!dev.value) return []
+ return [
   { swrNo: 'SWRDEV00001', swrType: 0, status: 0, customerNo: 'CUS-A', opNo: 'OP-CUT', deviceNo: 'DEVICE-A', startTime: '', endTime: '', customerLotNo: 'CL-001', moNo: 'MO-001', swrDesc: 'DEV 作業站特殊指示', creator: 'DEV', createDate: '2026-11-19 09:00:00', attachmentName: '', lotNos: ['DEV-LOT-001', 'DEV-LOT-005'] },
   { swrNo: 'SWRDEV00002', swrType: 1, status: 2, customerNo: 'CUS-B', opNo: 'OP-TEST', deviceNo: '', startTime: '2026-11-19T08:00', endTime: '2026-11-30T18:00', customerLotNo: 'CL-002', moNo: 'MO-002', swrDesc: 'DEV 包裝注意事項', creator: 'DEV', createDate: '2026-11-19 10:00:00', attachmentName: 'sample.pdf', lotNos: ['DEV-LOT-002'] },
   { swrNo: 'SWRDEV00003', swrType: 0, status: 1, customerNo: 'CUS-A', opNo: 'OP-CUT', deviceNo: '', startTime: '', endTime: '', customerLotNo: '', moNo: '', swrDesc: 'DEV 待處理資料', creator: 'DEV', createDate: '2026-11-19 11:00:00', attachmentName: '', lotNos: [] },
@@ -64,7 +67,9 @@ function fixtures(): Swr[] { return [
 ] }
 function nowText(): string { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}` }
 function dayKey(): string { const date = new Date(); return `${String(date.getFullYear()).slice(2)}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}` }
-function nextNo(): string { const day = dayKey(); const serial = saved.value.serialByDay[day] || 1; return serial > 999 ? '' : `SWR${day}${String(serial).padStart(3, '0')}` }
+function nextNo(): string {
+  if (!dev.value) return ''
+ const day = dayKey(); const serial = saved.value.serialByDay[day] || 1; return serial > 999 ? '' : `SWR${day}${String(serial).padStart(3, '0')}` }
 function norm(value: string): string { return value.trim().toUpperCase() }
 function load(): void {
   if (!dev.value) return
@@ -74,10 +79,12 @@ function load(): void {
     saved.value = parsed && Array.isArray(parsed.items) && parsed.serialByDay && typeof parsed.serialByDay === 'object' ? parsed : { items: fixtures(), serialByDay: {} }
   } catch { saved.value = { items: fixtures(), serialByDay: {} }; error.value = 'DEV SWR 資料無法讀取，已使用初始假資料。' }
 }
-function persist(): boolean { try { window.localStorage.setItem(storageKey, JSON.stringify(saved.value)); return true } catch { error.value = 'DEV SWR 資料無法儲存。'; return false } }
+function persist(): boolean {
+  if (!dev.value) return false
+ try { window.localStorage.setItem(storageKey, JSON.stringify(saved.value)); return true } catch { error.value = 'DEV SWR 資料無法儲存。'; return false } }
 function query(): void {
   error.value = ''
-  if (!dev.value) { error.value = '此頁尚無正式 API，只提供 DEV 假資料。'; return }
+  if (!dev.value) { error.value = unavailableMessage; return }
   load()
   for (const field of queryFields) if (field.key !== 'swrType') filters[field.key] = norm(filters[field.key])
   for (const field of queryFields) if (flags[field.key] && !filters[field.key]) { error.value = `${field.label} 已勾選，請輸入值。`; return }
@@ -95,6 +102,8 @@ function query(): void {
   message.value = `查得 ${rows.value.length} 列、${result.length} 張 SWR；一張 SWR 可有多筆 Lot 明細。`
 }
 function cell(row: { swr: Swr; lotNo: string }, key: keyof Swr | 'lotNo' | 'haveAttachFile'): string {
+  if (!dev.value) return ''
+
   if (key === 'lotNo') return row.lotNo
   if (key === 'haveAttachFile') return row.swr.attachmentName ? 'Y' : 'N'
   if (key === 'swrType') return typeLabels[row.swr.swrType] || String(row.swr.swrType)
@@ -102,6 +111,8 @@ function cell(row: { swr: Swr; lotNo: string }, key: keyof Swr | 'lotNo' | 'have
   return String(row.swr[key] ?? '')
 }
 function selectRow(swrNo: string, multi: boolean): void {
+  if (!dev.value) return
+
   activeNo.value = swrNo
   if (multi) selectedNos.value = selectedNos.value.includes(swrNo) ? selectedNos.value.filter(no => no !== swrNo) : [...selectedNos.value, swrNo]
   else selectedNos.value = [swrNo]
@@ -117,6 +128,8 @@ function openForm(mode: Mode): void {
   draftLots.value = draft.lotNos.join(','); startChecked.value = !!draft.startTime; endChecked.value = !!draft.endTime; modal.value = mode
 }
 function validateDraft(): string {
+  if (!dev.value) return unavailableMessage
+
   draft.customerNo = norm(draft.customerNo); draft.opNo = norm(draft.opNo); draft.deviceNo = norm(draft.deviceNo); draft.moNo = norm(draft.moNo)
   draft.customerLotNo = norm(draft.customerLotNo); draft.lotNos = [...new Set(draftLots.value.split(',').map(norm).filter(Boolean))]
   if (!draft.swrNo || !draft.customerNo || !draft.opNo || !draft.swrDesc.trim() || ![0, 1].includes(draft.swrType)) return 'SWRNo、CustomerNo、OPNo、SWRDescription、SWRType 必填。'
@@ -130,6 +143,8 @@ function validateDraft(): string {
   return ''
 }
 function confirmForm(): void {
+  if (!dev.value) return
+
   error.value = validateDraft()
   if (error.value || !modal.value) return
   load()
@@ -147,8 +162,12 @@ function confirmForm(): void {
   if (!persist()) { saved.value = previous; return }
   modal.value = null; status.value = 0; query(); activeNo.value = item.swrNo; message.value = `DEV 已${previous.items.some(value => value.swrNo === item.swrNo) ? '修改' : '新增'} ${item.swrNo}。`
 }
-function selectedItems(): Swr[] { return [...new Set(selectedNos.value.length ? selectedNos.value : activeNo.value ? [activeNo.value] : [])].map(no => saved.value.items.find(item => item.swrNo === no)).filter((item): item is Swr => !!item) }
-function openAction(kind: Action): void { error.value = ''; if (!selectedItems().length) { error.value = '請選資料列。'; return }; abortReason.value = ''; action.value = kind }
+function selectedItems(): Swr[] {
+  if (!dev.value) return []
+ return [...new Set(selectedNos.value.length ? selectedNos.value : activeNo.value ? [activeNo.value] : [])].map(no => saved.value.items.find(item => item.swrNo === no)).filter((item): item is Swr => !!item) }
+function openAction(kind: Action): void {
+  if (!dev.value) return
+ error.value = ''; if (!selectedItems().length) { error.value = '請選資料列。'; return }; abortReason.value = ''; action.value = kind }
 function confirmAction(): void {
   error.value = ''
   if (!action.value || !dev.value) return
@@ -172,24 +191,31 @@ function confirmAction(): void {
   action.value = null; query(); if (failure) error.value = failure
   message.value = `DEV 已${actionLabel} ${count} 筆；沒有正式交易。`
 }
-function download(): void { if (!active.value) { error.value = '請選資料列。'; return }; message.value = active.value.attachmentName ? `${active.value.attachmentName} 只有 DEV 檔名；正式附件下載由 API 提供。` : '此 SWR 沒有附件。' }
-function upload(event: Event): void { const input = event.target as HTMLInputElement; const file = input.files?.[0]; if (!file) return; if (!file.name.toLowerCase().endsWith('.pdf')) { error.value = '原 WinForms 僅接受 PDF 檔案。'; input.value = ''; return }; error.value = ''; draft.attachmentName = file.name }
-function chooseLookup(value: string): void { if (!lookup.value) return; if (lookup.value.target === 'query') { filters[lookup.value.key as FilterKey] = value; flags[lookup.value.key as FilterKey] = true } else if (lookup.value.key === 'lotNo') draftLots.value = [...new Set([...draftLots.value.split(',').map(norm).filter(Boolean), value])].join(','); else (draft as unknown as Record<string, string>)[lookup.value.key] = value; lookup.value = null }
+function download(): void {
+  if (!dev.value) return
+ if (!active.value) { error.value = '請選資料列。'; return }; message.value = active.value.attachmentName ? `${active.value.attachmentName} 只有 DEV 檔名；正式附件下載由 API 提供。` : '此 SWR 沒有附件。' }
+function upload(event: Event): void {
+  if (!dev.value) return
+ const input = event.target as HTMLInputElement; const file = input.files?.[0]; if (!file) return; if (!file.name.toLowerCase().endsWith('.pdf')) { error.value = '原 WinForms 僅接受 PDF 檔案。'; input.value = ''; return }; error.value = ''; draft.attachmentName = file.name }
+function chooseLookup(value: string): void {
+  if (!dev.value) return
+ if (!lookup.value) return; if (lookup.value.target === 'query') { filters[lookup.value.key as FilterKey] = value; flags[lookup.value.key as FilterKey] = true } else if (lookup.value.key === 'lotNo') draftLots.value = [...new Set([...draftLots.value.split(',').map(norm).filter(Boolean), value])].join(','); else (draft as unknown as Record<string, string>)[lookup.value.key] = value; lookup.value = null }
+function openLookup(key: string, target: 'query' | 'form'): void { if (!dev.value) return; lookup.value = { key, target } }
 onMounted(load)
 </script>
 
 <template>
   <section class="swr-page">
     <h1>特殊生產需求維護 <small>SWR BASIS · WP109</small></h1>
-    <p class="note">DEV 假資料；附件僅保存檔名，正式 SWR／簽核／作廢需 API。</p>
+    <p class="note">{{ dev ? 'DEV 假資料；附件僅保存檔名，正式 SWR／簽核／作廢需 API。' : unavailableMessage }}</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <fieldset><legend>Query</legend><div class="query-grid"><label v-for="field in queryFields" :key="field.key"><span><input v-model="flags[field.key]" type="checkbox"> {{ field.label }}</span><select v-if="field.key === 'swrType'" v-model="filters.swrType" :disabled="!dev || !flags.swrType"><option value="">請選擇</option><option value="0">作業站指示</option><option value="1">包裝作業說明</option></select><input v-else v-model="filters[field.key]" class="yellow" :disabled="!dev || !flags[field.key]"><button v-if="field.lookup" type="button" class="button" @click="lookup = { key: field.key, target: 'query' }">...</button></label><button type="button" class="button query-button" :disabled="!dev" @click="query">Query</button></div></fieldset>
-    <div class="work-area"><div class="main-pane"><fieldset class="list"><legend>SWR Basis</legend><div class="status-radios"><label v-for="value in [0,1,2,99]" :key="value"><input v-model="status" type="radio" name="swr-status" :value="value" @change="query"> {{ statusLabels[value] }}</label></div><div class="scroll"><table><thead><tr><th v-for="column in columns" :key="column.label">{{ column.label }}</th></tr></thead><tbody><tr v-for="(row,index) in rows" :key="`${row.swr.swrNo}-${row.lotNo}-${index}`" :class="{ active: activeNo === row.swr.swrNo, selected: selectedNos.includes(row.swr.swrNo) }" @click="selectRow(row.swr.swrNo, $event.ctrlKey || $event.metaKey)" @dblclick="openForm('edit')"><td v-for="column in columns" :key="column.label">{{ cell(row, column.key) }}</td></tr><tr v-if="!rows.length"><td :colspan="columns.length" class="empty">{{ queried ? '沒有符合條件的 SWR。' : '請先 Query。' }}</td></tr></tbody></table></div><div class="status-bar">{{ message }} <span>{{ rows.length }} 列／已選 {{ selectedNos.length }} 張</span></div></fieldset>
-    <fieldset><legend>SWRDescription</legend><textarea :value="active?.swrDesc || ''" readonly></textarea></fieldset>
+    <fieldset :disabled="!dev"><legend>Query</legend><div class="query-grid"><label v-for="field in queryFields" :key="field.key"><span><input v-model="flags[field.key]" type="checkbox"> {{ field.label }}</span><select v-if="field.key === 'swrType'" v-model="filters.swrType" :disabled="!dev || !flags.swrType"><option value="">請選擇</option><option value="0">作業站指示</option><option value="1">包裝作業說明</option></select><input v-else v-model="filters[field.key]" class="yellow" :disabled="!dev || !flags[field.key]"><button v-if="field.lookup" type="button" class="button" @click="openLookup(field.key, 'query')">...</button></label><button type="button" class="button query-button" :disabled="!dev" @click="query">Query</button></div></fieldset>
+    <div class="work-area"><div class="main-pane"><fieldset class="list" :disabled="!dev"><legend>SWR Basis</legend><div class="status-radios"><label v-for="value in [0,1,2,99]" :key="value"><input v-model="status" type="radio" name="swr-status" :value="value" @change="query"> {{ statusLabels[value] }}</label></div><div class="scroll"><table><thead><tr><th v-for="column in columns" :key="column.label">{{ column.label }}</th></tr></thead><tbody><tr v-for="(row,index) in rows" :key="`${row.swr.swrNo}-${row.lotNo}-${index}`" :class="{ active: activeNo === row.swr.swrNo, selected: selectedNos.includes(row.swr.swrNo) }" @click="selectRow(row.swr.swrNo, $event.ctrlKey || $event.metaKey)" @dblclick="openForm('edit')"><td v-for="column in columns" :key="column.label">{{ cell(row, column.key) }}</td></tr><tr v-if="!rows.length"><td :colspan="columns.length" class="empty">{{ !dev ? unavailableMessage : queried ? '沒有符合條件的 SWR。' : '請先 Query。' }}</td></tr></tbody></table></div><div class="status-bar">{{ message }} <span>{{ rows.length }} 列／已選 {{ selectedNos.length }} 張</span></div></fieldset>
+    <fieldset :disabled="!dev"><legend>SWRDescription</legend><textarea :value="active?.swrDesc || ''" readonly></textarea></fieldset>
     </div><div class="actions"><button type="button" class="button" :disabled="!dev" @click="openForm('add')">ADD (A)</button><button type="button" class="button" :disabled="!active || !dev" @click="openForm('edit')">EDIT (E)</button><button type="button" class="button" :disabled="!active || !dev" @click="openForm('copy')">Copy (C)</button><button type="button" class="button" :disabled="!active || !dev" @click="openAction('approve')">Approve (Y)</button><button type="button" class="button" :disabled="!active || !dev" @click="openAction('void')">Void</button><button type="button" class="button" :disabled="!active || !dev" @click="download">DownLoad File</button><button type="button" class="button" @click="emit('close')">Close (X)</button></div></div>
-    <div v-if="modal" class="overlay"><div class="dialog form-dialog" role="dialog" aria-modal="true"><h2>SWR Basis Define ({{ modal.toUpperCase() }})</h2><div class="form-grid"><label>SWRNo <input :value="draft.swrNo" readonly></label><label>SWRType <select v-model.number="draft.swrType"><option :value="0">作業站指示</option><option :value="1">包裝作業說明</option></select></label><label>CustomerNo <input v-model="draft.customerNo" class="yellow"><button type="button" class="button" @click="lookup = { key: 'customerNo', target: 'form' }">...</button></label><label>OPNo <input v-model="draft.opNo" class="yellow"><button type="button" class="button" @click="lookup = { key: 'opNo', target: 'form' }">...</button></label><label>MONo <input v-model="draft.moNo" class="yellow"><button type="button" class="button" @click="lookup = { key: 'moNo', target: 'form' }">...</button></label><label>CustomerLotNo <input v-model="draft.customerLotNo" class="yellow"></label><label>DeviceNo <input v-model="draft.deviceNo" class="yellow"><button type="button" class="button" @click="lookup = { key: 'deviceNo', target: 'form' }">...</button></label><label>LotNo <input v-model="draftLots" class="yellow"><button type="button" class="button" @click="lookup = { key: 'lotNo', target: 'form' }">...</button></label><label><input v-model="startChecked" type="checkbox"> StartTime <input v-model="draft.startTime" type="datetime-local" :disabled="!startChecked"></label><label><input v-model="endChecked" type="checkbox"> EndTime <input v-model="draft.endTime" type="datetime-local" :disabled="!endChecked"></label><label>AttachFile <input type="file" accept=".pdf,application/pdf" @change="upload"><small>{{ draft.attachmentName || '無' }} · DEV 僅檔名</small></label><label>Creator <input :value="draft.creator" readonly></label><label>Create Date <input :value="draft.createDate" readonly></label><label class="wide">SWRDescription <textarea v-model="draft.swrDesc" class="yellow"></textarea></label></div><div class="dialog-actions"><button type="button" class="button primary" @click="confirmForm">Confirm</button><button type="button" class="button" @click="modal = null">Close</button></div></div></div>
-    <div v-if="action" class="overlay"><div class="dialog" role="alertdialog" aria-modal="true"><h2>{{ action === 'approve' ? 'Approve' : 'Void' }} SWR</h2><p>{{ selectedItems().length }} 張 SWR；逐筆處理，遇錯停止。</p><label v-if="action === 'void'">AbortReason <input v-model="abortReason" class="yellow"></label><div class="dialog-actions"><button type="button" class="button" @click="action = null">Cancel</button><button type="button" class="button primary" @click="confirmAction">OK</button></div></div></div>
-    <div v-if="lookup" class="overlay top"><div class="dialog" role="dialog" aria-modal="true"><h2>{{ lookup.key }} Lookup</h2><div class="lookup-list"><button v-for="value in lookupOptions" :key="value" type="button" class="button" @click="chooseLookup(value)">{{ value }}</button></div><button type="button" class="button" @click="lookup = null">Close</button></div></div>
+    <div v-if="dev && modal" class="overlay"><div class="dialog form-dialog" role="dialog" aria-modal="true"><h2>SWR Basis Define ({{ modal.toUpperCase() }})</h2><div class="form-grid"><label>SWRNo <input :value="draft.swrNo" readonly></label><label>SWRType <select v-model.number="draft.swrType"><option :value="0">作業站指示</option><option :value="1">包裝作業說明</option></select></label><label>CustomerNo <input v-model="draft.customerNo" class="yellow"><button type="button" class="button" @click="openLookup('customerNo', 'form')">...</button></label><label>OPNo <input v-model="draft.opNo" class="yellow"><button type="button" class="button" @click="openLookup('opNo', 'form')">...</button></label><label>MONo <input v-model="draft.moNo" class="yellow"><button type="button" class="button" @click="openLookup('moNo', 'form')">...</button></label><label>CustomerLotNo <input v-model="draft.customerLotNo" class="yellow"></label><label>DeviceNo <input v-model="draft.deviceNo" class="yellow"><button type="button" class="button" @click="openLookup('deviceNo', 'form')">...</button></label><label>LotNo <input v-model="draftLots" class="yellow"><button type="button" class="button" @click="openLookup('lotNo', 'form')">...</button></label><label><input v-model="startChecked" type="checkbox"> StartTime <input v-model="draft.startTime" type="datetime-local" :disabled="!startChecked"></label><label><input v-model="endChecked" type="checkbox"> EndTime <input v-model="draft.endTime" type="datetime-local" :disabled="!endChecked"></label><label>AttachFile <input type="file" accept=".pdf,application/pdf" @change="upload"><small>{{ draft.attachmentName || '無' }} · DEV 僅檔名</small></label><label>Creator <input :value="draft.creator" readonly></label><label>Create Date <input :value="draft.createDate" readonly></label><label class="wide">SWRDescription <textarea v-model="draft.swrDesc" class="yellow"></textarea></label></div><div class="dialog-actions"><button type="button" class="button primary" @click="confirmForm">Confirm</button><button type="button" class="button" @click="modal = null">Close</button></div></div></div>
+    <div v-if="dev && action" class="overlay"><div class="dialog" role="alertdialog" aria-modal="true"><h2>{{ action === 'approve' ? 'Approve' : 'Void' }} SWR</h2><p>{{ selectedItems().length }} 張 SWR；逐筆處理，遇錯停止。</p><label v-if="action === 'void'">AbortReason <input v-model="abortReason" class="yellow"></label><div class="dialog-actions"><button type="button" class="button" @click="action = null">Cancel</button><button type="button" class="button primary" @click="confirmAction">OK</button></div></div></div>
+    <div v-if="dev && lookup" class="overlay top"><div class="dialog" role="dialog" aria-modal="true"><h2>{{ lookup.key }} Lookup</h2><div class="lookup-list"><button v-for="value in lookupOptions" :key="value" type="button" class="button" @click="chooseLookup(value)">{{ value }}</button></div><button type="button" class="button" @click="lookup = null">Close</button></div></div>
   </section>
 </template>
 

@@ -39,25 +39,26 @@ const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string
 const emit = defineEmits<{ close: [] }>()
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const unavailableMessage = "正式環境尚未開放此功能。"
 const confirmationOnly = computed(() => props.pageMode === 'confirm')
 const returnOnly = computed(() => props.pageMode === 'return')
 const cancelOnly = computed(() => props.pageMode === 'cancel')
 const pageTitles = { confirm: '外包單確認', return: '外包回貨', cancel: '取消外包出貨 ERP' }
 const pageTitle = computed(() => props.pageMode ? pageTitles[props.pageMode] : '外包單開立')
 const storageKey = 'ymes-dev-mock:wip-outsource:orders:v1'
-const stations = ['DEV-OS-OP', 'DEV-QC-OP']
-const vendors = ['DEV-VENDOR-01', 'DEV-VENDOR-02']
-const preparers = ['DEV001', 'DEV002']
-const returnStations = [
+const stations = isDev.value ? (['DEV-OS-OP', 'DEV-QC-OP']) : ([])
+const vendors = isDev.value ? (['DEV-VENDOR-01', 'DEV-VENDOR-02']) : ([])
+const preparers = isDev.value ? (['DEV001', 'DEV002']) : ([])
+const returnStations = isDev.value ? ([
   { node: 'DEV-CP-020', op: 'DEV-QC-OP', process: 'DEV-CP' },
   { node: 'DEV-FT-020', op: 'DEV-QC-OP', process: 'DEV-FT' },
-]
-const lots: Lot[] = [
+]) : ([])
+const lots: Lot[] = isDev.value ? ([
   { lotNo: 'DEV-LOT-401A', moNo: 'DEV-MO-401', productNo: 'DEV-PROD-CP', processNo: 'DEV-CP', opNo: 'DEV-OS-OP', componentNo: 'DEV-COMP-A', qty: 18, unit: 'PCS' },
   { lotNo: 'DEV-LOT-401B', moNo: 'DEV-MO-401', productNo: 'DEV-PROD-CP', processNo: 'DEV-CP', opNo: 'DEV-OS-OP', componentNo: 'DEV-COMP-B', qty: 20, unit: 'PCS' },
   { lotNo: 'DEV-LOT-401C', moNo: 'DEV-MO-401', productNo: 'DEV-PROD-CP', processNo: 'DEV-CP', opNo: 'DEV-QC-OP', componentNo: 'DEV-COMP-C', qty: 12.5, unit: 'PCS' },
   { lotNo: 'DEV-LOT-401D', moNo: 'DEV-MO-402', productNo: 'DEV-PROD-FT', processNo: 'DEV-FT', opNo: 'DEV-OS-OP', componentNo: 'DEV-COMP-D', qty: 30, unit: 'PCS' },
-]
+]) : ([])
 const upper = (value: string) => value.trim().toUpperCase()
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei' }).format(new Date())
 const lotTotal = (items: Lot[]) => Math.round(items.reduce((sum, lot) => sum + lot.qty, 0) * 10000) / 10000
@@ -88,6 +89,8 @@ const receiptRows = ref<{ lot: Lot; checked: boolean; good: number; scrap: numbe
 const receiptOrder = ref<Order>()
 
 const visibleOrders = computed(() => {
+  if (!isDev.value) return []
+
   const filters = appliedFilters.value
   return orders.value.filter(row => (returnOnly.value ? row.status === 1 || row.status === 10 : row.status === (cancelOnly.value ? 1 : 0)) &&
     mainFields.every(({ key }) => !upper(filters[key]) || upper(row[key]) === upper(filters[key])) &&
@@ -96,11 +99,11 @@ const visibleOrders = computed(() => {
     (!filters.shippedTo || !!row.shippedAt && row.shippedAt <= filters.shippedTo))
     .sort((a, b) => a.osNo.localeCompare(b.osNo))
 })
-const active = computed(() => visibleOrders.value.find(row => row.osNo === selectedNo.value) ?? visibleOrders.value[0])
-const reference = computed(() => draft.value?.lots[0])
-const requiresReturn = computed(() => draft.value?.itemNo === '02')
-const availableReturns = computed(() => returnStations.filter(row => row.process === reference.value?.processNo))
-const picked = computed(() => new Set(draft.value?.lots.map(lot => lot.lotNo)))
+const active = computed(() => isDev.value ? (visibleOrders.value.find(row => row.osNo === selectedNo.value) ?? visibleOrders.value[0]) : (undefined))
+const reference = computed(() => isDev.value ? (draft.value?.lots[0]) : (undefined))
+const requiresReturn = computed(() => isDev.value ? (draft.value?.itemNo === '02') : (false))
+const availableReturns = computed(() => isDev.value ? (returnStations.filter(row => row.process === reference.value?.processNo)) : ([]))
+const picked = computed(() => isDev.value ? (new Set(draft.value?.lots.map(lot => lot.lotNo))) : (new Set<string>()))
 
 function readOrders(): Order[] {
   if (!isDev.value) return []
@@ -132,6 +135,8 @@ function persist(rows: Order[]): boolean {
 }
 
 function search(): void {
+  if (!isDev.value) return
+
   error.value = ''
   notice.value = ''
   if ((filters.value.from && filters.value.to && filters.value.from > filters.value.to) ||
@@ -159,6 +164,8 @@ function openEditor(nextMode: typeof mode.value): void {
 }
 
 function useNumber(): void {
+  if (!isDev.value) return
+
   if (!draft.value || mode.value !== 'add') return
   const used = new Set(orders.value.map(row => row.osNo))
   let serial = 1
@@ -167,12 +174,16 @@ function useNumber(): void {
 }
 
 function isAvailable(lot: Lot): boolean {
+  if (!isDev.value) return false
+
   return !orders.value.some(row => row.status !== -1 && (mode.value !== 'edit' || row.osNo !== draft.value?.osNo) &&
     (row.status === 0 ? row.opNo === draft.value?.opNo : row.status !== 11) &&
     row.lots.some(item => item.lotNo === lot.lotNo && !item.receipt))
 }
 
 function searchReference(): void {
+  if (!isDev.value) return
+
   editError.value = ''
   if (!lotFields.some(({ key }) => upper(lotFilters.value[key]))) {
     editError.value = '請至少輸入一個參考批查詢條件。'
@@ -184,6 +195,8 @@ function searchReference(): void {
 }
 
 function pickReference(lot: Lot): void {
+  if (!isDev.value) return
+
   if (!draft.value || reference.value?.lotNo === lot.lotNo) return
   draft.value.lots = [lot]
   draft.value.returnNode = ''
@@ -193,11 +206,15 @@ function pickReference(lot: Lot): void {
 }
 
 function eligible(lot: Lot): boolean {
+  if (!isDev.value) return false
+
   return !!reference.value && lot.processNo === reference.value.processNo &&
     lot.unit === reference.value.unit && isAvailable(lot)
 }
 
 function scanLot(): void {
+  if (!isDev.value) return
+
   if (!draft.value || !reference.value) {
     editError.value = '請先選擇參考批。'
     return
@@ -214,6 +231,8 @@ function scanLot(): void {
 }
 
 function chooseLot(lot: Lot, checked: boolean): void {
+  if (!isDev.value) return
+
   if (!draft.value || lot.lotNo === reference.value?.lotNo) return
   if (!checked) draft.value.lots = draft.value.lots.filter(row => row.lotNo !== lot.lotNo)
   else if (eligible(lot) && !picked.value.has(lot.lotNo)) draft.value.lots.push(lot)
@@ -421,10 +440,10 @@ async function cancelShipment(): Promise<void> {
         </tbody>
       </table></div>
     </template>
-    <p v-else role="status">此功能尚未接入正式服務。</p>
+    <p v-else role="status">{{ unavailableMessage }}</p>
     <button type="button" @click="emit('close')">關閉</button>
 
-    <div v-if="draft" class="overlay">
+    <div v-if="isDev && draft" class="overlay">
       <section class="dialog" role="dialog" aria-modal="true" aria-label="外包單定義">
         <h3>{{ mode === 'add' ? '新增外包單' : '修改外包單' }}</h3>
         <div class="fields">
@@ -466,7 +485,7 @@ async function cancelShipment(): Promise<void> {
         <footer><button type="button" @click="save(true)">確認</button><button type="button" @click="save(false)">套用</button><button type="button" @click="draft = undefined">關閉</button></footer>
       </section>
     </div>
-    <div v-if="receiptRows" class="overlay">
+    <div v-if="isDev && receiptRows" class="overlay">
       <section class="dialog" role="dialog" aria-modal="true" aria-label="外包回貨明細">
         <h3>外包回貨 {{ receiptOrder?.osNo }}</h3>
         <div class="toolbar">
@@ -489,7 +508,7 @@ async function cancelShipment(): Promise<void> {
         <footer><button type="button" @click="saveReceipt">確認</button><button type="button" @click="receiptRows = undefined">關閉</button></footer>
       </section>
     </div>
-    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
+    <ActionConfirmationDialog v-if="isDev" :message="confirmationMessage" @resolve="resolveConfirmation" />
   </section>
 </template>
 

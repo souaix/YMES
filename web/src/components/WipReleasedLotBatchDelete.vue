@@ -2,15 +2,17 @@
 import { computed, reactive, ref } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 
-defineProps<{ developmentPreview: boolean }>()
+const props = defineProps<{ developmentPreview: boolean }>()
+const dev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const unavailableMessage = "正式環境尚未開放此功能。"
 defineEmits<{ close: [] }>()
 
-const lots = ref([
+const lots = ref(dev.value ? ([
   { no: 'DEV-BD001', source: 'DEV-ORG01', mo: 'DEV-MO01', product: 'DEV-IC1', op: 'WB', status: '排隊', qty: 100 },
   { no: 'DEV-BD002', source: 'DEV-ORG01', mo: 'DEV-MO01', product: 'DEV-IC1', op: 'FT', status: '完成', qty: 80, blocked: '有分批來源' },
   { no: 'DEV-BD003', source: 'DEV-ORG02', mo: 'DEV-MO02', product: 'DEV-IC2', op: 'PK', status: '執行中', qty: 75, packaged: true },
   { no: 'DEV-BD004', source: 'DEV-ORG03', mo: 'DEV-MO02', product: 'DEV-IC2', op: 'FT', status: '完成', qty: 60, blocked: '回復歷程已提交' },
-])
+]) : ([]))
 const filterFields = [
   { key: 'source', label: '來源批號' },
   { key: 'mo', label: '工單' },
@@ -26,11 +28,13 @@ const confirmation = ref<string | null>(null)
 const error = ref('')
 const result = ref('')
 const failures = ref<{ no: string; reason: string }[]>([])
-const visible = computed(() => queried.value ? lots.value.filter(lot =>
+const visible = computed(() => dev.value ? (queried.value ? lots.value.filter(lot =>
   filterFields.every(({ key }) => !criteria.value[key] || lot[key] === criteria.value[key]),
-) : [])
+) : []) : ([]))
 
 function search(): void {
+  if (!dev.value) return
+
   for (const { key } of filterFields) {
     criteria.value[key] = enabled[key] ? inputs[key].trim().toUpperCase() : ''
   }
@@ -42,11 +46,15 @@ function search(): void {
 }
 
 function requestDelete(): void {
+  if (!dev.value) return
+
   pending.value = visible.value.filter(row => selected.value.includes(row.no)).map(row => row.no)
   if (pending.value.length) confirmation.value = `確定刪除選取的 ${pending.value.length} 個生產批？`
 }
 
 function confirmDelete(accepted: boolean): void {
+  if (!dev.value) return
+
   confirmation.value = null
   const planned = pending.value
   pending.value = []
@@ -68,7 +76,7 @@ function confirmDelete(accepted: boolean): void {
 <template>
   <section class="batch-delete" aria-labelledby="batch-delete-title">
     <h2 id="batch-delete-title">批次刪除已下線生產批</h2>
-    <template v-if="developmentPreview">
+    <template v-if="dev">
       <form class="toolbar" @submit.prevent="search">
         <div v-for="field in filterFields" :key="field.key" class="filter">
           <label><input v-model="enabled[field.key]" type="checkbox" @change="!enabled[field.key] && (inputs[field.key] = '')"> {{ field.label }}</label>
@@ -105,7 +113,7 @@ function confirmDelete(accepted: boolean): void {
       <ActionConfirmationDialog :message="confirmation" @resolve="confirmDelete" />
     </template>
     <template v-else>
-      <p>批次刪除已下線生產批 API 待接續。</p>
+      <p role="status">{{ unavailableMessage }}</p>
       <button type="button" @click="$emit('close')">關閉</button>
     </template>
   </section>

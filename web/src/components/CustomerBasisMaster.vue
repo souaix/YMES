@@ -1,402 +1,291 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
+import { blankCustomerWrite, copyCustomerHeader, createEt101Service, editCustomerBody, Et101ServiceError,
+  type CustomerDto, type CustomerWrite, type BrokerOption, type ForwarderOption } from '../services/et101'
 
-interface Customer {
-  customerNo: string
-  customerName: string
-  customerSName: string
-  customerEName: string
-  telNo: string
-  faxNo: string
-  www: string
-  taxCode: string
-  address: string
-  address2: string
-  director: string
-  description: string
-  country: string
-  status: string
-  currency: string
-  invTypeNo: string
-  invAddr: string
-  invAddr2: string
-  invCustNo: string
-  invRemark: string
-  custType: string
-  arType: string
-  freightTerms: string
-  paymentTerms: string
-  acctNo: string
-  deliveryTerm: string
-  forwarderAssigned: string
-  brokerAssigned: string
-  insuranceCoverage: string
-  issueState: number
-  creator: string | null
-  createdAt: string | null
-  reviser: string | null
-  revisedAt: string | null
-  dataStamp: number
-  erpNo: string | null
-  sapFiskn: string | null
-  xxName1: string | null
-  xxName2: string | null
-}
-
-interface ImportRow { customerNo: string; customerName: string; customerSName: string; result: string; message: string }
 type FormMode = 'new' | 'edit' | 'copy' | null
-
+type StateFilter = number | 'all' | 'legacy'
+type PickerKind = 'broker' | 'forwarder' | null
 const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
-const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const mockMode = computed(() => import.meta.env.DEV && props.developmentPreview)
-const storageKey = 'ymes-dev-mock:ent-customer-basis:v1'
-const issueStates = [{ value: 0, label: '未簽核' }, { value: 1, label: '簽核中' }, { value: 2, label: '已簽核' }, { value: -1, label: '不使用' }]
-const statusOptions = [{ value: '', label: '未設定' }, { value: 'O', label: '有效' }, { value: 'C', label: '失效' }, { value: 'B', label: '呆帳' }, { value: 'P', label: '暫停' }]
-const invoiceTypeOptions = [{ value: '', label: '未設定' }, { value: '0', label: '內銷' }, { value: '1', label: '外銷' }]
-const customerTypeOptions = [{ value: '', label: '未設定' }, { value: '0', label: '國內' }, { value: '1', label: '國外' }]
-const arTypeOptions = [{ value: '', label: '未設定' }, { value: '0', label: '入庫計價' }, { value: '1', label: '出貨計價' }]
-
-function blankCustomer(): Customer {
-  return {
-    customerNo: '', customerName: '', customerSName: '', customerEName: '', telNo: '', faxNo: '', www: '', taxCode: '',
-    address: '', address2: '', director: '', description: '', country: '', status: '', currency: '', invTypeNo: '',
-    invAddr: '', invAddr2: '', invCustNo: '', invRemark: '', custType: '', arType: '', freightTerms: '', paymentTerms: '',
-    acctNo: '', deliveryTerm: '', forwarderAssigned: '', brokerAssigned: '', insuranceCoverage: '', issueState: 0,
-    creator: null, createdAt: null, reviser: null, revisedAt: null, dataStamp: 0, erpNo: null, sapFiskn: null, xxName1: null, xxName2: null,
-  }
-}
-
-const seedCustomers: Customer[] = [
-  { ...blankCustomer(), customerNo: 'DEV-C001', customerName: '開發用客戶甲股份有限公司', customerSName: '客戶甲', customerEName: 'DEV CUSTOMER A', telNo: '02-0000-0001', faxNo: '02-0000-0002', address: '開發用地址一', country: '台灣', director: '開發負責人', status: 'O', currency: 'TWD', invTypeNo: '0', custType: '0', arType: '0', description: '僅供 Development 畫面操作展示', issueState: 0, creator: 'DEV001', createdAt: '2026-11-01T08:00:00+08:00', reviser: 'DEV001', revisedAt: '2026-11-01T08:00:00+08:00' },
-  { ...blankCustomer(), customerNo: 'DEV-C002', customerName: '開發用客戶乙有限公司', customerSName: '客戶乙', customerEName: 'DEV CUSTOMER B', telNo: '03-0000-0003', country: '日本', director: '開發負責人', status: 'P', currency: 'JPY', invTypeNo: '1', custType: '1', arType: '1', issueState: 2, creator: 'DEV001', createdAt: '2026-11-02T08:00:00+08:00', reviser: 'DEV002', revisedAt: '2026-11-03T09:30:00+08:00', dataStamp: 1 },
-  { ...blankCustomer(), customerNo: 'DEV-C003', customerName: '開發用客戶丙企業', customerSName: '客戶丙', status: 'C', currency: 'USD', issueState: -1, creator: 'DEV001', createdAt: '2026-11-04T08:00:00+08:00', reviser: 'DEV002', revisedAt: '2026-11-05T09:30:00+08:00', dataStamp: 1 },
-]
-
-const customers = ref<Customer[]>([])
-const issueState = ref(0)
-const keyword = ref('')
-const selectedCustomerNos = ref<string[]>([])
-const loading = ref(false)
-const busy = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
-const formMode = ref<FormMode>(null)
-const form = ref<Customer>(blankCustomer())
-const formError = ref('')
-const audit = ref({ creator: '', createdAt: '', reviser: '', revisedAt: '' })
-const importOpen = ref(false)
-const importFile = ref<File | null>(null)
-const importFileName = ref('')
-const importRows = ref<ImportRow[]>([])
-const importPreviewToken = ref('')
-const importBusy = ref(false)
-const importError = ref('')
-const importProgress = ref('')
-
-const visibleCustomers = computed(() => customers.value.filter(row => row.issueState === issueState.value && row.customerNo.toLocaleLowerCase().includes(keyword.value.trim().toLocaleLowerCase())))
-const selectedCustomers = computed(() => selectedCustomerNos.value.map(no => customers.value.find(row => row.customerNo === no)).filter((row): row is Customer => Boolean(row)))
+const emit = defineEmits<{ close: [] }>()
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
+const issueStates: { value: StateFilter; label: string }[] = [{ value: 0, label: '未簽核' }, { value: 1, label: '簽核中' }, { value: 2, label: '已簽核' }, { value: -1, label: '不使用' }, { value: 'all', label: '全部' }, { value: 'legacy', label: '未設定／其他' }]
+const statusOptions = [{ value: '', label: '空白' }, { value: 'O', label: '有效' }, { value: 'C', label: '失效' }, { value: 'B', label: '呆帳' }, { value: 'P', label: '暫停' }]
+const invoiceTypeOptions = [{ value: '', label: '空白' }, { value: '0', label: '內銷' }, { value: '1', label: '外銷' }]
+const customerTypeOptions = [{ value: '', label: '空白' }, { value: '0', label: '國內' }, { value: '1', label: '國外' }]
+const arTypeOptions = [{ value: '', label: '空白' }, { value: '0', label: '入庫計價' }, { value: '1', label: '出貨計價' }]
+const customers = ref<CustomerDto[]>([]), issueState = ref<StateFilter>(0), keyword = ref(''), selectedCustomerNos = ref<string[]>([])
+const loading = ref(false), rowsReady = ref(false), writing = ref(false), formLoading = ref(false), closing = ref(false), writeUncertain = ref(false)
+const errorMessage = ref(''), successMessage = ref(''), readWarning = ref(''), formError = ref('')
+const formMode = ref<FormMode>(null), formReady = ref(false), form = ref<CustomerWrite>(blankCustomerWrite()), originalRow = ref<CustomerDto | null>(null), formOriginal = ref('')
+const pageElement = ref<HTMLElement | null>(null), formElement = ref<HTMLElement | null>(null), pickerElement = ref<HTMLElement | null>(null)
+const pickerKind = ref<PickerKind>(null), pickerLoading = ref(false), pickerReady = ref(false), pickerKeyword = ref(''), pickerError = ref('')
+const brokerRows = ref<BrokerOption[]>([]), forwarderRows = ref<ForwarderOption[]>([])
+let disposed = false, scopeEpoch = 0, listEpoch = 0, formEpoch = 0, pickerEpoch = 0
+let previousModalFocus: HTMLElement | null = null, previousPickerFocus: HTMLElement | null = null
+const modalOpen = computed(() => formMode.value !== null || pickerKind.value !== null)
+const pageBlocked = computed(() => loading.value || writing.value || closing.value || modalOpen.value || confirmationMessage.value !== null)
+const mutationBlocked = computed(() => pageBlocked.value || writeUncertain.value)
+const formBusy = computed(() => writing.value || formLoading.value || closing.value || pickerKind.value !== null || confirmationMessage.value !== null)
+const dirty = computed(() => formMode.value !== null && JSON.stringify(form.value) !== formOriginal.value)
+const visibleCustomers = computed(() => customers.value.filter(row => issueState.value === 'all' || (issueState.value === 'legacy' ? ![-1, 0, 1, 2].includes(row.issueState as number) : row.issueState === issueState.value)))
+const selectedCustomers = computed(() => visibleCustomers.value.filter(row => selectedCustomerNos.value.includes(row.customerNo)))
 const selectedCustomer = computed(() => selectedCustomers.value.length === 1 ? selectedCustomers.value[0] : null)
-const lockBasicFields = computed(() => formMode.value === 'edit' && form.value.issueState !== 0)
-
-function apiUrl(path: string): string {
-  const base = props.apiBaseUrl.trim()
-  if (!base) throw new Error('目前環境尚未設定 API 位址。')
-  return new URL(path.replace(/^\/+/, ''), new URL(base.replace(/\/+$/, '') + '/', window.location.origin)).toString()
+const lockBasicFields = computed(() => formMode.value === 'edit' && originalRow.value?.issueState !== 0)
+const audit = computed(() => ({ creator: originalRow.value?.creator ?? '', createDate: formatDate(originalRow.value?.createDate ?? null), reviser: originalRow.value?.reviser ?? '', reviseDate: formatDate(originalRow.value?.reviseDate ?? null) }))
+const pickerRows = computed(() => {
+  const rows = pickerKind.value === 'broker' ? brokerRows.value.map(row => ({ no: row.brokerNo, name: row.contactorName, state: row.issueState }))
+    : forwarderRows.value.map(row => ({ no: row.forwarderNo, name: row.contactorName, state: row.issueState }))
+  const search = pickerKeyword.value.toLowerCase()
+  return rows.filter(row => row.no.toLowerCase().includes(search))
+})
+const fail = (cause: unknown): string => cause instanceof Error ? cause.message : '客戶服務操作失敗。'
+const service = () => createEt101Service(props.apiBaseUrl, window.location.origin)
+function stateName(value: StateFilter | null): string { return issueStates.find(item => item.value === value)?.label ?? (value === null ? '未設定' : String(value)) }
+function valueName(options: { value: string; label: string }[], value: string | null): string { return value === null ? '' : options.find(item => item.value === value)?.label ?? value }
+function legacyOption(options: { value: string; label: string }[], value: string | null): boolean { return value !== null && !options.some(item => item.value === value) }
+function formatDate(value: string | null): string { return value === null ? '' : new Date(value).toLocaleString('zh-TW') }
+function applyFilter(): void { const keys = new Set(visibleCustomers.value.map(row => row.customerNo)); selectedCustomerNos.value = selectedCustomerNos.value.filter(key => keys.has(key)) }
+function upsert(row: CustomerDto): void { const index = customers.value.findIndex(item => item.customerNo === row.customerNo); if (index < 0) customers.value.push(row); else customers.value[index] = row }
+function selectRow(row: CustomerDto, event?: MouseEvent | KeyboardEvent): void {
+  if (pageBlocked.value || !rowsReady.value) return
+  if (event?.ctrlKey || event?.metaKey) toggleSelection(row, !selectedCustomerNos.value.includes(row.customerNo))
+  else selectedCustomerNos.value = [row.customerNo]
 }
-
-async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(apiUrl(path), { credentials: 'include', ...init })
-  if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
-  if (!response.ok) {
-    const problem = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
-    if (response.status === 404) throw new Error('客戶基本資料 API 尚未建立；請依 todolist_homepc.md 完成資料表與 API。')
-    throw new Error(problem?.detail || problem?.message || problem?.title || `API 回應錯誤 (${response.status})。`)
-  }
-  if (response.status === 204) return undefined as T
-  return await response.json() as T
-}
-
-function readMockRows(): Customer[] {
-  try {
-    const saved = window.localStorage.getItem(storageKey)
-    return saved ? JSON.parse(saved) as Customer[] : structuredClone(seedCustomers)
-  } catch { return structuredClone(seedCustomers) }
-}
-function saveMockRows(rows: Customer[]): void { window.localStorage.setItem(storageKey, JSON.stringify(rows)) }
-function stateName(state: number): string { return issueStates.find(item => item.value === state)?.label ?? '未知' }
-function valueName(options: { value: string; label: string }[], value: string): string { return value ? options.find(item => item.value === value)?.label ?? value : '' }
-function formatDate(value: string | null): string {
-  if (!value) return ''
-  const date = new Date(value)
-  return Number.isNaN(date.valueOf()) ? value : date.toLocaleString('zh-TW')
-}
-
-async function loadCustomers(): Promise<void> {
-  loading.value = true
-  errorMessage.value = ''
-  try {
-    if (mockMode.value) {
-      customers.value = readMockRows()
-      if (!window.localStorage.getItem(storageKey)) saveMockRows(customers.value)
-    } else {
-      customers.value = await requestJson<Customer[]>('api/ent/customer-basis')
-    }
-    const visible = new Set(visibleCustomers.value.map(row => row.customerNo))
-    selectedCustomerNos.value = selectedCustomerNos.value.filter(no => visible.has(no))
-  } catch (error) { errorMessage.value = error instanceof Error ? error.message : '客戶資料載入失敗。' }
-  finally { loading.value = false }
-}
-
-function applyFilter(): void {
-  const visible = new Set(visibleCustomers.value.map(row => row.customerNo))
-  selectedCustomerNos.value = selectedCustomerNos.value.filter(no => visible.has(no))
-}
-function selectRow(row: Customer): void { selectedCustomerNos.value = [row.customerNo] }
-function toggleSelection(row: Customer, checked: boolean): void {
-  selectedCustomerNos.value = checked
-    ? [...new Set([...selectedCustomerNos.value, row.customerNo])]
-    : selectedCustomerNos.value.filter(no => no !== row.customerNo)
+function toggleSelection(row: CustomerDto, checked: boolean): void {
+  if (pageBlocked.value || !rowsReady.value) return
+  selectedCustomerNos.value = checked ? [...new Set([...selectedCustomerNos.value, row.customerNo])] : selectedCustomerNos.value.filter(key => key !== row.customerNo)
 }
 function toggleAllVisible(checked: boolean): void {
-  if (checked) selectedCustomerNos.value = [...new Set([...selectedCustomerNos.value, ...visibleCustomers.value.map(row => row.customerNo)])]
-  else selectedCustomerNos.value = selectedCustomerNos.value.filter(no => !visibleCustomers.value.some(row => row.customerNo === no))
+  if (pageBlocked.value || !rowsReady.value) return
+  const keys = new Set(visibleCustomers.value.map(row => row.customerNo))
+  selectedCustomerNos.value = checked ? [...keys] : selectedCustomerNos.value.filter(key => !keys.has(key))
 }
-
-function openForm(mode: Exclude<FormMode, null>): void {
-  formError.value = ''
-  successMessage.value = ''
-  if (mode === 'new') form.value = blankCustomer()
-  else if (!selectedCustomer.value) { errorMessage.value = mode === 'edit' ? '修改請選取單筆客戶資料。' : '複製請選取單筆客戶資料。'; return }
-  else form.value = { ...selectedCustomer.value }
-  if (mode === 'copy') {
-    form.value.customerNo = ''
-    form.value.issueState = 0
-    form.value.dataStamp = 0
-    form.value.creator = null
-    form.value.createdAt = null
-    form.value.reviser = null
-    form.value.revisedAt = null
-  }
-  const now = new Date().toISOString()
-  if (mode !== 'edit') {
-    form.value.issueState = 0
-    form.value.creator = props.currentUserNo || 'DEV001'
-    form.value.createdAt = now
-    form.value.reviser = props.currentUserNo || 'DEV001'
-    form.value.revisedAt = now
-  }
-  audit.value = { creator: form.value.creator ?? '', createdAt: formatDate(form.value.createdAt), reviser: form.value.reviser ?? '', revisedAt: formatDate(form.value.revisedAt) }
-  formMode.value = mode
+async function reloadRows(): Promise<void> {
+  const epoch = ++listEpoch, scope = scopeEpoch, api = service()
+  const rows = await api.list(keyword.value)
+  if (disposed || epoch !== listEpoch || scope !== scopeEpoch) return
+  customers.value = rows; rowsReady.value = true; applyFilter()
 }
-
-function validateForm(closeAfterSave: boolean): string {
-  if (!form.value.customerNo.trim()) return '請輸入客戶編號。'
-  if (!form.value.customerName.trim()) return '請輸入客戶名稱。'
-  if (closeAfterSave && !form.value.customerSName.trim()) return '請輸入客戶簡稱。'
+async function queryCustomers(): Promise<void> {
+  if (pageBlocked.value) return
+  const scope = scopeEpoch
+  loading.value = true; errorMessage.value = ''; readWarning.value = ''
+  try { await reloadRows() }
+  catch (cause) { if (!disposed && scope === scopeEpoch) { rowsReady.value = false; errorMessage.value = fail(cause) } }
+  finally { if (!disposed && scope === scopeEpoch) { loading.value = false; await restoreFocus() } }
+}
+async function openForm(mode: Exclude<FormMode, null>): Promise<void> {
+  if (mutationBlocked.value || (mode !== 'new' && (!rowsReady.value || !selectedCustomer.value))) return
+  const selected = selectedCustomer.value, epoch = ++formEpoch, scope = scopeEpoch
+  previousModalFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  formMode.value = mode; form.value = blankCustomerWrite(); originalRow.value = null; formReady.value = false; formError.value = ''; successMessage.value = ''; formLoading.value = true
+  formOriginal.value = JSON.stringify(form.value)
+  try {
+    if (mode !== 'new' && selected) {
+      const fresh = await service().get(selected.customerNo)
+      if (disposed || epoch !== formEpoch || scope !== scopeEpoch) return
+      upsert(fresh); applyFilter()
+      form.value = mode === 'copy' ? copyCustomerHeader(fresh) : editCustomerBody(fresh)
+      if (mode === 'edit') originalRow.value = fresh
+    }
+    formOriginal.value = JSON.stringify(form.value); formReady.value = true
+  } catch (cause) { if (!disposed && epoch === formEpoch && scope === scopeEpoch) formError.value = fail(cause) }
+  finally { if (!disposed && epoch === formEpoch && scope === scopeEpoch) { formLoading.value = false; await restoreFocus() } }
+}
+function writeOnly(): CustomerWrite {
+  // Edit body helper includes tokens; never spread those into POST or hidden
+  // source fields. Re-project29 visible values for every submission.
+  return Object.fromEntries(Object.keys(blankCustomerWrite()).map(key => [key, form.value[key as keyof CustomerWrite]])) as unknown as CustomerWrite
+}
+function validateForm(): string {
+  const body = writeOnly(), old = originalRow.value
+  if (!body.customerNo.trim()) return '請輸入客戶編號。'
+  for (const [key, label] of [['customerName', '客戶名稱'], ['customerSName', '客戶簡稱']] as const)
+    if ((formMode.value !== 'edit' || body[key] !== old?.[key]) && !body[key]?.trim()) return '請輸入' + label + '。'
+  const limits: Partial<Record<keyof CustomerWrite, number>> = { customerNo: 50, customerName: 100, customerSName: 100, customerEName: 50, telNo: 25, faxNo: 25, www: 50, taxCode: 25, address: 255, address2: 255, director: 50, country: 50, description: 255, status: 5, currency: 6, invTypeNo: 1, invAddr: 255, invAddr2: 255, invCustNo: 20, invRemark: 100, custType: 1, arType: 1, freightTerms: 20, paymentTerms: 20, acctNo: 50, deliveryTerm: 50, forwarderAssigned: 50, brokerAssigned: 50, insuranceCoverage: 50 }
+  for (const [key, limit] of Object.entries(limits)) { const value = body[key as keyof CustomerWrite]; if (value !== null && Array.from(value).length > limit!) return key + ' 超過來源欄位長度。' }
   return ''
 }
-
+function adoptSaved(saved: CustomerDto): void {
+  upsert(saved); originalRow.value = saved; form.value = editCustomerBody(saved); formMode.value = 'edit'; formReady.value = true
+  formOriginal.value = JSON.stringify(form.value); selectedCustomerNos.value = [saved.customerNo]; applyFilter()
+}
 async function saveCustomer(closeAfterSave: boolean): Promise<void> {
-  if (!formMode.value || busy.value) return
-  formError.value = validateForm(closeAfterSave)
-  if (formError.value) return
-  busy.value = true
-  formError.value = ''
-  const mode = formMode.value
-  const customerNo = form.value.customerNo.trim().toUpperCase()
-  const payload: Customer = { ...form.value, customerNo }
+  if (!formMode.value || !formReady.value || formBusy.value || writeUncertain.value) return
+  if (!dirty.value && formMode.value === 'edit') { if (closeAfterSave) await closeForm(); return }
+  formError.value = validateForm(); if (formError.value) return
+  const scope = scopeEpoch, epoch = formEpoch, body = writeOnly(), old = originalRow.value
+  const updating = formMode.value === 'edit' && old !== null
+  writing.value = true; formError.value = ''; successMessage.value = ''; readWarning.value = ''
   try {
-    let saved: Customer
-    if (mockMode.value) {
-      const rows = readMockRows()
-      const index = rows.findIndex(row => row.customerNo.toUpperCase() === customerNo)
-      const now = new Date().toISOString()
-      if (mode !== 'edit' && index >= 0) throw new Error('客戶編號已存在。')
-      if (mode === 'edit') {
-        if (index < 0) throw new Error('找不到要修改的客戶。')
-        const original = rows[index]
-        saved = { ...original, ...payload, issueState: original.issueState, dataStamp: original.dataStamp + 1, creator: original.creator, createdAt: original.createdAt, reviser: props.currentUserNo || 'DEV001', revisedAt: now }
-        rows[index] = saved
-      } else {
-        saved = { ...payload, issueState: 0, dataStamp: 0, creator: props.currentUserNo || 'DEV001', createdAt: now, reviser: props.currentUserNo || 'DEV001', revisedAt: now }
-        rows.push(saved)
-      }
-      saveMockRows(rows)
-    } else {
-      const path = 'api/ent/customer-basis' + (mode === 'edit' ? '/' + encodeURIComponent(customerNo) : '')
-      saved = await requestJson<Customer>(path, { method: mode === 'edit' ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    const api = service()
+    const saved = updating && old
+      ? await api.update(old.customerNo, { ...body, issueState: old.issueState, dataStamp: old.dataStamp })
+      : await api.create(body)
+    if (disposed || scope !== scopeEpoch || epoch !== formEpoch) return
+    if ((updating && old && (saved.customerNo !== old.customerNo || saved.issueState !== old.issueState || saved.dataStamp !== (old.dataStamp ?? 0) + 1))
+      || (!updating && (saved.issueState !== 0 || saved.dataStamp !== 0)))
+      throw new Et101ServiceError('保存回傳身份或版本不符契約，請先核對伺服器結果。', 200, true)
+    adoptSaved(saved); successMessage.value = '客戶資料已儲存。'
+    if (closeAfterSave) { formMode.value = null; formReady.value = false; ++formEpoch }
+    try { await reloadRows() } catch (cause) { if (!disposed && scope === scopeEpoch) { rowsReady.value = false; readWarning.value = '已儲存；清單重新讀取失敗：' + fail(cause) } }
+  } catch (cause) {
+    if (!disposed && scope === scopeEpoch && epoch === formEpoch) {
+      formError.value = fail(cause)
+      if (cause instanceof Et101ServiceError && cause.unknownCommit) { writeUncertain.value = true; rowsReady.value = false }
     }
-    audit.value = { creator: saved.creator ?? '', createdAt: formatDate(saved.createdAt), reviser: saved.reviser ?? '', revisedAt: formatDate(saved.revisedAt) }
-    form.value = { ...saved }
-    successMessage.value = '客戶資料已儲存。'
-    await loadCustomers()
-    if (closeAfterSave) {
-      formMode.value = null
-      selectedCustomerNos.value = customers.value.some(row => row.customerNo === customerNo && row.issueState === issueState.value) ? [customerNo] : []
-    }
-  } catch (error) { formError.value = error instanceof Error ? error.message : '客戶資料儲存失敗。' }
-  finally { busy.value = false }
+  } finally { if (!disposed && scope === scopeEpoch) { writing.value = false; await restoreFocus() } }
 }
-
 async function deleteSelected(): Promise<void> {
-  if (!selectedCustomers.value.length || busy.value) return
-  if (!window.confirm(`確定刪除選取的 ${selectedCustomers.value.length} 筆客戶資料？`)) return
-  busy.value = true; errorMessage.value = ''; successMessage.value = ''
-  let completed = 0
+  if (mutationBlocked.value || !rowsReady.value || !selectedCustomers.value.length) return
+  const targets = selectedCustomers.value.map(row => ({ ...row })), scope = scopeEpoch
+  const focus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  if (!await requestConfirmation('確定處理選取的 ' + targets.length + ' 筆客戶？已核准資料會停用；未簽核／不使用資料會連同地址及連絡人刪除。')) { await restorePageFocus(focus); return }
+  if (disposed || scope !== scopeEpoch) return
+  writing.value = true; errorMessage.value = ''; successMessage.value = ''; readWarning.value = ''
+  let completed = 0, retired = 0, deleted = 0, addresses = 0, contacts = 0
   try {
-    for (const row of selectedCustomers.value) {
-      if (![0, -1, 2].includes(row.issueState)) throw new Error(`${row.customerNo} 為簽核中，不能刪除。`)
-      if (mockMode.value) {
-        const rows = readMockRows()
-        if (row.issueState === 2) {
-          const index = rows.findIndex(item => item.customerNo === row.customerNo)
-          if (index >= 0) rows[index] = { ...rows[index], issueState: -1, dataStamp: rows[index].dataStamp + 1, reviser: props.currentUserNo || 'DEV001', revisedAt: new Date().toISOString() }
-        } else {
-          const kept = rows.filter(item => item.customerNo !== row.customerNo)
-          saveMockRows(kept)
-        }
-        if (row.issueState === 2) saveMockRows(rows)
-      } else {
-        const query = new URLSearchParams({ issueState: String(row.issueState), dataStamp: String(row.dataStamp) })
-        await requestJson<void>('api/ent/customer-basis/' + encodeURIComponent(row.customerNo) + '?' + query, { method: 'DELETE' })
-      }
-      completed++
+    const api = service()
+    for (const row of targets) {
+      const result = await api.remove(row.customerNo, { issueState: row.issueState, dataStamp: row.dataStamp })
+      if (disposed || scope !== scopeEpoch) return
+      if (result.customerNo !== row.customerNo) throw new Et101ServiceError('刪除回傳身份不符，請先核對伺服器結果。', 200, true)
+      if (result.kind === 'retired') { upsert(result.item); retired++ }
+      else { customers.value = customers.value.filter(item => item.customerNo !== result.customerNo); deleted++; addresses += result.deletedAddressRows; contacts += result.deletedContactorRows }
+      completed++; selectedCustomerNos.value = selectedCustomerNos.value.filter(key => key !== row.customerNo); applyFilter()
     }
-    successMessage.value = `已處理 ${completed} 筆資料。已核准資料改為不使用，未簽核或不使用資料實體刪除。`
-    selectedCustomerNos.value = []
-    await loadCustomers()
-  } catch (error) {
-    errorMessage.value = `${error instanceof Error ? error.message : '刪除客戶資料失敗。'}${completed ? `（前 ${completed} 筆已完成）` : ''}`
-    if (completed) await loadCustomers()
-  } finally { busy.value = false }
+  } catch (cause) {
+    if (!disposed && scope === scopeEpoch) { errorMessage.value = fail(cause); if (cause instanceof Et101ServiceError && cause.unknownCommit) { writeUncertain.value = true; rowsReady.value = false } }
+  } finally {
+    if (!disposed && scope === scopeEpoch) {
+      successMessage.value = '已確認完成 ' + completed + '/' + targets.length + ' 筆（停用 ' + retired + '、刪除 ' + deleted + '；地址 ' + addresses + '、連絡人 ' + contacts + '）。'
+      try { await reloadRows() } catch (cause) { if (!disposed && scope === scopeEpoch) { rowsReady.value = false; readWarning.value = '已完成的結果保留；清單讀取失敗：' + fail(cause) } }
+      if (!disposed && scope === scopeEpoch) { writing.value = false; await restorePageFocus(focus) }
+    }
+  }
 }
-
 async function approveSelected(): Promise<void> {
-  if (!selectedCustomers.value.length || busy.value) return
-  if (!window.confirm(`確定核准選取的 ${selectedCustomers.value.length} 筆客戶資料？`)) return
-  busy.value = true; errorMessage.value = ''; successMessage.value = ''
+  if (mutationBlocked.value || !rowsReady.value || !selectedCustomers.value.length) return
+  const targets = selectedCustomers.value.map(row => ({ ...row })), scope = scopeEpoch
+  if (targets.some(row => row.issueState !== 0)) { errorMessage.value = '只有未簽核客戶可提出核准。'; return }
+  const focus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  if (!await requestConfirmation('確定核准選取的 ' + targets.length + ' 筆客戶？若需要簽核流程，會保留原資料並停止。')) { await restorePageFocus(focus); return }
+  if (disposed || scope !== scopeEpoch) return
+  writing.value = true; errorMessage.value = ''; successMessage.value = ''; readWarning.value = ''
   let completed = 0
   try {
-    for (const row of selectedCustomers.value) {
-      if (row.issueState !== 0) throw new Error(`${row.customerNo} 不是未簽核狀態。`)
-      if (mockMode.value) {
-        const rows = readMockRows(); const index = rows.findIndex(item => item.customerNo === row.customerNo)
-        if (index < 0) throw new Error('找不到要核准的客戶。')
-        rows[index] = { ...rows[index], issueState: 2, dataStamp: rows[index].dataStamp + 1, reviser: props.currentUserNo || 'DEV001', revisedAt: new Date().toISOString() }
-        saveMockRows(rows)
-      } else {
-        const query = new URLSearchParams({ dataStamp: String(row.dataStamp) })
-        await requestJson<void>('api/ent/customer-basis/' + encodeURIComponent(row.customerNo) + '/approve?' + query, { method: 'POST' })
-      }
-      completed++
+    const api = service()
+    for (const row of targets) {
+      const saved = await api.approve(row.customerNo, { issueState: row.issueState, dataStamp: row.dataStamp })
+      if (disposed || scope !== scopeEpoch) return
+      // The service requires the complete true41DTO, state2, exact original
+      // raw identity and bumped nullable stamp before accepting this result.
+      upsert(saved); completed++; selectedCustomerNos.value = selectedCustomerNos.value.filter(key => key !== row.customerNo); applyFilter()
     }
-    successMessage.value = `已送出 ${completed} 筆核准；正式核准可能依簽核設定進入簽核中狀態。`
-    selectedCustomerNos.value = []
-    await loadCustomers()
-  } catch (error) {
-    errorMessage.value = `${error instanceof Error ? error.message : '核准客戶資料失敗。'}${completed ? `（前 ${completed} 筆已完成）` : ''}`
-    if (completed) await loadCustomers()
-  } finally { busy.value = false }
-}
-
-function openImport(): void {
-  importOpen.value = true; importFile.value = null; importFileName.value = ''; importRows.value = []; importPreviewToken.value = ''; importError.value = ''; importProgress.value = ''
-}
-function parseCsvLine(line: string): string[] {
-  const values: string[] = []; let value = ''; let quoted = false
-  for (let index = 0; index < line.length; index++) {
-    const char = line[index]
-    if (char === '"' && quoted && line[index + 1] === '"') { value += '"'; index++ }
-    else if (char === '"') quoted = !quoted
-    else if (char === ',' && !quoted) { values.push(value); value = '' }
-    else value += char
-  }
-  values.push(value)
-  return values
-}
-async function chooseImportFile(event: Event): Promise<void> {
-  const file = (event.target as HTMLInputElement).files?.[0] ?? null
-  importFile.value = file; importFileName.value = file?.name ?? ''; importRows.value = []; importPreviewToken.value = ''; importError.value = ''; importProgress.value = ''
-  if (!file) return
-  const ext = file.name.split('.').pop()?.toLowerCase()
-  if (mockMode.value && ext !== 'csv') { importError.value = 'Development 預覽目前只解析 CSV；舊版 .xls/.xlsx 由正式 API 解析。'; return }
-  if (mockMode.value && ext === 'csv') {
-    const lines = (await file.text()).replace(/^\uFEFF/, '').split(/\r?\n/).filter(line => line.trim())
-    importRows.value = lines.slice(1).map(line => { const columns = parseCsvLine(line); return { customerNo: (columns[0] ?? '').trim(), customerName: (columns[1] ?? '').trim(), customerSName: (columns[2] ?? '').trim(), result: '待檢核', message: '' } })
-    return
-  }
-  if (!mockMode.value) {
-    importBusy.value = true
-    try {
-      const body = new FormData(); body.append('file', file)
-      const preview = await requestJson<{ previewToken: string; rows: ImportRow[] }>('api/ent/customer-basis/import/preview', { method: 'POST', body })
-      importPreviewToken.value = preview.previewToken
-      importRows.value = preview.rows.map(row => ({ ...row, result: row.result || '待匯入' }))
-    } catch (error) { importError.value = error instanceof Error ? error.message : 'Excel 預覽失敗。' }
-    finally { importBusy.value = false }
+  } catch (cause) {
+    if (!disposed && scope === scopeEpoch) { errorMessage.value = fail(cause); if (cause instanceof Et101ServiceError && cause.unknownCommit) { writeUncertain.value = true; rowsReady.value = false } }
+  } finally {
+    if (!disposed && scope === scopeEpoch) {
+      successMessage.value = '已確認核准 ' + completed + '/' + targets.length + ' 筆。'
+      try { await reloadRows() } catch (cause) { if (!disposed && scope === scopeEpoch) { rowsReady.value = false; readWarning.value = '已核准結果保留；清單讀取失敗：' + fail(cause) } }
+      if (!disposed && scope === scopeEpoch) { writing.value = false; await restorePageFocus(focus) }
+    }
   }
 }
-function downloadBlob(blob: Blob, name: string): void {
-  const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = name; anchor.click(); URL.revokeObjectURL(url)
-}
-async function downloadTemplate(): Promise<void> {
-  importError.value = ''
+async function openParentPicker(kind: Exclude<PickerKind, null>): Promise<void> {
+  if (!formMode.value || !formReady.value || formBusy.value || writeUncertain.value) return
+  previousPickerFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  pickerKind.value = kind; pickerReady.value = false; pickerLoading.value = true; pickerError.value = ''; pickerKeyword.value = ''; brokerRows.value = []; forwarderRows.value = []
+  const epoch = ++pickerEpoch, scope = scopeEpoch
+  await restoreFocus()
   try {
-    if (mockMode.value) {
-      downloadBlob(new Blob(['CustomerNo,CustomerName,CustomerSName\r\nDEV-C100,開發客戶,開發簡稱\r\n'], { type: 'text/csv;charset=utf-8' }), 'CustomerTemplate_DEVELOPMENT.csv')
-    } else {
-      const response = await fetch(apiUrl('api/ent/customer-basis/import/template'), { credentials: 'include' })
-      if (!response.ok) throw new Error(response.status === 404 ? '客戶匯入範本 API 尚未建立。' : `範本下載失敗 (${response.status})。`)
-      downloadBlob(await response.blob(), 'CustomerTemplate.xlsx')
-    }
-  } catch (error) { importError.value = error instanceof Error ? error.message : '範本下載失敗。' }
+    const api = service(), rows = kind === 'broker' ? await api.brokers() : await api.forwarders()
+    if (disposed || scope !== scopeEpoch || epoch !== pickerEpoch || pickerKind.value !== kind) return
+    if (kind === 'broker') brokerRows.value = rows as BrokerOption[]; else forwarderRows.value = rows as ForwarderOption[]
+    pickerReady.value = true
+  } catch (cause) { if (!disposed && scope === scopeEpoch && epoch === pickerEpoch) pickerError.value = fail(cause) }
+  finally { if (!disposed && scope === scopeEpoch && epoch === pickerEpoch) { pickerLoading.value = false; await restoreFocus() } }
 }
-async function runImport(): Promise<void> {
-  if (!importFile.value || importBusy.value) { importError.value = '請先選擇 Excel 匯入檔案。'; return }
-  importBusy.value = true; importError.value = ''; importProgress.value = ''
+function chooseParent(no: string): void {
+  if (!pickerKind.value || !pickerReady.value || pickerLoading.value || writing.value || confirmationMessage.value !== null) return
+  if (pickerKind.value === 'broker') form.value.brokerAssigned = no; else form.value.forwarderAssigned = no
+  void closeParentPicker()
+}
+async function closeParentPicker(): Promise<void> {
+  if (writing.value || confirmationMessage.value !== null || !pickerKind.value) return
+  ++pickerEpoch; pickerKind.value = null; pickerReady.value = false; pickerLoading.value = false
+  await nextTick(); if (previousPickerFocus?.isConnected && !previousPickerFocus.matches(':disabled')) previousPickerFocus.focus(); else await restoreFocus()
+}
+async function closeForm(): Promise<void> {
+  if (!formMode.value || writing.value || formLoading.value || closing.value || pickerKind.value || confirmationMessage.value !== null) return
+  closing.value = true
   try {
-    if (mockMode.value) {
-      const records = readMockRows(); let done = 0
-      for (const row of importRows.value) {
-        if (!row.customerNo || !row.customerName || !row.customerSName) { row.result = '失敗'; row.message = '客戶編號、客戶名稱、客戶簡稱皆為必填。'; continue }
-        const customerNo = row.customerNo.toUpperCase()
-        if (records.some(item => item.customerNo.toUpperCase() === customerNo)) { row.result = '失敗'; row.message = '客戶編號已存在。'; continue }
-        const now = new Date().toISOString()
-        records.push({ ...blankCustomer(), customerNo, customerName: row.customerName, customerSName: row.customerSName, issueState: 0, creator: props.currentUserNo || 'DEV001', createdAt: now, reviser: props.currentUserNo || 'DEV001', revisedAt: now })
-        row.result = '成功'; row.message = 'Development 假資料'; done++
-      }
-      saveMockRows(records); importProgress.value = `完成 ${done} 筆假資料；舊系統 checker 未在瀏覽器執行。`
-      await loadCustomers()
-    } else {
-      if (!importPreviewToken.value) throw new Error('請先成功預覽匯入檔案。')
-      const result = await requestJson<{ results?: ImportRow[]; completedCount?: number }>('api/ent/customer-basis/import/commit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ previewToken: importPreviewToken.value }) })
-      if (result.results) importRows.value = result.results
-      importProgress.value = `完成 ${result.completedCount ?? result.results?.filter(row => row.result === '成功').length ?? 0} 筆檢核/匯入。`
-      await loadCustomers()
-    }
-  } catch (error) { importError.value = error instanceof Error ? error.message : '客戶資料匯入失敗。' }
-  finally { importBusy.value = false }
+    if (dirty.value && !await requestConfirmation('尚有未儲存的修改，確定放棄？')) return
+    formMode.value = null; formReady.value = false; ++formEpoch
+  } finally { closing.value = false; await restoreFocus() }
 }
-function closePage(): void { window.history.pushState({}, '', appBase + '/'); window.dispatchEvent(new PopStateEvent('popstate')) }
-function onCustomerNoBlur(): void { form.value.customerNo = form.value.customerNo.toUpperCase() }
-function auditValue(value: string | null): string { return value ? formatDate(value) : '' }
+async function closePage(): Promise<void> {
+  if (pageBlocked.value) return
+  ++listEpoch; ++formEpoch; ++pickerEpoch; customers.value = []; selectedCustomerNos.value = []; rowsReady.value = false
+  emit('close')
+}
+function onCustomerNoBlur(): void { if (formMode.value !== 'edit') form.value.customerNo = form.value.customerNo.toUpperCase() }
+function currentModal(): HTMLElement | null { return pickerKind.value ? pickerElement.value : formMode.value ? formElement.value : null }
+async function restorePageFocus(previous: HTMLElement | null): Promise<void> {
+  await nextTick(); if (disposed || modalOpen.value || confirmationMessage.value !== null) return
+  if (previous?.isConnected && !previous.matches(':disabled') && !previous.closest('[inert]')) previous.focus()
+  else (pageElement.value?.querySelector<HTMLElement>('.customer-main button:not(:disabled),.customer-main input:not(:disabled)') ?? pageElement.value)?.focus()
+}
+async function restoreFocus(): Promise<void> {
+  await nextTick(); if (disposed || confirmationMessage.value !== null) return
+  const modal = currentModal()
+  if (modal) (modal.querySelector<HTMLElement>('input:not(:disabled):not([readonly]),select:not(:disabled),textarea:not(:disabled):not([readonly]),button:not(:disabled)') ?? modal).focus()
+  else await restorePageFocus(previousModalFocus)
+}
+function trapTab(event: KeyboardEvent): void {
+  const modal = currentModal(); if (!modal || confirmationMessage.value !== null) return
+  const controls = Array.from(modal.querySelectorAll<HTMLElement>('input:not(:disabled),select:not(:disabled),textarea:not(:disabled),button:not(:disabled),[tabindex="0"]')).filter(element => element.offsetParent !== null && !element.closest('[inert]'))
+  const first = controls[0], last = controls.at(-1)
+  if (!first || !last) { event.preventDefault(); modal.focus(); return }
+  if (!modal.contains(document.activeElement) || document.activeElement === modal) { event.preventDefault(); (event.shiftKey ? last : first).focus() }
+  else if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+}
+function captureTab(event: KeyboardEvent): void {
+  if (event.key !== 'Tab' || !modalOpen.value || confirmationMessage.value !== null) return
+  if (writing.value || formLoading.value || closing.value) { event.preventDefault(); return }
+  trapTab(event)
+}
+onMounted(() => { window.addEventListener('keydown', captureTab, true); void queryCustomers() })
+onBeforeUnmount(() => { disposed = true; ++scopeEpoch; ++listEpoch; ++formEpoch; ++pickerEpoch; window.removeEventListener('keydown', captureTab, true) })
+watch(issueState, applyFilter)
+watch(() => props.apiBaseUrl, () => {
+  ++scopeEpoch; ++listEpoch; ++formEpoch; ++pickerEpoch
+  if (writing.value) writeUncertain.value = true
+  writing.value = false; loading.value = false; formLoading.value = false; formMode.value = null; pickerKind.value = null; formReady.value = false
+  customers.value = []; selectedCustomerNos.value = []; rowsReady.value = false
+  void queryCustomers()
+})
 
-onMounted(() => { void loadCustomers() })
-watch(() => [props.developmentPreview, props.apiBaseUrl], () => { void loadCustomers() })
-watch([issueState, keyword], applyFilter)
 </script>
 
 <template>
-  <div class="customer-page">
-    <form class="customer-query" @submit.prevent="applyFilter">
+  <div ref="pageElement" class="customer-page" tabindex="-1">
+    <div class="customer-main" :inert="modalOpen || writing || confirmationMessage !== null">
+    <form class="customer-query" @submit.prevent="queryCustomers">
       <fieldset class="customer-state-filter"><legend>客戶</legend>
-        <label v-for="item in issueStates" :key="item.value"><input v-model.number="issueState" type="radio" name="customerState" :value="item.value" />{{ item.label }}</label>
+        <label v-for="item in issueStates" :key="item.value"><input v-model="issueState" type="radio" name="customerState" :value="item.value" :disabled="pageBlocked" />{{ item.label }}</label>
       </fieldset>
       <label class="customer-search-label" for="customer-no-search">客戶編號</label>
-      <input id="customer-no-search" v-model="keyword" type="search" /><span>%</span>
-      <button type="submit" :disabled="loading">查詢</button>
+      <input id="customer-no-search" v-model="keyword" type="search" :disabled="pageBlocked" /><span title="字元依字面查詢，不作萬用比對">字面包含</span>
+      <button type="submit" :disabled="pageBlocked">查詢</button>
     </form>
-    <div v-if="mockMode" class="customer-note" role="status">Development 假資料｜只儲存在此瀏覽器，不會寫入正式資料庫</div>
+    <div class="customer-note" role="status">匯入服務尚未提供；核准僅支援無簽核流程的客戶，需流程時會保留原資料。</div>
+    <p v-if="writeUncertain" class="customer-message error" role="alert">先前寫入結果尚未確認，本頁暫停寫入；請先查詢核對，關閉後重新進入再操作。</p>
+    <p v-if="readWarning" class="customer-message error" role="status">{{ readWarning }}</p>
     <div v-if="errorMessage" class="customer-message error" role="alert">{{ errorMessage }}</div>
     <div v-if="successMessage" class="customer-message success" role="status">{{ successMessage }}</div>
 
@@ -405,89 +294,96 @@ watch([issueState, keyword], applyFilter)
         <div class="customer-table-scroll">
           <table class="customer-table">
             <thead><tr>
-              <th class="select-column"><input type="checkbox" aria-label="選取目前清單全部資料" :checked="visibleCustomers.length > 0 && visibleCustomers.every(row => selectedCustomerNos.includes(row.customerNo))" @change="toggleAllVisible(($event.target as HTMLInputElement).checked)" /></th>
+              <th class="select-column"><input type="checkbox" aria-label="選取目前清單全部資料" :checked="visibleCustomers.length > 0 && visibleCustomers.every(row => selectedCustomerNos.includes(row.customerNo))" :indeterminate="selectedCustomers.length > 0 && selectedCustomers.length < visibleCustomers.length" :disabled="pageBlocked || !rowsReady" @change="toggleAllVisible(($event.target as HTMLInputElement).checked)" /></th>
               <th>客戶編號</th><th>客戶名稱</th><th>客戶簡稱</th><th>客戶英文名稱</th><th>負責人</th><th>電話</th><th>國家</th><th>傳真</th><th>WWW</th><th>統一編號</th><th>地址</th><th>地址2</th><th>說明</th><th>建立人</th><th>建立日期</th><th>狀態</th><th>幣別</th><th>發票類型</th><th>發票地址</th><th>發票地址2</th><th>發票客戶編號</th><th>發票備註</th><th>客戶類別</th><th>應收類別</th><th>運費條件</th><th>付款條件</th><th>帳號</th><th>交貨條件</th><th>指定貨運行</th><th>指定報關行</th><th>保險</th><th>修改人</th><th>修改日期</th>
             </tr></thead>
             <tbody>
-              <tr v-for="row in visibleCustomers" :key="row.customerNo" tabindex="0" :aria-selected="selectedCustomerNos.includes(row.customerNo)" :class="{ selected: selectedCustomerNos.includes(row.customerNo) }" @click="selectRow(row)" @keydown.enter.prevent="selectRow(row)">
-                <td class="select-column" @click.stop><input type="checkbox" :aria-label="`選取 ${row.customerNo}`" :checked="selectedCustomerNos.includes(row.customerNo)" @change="toggleSelection(row, ($event.target as HTMLInputElement).checked)" /></td>
-                <td class="customer-code">{{ row.customerNo }}</td><td>{{ row.customerName }}</td><td>{{ row.customerSName }}</td><td>{{ row.customerEName }}</td><td>{{ row.director }}</td><td>{{ row.telNo }}</td><td>{{ row.country }}</td><td>{{ row.faxNo }}</td><td>{{ row.www }}</td><td>{{ row.taxCode }}</td><td>{{ row.address }}</td><td>{{ row.address2 }}</td><td>{{ row.description }}</td><td>{{ row.creator }}</td><td>{{ formatDate(row.createdAt) }}</td><td>{{ valueName(statusOptions, row.status) }}</td><td>{{ row.currency }}</td><td>{{ valueName(invoiceTypeOptions, row.invTypeNo) }}</td><td>{{ row.invAddr }}</td><td>{{ row.invAddr2 }}</td><td>{{ row.invCustNo }}</td><td>{{ row.invRemark }}</td><td>{{ valueName(customerTypeOptions, row.custType) }}</td><td>{{ valueName(arTypeOptions, row.arType) }}</td><td>{{ row.freightTerms }}</td><td>{{ row.paymentTerms }}</td><td>{{ row.acctNo }}</td><td>{{ row.deliveryTerm }}</td><td>{{ row.forwarderAssigned }}</td><td>{{ row.brokerAssigned }}</td><td>{{ row.insuranceCoverage }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.revisedAt) }}</td>
+              <tr v-for="row in visibleCustomers" :key="row.customerNo" tabindex="0" :aria-selected="selectedCustomerNos.includes(row.customerNo)" :class="{ selected: selectedCustomerNos.includes(row.customerNo) }" @click="selectRow(row, $event)" @keydown.enter.prevent="selectRow(row, $event)" @keydown.space.prevent="toggleSelection(row, !selectedCustomerNos.includes(row.customerNo))">
+                <td class="select-column" @click.stop><input type="checkbox" :aria-label="`選取 ${row.customerNo}`" :checked="selectedCustomerNos.includes(row.customerNo)" :disabled="pageBlocked || !rowsReady" @change="toggleSelection(row, ($event.target as HTMLInputElement).checked)" /></td>
+                <td class="customer-code">{{ row.customerNo }}</td><td>{{ row.customerName }}</td><td>{{ row.customerSName }}</td><td>{{ row.customerEName }}</td><td>{{ row.director }}</td><td>{{ row.telNo }}</td><td>{{ row.country }}</td><td>{{ row.faxNo }}</td><td>{{ row.www }}</td><td>{{ row.taxCode }}</td><td>{{ row.address }}</td><td>{{ row.address2 }}</td><td>{{ row.description }}</td><td>{{ row.creator }}</td><td>{{ formatDate(row.createDate) }}</td><td>{{ valueName(statusOptions, row.status) }}</td><td>{{ row.currency }}</td><td>{{ valueName(invoiceTypeOptions, row.invTypeNo) }}</td><td>{{ row.invAddr }}</td><td>{{ row.invAddr2 }}</td><td>{{ row.invCustNo }}</td><td>{{ row.invRemark }}</td><td>{{ valueName(customerTypeOptions, row.custType) }}</td><td>{{ valueName(arTypeOptions, row.arType) }}</td><td>{{ row.freightTerms }}</td><td>{{ row.paymentTerms }}</td><td>{{ row.acctNo }}</td><td>{{ row.deliveryTerm }}</td><td>{{ row.forwarderAssigned }}</td><td>{{ row.brokerAssigned }}</td><td>{{ row.insuranceCoverage }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.reviseDate) }}</td>
               </tr>
-              <tr v-if="!loading && !visibleCustomers.length"><td colspan="34" class="customer-empty">{{ customers.length ? '查無符合條件的客戶資料。' : '目前沒有客戶資料。' }}</td></tr>
+              <tr v-if="!loading && !visibleCustomers.length"><td colspan="34" class="customer-empty">{{ !rowsReady ? '客戶資料尚未取得；請查詢真實來源。' : customers.length ? '查無符合條件的客戶資料。' : '目前沒有客戶資料。' }}</td></tr>
               <tr v-if="loading"><td colspan="34" class="customer-empty">資料載入中…</td></tr>
             </tbody>
           </table>
         </div>
         <aside class="customer-actions" aria-label="客戶資料操作">
-          <button class="primary" type="button" :disabled="busy" @click="openForm('new')">新增(A)</button>
-          <button type="button" :disabled="busy || selectedCustomerNos.length !== 1" @click="openForm('edit')">修改(E)</button>
-          <button type="button" :disabled="busy || selectedCustomerNos.length !== 1" @click="openForm('copy')">複製(C)</button>
-          <button type="button" :disabled="busy || !selectedCustomers.length" @click="approveSelected">核准</button>
-          <button type="button" :disabled="busy || !selectedCustomers.length || selectedCustomers.some(row => ![0, 2, -1].includes(row.issueState))" @click="deleteSelected">刪除(D)</button>
-          <button type="button" :disabled="busy" @click="openImport">匯入</button>
+          <button class="primary" type="button" :disabled="mutationBlocked" @click="openForm('new')">新增(A)</button>
+          <button type="button" :disabled="mutationBlocked || !rowsReady || selectedCustomers.length !== 1" @click="openForm('edit')">修改(E)</button>
+          <button type="button" :disabled="mutationBlocked || !rowsReady || selectedCustomers.length !== 1" @click="openForm('copy')">複製(C)</button>
+          <button type="button" :disabled="mutationBlocked || !rowsReady || !selectedCustomers.length || selectedCustomers.some(row => row.issueState !== 0)" @click="approveSelected">核准</button>
+          <button type="button" :disabled="mutationBlocked || !rowsReady || !selectedCustomers.length || selectedCustomers.some(row => ![0, 2, -1].includes(row.issueState as number))" @click="deleteSelected">刪除(D)</button>
+          <button type="button" disabled title="原生匯入檢核及範本服務尚未提供">匯入</button>
           <span class="customer-state">{{ selectedCustomers.length ? `${selectedCustomers.length} 筆已選取` : stateName(issueState) }}</span>
-          <button type="button" @click="closePage">關閉</button>
+          <button type="button" :disabled="pageBlocked" @click="closePage">關閉</button>
         </aside>
       </div>
       <footer class="customer-count">資料總筆數 <strong>{{ visibleCustomers.length }}</strong></footer>
     </section>
 
-    <div v-if="formMode" class="customer-overlay" @click.self="formMode = null">
-      <form class="customer-dialog" @submit.prevent="saveCustomer(true)">
-        <header><strong>客戶基本資料 ({{ formMode === 'edit' ? 'EDIT' : formMode === 'copy' ? 'COPY' : 'ADD' }})</strong><button type="button" aria-label="關閉" @click="formMode = null">×</button></header>
+    </div>
+    <div v-if="formMode" class="customer-overlay" @click.self="closeForm" :inert="pickerKind !== null || confirmationMessage !== null">
+      <form ref="formElement" novalidate class="customer-dialog" role="dialog" aria-modal="true" aria-label="客戶基本資料編輯" tabindex="-1" @keydown.esc.stop.prevent="closeForm" @keydown.tab="trapTab" @submit.prevent="saveCustomer(true)">
+        <header><strong>客戶基本資料 ({{ formMode === 'edit' ? 'EDIT' : formMode === 'copy' ? 'COPY' : 'ADD' }})</strong><button type="button" aria-label="關閉" :disabled="writing || formLoading || closing || confirmationMessage !== null" @click="closeForm">×</button></header>
         <div class="customer-form-scroll">
-          <fieldset><legend>客戶主檔資料</legend><div class="customer-fields">
-            <label><span>客戶編號</span><input v-model.trim="form.customerNo" required maxlength="50" :readonly="formMode === 'edit'" @blur="onCustomerNoBlur" /></label>
-            <label><span>客戶名稱</span><input v-model.trim="form.customerName" required maxlength="50" :readonly="lockBasicFields" /></label>
-            <label><span>客戶簡稱</span><input v-model.trim="form.customerSName" maxlength="50" :readonly="lockBasicFields" /></label>
-            <label><span>客戶英文名稱</span><input v-model.trim="form.customerEName" maxlength="25" /></label>
-            <label><span>電話</span><input v-model.trim="form.telNo" maxlength="25" :readonly="lockBasicFields" /></label>
-            <label><span>傳真</span><input v-model.trim="form.faxNo" maxlength="25" :readonly="lockBasicFields" /></label>
-            <label><span>WWW</span><input v-model.trim="form.www" maxlength="50" :readonly="lockBasicFields" /></label>
-            <label><span>統一編號</span><input v-model.trim="form.taxCode" maxlength="25" :readonly="lockBasicFields" /></label>
-            <label><span>負責人</span><input v-model.trim="form.director" maxlength="50" :readonly="lockBasicFields" /></label>
-            <label><span>國家</span><input v-model.trim="form.country" maxlength="50" :readonly="lockBasicFields" /></label>
-            <label><span>地址</span><input v-model.trim="form.address" maxlength="255" :readonly="lockBasicFields" /></label>
-            <label><span>地址2</span><input v-model.trim="form.address2" maxlength="255" :readonly="lockBasicFields" /></label>
-            <label class="wide"><span>說明</span><textarea v-model="form.description" maxlength="255" rows="2" :readonly="lockBasicFields" /></label>
+          <p v-if="formLoading" class="import-hint" role="status">正在讀取目前伺服器資料…</p>
+          <fieldset :disabled="formBusy || !formReady || writeUncertain"><legend>客戶主檔資料</legend><div class="customer-fields">
+            <label><span>客戶編號</span><input v-model="form.customerNo" required maxlength="100" :readonly="formMode === 'edit'" @blur="onCustomerNoBlur" /></label>
+            <label><span>客戶名稱</span><input v-model="form.customerName" required maxlength="200" :readonly="lockBasicFields" /></label>
+            <label><span>客戶簡稱</span><input v-model="form.customerSName" required maxlength="200" :readonly="lockBasicFields" /></label>
+            <label><span>客戶英文名稱</span><input v-model="form.customerEName" maxlength="100" /></label>
+            <label><span>電話</span><input v-model="form.telNo" maxlength="50" :readonly="lockBasicFields" /></label>
+            <label><span>傳真</span><input v-model="form.faxNo" maxlength="50" :readonly="lockBasicFields" /></label>
+            <label><span>WWW</span><input v-model="form.www" maxlength="100" :readonly="lockBasicFields" /></label>
+            <label><span>統一編號</span><input v-model="form.taxCode" maxlength="50" :readonly="lockBasicFields" /></label>
+            <label><span>負責人</span><input v-model="form.director" maxlength="100" :readonly="lockBasicFields" /></label>
+            <label><span>國家</span><input v-model="form.country" maxlength="100" :readonly="lockBasicFields" /></label>
+            <label><span>地址</span><input v-model="form.address" maxlength="510" :readonly="lockBasicFields" /></label>
+            <label><span>地址2</span><input v-model="form.address2" maxlength="510" :readonly="lockBasicFields" /></label>
+            <label class="wide"><span>說明</span><textarea v-model="form.description" maxlength="510" rows="2" :readonly="lockBasicFields" /></label>
           </div></fieldset>
-          <fieldset><legend>交易與發票資料</legend><div class="customer-fields">
-            <label><span>狀態</span><select v-model="form.status"><option v-for="item in statusOptions" :key="item.value" :value="item.value">{{ item.label }}</option></select></label>
-            <label><span>幣別</span><input v-model.trim="form.currency" maxlength="50" /></label>
-            <label><span>發票類型</span><select v-model="form.invTypeNo"><option v-for="item in invoiceTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option></select></label>
-            <label><span>客戶類別</span><select v-model="form.custType"><option v-for="item in customerTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option></select></label>
-            <label><span>應收類別</span><select v-model="form.arType"><option v-for="item in arTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option></select></label>
-            <label><span>發票客戶編號</span><input v-model.trim="form.invCustNo" maxlength="50" /></label>
-            <label><span>運費條件</span><input v-model.trim="form.freightTerms" maxlength="50" /></label>
-            <label><span>付款條件</span><input v-model.trim="form.paymentTerms" maxlength="50" /></label>
-            <label><span>帳號</span><input v-model.trim="form.acctNo" maxlength="50" /></label>
-            <label><span>交貨條件</span><input v-model.trim="form.deliveryTerm" maxlength="50" /></label>
-            <label><span>指定貨運行</span><input v-model.trim="form.forwarderAssigned" maxlength="50" /></label>
-            <label><span>指定報關行</span><input v-model.trim="form.brokerAssigned" maxlength="50" /></label>
-            <label><span>保險</span><input v-model.trim="form.insuranceCoverage" maxlength="50" /></label>
-            <label><span>發票地址</span><input v-model.trim="form.invAddr" maxlength="255" /></label>
-            <label><span>發票地址2</span><input v-model.trim="form.invAddr2" maxlength="255" /></label>
-            <label class="wide"><span>發票備註</span><input v-model.trim="form.invRemark" maxlength="50" /></label>
+          <fieldset :disabled="formBusy || !formReady || writeUncertain"><legend>交易與發票資料</legend><div class="customer-fields">
+            <label><span>狀態</span><select v-model="form.status"><option :value="null">未設定</option><option v-if="legacyOption(statusOptions, form.status)" :value="form.status">原值：{{ form.status }}</option><option v-for="item in statusOptions" :key="item.value" :value="item.value">{{ item.label }}</option></select></label>
+            <label><span>幣別</span><input v-model="form.currency" maxlength="12" /></label>
+            <label><span>發票類型</span><select v-model="form.invTypeNo"><option :value="null">未設定</option><option v-if="legacyOption(invoiceTypeOptions, form.invTypeNo)" :value="form.invTypeNo">原值：{{ form.invTypeNo }}</option><option v-for="item in invoiceTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option></select></label>
+            <label><span>客戶類別</span><select v-model="form.custType"><option :value="null">未設定</option><option v-if="legacyOption(customerTypeOptions, form.custType)" :value="form.custType">原值：{{ form.custType }}</option><option v-for="item in customerTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option></select></label>
+            <label><span>應收類別</span><select v-model="form.arType"><option :value="null">未設定</option><option v-if="legacyOption(arTypeOptions, form.arType)" :value="form.arType">原值：{{ form.arType }}</option><option v-for="item in arTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option></select></label>
+            <label><span>發票客戶編號</span><input v-model="form.invCustNo" maxlength="40" /></label>
+            <label><span>運費條件</span><input v-model="form.freightTerms" maxlength="40" /></label>
+            <label><span>付款條件</span><input v-model="form.paymentTerms" maxlength="40" /></label>
+            <label><span>帳號</span><input v-model="form.acctNo" maxlength="100" /></label>
+            <label><span>交貨條件</span><input v-model="form.deliveryTerm" maxlength="100" /></label>
+            <label><span>指定貨運行</span><div class="customer-field-with-picker"><input v-model="form.forwarderAssigned" maxlength="100" /><button type="button" @click="openParentPicker('forwarder')" aria-label="查找指定貨運行">查找</button></div></label>
+            <label><span>指定報關行</span><div class="customer-field-with-picker"><input v-model="form.brokerAssigned" maxlength="100" /><button type="button" @click="openParentPicker('broker')" aria-label="查找指定報關行">查找</button></div></label>
+            <label><span>保險</span><input v-model="form.insuranceCoverage" maxlength="100" /></label>
+            <label><span>發票地址</span><input v-model="form.invAddr" maxlength="510" /></label>
+            <label><span>發票地址2</span><input v-model="form.invAddr2" maxlength="510" /></label>
+            <label class="wide"><span>發票備註</span><input v-model="form.invRemark" maxlength="200" /></label>
           </div></fieldset>
-          <div class="customer-audit"><label>建立人<input :value="audit.creator" readonly /></label><label>建立日期<input :value="audit.createdAt" readonly /></label><label>修改人<input :value="audit.reviser" readonly /></label><label>修改日期<input :value="audit.revisedAt" readonly /></label></div>
-          <p v-if="lockBasicFields" class="locked-note">目前為 {{ stateName(form.issueState) }}；WinForms 僅允許修改交易及發票資料。</p>
+          <div class="customer-audit"><label>建立人<input :value="audit.creator" readonly /></label><label>建立日期<input :value="audit.createDate" readonly /></label><label>修改人<input :value="audit.reviser" readonly /></label><label>修改日期<input :value="audit.reviseDate" readonly /></label></div>
+          <p v-if="lockBasicFields" class="locked-note">目前為 {{ stateName(originalRow?.issueState ?? null) }}；原生基本身份／聯絡欄位鎖定；英文名稱、交易及發票資料仍可修改。</p>
           <p v-if="formError" class="customer-message error" role="alert">{{ formError }}</p>
           <p v-if="successMessage" class="customer-message success" role="status">{{ successMessage }}</p>
         </div>
-        <footer class="customer-dialog-actions"><button class="primary" type="submit" :disabled="busy">確定</button><button type="button" @click="formMode = null">關閉</button><button type="button" :disabled="busy" @click="saveCustomer(false)">套用</button></footer>
+        <footer class="customer-dialog-actions"><button class="primary" type="submit" :disabled="formBusy || !formReady || writeUncertain">確定</button><button type="button" :disabled="writing || formLoading || closing || confirmationMessage !== null" @click="closeForm">關閉</button><button type="button" :disabled="formBusy || !formReady || writeUncertain || !dirty" @click="saveCustomer(false)">套用</button></footer>
       </form>
     </div>
 
-    <div v-if="importOpen" class="customer-overlay" @click.self="importOpen = false">
-      <section class="customer-dialog import-dialog">
-        <header><strong>客戶資料匯入</strong><button type="button" aria-label="關閉" @click="importOpen = false">×</button></header>
-        <div class="import-toolbar"><label>檔案路徑 <input :value="importFileName" readonly placeholder="請選擇 Excel 檔案" /></label><input type="file" accept=".xlsx,.xls,.csv" @change="chooseImportFile" /><button type="button" :disabled="importBusy" @click="downloadTemplate">Template Download</button></div>
-        <p class="import-hint">舊系統讀取第一個工作表前三欄：CustomerNo、CustomerName、CustomerSName；三欄不得空白。</p>
-        <div class="customer-table-scroll import-grid"><table class="customer-table"><thead><tr><th>客戶編號</th><th>客戶名稱</th><th>客戶簡稱</th><th>結果</th><th>訊息</th></tr></thead><tbody><tr v-for="(row,index) in importRows" :key="index"><td>{{ row.customerNo }}</td><td>{{ row.customerName }}</td><td>{{ row.customerSName }}</td><td>{{ row.result }}</td><td>{{ row.message }}</td></tr><tr v-if="!importRows.length"><td colspan="5" class="customer-empty">請選取 .xlsx/.xls 檔案；Development 可預覽 CSV。</td></tr></tbody></table></div>
-        <p v-if="importProgress" class="import-hint" role="status">{{ importProgress }}</p><p v-if="importError" class="customer-message error" role="alert">{{ importError }}</p>
-        <footer class="customer-dialog-actions"><button class="primary" type="button" :disabled="importBusy" @click="runImport">{{ importBusy ? '匯入中…' : 'Import' }}</button><button type="button" @click="importOpen = false">關閉</button></footer>
+    <div v-if="pickerKind" class="customer-overlay customer-picker-overlay" @click.self="closeParentPicker" :inert="confirmationMessage !== null">
+      <section ref="pickerElement" class="customer-dialog" role="dialog" aria-modal="true" :aria-label="pickerKind === 'broker' ? '選擇報關行' : '選擇貨運行'" tabindex="-1" @keydown.esc.stop.prevent="closeParentPicker" @keydown.tab="trapTab">
+        <header><strong>{{ pickerKind === 'broker' ? '選擇報關行' : '選擇貨運行' }}</strong><button type="button" aria-label="關閉查找" :disabled="writing || confirmationMessage !== null" @click="closeParentPicker">×</button></header>
+        <div class="customer-picker-body">
+          <label>編號查找 <input v-model="pickerKeyword" :disabled="pickerLoading" /></label>
+          <p class="import-hint">顯示真實來源全部狀態；未變動的舊指定值可保留。</p>
+          <p v-if="pickerLoading" role="status">查找資料讀取中…</p><p v-if="pickerError" class="customer-message error" role="alert">{{ pickerError }}</p>
+          <table class="customer-table"><thead><tr><th>編號</th><th>連絡人</th><th>狀態</th><th>操作</th></tr></thead><tbody>
+            <tr v-for="row in pickerRows" :key="row.no"><td>{{ row.no }}</td><td>{{ row.name }}</td><td>{{ stateName(row.state) }}</td><td><button type="button" :disabled="pickerLoading || !pickerReady" @click="chooseParent(row.no)">選取</button></td></tr>
+            <tr v-if="pickerReady && !pickerRows.length"><td colspan="4" class="customer-empty">沒有符合條件的真實資料。</td></tr>
+          </tbody></table>
+        </div><footer class="customer-dialog-actions"><button type="button" @click="closeParentPicker">關閉</button></footer>
       </section>
     </div>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </div>
 </template>
 
@@ -502,4 +398,8 @@ watch([issueState, keyword], applyFilter)
 .customer-note{padding:6px 10px;border:1px solid #d8c77b;background:#fff9dd;color:#665810;font-size:12px}.customer-message{margin:8px;padding:7px 10px;border:1px solid;font-size:12px}.customer-message.error{border-color:#d5a3a3;background:#fff5f3;color:#7a2424}.customer-message.success{border-color:#b6c9a8;background:#f5f8ef;color:#435c32}
 .customer-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:rgb(20 20 16 / 35%)}.customer-dialog{display:flex;flex-direction:column;width:min(1060px,100%);max-height:min(94vh,900px);border:1px solid #c4c1b8;background:#fff;box-shadow:0 8px 28px rgb(0 0 0 / 20%)}.customer-dialog>header{display:flex;flex:none;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid #ddd;background:#f8f7f3}.customer-dialog>header button{width:30px;height:28px;border:1px solid #ccc;background:#fff;font-size:20px;line-height:1}.customer-form-scroll{overflow:auto;padding:3px 10px}.customer-dialog fieldset{margin:9px 2px;padding:11px 13px 14px;border:1px solid #c8c5bc}.customer-dialog legend{padding:0 5px;color:#555}.customer-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}.customer-fields>label{display:grid;grid-template-columns:120px minmax(0,1fr);align-items:center;gap:8px}.customer-fields input,.customer-fields select,.customer-fields textarea{width:100%;min-height:30px;padding:5px 7px;border:1px solid #999;border-radius:0;background:#fff0ae;color:#26251f;font:inherit}.customer-fields input:read-only,.customer-fields textarea:read-only{background:#eee}.customer-fields textarea{resize:vertical}.customer-fields .wide{grid-column:1/-1}.customer-fields .wide textarea{min-height:48px}.customer-audit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 2px 9px;padding:10px;border:1px solid #d6d2c7;background:#faf9f6}.customer-audit label{display:grid;gap:4px;color:#666;font-size:11px}.customer-audit input{width:100%;min-height:28px;padding:4px;border:1px solid #ccc;background:#eee;color:#555;font:inherit}.locked-note,.import-hint{margin:6px 3px;color:#706a55;font-size:12px}.customer-dialog-actions{display:flex;flex:none;justify-content:flex-end;gap:8px;padding:8px 12px 12px;border-top:1px solid #ddd}.import-dialog{width:min(1000px,100%)}.import-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px}.import-toolbar label{display:flex;flex:1;min-width:260px;align-items:center;gap:8px}.import-toolbar label input{flex:1;min-width:0;height:30px;padding:4px;border:1px solid #aaa}.import-toolbar input[type=file]{max-width:300px}.import-grid{max-height:55vh;margin:0 12px;border:1px solid #ccc}.import-grid .customer-table{width:100%}
 @media(max-width:800px){.customer-list-layout{grid-template-columns:minmax(0,1fr) 82px}.customer-actions button{padding:4px;font-size:11px}.customer-state-filter{gap:8px}.customer-dialog{max-height:96vh}.customer-fields,.customer-audit{grid-template-columns:1fr}.customer-fields .wide{grid-column:auto}.customer-fields>label{grid-template-columns:105px minmax(0,1fr)}}
+</style>
+
+<style scoped>
+.customer-main{display:grid;gap:8px;min-width:0}.customer-picker-overlay{z-index:1100}.customer-picker-overlay .customer-dialog{width:min(760px,100%)}.customer-picker-body{padding:12px;overflow:auto}.customer-field-with-picker{display:flex;min-width:0;gap:5px}.customer-field-with-picker input{min-width:0;flex:1}.customer-field-with-picker button{border:1px solid #c4c4c4;background:#fff;color:inherit}
 </style>

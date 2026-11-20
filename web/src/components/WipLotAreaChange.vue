@@ -2,7 +2,9 @@
 import { computed, ref } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 
-defineProps<{ developmentPreview: boolean }>()
+const props = defineProps<{ developmentPreview: boolean }>()
+const dev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const unavailableMessage = "正式環境尚未開放此功能。"
 const emit = defineEmits<{ close: [] }>()
 
 interface Lot {
@@ -15,33 +17,35 @@ interface Lot {
   overrides: Record<string, string>
 }
 
-const areas = new Map([['A01', 'F1'], ['A02', 'F1'], ['A03', 'F2'], ['T01', 'F2'], ['T02', 'F2']])
-const nodes = [
+const areas = new Map<string, string>(dev.value ? [['A01', 'F1'], ['A02', 'F1'], ['A03', 'F2'], ['T01', 'F2'], ['T02', 'F2']] : [])
+const nodes = dev.value ? ([
   { id: 'N1', flow: 'MAIN', op: 'WB', label: '打線', defaultArea: 'A01', choices: ['A01', 'A02', 'A03'] },
   { id: 'N2', flow: 'MAIN', op: 'FT', label: '最終測試', defaultArea: 'T01', choices: ['T01', 'T02'] },
   { id: 'N3', flow: 'SUB', op: 'FT', label: '重測', defaultArea: 'T02', choices: ['T01', 'T02'] },
   { id: 'N4', flow: 'SUB', op: 'FT', label: '停用節點', defaultArea: 'T02', choices: ['T01', 'T02'], removed: true },
-]
-const lots = ref<Lot[]>([
+]) : ([])
+const lots = ref<Lot[]>(dev.value ? ([
   { no: 'DEV-AREA001', status: 0, currentNode: 'N1', area: 'A01', factory: 'F1', stamp: 3, overrides: {} },
   { no: 'DEV-AREA002', status: 4, currentNode: 'N2', area: 'T01', factory: 'F2', stamp: 6, overrides: { N3: 'T01' } },
-])
+]) : ([]))
 const lotInput = ref('')
 const loadedNo = ref('')
 const flow = ref('MAIN')
 const nodeId = ref('')
 const plannedArea = ref('')
 const overrides = ref<Record<string, string>>({})
-const loaded = computed(() => lots.value.find(lot => lot.no === loadedNo.value))
-const currentNode = computed(() => nodes.find(node => node.id === nodeId.value))
-const visible = computed(() => nodes.filter(node => node.flow === flow.value))
-const dirty = computed(() => !!loaded.value && nodes.some(node => loaded.value?.overrides[node.id] !== overrides.value[node.id]))
+const loaded = computed(() => dev.value ? (lots.value.find(lot => lot.no === loadedNo.value)) : (undefined))
+const currentNode = computed(() => dev.value ? (nodes.find(node => node.id === nodeId.value)) : (undefined))
+const visible = computed(() => dev.value ? (nodes.filter(node => node.flow === flow.value)) : ([]))
+const dirty = computed(() => dev.value ? (!!loaded.value && nodes.some(node => loaded.value?.overrides[node.id] !== overrides.value[node.id])) : (false))
 const pending = ref<'save' | 'load' | 'close'>()
 const confirmation = ref<string | null>(null)
 const error = ref('')
 const result = ref('')
 
 function loadLot(): void {
+  if (!dev.value) return
+
   const next = lots.value.find(lot => lot.no === lotInput.value.trim().toUpperCase())
   if (!next) {
     error.value = '查無排隊或完成狀態的生產批。'
@@ -54,17 +58,23 @@ function loadLot(): void {
 }
 
 function selectFlow(value: string): void {
+  if (!dev.value) return
+
   flow.value = value
   selectNode('')
 }
 
 function selectNode(id: string): void {
+  if (!dev.value) return
+
   nodeId.value = id
   plannedArea.value = overrides.value[id] || ''
   error.value = ''
 }
 
 function setOverride(): void {
+  if (!dev.value) return
+
   const node = currentNode.value
   if (!node || node.removed) return
   if (!node.choices.includes(plannedArea.value) || plannedArea.value === node.defaultArea) {
@@ -76,12 +86,16 @@ function setOverride(): void {
 }
 
 function clearOverride(): void {
+  if (!dev.value) return
+
   delete overrides.value[nodeId.value]
   plannedArea.value = ''
   error.value = ''
 }
 
 function request(action: typeof pending.value): void {
+  if (!dev.value) { if (action === 'close') emit('close'); return }
+
   if (action === 'save' && !dirty.value) return
   if (action !== 'save' && !dirty.value) {
     if (action === 'load') loadLot()
@@ -93,6 +107,8 @@ function request(action: typeof pending.value): void {
 }
 
 function resolve(accepted: boolean): void {
+  if (!dev.value) return
+
   const action = pending.value
   confirmation.value = null
   pending.value = undefined
@@ -115,7 +131,7 @@ function resolve(accepted: boolean): void {
 <template>
   <section class="area-change" aria-labelledby="area-change-title">
     <h2 id="area-change-title">生產批作業區變更</h2>
-    <template v-if="developmentPreview">
+    <template v-if="dev">
       <form class="toolbar" @submit.prevent="request('load')">
         <label>生產批號 <input v-model="lotInput" list="area-change-lots" maxlength="50"></label>
         <datalist id="area-change-lots"><option v-for="lot in lots" :key="lot.no" :value="lot.no" /></datalist>
@@ -152,7 +168,7 @@ function resolve(accepted: boolean): void {
       <ActionConfirmationDialog :message="confirmation" @resolve="resolve" />
     </template>
     <template v-else>
-      <p>生產批作業區變更 API 待接續。</p>
+      <p role="status">{{ unavailableMessage }}</p>
       <button type="button" @click="emit('close')">關閉</button>
     </template>
   </section>

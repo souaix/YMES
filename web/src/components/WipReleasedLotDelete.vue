@@ -2,7 +2,9 @@
 import { computed, ref } from 'vue'
 import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
 
-defineProps<{ developmentPreview: boolean }>()
+const props = defineProps<{ developmentPreview: boolean }>()
+const dev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const unavailableMessage = "正式環境尚未開放此功能。"
 defineEmits<{ close: [] }>()
 
 interface ReleasedLot {
@@ -13,21 +15,23 @@ interface ReleasedLot {
   history?: { id: number; description: string; committed: boolean }
 }
 
-const lots = ref<ReleasedLot[]>([
+const lots = ref<ReleasedLot[]>(dev.value ? ([
   { no: 'DEV-DEL001', status: 0 },
   { no: 'DEV-DEL002', status: 4, history: { id: 1, description: '進站及完工歷程', committed: false } },
   { no: 'DEV-DEL003', status: 1, packaged: true },
   { no: 'DEV-DEL004', status: 0, related: 'split' },
   { no: 'DEV-DEL005', status: 4, history: { id: 1, description: '已轉庫', committed: true } },
-])
+]) : ([]))
 const statuses = { 0: '排隊', 1: '執行中', 4: '完成' }
 const lotInput = ref('')
 const loadedNo = ref('')
 const confirmation = ref<string | null>(null)
 const error = ref('')
 const result = ref('')
-const current = computed(() => lots.value.find(lot => lot.no === loadedNo.value))
+const current = computed(() => dev.value ? (lots.value.find(lot => lot.no === loadedNo.value)) : (undefined))
 const fields = computed(() => {
+  if (!dev.value) return []
+
   const lot = current.value
   if (!lot) return []
   return [
@@ -39,6 +43,8 @@ const fields = computed(() => {
 })
 
 function search(): void {
+  if (!dev.value) return
+
   const lot = lots.value.find(row => row.no === lotInput.value.trim().toUpperCase())
   loadedNo.value = ''
   result.value = ''
@@ -49,6 +55,8 @@ function search(): void {
 }
 
 function deletionError(lot: ReleasedLot): string {
+  if (!dev.value) return unavailableMessage
+
   if (lot.no !== lotInput.value.trim().toUpperCase()) return '批號與已載入資料不同，請重新查詢。'
   if (lot.related) return lot.related === 'split' ? '此批有分批來源，不可刪除。' : '此批有併批來源，不可刪除。'
   if (lot.history?.committed) return '歷程已提交，無法先行回復。'
@@ -56,6 +64,8 @@ function deletionError(lot: ReleasedLot): string {
 }
 
 function requestDelete(): void {
+  if (!dev.value) return
+
   const lot = current.value
   if (!lot) return
   error.value = deletionError(lot)
@@ -63,6 +73,8 @@ function requestDelete(): void {
 }
 
 function confirmDelete(accepted: boolean): void {
+  if (!dev.value) return
+
   confirmation.value = null
   const lot = current.value
   if (!accepted || !lot) return
@@ -77,7 +89,7 @@ function confirmDelete(accepted: boolean): void {
 <template>
   <section class="released-lot" aria-labelledby="released-lot-title">
     <h2 id="released-lot-title">刪除已下線生產批</h2>
-    <template v-if="developmentPreview">
+    <template v-if="dev">
       <form class="toolbar" @submit.prevent="search">
         <label>生產批號 <input v-model="lotInput" list="released-lot-candidates" maxlength="50" autocomplete="off"></label>
         <datalist id="released-lot-candidates"><option v-for="lot in lots" :key="lot.no" :value="lot.no" /></datalist>
@@ -109,7 +121,7 @@ function confirmDelete(accepted: boolean): void {
       <ActionConfirmationDialog :message="confirmation" @resolve="confirmDelete" />
     </template>
     <template v-else>
-      <p>刪除已下線生產批 API 待接續。</p>
+      <p role="status">{{ unavailableMessage }}</p>
       <button type="button" @click="$emit('close')">關閉</button>
     </template>
   </section>

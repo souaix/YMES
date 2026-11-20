@@ -817,3 +817,9 @@ button {
   font-size: 14px;
   font-weight: 500;
 }
+
+/* e5f Office WIP titles belong to the framework; keep every dialog title. */
+.framework-main .framework-content.office-wip-module:is(.swr-page, .undo-page) > h1,
+.framework-main .framework-content.office-wip-module:is(.outsource, .reverse-page, .released-lot, .batch-delete, .area-change, .version-change, .ecn-wizard) > h2 {
+  display: none;
+}
