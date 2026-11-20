@@ -69,6 +69,7 @@ import WipRunCard from './components/WipRunCard.vue'
 import WipLotSheetPrint from './components/WipLotSheetPrint.vue'
 import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
 import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
+import WipOperatorOnline from './components/WipOperatorOnline.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
 import WipOperatorLogin from './components/WipOperatorLogin.vue'
@@ -503,6 +504,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:OPERATOR LOGIN_LOT', label: '生產批作業員登入／登出', tableName: 'tblwiplotloginstate', shortLabel: 'Lot登入', functionNo: 'OPERATOR LOGIN_LOT', moduleNo: 'WIP' },
       { id: 'function:WIP:OPERATOR CLOCKIN', label: '使用者登入作業（上工）', tableName: 'tblwipoperatorstate', shortLabel: '上工', functionNo: 'OPERATOR CLOCKIN', moduleNo: 'WIP' },
       { id: 'function:WIP:OPERATOR CLOCKOUT', label: '使用者登出作業（下工）', tableName: 'tblwipoperatorstate', shortLabel: '下工', functionNo: 'OPERATOR CLOCKOUT', moduleNo: 'WIP' },
+      { id: 'function:WIP:OPERATOR ONLINE', label: '使用者登入(上工)資訊', tableName: 'tblwipoperatorstate', shortLabel: '上工資訊', functionNo: 'OPERATOR ONLINE', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT OPERATOR CLOCKIN', label: '批次作業員上工', tableName: 'tblwipoperatorstate', shortLabel: '批次上工', functionNo: 'LOT OPERATOR CLOCKIN', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT OPERATOR CLOCKOUT', label: '批次作業員下工', tableName: 'tblwipoperatorstate', shortLabel: '批次下工', functionNo: 'LOT OPERATOR CLOCKOUT', moduleNo: 'WIP' },
       { id: 'function:WIP:CREATE LOT', label: '生產批開立', tableName: 'tblwiplotbasis', shortLabel: '批', functionNo: 'CREATE LOT', moduleNo: 'WIP' },
@@ -542,7 +544,9 @@ const fallbackMenuTree: MenuNode[] = [
   }, {
     id: 'menu:WIP:HOLD AND WAIT', label: '異常與等待', shortLabel: '異常', children: [
       { id: 'function:WIP:ERF BASIS', label: '異常單資料', tableName: 'tblwiperfbasis', shortLabel: '異常', functionNo: 'ERF BASIS', moduleNo: 'WIP' },
+      { id: 'function:WIP:WIP ERF UNRELEASED', label: '未解除異常單', tableName: 'tblwiperfbasis', shortLabel: '未解除', functionNo: 'WIP ERF UNRELEASED', moduleNo: 'WIP' },
       { id: 'function:WIP:WAIT BASIS', label: '等待單資料', tableName: 'tblwipwaitbasis', shortLabel: '等待', functionNo: 'WAIT BASIS', moduleNo: 'WIP' },
+      { id: 'function:WIP:WIP WAIT DISPOSITION', label: '等待處置', tableName: 'tblwipwaitbasis', shortLabel: '處置', functionNo: 'WIP WAIT DISPOSITION', moduleNo: 'WIP' },
     ],
   }, {
     id: 'menu:WIP:8D MANAGEMENT', label: '8D 管理', shortLabel: '8D', children: [
@@ -563,6 +567,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:OPERATOR LOGIN_LOT': appBasePath + '/WIP/OperatorLoginLot',
   'function:WIP:OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
   'function:WIP:OPERATOR CLOCKOUT': appBasePath + '/WIP/OperatorClockOut',
+  'function:WIP:OPERATOR ONLINE': appBasePath + '/WIP/OperatorOnline',
   'function:WIP:LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'function:WIP:LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
@@ -764,6 +769,7 @@ const functionRoutes: Record<string, string> = {
   'OPERATOR LOGIN_LOT': appBasePath + '/WIP/OperatorLoginLot',
   'OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
   'OPERATOR CLOCKOUT': appBasePath + '/WIP/OperatorClockOut',
+  'OPERATOR ONLINE': appBasePath + '/WIP/OperatorOnline',
   'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'LOT SPLIT': appBasePath + '/WIP/LotSplit',
@@ -993,6 +999,7 @@ const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'functio
 const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
 const isWipOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKOUT')
+const isWipOperatorOnlinePage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR ONLINE')
 const isWipLotOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKIN')
 const isWipLotOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKOUT')
 const isWipCarrierStatePage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER STATE')
@@ -2698,6 +2705,7 @@ async function signOut(): Promise<void> {
         <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockOut v-else-if="isWipOperatorClockOutPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorOnline v-else-if="isWipOperatorOnlinePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />

@@ -2421,3 +2421,10 @@ API 工作：
 - [ ] Lot Disposition command 僅 Status 11，逐一移植 0/1/2/3/4/6/7/8/98/99 與 Batch ERFType6 的不同 Service/Core。Back=11、Split=12、Merge=13、QtyAdjust=14 走獨立分支；非 `ReleaseType` 一律禁止錯送通用解除。以 row lock/DataStamp 或 LotStamp、idempotency key、權限/庫存/路由/OCAP/ERFType 重驗做 ERF Basis/Batch、LotState、ERFLotDisposition、Reverse/Log/Inventory/Transfer/ProductChange 的原子交易。處理外部 Transfer 失敗與重送，回應明確狀態。
 - [ ] ERF Abort：OCAP 禁止；ERFType6 用 Batch，否則單筆加 LotStamp，確認後 server 更新 ERF/Lot 關聯並處理 Complete Lot 的 BRTransferLot；不得只改 Status=12。ERF Create 固定 ERFType5，由 server 走 `WP_BRERFCreate` 規則、流水號、Hold/附件/日誌，不能由 browser 複製一列。ERF Info 重用 WP508 正式五頁查詢及附件安全下載。
 - [ ] 七種 Split/Merge 子窗依 GoodBinState、Component、Carrier 分支逐一核 WinForms/Service/Core：分量、料件、Bin、Carrier 容量、Lot/ERF 關聯、序號與庫存均需 transaction；QtyAdjust 的 Bin/Comp/standard 三分支與 `Exe_ERF_QtyAdjustLog` 也要保留。公司 DEV 僅批號與數量簡化示意；完成 API 後與 WP508 Info 的 read model 一起驗收正常/Batch/OCAP/Partial、無權限、重送、舊版本和部分成功。家用端負責 PG migration、API、部署及 build/test/browser。
+
+## WIP WP106 使用者登入（上工）資訊家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP106 規格](docs/modules/WIP/使用者登入資訊.md)。公司 `/YMES/WIP/OperatorOnline` 只用 WP104/WP105 共用 DEV localStorage `ymes-dev-mock:wip-operator-clock-in:state:v1`/`...:log:v1`；正式環境不可從這些 key 讀在線員工或把假 SignOut 當交易成功。
+- [ ] 核 YMES PostgreSQL live schema/history。WP106 沒有新直接表，`TBLWIPOPERATORSTATE`/`TBLWIPOPERATORLOG` Oracle DDL/metadata/PG CREATE-only 沿 `database/reference/mestest_wip_wp104_*`，`TBLWIPLOTLOGINSTATE` 沿 WP305，UserBasis/OP/Area/Equipment 沿既有 refs。只補真缺項，無需新增 WP106 CREATE SQL。
+- [ ] 提供登入/`WP106` Function ACL 的在線人員分頁/有上限 GET。OP/Area/Equipment/Lot 多值條件是 **LoginPlaceNo 的聯集**，以值陣列參數化，不接受 Form 原始 `AdditionalXml` SQL 字串。無條件查詢須有授權範圍與 pageSize 上限；回七欄、WorkDate/OPNo/版本鍵。OP/Area/Equipment lookup 依權限、現行狀態限量查。
+- [ ] SignOut command 檢查員工與地點可見/可操作權限，用 server LogoutDate、UserNo+MultiOperatorMode+LoginPlaceNo 重新查/鎖 State；單筆交易插 OperatorLog、刪 State、更新相關 LotLoginState，保留多人加工 side effect。需冪等、併發保護，逐筆結果表明成功/失敗/未處理；來源 Form 逐筆呼叫可能部分成功。`EnableSignOut=False` 僅是 UI 唯讀提示，不能當 API 權限。家用端接正式 Vue、PG migration/部署並驗收。
