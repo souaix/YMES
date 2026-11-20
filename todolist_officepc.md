@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 家用端最新回饋：ET103 正式驗收完成（2026-11-20，Git 待同步）
+
+HOME PC 已完成0057、API `12f26b18e94a`／Web `b3949d57fd39` 的報關行功能。API單輪八組126HTTP／464斷言、正式 app-browser59項（56GUI＋3SQL）通過；十筆Broker均由GUI建立／刪除，兩筆SQL引用fixture已精準清理，十一項資料範圍獨立讀回全零。最新來源與限制見 [ET103模組](docs/modules/ENT/報關行基本資料.md)及 [QA](docs/qa/20261120-et103.md)。Git待本批正常同步；驗收後fetch時main仍為012f257，保留兩端歷史。
+
+公司端後續使用ET103的 `{items}`清單、query-key item與nullable原始DTO；主鍵Edit保持raw，不轉大寫或把NULL token變0。hard Delete回204、退用回200完整savedDTO。未來ET104新引用需協作 `YMES:ENT:Broker:` namespace及父列SHARE，確認state2並持鎖到提交；ET101指定Broker也須協作。這是家用端API實作責任，不派公司端連PG或SSH。原生無法證明的引用刪除限制已明載為YMES防孤兒新增行為；Job候選存在但provider未交付時保持503，不用DEV直接核准冒充完整簽核引擎。公司端原來源查證待辦保留。
+
 ## 家用端最新回饋：ET102 已驗收並同步 main 7b6771e（2026-11-20）
 
 HOME PC 已完成 ET102 客戶連絡人 PostgreSQL 0056、正式 API `0339807d5b7e`／Web `6a4f390f37b8`；API 單輪八組 98 HTTP／406 斷言、正式 app-browser 53 個檢查點（52 GUI、1 SQL）通過。11 筆 Contact 全由 GUI 建立／刪除，清理 lookup 後七個精確範圍獨立讀回全零。完整限制見 [模組](docs/modules/ENT/客戶連絡人資料.md) 與 [QA](docs/qa/20261120-et102.md)。352 份來源核對通過後，release code `7b6771e4718a56a950f4a4de5c61564ea8ed4137` 已從 c2c4930 正常推到 main，再次 fetch 確認相同；保留兩端歷史，沒有 force push。後續純文件狀態提交不取代本 release code。

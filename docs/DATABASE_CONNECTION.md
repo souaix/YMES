@@ -1,5 +1,14 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## ENT ET103 既有報關行default與最小權限：0057（2026-11-20）
+
+- Root以PPK READ ONLY核對三schema及全本地catalog，`"YMES".tblentbrokerbasis` 已有原生十三欄、單欄PK及唯一PK index，無user trigger／RLS，僅三來源default與Broker CRUD缺少；不是缺表，不CREATE／重建。真reference為Customer.brokerassigned與Forwarder.brokerno，前者已有SELECT、後者缺column SELECT。
+- 成功套用前完整custom-format備份 `/opt/ymes/backups/ymes_before_0057_et103_20261119T231212Z_7Gf2l4zo.dump`，633770 bytes、目錄700／檔600，`pg_restore --list` 成功1803 entries。之後才以原SHA256 `bfd3f93aa70a91e64fed515547c8b84a1b62aa4970938008723704ac22835aa4` 套 [0057 migration](../database/migrations/0057_et103_broker_defaults_permissions.sql)。只補IssueState0／CreateDate LOCALTIMESTAMP／DataStamp0、Broker CRUD及Forwarder `SELECT(brokerno)`，不回填既有NULL、不加FK／index或改Customer權限。
+- 原transaction內前後完整metadata allowlist僅允許三default及指定ACL增量，Customer catalog／ACL、schema／defaultACL／roles／membership、原indexes／constraints與無關grants保持；提交後獨立source13／三default／PK1／index1、column differences0及snapshot全等。app role零列SELECT probe通過；Forwarder table SELECT=false、column SELECT=true，無business讀列／DML。
+- 前兩次失敗原log保留：PowerShell尾CR令input path不合；direct流程在ALTER前snapshot的零維空ACL array失敗。Root另READ ONLY確認三default與權限仍原baseline，再只修helper為strict `aclexplode(a.attacl)`、重新完整備份後成功，沒有憑ack0盲重跑。私有證據 `/opt/ymes/backups/et103_0057_reviewed_mXDgnSeb`；本機 `.tools/et103-migration-applied-20261120.json`、`et103-migration-apply-fixed-20261120.log`。
+- **Schema已0057，ET103 API／Web已正式部署**：API `12f26b18e94a85e16b4192d815f07ea2698b3ec5ddbfc21c8e589fc98a413d10` ready200／nonroot runtime讀取通過；Web `b3949d57fd39db048cfebe566287d4bbc11d47c4c3007e079960893f728ec871`，206私有source canonical070fad5c／700與600、公開755與644／HTTPS資產MIME／bytes／SHA通過，API不變。API單輪八組126HTTP／464斷言通過，11自有資料scope＋holder0、metadata保持／logout204，獨立11項再讀0。
+- Root正式GUI封存59項＝56GUI＋3SQL、0 observations（僅最終此範圍）；10筆Broker均GUI建刪，兩個自有Customer／Forwarder引用只由SQL setup／精準清除且Broker R不改。N raw／11NULL及signed stamp前置由SQL調整，真GUI續存與獨立讀回另記；不是完整簽核或其他ENT writer已交付。最終三array `[]`、GUI精確11項獨立計數全0，fresh reload logs `[]` 僅該次範圍。**Git同步／355份來源綁定仍待完成**；原0057兩FAIL與部署前PK index query修正歷史保留。完整範圍及證據見 [報關行模組](modules/ENT/報關行基本資料.md)、[ET103 QA](qa/20261120-et103.md)。
+
 ## ENT ET102 客戶連絡人結構與權限：0056（2026-11-20）
 
 - HOME PC root先以PPK SSH唯讀核對，Contact表／PK index／同名type在所有schema缺少；既有Customer真表41欄、無RLS，0055提供的SELECT及 `UPDATE(customerno)` 實際可用。本批不重建Customer、不擴充其權限。

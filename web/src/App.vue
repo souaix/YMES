@@ -1667,6 +1667,7 @@ async function signOut(): Promise<void> {
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
         />
         <ForwarderBasisMaster
           v-else-if="isForwarderBasisPage"

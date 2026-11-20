@@ -1,5 +1,15 @@
 # 部署設定檔
 
+## 目前正式版本：ET103（2026-11-20，正式驗收完成，Git 待同步）
+
+API `12f26b18e94a85e16b4192d815f07ea2698b3ec5ddbfc21c8e589fc98a413d10`；Web `b3949d57fd39db048cfebe566287d4bbc11d47c4c3007e079960893f728ec871`；migration **0057**。Web `/YMES/`、API `/YMES/API/` 分開運行，只切換 YMES 自己的容器。下方 ET102 與更早資訊保留歷史。
+
+固定 API來源 `/opt/ymes/releases/et103-api-20261120-a1/main` 共148檔，canonical `941fe45f980a8385f7b2ccd43ac2c8db7782fc7e3ecf4850202947afdbbe62db`；Web私有來源 `/opt/ymes/checkpoints/web-et103-20261120-a1` 共206檔，canonical `070fad5c72ed7d393280b7fbd9a686da2e344ab2f634d8ba763d732d9524123a`。來源0700／0600，公開網站0755／0644，實際nonroot可讀。
+
+公開資產 `index-DrJWnfIC.js`（3724214 bytes）／`index-CQ_CXw4B.css`（966269 bytes）已核MIME、bytes、SHA與正常TLS。API八組126／464、GUI59項（56GUI＋3SQL）、11scope獨立全零通過；詳見 [ET103 QA](docs/qa/20261120-et103.md)。Git與完成checkpoint尚待355來源綁定及正常同步，不能由部署成功推定已推送。
+
+已驗證回復基底為 API `0339807d5b7e13be6efeec1ed72cdbaef71619af3f7c3fe46cd88ce9f0d87c2a`，來源 `/opt/ymes/releases/et102-api-20261120-a1/main`145檔，保留B2/B3/ET102且無Broker父writer；API回復不移除0057或業務資料，前Web `6a4f390f37b80c1579b79579dba625a702e753f11f52e71638dbbb8cdb3b3f67`亦保留。共用 `/opt/ymes/source` 不作重建來源。
+
 ## 目前正式版本：ET102（2026-11-20，已驗收並同步 main 7b6771e）
 
 API `0339807d5b7e13be6efeec1ed72cdbaef71619af3f7c3fe46cd88ce9f0d87c2a`；Web `6a4f390f37b80c1579b79579dba625a702e753f11f52e71638dbbb8cdb3b3f67`；migration **0056**。Web `/YMES/` 與 API `/YMES/API/` 分開運行在同一 server，只更新 YMES 容器。下方 OPB03 與更早資訊是歷史，不作現在的重建來源。

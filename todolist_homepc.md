@@ -1,5 +1,20 @@
 # 家裡電腦接手清單
 
+## 最新接手：ET103 報關行正式驗收完成（2026-11-20，Git 待同步）
+
+本機為 HOME PC，處理 PostgreSQL 復刻庫、API、PPK SSH、部署與驗收；公司端維持原生 Oracle 唯讀來源與 UI。最新 API `12f26b18e94a`／Web `b3949d57fd39`，migration **0057**；下方 ET102 及更早內容保留歷史。
+
+- [x] 既有 Broker 13 欄與 PK/index 核對後，只補三個原生 defaults、Broker CRUD 及 Forwarder `SELECT(brokerno)`；完整備份／restore-list、交易內變更白名單及獨立讀回通過，沒有重建表或回填舊資料。前置工具失敗與修正證據保留於 QA。
+- [x] 固定 API148／Web206 來源完成 .NET9 Release 與完整 Vue 型別／Vite 建置、正式部署、nonroot 與正常 HTTPS 資產核對。回復 API 保留 ET102 `0339807d5b7e` 的145份來源與既有防護，保留表與資料。
+- [x] API 單輪八組126 HTTP／464斷言通過；11個精確資料範圍及holder全零，獨立再讀11項亦0，metadata不變、登出204。
+- [x] 正式 app-browser 自行 Demo 登入專用分頁，59個檢查點（56GUI＋3SQL）通過；新增／重複／反覆套用、必填／原生長度／字面特殊鍵、dirty／雙向Tab、選取、批次核准及刪除部分成功、四態、raw／NULL／signed版本、引用防護、空白首頁／21收合圖示／重進與深路由重載皆有實證。最終59項無失敗觀察，不代表前置工具沒有失敗。
+- [x] 十筆 Broker 全由 GUI 建立與刪除。SQL 僅設定自有衝突／舊資料條件及兩筆有標記的引用；引用精準清理後由 GUI 刪 R，最終三個自有資料陣列皆空、11範圍獨立全0。重載後 console 無紀錄，限該次範圍。
+- [x] 正常TLS公開HTTP再核對：深路由200、小寫兩路徑404、API ready200、未登入Broker API401。明確QA請求識別通過，不修改邊緣服務規則。
+- [ ] 正常同步 GitHub 並核對 SQL1／API148／Web206 共355份來源。完成驗收後 fetch 時，HEAD 與 origin/main 均為 `012f257cf2081e0b18c72d1a568df988f6edd8b1`，公司端沒有新增提交；本批尚未推送。
+- [ ] 同步後再 fetch 檢查新交接，接續 ET104 貨運行等來源完整的家用端工作。完整 Job/通知 provider 與其他模組不因本批驗收而改為完成。
+
+維護契約、原生與 YMES 新增防孤兒行為、已測與未測分支，見 [ET103 模組](docs/modules/ENT/報關行基本資料.md)及 [ET103 QA](docs/qa/20261120-et103.md)。
+
 ## 最新接手：ET102 客戶連絡人已驗收並同步 main 7b6771e（2026-11-20）
 
 本機為 HOME PC，負責 PostgreSQL 復刻資料庫、API、PPK SSH、部署與正式驗收；公司端負責原生 Oracle 唯讀來源與 UI。最新正式 API `0339807d5b7e`／Web `6a4f390f37b8`，migration **0056**；下方 OPB03 及更早狀態保留歷史。
