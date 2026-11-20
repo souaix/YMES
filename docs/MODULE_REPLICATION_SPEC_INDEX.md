@@ -343,6 +343,7 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 - WP905「產品版本變更」見 [功能規格](modules/WIP/產品版本變更.md)。DEV 已交付基礎批版本查詢與變更，正式 API 需一併提交對應回復歷程。
 - WP906「ECN 設定精靈」見 [功能規格](modules/WIP/ECN設定精靈.md)。DEV 已交付六步與受影響批選擇，正式建立交易沿用 WP201 三張表。
 - WP907「生產批數量調整」見 [功能規格](modules/WIP/生產批數量調整.md)。DEV 已交付整批／Bin／元件分流，調整歷程與原因表附 Oracle metadata 及 CREATE-only。
+- WP913「生產批屬性調整」見 [功能規格](modules/WIP/生產批屬性調整.md)。DEV 已交付批與元件屬性 CRUD，沿用既有直接表。
 - WP912「生產批作業站製程特性值調整」見 [功能規格](modules/WIP/生產批作業站製程特性值調整.md)。DEV 已交付批及元件特性調整；Oracle 稽核表 metadata／CREATE-only 已交接。
 - WP911「生產批作業站用料記錄調整」見 [功能規格](modules/WIP/生產批作業站用料記錄調整.md)。DEV 已交付報工用料主明細及加改刪，正式用料聚合及並發規則已交接。
 - WP909「換廠作業」見 [功能規格](modules/WIP/換廠作業.md)。DEV 已交付群組守門與換廠，沿用現有來源表。
