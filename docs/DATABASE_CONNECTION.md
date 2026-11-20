@@ -971,3 +971,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - 對照 `frmBR_CL_Split_GEN`、`frmCarrierSplit_Comp`、Service `Exe_Manual_LotSplit_Carrier` 及 Core `BR_Manual_LotSplit_Carrier`／`BR_Manual_LotSplit_Carrier_Component`。兩條 Core 字面直接引用共 17 張表；逐名核對 `database/reference/` 中的來源 CREATE TABLE 結構，17 張均已有 reference。Carrier Basis／Type lookup 亦屬既有共用結構；本功能沒有新缺失的直接表，所以不重複取得 Oracle DDL 或產生 CREATE SQL。完整表名及來源行為見 `docs/modules/WIP/分批處理_載具.md`。
 - 公司端只讀 WinForms／Service／Core 和既有 source references；未連 YMES PostgreSQL、未讀 Oracle 業務資料列、未執行 Oracle DDL/DML。家用端仍須核對 PostgreSQL live schema／migration history，追查 Core helper 的其他間接表，並以真實載具容量、位置與元件現況建交易式 API；不可從已有 reference 推斷 live schema 必然完整。
+
+### 更新 2026-11-20：WIP WP211 併批處理
+
+- 對照 `frmBR_L_Merge_GEN`、Service `Exe_Manual_LotMerge` 與 Core `BR_Manual_LotMerge`。Core 字面直接引用八張表：`TBLEMSDISPATCHSTATE`、`TBLINVWIPINVENTORY_SEMI`、`TBLWIPAUTOMERGE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`、`TBLWIPOSBASIS`、`TBLWIPOSDETAIL`。逐名核對 `database/reference/` 均已有 Oracle source DDL 與 PostgreSQL CREATE-only reference；本功能不新增重複 CREATE SQL。詳 `docs/modules/WIP/併批處理.md`。
+- 公司端未查 Oracle 業務資料、未執行 Oracle DDL/DML、未連 YMES PostgreSQL；家用端先核 live schema／migration history，再追 Core helper 的間接表、實作具交易性與冪等守門的正式 API。已有 CREATE-only reference 不能當作 live schema 已完成或可直接重播 migration。
