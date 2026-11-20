@@ -1,5 +1,9 @@
 # Office 8ff 整合與正式入口驗證（2026-11-21）
 
+本輪已完成結案與main同步。current-checkpoint SHA `33bd353dd129962d2e2cf196aa5b628cdc4b176be1495e58972621f69dd78f58`，另一連線獨立raw下載／64個保護欄位／歷史與服務核對通過，回條SHA `49925286533ee240e7a1b8a5f58513059c69b8646dd185aec8cfb4a51edb1a3d`。原7d0完整raw備份、API與DB所有段落、WP109讀取版結案及history前綴保持。發行對應code X `7c5ba15af622fe4776fecfb9bddc96cabd250ee5`、status Y `23559909602900349e5bf6018a0e9027bf9d64c2`，均真452來源綁定／正常推送／直接ref核回；main已到Y，`mainSyncConfirmed=true/mainSyncPending=false`。本次後補文件提交不改此發行對應。八個WIP provider、global MES QA與偶發登入載入根因仍待辦。
+
+下文包含結案前各步驟的原時點，完整保留。
+
 HOME負責PostgreSQL復刻、API、PPK SSH與發行；Office負責MES原生Oracle唯讀來源與UI。本輪正常合併Office `8ff405290a7f55bfd1e2261f8d85dec97f363409` 九提交及HOME `6e9ee9127a19d47a926db6b5a871684ad4adeaf6`，合併提交 `7c5ba15af622fe4776fecfb9bddc96cabd250ee5`。唯一WP109模組文件衝突完整保留雙方內容，沒有force或覆寫另一端工作。
 
 ## 交付範圍

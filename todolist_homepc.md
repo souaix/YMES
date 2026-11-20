@@ -1,10 +1,14 @@
 # 家裡電腦接手清單
 
-## Office 8ff已部署並完成限定GUI（2026-11-21；Git／metadata收尾中）
+## Office 8ff整合結案及main同步完成（2026-11-21）
+
+本輪已完成結案與main同步。current-checkpoint SHA `33bd353dd129962d2e2cf196aa5b628cdc4b176be1495e58972621f69dd78f58`，另一連線獨立raw下載／64個保護欄位／歷史與服務核對通過，回條SHA `49925286533ee240e7a1b8a5f58513059c69b8646dd185aec8cfb4a51edb1a3d`。原7d0完整raw備份、API與DB所有段落、WP109讀取版結案及history前綴保持。發行對應code X `7c5ba15af622fe4776fecfb9bddc96cabd250ee5`、status Y `23559909602900349e5bf6018a0e9027bf9d64c2`，均真452來源綁定／正常推送／直接ref核回；main已到Y，`mainSyncConfirmed=true/mainSyncPending=false`。本次後補文件提交不改此發行對應。八個WIP provider、global MES QA與偶發登入載入根因仍待辦。
+
+
 
 正式Web274／03e已切換，API172／502與DB0062保持。完整typecheck／Vite建置通過，獨立公開七項與完整來源／runtime／catalog核對通過（回條71f57c04…）。Root自行Demo完成八個原生入口及deep reload／Close，並核KD、三層折疊／72px圖示、透明auto scrollbar、WP109 Query與客戶查找回歸。proof437b05ca…為48raw／45成功，三筆false及復驗保留；沒有業務寫入。詳[本輪QA](docs/qa/20261121-office8ff-integration.md)。八個provider仍待真API，不能把DEV隔離當交易完成。
 
-- [ ] 完成本輪正常feature／main同步與metadata，推送前再讀Office最新ref，不force；完成後再查下一接手事項。
+- [x] 完成本輪正常feature／main同步與metadata，原Office九提交保留；結案後再次fetch確認main仍為Y，無新Office提交。接續ET202實作，不等待人員登入。
 - [ ] HOME追查快速goto／reload時偶發回登入頁及原生menu載入超過15秒：本輪自行Demo／fresh reload已恢復，最後console空；根因未明，不冒稱已修。取前端與API／代理時間對照後修復，再以app-browser重載復驗；不等待使用者操作。
 - [ ] ET202：採用已獨立準備的176後端A2／原生11欄，freshmetadata後決定migration與權限，完成真API／PG／UI與獨立清理。Process只允0／−1硬刪的窄修需一併真驗。
 - [ ] WP109 writer先做原生允許空Lot分支；非空Lot缺真provider明確503。Office待補最新Lot39與舊DDL38差異，HOME不猜表。EventLog／Parameter已有來源，先核fresh現況再施作。
