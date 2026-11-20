@@ -14,8 +14,8 @@ public sealed partial class Et101Repository
         { Text(canonical, "customer", input.CustomerNo); no = (string)canonical.ExecuteScalar()!; }
         RawKey(no); AcquireCustomer(c, t, no); EnsureOwn(c, t);
         if (Read(c, t, no, update: true) is not null) throw Rule(409, "客戶已存在，不可接管既有資料。");
-        EnsureReferences(c, t);
-        if (AnyOwnedReference(c, t, no))
+        var swrPresent = EnsureReferences(c, t);
+        if (AnyOwnedReference(c, t, no, swrPresent))
             throw Rule(409, "此客戶編號已有孤立子資料；新增不會默認接管，請先釐清原始歸屬。");
         CheckAssignedParents(c, t, input, null);
         var names = string.Join(',', Fields.Select(x => x.Column));
@@ -97,9 +97,9 @@ public sealed partial class Et101Repository
 
         // Own parent FOR UPDATE has already waited. Every probe/count below
         // uses a fresh READ COMMITTED statement; no reverse child-parent locks.
-        EnsureReferences(c, t);
-        if (HasNonCascadingReferences(c, t, old.CustomerNo))
-            throw Rule(409, "客戶仍被報關設定、站點對應、產品或使用者引用；所有資料已保留。");
+        var swrPresent = EnsureReferences(c, t);
+        if (HasNonCascadingReferences(c, t, old.CustomerNo, swrPresent))
+            throw Rule(409, "客戶仍被報關設定、站點對應、產品、使用者或特殊生產需求引用；所有資料已保留。");
         AssertNativeChildOwners(c, t, old.CustomerNo);
         int addresses, contacts;
         using (var cmd = new NpgsqlCommand("DELETE FROM \"YMES\".tblentcustomershipaddr WHERE customerno=@customer;", c, t))

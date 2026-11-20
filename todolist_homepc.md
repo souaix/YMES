@@ -1,5 +1,25 @@
 # 家裡電腦接手清單
 
+## WP109 正式讀取版驗收及清理完成（2026-11-21；Git／metadata收尾中）
+
+HOME負責PostgreSQL復刻／API／PPK SSH／發行；Office負責MES原生Oracle唯讀來源、UI及原始流程契約。新工作在 `codex/homepc-wp109-read-20261120`，基於已同步main `101b86e`；未推送新版本。
+
+- [x] 核對三張原生DDL／metadata與原先缺席狀態；完成0062三表19欄、原生驗證及精確catalog差異檢查，原SQL已保存migration／verification供維護。
+- [x] 採用SWR引用相容A2與查詢／單張／附件串流API A2，完成離線API172建置，零警告／零錯誤。保留原167／168來源與收據；新172來源canonical `454fdebb005e9906fa21e307917a98c57c591d92c1a0c8e6dd936aecdd151ceb`。
+- [x] 遠端私有封包核對及candidate-only build後，實際API映像 `502f88704b928ffcfd0b5dedf6e3c469707e301ac7d04e961be59ce19ca8c614` 已切換，nonroot／完整來源172與runtime11／ready通過；API切換當時WebADE／歷史checkpoint496保持，現行Web版本見下方A4部署紀錄。
+- [x] 採用正式讀取UI A2，保留公司DEV元件原bytes；修正ASCII空白判定及OP查找原始陣列保留，獨立source/mock peer通過。本機完整Web258建置通過，原EPERM失敗及成功retry紀錄保留；此項是A2準備時點，下方A4已完成正式GUI。
+- [x] API172先切換並驗證absent分支、既有Customer／OP增刪與no-Job流程：A3真39HTTP／51檢核，獨立五範圍全0。新完整備份後單交易套0062，另連線驗證native19／全catalog差異及最小權限，真回條SHA `1959a9d1792e4b3f21c1167f8abc7509e16b9764c59a237d65a2a730c8e68522`、catalog62d9；另11次present空表API通過。
+- [x] 最終A4 Web258 `c8284e0ed4482a35ebdebc6de53c5ce5ad063ce517d62fa03604c5a40f677871` 已真正切換；source canonical `8eb5c2611459ff9992ba77dfd4ea591f74332751a1de7316a4732fd2738ba76e`，完整建置回條21bf5894…，活化log SHA `4533e0f636cf461f055c59e5c8d76f26898543f8dab91e15507c4ed1d7aae71e`。API502／DB0062不變。
+- [x] 獨立公開／runtime七項讀回通過，11968 bytes／SHA `c577f57474c15c6357f14a767ea6851b9a515b08105ce58e65c18c5b2897f55b`；live/current／nonroot、172＋258來源、runtime11／公開6檔及native19／35／61／full16 catalog62d9前後保持。
+- [x] Root已完成並封存本輪正式A4操作驗證：46筆原始事件、45筆有效GUI，原false #8是測試期望誤用Lot插入順序，#9／16已按原生C排序復驗；原紀錄保留。最終proof SHA `0982190be36e9feec7db9485a9bdc590666132b18ff76e66ea292d4faf6b3011`。自行Demo、七條件／四狀態、真查找與焦點／Escape、完整單張／limit1、多選與取消、PDF／binary原生下載交付、Close／重進／deep reload、兩個引用拒刪、設備／站點對應／ECN群組讀取回歸及KD／三層選單／72px圖示均已實作操作；836×891及原缺陷1280×720高度通過。OP原生確認造成工具中斷，使用者確認一次後Root核回409提示與資料保留，不把它寫成全程無人協助；後續不重播刪除。最後fresh logs為空。精確清理真14HTTP／29檢核通過（SHA `f31cec32698ab3ef29f24698f3d010163e38ed308d68f1c58b9070b147c30752`），另一唯讀連線26範圍全0（SHA `40abac063f1ec6ec22891195953a960c02707527096704ca2e1965e2189749d2`）；非GUI SQL主6／明細3清理與API父4筆不混算GUI。436來源對真提交的綁定、Git同步及新checkpoint仍待本輪收尾。
+- [ ] 補本輪QA／模組MD與兩台TODO，驗收完成後才fetch最新Office、正常merge及同步GitHub，保留雙方工作並檢查新接手事項。
+- [ ] Add/Edit/Copy/Approve/Void/upload不在本次讀取版冒充完成；待公司端補原生取號、Lot／EventLog／系統參數契約後接真正writer。SWR表建立後禁止回不相容API167或DROP表繞過引用。
+
+- [ ] 讀取版收尾後整合Office最新 `8ff4052`（9提交／8個新WIP DEV入口及WP109原生契約）；保留雙方變更，正式入口須檢查DEV隔離、完整build／app-browser後再部署。WP109新增取號／lookup／audit來源先核，不繼續把已提供的DDL列為Office缺件。
+- [ ] 後續維護：作業站原生window.confirm在app-browser有工具互卡風險，可沿Customer既有自訂確認框統一；本輪已由使用者確認一次並真核拒刪，這項是改善工具相容性，不是將本輪引用守門寫成未通過。若工具確實無法操作，按使用者2026-11-21授權記待辦並繼續其他工作，不等待人員登入。
+
+前版ET101已完成的限定驗收、提交與checkpoint歷史如下，維持原紀錄。
+
 ## 最新完成：ET101＋Office e5f限定結案與main同步（2026-11-20）
 
 Root已完成69份私有證據上傳、真正Ready計畫、A2 dry／apply及另一連線獨立下載核對；目前正式checkpoint為 `496ae4bdd3c1cd8d4ecea8d8c16bd9ac35bd843118f97ab965e03651737fd7e9`，獨立讀回收據SHA `3e98979bea11b013ed9e760cdc643fb1f0e4ea50331fd23d4b9c55e5382b534c`，本輪ET101限定結案已完成。API167／3f0bdc7c…、Web256／ade411cc…及DB0061穩定；catalog2349、native35、全部167＋256私有來源、46項原有欄位及history prefixes保持，原2c23 checkpoint的完整raw備份保留。

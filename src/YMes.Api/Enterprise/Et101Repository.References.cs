@@ -97,7 +97,7 @@ public sealed partial class Et101Repository
         // All actual parent states, including NULL, qualify by existence only.
     }
 
-    private static bool AnyOwnedReference(NpgsqlConnection c, NpgsqlTransaction t, string no)
+    private static bool AnyOwnedReference(NpgsqlConnection c, NpgsqlTransaction t, string no, bool swrPresent)
     {
         // Whitelisted relation names only; the metadata registry and zero-row
         // probes have completed before this first business reference query.
@@ -106,10 +106,10 @@ public sealed partial class Et101Repository
             using var cmd = new NpgsqlCommand($"SELECT EXISTS(SELECT 1 FROM \"YMES\".{spec.Table} WHERE lower(btrim(customerno))=lower(btrim(@customer)));", c, t);
             Text(cmd, "customer", no); if (cmd.ExecuteScalar() is true) return true;
         }
-        return false;
+        return SwrReferenceGuard.HasReferences(c, t, SwrReference.Customer, no, swrPresent);
     }
 
-    private static bool HasNonCascadingReferences(NpgsqlConnection c, NpgsqlTransaction t, string no)
+    private static bool HasNonCascadingReferences(NpgsqlConnection c, NpgsqlTransaction t, string no, bool swrPresent)
     {
         // Each statement runs after the own parent UPDATE lock has waited.
         // MVCC reads, not reverse FOR UPDATE/SHARE on OP/Product/User rows.
@@ -120,7 +120,9 @@ public sealed partial class Et101Repository
               OR EXISTS(SELECT 1 FROM "YMES".tblprdproductbasis WHERE lower(btrim(customerno))=lower(btrim(@customer)))
               OR EXISTS(SELECT 1 FROM "YMES".tblusruserbasis WHERE lower(btrim(customerno))=lower(btrim(@customer)));
             """, c, t);
-        Text(cmd, "customer", no); return cmd.ExecuteScalar() is true;
+        Text(cmd, "customer", no);
+        return cmd.ExecuteScalar() is true
+            || SwrReferenceGuard.HasReferences(c, t, SwrReference.Customer, no, swrPresent);
     }
 
     private static void AssertNativeChildOwners(NpgsqlConnection c, NpgsqlTransaction t, string raw)

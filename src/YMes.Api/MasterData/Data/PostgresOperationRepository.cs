@@ -164,7 +164,7 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
     {
         ValidateActor(actorUserNo);
         using var connection = dataSource.OpenConnection();
-        using var transaction = connection.BeginTransaction();
+        using var transaction = connection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
         var current = Get(connection, transaction, operationNo, forUpdate: true);
         EnsureStamp(current, dataStamp);
         EnsureIssueState(current, issueState);
@@ -191,7 +191,7 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
         else
         {
             if (HasDependents(connection, transaction, current.OperationNo))
-                throw new MasterDataRuleException(409, "作業仍被途程、配方、設備或作業群組引用，不能物理刪除。");
+                throw new MasterDataRuleException(409, "作業仍被途程、配方、設備、作業群組或特殊生產需求引用，不能物理刪除。");
             try
             {
                 using var delete = new NpgsqlCommand("""
@@ -253,8 +253,30 @@ public sealed class PostgresOperationRepository(NpgsqlDataSource dataSource) : I
         AddVarchar(command, "operationNo", operationNo);
         return (bool)(command.ExecuteScalar() ?? false)
             || HasEcnGroupDependents(connection, transaction, operationNo)
-            || HasCustomerMappingDependents(connection, transaction, operationNo);
+            || HasCustomerMappingDependents(connection, transaction, operationNo)
+            || HasSwrDependents(connection, transaction, operationNo);
     }
+
+    private static bool HasSwrDependents(NpgsqlConnection connection, NpgsqlTransaction transaction, string operationNo)
+    {
+        // OP UPDATE was obtained before HasDependents. A future SWR writer
+        // must hold this parent FOR SHARE until its SWR write commits.
+        // Fresh MVCC only: never take SWR row/namespace locks in this path.
+        try
+        {
+            var present = YMes.Api.Enterprise.SwrReferenceGuard.EnsureOptional(connection, transaction,
+                YMes.Api.Enterprise.SwrReference.Operation, SwrUnavailable);
+            return YMes.Api.Enterprise.SwrReferenceGuard.HasReferences(connection, transaction,
+                YMes.Api.Enterprise.SwrReference.Operation, operationNo, present);
+        }
+        catch (NpgsqlException)
+        {
+            throw SwrUnavailable();
+        }
+    }
+
+    private static Exception SwrUnavailable() => new MasterDataRuleException(503,
+        "無法確認特殊生產需求引用，本次未刪除；請檢查來源結構與必要讀取權限。");
 
     private static bool HasEcnGroupDependents(NpgsqlConnection connection, NpgsqlTransaction transaction, string operationNo)
     {

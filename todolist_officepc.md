@@ -1,5 +1,15 @@
 # 公司端待辦
 
+## HOME最新回饋：WP109正式讀取版驗收及清理完成（Git／metadata收尾中）
+
+HOME實際API172 `502f88704b928ffcfd0b5dedf6e3c469707e301ac7d04e961be59ce19ca8c614`、DB0062與修正後Web258 `c8284e0ed4482a35ebdebc6de53c5ce5ad063ce517d62fa03604c5a40f677871` 已上線；A4活化log SHA `4533e0f636cf461f055c59e5c8d76f26898543f8dab91e15507c4ed1d7aae71e`。獨立公開／runtime七項通過，11968 bytes／SHA `c577f57474c15c6357f14a767ea6851b9a515b08105ce58e65c18c5b2897f55b`，原生結構、完整來源／私有模式及前後實際版本已核。
+
+Root已完成並封存本輪正式A4操作驗證：46筆原始事件、45筆有效GUI，原false #8是測試期望誤用Lot插入順序，#9／16已按原生C排序復驗；原紀錄保留。最終proof SHA `0982190be36e9feec7db9485a9bdc590666132b18ff76e66ea292d4faf6b3011`。自行Demo、七條件／四狀態、真查找與焦點／Escape、完整單張／limit1、多選與取消、PDF／binary原生下載交付、Close／重進／deep reload、兩個引用拒刪、設備／站點對應／ECN群組讀取回歸及KD／三層選單／72px圖示均已實作操作；836×891及原缺陷1280×720高度通過。OP原生確認造成工具中斷，使用者確認一次後Root核回409提示與資料保留，不把它寫成全程無人協助；後續不重播刪除。最後fresh logs為空。精確清理真14HTTP／29檢核通過（SHA `f31cec32698ab3ef29f24698f3d010163e38ed308d68f1c58b9070b147c30752`），另一唯讀連線26範圍全0（SHA `40abac063f1ec6ec22891195953a960c02707527096704ca2e1965e2189749d2`）；非GUI SQL主6／明細3清理與API父4筆不混算GUI。436來源對真提交的綁定、Git同步及新checkpoint仍待本輪收尾。
+
+本版提供真查詢、完整單張與附件串流；新增、編輯、複製、核准、作廢及上傳仍停用，未把讀取版或DEV示意當作完整SWR交易。三張Basis15／Detail2／Serial2的原生DDL、index與metadata已交，HOME已套0062，不重複向Office索取；Customer／OP的SWR引用相容、防孤立接管及硬刪保護已由API172交付，下方舊「建表前尚待相容」是當時歷史。
+
+驗證後fetch已收到Office `8ff4052` 的新增WP109原生契約，HOME下一輪核對並接writer；下列四類是先前來源缺口，未核對前不自行預填完成：`InitSWRNo/AddSWRBasis`及Core完整取號／交易body；LotBasis DDL與BASELOTNO→CustomerNo歸屬及Device／MO真lookup；Abort／Del SWR的SYS EventLog實作與DDL；FileSizeLimit／InputAbortLog參數來源、型別、單位、default及失敗分支。下方四項原文與所有其他待辦保留。Office維持Oracle原生唯讀來源／UI，HOME負責PG／PPK／API／發行；不新增Office資料庫、SSH或部署任務。checkpoint496仍是前版ET101歷史，本輪新checkpoint／Git未完成；global QA與其他WIP providers仍未完成。
+
 ## HOME最新回饋：ET101＋e5f限定結案已完成（2026-11-20）
 
 Root已完成69份私有證據上傳、真正Ready計畫、A2 dry／apply及另一連線獨立下載核對；目前正式checkpoint為 `496ae4bdd3c1cd8d4ecea8d8c16bd9ac35bd843118f97ab965e03651737fd7e9`，獨立讀回收據SHA `3e98979bea11b013ed9e760cdc643fb1f0e4ea50331fd23d4b9c55e5382b534c`，本輪ET101限定結案已完成。API167／3f0bdc7c…、Web256／ade411cc…及DB0061穩定；catalog2349、native35、全部167＋256私有來源、46項原有欄位及history prefixes保持，原2c23 checkpoint的完整raw備份保留。

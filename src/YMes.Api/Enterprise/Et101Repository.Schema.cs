@@ -106,8 +106,9 @@ public sealed partial class Et101Repository
         // is explicit. Default reconciliation is a separate Root migration.
     }
 
-    private static void EnsureReferences(NpgsqlConnection c, NpgsqlTransaction t)
+    private static bool EnsureReferences(NpgsqlConnection c, NpgsqlTransaction t)
     {
+        var swrPresent = SwrReferenceGuard.EnsureOptional(c, t, SwrReference.Customer, Unavailable);
         var ids = new Dictionary<string, long>(StringComparer.Ordinal);
         foreach (var field in ReferenceColumns)
         {
@@ -117,7 +118,7 @@ public sealed partial class Et101Repository
             if (Relation(c, t, field.Table) != oid) throw Unavailable();
             ids.Add(field.Table, oid);
         }
-        Registry(c, t);
+        Registry(c, t, swrPresent);
         CheckShape(c, t, ids["tblentcustomercontactor"], ContactorShape);
         CheckPrimaryKey(c, t, ids["tblentcustomercontactor"], ["customerno", "contactorname"]);
         CheckShape(c, t, ids["tblentcustomershipaddr"], AddressShape);
@@ -125,7 +126,8 @@ public sealed partial class Et101Repository
         // Validate after ACCESS SHARE probes; no unreviewed relation is read.
         foreach (var field in ReferenceColumns)
             CheckNeeded(c, t, ids[field.Table], [(field.Column, field.Type, field.NotNull)]);
-        Registry(c, t);
+        Registry(c, t, swrPresent);
+        return swrPresent;
     }
 
     private static void EnsureAssignedParent(NpgsqlConnection c, NpgsqlTransaction t, AssignedParent parent)
@@ -166,9 +168,10 @@ public sealed partial class Et101Repository
         var oid = r.GetInt64(0); if (r.Read()) throw Unavailable(); return oid;
     }
 
-    private static void Registry(NpgsqlConnection c, NpgsqlTransaction t)
+    private static void Registry(NpgsqlConnection c, NpgsqlTransaction t, bool swrPresent)
     {
         var remaining = ReferenceColumns.ToDictionary(x => x.Table, StringComparer.Ordinal);
+        if (swrPresent) remaining.Add("tblwipswrbasis", ("tblwipswrbasis", "customerno", "character varying(50)", true));
         using var cmd = new NpgsqlCommand("""
             SELECT n.nspname,c.relname,c.relkind::text,c.relrowsecurity,c.relforcerowsecurity,
               a.attname,format_type(a.atttypid,a.atttypmod),a.attnotnull,a.attidentity::text,a.attgenerated::text,

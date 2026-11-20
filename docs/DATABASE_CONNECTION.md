@@ -1,5 +1,15 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WP109讀取版API172／Web258／DB0062讀取範圍驗收及清理完成（Git／metadata收尾中）
+
+目前實際API為 `502f88704b928ffcfd0b5dedf6e3c469707e301ac7d04e961be59ce19ca8c614`，修正後Web為 `c8284e0ed4482a35ebdebc6de53c5ce5ad063ce517d62fa03604c5a40f677871`；A4活化成功log SHA `4533e0f636cf461f055c59e5c8d76f26898543f8dab91e15507c4ed1d7aae71e`。0062已真備份／單交易COMMIT及另連線獨立讀回，apply SHA1959a9d1…，catalog `62d9f825dd249d679b08f5a4cde21386158aef6c5737d0d86d75efc417e7a6ae`，原生19欄／3PK／3index／6types及Basis、Detail唯讀SELECT保持，Serial未授app權限。API172已交付SWR引用存在／缺席相容及正式查詢／單張／附件串流；完整writer仍未交付。
+
+獨立公開／runtime讀回 `.tools/wp109-layout-public-runtime-independent-root-20261120.json`（11968 bytes，SHA `c577f57474c15c6357f14a767ea6851b9a515b08105ce58e65c18c5b2897f55b`）七項正常TLS檢查全通過：首頁及原生深連結200／text/html並含新JS與CSS參照、兩資產MIME／長度／SHA精確、兩個小寫路徑404、ready200。前後容器ID／image／current tag／running／非root、私有API172＋Web258完整來源與模式、API runtime11及公開6檔、native19／35／61及full16 catalog62d9保持。這是獨立讀回，不代替GUI或清理驗收。
+
+Root已完成並封存本輪正式A4操作驗證：46筆原始事件、45筆有效GUI，原false #8是測試期望誤用Lot插入順序，#9／16已按原生C排序復驗；原紀錄保留。最終proof SHA `0982190be36e9feec7db9485a9bdc590666132b18ff76e66ea292d4faf6b3011`。自行Demo、七條件／四狀態、真查找與焦點／Escape、完整單張／limit1、多選與取消、PDF／binary原生下載交付、Close／重進／deep reload、兩個引用拒刪、設備／站點對應／ECN群組讀取回歸及KD／三層選單／72px圖示均已實作操作；836×891及原缺陷1280×720高度通過。OP原生確認造成工具中斷，使用者確認一次後Root核回409提示與資料保留，不把它寫成全程無人協助；後續不重播刪除。最後fresh logs為空。精確清理真14HTTP／29檢核通過（SHA `f31cec32698ab3ef29f24698f3d010163e38ed308d68f1c58b9070b147c30752`），另一唯讀連線26範圍全0（SHA `40abac063f1ec6ec22891195953a960c02707527096704ca2e1965e2189749d2`）；非GUI SQL主6／明細3清理與API父4筆不混算GUI。436來源對真提交的綁定、Git同步及新checkpoint仍待本輪收尾。
+
+目前current-checkpoint仍是ET101結案原raw `496ae4bdd3c1cd8d4ecea8d8c16bd9ac35bd843118f97ab965e03651737fd7e9`，其中API167／Web256／0061欄位是當時歷史，不回填成現在172／258／0062。只有本輪GUI、精確清理與真Git收尾後，Root才另行更新metadata；下方ET101及更早「目前／pending」均保留為各次時點。HOME負責PG／PPK／API／發行，Office維持原生Oracle唯讀來源／UI。
+
 ## 最新：ET101與DB0061結案已完成（2026-11-20）
 
 Root已完成69份私有證據上傳、真正Ready計畫、A2 dry／apply及另一連線獨立下載核對；目前正式checkpoint為 `496ae4bdd3c1cd8d4ecea8d8c16bd9ac35bd843118f97ab965e03651737fd7e9`，獨立讀回收據SHA `3e98979bea11b013ed9e760cdc643fb1f0e4ea50331fd23d4b9c55e5382b534c`，本輪ET101限定結案已完成。API167／3f0bdc7c…、Web256／ade411cc…及DB0061穩定；catalog2349、native35、全部167＋256私有來源、46項原有欄位及history prefixes保持，原2c23 checkpoint的完整raw備份保留。
