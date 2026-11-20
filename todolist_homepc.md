@@ -2235,3 +2235,12 @@ API 工作：
 - [ ] 建登入保護的指定 Lot 與 Component 查詢，限制 Status、HaveComponent、LotState、非 Partial／Stocker、載具／庫存範圍與使用者權限；產品和路由 lookup 依真實 `AllowLotProductChange`、ECN／流程設定回傳。WIP Inventory／BR 宿主模式只由可信 server 上下文設定。
 - [ ] 實作拆批 POST command：在交易內重讀／鎖定 LotStamp、ComponentState、Inventory 和序號，驗證每列數量、元件完整／唯一分配、未被其他子批／庫房占用、Action／ReturnType／NodeID、產品／路由；產生並保留批號，執行 `BR_Manual_LotSplit_Component` 對應的 Lot、Component、Temp、報工、庫存、派工及歷程副作用。不要信任 DEV 預覽號、localStorage 或瀏覽器提交的 SplitType=1。
 - [ ] 逐層追查 Core helper 對其他表的讀寫，並處理 BR 模式成功後 TransferLot、SEMI_Wafer `S_BatchID`／`LC_CI` 的後續轉站。若不能與拆批同一交易，提供可觀察且冪等的第二階段，避免已拆成功後重按 Confirm。WP208 不呼叫 WP207 的 THEIL `UPD_SplitLot`，不可把兩者誤併成同一輸入／SAP 規格。
+
+## WIP WP209 分批處理_等級家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP209 規格](docs/modules/WIP/分批處理_等級.md) 與 `docs/DATABASE_CONNECTION.md` WP209 段落。公司端 Vue `web/src/components/WipLotSplitBin.vue` 只供 DEV 假資料；正式版需保留原 WinForms 的母批／子批／Bin 三區、Count／Qty、Include Mother、路由／產品與靜電箱行為，不能讀 localStorage 當 MES 資料。
+- [ ] `TBLWIPSPLITCONTENT_BIN` 已由公司端 Oracle MESTEST 唯讀取得 source DDL、index DDL、metadata，檔案為 `database/reference/mestest_wip_wp209_source_ddl.sql`、`mestest_wip_wp209_source_indexes.sql`、`mestest_wip_wp209_metadata.txt`；PG CREATE-only 為 `mestest_wip_wp209_create.sql`。來源 22 欄、單欄 PK `TOLOTSERIAL`，無 FK／trigger／其他 index。先核對 YMES PostgreSQL live schema／migration history，僅在確實缺表時新增 forward migration；其他 23 張已知直接依賴表沿用既有 refs，不重建。
+- [ ] `TBLWIPSORTERBINDATA` 目前在公司 MESTEST `ALL_TABLES`／`ALL_SYNONYMS`／`ALL_OBJECTS` 查無。Core 的 LED_PKG 分支使用此表；取得正確 Oracle schema／環境或 vendor DDL 後才補 source／PG CREATE，不能由 Core 使用欄位臆造 migration。正式 LED 分支在 DDL 與副作用確認前保持未交付，並明確回應不可用。
+- [ ] 建登入保護的指定 Lot、GoodBinState、SysBin、Product／Routing 查詢。重現 WinForms Status `0|1|4`、LotState=1、HaveLevel=1、非 Partial／Stocker 與有 GoodBinState 守門。Bin 目錄依 `BinOrder, BinNo` 動態返回，不能固定 DEV 三 Bin。路由、產品及 `IC_FT_PKG`／`AllowLotProductChange` 由可信 server 讀取。
+- [ ] 拆批 POST 在交易內鎖定並重讀 LotStamp、GoodBinState、庫存、序號及每個 Bin 餘量。驗證每子批 Qty 等於 Bin 分配、全子批等於 CurQty、每 Bin 不超量且總分配與來源相等、非負及精度、Action／ReturnType／NodeID、產品／流程權限。序號以 server 原子保留，拒絕舊預覽號／重複提交；BR／Inventory／Electricbox 模式只接受可信 server 上下文。
+- [ ] 移植 `BR_Manual_LotSplit_Bin` 的 Lot、GoodBin、Temp、庫存、報工、派工、載具／靜電箱與歷程副作用，逐層追查 Core helper 的額外共用表。BR 宿主成功後的 TransferLot、`BindByMLotNo` 複製載具明細須有同交易或可恢復且冪等的階段結果。正式 PostgreSQL/API/部署與驗收仍由家用端負責；公司端未連 PostgreSQL、未建立 migration/API、未執行 build/test/browser。
