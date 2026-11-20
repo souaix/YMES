@@ -8,7 +8,8 @@
 - [x] [WP403 外包回貨](docs/modules/WIP/外包回貨.md) 已依兩份 Form、Service 與 Core 做 DEV 分批回貨，補兩張 Oracle 直接表及 CREATE-only。
 - [x] [WP404 取消外包出貨 ERP](docs/modules/WIP/取消外包出貨ERP.md) 已完成公司端 DEV 守門與臨時外包模擬回復，正式 ERP／Reverse 交家用端。
 - [x] [WP901 回復處理](docs/modules/WIP/回復處理.md) 完成 Vue DEV 歷程、回復守門和 API/CREATE-only 交接。Oracle 原始 DDL 回 ORA-03135，三張補表以唯讀 metadata 核對。
-- [ ] 依選單清冊接 WP902 刪除已下線生產批。
+- [x] [WP902 刪除已下線生產批](docs/modules/WIP/刪除已下線生產批.md) 完成雙 Grid、刪除確認、DEV 守門與五張表的 metadata／CREATE-only。
+- [ ] 依選單清冊接 WP903 批次刪除已下線生產批。
 
 ## 2026-11-20 桌機再接手：從 WP401 開始
 
