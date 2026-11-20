@@ -1585,4 +1585,37 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 與 WP303 共用假 log localStorage。沿用 `TBLWIPEQPCONSUMELOG` 已完成 Oracle DDL、metadata 與 CREATE-only；本功能沒有新表，不重複查 DDL／產 SQL。
 - [x] 規格、索引、DB 記錄、handoff/TODO 已更新；指出來源可無篩選全表查詢，正式 API 需登入保護、參數化、分頁及權限範圍。
 - [x] 未查 Oracle 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL、未修改 API、未執行 build/test/browser。
-- [ ] 接續 WP305「設備線上點檢」，核對自己的 WinForms／Service/Core；若有缺少的 Oracle DDL，使用本機 PowerShell 5.1 + 受保護 profile 唯讀查字典。
+- [x] WP305「設備線上點檢」已核對 WinForms／Service/Core、六張 Oracle source DDL、索引/欄位 metadata，完成 Vue DEV、Create-only 與家用 API handoff；詳下節。
+
+## WP305 設備線上點檢已完成公司端 DEV（FunctionKey WP305，2026-11-20）
+
+- [x] 依 `frmEQPCheckQCList`、`wsEQP/wsWIP`、`clsWIP`、`clsLot` 核對設備/點檢表載入、QCType 判定、部分存檔、候檢/補驗、Task status 及 NG 設備狀態/下機副作用。
+- [x] Vue DEV 路徑 `/YMES/WIP/EquipmentOnlineQC`，掛入 WIP → 設備與載具 → 設備線上點檢；涵蓋設備 lookup、Wait QC、Re QC、四種 QCType、D01-D10、Confirm/Close 與稽核欄位。假資料存 `ymes.dev.wp305-equipment-online-qc.v1`。
+- [x] PowerShell 5.1 + 受保護 Oracle profile 直連 MESTEST，查出 Log、Detail、Task 及三張狀態/下機副作用表的 DBMS_METADATA DDL、欄位/約束/索引/trigger metadata；新增 source/index DDL、metadata 與 PostgreSQL CREATE-only。
+- [x] 完成 `docs/modules/WIP/設備線上點檢.md`、模組索引、連線查詢紀錄、handoff 及 home/office TODO。WP305 fake NG 不直接改設備/WIP 狀態；正式端須接 WP201/WP204 下機交易。
+- [x] 未讀 Oracle 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL、未實作 API/migration/deploy，未執行 build/test/browser。
+- [x] WP306「設備點檢歷程」已依 WinForms／Service／Core 完成 DEV 查詢與規格，沿用 WP305 Log/Detail；不新增 Oracle 表。
+- [x] WP307「設備狀態監控_區域」已依 WP_AreaShow、LoginLogout、OperatorState、OperatorLog 及 wsSMD/clsWIP 完成 DEV 登入登出與狀態／歷史篩選；State/History 的 ShiftNo、UserNo `...` lookup 對應 `LoadShiftBasis(IssueState=2)`、`LoadUserSecurity(IssueState=2)`，選取時會自動啟用篩選；沿用 SD108 畫布並保留兩種 Function 的操作差異。
+- [x] WP307 使用受保護 Oracle profile 只讀查 TBLSMDAREARELATION、TBLWIPAREAOPERATORSTATE、TBLWIPAREAOPERATORLOG DDL/metadata。TBLSMDAREARELATION 沿用已存在的 source/Create reference；新增兩張 WIP 表的 source DDL、metadata 與 PostgreSQL CREATE-only，未查 business rows、未連 YMES PostgreSQL、未執行 DDL/DML、build/test/browser。
+- [x] WP305–WP307 及後續至 WP207 的 staged bundle 已逐檔核對並同步至 `D:\YMes` 工作樹；七個原有差異檔先備份並核實 SHA256，六個完全相同檔略過，未重置既有 WP305 修改。備份在 `D:\iMES\CSiMES\ymestage\wp207_sync_backup_20261120`。
+- [ ] 同步後的 YMES 工作樹仍待 commit/push；完成靜態差異檢查後建立 GitHub 檢查點。未執行 build/test/browser；下一個公司端功能是 WP208。
+- [x] WP203「過帳設備設定（EQP FAVORITE SETUP）」已核對 `frmEquipmentFavorite`/`frmEquipmentFavoriteDef`、`wsEQP`、`clsEQPBasis`。DEV 頁有 Host 收藏頁 CRUD/複製、設備類別篩選、設備雙 Grid、15 台上限、重名取代及部分刪除呈現；規格與家用端 API handoff 已完成。`TBLEQPFAVORITE` DDL/CREATE-only 沿用 WP204，不重複查表或產 SQL。
+- [x] WP103「列印流程卡（RUN CARD）」依 `frmBRRunCard_General`、`wsWIP`、`clsLot`、`wsPRD`、`clsProduct`、`wsRPT`、`wsSYS` 完成 source trace、DEV 假資料頁與 API/報表 handoff。Preview 多 Lot，包含 Current Process/Current PS/All、Include Log；RunCardStyle 0 預覽及只列印作用列；非 0 的 Product Map 精確／`*` fallback 已交由家用端移植 renderer。WP103 無新專用表；未新增 DDL。
+- [x] Vue DEV `/YMES/WIP/RunCard` 在 Form_Load 不自動查詢；查詢條件、lookups、Status 0/1/4、LotState 過濾／排序、印表機假選擇、報表預覽、ShippingNO inert button 均記錄於 `docs/modules/WIP/列印流程卡.md`。只使用假 lot/報表資料；未執行 build/test/browser，未連 YMES PostgreSQL。
+- [x] WP113「LOT SHEET PRINT」獨立於 WP103；已依 `Customer/Production/MESWin/WIP/WP_BRRunCard_General_THEIL_BU1`、`Customer/Production/wsTHEIL/wsWIP/wsWIP_Runcard.cs`、`Customer/Production/MEStc_THEIL/tcWIP/clsRuncard.cs` 完成 source trace、DEV 假資料畫面與 handoff。來源差異、查詢/流程/報表/列印規則見 `docs/modules/WIP/LOT_SHEET_PRINT.md`。重用既有 `TBLWIPLOTPROPERTY` 與 `XX_TBLLOTMARITX_THEIL_BU1`，不新增 DDL；未執行 build/test/browser，未連 YMES PostgreSQL。
+- [x] WP104「使用者登入作業（上工）」依 `STD/MESWin/WIP/WP_OperatorClockIn`、`wsUSR`、`wsOP`、`wsWIP_OperatorState`、`clsOperatorState` 完成 source trace、DEV 假資料畫面與 API handoff。Oracle MESTEST 只讀查得新表 `TBLWIPOPERATORSTATE`、`TBLWIPOPERATORLOG` 的 DDL、欄位、PK/index、trigger metadata；無 FK/trigger/非 PK index。source/metadata/CREATE-only 見 `database/reference/mestest_wip_wp104_*`。LotLoginState 重用 WP305 reference；未連 PG、未執行 build/test/browser。
+- [x] WP105「使用者登出作業（下工）」依 `STD/MESWin/WIP/WP_OperatorClockOut`、`wsUSR`、`wsWIP_OperatorState`、`clsOperatorState` 完成 source trace、DEV 假資料批次選取/逐筆登出及 API handoff。重用 WP104 OperatorState／OperatorLog 與 WP305 LotLoginState；無新 Oracle table/DDL。未連 PG、未執行 build/test/browser。
+- [x] 核對 `WP_OperatorOnline` 是 BR 報工多處呼叫的共用查詢／登出對話框，並非獨立選單頁；暫不複製成獨立路由，後續按其宿主報工功能整合。
+- [x] `WP_LotOperatorClockIn` 已核對 WinForms／Service／Core，完成 Lot status／clock status／PS／OP 查詢、Grid 預設全選、員工密碼/班別與按 mode/place 彙整的 Vue DEV 假頁和規格。重用 WP104/WP305 table references，沒有新 DDL。
+- [x] `WP_LotOperatorClockOut` 已核對 WinForms／Service／Core，完成固定已上工查詢、可選員工篩選、UserNo+LoginPlace 同步勾選、批次去重及假下工頁。重用 WP104/WP305 references，沒有新 DDL。
+- [ ] `WP_LotOperatorClockIn` 的正式 FunctionNo/FunctionKey 尚未從可用 WinForms 原始碼確認；目前 fallback FunctionNo `LOT OPERATOR CLOCKIN` 只由 Form 標題推導。正式整合前應核對 menu metadata。
+- [ ] `WP_LotOperatorClockOut` 的正式 FunctionNo/FunctionKey 尚未從可用 WinForms 原始碼確認；目前 fallback FunctionNo `LOT OPERATOR CLOCKOUT` 只由 Form 標題推導。正式整合前應核對 menu metadata。
+- [x] `WP_OperatorLogin` OP／Area 人員登入登出已依 Form、`wsUSR`、`wsOP/wsSMD`、`clsWorkTime` 完成 Vue DEV、路由與規格；WorkDay 班別預設、±1日、LoginSerial、Server time/WorkingHour 均已記錄。MESTEST 直連只讀查 `TBLUSROPERATORLOGINSTATE`、`TBLUSROPERATORLOGINLOG`，跨所有可見 Owner/Synonym 仍找不到；保留 NOT FOUND 證據，不推測 DDL/CREATE。
+- [x] `WP_OperatorLogin_Lot` 已依 Form、Service、Core 完成 CallType=MenuItem 的 Lot mode 5 DEV 頁；規格記錄 CallType 1/2/3 BR 呼叫差異、時間區間、Queue/Running 與 LotLoginState/OperatorState 副作用。重用 WP104/WP305 tables，無新 DDL。
+- [ ] `WP_OperatorLogin` 正式 API/schema 前，需要正確 Oracle MESTEST/來源環境的 `TBLUSROPERATORLOGINSTATE` 和 `TBLUSROPERATORLOGINLOG` DDL；目前受保護連線在所有可見 Owner/Synonym 查不到，Create SQL 不可臆造。
+- [ ] `WP_OperatorLogin`、`WP_OperatorLogin_Lot` 正式 FunctionNo/FunctionKey 尚須由可靠 menu metadata 核實；目前 DEV fallback 由 Form title 推導。
+- [x] 核對 `WP_OperatorOnline` 是 BR 報工共用 popup，沿其實際呼叫端整理為宿主流程需求，不另建錯誤的單獨選單頁。
+- [x] WP205「生產批選用生產設備」依 WinForms／Service／Core 完成 Vue DEV 假頁、WIP 三層選單路由及規格；Lot status=1／OPStatus=1、設備 AllowExecute、容量與 LoadPort 選擇、多設備限制、LotStamp 交易守門均已記錄。重用 WP101／WP201／WP204 共用表，無新 Oracle DDL／CREATE SQL；未連 YMES PostgreSQL、未實作 API、未執行 build/test/browser。
+- [x] WP206「計數不良原因收集」依 frmIPQC／frmABPosition、wsOP／wsWIP、clsOpBasis／clsLot 完成 Vue DEV、路由與規格；四張 Oracle DDL／metadata 已直連唯讀取得。`TBLWIPCONT_ABNORMAL` 無 PK，保留原唯一性；新增三張 CREATE-only，TBLOPABNORMAL 重用既有 Operation/System SQL。未查業務資料、未連 PostgreSQL、未實作 API、未執行 build/test/browser。
+- [x] WP207「分批處理」已對照 THEIL WinForms、標準 wsWIP／clsLot 及 THEIL 後續更新，完成 WIP → 生產報工選單、Vue DEV Count／Qty 草稿／四組數量驗證、路由／產品選擇與規格。MESTEST 唯讀取得六張缺少 reference 的表 DDL／metadata，新增 PostgreSQL CREATE-only；`TBLWIPCONT_EMPLOYEE` 無 PK/unique index。標準拆批成功後客製更新另行提交的部分成功風險已交接。未查業務列、未連 PostgreSQL、未實作正式 API、未執行 build/test/browser。
+- [ ] 下一步追 WP208「分批處理_元件」（FunctionNo `LOT SPLIT_COMP`，Form `frmBR_LC_Split_GEN`，DLL `BR_LC_Split_GEN.dll`）：對照 WinForms／Service／Core，核實與 WP207 共用及元件專用表，再補 Vue DEV、缺失 Oracle DDL／CREATE-only、規格與家用端 handoff。

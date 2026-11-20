@@ -63,6 +63,21 @@ import WipCarrierState from './components/WipCarrierState.vue'
 import WipCarrierManagement from './components/WipCarrierManagement.vue'
 import WipEquipmentConsumeStatus from './components/WipEquipmentConsumeStatus.vue'
 import WipEquipmentConsumeStatusLog from './components/WipEquipmentConsumeStatusLog.vue'
+import WipEquipmentOnlineQc from './components/WipEquipmentOnlineQc.vue'
+import WipEquipmentQcListLog from './components/WipEquipmentQcListLog.vue'
+import WipRunCard from './components/WipRunCard.vue'
+import WipLotSheetPrint from './components/WipLotSheetPrint.vue'
+import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
+import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
+import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
+import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
+import WipOperatorLogin from './components/WipOperatorLogin.vue'
+import WipOperatorLoginLot from './components/WipOperatorLoginLot.vue'
+import WipLotChoiceEquipment from './components/WipLotChoiceEquipment.vue'
+import WipIpqc from './components/WipIpqc.vue'
+import WipLotSplit from './components/WipLotSplit.vue'
+import WipAreaShow from './components/AreaShowMaster.vue'
+import WipEquipmentFavorite from './components/WipEquipmentFavorite.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
 import SemiInventory from './components/SemiInventory.vue'
 import PackingMOLine from './components/PackingMOLine.vue'
@@ -460,6 +475,12 @@ const fallbackMenuTree: MenuNode[] = [
   },
   { id: 'module:WIP', label: '在製品管理', shortLabel: '製', moduleNo: 'WIP', children: [{
     id: 'menu:WIP:IN PROCESS', label: '在製品', shortLabel: '製', children: [
+      { id: 'function:WIP:OPERATOR LOGIN', label: '作業員登入／登出（OP／Area）', tableName: 'tblusroperatorloginstate', shortLabel: 'OP登入', functionNo: 'OPERATOR LOGIN', moduleNo: 'WIP' },
+      { id: 'function:WIP:OPERATOR LOGIN_LOT', label: '生產批作業員登入／登出', tableName: 'tblwiplotloginstate', shortLabel: 'Lot登入', functionNo: 'OPERATOR LOGIN_LOT', moduleNo: 'WIP' },
+      { id: 'function:WIP:OPERATOR CLOCKIN', label: '使用者登入作業（上工）', tableName: 'tblwipoperatorstate', shortLabel: '上工', functionNo: 'OPERATOR CLOCKIN', moduleNo: 'WIP' },
+      { id: 'function:WIP:OPERATOR CLOCKOUT', label: '使用者登出作業（下工）', tableName: 'tblwipoperatorstate', shortLabel: '下工', functionNo: 'OPERATOR CLOCKOUT', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT OPERATOR CLOCKIN', label: '批次作業員上工', tableName: 'tblwipoperatorstate', shortLabel: '批次上工', functionNo: 'LOT OPERATOR CLOCKIN', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT OPERATOR CLOCKOUT', label: '批次作業員下工', tableName: 'tblwipoperatorstate', shortLabel: '批次下工', functionNo: 'LOT OPERATOR CLOCKOUT', moduleNo: 'WIP' },
       { id: 'function:WIP:CREATE LOT', label: '生產批開立', tableName: 'tblwiplotbasis', shortLabel: '批', functionNo: 'CREATE LOT', moduleNo: 'WIP' },
       { id: 'function:WIP:CREATE LOT_BATCH', label: '生產批開立_批次', tableName: 'tblwiplotbasis', shortLabel: '批次', functionNo: 'CREATE LOT_BATCH', moduleNo: 'WIP' },
     ],
@@ -468,6 +489,9 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:EXECUTE LOT', label: '生產批執行', tableName: 'tblwiplotstate', shortLabel: '執', functionNo: 'EXECUTE LOT', moduleNo: 'WIP' },
       { id: 'function:WIP:EXECUTE LOT_COMP', label: '生產批執行_元件', tableName: 'tblwipcomponentstate', shortLabel: '元', functionNo: 'EXECUTE LOT_COMP', moduleNo: 'WIP' },
       { id: 'function:WIP:EXECUTE LOT_EQP', label: '生產批執行_設備', tableName: 'tbleqpfavorite', shortLabel: '設備', functionNo: 'EXECUTE LOT_EQP', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT CHOICE EQP', label: '生產批選用生產設備', tableName: 'tblwiplotstate', shortLabel: '選機', functionNo: 'LOT CHOICE EQP', moduleNo: 'WIP' },
+      { id: 'function:WIP:IPQC', label: '計數不良原因收集', tableName: 'tblwipcont_abnormal', shortLabel: '不良', functionNo: 'IPQC', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT SPLIT', label: '分批處理', tableName: 'tblwiplotstate', shortLabel: '分批', functionNo: 'LOT SPLIT', moduleNo: 'WIP' },
     ],
   }, {
     id: 'menu:WIP:EQUIPMENT AND CARRIER', label: '設備與載具', shortLabel: '設備', children: [
@@ -493,11 +517,20 @@ const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
 const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
+  'function:WIP:OPERATOR LOGIN': appBasePath + '/WIP/OperatorLogin',
+  'function:WIP:OPERATOR LOGIN_LOT': appBasePath + '/WIP/OperatorLoginLot',
+  'function:WIP:OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
+  'function:WIP:OPERATOR CLOCKOUT': appBasePath + '/WIP/OperatorClockOut',
+  'function:WIP:LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
+  'function:WIP:LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
   'function:WIP:CREATE LOT_BATCH': appBasePath + '/WIP/LotBasisBatch',
   'function:WIP:EXECUTE LOT': appBasePath + '/WIP/LotExecution',
   'function:WIP:EXECUTE LOT_COMP': appBasePath + '/WIP/LotExecutionByComponent',
   'function:WIP:EXECUTE LOT_EQP': appBasePath + '/WIP/EquipmentLotState',
+  'function:WIP:LOT CHOICE EQP': appBasePath + '/WIP/LotChoiceEquipment',
+  'function:WIP:IPQC': appBasePath + '/WIP/IPQC',
+  'function:WIP:LOT SPLIT': appBasePath + '/WIP/LotSplit',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
   'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
   'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
@@ -661,8 +694,21 @@ const menuRoutes: Record<string, string> = {
 }
 
 const functionRoutes: Record<string, string> = {
+  'OPERATOR LOGIN': appBasePath + '/WIP/OperatorLogin',
+  'OPERATOR LOGIN_LOT': appBasePath + '/WIP/OperatorLoginLot',
+  'OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
+  'OPERATOR CLOCKOUT': appBasePath + '/WIP/OperatorClockOut',
+  'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
+  'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
+  'LOT SPLIT': appBasePath + '/WIP/LotSplit',
+  'RUN CARD': appBasePath + '/WIP/RunCard',
+  'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
+  'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'CARRIER STATE': appBasePath + '/WIP/CarrierState',
   'CARRIER MANAGEMENT COMP': appBasePath + '/WIP/CarrierManagement',
+  'EQP QCLIST ONLINE CHECK': appBasePath + '/WIP/EquipmentOnlineQC',
+  'EQP QCLIST LOG': appBasePath + '/WIP/EquipmentQcListLog',
+  'PRODUCTION STATE BY AREA': appBasePath + '/WIP/AreaShow',
   'BROKER BASIS': brokerBasisRoute,
   'FORWARDER BASIS': forwarderBasisRoute,
   'TAKER BASIS': takerBasisRoute,
@@ -816,10 +862,25 @@ const isWipLotBasisCreatePage = computed(() => activeMasterKey.value === 'functi
 const isWipLotBasisBatchPage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT_BATCH')
 const isWipLotExecutionPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT')
 const isWipLotExecutionByComponentPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_COMP')
+const isWipLotChoiceEquipmentPage = computed(() => activeMasterKey.value === 'function:WIP:LOT CHOICE EQP')
+const isWipIpqcPage = computed(() => activeMasterKey.value === 'function:WIP:IPQC')
+const isWipLotSplitPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SPLIT')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
 const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
 const isWipEquipmentConsumeStatusLogPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS LOG')
+const isWipEquipmentOnlineQcPage = computed(() => activeMasterKey.value === 'function:WIP:EQP QCLIST ONLINE CHECK')
+const isWipEquipmentQcListLogPage = computed(() => activeMasterKey.value === 'function:WIP:EQP QCLIST LOG')
+const isWipAreaShowPage = computed(() => activeMasterKey.value === 'function:WIP:PRODUCTION STATE BY AREA')
+const isWipEquipmentFavoritePage = computed(() => activeMasterKey.value === 'function:WIP:EQP FAVORITE SETUP')
+const isWipRunCardPage = computed(() => activeMasterKey.value === 'function:WIP:RUN CARD')
+const isWipLotSheetPrintPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SHEET PRINT')
+const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN')
+const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
+const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
+const isWipOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKOUT')
+const isWipLotOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKIN')
+const isWipLotOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKOUT')
 const isWipCarrierStatePage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER STATE')
 const isWipCarrierManagementPage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER MANAGEMENT COMP')
 const isWipFgdInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:FGD INV')
@@ -2417,10 +2478,25 @@ async function signOut(): Promise<void> {
         <WipLotBasisBatch v-else-if="isWipLotBasisBatchPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotExecution v-else-if="isWipLotExecutionPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotExecutionByComponent v-else-if="isWipLotExecutionByComponentPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotChoiceEquipment v-else-if="isWipLotChoiceEquipmentPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipIpqc v-else-if="isWipIpqcPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotSplit v-else-if="isWipLotSplitPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatusLog v-else-if="isWipEquipmentConsumeStatusLogPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentOnlineQc v-else-if="isWipEquipmentOnlineQcPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentQcListLog v-else-if="isWipEquipmentQcListLogPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipAreaShow v-else-if="isWipAreaShowPage" class="framework-content" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :current-user-no="currentUser?.userNo || ''" :enterprise-no="currentUser?.enterpriseNo || ''" :development-preview="isDevelopmentPreview" :work-area-mode="true" @close="navigateHome" />
+        <WipRunCard v-else-if="isWipRunCardPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotSheetPrint v-else-if="isWipLotSheetPrintPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorClockOut v-else-if="isWipOperatorClockOutPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipCarrierState v-else-if="isWipCarrierStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipCarrierManagement v-else-if="isWipCarrierManagementPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipInventory v-else-if="isWipInventoryPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />

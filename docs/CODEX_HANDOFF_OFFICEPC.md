@@ -1,6 +1,6 @@
 # Codex handoff：公司筆電 → 桌電
 
-更新：2026-11-19。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
+更新：2026-11-20。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
 ## 接手方式
 
@@ -28,6 +28,17 @@
 ## 目前檢查點與下一步
 
 - 公司端已接續 OE101、OE102、OE201 至 OE209、OEB01、OEP01 的 DEV 訂單與工單操作。各功能及 Oracle DDL／API 交接見模組索引。WP101、WP102、WP201、WP202、WP204、WP301、WP302、WP601、WP603、WP604、WP605、WP629 已完成公司端 DEV 與家用端 handoff；後續工作依 `todolist_officepc.md` 及 MES menu inventory 接續。
+- **2026-11-20 WIP 接續檢查點：WP305–WP307 及 WP203／WP103／WP113／WP104／WP105／WP205–WP207 的公司端 DEV/spec/handoff 已同步至 `D:\YMes` 工作樹。** 同步前逐檔比對、於 `D:\iMES\CSiMES\ymestage\wp207_sync_backup_20261120` 備份七個有差異的既有檔案並核實 SHA256；新增檔與既有 WP305 未提交檔均已保留。WP307 的 State/History ShiftNo／UserNo lookup 與正式 API contract 已列於規格與 `todolist_homepc.md`。
+- Oracle 僅以受保護 MESTEST profile 讀取 WP307、WP206、WP207 等結構字典，未查業務資料、未執行 DDL/DML。source DDL、metadata、CREATE-only 與兩端 TODO 均在工作樹。公司端仍未連 YMES PostgreSQL、未實作 Production API/migration，也未執行 build/test/browser。接續 WP208「分批處理_元件」。
+- **WP203「過帳設備設定」（`EQP FAVORITE SETUP`）公司端 DEV 與 handoff 已完成。** 原始來源為 `STD/MESWin/WIP/WP_EquipmentFavorite/frmEquipmentFavorite.vb`、`frmEquipmentFavoriteDef.vb`、`STD/MESws_STD/wsSTD/wsEQP/wsEQP.cs`、`STD/MESkc/kcEQP/clsEQPBasis.cs`。重用 WP204 的 `TBLEQPFAVORITE` source DDL/CREATE-only；沒有新增 Oracle table。HostId 是 workstation-scoped，Production API 不得信任瀏覽器傳值。
+- **WP103「列印流程卡（RUN CARD）」公司端 DEV 與 handoff 已完成**，規格為 `docs/modules/WIP/列印流程卡.md`，FunctionKey `WP103` 路徑 `/YMES/WIP/RunCard`。來源 Form/Service/Core 和 RunCardStyle 0/非 0、Lot 查詢、RunCard Log、Net Flow、Runcard template／Product RunCardMap 分支均已記錄。無新增專用表／DDL；DEV Preview 使用假 lot/流程，Print 不送出實體工作。Production API、PDF renderer、ProductMap/PD_Kit 移植與 PostgreSQL live schema 核對交家用端依 `todolist_homepc.md` 執行。
+- **WP113「LOT SHEET PRINT」THEIL 專用頁已完成公司端 source trace、DEV 假資料頁與 API handoff**，規格 `docs/modules/WIP/LOT_SHEET_PRINT.md`，路徑 `/YMES/WIP/LotSheetPrint`。來源為 THEIL WinForms/Service/Core 與 ActiveReports；假資料包含 MO/建立日期篩選、Current/Original Process、Lot Sheet/Empty Version 預覽及不連印表機的 Print 模擬。重用既有 Lot Property 與 THEIL Matrix，無新增表／DDL。Production 查詢、報表 renderer 與 print count 原子更新交家用端依 `todolist_homepc.md` 執行。
+- **WP104「使用者登入作業（上工）」公司端 DEV 與 source/API handoff 已完成**，規格 `docs/modules/WIP/使用者登入作業_上工.md`，路徑 `/YMES/WIP/OperatorClockIn`。已依 WinForms、wsUSR/wsOP/wsWIP_OperatorState、clsOperatorState 實作假員工、班別、OP mode、LoginPlace 與 auto-clockout 確認。Oracle 只讀新查 `TBLWIPOPERATORSTATE` 和 `TBLWIPOPERATORLOG`，DDL／metadata／CREATE-only 在 `database/reference/mestest_wip_wp104_*`；重用 WP305 的 LotLoginState。Production credential verification、交易及 live PG schema 核對交家用端依 `todolist_homepc.md` 執行。
+- **WP105「使用者登出作業（下工）」公司端 DEV 與 source/API handoff 已完成**，規格 `docs/modules/WIP/使用者登出作業_下工.md`，路徑 `/YMES/WIP/OperatorClockOut`。依 WinForms/Service/Core 模擬員工驗證、現況篩選、預設全選與逐列下工；沿用 WP104 OperatorState／OperatorLog 和 WP305 LotLoginState。沒有新增 Oracle 表或 DDL；Production API 與 PostgreSQL live schema 核對交家用端。
+- **Lot Operator Clockin 批次上工 DEV 與規格已完成**，見 `docs/modules/WIP/批次作業員上工.md`，路徑 `/YMES/WIP/LotOperatorClockIn`。頁面依 LotStatus/ClockStatus/PS/OP 查詢候選 Lot，預設全選，按 mode/location 去重後一次模擬批次上工，並與 WP104/WP105 共用假 OperatorState。沿用 WP104/WP305 Oracle references，無新 DDL。WinForms 來源只暴露 `PrivFunNo`，FunctionKey 未核實；fallback FunctionNo 是標題推導值，上游 menu metadata 待確認。
+- **Lot Operator ClockOut 批次下工 DEV 與規格已完成**，見 `docs/modules/WIP/批次作業員下工.md`，路徑 `/YMES/WIP/LotOperatorClockOut`。頁面依預設 ClockStatus=Clocked In 查詢、可選員工篩選、同步勾選同 UserNo+LoginPlace rows，按來源批次去重模擬下工；共用 WP104/WP105 假狀態／歷程，沿用 WP104/WP305 refs，無新 DDL。FunctionKey 未核實，正式路由待 menu metadata 確認。
+- **作業員 OP／Area 登入登出 DEV 與規格已完成**，見 `docs/modules/WIP/作業員登入登出_OPArea.md`，路徑 `/YMES/WIP/OperatorLogin`。來源使用 `TBLUSROPERATORLOGINSTATE`、`TBLUSROPERATORLOGINLOG`，但公司端 MESTEST 所有可見 Owner/Synonym 查無這兩表；未製作推測 CREATE，家用端應先核 live PG schema，並取得正確 Oracle DDL 再決定 migration。
+- **OPERATOR LOGIN_LOT 生產批人員登入登出 DEV 與規格已完成**，見 `docs/modules/WIP/生產批作業員登入登出.md`，路徑 `/YMES/WIP/OperatorLoginLot`。DEV 呈現 CallType=MenuItem，規格涵蓋 BR 呼叫端 1/2/3；共用 WP104 OperatorState/Log 與 WP305 LotLoginState，沒有新表／DDL。正式 FunctionKey 待 menu metadata 核實。
 - WP301 設備上料已核對 `frmEQPMaterialLoading`／`wsWIP_Material`／`clsMaterialHandler`，完成物料、元件、半成品模式的 DEV 假資料頁。四張相依表 DDL／CREATE-only 在 `database/reference/mestest_wip_wp301_*`；其餘 13 張沿用既有 reference。未連 YMES PostgreSQL、未實作 Production API／migration。
 - WP302 載具現況管理已核對 `frmCarrierState`／`wsEQP`／`wsWIP`／`wsINV`／`clsCarrierBasis`，完成 Vue DEV 放入、取出、清空及隱藏狀態操作。三張新查證表 DDL／metadata／CREATE-only 在 `database/reference/mestest_wip_wp302_*`；Lot／Component／CarrierType 等沿用既有 references。未連 YMES PostgreSQL、未實作 Production API／migration。
 
@@ -76,4 +87,12 @@
 
 - WP304 依 `frmEQPConsumeStatusLog`、`wsWIP.LoadEQPConsumeLog`、`wsEQP` lookup 與 `clsWIP.LoadEQPConsumeLog` 完成唯讀查詢頁；設備／耗品核取篩選、兩個 lookup、From/End Date、Query、七欄 Grid 與 Close 均已實作。頁面 `/YMES/WIP/EquipmentConsumeStatusLog`。
 - 本功能只讀 WP303 已核對的 `TBLWIPEQPCONSUMELOG`，沒有新 Oracle DDL／CREATE-only；DEV 與 WP303 共用假 log storage。
-- 下一功能接續 WP305「設備線上點檢」。公司端不連 YMES PostgreSQL、不實作 API/migration、不部署、不執行 build/test/browser。
+- WP305「設備線上點檢」已接續完成，接手摘要見下節。公司端不連 YMES PostgreSQL、不實作 API/migration、不部署、不執行 build/test/browser。
+
+## 2026-11-20 WIP WP305 接續檢查點
+
+- WP305 依 `frmEQPCheckQCList`、`wsEQP/wsWIP`、`clsWIP`、`clsLot` 完成 Vue DEV `/YMES/WIP/EquipmentOnlineQC`。規格與 DEV 差異見 `docs/modules/WIP/設備線上點檢.md`。
+- 直接唯讀 Oracle MESTEST 字典取得 6 表 DDL、indexes、欄位/constraint/trigger metadata：點檢 Log/Detail/Task、設備狀態 Log、設備上機歷程與 Lot 人員登入狀態。Source DDL/Index DDL/metadata/CREATE-only 在 `database/reference/mestest_wip_wp305_*`。`TBLWIPCONT_EQUIPMENT` 原始無 PK；不可自行補 key。
+- Vue DEV 使用 localStorage `ymes.dev.wp305-equipment-online-qc.v1`，測項涵蓋 QCType 0–3、多筆 D01-D10、Wait QC、Re QC、未完成確認及結果存檔。NG + UnValidAction 的設備狀態/生產下機副作用尚未在 DEV 寫假 DB 狀態，已明列於規格。
+- 正式 API 需保留 Header/Detail/Task 原子交易、server-side QC 結果計算、check-in 不允許部分存檔，以及失敗設備狀態變更時共用 WP201/WP204 下機 command；家用端先比對 live schema/migrations，只補缺少物件。
+- 下一功能為 WP306「設備點檢歷程」。繼續讀該 Form/Designer/Service/Core，沿用 WP305 Log/Detail references；若查到未收錄表才以公司 PowerShell 5.1 + Oracle profile 唯讀查 DDL。公司端不連 YMES PostgreSQL、不改 API/migration、不部署/執行 build/test/browser。

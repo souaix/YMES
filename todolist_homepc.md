@@ -92,6 +92,78 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 - [x] OP105：兩表20欄比對及0053備份／套用／readback完成，僅補5defaults與owner CRUD；API隔離.NET9 Release 0警告／0錯誤、16a825af0bea已啟動ready200。正式8組145HTTP／501斷言一次通過，5owner表／group ref及其他7引用表精準鍵／holder0，metadata保持、登出204。包含真OP引用鎖與padded舊member防實刪。最終Web a2已修7項peer邊界、build exit0，23:14部署1f2dff75f080（DY_b-9Fr.js／BCM0CnE5.css），9項靜態HTTP及完整資產SHA通過；GUI仍待。
 - [x] 可重建來源／發行界線已補 `DEPLOYMENT_PROFILES.md`：遠端 `/opt/ymes/checkpoints/fb22a87` 與本機checkpoint保留已部署來源；共用 `/opt/ymes/source` 尚有舊碼，不可直接預設重建退回舊版。
 
+## 新交接公司端作業員 OP／Area 登入登出（2026-11-20）
+
+- [ ] 閱讀 [OP／Area 登入登出規格](docs/modules/WIP/作業員登入登出_OPArea.md) 與 `docs/DATABASE_CONNECTION.md` 對應查詢結果。先核 YMES PostgreSQL live schema/migration 是否已含 Operator Login State/Log。
+- [ ] 公司端使用受保護 Oracle profile 對 MESTEST `ALL_TABLES`、`ALL_SYNONYMS` 查 `TBLUSROPERATORLOGINSTATE`、`TBLUSROPERATORLOGINLOG` 均查無；source DDL/Create-only 不存在。若 PG 也缺少，先取得有該兩表的正確 Oracle 環境 DDL/metadata，再建立 CREATE SQL/migration，禁止用舊 Core INSERT/UPDATE 欄位推測表結構。
+- [ ] DDL 確認後實作登入授權 User/Shift/current-state API、POST login、POST logout。Server 重查 target employee/shift/OP/Area、WorkDay ±1 與 LoginSerial 狀態，產生 serial/time，登入 State+Log 原子新增；登出按 LoginSerial 鎖定、計算 WorkingHour、原子刪 State/更新 Log。
+- [ ] 保留現場員工刷入模式，同時限制授權操作者/terminal 可代登入的範圍。Audit actor、LoginDate、LogoutDate、WorkingHour 必須由 server 產生；不可信任 browser 送入的 EmployeeName、ShiftNo、serial、時間或 audit identity。完成後補 CREATE SQL、migration/API 規格及驗收紀錄。
+
+## 新交接公司端 OPERATOR LOGIN_LOT 生產批作業員登入登出（2026-11-20）
+
+- [ ] 閱讀 [生產批作業員登入登出規格](docs/modules/WIP/生產批作業員登入登出.md)、WP104/WP105 與 WP305 references；此頁公司端完成 CallType=MenuItem DEV，BR 呼叫端差異亦已記錄。
+- [ ] 核對 YMES PostgreSQL live schema/migrations，重用 `TBLWIPOPERATORSTATE`、`TBLWIPOPERATORLOG`、`TBLWIPLOTLOGINSTATE` 對應資料；無新 Oracle table，不要新增重複 CREATE/migration。
+- [ ] 實作登入保護的 Lot mode=5 資料查詢、簽入／簽出 commands。僅允許 Lot Status 0/1；server 重查 OP MultiOperatorMode=5、使用者有效性／OP 權限及 PreOPEndTime/WIPDate、既有區間與暫存狀態；不接受 browser 指定 LoginPlace、Mode、Creator 或 server time。
+- [ ] 交易中同步 OperatorState/OperatorLog/LotLoginState 及 `funSHR_CI_EMP_ClockIn`／`funSHR_CO_EMP_ClockOut` 等價副作用。保留 Queue 或 MultiOperator 關閉時刪除 mode 5 現況的特殊下工分支，以及 BR CallType=1/2/3 的預登、批次暫存與權限行為。
+- [ ] Company DEV 僅使用假資料，沒有 PostgreSQL/API，也未執行 build/test/browser；正式 FunctionKey 尚待可靠 menu metadata 核實。
+
+## 新交接公司端 Lot Operator ClockOut 批次作業員下工（2026-11-20）
+
+- [ ] 閱讀 [批次下工規格](docs/modules/WIP/批次作業員下工.md)、WP104/WP105 與 Lot Operator Clockin 規格。本功能公司端完成 DEV 假資料，不含正式 API。
+- [ ] 核對 YMES PostgreSQL live schema/migrations；重用 OperatorState/OperatorLog 與 LotLoginState，不新增重複表。候選列查詢需沿用已存在 Lot/OP/Area/Equipment/Group/TempEquipment schema 與 APIs。
+- [ ] 實作登入授權 `GET /api/wip/lot-operator-clock-outs/lots`，固定 ClockStatus=1（LoginPlaceNo 非空），LotStatus 預設 Running=1，可接受有權範圍內 UserNo/PSNo/OPNo filter；安全分頁與穩定排序。
+- [ ] `POST /api/wip/lot-operator-clock-outs` 僅接選取 LotNo/key。Server 重查登入現況、OP mode/place、group/privilege；operator user 由資料列限定，審計操作者由登入 session 取得，LogoutDate 用 server time。交易內新增 OperatorLog、刪 OperatorState、同步 LotLoginState checkout side effect，加入鎖／冪等／競爭錯誤處理。
+- [ ] WinForms 將 CheckFlag 同步套用到同 UserNo+LoginPlaceNo 的所有列，批次組資料再呼叫一次 Service；檢查 mode/place 衝突或來源去重造成的差異。沒有新 Oracle table/DDL；公司端未連 PG、未執行 build/test/browser。
+
+## 新交接公司端 Lot Operator Clockin 批次作業員上工（2026-11-20）
+
+- [ ] 閱讀 [批次上工規格](docs/modules/WIP/批次作業員上工.md)、WP104/WP105 規格與本檔 WP104 交接。公司端完成的是 Vue DEV 假資料頁，不含正式 API。
+- [ ] 先核對 YMES PostgreSQL live schema/migrations，重用 OperatorState/OperatorLog、LotLoginState、LotState、OP、Area/Equipment、Temporary Equipment 與 User/Shift/Privilege；本功能沒有新專用表，不新增重複 migration。
+- [ ] 實作登入授權、分頁 `GET /api/wip/lot-operator-clock-ins/lots`。必須按 WinForms/Core 邏輯展開 `MultiOperatorMode`／`PartialMode` 與設備、Area、Group、TempEquipment mapping；LotStatus 預設 Running=1、ClockStatus 預設 All=0、1/2 分別判斷 LoginPlaceNo 非空/空。保留 PSNo/OPNo/LotNo 排序並限制查詢範圍。
+- [ ] 重用 WP104 員工 challenge，實作 `POST /api/wip/lot-operator-clock-ins`。request 只帶 challenge、WorkDay、選取 LotNo；server 重查所選 LotState/OP mode/place，彙整不同 location 後做 OP privilege、Shift、UserLevel、系統參數與現況檢核。
+- [ ] 以一個冪等 command/交易處理 `CLOCKIN_AUTOCLOCKOUT`、OperatorLog/OperatorState、LotLoginState 與 `funSHR_CI_EMP_ClockIn` 同等副作用；AP Server 時間由 server 產生。不可由 Vue 傳任意 OPNo、LoginPlace、MultiOperatorMode、LoginDate、UserLevel、ShiftNo 或 user identity。
+- [ ] 正式 menu 的 FunctionNo/FunctionKey 尚未核實；取得可靠 menu metadata 後再調整路由／Function ACL，不採信公司端標題推導的 fallback 值。公司端沒有執行 build/test/browser，也未連 YMES PostgreSQL。
+
+## 新交接公司端 WP105 使用者登出作業（下工）（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP105 規格](docs/modules/WIP/使用者登出作業_下工.md)、WP104 規格、`docs/DATABASE_CONNECTION.md` WP104/WP105 記錄及 Oracle references。
+- [ ] WP105 沒有新專用表。先查 YMES PostgreSQL live schema/migration history，重用 OperatorState／OperatorLog 與 LotLoginState；不可重複 CREATE。User/Shift/OP/Area/Equipment/System Parameter 沿用現有共用 schema/API。
+- [ ] 重用 WP104 員工密碼驗證 challenge。登入授權讀取只限 challenge 員工的 OperatorState；不可開放全廠現況。LogoutDate 由 server 產生，不接受 browser 時間。
+- [ ] 實作逐列 `POST /api/wip/operator-clock-outs/close`：request 只帶 challenge 與伺服器查得現況的 `(multiOperatorMode, loginPlaceNo)` key；server 重新查並鎖定目前狀態，原子新增 OperatorLog、刪除 OperatorState、同步 LotLoginState side effects。Vue 依來源逐列呼叫；失敗停止，回報先前成功及未處理列，保留來源部分成功語意。
+- [ ] 加冪等／並行防重、權限與稽核；處理狀態已被其他操作關閉、同使用者相同 place/mode PK 等錯誤。檢查 API 不接受任意 UserNo、時間或工作分鐘。
+- [ ] 公司端僅完成 DEV 假資料頁，未連 YMES PostgreSQL、未建立 migration/API，未執行 build/test/browser；家用端完成 schema/API 後更新驗收紀錄。
+
+## 新交接公司端 WP103 列印流程卡（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP103 規格](docs/modules/WIP/列印流程卡.md)、本段與 `docs/DATABASE_CONNECTION.md` 的 WP103 記錄。
+- [ ] 先核對 YMES PostgreSQL live schema／migration history 與既有 WIP Lot Basis/State、Process Node/Relation、OP、Product、Customer、RunCard Log、`tblprdRuncardMap`、User Defined Report、System Parameter 及現有 lookup API。WP103 沒有新專用表；不得重建或重複建立 CREATE-only 已涵蓋的共用表，確實缺表才補 migration。
+- [ ] 實作登入授權 `GET /api/wip/run-cards/lots`，固定預設 Status 0/1/4，服務端排除 `LotState=0`，保留 HotLot DESC、Priority、LotNo 排序；查詢欄位與參數化／分頁規則依 spec。lookup 重用 Area、Production Segment、OP、MO API。
+- [ ] 實作 `POST /api/wip/run-cards/preview`：重驗所選 Lot 的登入者可見範圍，`processScope` 對應 Core `IsAllProcess=2/1/0`，Include Log 控制歷程載入；保留一般流程與 Net Flow 的報表步驟來源、使用者定義 `Runcard` 範本與多 Lot 合併預覽。
+- [ ] RunCardStyle 由 server `wsSYS.LoadParameter` 同等設定解析，不接受 browser 自選。Style 0 產生 ActiveReports 相容 PDF；Style 非 0 先載入 `tblprdRuncardMap`，ProductNo 精確配對失敗才 fallback `*`，找不到設定需明確錯誤。確認/移植 `PD_Kit.clsPRDKit.funRunCardExecute` 與 Excel/custom map renderer；未完成時不可回傳假成功。
+- [ ] 列印文件回傳 PDF，由使用者在瀏覽器選擇本機印表機；不要讓瀏覽器傳入 server printer/path。相容 WinForms：Style 0 的 Print 僅作用列，Preview 可多選；Style 非 0 的 Print 逐筆處理選取 Lot。定義 PDF 產生錯誤、缺 Template/Map、空流程及大量 Lot 的回應。
+- [ ] Production API 完成後更新 schema/API、整合與部署證據。公司端 WP103 Vue 頁只用 DEV 固定假資料，未連 PostgreSQL、未實作 API/migration、未執行 build/test/browser。
+
+## 新交接公司端 WP113 THEIL LOT SHEET PRINT（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP113 規格](docs/modules/WIP/LOT_SHEET_PRINT.md)、本段與 `docs/DATABASE_CONNECTION.md` 的 WP113 記錄。此功能與 WP103 是獨立 WinForms Form／Service／Core／ActiveReports。
+- [ ] 先核對 YMES PostgreSQL live schema/migration 與 WP101/WP201 已有 Lot Basis/State/Property、MO、產品、流程、OP 屬性、BOM、材料、Wait/ERF disposition、使用者資料，以及 THEIL Matrix `XX_TBLLOTMARITX_THEIL_BU1`。公司端已有 Oracle source DDL／PG CREATE reference；無新專用表，不要重複 CREATE。真正缺 schema 時才查 live Oracle metadata 和做 forward migration。
+- [ ] 實作登入保護 `GET /api/wip/lot-sheet/lots`：至少需要 MO No 或 WO 建立日期區間，Start < End；伺服器依 Core 的 `LotState<>0`、HotLot DESC／Priority／LotNo 排序並分頁，不要加 WP103 的 Status 0/1/4 限制。
+- [ ] 實作 `POST /api/wip/lot-sheet/preview`：server 讀 RunCardStyle，重新授權與讀取 Lot；維持 Current/Original Process、重工步驟、Net Flow、MOState 99 RunCard Log、Style 0 同 MO 限制及 THEIL Matrix／產品屬性／BOM／處置／人員等報表資料，回傳 ActiveReports 相容 PDF。
+- [ ] 移植 THEIL Style 非 0 RunCardMap 精確配對及 `*` fallback；不可套 WP103 或讓 client 選 report style。無可用 renderer 時要明確回錯，不回空白成功 PDF。
+- [ ] 實作 Print 產檔及 `WIP_PRINT_COUNT` 更新：重用 `TBLWIPLOTPROPERTY`，依規格使用 command/idempotency key 與 transaction，處理瀏覽器無法確認實體印出的差異。不可再造 print count table。
+- [ ] 實作 `POST /api/wip/lot-sheet/empty-version`：ProductNo/Version，讀產品流程、OP Attribute、BOM、人員資料並使用 THEIL Empty Version 報表；不改 Lot、不增 Print Count。
+- [ ] 公司 DEV `/YMES/WIP/LotSheetPrint` 目前是假 Lot／假報表、localStorage 假次數，未連 API/PG，未執行 build/test/browser；家用端完成 API/schema 後更新驗收與部署紀錄。
+
+## 新交接公司端 WP104 使用者登入作業（上工）（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP104 規格](docs/modules/WIP/使用者登入作業_上工.md)、`docs/DATABASE_CONNECTION.md` 的 WP104 段與三個 Oracle reference 檔。公司端只做 Vue DEV fake UI，沒有正式 API。
+- [ ] 對照 YMES PostgreSQL live schema／migration history。Oracle source metadata 已證實 OperatorState PK `(userno,multioperatormode,loginplaceno)`、OperatorLog PK `(sid)`；CREATE-only `database/reference/mestest_wip_wp104_create.sql` 只在 live schema 缺表時改為 forward migration。LotLoginState 重用 WP305 表／reference，不重建；Employee/User/Shift/OP/OPArea/Equipment/System Parameter 沿用共用 schema/API。
+- [ ] 做登入保護 `POST /api/wip/operator-clock-ins/verify`，以 server 驗證 EmployeeNo/password，節流並遮蔽 request body log；不可將員工密碼存 browser 或寫一般 log。回傳短效 challenge 綁定員工與目前 session。`WIPChkPassword=0` 仍需 server 檢查員工/班別狀態。
+- [ ] Context/lookup API 回伺服器時間、`WIPChkPassword`、`CLOCKIN_AUTOCLOCKOUT`、Shift、有效 OP、Area/Equipment；從 Server 主檔查 mode 與使用者 OP privilege，不信任 Vue 傳入的 UserLevel/ShiftNo/登入身份。
+- [ ] `POST /api/wip/operator-clock-ins` 用 challenge、OPNo、LoginPlaceNo、WorkDay 及明確 auto-clockout confirmation。Server 重新驗證 user/shift、班別時間、UserLevel!=3、OPPRIV、LoginPlace、工作日與伺服器時間不可未來；多工 mode 0/1/2 規則見 spec，mode 5 回導 WP111，不當一般上工。
+- [ ] 一個交易內依 `CLOCKIN_AUTOCLOCKOUT` 決策，必要時結束舊 `TBLWIPOPERATORSTATE` 並新增 `TBLWIPOPERATORLOG`，新增本次 State；多人加工功能啟用時同步生成 `TBLWIPLOTLOGINSTATE`，執行 reverse/update side effects。定義鎖、冪等鍵、PK 衝突、工作日自動下工與 rollback。
+- [ ] 公司 DEV `/YMES/WIP/OperatorClockIn` 有固定假員工、密碼、班別、OP／Area／Equipment lookup 與 localStorage 假上工/下工紀錄；未呼叫 API/PG、未執行 build/test/browser。家用端整合後更新 API/schema/驗收/部署紀錄。
+
 ## 新交接公司端 WP302 載具現況管理（2026-11-20）
 
 - [ ] Pull 最新 `main`，閱讀 [WP302 規格](docs/modules/WIP/載具現況管理.md)、本段及三張 Oracle source DDL／metadata、CREATE-only reference。
@@ -2086,3 +2158,71 @@ API 工作：
 - [ ] Equipment lookup 限 IssueState=2；ConsumeNo lookup 讀全部 Equipment Type Consume Basis，不隨設備類別縮小。DTO 至少提供 EquipmentNo、ConsumeNo、ConsumeSeq、AccQty、AccPeriod、Creator、CreateDate。
 - [ ] WP304 Vue DEV 會在開頁時讀取 WP303 共用假 log localStorage；正式端改為 GET API，勿把 localStorage 假資料當成伺服器資料或授權依據。
 - [ ] 完成 API、查詢權限、分頁、空條件保護及部署紀錄後更新 TODO；接續公司端 WP305 設備線上點檢。
+
+## WIP WP305 設備線上點檢家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/WIP/設備線上點檢.md`、`docs/DATABASE_CONNECTION.md` WP305 段落，以及 `database/reference/mestest_wip_wp305_metadata.txt`。
+- [ ] WP305 Oracle source DDL、index DDL、metadata 與 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp305_source_ddl.sql`、`mestest_wip_wp305_source_indexes.sql`、`mestest_wip_wp305_metadata.txt`、`mestest_wip_wp305_create.sql`。CREATE-only 包含點檢 Log/Detail/Task 及設備狀態 Log、`TBLWIPCONT_EQUIPMENT`、`TBLWIPLOTLOGINSTATE` 三張失敗處置副作用表。先比對 YMES live schema／migration history，缺少才新增 migration；equipment-state basis、QCList Basis/Detail/Setup、Equipment、`TBLWIPTEMP_EQUIPMENT` 沿用既有 reference。
+- [ ] `TBLWIPCONT_EQUIPMENT` 在 Oracle 沒有 PK/unique index；不可在 YMES 猜測主鍵或宣告不實唯一性。三張功能 Log/Detail/Task 的 PK 依 Oracle source metadata；非唯一索引照 DDL reference 核實後再建。
+- [ ] 建登入保護的 Equipment/EquipmentType、QC List Basis/Detail、Wait QC/Re QC candidate API。Wait QC 必須遵守 QCTaskClass=1、Status=0、設備設定及報工模式 BelongDate/最近 PlanQCTime；ReQC 僅 Status=2。多候選不得無排序自動取第一筆。
+- [ ] 新增點檢使用 `POST`，修改既有 Log 使用 `PUT`；禁止 GET 寫入。Server 從 QCList Detail 重新計算 QCType 0 exact / 1 inclusive range（`*` 無界）/ 2 OK-NG / 3 text 的 item 結果與整體 QCResult，不接受瀏覽器提交的 QCResult 作權威值。保留 InputDataCount 及 D01-D10。
+- [ ] Header + Detail + 若有 QCTask 的 Status=1、QCSerialNo/任務欄位回填須同一 transaction；以唯一 Serial、task row lock/CAS、idempotency 防重複提交與補驗競態。獨立模式部分存檔可留 QCResult=-1；Check-in 呼叫必須拒絕未完成項。
+- [ ] 若 QCResult=NG 且 QCList UnValidAction 有設定，Core 會改設備狀態並寫 EquipmentStateLog。若設備原為 WIP CheckInConfirm，還會呼叫 SHR_COEquipment 結算設備上的批次、更新設備歷程、刪除 Temp Equipment、關閉 Cont Equipment、更新多人上工 LotLoginState 簽退。正式 API 必須接 WP201/WP204 共用下機交易或等價一致 transaction；不可只建立 QC Log 後遺漏設備/WIP/人員副作用，也不可允許半套提交。
+- [ ] WP305 DEV localStorage `ymes.dev.wp305-equipment-online-qc.v1` 只供假畫面及 WP306 DEV 假歷程使用；不得當作正式 API 資料、授權或 task 狀態依據。完成權限、transaction、錯誤碼與 API/migration/deploy records 後更新交接。
+
+## WIP WP306 設備點檢歷程家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 `docs/modules/WIP/設備點檢歷程.md`、WP305 規格與 `docs/DATABASE_CONNECTION.md` 的 WP305 共用表 DDL 段落。
+- [ ] WP306 沿用 WP305 已建的 `TBLWIPEQPQCLISTLOG`／`TBLWIPEQPQCLISTDETAIL`；先查 YMES PostgreSQL live schema／migration，不要重複建表。沒有新增 Oracle DDL／CREATE-only。
+- [ ] 建登入保護的唯讀查詢 API，支援 WinForms 篩選欄位與穩定分頁排序；同一 QCSerialNo 回傳點檢 Header 與所有 Detail，避免把不同檢驗序號的 detail 混在一起。
+- [ ] 限制可查詢設備範圍及最大日期/頁數；權限依使用者與 WIP 功能設定。WP306 是唯讀歷程，不透過此 API 修改 Log/Detail。
+
+## WIP WP307 設備狀態監控_區域家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP307 規格](docs/modules/WIP/設備狀態監控_區域.md)、SMD SD108/SD104 規格及 `docs/DATABASE_CONNECTION.md` WP307 段落。
+- [ ] Oracle source DDL、index DDL、metadata 與 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp307_source_ddl.sql`、`mestest_wip_wp307_source_indexes.sql`、`mestest_wip_wp307_metadata.txt`、`mestest_wip_wp307_create.sql`。`TBLSMDAREARELATION` 已在 `mestest_equipment_group_smd_*`，不要重複 migration；先核對 YMES live schema／migration history，僅建立缺少的兩張 WIP 表。
+- [ ] `TBLWIPAREAOPERATORSTATE` 的 PK 是 UserNo，表示跨全區域每位使用者最多一筆 Current 狀態；以此唯一性防止同一使用者同時登入多區。`TBLWIPAREAOPERATORLOG` 在 Oracle 無 PK/index，不能為方便而加入虛構的 source unique key/index。
+- [ ] 實作登入保護、WIP307/IMESTECH 功能授權與參數化 API：eligible 檢查目前班別、AreaOperator、UserShift 時段及既有登入，回傳全部目前合格 ShiftNo 並保持來源順序；伺服器要處理跨午夜班別，並自行產生 LoginTime。
+- [ ] 實作 GET `/api/wip/areas/{areaNo}/operators/filter-options?departmentNo=`，回傳該部門 IssueState=2 班別（ShiftNo、ShiftName、FromTime、ToTime）與使用者（UserNo、UserName），供 State/History 的 ShiftNo/UserNo `...` 查找；使用者清單不可縮限為 AreaOperator 排班名單。
+- [ ] Login POST 在交易內重新驗證當下排班後插入 Current。Logout POST 鎖定 UserNo Current row、核對 area，從 AreaShift 取得 ExceptionTime，原子刪除 Current 並新增 History，LogoutTime 由伺服器產生；使用者不得傳入任意 ExceptionTime。
+- [ ] 提供 State/History 篩選 GET，欄位、可選核取條件與日期分頁見規格。WinForms Core 的 State 日期界值為嚴格 `>`/`<`；若改成含界值，需明確記錄相對來源行為的 API 決策。結果採穩定排序、權限範圍及安全分頁。
+- [ ] DEV localStorage `ymes-dev-mock:wip-area-operator-state:v1`、`ymes-dev-mock:wip-area-operator-log:v1` 只用於公司端畫面互動，正式 API 不得讀取或信任瀏覽器假資料。Migration/API transaction、權限與部署紀錄完成後，更新 office/home TODO。
+
+## WIP WP203 過帳設備設定家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP203 規格](docs/modules/WIP/過帳設備設定.md)、`docs/DATABASE_CONNECTION.md` 的 WP203/WP204 段落及 `todolist_officepc.md` WP203 段落。
+- [ ] WP203 沒有新 Oracle 表。沿用 `TBLEQPFAVORITE` 的 WP204 source DDL/CREATE-only，以及已存在的 EquipmentBasis/EquipmentType references；先核對 YMES live schema/migration history，不重複建表。
+- [ ] **先解決 HostId Web 身份對應。** WinForms HostId 是 `gComputerName` 去掉最後一個 `/` 元素所得的 workstation id，不是 UserNo。API 從可信登入 session 或伺服器端 workstation binding 解析；不得接受瀏覽器任意 HostId。若目前登入流程沒有可信 workstation mapping，先記錄需要的架構決策，不能暗中改成 user-scoped favorite。
+- [ ] 實作登入保護 API：GET `/api/wip/equipment-favorites` 列該 Host 的 PageNo；GET `/{pageNo}` 讀明細；GET `/options?issueState=2` 同時回已核准 EquipmentType 與 EquipmentBasis。Server 強制 `IssueState=2`，且可選設備必須 `ChamberFlag=0`。
+- [ ] POST 根路徑新增/複製 `{pageNo,equipmentNos,replaceExisting}`；UI 取代確認後才傳 true。PUT `/{pageNo}` 編輯並保持 PageNo 不可修改；DELETE `/{pageNo}` 刪單頁。所有寫入參數化並在 server 重驗設備核准狀態、EquipmentType、主設備資格及 1–15 個唯一 EquipmentNo。
+- [ ] Favorite source table 無 PK/unique index。不得新增 source 不存在的 unique constraint；用 PostgreSQL transaction-scoped advisory lock（固定 hash(HostId,PageNo)）或同等跨多個 API instance 的序列化，將舊頁刪除與整批設備重建放在同一交易，防止同頁併發 duplicates。
+- [ ] Main form 多選 Delete 是逐頁執行，可能部分成功。正式 API可逐頁呼叫並回報已刪/失敗頁；不可假稱來源是整批原子刪除。
+- [ ] Vue DEV localStorage `ymes-dev-mock:wip-eqp-favorite:pages:v1`、`ymes-dev-mock:wip-eqp-favorite:equipment:v1` 只供假 UI，Production 不得使用；API、權限、交易、部署完成後更新交接。
+
+## WIP WP205 生產批選用生產設備家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP205 規格](docs/modules/WIP/生產批選用生產設備.md)、WP101／WP201／WP204 規格與 `docs/DATABASE_CONNECTION.md` WP205 段落。
+- [ ] WP205 無新增 Oracle table／CREATE-only；先核對 YMES live schema/migration，重用 LotState／TempLotState、TempEquipment、Equipment/EMS、Area Relation/Group、PRD OP Capability。不可為此頁重複建共用表。
+- [ ] 提供登入保護查詢：LotNo + Status=1 的 LotState；以 `LoadAvailableEquipment_All` 同等伺服器規則回傳 Area 全部設備、AllowExecute、Capacity、EQPLoadPort、Description 及原因；設備 LoadPort 查詢需回傳占用 Lot 與空 Port。
+- [ ] 提供登入保護的選機 POST command，接受 LotNo、LotStamp、唯一 EquipmentNo 清單與可選 LoadPort。交易內重讀 Lot/Temp LotState，要求 OPStatus=1 且 Lot 尚未上機；重算設備核准／開關／狀態、產品 OP Capability、Capacity（-1 不限）、LoadPort 占用與設備數量，再執行 `SHR_CIEquipment` 與 OperatorState Mode=1/MultiOperatorMode=5 的副作用；透過 LotStamp CAS 防止舊資料，任一步失敗 rollback。
+- [ ] 多設備選擇時拒絕 LoadPort；單設備 EQPLoadPort>0 可指定但非必填。不能信任瀏覽器傳回的 AllowExecute、Capacity 或 Port 空位，正式端不得讀取 DEV localStorage `ymes-dev-mock:wip-lot-choice-equipment:assignments:v1`。
+- [ ] DEV-only FunctionNo `LOT CHOICE EQP`／FunctionKey `WP205` 的 localStorage 樣本不是正式授權資料。完成 live schema 比對、API、交易、WP205 功能授權與部署紀錄後更新 handoff。
+
+## WIP WP206 計數不良原因收集家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP206 規格](docs/modules/WIP/計數不良原因收集.md)、`docs/DATABASE_CONNECTION.md` WP206 段落及 DDL／metadata／CREATE-only references。
+- [ ] `TBLOPABNORMAL` 已在 `database/reference/mestest_operation_and_system_*`，不可重複 migration。新增表 reference 是 `TBLQCABNORMALBASIS`、`TBLQCABNORMALPOSITION`、`TBLWIPCONT_ABNORMAL`；先查 YMES live PostgreSQL schema 與 migration history，缺少才建 forward migration。
+- [ ] Oracle source DDL、index DDL、metadata、PG CREATE-only 在 `database/reference/mestest_wip_wp206_source_ddl.sql`、`mestest_wip_wp206_source_indexes.sql`、`mestest_wip_wp206_metadata.txt`、`mestest_wip_wp206_create.sql`。`TBLWIPCONT_ABNORMAL` 無 PK/FK/Trigger，只有 `LOTSERIAL` 非唯一 index；不得補造 PK／unique constraint。
+- [ ] 建登入保護的 OPClass=1／IssueState=2 作業站 lookup、OP 關聯異常 lookup、異常位置 lookup；非同步以一次有限查詢取得 LotNo，不延續 WinForms Enter 時無條件載入全 LotState 的程式。
+- [ ] 建登入保護的 IPQC POST command，伺服器驗證 Lot、OP、異常關聯及 Position 關聯，在單一交易新增選取資料。舊 Core 將 LotNo 寫到 LotSerial、AbnormalQty 留 DB default 0，且忽略 LinkName/Priority/UserNo/ShiftNo/EventTime；正式 API 若補填需標示為擴充。防止多次提交重複資料，但不新增 Oracle 沒有的 source key；使用 request idempotency 或明確冪等策略。
+- [ ] DEV localStorage `ymes-dev-mock:wip-ipqc:abnormal-records:v1` 只供公司端假互動，正式端不得讀取。API/schema/交易/授權/部署完成後更新交接。
+
+## WIP WP207 分批處理家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP207 規格](docs/modules/WIP/分批處理.md) 與 `docs/DATABASE_CONNECTION.md` WP207 段落。公司端 UI 在 `web/src/components/WipLotSplit.vue`，僅 DEV 假資料，不代表正式過帳。
+- [ ] WP207 六張缺失 reference 的 Oracle source DDL、index DDL、metadata 與 PostgreSQL CREATE-only 分別在 `database/reference/mestest_wip_wp207_source_ddl.sql`、`mestest_wip_wp207_source_indexes.sql`、`mestest_wip_wp207_metadata.txt`、`mestest_wip_wp207_create.sql`。先核對 YMES live PostgreSQL schema/migration history，只為實際缺少的表新增 forward migration；Lot/Process/Product/Temp/Inventory/Matrix 共用結構沿用 WP101／WP201 與主檔 references，不重複建表。
+- [ ] 六張表為 `TBLEMSDISPATCHSTATE`、`TBLWIPAUTOMERGE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTOPECNRECORD`、`TBLWIPOSBASIS`、`TBLWIPOSDETAIL`。Employee 表沒有來源 PK/unique index，僅三個 non-unique index；不可加虛構的來源唯一鍵。其他表 PK 以 metadata 為準。
+- [ ] 實作登入保護的指定 Lot 查詢，要求原 WinForms Status `0|1|4|5`、HaveComponent=0、LotState=1、非 Partial/Stocker、無 GoodBinState、未包裝及使用者可見範圍；查產品／流程節點／單位換算／是否可顯示 Electricbox 的 API。路由和產品候選應由 server 依批次、權限與系統參數提供，不能沿用 Vue 固定選項。
+- [ ] 實作分批 POST command，使用 LotNo、LotStamp、IncludeMother、各列 LotQty／SysQty／SAP_PRDQTY／SAP_PCSQTY／Action／NodeID／Product／Version／UnitNo。Server 在交易內重驗正數、四組合計、ReturnType、包裝／GoodBin／委外守門、LotStamp、產品與流程有效性；按來源 `GetSplitLotNo_Multiple` 語意原子保留子批號，拒絕舊預覽號與重複提交。BR／WIP Inventory 宿主模式須由可信內部上下文區分，不接受瀏覽器任意指定。
+- [ ] 以 `BR_Manual_LotSplit` 的 Lot/Temp、報工、屬性、流程、庫存、歷程、委外、派工等多表變更為規格，追查 Core helper 的額外共享表。標準拆批成功後 Form 另呼叫 THEIL `UPD_SplitLot` 寫 `TBLWIPLOTBASIS.SAP_PRDQTY/SAP_PCSQTY`、`TBLWIPLOTPROPERTY.WIP_BIGQTY`、`XX_TBLLOTMARITX_THEIL_BU1`；正式端要同一原子交易，或明確可恢復且冪等的二階段流程。失敗回應需區分標準拆批未提交與客製更新失敗，避免重複拆批。
+- [ ] 客製 Core 的 `UPDATE ... SAP_PCSQTY = <value>WHERE ...` 字串缺空白，依原始碼字面可能 SQL 無效；請以參數化 SQL 修正，確認 BaseLotNo/OrgLotNo 映射與 Matrix 複製。不複製字串拼接或瀏覽器 localStorage `ymes-dev-mock:wip-lot-split:*`。完成 migration/API/授權/交易驗證與部署紀錄後更新 TODO。
