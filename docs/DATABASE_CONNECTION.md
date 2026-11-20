@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 公司WIP拆批Web222（2026-11-20；資料庫仍0058）
+
+Office12c6a2e與已完成分支同步的Web220 dc34ee6正常合併至32d422b5，新Web來源222檔canonical `ee360b1d9fd47f130df900de539402bda2a2e73a1cd5e6acdcdbca1c9f5df0d5` 已完整建置並部署 `b330b9b009670ea092218b8ecffdc6f1c389e9595a572ebf5ab471afd3e377e8`，公開HTTP七項通過。API仍6d2501…／151份，DB `ymes`／schema `YMES`仍0058；本輪未新增DDL、grant、backfill或資料庫交易provider。
+
+Root已封存69通過檢查點／70events／1已解menu timing harness觀察，涵蓋16個native入口＋1個direct、WP307 Grid30×40／四縮放、共用SD108空lookup／Grid／zoom及ET104新Web完整smoke。2筆資料全GUI建刪、SQL fixture writes=0；獨立精準broker／forwarder皆0，cleanup SHA256 `d8075801657e31dfed1aa792ca63a7affc1bb2323738ef0f46b5110d8f619c46`；fresh reload空首頁／21收合選單／logs[]。WIP正式providers均未交付，SD108未驗有資料的layout；ET105僅隔離候選與純讀peer，尚未build／migration。mainSyncPending=true，374來源綁定及main同步待實證，詳見[Web222 QA](qa/20261120-office-wip-split-integration.md)。
+
+Web220 dc34ee6的372綁定／正常featurebranch推送／私有7份證據已完成；其86項proof、原ET104 A1完整checkpoint9cbe與schema0058歷史保持，未套用220 metadata，不改舊證據配新來源。
+
 ## 公司WIP Web220整合（2026-11-20；資料庫維持0058）
 
 本輪正常合併公司b3f0f06與家用A1至基底7e71e38，已建置並部署Web `823d0571d6dc82436ae5eeace7a68b8c22e8baf15dcbf0b478260d7a15224194`／220檔canonical `8071ec80f982071775cdcbd40be6d4b0509cf725e2662468bad17b19df049c46`。API仍6d2501…／151份、DB `ymes`／schema `YMES`仍migration0058，這次Web部署沒有新增DDL、grant或backfill；公司新增reference CREATE SQL僅是來源，不代表已在復刻庫套用，GUI若需自有fixture另依實證記錄。

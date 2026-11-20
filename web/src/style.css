@@ -764,13 +764,13 @@ button {
   background: color-mix(in srgb, var(--yellow) 18%, white);
 }
 
-.framework-main .framework-content.office-wip-module :is(button.primary, button.confirm-button, button.query-button) {
+.framework-main .framework-content.office-wip-module :is(button.primary, button.confirm-button, button.query-button, button.confirm) {
   background: #3b3930;
   border-color: #3b3930;
   color: #fff;
 }
 
-.framework-main .framework-content.office-wip-module :is(button.primary, button.confirm-button, button.query-button):hover:not(:disabled) {
+.framework-main .framework-content.office-wip-module :is(button.primary, button.confirm-button, button.query-button, button.confirm):hover:not(:disabled) {
   background: var(--ink);
   border-color: var(--ink);
 }
@@ -797,7 +797,7 @@ button {
 }
 
 /* The framework owns page titles. Keep dialog controls and DEV badges visible. */
-.framework-main .framework-content.office-wip-module:is(.operator-login-lot-page, .wp205-page, .wp206-page, .wp207-page) > h1,
+.framework-main .framework-content.office-wip-module:is(.operator-login-lot-page, .wp205-page, .wp206-page, .wp207-page, .wp208-page, .wp209-page) > h1,
 .framework-main .framework-content.office-wip-module.area-show-page > header.page-title,
 .framework-main .framework-content.office-wip-module.favorite-page > header.page-heading > h1 {
   display: none;

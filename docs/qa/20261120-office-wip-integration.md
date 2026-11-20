@@ -2,7 +2,7 @@
 
 本輪正常合併公司端 `b3f0f062e22b1df3437868a2c29ec51e80ebbb92` 與家用端 ET104 A1 status `b015e51191da6b6042edbd0f7ba3a55253e04bc9`，整合基底為 `7e71e38454308b2536ace65f4bb64a16f092520a`。保留雙方開發，不使用 force push，也不把舊 Web206 的驗收結果套成新 Web220 已驗。
 
-**本版進度：Web220已部署、公開HTTP七項與限定範圍GUI已通過；Root封存86個通過檢查點／87個原始events，保留1個已解harness誤判。372份來源綁定與本版featurebranch推送尚待實際完成，mainSyncPending=true。** 新發現的Office兩版dbebd0f／12c6a2e尚未納入本次部署或驗收，後續另做Web222整合。
+**本版進度：Web220已部署、公開HTTP七項與限定範圍GUI已通過；Root封存86個通過檢查點／87個原始events，保留1個已解harness誤判。release code `dc34ee6fc02f5949f4ffdfbbd4673e4232a9957a` 已完成372份來源綁定並正常推送featurebranch、遠端讀回相同；本版當時mainSyncPending=true。** Office後續dbebd0f／12c6a2e不在本版220產物，另於[Web222整合](20261120-office-wip-split-integration.md)記錄，沒有改寫本版proof。
 
 ## 已完成建置與部署
 
@@ -62,4 +62,6 @@ Root收據 `.tools/office-wip-integration-gui-receipt-20261120.json` SHA256 `72e
 
 ET104 A1已完成的API單輪169HTTP／621assert、GUI87項（77GUI＋10SQL）、12筆GUI建刪及11scope全零維持原紀錄。A1 code `65f17a0c347acd4b5df2a1be1cad712138ececd6`、status `b015e51191da6b6042edbd0f7ba3a55253e04bc9` 已正常同步featurebranch並完成358綁定；完整checkpoint `9cbe89c5eef1ad06b72f5782a6ba6b42a8665e1b514f99768db5e4b3548d8fd5` 保留。這些不是新Web220的完整GUI驗收。
 
-本輪限定GUI完成後，先依SQL1＋未變API151＋新Web220＝372份真來源綁定並正常推送目前featurebranch，actual commit／binding／push仍待Root提供，不填假值。Root fetch另見Office `dbebd0f336e6a1c5862a121e46ed11b23e8ee75b`、最新 `12c6a2e8b98be035a82993fcaf3354a555ce31fa`；兩版未在本次220產物部署／驗收，後續正常merge並另建Web222。main同步前保持`mainSyncPending=true`，不更動finalizer的實際main gate，也不把220證據改配222。WIP providers及全MES仍未完成；ET105只有唯讀稽核，無API或migration。
+本輪SQL1＋未變API151＋新Web220＝372份真來源綁定已通過，binding收據SHA256 `9c186dc0efe913bedc2862f2a9bc37ee824524894e4e001b3ba85bb6013384b7`。release code `dc34ee6fc02f5949f4ffdfbbd4673e4232a9957a` 已正常推送 `refs/heads/codex/homepc-office-wip-integration-20261120` 並讀回相同；私有7份證據上傳／雜湊核對通過，小型分支發行紀錄SHA256 `e51a645061b313aa05ecb1d15f859701b398d8d15c3ab30e504fdb0a9e239261`，完整A1 checkpoint仍為9cbe，未套用220 metadata。此時main同步仍待後續整合，`mainSyncPending=true`。
+
+Office `dbebd0f336e6a1c5862a121e46ed11b23e8ee75b`／`12c6a2e8b98be035a82993fcaf3354a555ce31fa` 已在後續正常merge至32d422b5，另做Web222建置與驗收；不把220的86項proof改配222。WIP providers及全MES仍未完成。ET105最新僅隔離候選與純讀peer，尚未build、migration或正式發行。

@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## 家用端最新整合進度：Web222（2026-11-20；限定GUI完成／main待同步）
+
+公司12c6a2e的WP208／WP209已與家用Web220 dc34ee6正常合併至32d422b5，保留雙方來源。Web222／B330b9…（來源222檔canonical ee360b1d…）完整建置與七項HTTP已通過；API6d／151份、PostgreSQL0058保持不變。17入口採既有KD框架，WIP正式providers仍待家用端實作。
+
+Root已封存限定GUI69通過檢查點／70events／1個已解menu hydration harness觀察：新兩頁＋舊14native的正式防護／Close、新兩頁重進及direct fresh／無假Bin／KD單一主標題、WP307 Grid30×40／四縮放、direct OP、SD108空lookup／Grid／zoom與ET104新Web完整smoke均通過。2筆資料全GUI建刪、獨立精準broker／forwarder皆0、SQL fixture writes=0，fresh reload空首頁／21收合選單／logs[]。原locator detach觀察與穩定三層選單復驗保留，未修改產品來源；SD108未驗populated layout。mainSyncPending=true，374綁定及新commit／main推送仍待實證，見[Web222 QA](docs/qa/20261120-office-wip-split-integration.md)。
+
+前版Web220的dc34ee6／372綁定／featurebranch正常推送與私有證據已完成，86項proof及當時main待同步狀態保留。ET105最新為隔離候選與純讀peer，尚未build／migration。公司端仍只處理原生Oracle唯讀來源、UI及規格，不新增公司端PG、SSH或部署任務。
+
 ## 家用端整合進度：公司WIP Web220（2026-11-20；限定GUI完成／main待同步）
 
 已正常合併公司b3f0f06的14個新WIP Vue／App／AreaShow及原生來源文件，保留雙方工作，未force push。家用端新Web220已建置並部署 `823d0571d6dc`（canonical8071ec80…），公開七項HTTP與資產檢查通過；API6d2501…／151份與PostgreSQL0058維持原版。

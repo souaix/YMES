@@ -1,5 +1,18 @@
 # 家裡電腦接手清單
 
+## 最新接手：公司WIP拆批Web222（2026-11-20；限定GUI完成／main待同步）
+
+本機為HOME PC，負責PostgreSQL復刻、API、SSH與發行；公司端維持Oracle唯讀來源與UI。Office12c6a2e已與Web220 release dc34ee6正常合併至32d422b5，兩端工作保留。
+
+- [x] Web220 dc34ee6已完成372來源綁定（收據9c186dc0…）、正常featurebranch推送／遠端讀回及私有7份證據；保留86項proof與當時mainSyncPending=true，不改配222。
+- [x] 新Web222來源canonical ee360b1d…完整型別／Vite建置exit0並部署B330b9…，七項HTTP通過；API6d／151份及資料庫0058維持原版。
+- [x] Root已封存Web222限定GUI69通過檢查點／70events／1個已解menu hydration harness觀察：WP208／209＋舊14native防護／Close、新兩頁重進／直接fresh／無假Bin／KD單一主標題、WP307 Grid30×40／四zoom、direct OP及SD108空lookup／Grid／zoom、ET104新Web完整smoke均實測；SD108未驗populated layout。
+- [x] 2筆smoke全GUI建立並硬刪，獨立精準broker／forwarder皆0、SQL fixture writes=0；fresh reload空首頁／21個收合選單／logs[]。proof346d017b…、receipt fbb84410…及清理d8075801…封存，原harness觀察與穩定三層復驗保留，無產品改碼。
+- [ ] 執行374份來源綁定並正常同步main；目前mainSyncPending=true，不預填新commit或push結果。
+- [ ] WIP正式provider與原生交易持續由家用端接手；入口防護或DEV原型不算API交付。ET105僅隔離候選與純讀peer，尚未build／migration／正式部署。
+
+本版證據與界線見[Web222 QA](docs/qa/20261120-office-wip-split-integration.md)；舊版歷史及既有待辦保留。
+
 ## 最新接手：公司WIP整合Web220（2026-11-20；限定GUI完成／main待同步）
 
 本機是HOME PC，負責PostgreSQL復刻、API、PPK SSH與發行；公司端維護Oracle唯讀來源及UI。公司b3f0f06已與家用A1正常合併至基底7e71e38，兩端原始工作保留。

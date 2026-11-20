@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 type Action = 0 | 1 | 2
 type ReturnType = 0 | 1 | 2
@@ -20,7 +20,8 @@ type SplitRecord = { lotNo: string; lotStamp: number; rows: SplitRow[]; bins: Bi
 const props = defineProps<{ developmentPreview?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
-const bins: BinNo[] = ['BIN001', 'BIN002', 'BIN003']
+const unavailableMessage = '正式環境尚未開放此功能。'
+const bins = computed<BinNo[]>(() => dev.value ? ['BIN001', 'BIN002', 'BIN003'] : [])
 const storageKey = 'ymes-dev-mock:wip-lot-split-bin:state:v1'
 const fixtures: Lot[] = [
   { lotNo: 'DEV-LOT-BIN-001', baseLotNo: 'DEV-LOT-BIN-001', curQty: 12, status: 'Running', lotStamp: 1901, productNo: 'DEV-PRODUCT-A', productVersion: '01', processNo: 'DEV-PROC-FT', opNo: 'DEV-OP-FT-10', goodBin: { BIN001: 7, BIN002: 3, BIN003: 2 } },
@@ -60,17 +61,18 @@ const message = ref('請輸入有 GoodBinState 的參考批號，查詢後設定
 
 const activeRow = computed(() => rows.value.find(row => row.splitLotNo === selectedLotNo.value) ?? null)
 const activeAllocation = computed(() => allocations.value.find(item => item.splitLotNo === selectedLotNo.value) ?? null)
-const activeBinTotal = computed(() => bins.reduce((sum, bin) => sum + (activeAllocation.value?.bins[bin] ?? 0), 0))
+const activeBinTotal = computed(() => bins.value.reduce((sum, bin) => sum + (activeAllocation.value?.bins[bin] ?? 0), 0))
 const canEdit = computed(() => dev.value && lot.value !== null && !submitted.value)
 const totalLotQty = computed(() => rows.value.reduce((sum, row) => sum + row.splitLotQty, 0))
 const remaining = computed(() => {
   const result = { BIN001: 0, BIN002: 0, BIN003: 0 } as Record<BinNo, number>
   if (!lot.value?.goodBin) return result
-  for (const bin of bins) result[bin] = lot.value.goodBin[bin] - allocations.value.filter(item => item.splitLotNo !== selectedLotNo.value).reduce((sum, item) => sum + item.bins[bin], 0)
+  for (const bin of bins.value) result[bin] = lot.value.goodBin[bin] - allocations.value.filter(item => item.splitLotNo !== selectedLotNo.value).reduce((sum, item) => sum + item.bins[bin], 0)
   return result
 })
 
 function readState(): { records: SplitRecord[]; nextSequence: number } {
+  if (!dev.value) return { records: [], nextSequence: 1 }
   const stored = JSON.parse(window.localStorage.getItem(storageKey) || 'null') as { records?: SplitRecord[]; nextSequence?: number } | null
   const rawSequence = stored?.nextSequence
   return {
@@ -89,6 +91,7 @@ function loadState(): void {
 }
 
 function saveState(): void {
+  if (!dev.value) return
   window.localStorage.setItem(storageKey, JSON.stringify({ records: records.value, nextSequence: nextSequence.value }))
 }
 
@@ -106,7 +109,7 @@ function clearDraft(): void {
 function queryLot(): void {
   errorText.value = ''
   clearDraft()
-  if (!dev.value) { errorText.value = '此頁目前僅提供 DEV 假資料預覽。'; return }
+  if (!dev.value) { errorText.value = unavailableMessage; return }
   const source = fixtures.find(item => item.lotNo === lotNoInput.value.trim().toUpperCase())
   if (!source) { lot.value = null; errorText.value = '找不到 DEV Lot。可輸入 DEV-LOT-BIN-001。'; return }
   if (!source.goodBin) { lot.value = null; errorText.value = '此 Lot 沒有 GoodBinState，請使用一般分批處理。'; return }
@@ -119,6 +122,7 @@ function queryLot(): void {
 function childLotNo(sequence: number): string { return `DEV-BIN-SPLIT-${String(sequence).padStart(6, '0')}` }
 
 function split(): void {
+  if (!dev.value) return
   errorText.value = ''
   if (!canEdit.value || !lot.value) { errorText.value = '請先查詢有效的參考批。'; return }
   const amount = Number(amountInput.value)
@@ -151,18 +155,20 @@ function split(): void {
 }
 
 function openBinDialog(): void {
+  if (!dev.value) return
   if (!canEdit.value || !activeRow.value || !lot.value?.goodBin) return
   const current = activeAllocation.value?.bins
-  binDraft.value = Object.fromEntries(bins.map(bin => [bin, String(current?.[bin] ?? 0)])) as Record<BinNo, string>
+  binDraft.value = Object.fromEntries(bins.value.map(bin => [bin, String(current?.[bin] ?? 0)])) as Record<BinNo, string>
   dialog.value = 'bin'
   errorText.value = ''
 }
 
 function confirmBinDialog(): void {
+  if (!dev.value) return
   const row = activeRow.value
   if (!row || !lot.value) return
   const values = {} as Record<BinNo, number>
-  for (const bin of bins) {
+  for (const bin of bins.value) {
     const qty = Number(binDraft.value[bin])
     if (!Number.isInteger(qty) || qty < 0 || qty > remaining.value[bin]) {
       errorText.value = `${bin} 的 Split Bin 必須是 0 至 Remaining ${remaining.value[bin]} 的整數。`
@@ -174,18 +180,23 @@ function confirmBinDialog(): void {
   const allocation = { splitLotNo: selectedLotNo.value, bins: values }
   if (index < 0) allocations.value.push(allocation)
   else allocations.value[index] = allocation
-  row.splitLotQty = bins.reduce((sum, bin) => sum + values[bin], 0)
+  row.splitLotQty = bins.value.reduce((sum, bin) => sum + values[bin], 0)
   dialog.value = null
   errorText.value = ''
   message.value = `${selectedLotNo.value} 已分配 ${row.splitLotQty} 個 Good Bin。`
 }
 
 function changeAction(row: SplitRow, value: string): void {
+  if (!dev.value) return
   row.action = Number(value) as Action
   row.processNo = ''; row.processVersion = ''; row.opNo = ''; row.nodeId = ''
 }
-function changeReturnType(row: SplitRow, value: string): void { row.returnType = Number(value) as ReturnType }
+function changeReturnType(row: SplitRow, value: string): void {
+  if (!dev.value) return
+  row.returnType = Number(value) as ReturnType
+}
 function chooseRoute(option: (typeof routeOptions)[number]): void {
+  if (!dev.value) return
   if (!activeRow.value) return
   activeRow.value.action = option.action
   activeRow.value.processNo = option.processNo
@@ -195,6 +206,7 @@ function chooseRoute(option: (typeof routeOptions)[number]): void {
   dialog.value = null
 }
 function chooseProduct(option: (typeof products)[number]): void {
+  if (!dev.value) return
   if (!activeRow.value) return
   activeRow.value.productNo = option.productNo
   activeRow.value.productVersion = option.productVersion
@@ -203,6 +215,7 @@ function chooseProduct(option: (typeof products)[number]): void {
 }
 
 function bindElectricBox(): void {
+  if (!dev.value) return
   if (dialog.value === 'motherBox') motherElectricBox.value = true
   if (dialog.value === 'childBox' && selectedLotNo.value && !childElectricBoxes.value.includes(selectedLotNo.value)) childElectricBoxes.value.push(selectedLotNo.value)
   message.value = 'DEV 靜電箱綁定已模擬；未寫入 MES。'
@@ -210,19 +223,20 @@ function bindElectricBox(): void {
 }
 
 function confirmSplit(): void {
+  if (!dev.value) return
   errorText.value = ''
   if (!dev.value || !lot.value || rows.value.length < 2 || submitted.value) { errorText.value = '請先查詢參考批並建立分批草稿。'; return }
   if (settingsSnapshot.value !== `${mode.value}|${amountInput.value}|${includeMother.value}`) { errorText.value = '分批條件已變更，請重新按 Split。'; return }
   for (const row of rows.value) {
     const allocation = allocations.value.find(item => item.splitLotNo === row.splitLotNo)
     if (!allocation) { errorText.value = `${row.splitLotNo} 尚未執行 Bin Assign。`; return }
-    const binSum = bins.reduce((sum, bin) => sum + allocation.bins[bin], 0)
+    const binSum = bins.value.reduce((sum, bin) => sum + allocation.bins[bin], 0)
     if (row.splitLotQty <= 0 || binSum !== row.splitLotQty) { errorText.value = `${row.splitLotNo} 的 Split Lot Qty 必須等於 Bin 合計且大於 0。`; return }
     if ((row.action === 0 || row.action === 1) && row.returnType !== 0) { errorText.value = `${row.splitLotNo} 的 Go／Jump OP 只能選 Not Return。`; return }
     if (row.action !== 0 && !row.nodeId) { errorText.value = `${row.splitLotNo} 請用 Change Routing 指定目標節點。`; return }
   }
   if (totalLotQty.value !== lot.value.curQty) { errorText.value = `子批數量合計須等於 CurQty ${lot.value.curQty}。`; return }
-  for (const bin of bins) {
+  for (const bin of bins.value) {
     const sum = allocations.value.reduce((acc, item) => acc + item.bins[bin], 0)
     if (sum !== lot.value.goodBin?.[bin]) { errorText.value = `${bin} 子批分配合計須等於來源 Good Bin。`; return }
   }
@@ -249,6 +263,11 @@ function confirmSplit(): void {
   message.value = 'DEV 已模擬分批；結果只保存在此瀏覽器，未更新 MES。'
 }
 
+watch(dev, enabled => {
+  if (enabled) return
+  lot.value = null; lotNoInput.value = ''; records.value = []; errorText.value = ''
+  clearDraft()
+}, { immediate: true })
 onMounted(loadState)
 </script>
 
@@ -257,7 +276,7 @@ onMounted(loadState)
     <div v-if="dev" class="dev-banner">DEV 假資料預覽；Good Bin 分配與子批號只寫入此瀏覽器 localStorage。</div>
     <h1>分批處理_等級 <small>LOT SPLIT_BIN · WP209</small></h1>
     <p v-if="errorText" class="notice error" role="alert">{{ errorText }}</p>
-    <p v-else class="notice" role="status">{{ message }}</p>
+    <p v-else class="notice" role="status">{{ dev ? message : unavailableMessage }}</p>
 
     <fieldset class="mother-frame">
       <legend>MLot</legend>
@@ -275,7 +294,7 @@ onMounted(loadState)
     </fieldset>
     <footer class="form-footer"><span>{{ submitted ? 'DEV 模擬完成' : '確認前檢查 Bin 與子批數量守恆。' }}</span><button type="button" class="mes-button confirm" :disabled="!canEdit || rows.length === 0" @click="confirmSplit">Confirm(&amp;C)</button><button type="button" class="mes-button" @click="emit('close')">Close (&amp;X)</button></footer>
 
-    <div v-if="dialog" class="modal-backdrop" @click.self="dialog = null">
+    <div v-if="dev && dialog" class="modal-backdrop" @click.self="dialog = null">
       <section v-if="dialog === 'bin'" class="dialog" role="dialog" aria-modal="true" aria-label="Lot Split Bin Assign"><header><strong>Lot Split Bin Assign</strong><span>{{ selectedLotNo }}</span></header><div class="grid-wrap assign-grid"><table><thead><tr><th></th><th v-for="bin in bins" :key="bin">{{ bin }}</th></tr></thead><tbody><tr><th>Good Bin</th><td v-for="bin in bins" :key="bin" class="number">{{ lot?.goodBin?.[bin] ?? 0 }}</td></tr><tr><th>Remaining Bin</th><td v-for="bin in bins" :key="bin" class="number">{{ remaining[bin] }}</td></tr><tr><th>Split Bin</th><td v-for="bin in bins" :key="bin"><input v-model="binDraft[bin]" class="mes-input editable bin-input" inputmode="numeric"></td></tr></tbody></table></div><footer><button type="button" class="mes-button confirm" @click="confirmBinDialog">Confirm</button><button type="button" class="mes-button" @click="dialog = null">Close</button></footer></section>
       <section v-else-if="dialog === 'route'" class="dialog" role="dialog" aria-modal="true" aria-label="Change Routing"><header><strong>Change Routing</strong><span>{{ selectedLotNo }}</span></header><button v-for="option in routeOptions" :key="option.nodeId" type="button" class="option" @click="chooseRoute(option)">{{ option.label }}<small>{{ option.processNo }} / {{ option.processVersion }} · {{ option.nodeId }}</small></button><footer><button type="button" class="mes-button" @click="dialog = null">Close</button></footer></section>
       <section v-else-if="dialog === 'product'" class="dialog" role="dialog" aria-modal="true" aria-label="Change Product"><header><strong>Change Product</strong><span>{{ selectedLotNo }}</span></header><button v-for="option in products" :key="option.productNo" type="button" class="option" @click="chooseProduct(option)">{{ option.productNo }} / {{ option.productVersion }}</button><footer><button type="button" class="mes-button" @click="dialog = null">Close</button></footer></section>

@@ -1,5 +1,13 @@
 # 部署設定檔
 
+## 公司WIP拆批整合Web222（2026-11-20；限定GUI完成，main待同步）
+
+已將Office最新12c6a2e與已正常推送的Web220 release dc34ee6合併至32d422b5。固定222檔來源canonical `ee360b1d9fd47f130df900de539402bda2a2e73a1cd5e6acdcdbca1c9f5df0d5`，完整型別／Vite建置exit0，已實際部署Web `b330b9b009670ea092218b8ecffdc6f1c389e9595a572ebf5ab471afd3e377e8`；公開七項HTTP檢查通過。API仍6d2501…／151份，資料庫仍0058，本版未重建API、未套DDL或權限。
+
+Root已封存69個通過檢查點／70原始events，保留一次menu初始化hydration造成locator detach的harness觀察及穩定原生三層選單復驗，未改產品來源。實測新WP208／WP209與舊14個native入口的正式防護／Close、新兩頁重進與直接重新載入、無假Bin、KD單一主標題、WP307的30×40 Grid與四種縮放、direct OP入口、共用SD108空lookup／Grid／zoom及ET104新Web完整smoke。2筆資料全GUI建刪、獨立精準broker／forwarder皆0、SQL fixture writes=0；fresh reload回空首頁、21個收合選單及logs[]。SD108沒有核准Area，未驗populated layout／班別。
+
+本版mainSyncPending=true，新Git／374綁定尚待實證；[Web222 QA](docs/qa/20261120-office-wip-split-integration.md)另記。Web220的dc34ee6／372綁定／正常featurebranch推送與私有證據已完成，保留其86項proof及當時main待同步歷史。WIP正式providers仍未提供；ET105只有隔離候選與純讀peer，未build或migration。
+
 ## 公司WIP整合Web220（2026-11-20；限定GUI完成，main待同步）
 
 已正常合併公司b3f0f06與ET104 A1的Yb015e51，整合基底7e71e38；完整Web型別／Vite建置exit0後已部署 `823d0571d6dc82436ae5eeace7a68b8c22e8baf15dcbf0b478260d7a15224194`。固定220檔來源canonical `8071ec80f982071775cdcbd40be6d4b0509cf725e2662468bad17b19df049c46`，私有來源 `/opt/ymes/checkpoints/web-office-wip-20261120-a1` 保持700／600；公開755／644、實際nonroot讀取與正常TLS的七項HTTP檢查已通過。
