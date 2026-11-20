@@ -75,7 +75,7 @@ const gridSettingsError = ref('')
 const gridSettings = ref({ draw: true, snap: true, color: '#e9e7e2', style: 'Lines' as 'Pixels' | 'Lines' | 'DottedLines', sizeX: 20, sizeY: 20 })
 const gridSettingsDraft = ref({ ...gridSettings.value })
 const canvasGridVisible = computed(() => props.workAreaMode ? gridSettings.value.draw : gridVisible.value)
-const canvasGridStyle = computed<Record<string, string>>(() => {
+const canvasGridStyle = computed((): Record<string, string> => {
   if (!props.workAreaMode || !gridSettings.value.draw) return {}
   const { color, style, sizeX, sizeY } = gridSettings.value
   const backgroundImage = style === 'Pixels'
