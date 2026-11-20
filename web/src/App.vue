@@ -93,6 +93,7 @@ import WipFutureWaitSet from './components/WipFutureWaitSet.vue'
 import WipFutureHoldRelease from './components/WipFutureHoldRelease.vue'
 import WipFutureWaitRelease from './components/WipFutureWaitRelease.vue'
 import WipErfBasis from './components/WipErfBasis.vue'
+import WipErfUnreleased from './components/WipErfUnreleased.vue'
 import WipWaitBasis from './components/WipWaitBasis.vue'
 import WipWaitDisposition from './components/WipWaitDisposition.vue'
 import Wip8DBasisFactory from './components/Wip8DBasisFactory.vue'
@@ -589,6 +590,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:FUTURE HOLD RELEASE': appBasePath + '/WIP/FutureHoldRelease',
   'function:WIP:FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'function:WIP:ERF BASIS': appBasePath + '/WIP/ErfBasis',
+  'function:WIP:WIP ERF UNRELEASED': appBasePath + '/WIP/ErfUnreleased',
   'function:WIP:WAIT BASIS': appBasePath + '/WIP/WaitBasis',
   'function:WIP:WIP WAIT DISPOSITION': appBasePath + '/WIP/WaitDisposition',
   'function:WIP:8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
@@ -782,6 +784,7 @@ const functionRoutes: Record<string, string> = {
   'FUTURE HOLD RELEASE': appBasePath + '/WIP/FutureHoldRelease',
   'FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'ERF BASIS': appBasePath + '/WIP/ErfBasis',
+  'WIP ERF UNRELEASED': appBasePath + '/WIP/ErfUnreleased',
   'WAIT BASIS': appBasePath + '/WIP/WaitBasis',
   'WIP WAIT DISPOSITION': appBasePath + '/WIP/WaitDisposition',
   '8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
@@ -969,6 +972,7 @@ const isWipFutureWaitSetPage = computed(() => activeMasterKey.value === 'functio
 const isWipFutureHoldReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE HOLD RELEASE')
 const isWipFutureWaitReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE WAIT RELEASE')
 const isWipErfBasisPage = computed(() => activeMasterKey.value === 'function:WIP:ERF BASIS')
+const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
 const isWipWaitDispositionPage = computed(() => activeMasterKey.value === 'function:WIP:WIP WAIT DISPOSITION')
 const isWip8DBasisFactoryPage = computed(() => activeMasterKey.value === 'function:WIP:8D BASIS_FACTORY')
@@ -2674,6 +2678,7 @@ async function signOut(): Promise<void> {
         <WipFutureHoldRelease v-else-if="isWipFutureHoldReleasePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFutureWaitRelease v-else-if="isWipFutureWaitReleasePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipErfBasis v-else-if="isWipErfBasisPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-erf-no="pendingErfInfoNo" @create8d="open8dFromErf" @open8d-maintain="open8dMaintainFromErf" @close="navigateHome" />
+        <WipErfUnreleased v-else-if="isWipErfUnreleasedPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipWaitBasis v-else-if="isWipWaitBasisPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipWaitDisposition v-else-if="isWipWaitDispositionPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <Wip8DBasisFactory v-else-if="isWip8DBasisFactoryPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :linked-erf="pending8dErf" @open-erf-info="openErfInfoFrom8d" @close="navigateHome" />
