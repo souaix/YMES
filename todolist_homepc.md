@@ -1,5 +1,21 @@
 # 家裡電腦接手清單
 
+## 最新：ET106 原生兩表0060與present相容已驗（2026-11-20；writer／Git收尾待辦）
+
+HOME PC維持PostgreSQL復刻／API／PPK SSH／發行；Office只讀原生Oracle與開發UI。Root已在資料庫 `ymes`／`"YMES"` 真COMMIT0060，Address22＋Declaration13、source PK1／index1／defaults5／row-array types4與本表CRUD，父catalog／ACL／roles／schema保持；API155 actual466、Web237 actual5ff不變。下面舊0059／absent／prepared描述是當時歷史，不是現在DB狀態。
+
+- [x] 依既有CREATE核號0060，完整backup635278B／restore-list1807，Root A3 whole transaction與獨立native35／fullcatalog after比對PASS。原A2真PG14 CASE語法FAIL與private證據保留，先獨立確認全catalog回原before，再新備份／新交易修補成功，不盲重跑。
+- [x] 表存在之真相容單輪run `34CA74C7333D4B248CA239A1C8F4451F`：55HTTP／299assert PASS，三個主檔全API建刪，明載SQL地址fixture3／cleanup3；真normalized refs、state0／-1硬刪409／2退休與B僅地址ref檢核完成，獨立16scope全0。
+- [x] 建表後app-browser新15raw／15有效＝14GUI＋1SQL、0obs；三主檔真read與Taker `G60T-1120A` NewApply／EditApply／clean Confirm／GUI硬刪／四態0／fresh Home21／末次logs[]。GUI建1刪1、SQLfixture／cleanup0，Root獨立三scope全0。
+- [x] code X `800564271c7d92fba7472c28783a6bd4b8d03d49` 已真394＝SQL59/60兩份＋API155＋Web237 binding PASS，receipt SHA `16039d4ad8ac02390a04c726bf21d639eda9b456b0359b15ddd701481fc80a7c`；正常推送 `refs/heads/codex/homepc-et106-schema-20261120` 並直接讀回同值，無force。main仍待公司UI整合。
+- [ ] 純文件status Y提交、394 binding與正常feature推送／直接讀回；未填尚未取得的Y。
+- [ ] 原子完成schema60 checkpoint metadata；目前CP `7a9191309d3bdb86fb8f496711e24ed87cc70e0f9175ec5b7791b835db4dc324`仍是先前compat59紀錄，DB已60。保留舊rawbackup與完整API／Web／GUI歷史，不就地篡改舊證據。
+- [ ] 接ET106真正地址／報關writer：raw可重鍵地址、父／lookup資格、nullable signed CAS／UTC audit、無PK Declaration完整13欄multiset版本／七欄整組實際影響列數；部署後另API／app-browser全操作驗收，不造PK／假provider。已存在兩表，不重跑0060，也不回不相容8db／absent-only suite。
+- [ ] F1 Web241四8D整合已由Root本機完整typecheck／Vite與封裝，尚未部署／GUI驗收；其後另依實際版本做source binding／正常Git整合。WIP交易provider未因頁面guard而交付。
+
+實際收據、A2FAIL與A3復原界線、API／GUI自有scope分別見[ET106 schema60 QA](docs/qa/20261120-et106-schema60.md)及[模組](docs/modules/ENT/客戶出貨地址資料.md)。
+
+
 ## ET106前置相容已正式驗證（2026-11-20；最新實況）
 
 Root已正式啟用API155 `466ff88469c70ce08cfd13b6210f986796aa848b8f24d62ee3470da939402487`，canonical `7e795d7013a804b6f8ab848f4d0a5454ec613744ca2c68b6010e6a2273368202`；Web維持E1 Web237 `5ff068fc556b6449485dc40ea5b399ff2f773609c59ee19ee529aab1fbd9faae`。本批只改三個既有主檔的未來出貨地址引用相容性，schema仍0059、ET106兩表／types仍absent，地址／報關writer未交，a2 schema wrapper只是prepared，沒有新增migration／seed或WIP provider。
