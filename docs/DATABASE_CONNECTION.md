@@ -1013,3 +1013,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - `frmImmediateWaitSet`／`wsWIP.Exe_Wait_Set`／`clsLot.SetLotStateToWait` 直接使用 LotBasis、LotState、LotLog、Temp_LotState、WaitBasis、USRUserBasis、ComponentState。WaitBasis Oracle source DDL 已在 `database/reference/mestest_wip_wp201_additional_source_ddl.sql`，PG CREATE-only 已在 `mestest_wip_wp201_create.sql`；其餘直接表由 WP101、WP201、QC409/首批 refs 涵蓋。沒有新直接表需 Oracle DDL 或 CREATE SQL。家用端仍先核 YMES live schema/history、資料及 helper/adapter 間接表，再做 API/必要 forward migration。
 - 公司端只讀 WinForms/Service/Core 與既有 DDL，未查 Oracle 業務列、未寫 Oracle、未連 YMES PostgreSQL。原 Form 的批次包裝預檢以逗號串 LotNo，但 `CheckLotPackage` 將它當單一值；正式端要逐筆重查。完整規格見 `docs/modules/WIP/立即等待設定.md`。
+
+### 更新 2026-11-20：WIP WP503 批次立即異常設定
+
+- `frmImmediateHoldSet_Batch`／`frmBRERFCreate_Batch`／`wsWIP.Exe_ERF_Create_Batch`／`clsLot.UpdERF_Create_Batch` 的 `ERFBatchHoldGenType=0` 寫 `TBLWIPERFBATCHLOT`，`1` 改 `ERFType=2` 且不寫此表。BatchLot 的六欄 Oracle source DDL 已在 `database/reference/mestest_qc409_wip_disposition_dependencies_source_ddl.sql`；本批 `database/reference/mestest_wip_wp503_create.sql` 提供 PostgreSQL CREATE-only。其他 Lot/ERF/QC/設備查詢直接表沿用 WP101/WP201/WP305/WP501/QC refs，家用端須先核 live schema/history。
+- 同一 Core 的 `ERFType=3` Future Hold 分支使用 `TBLWIPFUTUREHOLDLOG`／`TBLWIPFUTUREHOLDREASON`。公司端以既有受保護 Oracle profile、PowerShell 5.1/ODP.NET **唯讀**取得這兩表的 DDL、欄位及索引供後續 Future Hold 規格；WP503 傳入 `6` 或轉 `2`，不執行該分支，兩表不可錯列為 WP503 migration。未查業務列、未寫 Oracle、未連 YMES PostgreSQL，也未保存連線字串或密碼。完整規格見 `docs/modules/WIP/批次立即異常設定.md`。
