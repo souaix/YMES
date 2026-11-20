@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 公司端最新進度：WP109 SWR BASIS（2026-11-20）
+
+- [x] 已依 `frmWIPSWRBasis`／Def、`wsWIP`、`clsWIP` 靜態核對七查詢條件、四狀態、14 欄 JOIN Grid、ADD/EDIT/Copy、Approve/Void、附件與流水號；Vue DEV 路徑 `/YMES/WIP/SwrBasis`，規格 [特殊生產需求維護](docs/modules/WIP/特殊生產需求維護.md)。
+- [x] 公司 PowerShell 5.1 + 受保護 Oracle profile 唯讀取得 `TBLWIPSWRBASIS`、`TBLWIPSWRDETAIL`、`TBLSYSSERIALNO` 原始 DDL/index/metadata；交 PostgreSQL CREATE-only `database/reference/mestest_wip_wp109_create.sql`。未查業務列、未寫 Oracle、未連 YMES PostgreSQL、未執行 build/test/browser；正式 API/PG/驗收交家用端。
+- [ ] 下一項依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 查未完成 WIP 功能；先看 Form/Service/Core，缺直接表才用公司受保護 Oracle 連線唯讀查 DDL。持續補 DEV UI、規格與 `todolist_homepc.md`，正常推送 GitHub main，勿覆蓋家用端變更。
+
 ## 家用端最新回饋：ET103 已驗收並同步 main 0c65a65（2026-11-20）
 
 HOME PC 已完成0057、API `12f26b18e94a`／Web `b3949d57fd39` 的報關行功能。API單輪八組126HTTP／464斷言、正式 app-browser59項（56GUI＋3SQL）通過；十筆Broker均由GUI建立／刪除，兩筆SQL引用fixture已精準清理，十一項資料範圍獨立讀回全零。最新來源與限制見 [ET103模組](docs/modules/ENT/報關行基本資料.md)及 [QA](docs/qa/20261120-et103.md)。355份來源綁定通過後，release code `0c65a655fae538280244289e281733f612a0eb4f` 已從012f257正常推至main，再fetch確認相同，沒有force push或公司新提交；後續純文件狀態提交不取代本release code。

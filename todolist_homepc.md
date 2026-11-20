@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 最新公司端交付：WP109 特殊生產需求維護（2026-11-20）
+
+公司端新增 `/YMES/WIP/SwrBasis` Vue DEV 假資料頁；原碼核對及限制見 [WP109 規格](docs/modules/WIP/特殊生產需求維護.md)。公司端沒有連 YMES PostgreSQL、部署或建立正式 API。
+
+- [ ] Pull 最新 `main`，先查 PostgreSQL live schema/migration history/資料/權限。Oracle MESTEST **唯讀原始 DDL**：`database/reference/mestest_wip_wp109_{basis,detail,serial}_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt`；PostgreSQL 三表空表 CREATE-only：`database/reference/mestest_wip_wp109_create.sql`。主表 15 欄/SWRNO PK，明細 2 欄/(SWRNO,LOTNO) PK，共用流水號 2 欄/FUNCTIONNAME PK；均無 FK/trigger。已存在表只核差異，確實缺項才做 forward migration；不可直接認定 CREATE-only 已套用，也不要重建共用流水號表。
+- [ ] 實作登入/`WP109` ACL、分頁/上限 `LoadSWRBasis` 等效 GET（七個勾選條件，LotNo/OPNo 逗號多值改成驗證後陣列，狀態 0/1/2/99）、SWR 明細、Customer/OP/Device/MO/Lot 安全 lookup。JOIN 導致同單多列，讀取/批次命令以 SWRNo 去重；不接受原 Core SQL 字串。
+- [ ] Add/Copy 在交易與 row lock 下配置 `SWRyyMMdd###`，一起寫流水號、主表及 Lot 明細；Edit 鎖主表、限制 status0，替換 Lot 明細並更新所有欄/附件。每個 BaseLotNo 重查屬於 CustomerNo；Start/End 同填且 End>Start，依 Oracle 原長度驗證。Client 預覽號不得當唯一性保證；每日 999 後的策略需明確。
+- [ ] Approve 只准 0→2、重驗時間；Void 對 2→99、0/99→刪主明細，狀態 1 回明確衝突（原 Service 誤回 success）；依 `InputAbortLog` 要求原因並寫 SYS EventLog。逐筆批次要回每張成功/失敗/未處理，保留原本中途停止語義但防 JOIN 重複；狀態、ACL、actor、版本全部在 server 端重驗。
+- [ ] 附件 API 從 `ATTACHFILE BLOB` 完整上傳/下載，檢查大小與檔名、不要露 `ATTACHFILEPATH` 舊客戶端路徑。WinForms `fs.Read(...Length-1)` 少讀一 byte，正式版須修正；`HaveAttachFile` 目前用路徑算 Y/N，要兼容 BLOB/路徑不一致舊列。正式 UI 接 API，DEV localStorage 只供 preview；API/PG/build/browser/部署和驗收由家用端完成。
+
 ## 最新接手：ET103 報關行已驗收並同步 main 0c65a65（2026-11-20）
 
 本機為 HOME PC，處理 PostgreSQL 復刻庫、API、PPK SSH、部署與驗收；公司端維持原生 Oracle 唯讀來源與 UI。最新 API `12f26b18e94a`／Web `b3949d57fd39`，migration **0057**；下方 ET102 及更早內容保留歷史。
