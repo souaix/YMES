@@ -1,5 +1,16 @@
 # WP906 ECN 設定精靈
 
+## HOME整合：正式防護範圍實測通過（2026-11-20；provider待接）
+
+目前入口 `/YMES/WIP/EcnWizard`，元件 `web/src/components/WipEcnWizard.vue`。HOME已將Office e5f來源整合至既有KD框架，保留原三層選單及本機DEV操作。App只對本輪九個新元件掛 `office-wip-module`，統一外框單一主標題；不改其他模組CSS。
+
+DEV資料、localStorage、假查找、查詢／命令及彈窗都必須同時滿足 `import.meta.env.DEV && developmentPreview === true`。正式包一律空資料、顯示「正式環境尚未開放此功能。」並停用查詢／異動／查找等未交付操作，保留關閉回首頁。不得以假流水號、假SAP／ERP／簽核／Lot變動回成功。fieldset內控制項驗收以有效 `:disabled` 狀態為準。
+
+Root已在正式Web256 `ade411cc…`／API167 `3f0bdc7c…`逐頁實測 `WP906`／`/YMES/WIP/EcnWizard` 的限定防護通過：原生入口、正式空資料與未開放提示、KD單一主標題、無假lookup／DEV列或業務彈窗；本頁direct重進／reload後保持隔離，Close回空首頁。逐頁觀察檔 `.tools/gui-proof-20261120/et101-office-e5f-wip-observations.json` 以本頁code定位：menu#14、direct-reenter#37、reload-confirm#38（#為1起算array序位）；主GUI journal本頁direct／reload／Close事件為112/113/114。
+
+以上只記已實做的正式防護／導航範圍，**不是 `WP906` 正式provider或交易完成**；所需PG migration、權限、原子交易及外部整合仍由HOME按下方原生規格完成。Office持續原生Oracle唯讀來源、UI及規格，不連HOME PostgreSQL或SSH。本輪整體GUI尚未封存，最終數字、Git／main／新checkpoint仍pending，封存後另見[本輪QA](../../qa/20261120-et101-office-e5f.md)。
+
+
 - FunctionNo 為 `ECN WIZARD`。依 `STD/MESWin/WIP/WP_ECNWizard/frmECNWizard.vb` 及 `uctStep1.vb` 至 `uctStep6.vb` 的 Form／內嵌 Designer，依序歡迎、ECN 資料、特性、條件、選批、完成。
 - 步驟二輸入 ECNNo（最長 50）、選擇依作業站或產品取特性，兩種都要 OPNo，產品來源另需產品與版本。生效／失效時間可空，生效不得早於現在，失效須晚於已填的生效時間。
 - 步驟三以 AttribSource=3，呼叫 `wsOP.LoadOPAttrib` 或 `wsPRD.LoadPRDOPAttrib_Default` 取 Setup 特性。須勾選至少一項。步驟四至少勾一個客戶、工單或產品／版本因子，每個勾選條件要有值。

@@ -1,5 +1,20 @@
 # 家裡電腦接手清單
 
+## 最新接手：ET106收尾完成，ET101＋Office e5f發行進行中（2026-11-20）
+
+- [x] ET106 writer完成正式API121／961、A1＋修正A2指定GUI與清理、codeXebc／statusY24ee409來源綁定及正常feature推送／直接ref讀回。完整checkpoint已真更新並獨立下載：`2c23af30ac36103f5393bc0ab23012845ad00c4258889ca24b3e206ef932513f`；F1／schema60／compat／E1／D1／ET105與舊GUI歷史保留，main待本輪Office整合。
+- [x] 正常合併Office e5f的15提交／12新WIP入口，保留雙方source／TODO。九新元件正式DEV資料／查找／storage／命令隔離、KD／單標題與ET101真owner API／UI已Root採用；兩個獨立source peers通過，未以pure測試冒GUI。
+- [x] 167 API／256 Web完整離線build／publish／封包通過；其餘160 API／243 Web沿已發原bytes。API3f0b與Web256 `ade411cc93a7a13c363bcb5b9c5b67169b93e5471d161bdb43432e99846ca323`均已真切換，獨立d1b29b02…核正常TLS七項／live-current／nonroot／167+256完整來源；API／DB／CP未因Web切換改變。
+- [x] 0061 fullbackup／restore-list後真COMMIT，僅Customer2原生DEFAULT0與本表IUD，獨立READ ONLY／整體catalog／舊native35保持；沒有改業務資料或重建表。
+- [x] 真0061＋候選來源核對後完成API-only切換3f0b／相容976 rollback備援；A1實產漏61守衛在執行前被Root發現並改新A2，原件保留。
+- [x] A4真API全新UUID八組228 HTTP／1568 assertions通過（f01774be…），unknown=false／pending空；獨立READ ONLY d3db117e…核22範圍全0。User引用與完整workflow未交付／未測界線見QA；A2 HTTP0、A3 unknown及精準恢復原件保留，不回填成PASS，不停用任何FK。
+- [x] Root已sealed正式Web256限定GUI（6f2499b5…）：132raw／127true＝124驗證（117GUI＋5唯讀SQL＋2背景API CAS）＋3resolution notes，五原false及復驗保留。Customer3／B/F各1全GUI建刪，Address1／Contact1全GUI新增再native cascade各1；GUI SQLfixture／cleanup0，獨立b990e2e4…核21範圍全0。十二WIP逐頁native／direct重進／reload／Close防護、四舊主檔read smoke與fresh Home已記，providers仍pending，未重跑全部舊CRUD／AreaMap／directOperatorLogin。
+- [x] 獨立GUI peer90df59c8…／119項一致性及Root acceptance c61d5d87…完成；五筆獨立SQL journal事件＋事件49退休佐證，共六份唯讀收據。code X `f82f183fcd3dfc78d5a690d3c43a15ec64f820b3`真426綁定b4599bb9…，正常推送feature／main並直接讀回。公司main e5f正常快轉，未force；原package pending／失敗與舊checkpoint歷史保持。
+- [ ] 本輪模組／QA／兩台TODO隨純文件status提交，綁定相同426來源並正常同步；再完成combined metadata。WIP／ERP／SAP／Issue／import未交付能力仍依各MD接手，不以入口隔離當交易完成。
+
+HOME負責PG復刻／API／PPK SSH／發行；Office維持MES原生Oracle唯讀來源與UI。詳[ET101](docs/modules/ENT/客戶基本資料.md)。下方舊pending皆保留為當時歷史。
+
+
 ## 最新進度：ET106 writer A2指定驗收與清理通過（2026-11-20）
 
 Root已完成API161／976單輪121 HTTP／961 assertions、獨立API13全0；Web246 A2／eb1已正式部署，GUI36 raw／32有效＝30GUI＋2SQL、四工具觀察已復驗，兩A1產品缺陷在A2真復驗。GUI地址／報關／BFT全GUI建刪，只有Customer SQL前置／清理各1；獨立13範圍全0，native35及完整catalog保持。A1 proof／缺陷、A2 proof／工具觀察及失敗log全部保留，不把API或pure測試當GUI。

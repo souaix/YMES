@@ -1,5 +1,14 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：0061客戶主檔兩預設與本表權限已套用（2026-11-20）
+
+Root在CP `2c23af30…`／API976／Webeb1基準，以新full custom backup639181B（SHA `6ae87759…`）及restore-list1814項後，實際COMMIT0061。只將既有`"YMES".tblentcustomerbasis` IssueState與DataStamp設原生DEFAULT0、將原app SELECT加INSERT／UPDATE／DELETE；原column ACL、資料／NULL、CreateDate無default、其他表與16類目錄保持。apply SHA `d07b40f130d3ddb229ac8e522a454a37a96f136430ca6373066874d334a66301`，另條READ ONLY SHA `43a0144b11f55e243562702a12419c61b3b305a8f0adb7494c043b1186507660`，真after catalog `2349d0f0f8444c675044339ef586e934d6dde091de39560ec263ded0d411590b`；native35亦保持。
+
+目前CP2c23仍是已完成ET106 writer／當時DB0060的歷史紀錄；0061實證另存，待本輪發行紀錄收尾再合併新checkpoint，沒有虛構DB ledger table。新API167／3f0b已真啟動，A4單輪八組228 HTTP／1568 assertions通過（f01774be…），另連線READ ONLY d3db117e…核22自有範圍全0；原A2／A3失敗及獨立恢復證據保持原狀。
+
+Web256已真部署 `ade411cc93a7a13c363bcb5b9c5b67169b93e5471d161bdb43432e99846ca323`，deploy log09abfa62…及獨立公開runtime d1b29b02…核TLS七項／私有167+256來源／live-current／nonroot／ready200，API3f／實DB0061／CP2c23均未因Web切換改變。此collector未執SQL，不能當新鮮schema查核或GUI驗收。另已封存GUI132raw／127true＝124驗證（117GUI＋5唯讀SQL＋2背景API CAS）及3resolution notes，五false原件與復驗保留；GUI SQLfixture／cleanup0，獨立READ ONLY b990e2e4…核21自有範圍全0，不混成API A4的22範圍。獨立peer90df59c8…及Root acceptance c61d5d87…已完成，code Xf82f183已真426綁定並正常推送／直接讀回feature與main；純文件status與新checkpoint待收尾。五個獨立SQL journal事件另有事件49的退休佐證，實際六份GUI範圍唯讀收據，均非SQL fixture／cleanup。ET106 writer已完成codeXebc／statusY24ee的409綁定、正常feature同步與完整metadata／舊raw備份／獨立讀回，其歷史不重寫。十二WIP只驗正式防護，未新增WIP schema或provider。詳[ET101模組](modules/ENT/客戶基本資料.md)及[本輪QA](qa/20261120-et101-office-e5f.md)。
+
+
 ## 最新：ET106 writer A2實證，DB仍0060（2026-11-20）
 
 本批沒有新migration／DDL／seed provider：Address22＋Declaration13及原生35欄／5 defaults維持0060。Root正式API161 `97634eef…` 單輪121 HTTP／961 assertions、API原scope獨立13全0已通過；最終Web246 A2 `eb1f5d2897d44d4498473a20029728df10f75d8c9997f3cdc3f91cb1fbb92f81` 已真部署，A2指定GUI32有效（30GUI＋2SQL）與四工具觀察復驗封存。

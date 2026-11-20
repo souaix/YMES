@@ -1,5 +1,27 @@
 # 公司端待辦
 
+## HOME回饋：ET101與e5f正式整合中（2026-11-20；驗收進行中）
+
+HOME已正常整合Office e5f與ET106完成歷史，API167／3f0b與Web256／ade411cc已正式切換；0061完成真備份／COMMIT與獨立核對。真API A4單輪八組228 HTTP／1568 assertions通過，另連線22自有範圍全0；公開TLS七項／live-current／nonroot／完整167+256來源讀回通過，API／DB未因Web切換改變。正式GUI已sealed／passed_scoped：132raw／127true＝124驗證（117GUI＋5唯讀SQL＋2背景API CAS）＋3resolution notes，五false與復驗完整保留；五個獨立SQL journal事件另有事件49退休佐證，實際六份GUI範圍唯讀收據；Customer3／B/F各1與Address1／Contact1真GUI建刪（子列由Customer native cascade），SQLfixture／cleanup0，獨立21範圍全0。十二WIP native／direct重進／reload／Close正式防護及四舊主檔read smoke已記，**不代表WIP provider交付或全部舊CRUD重驗**。獨立peer90df59c8…及Root acceptance c61d5d87…已完成，code Xf82f183真426綁定後已正常推送feature／main並直接讀回。純文件status與新checkpoint仍待收尾；User引用／完整workflow不擴稱已測，A2／A3歷史不改。各頁觀察映射與十二模組連結見[本輪QA](docs/qa/20261120-et101-office-e5f.md)。
+
+- [ ] Office後續新WIP DEV頁統一使用 `import.meta.env.DEV && developmentPreview === true` 隔離初始資料、storage、查找／Query、命令、選取與所有彈窗；正式尚無provider時空資料及明確未開放，不能只停用一顆按鈕仍露假lookup或假成功。HOME已對e5f九個新元件／12入口套同契約並逐模組補MD。
+- [ ] 保持KD共用外框與原三層選單；同頁只一個主標題，不用全域CSS改所有既有頁。每模組MD寫原來源、欄位／NULL／狀態／並發及跨系統副作用；完整MES交易與DEV示意分開交代。
+- [ ] 後續改ET101請對齊真query-key路由、完整41欄讀／29可寫、nullable signed CAS、New正規化但Edit raw key不變、六個hidden只讀、changed-only合法舊值保留、savedDTO先採用、逐筆部分成功與unknown-write停送。Apply保持Edit，clean Confirm不多寫。No-Job才支援真核准，遇流程候選503；Import未交付。
+
+Office維持MES原生Oracle唯讀來源／UI／規格；HOME維持復刻PostgreSQL／PPK SSH／API／部署／正式驗收。下方原生查證及尚未交付provider待辦完整保留，不要求Office操作HOME資料庫或上版。
+
+### WP109下一批：待補的精確原生來源（尚未實作完成）
+
+三張SWR Basis15／Detail2／共用Serial2的Oracle DDL、index與metadata已交，不重複要求；HOME本機只讀readiness確認captured catalog缺這三表及LotBasis，沒有建表或接provider。Office請僅補下列原碼摘錄／必要Oracle唯讀metadata，不操作HOME PG、SSH、部署或業務列：
+
+- [ ] `wsWIP.InitSWRNo/AddSWRBasis`及`clsWIP.cs`約11213–11825的實際serial body：新日缺列怎麼起始、存last還是next、配置／rollback時點、超999與日期時區。DEV cap999不可當原生政策，既有SerialRule配置也不可當真counter。
+- [ ] Lot lookup的`TBLWIPLOTBASIS`原生DDL及`BASELOTNO`對CustomerNo的精確ownership join；Device／MO lookup的實體表、鍵、投影與資格條件。不可從DEV options猜表名或先假設state2。
+- [ ] `AbortSWRBasis/DelSWRBasis`寫SYS EventLog的Service/Core參數、實體／欄位DDL、SWRNo／reason／actor／時間映射及交易失敗分支；現有auth audit不能直接視為此provider。
+- [ ] `FileSizeLimit`與`InputAbortLog`的原生參數讀取表／row key／型別／單位／default及失敗分支；只知道名稱和MB尚不足以安全上傳或完整作廢。原生附件讀取少最後1 byte的問題不沿用。
+
+HOME在任何SWR建表前須先補ET101 CustomerNo registry absent/present相容與防orphan；開放SWR寫入前補OP引用／鎖協作。這是HOME下一批責任，尚未完成；本輪ET101／Web256驗收不代表WP109正式交易交付。原生`issueoption=0/issuetable=NULL`，Approve為直接0→2，不新增無據SAP／generic IssueJob需求。
+
+
 ## 家用驗收回饋：ET106 writer A1／A2（2026-11-20）
 
 HOME已依已交原生22／13欄及核定契約完成本批真API／指定GUI／清理：API121／961，A2 GUI32有效（30GUI＋2SQL），原A1兩產品缺陷已在新Web246 A2真復驗；原false／工具觀察保留。Address／Declaration／BFT由GUI建立清除，Customer僅SQL前置／清理各1，獨立13範圍全0。這是本批範圍，不擴稱全MES／WIP／簽核provider完成。
