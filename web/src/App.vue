@@ -69,6 +69,7 @@ import WipRunCard from './components/WipRunCard.vue'
 import WipLotSheetPrint from './components/WipLotSheetPrint.vue'
 import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
 import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
+import WipOperatorOnline from './components/WipOperatorOnline.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
 import WipOperatorLogin from './components/WipOperatorLogin.vue'
@@ -93,6 +94,9 @@ import WipFutureWaitSet from './components/WipFutureWaitSet.vue'
 import WipFutureHoldRelease from './components/WipFutureHoldRelease.vue'
 import WipFutureWaitRelease from './components/WipFutureWaitRelease.vue'
 import WipErfBasis from './components/WipErfBasis.vue'
+import WipErfUnreleased from './components/WipErfUnreleased.vue'
+import WipWaitBasis from './components/WipWaitBasis.vue'
+import WipWaitDisposition from './components/WipWaitDisposition.vue'
 import Wip8DBasisFactory from './components/Wip8DBasisFactory.vue'
 import Wip8DMaintain from './components/Wip8DMaintain.vue'
 import Wip8DClose from './components/Wip8DClose.vue'
@@ -500,6 +504,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:OPERATOR LOGIN_LOT', label: '生產批作業員登入／登出', tableName: 'tblwiplotloginstate', shortLabel: 'Lot登入', functionNo: 'OPERATOR LOGIN_LOT', moduleNo: 'WIP' },
       { id: 'function:WIP:OPERATOR CLOCKIN', label: '使用者登入作業（上工）', tableName: 'tblwipoperatorstate', shortLabel: '上工', functionNo: 'OPERATOR CLOCKIN', moduleNo: 'WIP' },
       { id: 'function:WIP:OPERATOR CLOCKOUT', label: '使用者登出作業（下工）', tableName: 'tblwipoperatorstate', shortLabel: '下工', functionNo: 'OPERATOR CLOCKOUT', moduleNo: 'WIP' },
+      { id: 'function:WIP:OPERATOR ONLINE', label: '使用者登入(上工)資訊', tableName: 'tblwipoperatorstate', shortLabel: '上工資訊', functionNo: 'OPERATOR ONLINE', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT OPERATOR CLOCKIN', label: '批次作業員上工', tableName: 'tblwipoperatorstate', shortLabel: '批次上工', functionNo: 'LOT OPERATOR CLOCKIN', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT OPERATOR CLOCKOUT', label: '批次作業員下工', tableName: 'tblwipoperatorstate', shortLabel: '批次下工', functionNo: 'LOT OPERATOR CLOCKOUT', moduleNo: 'WIP' },
       { id: 'function:WIP:CREATE LOT', label: '生產批開立', tableName: 'tblwiplotbasis', shortLabel: '批', functionNo: 'CREATE LOT', moduleNo: 'WIP' },
@@ -539,6 +544,9 @@ const fallbackMenuTree: MenuNode[] = [
   }, {
     id: 'menu:WIP:HOLD AND WAIT', label: '異常與等待', shortLabel: '異常', children: [
       { id: 'function:WIP:ERF BASIS', label: '異常單資料', tableName: 'tblwiperfbasis', shortLabel: '異常', functionNo: 'ERF BASIS', moduleNo: 'WIP' },
+      { id: 'function:WIP:WIP ERF UNRELEASED', label: '未解除異常單', tableName: 'tblwiperfbasis', shortLabel: '未解除', functionNo: 'WIP ERF UNRELEASED', moduleNo: 'WIP' },
+      { id: 'function:WIP:WAIT BASIS', label: '等待單資料', tableName: 'tblwipwaitbasis', shortLabel: '等待', functionNo: 'WAIT BASIS', moduleNo: 'WIP' },
+      { id: 'function:WIP:WIP WAIT DISPOSITION', label: '等待處置', tableName: 'tblwipwaitbasis', shortLabel: '處置', functionNo: 'WIP WAIT DISPOSITION', moduleNo: 'WIP' },
     ],
   }, {
     id: 'menu:WIP:8D MANAGEMENT', label: '8D 管理', shortLabel: '8D', children: [
@@ -565,6 +573,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:OPERATOR LOGIN_LOT': appBasePath + '/WIP/OperatorLoginLot',
   'function:WIP:OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
   'function:WIP:OPERATOR CLOCKOUT': appBasePath + '/WIP/OperatorClockOut',
+  'function:WIP:OPERATOR ONLINE': appBasePath + '/WIP/OperatorOnline',
   'function:WIP:LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'function:WIP:LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
@@ -592,6 +601,9 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:FUTURE HOLD RELEASE': appBasePath + '/WIP/FutureHoldRelease',
   'function:WIP:FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'function:WIP:ERF BASIS': appBasePath + '/WIP/ErfBasis',
+  'function:WIP:WIP ERF UNRELEASED': appBasePath + '/WIP/ErfUnreleased',
+  'function:WIP:WAIT BASIS': appBasePath + '/WIP/WaitBasis',
+  'function:WIP:WIP WAIT DISPOSITION': appBasePath + '/WIP/WaitDisposition',
   'function:WIP:8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
   'function:WIP:8D MAINTAIN': appBasePath + '/WIP/8DMaintain',
   'function:WIP:8D CLOSE': appBasePath + '/WIP/8DClose',
@@ -763,6 +775,7 @@ const functionRoutes: Record<string, string> = {
   'OPERATOR LOGIN_LOT': appBasePath + '/WIP/OperatorLoginLot',
   'OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
   'OPERATOR CLOCKOUT': appBasePath + '/WIP/OperatorClockOut',
+  'OPERATOR ONLINE': appBasePath + '/WIP/OperatorOnline',
   'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'LOT SPLIT': appBasePath + '/WIP/LotSplit',
@@ -783,6 +796,9 @@ const functionRoutes: Record<string, string> = {
   'FUTURE HOLD RELEASE': appBasePath + '/WIP/FutureHoldRelease',
   'FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'ERF BASIS': appBasePath + '/WIP/ErfBasis',
+  'WIP ERF UNRELEASED': appBasePath + '/WIP/ErfUnreleased',
+  'WAIT BASIS': appBasePath + '/WIP/WaitBasis',
+  'WIP WAIT DISPOSITION': appBasePath + '/WIP/WaitDisposition',
   '8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
   '8D MAINTAIN': appBasePath + '/WIP/8DMaintain',
   '8D CLOSE': appBasePath + '/WIP/8DClose',
@@ -968,6 +984,9 @@ const isWipFutureWaitSetPage = computed(() => activeMasterKey.value === 'functio
 const isWipFutureHoldReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE HOLD RELEASE')
 const isWipFutureWaitReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE WAIT RELEASE')
 const isWipErfBasisPage = computed(() => activeMasterKey.value === 'function:WIP:ERF BASIS')
+const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
+const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
+const isWipWaitDispositionPage = computed(() => activeMasterKey.value === 'function:WIP:WIP WAIT DISPOSITION')
 const isWip8DBasisFactoryPage = computed(() => activeMasterKey.value === 'function:WIP:8D BASIS_FACTORY')
 const isWip8DMaintainPage = computed(() => activeMasterKey.value === 'function:WIP:8D MAINTAIN')
 const isWip8DClosePage = computed(() => activeMasterKey.value === 'function:WIP:8D CLOSE')
@@ -986,6 +1005,7 @@ const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'functio
 const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
 const isWipOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKOUT')
+const isWipOperatorOnlinePage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR ONLINE')
 const isWipLotOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKIN')
 const isWipLotOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKOUT')
 const isWipCarrierStatePage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER STATE')
@@ -2678,6 +2698,9 @@ async function signOut(): Promise<void> {
         <WipFutureHoldRelease v-else-if="isWipFutureHoldReleasePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFutureWaitRelease v-else-if="isWipFutureWaitReleasePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipErfBasis v-else-if="isWipErfBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-erf-no="pendingErfInfoNo" @create8d="open8dFromErf" @open8d-maintain="open8dMaintainFromErf" @close="navigateHome" />
+        <WipErfUnreleased v-else-if="isWipErfUnreleasedPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipWaitBasis v-else-if="isWipWaitBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipWaitDisposition v-else-if="isWipWaitDispositionPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <Wip8DBasisFactory v-else-if="isWip8DBasisFactoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :linked-erf="pending8dErf" @open-erf-info="openErfInfoFrom8d" @close="navigateHome" />
         <Wip8DMaintain v-else-if="isWip8DMaintainPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-qrs-no="pending8dMaintainNo" :read-only="pending8dMaintainReadOnly" @open-erf-info="openErfInfoFrom8d" @close="close8dMaintain" />
         <Wip8DClose v-else-if="isWip8DClosePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromClose" @close="navigateHome" />
@@ -2695,6 +2718,7 @@ async function signOut(): Promise<void> {
         <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockOut v-else-if="isWipOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipOperatorOnline v-else-if="isWipOperatorOnlinePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />

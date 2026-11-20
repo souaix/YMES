@@ -1111,6 +1111,8 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ### 更新 2026-11-20：WIP WP501 立即異常設定
 
+- Release EQP 來源補核（同日）：`clsLot.LoadWIPTemp_Equipment` 直接查 `TBLWIPTEMP_EQUIPMENT`、`TBLEMSEQUIPMENTSTATE`；前者的 Oracle source／PG CREATE-only 已在 `mestest_wip_wp201_dependency_source_ddl.sql`／`mestest_wip_wp201_create.sql`，後者在 `mestest_equipment_state_references_source_ddl.sql`／`mestest_equipment_state_references_create.sql`。下拉的 `TBLEQPSTATEBASIS` PG CREATE-only 在 `mestest_equipment_state_create.sql`。本次只靜態核對既有 DDL/CREATE，不需新增表、未重新查 Oracle 業務列、未連 PostgreSQL。Form 0 行警告仍提交的邏輯缺陷及交易守門見 WP501 規格。
+
 - 公司端以 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 和受保護 MESTEST profile，唯讀 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。新增查證 `TBLWIPERFCREATEDATA`（15 欄、PK RepairNo）、`TBLWIPERFHOLDREASON`（9 欄、複合 PK ERFNo+ComponentNo+HoldItemNo+AreaNo、LotSerial 非唯一 index）、`BKTBLWIPERFCREATEDATA`（15 欄、無 PK、LotNo 非唯一 index）。三表均無 trigger；Backup.HoldUser 長 50，原表長 10。Oracle source DDL／index DDL／metadata 在 `database/reference/mestest_wip_wp501_*`。
 - `TBLWIPERFBASIS`、`TBLWIPERFHOLDREASONDISP`、`TBLWIPERF_ATTACHFILE` 的 Oracle source DDL 已在 `database/reference/mestest_qc409_wip_disposition_dependencies_source_ddl.sql`，本次補六表的 PostgreSQL CREATE-only 參考 `database/reference/mestest_wip_wp501_create.sql`。其他 Lot／QC／OCAP 共用表沿用既存 refs；正式 API 仍須追 Reverse/ReleaseLog/User Define hook 間接表。
 - CREATE-only 僅供家用端比對 YMES PostgreSQL live schema/history；若已存在不得重建或覆蓋資料，缺項才做 forward migration。公司端未查 Oracle 業務列、未執行 DDL/DML、未連 PostgreSQL，連線秘密未寫入 repo。來源與交易細節見 `docs/modules/WIP/立即異常設定.md`。
@@ -1161,3 +1163,15 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 ### 更新 2026-11-20：WIP WP803 8D 矯正單結案作業
 
 - Release/ReleaseLog/TeamMember 直接表沿 WP802，Basis 沿 WP508。Def 的 D1 部門/人員選擇由 `clsWIP.Load8DTeamMember` 左連 `TBLUSRDEPARTMENTBASIS` 帶 DepartmentName；公司端以既有受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp803_department_source_ddl.sql` 及 `mestest_wip_wp803_department_metadata.txt`。原表 14 欄、DepartmentNo PK/單一 unique index、無 trigger，四個 `DEFAULT 0` 為 IssueState、ControlDtConect、DtConectQty、DataStamp。`mestest_first_phase_create_tables.sql` 欄/PK 已有但少四 default；準確 PG CREATE-only 為 `mestest_wip_wp803_department_create.sql`。家用端先核 live schema/history，缺 default 才 forward ALTER；公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL，憑證未提交。
+
+### 更新 2026-11-20：WIP WP510 等待單資料
+
+- 公司端以受保護 MESTEST profile、Windows PowerShell 5.1 與 Oracle.ManagedDataAccess 唯讀取得 `TBLWIPWAITLOTDISPOSITION` 的 DBMS_METADATA table/index DDL 與 ALL_TAB_COLUMNS／CONSTRAINTS／INDEXES／TRIGGERS：13 欄、5 個 NOT NULL、無 PK/FK/unique/trigger，只有 WAITNO 非唯一索引。`database/reference/mestest_wip_wp510_disposition_source_ddl.sql`、`mestest_wip_wp510_disposition_source_indexes.sql`、`mestest_wip_wp510_disposition_metadata.txt` 與 PG CREATE-only `mestest_wip_wp510_disposition_create.sql` 已交付。主表 WaitBasis 沿 WP201，NodeBasis 沿 PRS104。未查業務列、未寫 Oracle、未連 YMES PostgreSQL；家用端核 live schema/history 後只補缺項。
+
+### 更新 2026-11-20：WIP WP511 等待處置
+
+- 使用同一受保護 Oracle profile，在 Windows PowerShell 5.1 載入 `D:\iMES\CSiMES\STD\MES_S_DLL\Oracle.ManagedDataAccess.dll`，只讀 `MESTEST.XX_TBLWAITPRIV` 的 DBMS_METADATA table/index DDL 與 ALL_TAB_COLUMNS／CONSTRAINTS／INDEXES／TRIGGERS；沒有查業務資料列。14 欄全部 NOT NULL，`GROUPNO` 主鍵、單一 unique index、無 FK/trigger。`database/reference/mestest_wip_wp511_priv_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt` 與 `_create.sql` 已交付；PG CREATE-only 只供家用端核 live schema/history 後建 forward migration。權限關聯的 `TBLUSRUSERGROUP` 沿既有設備工程群組 reference，Wait 主/明細沿 WP201/WP510；公司端未連 YMES PostgreSQL、未寫 Oracle，憑證未提交。
+
+### 更新 2026-11-20：WIP WP509 未解除異常單
+
+- 公司端以同一受保護 Oracle profile、Windows PowerShell 5.1 與 Oracle.ManagedDataAccess **唯讀**查 `MESTEST.XX_TBLQCHOLDPRIV` 的 DBMS_METADATA table/index DDL 和 ALL_TAB_COLUMNS／CONSTRAINTS／INDEXES／TRIGGERS；沒有查業務資料列。18 欄全部 NOT NULL、15 個處置旗標 `NUMBER(1,0) DEFAULT 0`、`GROUPNO` 主鍵及單一 unique index、無 FK/trigger。交付 `database/reference/mestest_wip_wp509_priv_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt`、`_create.sql`。PG CREATE-only 僅供家用端核 live schema/history 後寫 forward migration。其餘 ERF/Lot/USR 表沿 QC409/WP501/WP508 及既有設備群組 refs；公司端未連 YMES PostgreSQL、未寫 Oracle，憑證未提交。
