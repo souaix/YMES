@@ -77,6 +77,7 @@ import WipLotReverse from './components/WipLotReverse.vue'
 import WipReleasedLotDelete from './components/WipReleasedLotDelete.vue'
 import WipReleasedLotBatchDelete from './components/WipReleasedLotBatchDelete.vue'
 import WipLotAreaChange from './components/WipLotAreaChange.vue'
+import WipProductVersionChange from './components/WipProductVersionChange.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
 import WipOperatorLogin from './components/WipOperatorLogin.vue'
@@ -577,6 +578,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:DELETE RELEASED LOT', label: '刪除已下線生產批', tableName: 'tblwiplotstate', shortLabel: '刪批', functionNo: 'DELETE RELEASED LOT', moduleNo: 'WIP' },
       { id: 'function:WIP:DELETE BATCH LOT', label: '批次刪除已下線生產批', tableName: 'tblwiplotstate', shortLabel: '批刪', functionNo: 'DELETE BATCH LOT', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT OP AREA CHANGE', label: '生產批作業區變更', tableName: 'tblwiplotoparea', shortLabel: '作業區', functionNo: 'LOT OP AREA CHANGE', moduleNo: 'WIP' },
+      { id: 'function:WIP:PRODUCT VERSION CHANGE', label: '產品版本變更', tableName: 'tblwiplotbasis', shortLabel: '版本', functionNo: 'PRODUCT VERSION CHANGE', moduleNo: 'WIP' },
     ],
   }] },
 ]
@@ -601,6 +603,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:DELETE RELEASED LOT': appBasePath + '/WIP/ReleasedLotDelete',
   'function:WIP:DELETE BATCH LOT': appBasePath + '/WIP/ReleasedLotBatchDelete',
   'function:WIP:LOT OP AREA CHANGE': appBasePath + '/WIP/LotAreaChange',
+  'function:WIP:PRODUCT VERSION CHANGE': appBasePath + '/WIP/ProductVersionChange',
   'function:WIP:LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'function:WIP:LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
@@ -813,6 +816,7 @@ const functionRoutes: Record<string, string> = {
   'DELETE RELEASED LOT': appBasePath + '/WIP/ReleasedLotDelete',
   'DELETE BATCH LOT': appBasePath + '/WIP/ReleasedLotBatchDelete',
   'LOT OP AREA CHANGE': appBasePath + '/WIP/LotAreaChange',
+  'PRODUCT VERSION CHANGE': appBasePath + '/WIP/ProductVersionChange',
   'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'LOT SPLIT': appBasePath + '/WIP/LotSplit',
@@ -1053,6 +1057,7 @@ const isWipLotReversePage = computed(() => activeMasterKey.value === 'function:W
 const isWipReleasedLotDeletePage = computed(() => activeMasterKey.value === 'function:WIP:DELETE RELEASED LOT')
 const isWipReleasedLotBatchDeletePage = computed(() => activeMasterKey.value === 'function:WIP:DELETE BATCH LOT')
 const isWipLotAreaChangePage = computed(() => activeMasterKey.value === 'function:WIP:LOT OP AREA CHANGE')
+const isWipProductVersionChangePage = computed(() => activeMasterKey.value === 'function:WIP:PRODUCT VERSION CHANGE')
 const isWipLotOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKIN')
 const isWipLotOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKOUT')
 const isWipCarrierStatePage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER STATE')
@@ -2766,6 +2771,7 @@ async function signOut(): Promise<void> {
         <WipReleasedLotDelete v-else-if="isWipReleasedLotDeletePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipReleasedLotBatchDelete v-else-if="isWipReleasedLotBatchDeletePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotAreaChange v-else-if="isWipLotAreaChangePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipProductVersionChange v-else-if="isWipProductVersionChangePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />
