@@ -1073,3 +1073,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-20：WIP WP109 特殊生產需求維護
 
 - 公司端使用同一受保護 Oracle profile，以 Windows PowerShell 5.1／Oracle.ManagedDataAccess **唯讀**查 `MESTEST.TBLWIPSWRBASIS`、`TBLWIPSWRDETAIL`、`TBLSYSSERIALNO` 的 DBMS_METADATA table/index DDL 和 ALL_TAB_COLUMNS／CONSTRAINTS／INDEXES／TRIGGERS，沒有查任何業務資料列或執行 DDL/DML。分別 15/2/2 欄；主鍵為 SWRNO、(SWRNO,LOTNO)、FUNCTIONNAME；各只有一個 unique PK index，均無 FK/trigger。三組 `database/reference/mestest_wip_wp109_{basis,detail,serial}_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt` 和 PG CREATE-only `mestest_wip_wp109_create.sql` 已交付。Serial 是共用表；家用端先核 live schema/history，再只對缺項寫 forward migration。公司端未連 YMES PostgreSQL，憑證未提交。
+
+### 更新 2026-11-20：WIP WP112 工單撤派工
+
+- 同一公司端受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**查 `TBLWIPCONT_MATERIALLOT`（18 欄、無 PK、兩個非唯一 index）、`TBLSYSSERIALCREATEMAX`（6 欄、四鍵 PK）、`XX_TBLOEMO_OS_BU1`（10 欄、四鍵 PK）、`ZPPT0025A/B/C1`（10/8/10 欄、各複合 PK）的 DBMS_METADATA table/index DDL、ALL_TAB_COLUMNS／CONSTRAINTS／INDEXES／TRIGGERS；六表均無 trigger。交付 `database/reference/mestest_wip_wp112_<table>_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt` 與 PG CREATE-only `mestest_wip_wp112_create.sql`。Source DDL 的 `VARCHAR2(n CHAR)` 已按字元長度轉 PG，不能用 metadata DATA_LENGTH 位元組值。原交易寫 `THSAP.ZPPT0025A/B/C1@SAP_DBLINK`，MESTEST 本地表 DDL 不能證明外部實表一致；家用端先核外部契約與 PG live schema/history，再僅補真缺項。公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL，憑證未提交。

@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 公司端最新進度：WP112 UNDO DISPATCH（2026-11-20）
+
+- [x] 靜態核對 THEIL `frmUndoDispatch_THEIL_BU1`／`wsWIP.LoadUndoDispatch`／`exeUndoDispatch`／`clsLot.LoadUndoDispatch`／`clsSAP.GetSAP_ZPPT0025x_Data`。Vue DEV `/YMES/WIP/UndoDispatch` 有兩模式、MO lookup、13 欄 Grid、全選/取消全選、逐批假 Confirm；規格 [工單撤派工](docs/modules/WIP/工單撤派工.md) 明列 SAP/Inventory/Log 不在 DEV 實作。
+- [x] PowerShell 5.1 + 受保護 MESTEST profile 唯讀取得六張缺表的原始 DDL/index/metadata：MaterialLot、SAP 計數器、MO OS、ZPPT0025A/B/C1；PG CREATE-only 在 `database/reference/mestest_wip_wp112_create.sql`。MESTEST 本地 ZPPT 不能代替實際 `THSAP.*@SAP_DBLINK` 的契約，家用端另核。未查業務列、未寫 Oracle、未連 YMES PostgreSQL、未 build/test/browser。
+- [ ] 照 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 接續未完成 WIP 功能；公司端只做原碼／Oracle 唯讀／Vue DEV／規格/家用交接，避免覆蓋家用端正式變更。
+
 ## 公司端最新進度：WP109 SWR BASIS（2026-11-20）
 
 - [x] 已依 `frmWIPSWRBasis`／Def、`wsWIP`、`clsWIP` 靜態核對七查詢條件、四狀態、14 欄 JOIN Grid、ADD/EDIT/Copy、Approve/Void、附件與流水號；Vue DEV 路徑 `/YMES/WIP/SwrBasis`，規格 [特殊生產需求維護](docs/modules/WIP/特殊生產需求維護.md)。

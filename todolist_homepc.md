@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 最新公司端交付：WP112 工單撤派工（2026-11-20）
+
+公司端完成 `/YMES/WIP/UndoDispatch` Vue DEV 示意與 [WP112 原始碼規格](docs/modules/WIP/工單撤派工.md)；未連 YMES PostgreSQL 或 SAP、未執行正式 API/部署。這個功能有外部 SAP DB link 與 Lot/Inventory 副作用，**不能只做狀態 UPDATE 就標示完成**。
+
+- [ ] Pull 最新 `main`，先核 YMES PostgreSQL live schema/history/權限。六張 MESTEST 直接表 `TBLWIPCONT_MATERIALLOT`、`TBLSYSSERIALCREATEMAX`、`XX_TBLOEMO_OS_BU1`、`ZPPT0025A/B/C1` 的原始 DDL/index/metadata 在 `database/reference/mestest_wip_wp112_*`，PG CREATE-only 在 `mestest_wip_wp112_create.sql`。MaterialLot 無 PK、只有兩個非唯一 index；`VARCHAR2(n CHAR)` 按 source DDL 字數，勿用 DATA_LENGTH 位元組數。已存在表不重建，缺項才 forward migration；本地 MESTEST ZPPT 不等於外部 THSAP 契約。
+- [ ] 查詢 API：授權 MOState 3/6 的 MO lookup；DataType1 只取 LotState.Status3，DataType2 只取 Status99+Ex_LotState1 Y 且拒已關結 MO。LotBasis/MO/Product/OP/ERF 的 JOIN 可能重複 Lot，前後端以 LotNo 去重；參數化查詢、分頁與可見範圍。重用 WP101/WP201/WP501/Area/SYS/主檔已有表，不重複 CREATE。
+- [ ] Confirm API：ProgramType3/4 逐 Lot 重查鎖定狀態、MO 關結與 `SysInfo/LastEndTime`；讀 `SAP_UPLOAD='Y'` Report、MO SAP_WERKS、OS VORNR、物料批 SAP_CHARG。按 Core 產生 `THSAP.ZPPT0025A/B/C1`、TransactionLog/EventLog，ProgramType4 分配 `SAP_RMZHL` 新計數器，3 沿用舊值；接著 3→LotState99/ExY，4→LotState12/ExNULL 並依 AreaInventory 插入 INVWIP_Scrap。若零 Report 列，須明定是否允許，不能無聲宣稱 SAP 完成。
+- [ ] 外部 THSAP schema／DB link／重試補償與交易 Log provider 須驗證。若 provider 未具備，正式 POST 明確回未支援，不能只寫 PG 並回成功。逐批結果含已成功/失敗/未處理、跨系統識別、冪等鍵和並發防重；家用端完成 API/PG/正式 UI/建置/驗收/部署。
+
 ## 最新公司端交付：WP109 特殊生產需求維護（2026-11-20）
 
 公司端新增 `/YMES/WIP/SwrBasis` Vue DEV 假資料頁；原碼核對及限制見 [WP109 規格](docs/modules/WIP/特殊生產需求維護.md)。公司端沒有連 YMES PostgreSQL、部署或建立正式 API。
