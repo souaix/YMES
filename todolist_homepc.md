@@ -2430,3 +2430,34 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] 建登入/Function ACL 的六欄候選查詢、五種 lookup、PS→有效 OP、QC M/S Class/Hold Description/HoldItem/FirstGroup 的正式讀取 API，限制結果量；Status `0|1|4`、ShowPartialLot=false、至少一個 filter。Selected Lot 是已勾列過濾，Lot/HoldItem 掃描在當前查詢或分類結果勾選。SClass 是 UI 必填與候選依據，原 Service 只收 MClass，不把 SClass 誤當主表欄。
 - [ ] Set POST 對每**一筆**所選 Lot 重查包裝、狀態、Partial、版本與權限；原 Form 把多筆 LotNo 逗號串送給單值 `CheckLotPackage`，有漏檢風險。確認選 PS/OP、MClass/SClass/HoldItem 合法、HoldTime 只能 0/1、說明非空。FirstGroup 缺對應 OP 而無 `*` 時提供可取消確認，不能把它當硬拒或忽略警示。
 - [ ] 按 Lot×OP 與 `(LotNo,OPNo,HoldTime,ModuleNo,ModuleVersion)` 在同一交易替換 FutureHold/Reason；此入口 ModuleNo/Version=`N/A`，`FutureHoldSerial` default=`N/A`，原刪除鍵**不含 Serial**，須確認不同 Serial 舊資料的覆蓋政策。Set 不立刻改 Lot/開 ERF；後續 Start/End 命中、ERFType3、FutureHoldLog、Reverse/ReleaseLog 與 WP506 Release 要設計一致。交易使用參數化 SQL、冪等鍵、server Creator/時間與並發衝突處理；API 完成後才接正式 Vue／部署/驗收。公司端未連 PG、未執行 build/test/browser。
+
+## WIP WP505 預先等待設定家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，讀 [WP505 規格](docs/modules/WIP/預先等待設定.md)。公司 `/YMES/WIP/FutureWaitSet` 只用 DEV 假資料，正式環境不可讀 `ymes-dev-mock:wip-future-wait-set:state:v1` 或回報假 Set 成功。
+- [ ] 核 YMES PostgreSQL live schema/history、資料與權限。`TBLWIPFUTUREWAIT` 七欄、PK `(LOTNO,OPNO,WAITTIME)`，Oracle source `mestest_wip_wp201_dependency_source_ddl.sql`、PG CREATE-only `mestest_wip_wp201_create.sql` 已存在；無新直接表，缺項才 forward migration，別重建 WP201 既有結構。
+- [ ] 建有登入/Function ACL 的六欄候選查詢、五類 lookup、PS→有效 OP；至少一個 filter、Status `0|1|4`、ShowPartialLot=false、結果分頁/上限。Selected Lot 是檢視過濾，掃描只勾當前查詢列。
+- [ ] Set POST 逐批重查包裝、Status、Partial、版本、Lot/OP 和權限；原 Form 的多筆 LotNo 逗號串被 `CheckLotPackage` 當單值，不能沿用。WaitTime 只允許 Start=0/End=1，OP 至少一個，Description **可空**且最多 3000 字元。以參數化 SQL 交易按 Lot×OP×WaitTime 刪舊再插新 FutureWait，server 決定 Creator/日期、明確處理併發/冪等；Set 不直接改 LotState/WaitBasis。後續 `ChkFutureWait` 命中、WP502 等待交易及 WP507 Release 需生命週期一致。完成 API 才接正式 Vue/部署驗收；公司端未連 PG、未執行 build/test/browser。
+
+## WIP WP506 預先異常解除家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，讀 [WP506 規格](docs/modules/WIP/預先異常解除.md)。公司 `/YMES/WIP/FutureHoldRelease` 為 DEV 假資料，與 WP504 共用 `ymes-dev-mock:wip-future-hold-set:state:v1`；正式環境不可讀此 key 或回報本機假 Release 成功。
+- [ ] 核 YMES PostgreSQL live schema/history、資料與權限。主表 `TBLWIPFUTUREHOLD` Oracle source/PG CREATE-only 在 WP201 refs；原因表 `TBLWIPFUTUREHOLDREASON` 在 WP504 refs。本功能無新直接表；確有缺項才 forward migration，不重建既有結構。
+- [ ] 提供有登入與 `WP506` Function ACL 的四種可選條件查詢：LotNo、OPNo、HoldTime 0/1、MClassNo；OP/MClass 查找，九欄結果。來源 Form 可無條件查全部，正式端必須限制筆數／分頁、做可見範圍與參數化 SQL，不在瀏覽器一次載入全表。
+- [ ] 先決定 Release 的業務範圍：建議以主表六鍵 `(LotNo,ModuleNo,ModuleVersion,OPNo,HoldTime,FutureHoldSerial)` 精確刪單筆及對應原因；若相容來源三鍵 `(LotNo,OPNo,HoldTime)` 批量刪，須明示影響筆數並鎖定/重查**每筆** LockFlag，任何鎖定均拒絕。來源只檢選取列 LockFlag 而 Core 刪同鍵全部，可能誤刪其他鎖定列；不能照搬。
+- [ ] 在交易內刪主/原因、處理並發版本/冪等與審計事件，server 取得 actor/時間；已進入 ERF 處置的設定及 FutureHoldLog 必須遵守完整生命週期，不能把此刪除當成即時解除 ERF。不可相信 browser 的 LockFlag 或拼 SQL；API 完成後接正式 Vue/部署驗收。公司端未連 PG、未執行 build/test/browser。
+
+## WIP WP507 預先等待解除家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，讀 [WP507 規格](docs/modules/WIP/預先等待解除.md)。公司 `/YMES/WIP/FutureWaitRelease` 與 WP505 共用 `ymes-dev-mock:wip-future-wait-set:state:v1`，只有 DEV 假資料；正式環境不得讀此 key 或回報假 Release 成功。
+- [ ] 核 YMES PostgreSQL live schema/history、資料與權限。`TBLWIPFUTUREWAIT` 七欄、PK `(LOTNO,OPNO,WAITTIME)` 的 Oracle source 在 `mestest_wip_wp201_dependency_source_ddl.sql`、PG CREATE-only 在 `mestest_wip_wp201_create.sql`；無新直接表。只對實際缺項 forward migration，不重建既有表。
+- [ ] 提供登入/`WP507` Function ACL 的 LotNo、OPNo、WaitTime 可選查詢和 OP lookup，顯示六欄；原 Form 可無條件查全表，正式 API 要分頁／結果上限、可見範圍和參數化 SQL。
+- [ ] Release POST 必須完整提供 LotNo/OPNo/WaitTime，WaitTime 僅 0/1；server 鎖定並重查該 PK、版本與權限，以參數化 SQL 交易刪單筆並記 actor/事件，提供不存在／衝突／冪等回應。舊 Core 允許缺鍵造成廣域刪除，絕不可照搬。Release 只刪未來設定，不解除已生效 WaitBasis/Lot Wait；須與 WP505 Set、`ChkFutureWait`、WP502 真等待交易分清生命週期。API 完成後接正式 Vue/部署驗收；公司端未連 PG、未執行 build/test/browser。
+
+## WIP WP508 異常單資料家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP508 規格](docs/modules/WIP/異常單資料.md)。公司 `/YMES/WIP/ErfBasis` 的三筆 ERF、ERF Info 五頁摘要與 8D 視窗都是 DEV 預覽，正式環境不得使用 fixture 或把 8D 提示當建立成功。
+- [ ] 核 YMES PostgreSQL live schema/history、資料、權限。主查詢 ERFBasis/BatchLot 與 Lot/Product/OP/Material/Vendor/Customer 直接表已有 Oracle/PG refs；8D Basis 的 Oracle source/PG CREATE-only 在 `mestest_wip_wp508_*`。ERF Info 新補 `mestest_wip_wp508info_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt` 和 PG CREATE-only `mestest_wip_wp508info_create.sql`：LotDisposition 16 欄、PK `(ERFNO, LOTDISPORDER)`、`LOTSERIAL` 索引；OCAP 附件 source 沿 QC409，CREATE 在本批，PK `(LOTNO, ERFNO, ATTACHNAME, OCAPNO)`。一般 ERF 附件 CREATE 沿 WP501；NodeBasis 沿 PRS104。確有缺項才 forward migration；完整 WP801 還有別表。
+- [ ] 提供登入/`WP508` Function ACL 的 ERF 查詢：六個可選文字欄、Create/Release 日期區，至少一有效條件，固定 `ERFSource=0`，分頁/上限，返回 25 欄及 batch member Lot/OP/Customer 比對語義。LotNo 是包含查詢；batch ERF 應能因任一成員命中而返回一張主 ERF。StatusShow、ERFRecordQty=ScrapQty、CalHoldTime 等派生欄由 server 計算；不得直接移植 Core 拼字串 SQL。
+- [ ] `ERF Info` 依 ERFNo 精確、授權讀主表、HoldReason、HoldReasonDisp、ERFDisposition、LotDisposition、ERF/OCAP 附件，做五頁完整查詢。LotDisposition 要以 NodeID 左聯 NodeBasis 取 OPNo/ProcessNo/ProcessVersion；HoldReason 的 `RECORDQTY=Qty`，有 OCAPNO 時 ERFDisposition 使用 OCAP 欄位分支。公司 DEV 已補假 grid/附件操作，正式端要按 `WP_ERFInformation/frmERFInformation.vb` 接真資料。
+- [ ] 附件提供分流的授權串流 View/Download 與 Delete API。Delete 必須確認、檢查獨立刪除權限、從 server 重查 ERFNo/LotNo/來源/OCAPNO 與完整 PK，並禁止刪除檔名不分大小寫包含 `CreateERFNo + "."` 的產生檔；執行前後都檢查。**舊 `wsWIP.DelERFOCAP_AttachFile`／Core 沒傳 OCAPNO，會刪同名多個 OCAP 列；新 API 必須用四鍵精確刪除。** 記 actor/稽核，交易處理競態、已刪/衝突；回應後重載兩種列表。下載輸出安全的 Content-Disposition，不能照搬 WinForms 把附件名稱與本機路徑相接並執行檔案。公司 DEV 的 View 只顯示假訊息、Delete 僅移除記憶體假列，不能當成 API 完成。
+- [ ] `8D` 有 QRSNo 時查 8D Basis，無結果或 IssueState=-1 不開維護；沒有 QRSNo 時走 WP801 建立並回寫 ERFBasis.QRSNo。此為跨模組交易：需先追 `WP_8DBasis_Factory`／`WP_8DMaintainDef` 及其他 8D 表、版本/簽核/附件/權限，再設計 API 和冪等回寫；不要從 browser 接受任意 QRSNo、IssueState。正式 API 完成後接 Vue/部署驗收。公司端未連 PG、未執行 build/test/browser。

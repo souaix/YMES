@@ -1083,3 +1083,23 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 - `frmFutureHoldSet`／`wsWIP.Exe_FutureHold_Set`／`clsLot.UpdFutureHold_Set` 的 Set 直接替換 `TBLWIPFUTUREHOLD`、`TBLWIPFUTUREHOLDREASON`；後續 `ERFType=3` 生效才使用 `TBLWIPFUTUREHOLDLOG`。主表 source/CREATE 已在 WP201；Reason/Log 由受保護 MESTEST 唯讀 `DBMS_METADATA`、ALL_TAB_COLUMNS/CONSTRAINTS/INDEXES/TRIGGERS 取得，原始檔 `database/reference/mestest_wip_wp504_source_ddl.sql`、`mestest_wip_wp504_source_indexes.sql`、`mestest_wip_wp504_metadata.txt`。PostgreSQL **CREATE-only** 在 `mestest_wip_wp504_create.sql`：Reason 八欄七鍵 PK；Log 十欄、無 PK、LotNo 非唯一 index。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL；憑證仍只在受保護本機設定，不提交。家用端先核 live schema/history，缺項才 forward migration。
 - 原 Form 多批包裝預檢傳逗號字串而 Service 當一個 LotNo，正式端須逐批重查。`UpdFutureHold_Set` 刪除鍵未含 FutureHoldSerial，會覆蓋同鍵其他 Serial；此語義與後續 ERFType3 Log 的 NOT NULL 欄位需在正式 API 交易設計確認。詳見 `docs/modules/WIP/預先異常設定.md`。
+
+### 更新 2026-11-20：WIP WP505 預先等待設定
+
+- `frmFutureWaitSet`／`wsWIP.Exe_FutureWait_Set`／`clsLot.UpdFutureWait_Set` 直接替換 `TBLWIPFUTUREWAIT`，Set 不立即更新 LotState 或 WaitBasis。主表七欄、PK `(LOTNO,OPNO,WAITTIME)`，Oracle source DDL 已在 `database/reference/mestest_wip_wp201_dependency_source_ddl.sql`，PostgreSQL CREATE-only 在 `mestest_wip_wp201_create.sql`；沒有新缺的直接表，不重複產生 CREATE SQL。公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL。家用端仍須核 live schema/history、後續生效與 WP507 Release 依賴；原 Form 多批包裝預檢有逗號單值缺陷，正式 API 逐批重查。詳見 `docs/modules/WIP/預先等待設定.md`。
+
+### 更新 2026-11-20：WIP WP506 預先異常解除
+
+- `frmFutureHoldRelease`／`wsWIP.DelFutureHold`／`clsLot.DelFutureHold` 只直接刪 `TBLWIPFUTUREHOLD`、`TBLWIPFUTUREHOLDREASON`。兩表 source DDL／CREATE-only 已在 WP201、WP504 refs；沒有新增直接表，不重複產生 CREATE SQL。公司端只讀既有 source/DDL，未查 Oracle 業務列、未寫 Oracle、未連 YMES PostgreSQL。家用端先核 live schema/history，再決定精確六鍵或舊式三鍵批量解除；來源只檢選取列 LockFlag，Core 三鍵可刪同鍵其他鎖定列。詳見 `docs/modules/WIP/預先異常解除.md`。
+
+### 更新 2026-11-20：WIP WP507 預先等待解除
+
+- `frmFutureWaitRelease`／`wsWIP.DelFutureWait`／`clsLot.DelFutureWait` 直接刪 `TBLWIPFUTUREWAIT`；七欄、PK `(LOTNO,OPNO,WAITTIME)` 的 Oracle source DDL 與 PostgreSQL CREATE-only 已在 WP201 refs。沒有新增直接表/CREATE SQL。公司端只讀來源碼與已交付 DDL，未查 Oracle 業務列、未寫 Oracle、未連 YMES PostgreSQL。正式 API 應限制查詢筆數並強制完整三鍵、0/1 WaitTime、參數化交易；家用端先核 live schema/history。詳見 `docs/modules/WIP/預先等待解除.md`。
+
+### 更新 2026-11-20：WIP WP508 異常單資料
+
+- `frmERFBasis` 的主查詢使用 ERFBasis/BatchLot 和 Lot/Product/OP/Material/Vendor/Customer 既有 source/CREATE refs，不重複建表；8D 分支直接讀 `TBLWIP8DBASIS_FACTORY`。公司端以受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得新表 source DDL、index、metadata：`database/reference/mestest_wip_wp508_source_ddl.sql`、`mestest_wip_wp508_source_indexes.sql`、`mestest_wip_wp508_metadata.txt`。PG CREATE-only 在 `mestest_wip_wp508_create.sql`：43 欄、PK `QRSNO`、無 FK/trigger/額外 index。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證未提交。家用端先核 live schema/history，確有缺項才 forward migration；完整 WP801 8D 仍有其他表，見 `docs/modules/WIP/異常單資料.md`。
+
+### 更新 2026-11-20：WIP WP508 ERF Info 補查
+
+- `WP_ERFInformation` 的 Lot Disposition 直接表 `TBLWIPERFLOTDISPOSITION`，公司端由受保護 MESTEST profile 以 PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp508info_source_ddl.sql`、`mestest_wip_wp508info_source_indexes.sql`、`mestest_wip_wp508info_metadata.txt`；16 欄，PK `(ERFNO, LOTDISPORDER)`，另有非唯一 `LOTSERIAL` 索引，無 trigger。PG CREATE-only `mestest_wip_wp508info_create.sql` 包含 LotDisposition 與 `TBLWIPERFOCAP_ATTACHFILE`。後者 Oracle source 已在 QC409 refs，11 欄，PK `(LOTNO,ERFNO,ATTACHNAME,OCAPNO)`，原先欠 PG CREATE。一般 ERF 附件 PG CREATE 在 WP501，NodeBasis 在 PRS104。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證/受保護附件路徑未提交。家用端先比對 live schema/history，僅對缺項做 forward migration。
