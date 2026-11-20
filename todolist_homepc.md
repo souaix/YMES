@@ -4,6 +4,7 @@
 
 - [ ] 讀 [WP401 規格](docs/modules/WIP/外包單開立.md)，比對既有 OS Basis、OS Detail、Future OS references 與 live schema。完成正式 WP401 權限、參考批 lookup、取號及跨表原子增修／刪除／作廢。
 - [ ] 讀 [WP402 規格](docs/modules/WIP/外包單確認.md)，比對 FutureOSLog 和 ERP settings 結構，實作出貨確認、Lot/流程/Reverse 原子更新及可復原的 ERP 請購與回寫。
+- [ ] 讀 [WP403 規格](docs/modules/WIP/外包回貨.md)，比對回貨元件及成本資源 DDL，完成批/元件量、庫房、ERP 回貨與原子交易。
 
 ## 最新公司端交付：WP112 工單撤派工（2026-11-20）
 

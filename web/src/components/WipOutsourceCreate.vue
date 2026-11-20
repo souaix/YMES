@@ -12,6 +12,7 @@ interface Lot {
   componentNo: string
   qty: number
   unit: string
+  receipt?: { good: number; scrap: number; other: number; unitPrice: number; unit: string; at: string; by: string }
 }
 
 interface Order {
@@ -24,7 +25,7 @@ interface Order {
   description: string
   returnNode: string
   lots: Lot[]
-  status: 0 | 1 | -1
+  status: 0 | 1 | 10 | 11 | -1
   creator: string
   createdAt: string
   stamp: number
@@ -32,7 +33,7 @@ interface Order {
   shippedBy?: string
 }
 
-const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; confirmationOnly?: boolean }>()
+const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; confirmationOnly?: boolean; returnOnly?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
@@ -61,7 +62,7 @@ const lotFields = [
   { key: 'productNo', label: '產品' }, { key: 'moNo', label: '工單' },
   { key: 'lotNo', label: '批號' }, { key: 'componentNo', label: '元件' },
 ] as const
-const filters = ref({ osNo: '', opNo: '', vendorNo: '', creator: '', from: '', to: '' })
+const filters = ref({ osNo: '', opNo: '', vendorNo: '', creator: '', from: '', to: '', shippedFrom: '', shippedTo: '' })
 const appliedFilters = ref({ ...filters.value })
 const orders = ref<Order[]>(readOrders())
 const selected = ref<string[]>([])
@@ -75,12 +76,16 @@ const scannedLotNo = ref('')
 const error = ref('')
 const editError = ref('')
 const notice = ref('')
+const receiptRows = ref<{ lot: Lot; checked: boolean; good: number; scrap: number; unitPrice: number; unit: string }[]>()
+const receiptOrder = ref<Order>()
 
 const visibleOrders = computed(() => {
   const filters = appliedFilters.value
-  return orders.value.filter(row => row.status === 0 &&
+  return orders.value.filter(row => (props.returnOnly ? row.status === 1 || row.status === 10 : row.status === 0) &&
     mainFields.every(({ key }) => !upper(filters[key]) || upper(row[key]) === upper(filters[key])) &&
-    (!filters.from || row.createdAt >= filters.from) && (!filters.to || row.createdAt <= filters.to))
+    (!filters.from || row.createdAt >= filters.from) && (!filters.to || row.createdAt <= filters.to) &&
+    (!filters.shippedFrom || !!row.shippedAt && row.shippedAt >= filters.shippedFrom) &&
+    (!filters.shippedTo || !!row.shippedAt && row.shippedAt <= filters.shippedTo))
     .sort((a, b) => a.osNo.localeCompare(b.osNo))
 })
 const active = computed(() => visibleOrders.value.find(row => row.osNo === selectedNo.value) ?? visibleOrders.value[0])
@@ -121,8 +126,9 @@ function persist(rows: Order[]): boolean {
 function search(): void {
   error.value = ''
   notice.value = ''
-  if (filters.value.from && filters.value.to && filters.value.from > filters.value.to) {
-    error.value = '建立日期的起日不可晚於迄日。'
+  if ((filters.value.from && filters.value.to && filters.value.from > filters.value.to) ||
+    (filters.value.shippedFrom && filters.value.shippedTo && filters.value.shippedFrom > filters.value.shippedTo)) {
+    error.value = '日期起日不可晚於迄日。'
     return
   }
   appliedFilters.value = { ...filters.value }
@@ -154,7 +160,8 @@ function useNumber(): void {
 
 function isAvailable(lot: Lot): boolean {
   return !orders.value.some(row => row.status !== -1 && (mode.value !== 'edit' || row.osNo !== draft.value?.osNo) &&
-    (row.status === 1 || row.opNo === draft.value?.opNo) && row.lots.some(item => item.lotNo === lot.lotNo))
+    (row.status === 0 ? row.opNo === draft.value?.opNo : row.status !== 11) &&
+    row.lots.some(item => item.lotNo === lot.lotNo && !item.receipt))
 }
 
 function searchReference(): void {
@@ -275,19 +282,71 @@ async function confirmShipment(): Promise<void> {
   selectedNo.value = ''
   notice.value = '已模擬確認 ' + updated.osNo + '。'
 }
+
+function openReceipt(): void {
+  if (!isDev.value || !props.returnOnly || !active.value) return
+  receiptOrder.value = active.value
+  receiptRows.value = active.value.lots.map(lot => ({
+    lot, checked: false, good: lot.receipt?.good ?? lot.qty, scrap: lot.receipt?.scrap ?? 0,
+    unitPrice: lot.receipt?.unitPrice ?? 0, unit: lot.receipt?.unit ?? lot.unit,
+  }))
+  editError.value = ''
+  notice.value = ''
+}
+
+function otherQty(row: { lot: Lot; good: number; scrap: number }): number {
+  return Math.round((row.lot.qty - row.good - row.scrap) * 10000) / 10000
+}
+
+async function saveReceipt(): Promise<void> {
+  const original = receiptOrder.value
+  if (!isDev.value || !props.returnOnly || !original) return
+  const selected = receiptRows.value?.filter(row => row.checked && !row.lot.receipt) ?? []
+  if (!selected.length) { editError.value = '請選擇至少一筆待回貨批號。'; return }
+  const bad = selected.find(row => ![row.good, row.scrap, row.unitPrice].every(value => Number.isFinite(value) && value >= 0) ||
+    otherQty(row) < 0 || !row.unit)
+  if (bad) { editError.value = bad.lot.lotNo + ' 的數量、單價或回貨單位有誤。'; return }
+  if (!await requestConfirmation('確定模擬回貨 ' + selected.length + ' 批？')) return
+  const current = orders.value.find(row => row.osNo === original.osNo)
+  if (!current || current.stamp !== original.stamp || (current.status !== 1 && current.status !== 10)) {
+    editError.value = '外包單已變更，請重新查詢。'
+    return
+  }
+  const at = today()
+  const by = props.currentUserNo || 'DEV001'
+  const lots = current.lots.map(lot => {
+    const row = selected.find(item => item.lot.lotNo === lot.lotNo)
+    return row ? { ...lot, receipt: { good: row.good, scrap: row.scrap, other: otherQty(row), unitPrice: row.unitPrice, unit: row.unit, at, by } } : lot
+  })
+  const updated: Order = { ...current, lots, status: lots.every(lot => lot.receipt) ? 11 : 10, stamp: current.stamp + 1 }
+  if (!persist(orders.value.map(row => row.osNo === updated.osNo ? updated : row))) {
+    editError.value = '無法儲存 DEV 回貨。'
+    return
+  }
+  receiptRows.value = undefined
+  receiptOrder.value = undefined
+  notice.value = '已模擬回貨 ' + selected.length + ' 批。'
+}
 </script>
 
 <template>
   <section class="outsource">
-    <h2>{{ confirmationOnly ? '外包單確認' : '外包單開立' }}</h2>
+    <h2>{{ returnOnly ? '外包回貨' : confirmationOnly ? '外包單確認' : '外包單開立' }}</h2>
     <template v-if="isDev">
       <form class="toolbar" @submit.prevent="search">
         <label v-for="field in mainFields" :key="field.key">{{ field.label }} <input v-model="filters[field.key]" maxlength="20"></label>
         <label>建立起日 <input v-model="filters.from" type="date"></label>
         <label>建立迄日 <input v-model="filters.to" type="date"></label>
+        <template v-if="returnOnly">
+          <label>出貨起日 <input v-model="filters.shippedFrom" type="date"></label>
+          <label>出貨迄日 <input v-model="filters.shippedTo" type="date"></label>
+        </template>
         <button type="submit">查詢</button>
       </form>
-      <div v-if="confirmationOnly" class="toolbar">
+      <div v-if="returnOnly" class="toolbar">
+        <button type="button" :disabled="!active" @click="openReceipt">外包回貨</button>
+      </div>
+      <div v-else-if="confirmationOnly" class="toolbar">
         <button type="button" :disabled="!active" @click="confirmShipment">確認</button>
       </div>
       <div v-else class="toolbar">
@@ -302,21 +361,21 @@ async function confirmShipment(): Promise<void> {
         <tbody>
           <tr v-for="row in visibleOrders" :key="row.osNo" :class="{ active: active?.osNo === row.osNo }" @click="selectedNo = row.osNo">
             <td>
-              <input v-if="confirmationOnly" name="os-confirm-order" type="radio" :aria-label="'選取 ' + row.osNo" :checked="active?.osNo === row.osNo" @change="selectedNo = row.osNo">
+              <input v-if="confirmationOnly || returnOnly" name="os-order" type="radio" :aria-label="'選取 ' + row.osNo" :checked="active?.osNo === row.osNo" @change="selectedNo = row.osNo">
               <input v-else v-model="selected" :aria-label="'選取 ' + row.osNo" type="checkbox" :value="row.osNo">
             </td>
             <td><button type="button" class="link" @click="selectedNo = row.osNo">{{ row.osNo }}</button></td>
             <td>{{ row.opNo }}</td><td>{{ row.itemNo }}</td><td>{{ row.vendorNo }}</td><td>{{ row.preparer }}</td><td>{{ row.due }}</td>
-            <td>{{ lotTotal(row.lots) }}</td><td>未確認</td><td>{{ row.creator }}</td><td>{{ row.createdAt }}</td><td>{{ row.description }}</td>
+            <td>{{ lotTotal(row.lots) }}</td><td>{{ row.status === 10 ? '部分回貨' : row.status === 1 ? '已出貨' : '未確認' }}</td><td>{{ row.creator }}</td><td>{{ row.createdAt }}</td><td>{{ row.description }}</td>
           </tr>
-          <tr v-if="!visibleOrders.length"><td colspan="12">查無未確認的臨時外包單</td></tr>
+          <tr v-if="!visibleOrders.length"><td colspan="12">{{ returnOnly ? '查無待回貨外包單' : '查無未確認的臨時外包單' }}</td></tr>
         </tbody>
       </table></div>
       <h3>批號明細 {{ active?.osNo }}</h3>
       <div class="grid"><table>
         <thead><tr><th>批號</th><th>投入量</th><th>單位</th><th>回貨狀態</th></tr></thead>
         <tbody>
-          <tr v-for="lot in active?.lots ?? []" :key="lot.lotNo"><td>{{ lot.lotNo }}</td><td>{{ lot.qty }}</td><td>{{ lot.unit }}</td><td>待回貨</td></tr>
+          <tr v-for="lot in active?.lots ?? []" :key="lot.lotNo"><td>{{ lot.lotNo }}</td><td>{{ lot.qty }}</td><td>{{ lot.unit }}</td><td>{{ lot.receipt ? '已回貨' : '待回貨' }}</td></tr>
           <tr v-if="!active"><td colspan="4">尚未選取外包單</td></tr>
         </tbody>
       </table></div>
@@ -364,6 +423,29 @@ async function confirmShipment(): Promise<void> {
         <p>外包量 {{ lotTotal(draft.lots) }} {{ reference?.unit }}</p>
         <p v-if="editError" role="alert">{{ editError }}</p>
         <footer><button type="button" @click="save(true)">確認</button><button type="button" @click="save(false)">套用</button><button type="button" @click="draft = undefined">關閉</button></footer>
+      </section>
+    </div>
+    <div v-if="receiptRows" class="overlay">
+      <section class="dialog" role="dialog" aria-modal="true" aria-label="外包回貨明細">
+        <h3>外包回貨 {{ receiptOrder?.osNo }}</h3>
+        <div class="toolbar">
+          <button type="button" @click="receiptRows.forEach(row => row.checked = !row.lot.receipt)">全選待回貨</button>
+          <button type="button" @click="receiptRows.forEach(row => row.checked = false)">取消全選</button>
+        </div>
+        <div class="grid"><table>
+          <thead><tr><th>納入</th><th>批號</th><th>投入量</th><th>良品量</th><th>報廢量</th><th>其他量</th><th>單價</th><th>回貨單位</th></tr></thead>
+          <tbody><tr v-for="row in receiptRows" :key="row.lot.lotNo">
+            <td><input v-model="row.checked" type="checkbox" :aria-label="'回貨 ' + row.lot.lotNo" :disabled="!!row.lot.receipt"></td>
+            <td>{{ row.lot.lotNo }}</td><td>{{ row.lot.qty }}</td>
+            <td><input v-model.number="row.good" type="number" step="0.0001" min="0" aria-label="良品量" :disabled="!row.checked"></td>
+            <td><input v-model.number="row.scrap" type="number" step="0.0001" min="0" aria-label="報廢量" :disabled="!row.checked"></td>
+            <td>{{ otherQty(row) }}</td>
+            <td><input v-model.number="row.unitPrice" type="number" step="0.0001" min="0" aria-label="單價" :disabled="!row.checked"></td>
+            <td><input v-model="row.unit" maxlength="30" aria-label="回貨單位" :disabled="!row.checked"></td>
+          </tr></tbody>
+        </table></div>
+        <p v-if="editError" role="alert">{{ editError }}</p>
+        <footer><button type="button" @click="saveReceipt">確認</button><button type="button" @click="receiptRows = undefined">關閉</button></footer>
       </section>
     </div>
     <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
