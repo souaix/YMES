@@ -991,3 +991,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - 對照 WinForms `frmBR_CL_Merge_GEN`／`frmCarrierMerge_Comp`、Service `Exe_Manual_LotMerge_Carrier`、Core `BR_Manual_LotMerge_Carrier`。Core 字面直接引用 11 張表：`TBLEMSDISPATCHSTATE`、`TBLWIPAUTOMERGE`、`TBLWIPCARRIERSTATE`、`TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCARRIERSTATEDETAILLOG`、`TBLWIPCOMPONENTSTATE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`、`TBLWIPOSBASIS`、`TBLWIPOSDETAIL`；逐名核對 `database/reference/` 均有 Oracle source DDL 及 PostgreSQL CREATE-only，分別沿用 WP101、WP302、WP207 與 Carrier Basis refs。`tblCarrierDetailComp` 是記憶體 DataTable，不是資料庫表。本功能沒有新缺失的直接表，故不重複取得 Oracle DDL 或建立 CREATE SQL。
 - 公司端只讀原碼及現有來源 SQL，未讀 Oracle 業務資料列、未執行 DDL/DML、未連 YMES PostgreSQL、未輸出憑證。家用端仍須核 PostgreSQL live schema/history，追 Core helper 間接表，再依實際缺口建立 forward migration；既有 CREATE-only 不代表 live 表已建立。詳 `docs/modules/WIP/併批處理_載具.md`。
+
+### 更新 2026-11-20：WIP WP215 元件分片處理
+
+- 對照 `frmSplitComponent`、`wsWIP.InitRunSplitComponentNo`／`EXE_SplitComponent`、`clsWIP.InitRunSplitComponentNo`／`EXE_SplitComponent`。兩個 Core 方法字面直接引用 14 張實體表；12 張已有 Oracle source DDL／PostgreSQL CREATE-only，缺 `TBLWIPCOMPONENTBASIS` 與 `TBLWIPREVERSEHISTORY` reference。
+- 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 MESTEST profile，唯讀查 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。兩表均位於 MESTEST：ComponentBasis 32 欄、PK `COMPONENTNO`；ReverseHistory 11 欄、PK `(LOTNO,REVERSEID)`，另有非唯一 `LOTSERIAL` index；兩表無 FK／trigger。source DDL、index DDL、metadata、PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp215_*`。ComponentBasis 在 Core 是表存在才繼承的可選分支，家用端先核 live PG schema/history 再決定 forward migration；不要直接重播 CREATE-only。
+- 未讀 Oracle 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。完整來源與 API 守門見 `docs/modules/WIP/元件分片處理.md`。

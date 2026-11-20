@@ -83,6 +83,7 @@ import WipLotMerge from './components/WipLotMerge.vue'
 import WipLotMergeComponent from './components/WipLotMergeComponent.vue'
 import WipLotMergeBin from './components/WipLotMergeBin.vue'
 import WipLotMergeCarrier from './components/WipLotMergeCarrier.vue'
+import WipComponentSplit from './components/WipComponentSplit.vue'
 import WipAreaShow from './components/AreaShowMaster.vue'
 import WipEquipmentFavorite from './components/WipEquipmentFavorite.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
@@ -551,6 +552,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:LOT MERGE_COMP': appBasePath + '/WIP/LotMergeComponent',
   'function:WIP:LOT MERGE_BIN': appBasePath + '/WIP/LotMergeBin',
   'function:WIP:LOT MERGE_CARRIER': appBasePath + '/WIP/LotMergeCarrier',
+  'function:WIP:LOT COMP SPLIT': appBasePath + '/WIP/ComponentSplit',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
   'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
   'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
@@ -728,6 +730,7 @@ const functionRoutes: Record<string, string> = {
   'LOT MERGE_COMP': appBasePath + '/WIP/LotMergeComponent',
   'LOT MERGE_BIN': appBasePath + '/WIP/LotMergeBin',
   'LOT MERGE_CARRIER': appBasePath + '/WIP/LotMergeCarrier',
+  'LOT COMP SPLIT': appBasePath + '/WIP/ComponentSplit',
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -899,6 +902,7 @@ const isWipLotMergePage = computed(() => activeMasterKey.value === 'function:WIP
 const isWipLotMergeComponentPage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE_COMP')
 const isWipLotMergeBinPage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE_BIN')
 const isWipLotMergeCarrierPage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE_CARRIER')
+const isWipComponentSplitPage = computed(() => activeMasterKey.value === 'function:WIP:LOT COMP SPLIT')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
 const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
@@ -2522,6 +2526,7 @@ async function signOut(): Promise<void> {
         <WipLotMergeComponent v-else-if="isWipLotMergeComponentPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotMergeBin v-else-if="isWipLotMergeBinPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotMergeCarrier v-else-if="isWipLotMergeCarrierPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipComponentSplit v-else-if="isWipComponentSplitPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
