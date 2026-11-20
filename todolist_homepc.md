@@ -59,6 +59,7 @@ Code X `ebc03a106ebd5d47a1a47bf6dcc172fc3bdb8ef1` 已409來源綁定PASS、正�
 - [ ] 讀 [WP912 規格](docs/modules/WIP/生產批作業站製程特性值調整.md)，核對特性值、並發版本與調整稽核資料，實作兩種原子交易。
 - [ ] 讀 [WP913 規格](docs/modules/WIP/生產批屬性調整.md)，比對既有屬性表，完成批／元件 CRUD、舊值鎖定與理由稽核。
 - [ ] 讀 [WP915 規格](docs/modules/WIP/生產批產品變更作業.md)，依來源模式、產品流程／ECN、庫存與回復規則完成正式逐批交易。
+- [ ] 讀 [WP916 規格](docs/modules/WIP/生產批強制結批作業.md)，依 Service／Core 完成排隊批 EndOP、301、工單／物料／載具／儲位及回復版本同一交易。
 
 ## 筆電交付：WP112 工單撤派工（2026-11-20）
 
