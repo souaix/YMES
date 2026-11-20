@@ -1039,3 +1039,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-20：WIP WP508 異常單資料
 
 - `frmERFBasis` 的主查詢使用 ERFBasis/BatchLot 和 Lot/Product/OP/Material/Vendor/Customer 既有 source/CREATE refs，不重複建表；8D 分支直接讀 `TBLWIP8DBASIS_FACTORY`。公司端以受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得新表 source DDL、index、metadata：`database/reference/mestest_wip_wp508_source_ddl.sql`、`mestest_wip_wp508_source_indexes.sql`、`mestest_wip_wp508_metadata.txt`。PG CREATE-only 在 `mestest_wip_wp508_create.sql`：43 欄、PK `QRSNO`、無 FK/trigger/額外 index。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證未提交。家用端先核 live schema/history，確有缺項才 forward migration；完整 WP801 8D 仍有其他表，見 `docs/modules/WIP/異常單資料.md`。
+
+### 更新 2026-11-20：WIP WP508 ERF Info 補查
+
+- `WP_ERFInformation` 的 Lot Disposition 直接表 `TBLWIPERFLOTDISPOSITION`，公司端由受保護 MESTEST profile 以 PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp508info_source_ddl.sql`、`mestest_wip_wp508info_source_indexes.sql`、`mestest_wip_wp508info_metadata.txt`；16 欄，PK `(ERFNO, LOTDISPORDER)`，另有非唯一 `LOTSERIAL` 索引，無 trigger。PG CREATE-only `mestest_wip_wp508info_create.sql` 包含 LotDisposition 與 `TBLWIPERFOCAP_ATTACHFILE`。後者 Oracle source 已在 QC409 refs，11 欄，PK `(LOTNO,ERFNO,ATTACHNAME,OCAPNO)`，原先欠 PG CREATE。一般 ERF 附件 PG CREATE 在 WP501，NodeBasis 在 PRS104。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證/受保護附件路徑未提交。家用端先比對 live schema/history，僅對缺項做 forward migration。
