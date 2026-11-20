@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## D1 九個 WIP 入口正式已驗（2026-11-20；最新權威狀態）
+
+Root 已完成 Web233 正式部署 `423552b638fe578066905ef72d98b58c50e0645519dc7cfc64ae2ce95a715e75`，source canonical `6a8b5567ca0d633c93c7a0d4d2f92f9d4ceb8bf0e57e9d0e74ded1f013e29590`；API154 `8db4b84024af86a82cac448f38492bfba0122a24b3e0a3369fa90b649af9d04e` 與 PostgreSQL `ymes`／schema `YMES`／migration `0059` 保持。HOME 負責 PostgreSQL 復刻、PPK SSH、API／資料庫與發行；Office 維持原生 MES Oracle 唯讀來源及 UI，沒有 PG／SSH 工作轉派。
+
+ET105 完整 checkpoint 已由 Root 實際套用並下載獨立讀回，SHA `e13f7023a76aca28a2cb7ab2c1d7c94f58c5f5de4f336a47f90d1a511ec1bfc4`；下方「最後套用待 Root」是先期文件合併快照，保留為歷史，不是目前狀態。D1 正式 GUI 封存 93 raw／91 有效 PASS＝90 GUI＋1 SQL，兩工具 observation 75→76、81→82 保留原 false 且復驗完成。九個新入口及重進／Close、兩個 fresh 深路由、既有 19 項含區域圖與 direct OperatorLogin、ET105 真 GUI 建核准停用硬刪回歸完成；末次 fresh Home 21 項預設折疊、收合 icon／提示、透明度 0.4 scrollbar 與該 reload 範圍 logs[] 通過。不是整套 MES 或 WIP 交易 provider 已交付。
+
+獨立正常 TLS 七項與 runtime live/current image、UID1654／101、必要檔案及 ready200 均通過。GUI 唯一 Taker `GD1T-1120A` 全由 GUI 建立／刪除；SQL fixture0、SQL cleanup0，獨立 exact／logical／actor+marker 三範圍各0。詳見 [D1 QA](docs/qa/20261120-office-wip-next9.md)。
+
+code `eff89213ccfbebadb024374487ec4e3410b2456c` 已正常推送 `refs/heads/codex/homepc-office-wip-next9-20261120` 並直接讀回同值；SQL1＋API154＋Web233＝388 份來源綁定 PASS，receipt SHA `e8b6c225b31fd882261c61de14118a76415038e17dedd838a18c14bf558fef2b`。文件 status 提交／D1 metadata 收尾待 Root 實際執行，不預填 commit。main 仍待整合：QA 後 origin 有 `f43fac5…` 的 WP505／506／507／508 四個新 UI handoff，尚未納入本版 merge、build、部署或 GUI；本版不宣稱 main 同步。保留以下原生來源、CREATE-only、歷史紀錄及未完成事項；本輪未套任何九頁 CREATE 或新增資料庫權限。
+
+
 ## 本輪九個 WIP 入口整合中（2026-11-20；尚未建置／部署／驗收）
 
 本節是這次文件合併時的最新狀態：家用基底為已正常同步 feature 的 ET105 code `ab0f8269e9778d88811947512e6753e51437703d`／status `a921b44e9b46aba20f6a8f66f4bd8944d79a18fb`；API `8db4b840…`、Web `0c2852e1…`、DB `0059` 已有前述實證，ET105 完整 checkpoint metadata 的最後套用仍待 Root 親自執行與讀回，不能從本次文件解衝突推斷已完成。
