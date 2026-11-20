@@ -79,6 +79,7 @@ import WipReleasedLotBatchDelete from './components/WipReleasedLotBatchDelete.vu
 import WipLotAreaChange from './components/WipLotAreaChange.vue'
 import WipProductVersionChange from './components/WipProductVersionChange.vue'
 import WipEcnWizard from './components/WipEcnWizard.vue'
+import WipChangeLotProduct from './components/WipChangeLotProduct.vue'
 import WipLotPropertyAdjust from './components/WipLotPropertyAdjust.vue'
 import WipLotProcessAttributeAdjust from './components/WipLotProcessAttributeAdjust.vue'
 import WipLotMaterialAdjust from './components/WipLotMaterialAdjust.vue'
@@ -587,6 +588,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:LOT OP AREA CHANGE', label: '生產批作業區變更', tableName: 'tblwiplotoparea', shortLabel: '作業區', functionNo: 'LOT OP AREA CHANGE', moduleNo: 'WIP' },
       { id: 'function:WIP:PRODUCT VERSION CHANGE', label: '產品版本變更', tableName: 'tblwiplotbasis', shortLabel: '版本', functionNo: 'PRODUCT VERSION CHANGE', moduleNo: 'WIP' },
       { id: 'function:WIP:ECN WIZARD', label: 'ECN 設定精靈', tableName: 'tblwipecnbasis', shortLabel: 'ECN', functionNo: 'ECN WIZARD', moduleNo: 'WIP' },
+      { id: 'function:WIP:CHANGELOTPRODUCT', label: '生產批產品變更作業', tableName: 'tblwiplotbasis', shortLabel: '轉產品', functionNo: 'CHANGELOTPRODUCT', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT PROPERTY ADJUST', label: '生產批屬性調整', tableName: 'tblwiplotproperty', shortLabel: '屬性', functionNo: 'LOT PROPERTY ADJUST', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT OP CONT ATTRIB ADJUST', label: '生產批作業站製程特性值調整', tableName: 'tblwipcont_attrib', shortLabel: '特性', functionNo: 'LOT OP CONT ATTRIB ADJUST', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT OP CONT MATERIAL ADJUST', label: '生產批作業站用料記錄調整', tableName: 'tblwipcont_material', shortLabel: '用料', functionNo: 'LOT OP CONT MATERIAL ADJUST', moduleNo: 'WIP' },
@@ -625,6 +627,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:LOT OP AREA CHANGE': appBasePath + '/WIP/LotAreaChange',
   'function:WIP:PRODUCT VERSION CHANGE': appBasePath + '/WIP/ProductVersionChange',
   'function:WIP:ECN WIZARD': appBasePath + '/WIP/EcnWizard',
+  'function:WIP:CHANGELOTPRODUCT': appBasePath + '/WIP/ChangeLotProduct',
   'function:WIP:LOT PROPERTY ADJUST': appBasePath + '/WIP/LotPropertyAdjust',
   'function:WIP:LOT OP CONT ATTRIB ADJUST': appBasePath + '/WIP/LotProcessAttributeAdjust',
   'function:WIP:LOT OP CONT MATERIAL ADJUST': appBasePath + '/WIP/LotMaterialAdjust',
@@ -845,6 +848,7 @@ const functionRoutes: Record<string, string> = {
   'LOT OP AREA CHANGE': appBasePath + '/WIP/LotAreaChange',
   'PRODUCT VERSION CHANGE': appBasePath + '/WIP/ProductVersionChange',
   'ECN WIZARD': appBasePath + '/WIP/EcnWizard',
+  'CHANGELOTPRODUCT': appBasePath + '/WIP/ChangeLotProduct',
   'LOT PROPERTY ADJUST': appBasePath + '/WIP/LotPropertyAdjust',
   'LOT OP CONT ATTRIB ADJUST': appBasePath + '/WIP/LotProcessAttributeAdjust',
   'LOT OP CONT MATERIAL ADJUST': appBasePath + '/WIP/LotMaterialAdjust',
@@ -1093,6 +1097,7 @@ const isWipReleasedLotBatchDeletePage = computed(() => activeMasterKey.value ===
 const isWipLotAreaChangePage = computed(() => activeMasterKey.value === 'function:WIP:LOT OP AREA CHANGE')
 const isWipProductVersionChangePage = computed(() => activeMasterKey.value === 'function:WIP:PRODUCT VERSION CHANGE')
 const isWipEcnWizardPage = computed(() => activeMasterKey.value === 'function:WIP:ECN WIZARD')
+const isWp915Page = computed(() => activeMasterKey.value === 'function:WIP:CHANGELOTPRODUCT')
 const isWp913Page = computed(() => activeMasterKey.value === 'function:WIP:LOT PROPERTY ADJUST')
 const isWp912Page = computed(() => activeMasterKey.value === 'function:WIP:LOT OP CONT ATTRIB ADJUST')
 const isWp911Page = computed(() => activeMasterKey.value === 'function:WIP:LOT OP CONT MATERIAL ADJUST')
@@ -2823,6 +2828,7 @@ async function signOut(): Promise<void> {
         <WipLotAreaChange v-else-if="isWipLotAreaChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipProductVersionChange v-else-if="isWipProductVersionChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEcnWizard v-else-if="isWipEcnWizardPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipChangeLotProduct v-else-if="isWp915Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotPropertyAdjust v-else-if="isWp913Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotProcessAttributeAdjust v-else-if="isWp912Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotMaterialAdjust v-else-if="isWp911Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
