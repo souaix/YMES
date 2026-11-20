@@ -1133,3 +1133,7 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 ### 更新 2026-11-20：WIP WP802 8D 矯正單維護作業
 
 - `WP_8DMaintainDef`/`clsWIP` 直接使用 `TBLWIP8D_ACTION`、`ACTIONDETAIL`、`ATTACHFILE`、`DISPOSITION`、`PREVENTION`、`PREVENTIONTRACK`、`QA`、`QUESTION`、`RELEASE`、`RELEASELOG`、`ROOTCAUSE`、`TEAMMEMBER` 共 12 表。公司端用既有受保護 MESTEST profile，以 PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**查得全部 12 表 DDL、欄位/constraints/index/trigger metadata，檔案 `database/reference/mestest_wip_wp802_source_ddl.sql`、`mestest_wip_wp802_source_indexes.sql`、`mestest_wip_wp802_metadata.txt`；PG CREATE-only 是 `mestest_wip_wp802_create.sql`。12 表皆無 trigger；TeamMember 有 `(QRSNO,MEMBERTYPE,MEMBERNO)` 唯一索引但無主鍵約束，原表 `PMFLAG DEFAULT 0`。家用端先核 live schema/history，僅缺表/欄/索引才 forward migration，不因 `CREATE IF NOT EXISTS` 假設既有 schema 已一致。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證未提交。
+
+### 更新 2026-11-20：WIP WP803 8D 矯正單結案作業
+
+- Release/ReleaseLog/TeamMember 直接表沿 WP802，Basis 沿 WP508。Def 的 D1 部門/人員選擇由 `clsWIP.Load8DTeamMember` 左連 `TBLUSRDEPARTMENTBASIS` 帶 DepartmentName；公司端以既有受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp803_department_source_ddl.sql` 及 `mestest_wip_wp803_department_metadata.txt`。原表 14 欄、DepartmentNo PK/單一 unique index、無 trigger，四個 `DEFAULT 0` 為 IssueState、ControlDtConect、DtConectQty、DataStamp。`mestest_first_phase_create_tables.sql` 欄/PK 已有但少四 default；準確 PG CREATE-only 為 `mestest_wip_wp803_department_create.sql`。家用端先核 live schema/history，缺 default 才 forward ALTER；公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL，憑證未提交。

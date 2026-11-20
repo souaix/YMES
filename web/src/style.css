@@ -798,7 +798,7 @@ button {
 }
 
 /* The framework owns page titles. Keep dialog controls and DEV badges visible. */
-.framework-main .framework-content.office-wip-module:is(.operator-login-lot-page, .wp205-page, .wp206-page, .wp207-page, .wp208-page, .wp209-page, .wp210-page, .wp211-page, .wp212-page, .wp213-page, .wp214-page, .wp215-page, .wp914-page, .wp501-page, .wp502-page, .wp503-page, .wp504-page, .wp505-page, .wp506-page, .wp507-page, .wp508-page, .wp801-page, .wp802) > h1,
+.framework-main .framework-content.office-wip-module:is(.operator-login-lot-page, .wp205-page, .wp206-page, .wp207-page, .wp208-page, .wp209-page, .wp210-page, .wp211-page, .wp212-page, .wp213-page, .wp214-page, .wp215-page, .wp914-page, .wp501-page, .wp502-page, .wp503-page, .wp504-page, .wp505-page, .wp506-page, .wp507-page, .wp508-page, .wp801-page, .wp802, .wp803, .wp804) > h1,
 .framework-main .framework-content.office-wip-module.area-show-page > header.page-title,
 .framework-main .framework-content.office-wip-module.favorite-page > header.page-heading > h1 {
   display: none;
