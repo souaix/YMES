@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## 家用驗收回饋：ET106 writer A1／A2（2026-11-20）
+
+HOME已依已交原生22／13欄及核定契約完成本批真API／指定GUI／清理：API121／961，A2 GUI32有效（30GUI＋2SQL），原A1兩產品缺陷已在新Web246 A2真復驗；原false／工具觀察保留。Address／Declaration／BFT由GUI建立清除，Customer僅SQL前置／清理各1，獨立13範圍全0。這是本批範圍，不擴稱全MES／WIP／簽核provider完成。
+
+Code X ebc03a1已409來源綁定PASS、正常feature推送／ref讀回；文件Y及combined checkpoint由HOME Root依實際完成後另報，這裡不預填main完成。公司後續e5f4466新增15提交／12WIP入口已另行source-only合併，尚未部署／驗收，不混本輪證據。公司既有來源待辦與歷史保留；本回饋沒有新增Office PostgreSQL／SSH／部署或業務資料查詢工作。詳[ET106 writer QA](docs/qa/20261120-et106-writer.md)。
+
+
+
 ## 桌機進度（2026-11-20）
 
 - [x] 桌機乾淨工作樹 fast-forward 至筆電交接 `d87c731`。依 Form／Designer、Service、Core 完成 Vue DEV 主明細、參考批／刷入批號、回貨站、增修、刪除與作廢。

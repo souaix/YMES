@@ -1,5 +1,15 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：ET106 writer A2實證，DB仍0060（2026-11-20）
+
+本批沒有新migration／DDL／seed provider：Address22＋Declaration13及原生35欄／5 defaults維持0060。Root正式API161 `97634eef…` 單輪121 HTTP／961 assertions、API原scope獨立13全0已通過；最終Web246 A2 `eb1f5d2897d44d4498473a20029728df10f75d8c9997f3cdc3f91cb1fbb92f81` 已真部署，A2指定GUI32有效（30GUI＋2SQL）與四工具觀察復驗封存。
+
+GUI跨A1／A2只有同一Customer SQL前置1、最終精準清1；B/F/T3、地址2及報關3均GUI建刪，SQL Address／Declaration／BFT寫入0。Customer清理parser失敗原log／前值保留，後續精準cleanup receipt SHA `4d44eb1af147f6f964f2b690d7c48e6b7cc5ac7a0dbcc87dd8b8b8edbc4ebc41`。另獨立READ ONLY13範圍全0（含Customer七引用）SHA `4e7d124e83886e424ca51adae3df0da3f4ef66dd94b7379ec4fa6f6a96329484`，native35及完整catalog等於A2前置，無DML／自動清理。
+
+歷史F1 checkpoint `b5aa92c6…` 仍是當時466／bd64，不能冒稱已記976／eb1；本輪code X `ebc03a106ebd5d47a1a47bf6dcc172fc3bdb8ef1` 已409來源綁定PASS、正常feature推送與ref讀回；文件Y／combined metadata／main仍待Root實際證據。兩ET106表存在後仍不得回不相容8db。原compat、schema60備份／A2失敗全rollback／A3成功與後續present證據完整保留；詳[ET106 writer QA](qa/20261120-et106-writer.md)。
+
+
+
 ## F1 Web241／schema0060已完成基準（2026-11-20；本批只換Web）
 
 實際HOME PostgreSQL ymes／quoted YMES維持0060，API155 compat466保持；F1 Web241已正式啟用 `bd6414710b2bcbb60e577903ee306d79f5a682f13253472561de9ba9fd3f3150`（source `4bbbf534…`）。本輪沒有WIP CREATE、DDL、ACL變更、SQLfixture或cleanup。此前ET106 schema60 metadata已完成，Root原子apply／獨立下載 SHA `7f4c5ae33a72c9dd3b9599840523d5e89f600ca61998990b408c399ddf350e47`，schema code800564／status521正常feature同步及394來源綁定已完成；其Web5ff是當時歷史。
