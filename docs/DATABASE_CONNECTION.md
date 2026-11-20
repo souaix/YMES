@@ -975,3 +975,16 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 六張表都在 MESTEST，均無 FK/trigger。除 `TBLWIPCONT_EMPLOYEE` 外都有來源 PK；Employee 表無 PK/unique index，只有三個 non-unique index。原始 source/index DDL、metadata 及 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp207_*`；完整欄位與限制見 `docs/modules/WIP/分批處理.md`。
 - 其餘 Lot、Product、Process、Temp、Inventory、Matrix 等共用結構沿用 WP101／WP201／主檔 reference，不重複建表。CREATE-only 不是 migration；家用端先核對 YMES PostgreSQL live schema/history，只為缺失表新增 forward migration，並實作標準拆批與 THEIL 客製更新的交易 API。
 - 本輪未連 YMES PostgreSQL、未輸出或提交 IP／帳號／密碼／SID／連線字串。`fetch_wp207_ddl.ps1` 只有受保護 profile 的本機路徑與讀取程序，不含憑證值。
+
+### 更新 2026-11-20：WIP WP208 分批處理_元件
+
+- 對照標準 WinForms `frmBR_LC_Split_GEN`、`WP_LotSplit_ComponentSelect`、Service `Exe_Manual_LotSplit_Component` 與 Core `BR_Manual_LotSplit_Component`。Core 方法直接出現 27 張表；其中 26 張在 WP101／WP201／WP305／WP603／WP207 及主檔／Operation/System source refs，詳 `docs/modules/WIP/分批處理_元件.md`。
+- `TBLSYSPARAMETER` 原先缺 SQL reference，本輪使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`、本機受保護 MESTEST profile 唯讀取得 `DBMS_METADATA.GET_DDL` 與 columns／constraints／indexes／triggers metadata。MESTEST 有 25 欄，PK `(PARAMETERNO)`，無 FK／trigger／非 PK index。source/index DDL、metadata、PG CREATE-only 在 `database/reference/mestest_wip_wp208_*`；未輸出或提交連線秘密。
+- 元件專用的 `TBLINVWIPINVENTORY_COMPONENT` 在 `mestest_wip_wp603_*`，`TBLWIPCOMPONENTSTATE` 在 `mestest_wip_wp101_*`，ComponentProperty／Cont／Temp ComponentAttrib／Temp Equipment 在 `mestest_wip_wp201_*`，`TBLWIPCONT_EQUIPMENT` 在 `mestest_wip_wp305_*`；WP207 六張共用表已有 DDL／metadata／CREATE-only。這些不另複製 CREATE SQL。
+- 未讀 Oracle 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL。家用端自行核對 live schema/history，僅為真正缺少的表建立 forward migration；不可把 source CREATE-only 當 migration 重播。
+
+### 更新 2026-11-20：WIP WP209 分批處理_等級
+
+- 對照標準 WinForms `frmBR_LB_Split_FT`、Bin Assign 對話框、Service `Exe_Manual_LotSplit_Bin` 與 Core `BR_Manual_LotSplit_Bin`。Core 直接引用 25 張表，23 張已有 WIP／主檔 reference。缺 reference 的兩張名稱是 `TBLWIPSPLITCONTENT_BIN` 與 `TBLWIPSORTERBINDATA`。
+- 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 及本機受保護 MESTEST profile 唯讀查 `DBMS_METADATA.GET_DDL` 和 `ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。`TBLWIPSPLITCONTENT_BIN` 存在，22 欄，單欄 PK `TOLOTSERIAL`，無 FK／trigger／其他 index；source/index DDL、metadata、PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp209_*`。CREATE-only 是結構參考，家用端先核對 live schema/history 再決定是否建 forward migration。
+- `TBLWIPSORTERBINDATA` 在目前連線的 `ALL_TABLES`／`ALL_SYNONYMS`／`ALL_OBJECTS` 均不可見；Core 只在 `LED_PKG` 分支使用。未猜測此表 CREATE SQL；取得正確 schema／環境或 vendor DDL 前，LED 分支不可視為正式 API 已完成。未查 Oracle 業務列、未執行 DDL/DML、未連 YMES PostgreSQL，且未輸出／提交連線秘密。

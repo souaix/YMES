@@ -76,6 +76,8 @@ import WipOperatorLoginLot from './components/WipOperatorLoginLot.vue'
 import WipLotChoiceEquipment from './components/WipLotChoiceEquipment.vue'
 import WipIpqc from './components/WipIpqc.vue'
 import WipLotSplit from './components/WipLotSplit.vue'
+import WipLotSplitComponent from './components/WipLotSplitComponent.vue'
+import WipLotSplitBin from './components/WipLotSplitBin.vue'
 import WipAreaShow from './components/AreaShowMaster.vue'
 import WipEquipmentFavorite from './components/WipEquipmentFavorite.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
@@ -492,6 +494,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:LOT CHOICE EQP', label: '生產批選用生產設備', tableName: 'tblwiplotstate', shortLabel: '選機', functionNo: 'LOT CHOICE EQP', moduleNo: 'WIP' },
       { id: 'function:WIP:IPQC', label: '計數不良原因收集', tableName: 'tblwipcont_abnormal', shortLabel: '不良', functionNo: 'IPQC', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT SPLIT', label: '分批處理', tableName: 'tblwiplotstate', shortLabel: '分批', functionNo: 'LOT SPLIT', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT SPLIT_COMP', label: '分批處理_元件', tableName: 'tblwipcomponentstate', shortLabel: '元件分批', functionNo: 'LOT SPLIT_COMP', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT SPLIT_BIN', label: '分批處理_等級', tableName: 'tblwipgoodbinstate', shortLabel: '等級分批', functionNo: 'LOT SPLIT_BIN', moduleNo: 'WIP' },
     ],
   }, {
     id: 'menu:WIP:EQUIPMENT AND CARRIER', label: '設備與載具', shortLabel: '設備', children: [
@@ -537,6 +541,8 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:LOT CHOICE EQP': appBasePath + '/WIP/LotChoiceEquipment',
   'function:WIP:IPQC': appBasePath + '/WIP/IPQC',
   'function:WIP:LOT SPLIT': appBasePath + '/WIP/LotSplit',
+  'function:WIP:LOT SPLIT_COMP': appBasePath + '/WIP/LotSplitComponent',
+  'function:WIP:LOT SPLIT_BIN': appBasePath + '/WIP/LotSplitBin',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
   'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
   'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
@@ -707,6 +713,8 @@ const functionRoutes: Record<string, string> = {
   'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'LOT SPLIT': appBasePath + '/WIP/LotSplit',
+  'LOT SPLIT_COMP': appBasePath + '/WIP/LotSplitComponent',
+  'LOT SPLIT_BIN': appBasePath + '/WIP/LotSplitBin',
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -871,6 +879,8 @@ const isWipLotExecutionByComponentPage = computed(() => activeMasterKey.value ==
 const isWipLotChoiceEquipmentPage = computed(() => activeMasterKey.value === 'function:WIP:LOT CHOICE EQP')
 const isWipIpqcPage = computed(() => activeMasterKey.value === 'function:WIP:IPQC')
 const isWipLotSplitPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SPLIT')
+const isWipLotSplitComponentPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SPLIT_COMP')
+const isWipLotSplitBinPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SPLIT_BIN')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
 const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
@@ -2488,6 +2498,8 @@ async function signOut(): Promise<void> {
         <WipLotChoiceEquipment v-else-if="isWipLotChoiceEquipmentPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipIpqc v-else-if="isWipIpqcPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotSplit v-else-if="isWipLotSplitPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotSplitComponent v-else-if="isWipLotSplitComponentPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotSplitBin v-else-if="isWipLotSplitBinPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
