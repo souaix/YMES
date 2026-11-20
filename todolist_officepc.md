@@ -1,5 +1,12 @@
 # 公司端待辦
 
+## HOME新整合驗證回報（2026-11-21）
+
+8ff九提交已正常合併HOME6e9，八個原型原bytes保留DEV，正式wrapper隔離已上Web274／03e，八個原生／deep reload／Close已驗。API502／PG0062未改。詳細[本輪QA](docs/qa/20261121-office8ff-integration.md)；交易provider仍由HOME依真來源接續，不把入口防護標成完成。
+
+請繼續下方最新LotBasis39欄與舊DDL38欄精確來源補證及各原生流程來源任務；公司端不負責PostgreSQL、SSH或遠端發行。快速重載偶發登入／menu延遲由HOME追查，無須Office代辦部署。
+
+
 ## HOME新查證：WP109 LotBasis來源版本差（2026-11-21）
 
 已收到8ff的取號、Lot／Device／MONo、參數與稽核補證；HOME三張SWR表0062及引用相容已上線，不重索這三張DDL。下一個精確來源需求是：

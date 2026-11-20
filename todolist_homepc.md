@@ -1,5 +1,17 @@
 # 家裡電腦接手清單
 
+## Office 8ff已部署並完成限定GUI（2026-11-21；Git／metadata收尾中）
+
+正式Web274／03e已切換，API172／502與DB0062保持。完整typecheck／Vite建置通過，獨立公開七項與完整來源／runtime／catalog核對通過（回條71f57c04…）。Root自行Demo完成八個原生入口及deep reload／Close，並核KD、三層折疊／72px圖示、透明auto scrollbar、WP109 Query與客戶查找回歸。proof437b05ca…為48raw／45成功，三筆false及復驗保留；沒有業務寫入。詳[本輪QA](docs/qa/20261121-office8ff-integration.md)。八個provider仍待真API，不能把DEV隔離當交易完成。
+
+- [ ] 完成本輪正常feature／main同步與metadata，推送前再讀Office最新ref，不force；完成後再查下一接手事項。
+- [ ] HOME追查快速goto／reload時偶發回登入頁及原生menu載入超過15秒：本輪自行Demo／fresh reload已恢復，最後console空；根因未明，不冒稱已修。取前端與API／代理時間對照後修復，再以app-browser重載復驗；不等待使用者操作。
+- [ ] ET202：採用已獨立準備的176後端A2／原生11欄，freshmetadata後決定migration與權限，完成真API／PG／UI與獨立清理。Process只允0／−1硬刪的窄修需一併真驗。
+- [ ] WP109 writer先做原生允許空Lot分支；非空Lot缺真provider明確503。Office待補最新Lot39與舊DDL38差異，HOME不猜表。EventLog／Parameter已有來源，先核fresh現況再施作。
+
+使用者睡眠期間已授權自行操作／Demo；工具確實無法完成的步驟記具體TODO並繼續，不以等登入中止開發。以下保留前時點完整歷史。
+
+
 ## 正在接手：Office 8ff整合（2026-11-21）
 
 已正常合併HOME6e9與Office8ff九提交，保留八個新WIP原型與WP109來源補證；唯一模組文件衝突完整保留雙方。Web274候選已採用原型lazy DEV隔離及App六組新增，原257來源／WP109讀取功能保持。完整建置、部署、本輪app-browser與main同步仍待完成，詳[本輪QA](docs/qa/20261121-office8ff-integration.md)。現行正式仍API502／Webc828／DB0062／checkpoint7d0。
