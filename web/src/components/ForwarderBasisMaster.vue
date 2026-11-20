@@ -1,57 +1,27 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+// Offline candidate; relative imports target web/src/components after Root integration.
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
+import { apiErrorMessage } from '../utils/apiError'
 
-interface Forwarder {
-  forwarderNo: string
-  contactorName: string
-  telNo: string
-  faxNo: string
-  email: string
-  address: string
-  brokerNo: string
-  bankNo: string
-  acNo: string
-  issueState: number
-  creator: string | null
-  createDate: string | null
-  dataStamp: number | null
-  reviser: string | null
-  reviseDate: string | null
-}
-interface BrokerOption { brokerNo: string; contactorName?: string; issueState: number }
-type ForwarderForm = Pick<Forwarder, 'forwarderNo' | 'contactorName' | 'telNo' | 'faxNo' | 'email' | 'address' | 'brokerNo' | 'bankNo' | 'acNo'>
+type Mode = 'new' | 'edit' | ''
 type IssueFilter = 0 | 1 | 2 | -1
-
-const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
-const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const mockMode = computed(() => import.meta.env.DEV && props.developmentPreview)
-const storageKey = 'ymes-dev-mock:ent-forwarder-basis:v1'
-const brokerStorageKey = 'ymes-dev-mock:ent-broker-basis:v1'
-const rows = ref<Forwarder[]>([])
-const filterState = ref<IssueFilter>(0)
-const keyword = ref('')
-const selectedKeys = ref<string[]>([])
-const activeKey = ref('')
-const loading = ref(false)
-const busy = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
-const formMode = ref<'add' | 'edit' | null>(null)
-const form = ref<ForwarderForm>(blankForm())
-const formDirty = ref(false)
-const originalDataStamp = ref<number | null>(null)
-const audit = ref({ creator: '', createDate: '', reviser: '', reviseDate: '' })
-const formError = ref('')
-const pickerOpen = ref(false)
-const pickerBusy = ref(false)
-const pickerError = ref('')
-const brokerKeyword = ref('')
-const brokerOptions = ref<BrokerOption[]>([])
-
-function blankForm(): ForwarderForm {
-  return { forwarderNo: '', contactorName: '', telNo: '', faxNo: '', email: '', address: '', brokerNo: '', bankNo: '', acNo: '' }
+type OptionalField = 'contactorName' | 'telNo' | 'faxNo' | 'email' | 'address' | 'bankNo' | 'acNo'
+interface Broker {
+  brokerNo: string; contactorName: string | null; telNo: string | null; faxNo: string | null
+  email: string | null; address: string | null; bankNo: string | null; issueState: number | null
+  creator: string | null; createDate: string | null; dataStamp: number | null; reviser: string | null; reviseDate: string | null
 }
-
+interface Forwarder extends Broker { forwarderNo: string; acNo: string | null }
+interface BrokerOption { brokerNo: string; contactorName: string | null; issueState: number | null }
+interface Draft { forwarderNo: string; brokerNo: string; contactorName: string; telNo: string; faxNo: string; email: string; address: string; bankNo: string; acNo: string }
+type ForwarderWrite = Pick<Forwarder, 'forwarderNo' | 'brokerNo' | OptionalField>
+type DeleteResult = { status: 204 } | { status: 200; item: Forwarder }
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { currentUserNo: '', developmentPreview: false })
+const emit = defineEmits<{ close: [] }>()
+const mock = computed(() => import.meta.env.DEV && props.developmentPreview)
+const apiRoot = 'api/ent/forwarder-basis', storageKey = 'ymes-dev-mock:ent-forwarder-basis:v1', brokerStorageKey = 'ymes-dev-mock:ent-broker-basis:v1'
 const seedRows: Forwarder[] = [
   { forwarderNo: 'DEV-FORWARDER-01', contactorName: '開發用貨運行甲', telNo: '02-0000-0301', faxNo: '02-0000-0302', email: 'forwarder.a@example.test', address: '台北市範例路 3 號', brokerNo: 'DEV-BROKER-02', bankNo: 'DEV-BANK-02', acNo: 'DEV-AC-01', issueState: 0, creator: 'DEV001', createDate: '2026-11-08T08:00:00+08:00', dataStamp: 0, reviser: null, reviseDate: null },
   { forwarderNo: 'DEV-FORWARDER-02', contactorName: '開發用貨運行乙', telNo: '03-0000-0401', faxNo: '', email: 'forwarder.b@example.test', address: '桃園市測試路 4 號', brokerNo: 'DEV-BROKER-02', bankNo: '', acNo: '', issueState: 2, creator: 'DEV001', createDate: '2026-11-09T08:00:00+08:00', dataStamp: 2, reviser: 'DEV002', reviseDate: '2026-11-10T09:00:00+08:00' },
@@ -59,259 +29,461 @@ const seedRows: Forwarder[] = [
   { forwarderNo: 'DEV-FORWARDER-04', contactorName: '', telNo: '', faxNo: '', email: '', address: '', brokerNo: 'DEV-BROKER-02', bankNo: '', acNo: '', issueState: -1, creator: 'DEV001', createDate: '2026-11-13T08:00:00+08:00', dataStamp: 2, reviser: 'DEV002', reviseDate: '2026-11-14T09:00:00+08:00' },
 ]
 const seedBrokers: BrokerOption[] = [{ brokerNo: 'DEV-BROKER-02', contactorName: '開發用報關行乙', issueState: 2 }]
-
-const visibleRows = computed(() => {
-  const term = keyword.value.trim().toLocaleLowerCase()
-  return rows.value.filter(row => row.issueState === filterState.value)
-    .filter(row => !term || row.forwarderNo.toLocaleLowerCase().includes(term))
-    .sort((a, b) => a.forwarderNo.localeCompare(b.forwarderNo))
+const rows = ref<Forwarder[]>([]), rowsReady = ref(false), filterState = ref<IssueFilter>(0), keyword = ref(''), appliedKeyword = ref('')
+const selectedKeys = ref<string[]>([]), activeKey = ref(''), loading = ref(false), busy = ref(false), saving = ref(false)
+const error = ref(''), notice = ref(''), mode = ref<Mode>(''), sourceRow = ref<Forwarder | null>(null), draft = ref<Draft>(blankDraft())
+const draftOriginal = ref(''), formReady = ref(false), formError = ref(''), formNotice = ref('')
+const pickerOpen = ref(false), pickerLoading = ref(false), pickerReady = ref(false), pickerError = ref(''), brokerKeyword = ref('')
+const brokerOptions = ref<BrokerOption[]>([]), chosenBroker = ref<BrokerOption | null>(null)
+const pageElement = ref<HTMLElement | null>(null), formElement = ref<HTMLElement | null>(null), pickerElement = ref<HTMLElement | null>(null)
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
+let listEpoch = 0, formEpoch = 0, operationEpoch = 0, pickerEpoch = 0, disposed = false
+let previousModalFocus: HTMLElement | null = null, previousPickerFocus: HTMLElement | null = null
+const writing = computed(() => busy.value || saving.value)
+const modalOpen = computed(() => mode.value !== '' || pickerOpen.value)
+const blocked = computed(() => loading.value || writing.value || pickerLoading.value || modalOpen.value || confirmationMessage.value !== null)
+const visibleRows = computed(() => rows.value.filter(row => row.issueState === filterState.value))
+const selectedRows = computed(() => visibleRows.value.filter(row => selectedKeys.value.includes(row.forwarderNo)))
+const singleSelected = computed(() => selectedRows.value.length === 1 && selectedKeys.value.length === 1 ? selectedRows.value[0]! : null)
+const allSelected = computed(() => visibleRows.value.length > 0 && selectedRows.value.length === visibleRows.value.length)
+const canEdit = computed(() => rowsReady.value && !!singleSelected.value && (singleSelected.value.issueState === 0 || singleSelected.value.issueState === 2))
+const dirty = computed(() => JSON.stringify(draft.value) !== draftOriginal.value)
+const visibleBrokers = computed(() => {
+  const term = brokerKeyword.value.trim().toLowerCase()
+  return brokerOptions.value.filter(row => row.issueState === 2 && (!term || [row.brokerNo, row.contactorName ?? ''].some(value => value.toLowerCase().includes(term))))
 })
-const activeRow = computed(() => rows.value.find(row => row.forwarderNo === activeKey.value) ?? null)
-const allVisibleSelected = computed(() => visibleRows.value.length > 0 && visibleRows.value.every(row => selectedKeys.value.includes(row.forwarderNo)))
-const visibleBrokers = computed(() => brokerOptions.value.filter(row => row.issueState === 2 && (!brokerKeyword.value.trim() || row.brokerNo.toLocaleLowerCase().includes(brokerKeyword.value.trim().toLocaleLowerCase()) || (row.contactorName || '').toLocaleLowerCase().includes(brokerKeyword.value.trim().toLocaleLowerCase()))))
 
-function apiUrl(path: string): string {
-  const base = props.apiBaseUrl.trim()
-  if (!base) throw new Error('目前環境尚未設定 API 位址。')
-  return new URL(path.replace(/^\/+/, ''), new URL(base.replace(/\/+$/, '') + '/', window.location.origin)).toString()
+function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T }
+function blankDraft(): Draft { return { forwarderNo: '', brokerNo: '', contactorName: '', telNo: '', faxNo: '', email: '', address: '', bankNo: '', acNo: '' } }
+function trimAscii(value: string): string { return value.replace(/^ +| +$/g, '') }
+function fold(value: string): string { return trimAscii(value).toLowerCase() }
+function fail(value: unknown): string { return value instanceof Error ? value.message : '操作失敗，請重新查詢。' }
+function stateName(value: number | null): string { return value === null ? '' : ({ 0: '未簽核', 1: '簽核中', 2: '已簽核', '-1': '不使用' } as Record<string, string>)[String(value)] ?? String(value) }
+function path(resource = '', forwarderNo?: string): string {
+  const query = new URLSearchParams()
+  if (forwarderNo !== undefined) query.set('forwarderNo', forwarderNo)
+  return apiRoot + (resource ? '/' + resource : '') + (query.size ? '?' + query.toString() : '')
 }
-async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(apiUrl(path), { credentials: 'include', ...init })
-  if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
-  if (!response.ok) {
-    const problem = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
-    if (response.status === 404) throw new Error('貨運行基本資料 API 尚未建立；請依 todolist_homepc.md 完成 ET104 API。')
-    throw new Error(problem?.detail || problem?.message || problem?.title || `API 回應錯誤 (${response.status})。`)
-  }
-  if (response.status === 204) return undefined as T
-  return await response.json() as T
+class ApiFailure extends Error { status: number; constructor(status: number, message: string) { super(message); this.status = status } }
+async function request(resource: string, init: RequestInit = {}): Promise<Response> {
+  if (!props.apiBaseUrl.trim()) throw new Error('目前環境尚未設定 API 位址。')
+  const url = new URL(resource.replace(/^\/+/, ''), new URL(props.apiBaseUrl.replace(/\/+$/, '') + '/', window.location.origin))
+  const headers = new Headers(init.headers); if (init.body) headers.set('Content-Type', 'application/json')
+  const response = await fetch(url, { credentials: 'include', ...init, headers })
+  if (response.status === 401) { window.location.assign(import.meta.env.BASE_URL); throw new ApiFailure(401, '登入狀態已逾期。') }
+  if (!response.ok) throw new ApiFailure(response.status, await apiErrorMessage(response))
+  return response
 }
-function readMockRows(): Forwarder[] {
-  try { const saved = window.localStorage.getItem(storageKey); return saved ? JSON.parse(saved) as Forwarder[] : structuredClone(seedRows) }
-  catch { return structuredClone(seedRows) }
+function object(value: unknown): Record<string, unknown> { if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new Error('伺服器回應不完整。'); return value as Record<string, unknown> }
+function text(row: Record<string, unknown>, key: string): string | null {
+  if (!Object.hasOwn(row, key) || row[key] !== null && typeof row[key] !== 'string') throw new Error('伺服器文字欄位回應不完整。')
+  return row[key] as string | null
 }
-function saveMockRows(value: Forwarder[]): void { window.localStorage.setItem(storageKey, JSON.stringify(value)) }
-function readMockBrokers(): BrokerOption[] {
-  try {
-    const saved = window.localStorage.getItem(brokerStorageKey)
-    const all = saved ? JSON.parse(saved) as BrokerOption[] : seedBrokers
-    const approved = all.filter(row => row.issueState === 2)
-    return approved.length ? approved : seedBrokers
-  } catch { return seedBrokers }
+function integer(row: Record<string, unknown>, key: string): number | null {
+  if (!Object.hasOwn(row, key) || row[key] !== null && (typeof row[key] !== 'number' || !Number.isSafeInteger(row[key]))) throw new Error('伺服器數值欄位回應不完整。')
+  return row[key] as number | null
 }
-function stateLabel(value: number): string { return ({ 0: '未簽核', 1: '簽核中', 2: '已簽核', '-1': '不使用' } as Record<string, string>)[String(value)] ?? '未知' }
-function formatDate(value: string | null): string {
+function dateValue(row: Record<string, unknown>, key: string, formal: boolean): string | null {
+  const value = text(row, key)
+  if (value !== null && (Number.isNaN(Date.parse(value)) || formal && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?Z$/.test(value))) throw new Error('伺服器日期欄位回應不完整。')
+  return value
+}
+function normalizeBroker(value: unknown, formal = true): Broker {
+  const row = object(value), brokerNo = text(row, 'brokerNo'), dataStamp = integer(row, 'dataStamp')
+  if (brokerNo === null || dataStamp !== null && Math.abs(dataStamp) > 99999999999) throw new Error('伺服器識別值或版本回應不完整。')
+  return { brokerNo, contactorName: text(row, 'contactorName'), telNo: text(row, 'telNo'), faxNo: text(row, 'faxNo'), email: text(row, 'email'), address: text(row, 'address'), bankNo: text(row, 'bankNo'),
+    issueState: integer(row, 'issueState'), creator: text(row, 'creator'), createDate: dateValue(row, 'createDate', formal), dataStamp, reviser: text(row, 'reviser'), reviseDate: dateValue(row, 'reviseDate', formal) }
+}
+function normalizeForwarder(value: unknown, formal = true): Forwarder {
+  const row = object(value), forwarderNo = text(row, 'forwarderNo')
+  if (forwarderNo === null) throw new Error('伺服器貨運行識別值回應不完整。')
+  return { ...normalizeBroker(row, formal), forwarderNo, acNo: text(row, 'acNo') }
+}
+function brokerOption(row: Broker): BrokerOption { return { brokerNo: row.brokerNo, contactorName: row.contactorName, issueState: row.issueState } }
+async function responseDto(response: Response): Promise<Forwarder> {
+  if (response.status !== 200) throw new Error('伺服器未回傳完整的儲存結果。')
+  return normalizeForwarder(await response.json())
+}
+function formatDate(value: string | null | undefined): string {
   if (!value) return ''
   const date = new Date(value)
-  return Number.isNaN(date.valueOf()) ? value : date.toLocaleString('zh-TW')
+  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).format(date)
+}
+function readMockRows(): Forwarder[] {
+  try { const raw = localStorage.getItem(storageKey); if (raw) { const value: unknown = JSON.parse(raw); if (Array.isArray(value)) return value.map(row => normalizeForwarder(row, false)) } } catch { /* Historical DEV data never enters formal mode. */ }
+  return clone(seedRows)
+}
+function saveMockRows(value: Forwarder[]): void { localStorage.setItem(storageKey, JSON.stringify(value)) }
+function readMockBrokers(): BrokerOption[] {
+  try {
+    const raw = localStorage.getItem(brokerStorageKey)
+    if (raw) {
+      const values: unknown = JSON.parse(raw)
+      if (!Array.isArray(values)) throw new Error('Invalid DEV Broker cache')
+      const result = values.map(value => { const row = object(value), no = text(row, 'brokerNo'); if (no === null) throw new Error('Invalid DEV Broker key'); return { brokerNo: no, contactorName: text(row, 'contactorName'), issueState: integer(row, 'issueState') } }).filter(row => row.issueState === 2)
+      // Historical fallback is confined to this DEV-only preview, never formal lookup.
+      return result.length ? result : clone(seedBrokers)
+    }
+  } catch { /* isolated historical DEV preview */ }
+  return clone(seedBrokers)
+}
+function pruneSelection(preferred = ''): void {
+  const keys = new Set(visibleRows.value.map(row => row.forwarderNo))
+  selectedKeys.value = preferred && keys.has(preferred) ? [preferred] : selectedKeys.value.filter(key => keys.has(key))
+  activeKey.value = selectedKeys.value.includes(activeKey.value) ? activeKey.value : selectedKeys.value[0] ?? ''
+}
+function upsert(row: Forwarder): void {
+  const index = rows.value.findIndex(value => value.forwarderNo === row.forwarderNo)
+  if (index < 0) rows.value.push(clone(row)); else rows.value[index] = clone(row)
+  pruneSelection()
+}
+async function reloadRows(term: string, preferred = ''): Promise<void> {
+  const epoch = ++listEpoch
+  let result: Forwarder[]
+  if (mock.value) result = readMockRows().filter(row => !term || row.forwarderNo.toLowerCase().includes(term.toLowerCase())).sort((a, b) => a.forwarderNo.localeCompare(b.forwarderNo))
+  else {
+    const response = await request(path('', term || undefined))
+    if (response.status !== 200) throw new Error('伺服器清單回應不完整。')
+    const value = object(await response.json()).items
+    if (!Array.isArray(value)) throw new Error('伺服器清單回應不完整。')
+    result = value.map(value => normalizeForwarder(value))
+  }
+  if (disposed || epoch !== listEpoch) return
+  if (new Set(result.map(row => row.forwarderNo)).size !== result.length) throw new Error('貨運行清單含重複識別值。')
+  // Formal ordering is the server's documented C-collation order, not browser locale order.
+  rows.value = result; appliedKeyword.value = term; rowsReady.value = true; pruneSelection(preferred)
 }
 async function loadRows(): Promise<void> {
-  loading.value = true; errorMessage.value = ''; successMessage.value = ''
-  try {
-    if (mockMode.value) rows.value = readMockRows()
-    else {
-      const query = new URLSearchParams()
-      if (keyword.value.trim()) query.set('forwarderNo', keyword.value.trim())
-      const queryString = query.toString()
-      rows.value = await requestJson<Forwarder[]>(`api/ent/forwarder-basis${queryString ? `?${queryString}` : ''}`)
-    }
-    selectedKeys.value = []; activeKey.value = ''
-  } catch (error) { errorMessage.value = error instanceof Error ? error.message : '貨運行清單載入失敗。'; rows.value = [] }
+  if (blocked.value || disposed) return
+  loading.value = true; rowsReady.value = false; rows.value = []; selectedKeys.value = []; activeKey.value = ''; error.value = ''; notice.value = ''
+  try { await reloadRows(trimAscii(keyword.value)) } catch (cause) { if (!disposed) error.value = fail(cause) }
   finally { loading.value = false }
 }
-function selectRow(row: Forwarder): void { activeKey.value = row.forwarderNo; selectedKeys.value = [row.forwarderNo] }
+function setFilter(value: IssueFilter): void { if (blocked.value) return; filterState.value = value; selectedKeys.value = []; activeKey.value = ''; error.value = ''; notice.value = '' }
+function selectRow(row: Forwarder): void { if (blocked.value || !rowsReady.value) return; activeKey.value = row.forwarderNo; selectedKeys.value = [row.forwarderNo] }
 function toggleRow(row: Forwarder, checked: boolean): void {
+  if (blocked.value || !rowsReady.value) return
   selectedKeys.value = checked ? [...new Set([...selectedKeys.value, row.forwarderNo])] : selectedKeys.value.filter(key => key !== row.forwarderNo)
-  activeKey.value = row.forwarderNo
+  activeKey.value = checked ? row.forwarderNo : selectedKeys.value.at(-1) ?? ''
 }
-function toggleAll(checked: boolean): void { selectedKeys.value = checked ? visibleRows.value.map(row => row.forwarderNo) : []; activeKey.value = checked ? (visibleRows.value[0]?.forwarderNo ?? '') : '' }
-function setFilter(value: IssueFilter): void { filterState.value = value; selectedKeys.value = []; activeKey.value = '' }
-function formFromRow(row: Forwarder): ForwarderForm {
-  return { forwarderNo: row.forwarderNo, contactorName: row.contactorName || '', telNo: row.telNo || '', faxNo: row.faxNo || '', email: row.email || '', address: row.address || '', brokerNo: row.brokerNo || '', bankNo: row.bankNo || '', acNo: row.acNo || '' }
+function toggleAll(checked: boolean): void { if (blocked.value || !rowsReady.value) return; selectedKeys.value = checked ? visibleRows.value.map(row => row.forwarderNo) : []; activeKey.value = selectedKeys.value[0] ?? '' }
+function draftFrom(row: Forwarder): Draft { return { forwarderNo: row.forwarderNo, brokerNo: row.brokerNo, contactorName: row.contactorName ?? '', telNo: row.telNo ?? '', faxNo: row.faxNo ?? '', email: row.email ?? '', address: row.address ?? '', bankNo: row.bankNo ?? '', acNo: row.acNo ?? '' } }
+async function readItem(row: Forwarder): Promise<Forwarder> {
+  if (mock.value) {
+    const matches = readMockRows().filter(value => fold(value.forwarderNo) === fold(row.forwarderNo))
+    if (matches.length !== 1 || matches[0]!.forwarderNo !== row.forwarderNo) throw new Error('貨運行不存在或識別值有歧義。')
+    return clone(matches[0]!)
+  }
+  const value = await responseDto(await request(path('item', row.forwarderNo)))
+  if (value.forwarderNo !== row.forwarderNo) throw new Error('貨運行回應的原始識別值不一致。')
+  return value
 }
-function openForm(mode: 'add' | 'edit'): void {
-  errorMessage.value = ''; successMessage.value = ''; formError.value = ''; formDirty.value = false
-  if (mode === 'edit' && (!activeRow.value || ![0, 2].includes(activeRow.value.issueState))) return
-  formMode.value = mode
-  if (mode === 'add') {
-    form.value = blankForm(); originalDataStamp.value = 0
-    audit.value = { creator: props.currentUserNo || (mockMode.value ? 'DEV001' : ''), createDate: new Date().toISOString(), reviser: '', reviseDate: '' }
-  } else {
-    const row = activeRow.value!
-    form.value = formFromRow(row); originalDataStamp.value = row.dataStamp
-    audit.value = { creator: row.creator || '', createDate: row.createDate || '', reviser: props.currentUserNo || '', reviseDate: new Date().toISOString() }
+async function openForm(nextMode: Exclude<Mode, ''>): Promise<void> {
+  if (blocked.value || disposed || nextMode === 'edit' && !canEdit.value) return
+  previousModalFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  const epoch = ++formEpoch, selected = singleSelected.value ? clone(singleSelected.value) : null
+  busy.value = true; error.value = ''; notice.value = ''
+  try {
+    const row = nextMode === 'new' ? null : await readItem(selected!)
+    if (disposed || epoch !== formEpoch) return
+    if (row) { upsert(row); if (row.issueState !== 0 && row.issueState !== 2) throw new Error('貨運行目前狀態不允許修改，請重新查詢。') }
+    sourceRow.value = row; draft.value = row ? draftFrom(row) : blankDraft(); draftOriginal.value = JSON.stringify(draft.value)
+    chosenBroker.value = null; pickerError.value = ''; brokerOptions.value = []; pickerReady.value = false
+    mode.value = nextMode; formReady.value = true; formError.value = ''; formNotice.value = ''
+  } catch (cause) { if (!disposed && epoch === formEpoch) error.value = fail(cause) }
+  finally { busy.value = false; await restoreFocus() }
+}
+function normalizeNewForwarderNo(): void { if (mode.value === 'new' && formReady.value && !writing.value) draft.value.forwarderNo = draft.value.forwarderNo.toUpperCase() }
+async function openBrokerPicker(): Promise<void> {
+  if (mode.value !== 'new' || !formReady.value || writing.value || pickerOpen.value || confirmationMessage.value !== null || disposed) return
+  previousPickerFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  const epoch = ++pickerEpoch, ownerEpoch = formEpoch
+  pickerOpen.value = true; pickerLoading.value = true; pickerReady.value = false; pickerError.value = ''; brokerKeyword.value = ''; brokerOptions.value = []
+  try {
+    let result: BrokerOption[]
+    if (mock.value) result = readMockBrokers()
+    else {
+      const response = await request('api/ent/broker-basis?issueState=2')
+      if (response.status !== 200) throw new Error('報關行清單回應不完整。')
+      const values = object(await response.json()).items
+      if (!Array.isArray(values)) throw new Error('報關行清單回應不完整。')
+      // Validate the released thirteen-field DTO before projecting picker columns.
+      result = values.map(value => brokerOption(normalizeBroker(value)))
+    }
+    if (disposed || epoch !== pickerEpoch || ownerEpoch !== formEpoch || mode.value !== 'new' || !pickerOpen.value) return
+    if (result.some(row => row.issueState !== 2) || new Set(result.map(row => row.brokerNo)).size !== result.length) throw new Error('已簽核報關行回應的狀態或識別值不一致。')
+    brokerOptions.value = result; pickerReady.value = true
+  } catch (cause) {
+    if (!disposed && epoch === pickerEpoch && ownerEpoch === formEpoch) { brokerOptions.value = []; pickerReady.value = false; pickerError.value = fail(cause) }
+  } finally {
+    if (!disposed && epoch === pickerEpoch && ownerEpoch === formEpoch) { pickerLoading.value = false; await restoreFocus() }
   }
 }
-function closeForm(): void { formMode.value = null; formError.value = ''; formDirty.value = false; pickerOpen.value = false }
-function normalizeForwarderNo(): void { form.value.forwarderNo = form.value.forwarderNo.toLocaleUpperCase() }
-function formPayload(): ForwarderForm { return { ...form.value, forwarderNo: form.value.forwarderNo.trim().toLocaleUpperCase(), brokerNo: form.value.brokerNo.trim().toLocaleUpperCase() } }
-async function openBrokerPicker(): Promise<void> {
-  pickerOpen.value = true; pickerError.value = ''; brokerKeyword.value = ''; pickerBusy.value = true
-  try {
-    if (mockMode.value) brokerOptions.value = readMockBrokers()
-    else brokerOptions.value = await requestJson<BrokerOption[]>('api/ent/broker-basis?issueState=2')
-    if (!brokerOptions.value.some(row => row.issueState === 2)) pickerError.value = '目前沒有已簽核的報關行。'
-  } catch (error) { pickerError.value = error instanceof Error ? error.message : '已簽核報關行載入失敗。' }
-  finally { pickerBusy.value = false }
+async function closeBrokerPicker(): Promise<void> {
+  if (!pickerOpen.value || writing.value || pickerLoading.value || confirmationMessage.value !== null || disposed) return
+  pickerOpen.value = false; pickerReady.value = false; brokerOptions.value = []; ++pickerEpoch
+  await nextTick()
+  if (previousPickerFocus?.isConnected && !previousPickerFocus.matches(':disabled') && !previousPickerFocus.closest('[inert]')) previousPickerFocus.focus()
+  else await restoreFocus()
 }
-function chooseBroker(row: BrokerOption): void { if (row.issueState === 2) { form.value.brokerNo = row.brokerNo; formDirty.value = true; pickerOpen.value = false } }
-async function saveForm(closeAfterSave: boolean): Promise<void> {
-  if (!formMode.value) return
-  normalizeForwarderNo()
-  if (!form.value.forwarderNo.trim()) { formError.value = '請輸入 Forwarder No。'; return }
-  if (!form.value.brokerNo.trim()) { formError.value = '請選擇已簽核的 Broker No。'; return }
-  const payload = formPayload()
-  if (payload.forwarderNo.length > 50 || payload.contactorName.length > 50 || payload.telNo.length > 25 || payload.faxNo.length > 25 || payload.email.length > 255 || payload.address.length > 500 || payload.brokerNo.length > 50 || payload.bankNo.length > 20 || payload.acNo.length > 50) { formError.value = '欄位長度超過 Oracle 資料表定義。'; return }
-  busy.value = true; formError.value = ''; errorMessage.value = ''
-  const wasAdd = formMode.value === 'add'
+async function chooseBroker(row: BrokerOption): Promise<void> {
+  if (!pickerOpen.value || !pickerReady.value || pickerLoading.value || writing.value || mode.value !== 'new' || confirmationMessage.value !== null || disposed) return
+  const selected = brokerOptions.value.find(value => value.brokerNo === row.brokerNo && value.issueState === 2)
+  if (!selected) return
+  chosenBroker.value = clone(selected); draft.value.brokerNo = selected.brokerNo
+  await closeBrokerPicker()
+}
+function validateDraft(): string {
+  if (mode.value === 'new' && !trimAscii(draft.value.forwarderNo)) return '請輸入 Forwarder No。'
+  if (mode.value === 'new' && (!trimAscii(draft.value.brokerNo) || !chosenBroker.value || chosenBroker.value.brokerNo !== draft.value.brokerNo)) return '請選擇已簽核的 Broker No。'
+  const limits: [keyof Draft, number, string][] = [['forwarderNo', 50, 'Forwarder No'], ['brokerNo', 50, 'Broker No'], ['contactorName', 50, 'Contactor'], ['telNo', 25, 'TEL'], ['faxNo', 25, 'Fax'], ['email', 255, 'Email'], ['address', 500, 'Address'], ['bankNo', 20, 'Bank No'], ['acNo', 50, 'AC No']]
+  for (const [key, limit, label] of limits) if (draft.value[key].length > limit) return label + '最多' + limit + '字元。'
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/.test(draft.value.address)) return 'Address 含有不支援的控制字元。'
+  return ''
+}
+function optionalValue(key: OptionalField): string | null { const old = sourceRow.value; return old && draft.value[key] === (old[key] ?? '') ? old[key] : draft.value[key] }
+function payload(): ForwarderWrite {
+  return { forwarderNo: mode.value === 'edit' && sourceRow.value ? sourceRow.value.forwarderNo : trimAscii(draft.value.forwarderNo), brokerNo: mode.value === 'edit' && sourceRow.value ? sourceRow.value.brokerNo : draft.value.brokerNo,
+    contactorName: optionalValue('contactorName'), telNo: optionalValue('telNo'), faxNo: optionalValue('faxNo'), email: optionalValue('email'), address: optionalValue('address'), bankNo: optionalValue('bankNo'), acNo: optionalValue('acNo') }
+}
+function nextMockStamp(value: number | null): number { if (value !== null && value >= 99999999999) throw new Error('版本已達上限。'); return value === null ? 1 : value + 1 }
+function mockSave(old: Forwarder | null, value: ForwarderWrite, editing: boolean): Forwarder {
+  const all = readMockRows(), now = new Date().toISOString(), actor = props.currentUserNo || 'DEV001'
+  if (editing) {
+    const matches = all.filter(row => fold(row.forwarderNo) === fold(old!.forwarderNo)), row = matches[0]
+    if (matches.length !== 1 || !row || row.forwarderNo !== old!.forwarderNo || row.brokerNo !== old!.brokerNo || row.dataStamp !== old!.dataStamp || row.issueState !== 0 && row.issueState !== 2) throw new Error('貨運行資料已變更，請重新查詢。')
+    Object.assign(row, value); row.dataStamp = nextMockStamp(row.dataStamp); row.reviser = actor; row.reviseDate = now
+    saveMockRows(all); return clone(row)
+  }
+  const forwarderNo = trimAscii(value.forwarderNo).toUpperCase()
+  if (all.some(row => fold(row.forwarderNo) === fold(forwarderNo))) throw new Error('Forwarder No 已存在。')
+  const parents = readMockBrokers().filter(row => fold(row.brokerNo) === fold(value.brokerNo) && row.issueState === 2)
+  if (parents.length !== 1) throw new Error('報關行不存在、未簽核或識別值有歧義。')
+  const saved: Forwarder = { ...value, forwarderNo, brokerNo: parents[0]!.brokerNo, issueState: 0, creator: actor, createDate: now, dataStamp: 0, reviser: null, reviseDate: null }
+  all.push(saved); saveMockRows(all); return clone(saved)
+}
+function adoptSaved(row: Forwarder, old: Forwarder | null, editing: boolean): void {
+  if (editing && old && (row.forwarderNo !== old.forwarderNo || row.brokerNo !== old.brokerNo) || editing && row.issueState !== 0 && row.issueState !== 2 || !editing && row.issueState !== 0) throw new Error('儲存回應的原始識別值或狀態不一致。')
+  upsert(row); sourceRow.value = clone(row); draft.value = draftFrom(row); draftOriginal.value = JSON.stringify(draft.value)
+  mode.value = 'edit'; formReady.value = true; pruneSelection(row.forwarderNo)
+}
+async function saveForm(close: boolean): Promise<void> {
+  if (!mode.value || !formReady.value || writing.value || pickerOpen.value || pickerLoading.value || confirmationMessage.value !== null || disposed) return
+  if (mode.value === 'edit' && !dirty.value) { if (close) await closeForm(); return }
+  formError.value = validateDraft(); if (formError.value) return
+  const epoch = formEpoch, editing = mode.value === 'edit', old = sourceRow.value ? clone(sourceRow.value) : null, value = payload(), term = appliedKeyword.value
+  if (editing && !old) { formReady.value = false; formError.value = '原始資料未載入，請關閉後重新查詢。'; return }
+  saving.value = true; formNotice.value = ''; notice.value = ''; error.value = ''; let observed = false
   try {
     let saved: Forwarder
-    if (mockMode.value) {
-      const data = readMockRows(); const now = new Date().toISOString()
-      if (wasAdd) {
-        if (data.some(row => row.forwarderNo === payload.forwarderNo)) throw new Error('Forwarder No 已存在。')
-        saved = { ...payload, issueState: 0, creator: props.currentUserNo || 'DEV001', createDate: now, dataStamp: 0, reviser: null, reviseDate: null }; data.push(saved)
-      } else {
-        const index = data.findIndex(row => row.forwarderNo === payload.forwarderNo)
-        if (index < 0) throw new Error('資料已不存在，請重新查詢。')
-        if (![0, 2].includes(data[index].issueState)) throw new Error('目前狀態不允許修改。')
-        saved = { ...data[index], ...payload, reviser: props.currentUserNo || 'DEV001', reviseDate: now, dataStamp: (data[index].dataStamp ?? 0) + 1 }; data[index] = saved
-      }
-      saveMockRows(data)
-    } else if (wasAdd) {
-      saved = await requestJson<Forwarder>('api/ent/forwarder-basis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      saved = saved || { ...payload, issueState: 0, creator: audit.value.creator, createDate: audit.value.createDate, dataStamp: 0, reviser: null, reviseDate: null }
-    } else {
-      const query = new URLSearchParams({ dataStamp: String(originalDataStamp.value ?? 0) })
-      saved = await requestJson<Forwarder>(`api/ent/forwarder-basis/${encodeURIComponent(payload.forwarderNo)}?${query}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      saved = saved || { ...payload, issueState: activeRow.value?.issueState ?? 0, creator: audit.value.creator, createDate: audit.value.createDate, dataStamp: (originalDataStamp.value ?? 0) + 1, reviser: props.currentUserNo || '', reviseDate: new Date().toISOString() }
+    if (mock.value) saved = mockSave(old, value, editing)
+    else {
+      const response = await request(editing ? path('item', old!.forwarderNo) : path(), { method: editing ? 'PUT' : 'POST', body: JSON.stringify(editing ? { ...value, dataStamp: old!.dataStamp } : value) })
+      observed = true; saved = await responseDto(response)
     }
-    await loadRows()
-    const savedRowIsVisible = visibleRows.value.some(row => row.forwarderNo === saved.forwarderNo)
-    activeKey.value = savedRowIsVisible ? saved.forwarderNo : ''
-    selectedKeys.value = savedRowIsVisible ? [saved.forwarderNo] : []
-    if (wasAdd && !closeAfterSave) {
-      formMode.value = 'edit'; originalDataStamp.value = saved.dataStamp ?? 0; form.value = formFromRow(saved)
-      audit.value = { creator: saved.creator || '', createDate: saved.createDate || '', reviser: props.currentUserNo || '', reviseDate: new Date().toISOString() }
-    } else if (!closeAfterSave) {
-      originalDataStamp.value = saved.dataStamp ?? 0; form.value = formFromRow(saved)
-      audit.value = { creator: saved.creator || '', createDate: saved.createDate || '', reviser: props.currentUserNo || '', reviseDate: new Date().toISOString() }
+    if (disposed || epoch !== formEpoch) return
+    observed = true; adoptSaved(saved, old, editing)
+    formNotice.value = '貨運行資料已儲存。'; notice.value = formNotice.value
+    if (close) { mode.value = ''; formReady.value = false; ++formEpoch }
+    try { await reloadRows(term, saved.forwarderNo) } catch (cause) { if (!disposed) { error.value = fail(cause); formNotice.value = '資料已儲存；清單更新失敗，已保留儲存結果，請重新查詢。'; notice.value = formNotice.value } }
+  } catch (cause) {
+    if (!disposed && epoch === formEpoch) {
+      formError.value = fail(cause)
+      if (observed || !mock.value && (!(cause instanceof ApiFailure) || cause.status >= 500)) { formReady.value = false; formError.value += ' 儲存結果無法確認，請關閉後重新查詢。' }
     }
-    successMessage.value = wasAdd ? '貨運行資料已新增。' : '貨運行資料已修改。'
-    formDirty.value = false
-    if (closeAfterSave) closeForm()
-  } catch (error) { formError.value = error instanceof Error ? error.message : '貨運行資料儲存失敗。' }
-  finally { busy.value = false }
+  } finally { saving.value = false; await restoreFocus() }
 }
-async function deleteSelected(): Promise<void> {
-  const targets = rows.value.filter(row => selectedKeys.value.includes(row.forwarderNo))
-  if (!targets.length) { errorMessage.value = '請先選取要刪除的貨運行。'; return }
-  if (!window.confirm(`確定刪除／停用選取的 ${targets.length} 筆貨運行資料？`)) return
-  busy.value = true; errorMessage.value = ''; successMessage.value = ''; let completed = 0
+function mockTransition(row: Forwarder, action: 'delete' | 'approve'): DeleteResult | Forwarder {
+  const all = readMockRows(), matches = all.filter(value => fold(value.forwarderNo) === fold(row.forwarderNo)), current = matches[0]
+  if (matches.length !== 1 || !current || current.forwarderNo !== row.forwarderNo || current.dataStamp !== row.dataStamp || current.issueState !== row.issueState) throw new Error('貨運行資料已變更，請重新查詢。')
+  if (action === 'delete' && (current.issueState === 0 || current.issueState === -1)) { saveMockRows(all.filter(value => value.forwarderNo !== current.forwarderNo)); return { status: 204 } }
+  if (action === 'approve' ? current.issueState !== 0 : current.issueState !== 2) throw new Error('貨運行目前狀態不允許此操作。')
+  current.dataStamp = nextMockStamp(current.dataStamp); current.issueState = action === 'approve' ? 2 : -1; current.reviser = props.currentUserNo || 'DEV001'; current.reviseDate = new Date().toISOString()
+  saveMockRows(all); return action === 'approve' ? clone(current) : { status: 200, item: clone(current) }
+}
+async function removeForwarder(row: Forwarder): Promise<DeleteResult> {
+  if (mock.value) return mockTransition(row, 'delete') as DeleteResult
+  const response = await request(path('item', row.forwarderNo), { method: 'DELETE', body: JSON.stringify({ expectedIssueState: row.issueState, dataStamp: row.dataStamp }) })
+  if (response.status === 204) return { status: 204 }
+  return { status: 200, item: await responseDto(response) }
+}
+async function approveForwarder(row: Forwarder): Promise<Forwarder> {
+  if (mock.value) return mockTransition(row, 'approve') as Forwarder
+  return responseDto(await request(path('approve', row.forwarderNo), { method: 'POST', body: JSON.stringify({ expectedIssueState: row.issueState, dataStamp: row.dataStamp }) }))
+}
+async function runBatch(action: 'delete' | 'approve'): Promise<void> {
+  if (blocked.value || !rowsReady.value || !selectedRows.value.length || disposed) return
+  const targets = clone(selectedRows.value), term = appliedKeyword.value, epoch = ++operationEpoch
+  const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  busy.value = true; error.value = ''; notice.value = ''; let completed = 0, retired = 0, removed = 0
   try {
+    if (!await requestConfirmation(action === 'approve' ? '確定核准選取的 ' + targets.length + ' 筆貨運行資料？' : '確定刪除或停用選取的 ' + targets.length + ' 筆貨運行資料？')) return
+    if (disposed || epoch !== operationEpoch) return
     for (const row of targets) {
-      if (![0, -1, 2].includes(row.issueState)) throw new Error(`「${row.forwarderNo}」目前為${stateLabel(row.issueState)}，不允許刪除。`)
-      if (mockMode.value) {
-        const data = readMockRows()
-        if (row.issueState === 2) { const index = data.findIndex(item => item.forwarderNo === row.forwarderNo); if (index >= 0) data[index] = { ...data[index], issueState: -1, reviser: props.currentUserNo || 'DEV001', reviseDate: new Date().toISOString(), dataStamp: (data[index].dataStamp ?? 0) + 1 }; saveMockRows(data) }
-        else saveMockRows(data.filter(item => item.forwarderNo !== row.forwarderNo))
+      if (action === 'delete') {
+        const result = await removeForwarder(row)
+        if (disposed || epoch !== operationEpoch) return
+        if (result.status === 204) { rows.value = rows.value.filter(value => value.forwarderNo !== row.forwarderNo); removed++ }
+        else {
+          if (result.item.forwarderNo !== row.forwarderNo || result.item.issueState !== -1) throw new Error('停用回應的原始識別值或狀態不一致。')
+          upsert(result.item); retired++
+        }
       } else {
-        const query = new URLSearchParams({ issueState: String(row.issueState), dataStamp: String(row.dataStamp ?? 0) })
-        await requestJson<void>(`api/ent/forwarder-basis/${encodeURIComponent(row.forwarderNo)}?${query}`, { method: 'DELETE' })
+        const saved = await approveForwarder(row)
+        if (disposed || epoch !== operationEpoch) return
+        if (saved.forwarderNo !== row.forwarderNo || saved.issueState !== 2) throw new Error('核准回應的原始識別值或狀態不一致。')
+        upsert(saved)
       }
-      completed++
+      selectedKeys.value = selectedKeys.value.filter(key => key !== row.forwarderNo); pruneSelection(); completed++
     }
-    await loadRows(); successMessage.value = `已處理 ${completed} 筆貨運行資料。`
-  } catch (error) { const message = error instanceof Error ? error.message : '貨運行資料刪除失敗。'; await loadRows(); errorMessage.value = message }
-  finally { busy.value = false }
+    notice.value = action === 'approve' ? '已核准 ' + completed + ' 筆貨運行資料。' + (mock.value ? '（DEV 本機模擬）' : '') : '已處理 ' + completed + ' 筆貨運行資料：刪除 ' + removed + ' 筆、停用 ' + retired + ' 筆。'
+    try { await reloadRows(term) } catch (cause) { if (!disposed) { rowsReady.value = false; error.value = fail(cause) + ' 操作已完成；清單更新失敗，請重新查詢。' } }
+  } catch (cause) {
+    if (disposed || epoch !== operationEpoch) return
+    rowsReady.value = false; error.value = fail(cause) + ' 已確認完成 ' + completed + '/' + targets.length + ' 筆；請以重新查詢結果確認其餘資料。'
+    try { await reloadRows(term) } catch (reloadError) { if (!disposed) error.value += ' ' + fail(reloadError) }
+  } finally { busy.value = false; await restorePageFocus(previous) }
 }
-async function approveSelected(): Promise<void> {
-  const targets = rows.value.filter(row => selectedKeys.value.includes(row.forwarderNo))
-  if (!targets.length) { errorMessage.value = '請先選取要核准的貨運行。'; return }
-  if (!window.confirm(`確定核准選取的 ${targets.length} 筆貨運行資料？`)) return
-  busy.value = true; errorMessage.value = ''; successMessage.value = ''; let completed = 0
-  try {
-    for (const row of targets) {
-      if (row.issueState !== 0) throw new Error(`「${row.forwarderNo}」目前為${stateLabel(row.issueState)}，不允許核准。`)
-      if (mockMode.value) {
-        const data = readMockRows(); const index = data.findIndex(item => item.forwarderNo === row.forwarderNo)
-        if (index >= 0) data[index] = { ...data[index], issueState: 2, reviser: props.currentUserNo || 'DEV001', reviseDate: new Date().toISOString(), dataStamp: (data[index].dataStamp ?? 0) + 1 }
-        saveMockRows(data)
-      } else { const query = new URLSearchParams({ dataStamp: String(row.dataStamp ?? 0) }); await requestJson<void>(`api/ent/forwarder-basis/${encodeURIComponent(row.forwarderNo)}/approve?${query}`, { method: 'POST' }) }
-      completed++
-    }
-    await loadRows(); successMessage.value = `已送出 ${completed} 筆核准。DEV 假資料以直接核准方式模擬。`
-  } catch (error) { const message = error instanceof Error ? error.message : '貨運行核准失敗。'; await loadRows(); errorMessage.value = message }
-  finally { busy.value = false }
+async function closeForm(): Promise<void> {
+  if (writing.value || pickerOpen.value || pickerLoading.value || confirmationMessage.value !== null || disposed) return
+  if (JSON.stringify(draft.value) !== draftOriginal.value && !await requestConfirmation('尚有未儲存的修改，確定放棄？')) { await restoreFocus(); return }
+  if (disposed) return
+  mode.value = ''; formReady.value = false; formError.value = ''; formNotice.value = ''; sourceRow.value = null; chosenBroker.value = null; ++formEpoch; ++pickerEpoch; await restoreFocus()
 }
-function closePage(): void { rows.value = []; selectedKeys.value = []; activeKey.value = ''; errorMessage.value = ''; successMessage.value = '' }
-onMounted(() => { if (mockMode.value && !window.localStorage.getItem(storageKey)) saveMockRows(seedRows); void loadRows() })
+function closePage(): void {
+  if (blocked.value || disposed) return
+  ++listEpoch; ++formEpoch; ++operationEpoch; ++pickerEpoch; rows.value = []; rowsReady.value = false; selectedKeys.value = []; activeKey.value = ''; error.value = ''; notice.value = ''; emit('close')
+}
+function currentModal(): HTMLElement | null { return pickerOpen.value ? pickerElement.value : mode.value ? formElement.value : null }
+async function restorePageFocus(previous: HTMLElement | null): Promise<void> {
+  await nextTick(); if (disposed || modalOpen.value || confirmationMessage.value !== null) return
+  if (previous?.isConnected && !previous.matches(':disabled') && !previous.closest('[inert]')) previous.focus()
+  else pageElement.value?.querySelector<HTMLElement>('.master-surface button:not(:disabled),.master-surface input:not(:disabled)')?.focus()
+}
+async function restoreFocus(): Promise<void> {
+  await nextTick(); if (disposed || confirmationMessage.value !== null) return
+  if (modalOpen.value && !writing.value && !pickerLoading.value) {
+    const modal = currentModal(), selector = pickerOpen.value ? '[data-focus="picker"]' : mode.value === 'new' ? '[data-focus="new"]' : '[data-focus="edit"]'
+    const preferred = modal?.querySelector<HTMLElement>(selector)
+    const target = preferred && !preferred.matches(':disabled') ? preferred : modal?.querySelector<HTMLElement>('input:not(:disabled):not([readonly]),textarea:not(:disabled),button:not(:disabled)')
+    ;(target ?? modal)?.focus()
+  } else if (!modalOpen.value) await restorePageFocus(previousModalFocus)
+}
+function keepModalFocus(event: KeyboardEvent): void {
+  if (event.key !== 'Tab' || !modalOpen.value || confirmationMessage.value !== null) return
+  if (writing.value || pickerLoading.value) { event.preventDefault(); return }
+  if (!currentModal()?.contains(document.activeElement)) { event.preventDefault(); void restoreFocus() }
+}
+function trapTab(event: KeyboardEvent): void {
+  if (confirmationMessage.value !== null) return
+  if (writing.value || pickerLoading.value) { event.preventDefault(); return }
+  const modal = currentModal(); if (!modal) return
+  const controls = Array.from(modal.querySelectorAll<HTMLElement>('input:not(:disabled),textarea:not(:disabled),button:not(:disabled)')).filter(element => element.offsetParent !== null)
+  const first = controls[0], last = controls.at(-1)
+  if (!first || !last) { event.preventDefault(); modal.focus(); return }
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+}
+onMounted(() => {
+  window.addEventListener('keydown', keepModalFocus, true)
+  if (mock.value && !localStorage.getItem(storageKey)) saveMockRows(seedRows)
+  void loadRows()
+})
+onBeforeUnmount(() => { disposed = true; ++listEpoch; ++formEpoch; ++operationEpoch; ++pickerEpoch; window.removeEventListener('keydown', keepModalFocus, true) })
 </script>
 
 <template>
-  <div class="forwarder-page">
-    <div class="forwarder-query">
-      <div class="forwarder-state-filter" role="radiogroup" aria-label="簽核狀態">
-        <label><input type="radio" :checked="filterState === 0" @change="setFilter(0)" />未簽核</label>
-        <label><input type="radio" :checked="filterState === 1" @change="setFilter(1)" />簽核中</label>
-        <label><input type="radio" :checked="filterState === 2" @change="setFilter(2)" />已簽核</label>
-        <label><input type="radio" :checked="filterState === -1" @change="setFilter(-1)" />不使用</label>
-      </div>
-      <label for="forwarder-no-search">貨運行編號</label><input id="forwarder-no-search" v-model="keyword" @keyup.enter="loadRows" /> <span>%</span>
-      <button type="button" :disabled="loading || busy" @click="loadRows">查詢</button>
+  <section ref="pageElement" class="forwarder-page" aria-label="貨運行基本資料">
+    <div class="master-surface" :inert="modalOpen || writing || confirmationMessage!==null">
+      <fieldset class="query-strip" :disabled="blocked">
+        <div class="issue-filter" role="radiogroup" aria-label="簽核狀態">
+          <label><input type="radio" name="forwarder-issue-state" :checked="filterState===0" @change="setFilter(0)">未簽核</label>
+          <label><input type="radio" name="forwarder-issue-state" :checked="filterState===1" @change="setFilter(1)">簽核中</label>
+          <label><input type="radio" name="forwarder-issue-state" :checked="filterState===2" @change="setFilter(2)">已簽核</label>
+          <label><input type="radio" name="forwarder-issue-state" :checked="filterState===-1" @change="setFilter(-1)">不使用</label>
+        </div>
+        <label class="query-field">貨運行編號<input v-model="keyword" class="kd-input query-input" maxlength="50" aria-label="貨運行編號查詢" @keydown.enter.prevent="loadRows"></label>
+        <button class="kd-button" type="button" @click="loadRows">查詢</button>
+        <span v-if="mock" class="dev-badge">DEV 開發假資料</span>
+      </fieldset>
+      <p v-if="error" class="message error-message" role="alert">{{ error }}</p>
+      <p v-if="notice" class="message notice-message" role="status">{{ notice }}</p>
+      <fieldset class="win-group forwarder-panel"><legend>貨運行資料</legend>
+        <div class="panel-layout">
+          <div class="grid-scroll"><table class="kd-grid"><thead><tr>
+            <th class="check-cell"><input type="checkbox" aria-label="選取所有貨運行" :checked="allSelected" :indeterminate="selectedRows.length>0 && !allSelected" :disabled="blocked || !rowsReady || !visibleRows.length" @change="toggleAll(($event.target as HTMLInputElement).checked)"></th>
+            <th>貨運行編號</th><th>連絡人</th><th>電話</th><th>傳真</th><th>Email</th><th>地址</th><th>報關行編號</th><th>銀行編號</th><th>建立人</th><th>建立日期</th><th>AC No</th><th>修改人</th><th>修改日期</th>
+          </tr></thead><tbody>
+            <tr v-for="row in visibleRows" :key="row.forwarderNo" :tabindex="blocked || !rowsReady ? -1 : 0" :aria-selected="selectedKeys.includes(row.forwarderNo)" :class="{active:selectedKeys.includes(row.forwarderNo)}" @click="selectRow(row)" @keydown.enter.prevent="selectRow(row)">
+              <td class="check-cell" @click.stop><input type="checkbox" :checked="selectedKeys.includes(row.forwarderNo)" :disabled="blocked || !rowsReady" :aria-label="'選取貨運行 '+row.forwarderNo" @change="toggleRow(row,($event.target as HTMLInputElement).checked)"></td>
+              <td>{{ row.forwarderNo }}</td><td>{{ row.contactorName }}</td><td>{{ row.telNo }}</td><td>{{ row.faxNo }}</td><td>{{ row.email }}</td><td>{{ row.address }}</td><td>{{ row.brokerNo }}</td><td>{{ row.bankNo }}</td><td>{{ row.creator }}</td><td>{{ formatDate(row.createDate) }}</td><td>{{ row.acNo }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.reviseDate) }}</td>
+            </tr>
+            <tr v-if="!visibleRows.length"><td colspan="14" class="empty-row">{{ loading?'資料載入中…':error && !rowsReady?'貨運行資料未能載入。':'沒有符合的貨運行資料。' }}</td></tr>
+          </tbody></table></div>
+          <div class="vertical-actions">
+            <button class="kd-button primary" type="button" :disabled="blocked" @click="openForm('new')">新增(A)</button>
+            <button class="kd-button" type="button" :disabled="blocked || !canEdit" @click="openForm('edit')">修改(E)</button>
+            <button class="kd-button" type="button" :disabled="blocked || !rowsReady || !selectedRows.length" @click="runBatch('delete')">刪除(D)</button>
+            <button class="kd-button" type="button" :disabled="blocked || !rowsReady || !selectedRows.length" @click="runBatch('approve')">核准</button>
+            <button class="kd-button close-button" type="button" :disabled="blocked" @click="closePage">關閉</button>
+          </div>
+        </div>
+        <div class="grid-status">資料總筆數 {{ visibleRows.length }}</div>
+      </fieldset>
     </div>
-    <div v-if="mockMode" class="forwarder-note">Development 假資料｜只儲存在此瀏覽器；已簽核報關行選擇器使用 ET103 假資料。</div>
-    <div v-if="errorMessage" class="forwarder-message error" role="alert">{{ errorMessage }}</div>
-    <div v-if="successMessage" class="forwarder-message success" role="status">{{ successMessage }}</div>
-    <section class="forwarder-list"><div class="forwarder-list-layout"><div class="forwarder-table-scroll">
-      <table class="forwarder-table"><thead><tr>
-        <th class="select-col"><input type="checkbox" aria-label="選取所有貨運行" :checked="allVisibleSelected" @change="toggleAll(($event.target as HTMLInputElement).checked)" /></th>
-        <th>貨運行編號</th><th>連絡人</th><th>電話</th><th>傳真</th><th>Email</th><th>地址</th><th>報關行編號</th><th>銀行編號</th><th>建立人</th><th>建立日期</th><th>AC No</th><th>修改人</th><th>修改日期</th>
-      </tr></thead><tbody>
-        <tr v-for="row in visibleRows" :key="row.forwarderNo" tabindex="0" :aria-selected="selectedKeys.includes(row.forwarderNo)" :class="{ selected: selectedKeys.includes(row.forwarderNo) }" @click="selectRow(row)" @keydown.enter.prevent="selectRow(row)">
-          <td class="select-col" @click.stop><input type="checkbox" :aria-label="`選取貨運行 ${row.forwarderNo}`" :checked="selectedKeys.includes(row.forwarderNo)" @change="toggleRow(row, ($event.target as HTMLInputElement).checked)" /></td>
-          <td>{{ row.forwarderNo }}</td><td>{{ row.contactorName }}</td><td>{{ row.telNo }}</td><td>{{ row.faxNo }}</td><td>{{ row.email }}</td><td>{{ row.address }}</td><td>{{ row.brokerNo }}</td><td>{{ row.bankNo }}</td><td>{{ row.creator }}</td><td>{{ formatDate(row.createDate) }}</td><td>{{ row.acNo }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.reviseDate) }}</td>
-        </tr>
-        <tr v-if="loading"><td colspan="14" class="forwarder-empty">資料載入中…</td></tr>
-        <tr v-else-if="visibleRows.length === 0 && !errorMessage"><td colspan="14" class="forwarder-empty">沒有符合的貨運行資料。</td></tr>
-      </tbody></table>
-    </div><div class="forwarder-actions">
-      <button class="primary" type="button" :disabled="busy" @click="openForm('add')">新增(A)</button>
-      <button type="button" :disabled="busy || !activeRow || ![0,2].includes(activeRow.issueState)" @click="openForm('edit')">修改(E)</button>
-      <button type="button" :disabled="busy || selectedKeys.length === 0" @click="deleteSelected">刪除(D)</button>
-      <button type="button" :disabled="busy || selectedKeys.length === 0" @click="approveSelected">核准</button>
-      <button class="forwarder-print" type="button" disabled>Print</button><button class="forwarder-close" type="button" @click="closePage">關閉</button>
-    </div></div><footer class="forwarder-count">資料總筆數 <strong>{{ visibleRows.length }}</strong></footer></section>
-
-    <div v-if="formMode" class="forwarder-overlay" @click.self="closeForm"><form class="forwarder-dialog" @submit.prevent="saveForm(true)">
-      <header><h2>{{ formMode === 'add' ? '新增' : '修改' }}貨運行基本資料</h2><button type="button" aria-label="關閉" @click="closeForm">×</button></header>
-      <div class="forwarder-form-scroll"><fieldset><legend>貨運行主檔資料</legend><div class="forwarder-fields">
-        <label><span>Forwarder No *</span><input v-model="form.forwarderNo" :readonly="formMode === 'edit'" required @input="formDirty = true" @blur="normalizeForwarderNo" /></label>
-        <label class="broker-field"><span>Broker No *</span><div><input v-model="form.brokerNo" readonly required /><button type="button" :disabled="formMode === 'edit'" @click="openBrokerPicker">...</button></div></label>
-        <label><span>連絡人</span><input v-model="form.contactorName" @input="formDirty = true" /></label><label><span>電話</span><input v-model="form.telNo" @input="formDirty = true" /></label>
-        <label><span>傳真</span><input v-model="form.faxNo" @input="formDirty = true" /></label><label><span>Email</span><input v-model="form.email" @input="formDirty = true" /></label>
-        <label><span>銀行編號</span><input v-model="form.bankNo" @input="formDirty = true" /></label><label><span>AC No</span><input v-model="form.acNo" @input="formDirty = true" /></label>
-        <label class="wide"><span>地址</span><textarea v-model="form.address" rows="3" @input="formDirty = true"></textarea></label>
-      </div></fieldset>
-      <div class="forwarder-audit"><label>建立人<input :value="audit.creator" readonly /></label><label>建立日期<input :value="formatDate(audit.createDate)" readonly /></label><label>修改人<input :value="audit.reviser" readonly /></label><label>修改日期<input :value="formatDate(audit.reviseDate)" readonly /></label></div>
-      <p v-if="formError" class="forwarder-message error" role="alert">{{ formError }}</p></div>
-      <footer class="forwarder-dialog-actions"><button type="button" :disabled="busy" @click="closeForm">關閉</button><button type="button" :disabled="busy || !formDirty" @click="saveForm(false)">套用</button><button class="primary" type="submit" :disabled="busy">確定</button></footer>
-    </form></div>
-
-    <div v-if="pickerOpen" class="forwarder-overlay picker-overlay" @click.self="pickerOpen = false"><section class="broker-picker" role="dialog" aria-modal="true" aria-label="選擇已簽核報關行">
-      <header><h2>選擇報關行</h2><button type="button" aria-label="關閉" @click="pickerOpen = false">×</button></header>
-      <div class="picker-query"><label for="broker-picker-search">報關行編號／名稱</label><input id="broker-picker-search" v-model="brokerKeyword" /></div>
-      <p v-if="pickerBusy" class="picker-empty">資料載入中…</p><p v-else-if="pickerError" class="picker-empty">{{ pickerError }}</p>
-      <div v-else class="picker-table-scroll"><table class="picker-table"><thead><tr><th>報關行編號</th><th>連絡人</th></tr></thead><tbody>
-        <tr v-for="row in visibleBrokers" :key="row.brokerNo" tabindex="0" @click="chooseBroker(row)" @keydown.enter.prevent="chooseBroker(row)"><td>{{ row.brokerNo }}</td><td>{{ row.contactorName }}</td></tr>
-        <tr v-if="!visibleBrokers.length"><td colspan="2" class="picker-empty">沒有符合的已簽核報關行。</td></tr>
-      </tbody></table></div>
-      <footer><button type="button" @click="pickerOpen = false">關閉</button></footer>
+    <div v-if="mode" class="dialog-backdrop" @click.self="closeForm"><section ref="formElement" class="win-dialog" role="dialog" aria-modal="true" aria-label="貨運行編輯" tabindex="-1" :inert="writing || pickerOpen || confirmationMessage!==null" @keydown.esc.stop.prevent="closeForm" @keydown.tab="trapTab">
+      <header class="dialog-title">{{ mode==='new'?'新增':'修改' }}貨運行基本資料</header>
+      <form class="dialog-form" novalidate @submit.prevent="saveForm(true)">
+        <fieldset class="form-group" :disabled="writing || pickerOpen || !formReady || confirmationMessage!==null"><legend>貨運行資料</legend><div class="form-grid">
+          <label>Forwarder No<input v-model="draft.forwarderNo" class="kd-input" :readonly="mode==='edit'" maxlength="50" aria-label="Forwarder No" data-focus="new" @blur="normalizeNewForwarderNo"></label>
+          <label>Broker No<span class="lookup-control"><input class="kd-input" :value="draft.brokerNo" readonly maxlength="50" aria-label="Broker No"><button class="kd-button lookup-button" type="button" :disabled="mode!=='new' || writing || !formReady || pickerOpen" aria-label="選擇已簽核報關行" @click="openBrokerPicker">...</button></span></label>
+          <label>Contactor<input v-model="draft.contactorName" class="kd-input" maxlength="50" aria-label="Contactor" data-focus="edit"></label>
+          <label>TEL<input v-model="draft.telNo" class="kd-input" maxlength="25" aria-label="TEL"></label>
+          <label>Fax<input v-model="draft.faxNo" class="kd-input" maxlength="25" aria-label="Fax"></label>
+          <label>Email<input v-model="draft.email" class="kd-input" maxlength="255" aria-label="Email"></label>
+          <label>Bank No<input v-model="draft.bankNo" class="kd-input" maxlength="20" aria-label="Bank No"></label>
+          <label>AC No<input v-model="draft.acNo" class="kd-input" maxlength="50" aria-label="AC No"></label>
+          <label class="wide-label">Address<textarea v-model="draft.address" class="kd-input" maxlength="500" rows="3" aria-label="Address"></textarea></label>
+        </div></fieldset>
+        <div class="audit-row">
+          <label>建立人<input class="kd-input" :value="mode==='edit' ? sourceRow?.creator ?? '' : ''" readonly aria-label="貨運行建立人"></label>
+          <label>建立日期<input class="kd-input" :value="mode==='edit' ? formatDate(sourceRow?.createDate) : ''" readonly aria-label="貨運行建立日期"></label>
+          <label>修改人<input class="kd-input" :value="mode==='edit' ? sourceRow?.reviser ?? '' : ''" readonly aria-label="貨運行修改人"></label>
+          <label>修改日期<input class="kd-input" :value="mode==='edit' ? formatDate(sourceRow?.reviseDate) : ''" readonly aria-label="貨運行修改日期"></label>
+        </div>
+        <p v-if="formError" class="message error-message" role="alert">{{ formError }}</p>
+        <p v-if="formNotice" class="message notice-message" role="status">{{ formNotice }}</p>
+        <footer class="dialog-actions">
+          <button class="kd-button" type="button" :disabled="writing || pickerOpen || confirmationMessage!==null" @click="closeForm">關閉</button>
+          <button class="kd-button" type="button" :disabled="writing || pickerOpen || !formReady || !dirty || confirmationMessage!==null" @click="saveForm(false)">套用</button>
+          <button class="kd-button primary" type="submit" :disabled="writing || pickerOpen || !formReady || confirmationMessage!==null">確定</button>
+        </footer>
+      </form>
     </section></div>
-  </div>
+    <div v-if="pickerOpen" class="dialog-backdrop picker-backdrop" @click.self="closeBrokerPicker"><section ref="pickerElement" class="win-dialog picker-dialog" role="dialog" aria-modal="true" aria-label="選擇已簽核報關行" tabindex="-1" :inert="writing || pickerLoading || confirmationMessage!==null" @keydown.esc.stop.prevent="closeBrokerPicker" @keydown.tab="trapTab">
+      <header class="dialog-title">選擇已簽核報關行</header>
+      <fieldset class="picker-fields" :disabled="writing || pickerLoading || confirmationMessage!==null">
+        <label class="picker-search">報關行編號／連絡人<input v-model="brokerKeyword" class="kd-input" maxlength="50" aria-label="報關行查找關鍵字" data-focus="picker" @keydown.enter.prevent></label>
+        <div class="picker-scroll"><table class="kd-grid"><thead><tr><th>Broker No</th><th>Contactor</th></tr></thead><tbody>
+          <tr v-for="row in visibleBrokers" :key="row.brokerNo"><td><button class="pick-button" type="button" :disabled="!pickerReady" @click="chooseBroker(row)">{{ row.brokerNo }}</button></td><td>{{ row.contactorName }}</td></tr>
+          <tr v-if="!visibleBrokers.length"><td colspan="2" class="empty-row">{{ pickerLoading?'資料載入中…':pickerError?'報關行資料未能載入。':'沒有符合的已簽核報關行。' }}</td></tr>
+        </tbody></table></div>
+      </fieldset>
+      <p v-if="pickerError" class="message error-message" role="alert">{{ pickerError }}</p>
+      <footer class="dialog-actions"><button class="kd-button" type="button" :disabled="writing || pickerLoading || confirmationMessage!==null" @click="closeBrokerPicker">關閉</button></footer>
+    </section></div>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
+  </section>
 </template>
 
 <style scoped>
-.forwarder-page input[type=radio],.forwarder-page input[type=checkbox]{accent-color:#b59a00}
-.forwarder-page{display:flex;min-height:0;flex-direction:column;gap:7px;padding:8px;background:#f8f7f3;color:#333;font-size:13px}.forwarder-query{display:flex;min-height:40px;align-items:center;gap:8px;padding:5px 10px;border:1px solid #d0cec7;background:#fff}.forwarder-state-filter{display:flex;align-items:center;gap:12px;margin-right:10px}.forwarder-state-filter label{display:flex;align-items:center;gap:4px;white-space:nowrap}.forwarder-query>label{margin-left:2px}.forwarder-query>input{width:190px;height:27px;padding:4px 6px;border:1px solid #aaa}.forwarder-query>span{margin-left:-6px}.forwarder-query>button,.forwarder-actions button,.forwarder-dialog-actions button,.broker-picker footer button{min-height:29px;padding:4px 9px;border:1px solid #c4c4c4;border-radius:3px;background:linear-gradient(#fff,#f4f3ef);color:#333}.forwarder-list{display:flex;min-height:0;flex:1;flex-direction:column;border:1px solid #c7c4bb;background:#fff}.forwarder-list-layout{display:grid;min-height:260px;flex:1;grid-template-columns:minmax(0,1fr) 92px;gap:8px;padding:7px}.forwarder-table-scroll,.picker-table-scroll{min-width:0;overflow:auto}.forwarder-table{width:max-content;min-width:100%;border-collapse:collapse;white-space:nowrap;font-size:12px}.forwarder-table th,.picker-table th{position:sticky;top:0;z-index:1;height:30px;padding:5px 8px;border:1px solid #9cb6c3;background:#56a9df;color:#fff;text-align:left;font-weight:500}.forwarder-table td,.picker-table td{height:30px;max-width:260px;overflow:hidden;padding:5px 8px;border:1px solid #d0d0d0;text-overflow:ellipsis}.forwarder-table tbody tr,.picker-table tbody tr{cursor:pointer}.forwarder-table tbody tr:hover,.picker-table tbody tr:hover{background:#faf7e7}.forwarder-table tbody tr.selected{background:#fff0b5;box-shadow:inset 3px 0 #b59a00}.forwarder-table tbody tr:focus-visible,.picker-table tbody tr:focus-visible{outline:2px solid #b59a00;outline-offset:-2px}.select-col{width:27px;text-align:center}.forwarder-empty,.picker-empty{text-align:center;color:#777}.forwarder-actions{display:flex;flex-direction:column;gap:6px}.forwarder-actions button:disabled,.forwarder-dialog-actions button:disabled{color:#aaa;cursor:not-allowed}.forwarder-actions button.primary,.forwarder-dialog-actions button.primary{border-color:#cf9b33;background:#ffad32;color:#fff;font-weight:600}.forwarder-print{margin-top:auto}.forwarder-close{margin-top:3px}.forwarder-count{flex:none;padding:2px 12px 8px;color:#777;font-size:11px}.forwarder-count strong{margin-left:7px;color:#555;font-weight:500}.forwarder-note{padding:6px 10px;border:1px solid #d8c77b;background:#fff9dd;color:#665810;font-size:12px}.forwarder-message{margin:0;padding:7px 10px;border:1px solid;font-size:12px}.forwarder-message.error{border-color:#d5a3a3;background:#fff5f3;color:#7a2424}.forwarder-message.success{border-color:#b6c9a8;background:#f5f8ef;color:#435c32}.forwarder-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:16px;background:rgb(20 20 16 / 35%)}.forwarder-dialog,.broker-picker{display:flex;width:min(650px,100%);max-height:94vh;flex-direction:column;border:1px solid #c4c1b8;background:#fff;box-shadow:0 8px 28px rgb(0 0 0 / 20%)}.forwarder-dialog>header,.broker-picker>header{display:flex;flex:none;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid #ddd;background:#f8f7f3}.forwarder-dialog>header h2,.broker-picker>header h2{margin:0;font-size:16px;font-weight:500}.forwarder-dialog>header button,.broker-picker>header button{width:30px;height:28px;border:1px solid #ccc;background:#fff;font-size:20px;line-height:1}.forwarder-form-scroll{overflow:auto;padding:3px 10px}.forwarder-dialog fieldset{margin:9px 2px;padding:11px 13px 14px;border:1px solid #c8c5bc}.forwarder-dialog legend{padding:0 5px;color:#555}.forwarder-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}.forwarder-fields>label{display:grid;grid-template-columns:105px minmax(0,1fr);align-items:center;gap:8px}.forwarder-fields input,.forwarder-fields textarea{width:100%;min-height:30px;padding:5px 7px;border:1px solid #999;border-radius:0;background:#fff0ae;color:#26251f;font:inherit}.forwarder-fields input:read-only{background:#eee}.forwarder-fields textarea{resize:vertical}.forwarder-fields .wide{grid-column:1/-1}.forwarder-fields .broker-field>div{display:flex;gap:4px}.forwarder-fields .broker-field>div input{min-width:0}.forwarder-fields .broker-field>div button{width:36px;border:1px solid #aaa;background:#f4f3ef}.forwarder-audit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 2px 9px;padding:10px;border:1px solid #d6d2c7;background:#faf9f6}.forwarder-audit label{display:grid;gap:4px;color:#666;font-size:11px}.forwarder-audit input{width:100%;min-height:28px;padding:4px;border:1px solid #ccc;background:#eee;color:#555;font:inherit}.forwarder-dialog-actions,.broker-picker>footer{display:flex;flex:none;justify-content:flex-end;gap:8px;padding:8px 12px 12px;border-top:1px solid #ddd}.picker-overlay{z-index:1010}.broker-picker{width:min(520px,100%);height:min(430px,88vh)}.picker-query{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #ddd}.picker-query input{flex:1;min-width:0;height:28px;padding:4px 6px;border:1px solid #aaa}.broker-picker .picker-empty{padding:14px}.picker-table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:12px}.broker-picker>footer{margin-top:auto}@media(max-width:950px){.forwarder-state-filter{gap:6px;margin-right:2px}.forwarder-query{flex-wrap:wrap}.forwarder-fields,.forwarder-audit{grid-template-columns:1fr}.forwarder-fields .wide{grid-column:auto}.forwarder-fields>label{grid-template-columns:90px minmax(0,1fr)}}
+.forwarder-page{box-sizing:border-box;display:flex;flex-direction:column;height:100%;min-height:0;padding:8px 10px;background:#F7F5EE;color:#26251F;font:13px/1.4 "Segoe UI","Microsoft JhengHei",sans-serif}.master-surface{display:flex;flex-direction:column;gap:6px;flex:1;min-height:0}
+.query-strip{display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-height:40px;margin:0;padding:5px 8px;border:1px solid #d4d0c7;background:#fff}.issue-filter{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-right:8px}.issue-filter label,.query-field{display:inline-flex;align-items:center;gap:5px}.query-input{width:180px}.dev-badge{padding:2px 7px;border:1px solid #d8c373;background:#fff5ce;color:#76631b;font-size:11px}
+.kd-input{box-sizing:border-box;width:100%;min-width:0;height:29px;padding:4px 7px;border:1px solid #aaa69e;background:#fff1bf;color:#333;font:inherit}.kd-input:focus{outline:2px solid var(--yellow,#E7C600);outline-offset:1px}.kd-input[readonly]{background:#efeeeb}.kd-button{min-height:30px;padding:4px 9px;border:1px solid #bdb9b0;border-radius:3px;background:linear-gradient(#fff,#efeeeb);color:#343331;font:inherit;white-space:nowrap;cursor:pointer}.kd-button:hover:not(:disabled){border-color:var(--yellow,#E7C600);background:#fff5d4}.kd-button:disabled{opacity:.48;cursor:default}.kd-button.primary{background:#3B3930;border-color:#3B3930;color:#fff}.kd-button.primary:hover:not(:disabled){background:#514d3e}
+.win-group{display:flex;flex-direction:column;min-width:0;min-height:0;margin:0;padding:7px;border:1px solid #c8c3b8;background:#fff}.win-group legend{padding:0 5px;color:#59564e}.forwarder-panel{flex:1}.panel-layout{display:flex;gap:8px;flex:1;min-height:0}.grid-scroll{flex:1;min-width:0;min-height:0;overflow:auto;border:1px solid #c5c1b9;scrollbar-width:thin;scrollbar-color:#7775 transparent}.kd-grid{width:max-content;min-width:100%;border-collapse:collapse;background:#fff;font-size:12px}.kd-grid th{position:sticky;top:0;z-index:1;background:#EEEAE0;color:#3B3930;text-align:left}.kd-grid td,.kd-grid th{padding:4px 7px;border:1px solid #d4d0c7;white-space:nowrap}.kd-grid td{max-width:320px;overflow:hidden;text-overflow:ellipsis}.kd-grid tbody tr{cursor:pointer}.kd-grid tbody tr:hover{background:#fff8e2}.kd-grid tr.active{background:#ffedb1}.kd-grid tbody tr:focus-visible{outline:2px solid var(--yellow,#E7C600);outline-offset:-2px}.check-cell{width:26px;text-align:center}.kd-grid input[type=checkbox],.issue-filter input{accent-color:var(--yellow,#E7C600)}.vertical-actions{display:flex;flex-direction:column;gap:6px;flex:0 0 88px}.close-button{margin-top:auto}.grid-status{padding:3px 2px 0;color:#777366;font-size:11px}.empty-row{height:44px;text-align:center;color:#777366}
+.message{margin:0;padding:6px 8px;border:1px solid;overflow-wrap:anywhere}.error-message{border-color:#d99b86;background:#fff0e9;color:#873820}.notice-message{border-color:#d8c79a;background:#fff8dc;color:#65541d}
+.dialog-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:14px;background:#17171770}.win-dialog{box-sizing:border-box;display:flex;flex-direction:column;gap:8px;width:min(650px,96vw);max-height:94vh;overflow:auto;padding:12px;border:1px solid #aaa69e;background:#F7F5EE;box-shadow:0 8px 25px #0004}.dialog-title{padding-bottom:7px;border-bottom:1px solid #d4d0c7;font-size:16px;font-weight:600}.dialog-form{display:flex;flex-direction:column;gap:8px}.form-group{margin:0;padding:10px;border:1px solid #c9c4b9}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}.form-grid>label,.audit-row>label{display:flex;flex-direction:column;gap:4px}.wide-label{grid-column:1/-1}.wide-label textarea{height:72px;resize:vertical}.audit-row{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;padding:7px;border:1px solid #d0cabf;background:#f1eee6;color:#777366;font-size:11px}.audit-row .kd-input{font-size:11px}.dialog-actions{display:flex;justify-content:flex-end;gap:7px}
+.lookup-control{display:flex;gap:5px}.lookup-control .kd-input{flex:1;min-width:0}.lookup-button{flex:0 0 34px;padding:3px}.picker-backdrop{z-index:1300}.picker-dialog{width:min(700px,96vw)}.picker-fields{display:flex;flex-direction:column;gap:8px;min-height:0;margin:0;padding:0;border:0}.picker-search{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.picker-search .kd-input{flex:1;min-width:140px}.picker-scroll{overflow:auto;max-height:55vh;border:1px solid #c5c1b9;scrollbar-width:thin;scrollbar-color:#7775 transparent}.pick-button{border:0;background:transparent;padding:3px 1px;color:#3B3930;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.pick-button:focus-visible{outline:2px solid var(--yellow,#E7C600);outline-offset:1px}
+@media(max-width:900px){.query-strip{gap:6px}.query-field{flex-wrap:wrap}.form-grid{grid-template-columns:1fr}.wide-label{grid-column:auto}.vertical-actions{flex-basis:78px}}
+@media(max-width:500px){.issue-filter{gap:7px}.query-input{width:min(180px,55vw)}.audit-row{grid-template-columns:1fr}.win-dialog{padding:9px}.forwarder-page{padding:6px}.vertical-actions{flex-basis:74px}}
 </style>

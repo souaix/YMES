@@ -1,5 +1,19 @@
 # 家裡電腦接手清單
 
+## ET104 A1 正式驗收（2026-11-20；Git分支同步待實際讀回）
+
+本機是 HOME PC：PostgreSQL復刻庫／API／PPK SSH／部署；公司端是原生Oracle唯讀來源／UI。正式 API `6d2501aad008`、Web `56c31765e2af`、0058；路由 `/YMES/` 與 `/YMES/API/` 維持分離。
+
+- [x] 既有Forwarder十五欄／PK1／index1核對後，只補三來源DEFAULT及CRUD。完整備份634316 bytes／1805 restore entries、交易差異白名單與獨立metadata通過，保留0057欄權限及父檔，無重建／回填。
+- [x] API151／Web206固定來源完整建置與正式部署；API單輪八組169HTTP／621斷言，11自有範圍及Holder全0，獨立11項再讀0。
+- [x] 自行按Demo登入正式app-browser，87項（77GUI＋10SQL讀回）通過；90原始events與3項已解harness誤判保留，沒有因此修改產品。12筆Forwarder全由GUI建刪，SQL未新增／刪除Forwarder；最後11scope全0／三個原始資料陣列空，重載錯誤紀錄空。
+- [x] 補齊模組維護、QA、資料庫與部署紀錄；既有兩鍵raw／nullable／signed CAS、Edit0與2真更新、Apply乾淨停用、New才驗Broker2、舊parent缺失／退休、引用guard與workflow界線已記錄。
+- [ ] A1先正常同步 `codex/homepc-et104-20261120` 並核358份來源；actual codeX／statusY與遠端分支讀回後更新，不預告main同步。
+- [ ] GUI完成後fetch已有公司提交 `b3f0f062e22b1df3437868a2c29ec51e80ebbb92`；A1紀錄完成後正常merge，保留公司14個新WIP Vue與App／AreaShow修改，另建Web220／驗正式入口及ET104回歸，再正常同步main。不能拿A1的206份來源／87項證據冒充新版本。
+- [ ] 同步與整合後再fetch檢查下一交接；接續ET105等來源完整項目。完整Job／通知provider及其他WIP流程保持各自待辦。
+
+維護與驗證：[貨運行模組](docs/modules/ENT/貨運行基本資料.md)、[ET104 QA](docs/qa/20261120-et104.md)。下方ET103等為歷史。
+
 ## 最新接手：ET103 報關行已驗收並同步 main 0c65a65（2026-11-20）
 
 本機為 HOME PC，處理 PostgreSQL 復刻庫、API、PPK SSH、部署與驗收；公司端維持原生 Oracle 唯讀來源與 UI。最新 API `12f26b18e94a`／Web `b3949d57fd39`，migration **0057**；下方 ET102 及更早內容保留歷史。
@@ -1365,7 +1379,9 @@ Vue 元件與路由已在公司端完成：web/src/components/AccessoryCategoryM
 5. 新增 `POST /api/ent/broker-basis/{brokerNo}/approve?dataStamp=`，只接受狀態 0，需使用 YMES 現有 Issue/Job 簽核服務及 IssueNo `BROKER BASIS`。沒有 JobMap/Detail 時按舊規則直接轉 2；有 Detail 時建立 Issue Master、狀態轉 1、簽核通過到 2、退回到 0，寄送第一簽核群組通知。主檔狀態、簽核單、稽核與通知需使用既有交易/簽核服務，不可將 DEV 直接核准複製到 Production。
 6. 所有端點檢查登入者 ENT 權限；設定 `ymes_app` 最小 CRUD 權限。更新 migration/API 文件後部署並通知公司端 pull。公司端 Production Vue 不使用假資料。
 
-## ENT ET104 貨運行基本資料（公司端已完成 DEV UI/Oracle DDL，待家用端接手）
+## ENT ET104 貨運行基本資料（家用端A1已實作驗收；以下保留原交接來源）
+
+正式query-key／JSON CAS與已測界線見本檔最上方ET104及[模組維護](docs/modules/ENT/貨運行基本資料.md)；下列path-parameter與完整Job建議屬原交接歷史，不能當成正式端點或已交付Job。
 
 先讀 `docs/modules/ENT/貨運行基本資料.md`、ET103 報關行規格及 `todolist_officepc.md` ET104 進度。公司端已依 WinForms 原始碼完成 `/YMES/Customer/Forwarders` Vue DEV 頁，並以 PowerShell 5.1 + Oracle.ManagedDataAccess 直連取得正式 DDL。ET104 與 ET101/102/106/103 共用 ENT API、schema/migration；不要另建重複 Controller。
 

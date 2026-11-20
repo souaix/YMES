@@ -1,5 +1,15 @@
 # 部署設定檔
 
+## ET104 A1 正式驗收版本（2026-11-20；分支同步後續記錄）
+
+API `6d2501aad008b6b5ca0c11abae0700d1f7a00b74933645c83d3a4c183dd0c171`；Web `56c31765e2af045df561c288feee07d3258501f815577fcabdf188017ff052fa`；migration0058。Web `/YMES/`、API `/YMES/API/`同server分開容器，只更新YMES自己的API／Web，保留其他專案及ymes-master-web。
+
+固定API來源 `/opt/ymes/releases/et104-api-20261120-a1/main`151檔、canonical `434bd27f24545e452768022505cf92d21bbc7eab237bfab6816009a08fee1486`；Web私有來源 `/opt/ymes/checkpoints/web-et104-20261120-a1`206檔、canonical `aacf93de45c49d6d85b531f680bf578c9a54ecfa90c8436eee88383489df3311`。私有700／600、公開755／644，實際nonroot讀取通過；共用 `/opt/ymes/source`不作重建基底。
+
+完整.NET9 Release及Vue型別／Vite建置通過。公開 `index-CpGBiYYp.js`3734245 bytes／`index-DUdqkPfB.css`965419 bytes，正常TLS／MIME／bytes／SHA及七項HTTP檢查通過，小寫兩路徑404。API八組169／621；GUI87項＝77GUI＋10SQL、90events及3個已解harness觀察，12筆GUI建刪、11自有scope全零；fresh reload logs空，完整範圍見[QA](docs/qa/20261120-et104.md)。
+
+API-only回復保留已驗ET103 `12f26b18e94a85e16b4192d815f07ea2698b3ec5ddbfc21c8e589fc98a413d10`及148份原來源／archive e341220d…，保留0058及業務資料；前Web b3949d57…亦保留。A1先正常同步featurebranch `codex/homepc-et104-20261120`，actual X／Y與358 binding後補，mainSyncPending=true。已fetch公司b3f0f06新WIP碼；接續正常merge／新Web220建置與入口驗證後才同步main，不重寫A1封存來源或測試結果。
+
 ## 目前正式版本：ET103（2026-11-20，已驗收並同步 main 0c65a65）
 
 API `12f26b18e94a85e16b4192d815f07ea2698b3ec5ddbfc21c8e589fc98a413d10`；Web `b3949d57fd39db048cfebe566287d4bbc11d47c4c3007e079960893f728ec871`；migration **0057**。Web `/YMES/`、API `/YMES/API/` 分開運行，只切換 YMES 自己的容器。下方 ET102 與更早資訊保留歷史。

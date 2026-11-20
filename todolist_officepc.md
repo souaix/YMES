@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## ET104 A1 正式驗收回饋（2026-11-20；main整合另記）
+
+HOME PC已完成0058、正式API `6d2501aad008`／Web `56c31765e2af`；API169HTTP／621斷言與app-browser87項（77GUI＋10SQL讀回）通過，12筆Forwarder由GUI建刪，11項資料範圍獨立全零。三個harness誤判原始紀錄與復驗保留；見[模組](docs/modules/ENT/貨運行基本資料.md)及[QA](docs/qa/20261120-et104.md)。
+
+公司端請對齊：列表 `{items}`、query-key item／approve、完整nullable十五欄，原ForwarderNo／BrokerNo在Edit均唯讀且不得trim／轉大寫。必帶nullable dataStamp，Delete204為硬刪、200為停用savedDTO；Apply先採新DTO/token轉Edit，乾淨停用。New才查真Broker2；既有0／2聯絡維護不重驗舊parent資格。未來Customer指定Forwarder時，家用API writer應合作Forwarder namespace／SHARE；不派公司端連PG或SSH。
+
+A1的151 API／206 Web來源先在 `codex/homepc-et104-20261120` 正常同步；實際X/Y及遠端讀回待記，尚不能稱main已整合。已取得公司新提交 `b3f0f062e22b1df3437868a2c29ec51e80ebbb92`；接著在同branch正常合併、以新Web220及新增WIP正式入口／ET104回歸另驗，再同步main。保留全部公司來源，不force push。原生來源查證待辦繼續保留，不新增公司端資料庫／部署工作。
+
 ## 家用端最新回饋：ET103 已驗收並同步 main 0c65a65（2026-11-20）
 
 HOME PC 已完成0057、API `12f26b18e94a`／Web `b3949d57fd39` 的報關行功能。API單輪八組126HTTP／464斷言、正式 app-browser59項（56GUI＋3SQL）通過；十筆Broker均由GUI建立／刪除，兩筆SQL引用fixture已精準清理，十一項資料範圍獨立讀回全零。最新來源與限制見 [ET103模組](docs/modules/ENT/報關行基本資料.md)及 [QA](docs/qa/20261120-et103.md)。355份來源綁定通過後，release code `0c65a655fae538280244289e281733f612a0eb4f` 已從012f257正常推至main，再fetch確認相同，沒有force push或公司新提交；後續純文件狀態提交不取代本release code。

@@ -1,5 +1,15 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## ET104 A1 正式驗收：0058既有貨運行預設值與權限（2026-11-20）
+
+HOME PC以PPK SSH核對資料庫 `ymes`／`"YMES".tblentforwarderbasis`，既有15欄、PK1／index1及NULL型別皆符合來源。只有IssueState DEFAULT0／CreateDate DEFAULT LOCALTIMESTAMP／DataStamp DEFAULT0及本表CRUD缺少，依[0058](../database/migrations/0058_et104_forwarder_defaults_permissions.sql)補齊；原SQL SHA256 `6ac46dfb0c09241c606665556de01a25e12349fd574993487b2ee900e28d38cb`不改。無CREATE／業務回填／FK／額外index／新簽核表。
+
+完整custom備份 `/opt/ymes/backups/ymes_before_0058_et104_20261120T003221Z_TNcGiFLs.dump` 634316 bytes、restore-list1805 entries，root目錄700／檔600。交易內差異只允三DEFAULT與Forwarder CRUD；0057既有brokerno column SELECT、Broker／Customer完整metadata與ACL、schema／defaultACL／roles／membership／原索引約束保持。提交後獨立讀回及零列app probe通過；證據 `/opt/ymes/backups/et104_0058_reviewed_VbtntSyG`，本輪單次成功，不重跑0058。
+
+API151／Web206已正式部署，API169／621通過，11自有scope＋Holder全0。正式app-browser87項＝77GUI＋10SQL，12Forwarder均GUI建刪；9筆Broker查找與一筆Customer引用只作自有SQLfixture，最後11scope獨立全0、三陣列[]，來源15欄／DEFAULT／原欄ACL再次讀回相符。原NULL／raw／signed版本保存及New-parent／既有parent邊界見[模組](modules/ENT/貨運行基本資料.md)與[QA](qa/20261120-et104.md)。
+
+A1來源358份的Git分支同步待actual X/Y讀回；公司新WIP提交另正常整合並驗新Web版本，不能將本節206份證據套到220份來源。
+
 ## ENT ET103 既有報關行default與最小權限：0057（2026-11-20）
 
 - Root以PPK READ ONLY核對三schema及全本地catalog，`"YMES".tblentbrokerbasis` 已有原生十三欄、單欄PK及唯一PK index，無user trigger／RLS，僅三來源default與Broker CRUD缺少；不是缺表，不CREATE／重建。真reference為Customer.brokerassigned與Forwarder.brokerno，前者已有SELECT、後者缺column SELECT。
