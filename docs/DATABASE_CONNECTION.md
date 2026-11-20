@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 本輪九個 WIP 入口整合中（2026-11-20；尚未建置／部署／驗收）
+
+本節是這次文件合併時的最新狀態：家用基底為已正常同步 feature 的 ET105 code `ab0f8269e9778d88811947512e6753e51437703d`／status `a921b44e9b46aba20f6a8f66f4bd8944d79a18fb`；API `8db4b840…`、Web `0c2852e1…`、DB `0059` 已有前述實證，ET105 完整 checkpoint metadata 的最後套用仍待 Root 親自執行與讀回，不能從本次文件解衝突推斷已完成。
+
+公司端 `095b3d267bc102687c32b25c9a3f593cf1ebfda9` 的九個新 UI、模組規格、來源 DDL／CREATE-only 與家用 handoff 在本工作區整合中；尚未完成這九頁的家用建置、正式部署與 app-browser 驗收，也未因本輪合併套用任何九頁 CREATE／migration 或完成 WIP 交易 provider。既有 reference 不代表 PostgreSQL live 表已建，家用端須先核實 live schema／history 再決定必要差異。
+
+本機維持 HOME PC：PostgreSQL 復刻庫、PPK／SSH、API／資料庫與發行由家用端負責。公司端只讀原生 MES Oracle 來源並復刻 UI；以下公司 handoff 內的「本機」Oracle profile 指公司電腦，不是家用 PostgreSQL。兩側原有內容與歷史均保留，後續狀態以實際 Root 收據為準。
+
 ## ET105取貨公司：0059已套用，API與正式頁面已驗（2026-11-20）
 
 本機是HOME PC，維護資料庫`ymes`、schema `"YMES"`的PostgreSQL復刻庫。Root以既有PPK SSH核對原生13欄表已存在，完成備份後，0059只補三個default與ymes_app本表CRUD；沒有重建表、回填舊資料或新增ET106表。custom備份634856 bytes／restore-list1806，SHA`c3200aaf96648827d980f6725ba9a11152d39a649d924754a268a876505af51d`；原子allowlist與額外獨立讀回通過，完整證據見[ET105 QA](qa/20261120-et105.md)。
@@ -1028,3 +1036,50 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 code `ab0f8269e9778d88811947512e6753e51437703d`已正常推送`refs/heads/codex/homepc-et105-20261120`並直接讀回相同；SQL1／API154／Web224共379份來源綁定通過，receipt SHA `2ac94056c8c82c76eedf698e64fcaa242f388a66f74a0777db1522c9c3690bae`，未允許差異0。後續純文件狀態提交不改本release code或重建產物。
 
 QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個新WIP頁及CREATE交接另行整合／建置／驗收。本次224來源保持，mainSyncPending=true；公司端與家用端歷史均保留，沒有force push。完整checkpoint以Root後續實際套用收據為準。
+
+### 更新 2026-11-20：WIP WP212 併批處理_元件
+
+- 對照 `frmBR_LC_Merge_GEN`、Service `Exe_Manual_LotMerge_Component`、Core `BR_Manual_LotMerge_Component`。Core 直接引用十張表：`TBLEMSDISPATCHSTATE`、`TBLINVWIPINVENTORY_COMPONENT`、`TBLINVWIPINVENTORY_SEMI`、`TBLWIPAUTOMERGE`、`TBLWIPCARRIERSTATE`、`TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCOMPONENTSTATE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`。逐名核對 `database/reference/`，每張已有 Oracle source DDL 和 PostgreSQL CREATE-only；不重複取 DDL 或產生 CREATE SQL。完整來源與載具檢查缺陷見 `docs/modules/WIP/併批處理_元件.md`。
+- 公司端未查 Oracle 業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL。家用端須核 live schema/migration history，追 helper/User Define hook 間接表，並將所有來源 Lot／元件／載具／Inventory 放在同一交易守門；reference 不能當成已建表證據。
+
+### 更新 2026-11-20：WIP WP213 併批處理_等級
+
+- 對照 `frmBR_LB_Merge_FT`、Service `Exe_Manual_LotMerge_Bin`、Core `BR_Manual_LotMerge_Bin`。Core 字面直接引用八表：`TBLEMSDISPATCHSTATE`、`TBLINVWIPINVENTORY_SEMI`、`TBLSYSBIN`、`TBLWIPAUTOMERGE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`、`TBLWIPMERGECONTENT_BIN`。前七張沿用 WP101／WP201／WP207／PRD Bin refs；最後一張原缺 SQL reference。
+- 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 MESTEST profile 唯讀 `DBMS_METADATA.GET_DDL` 及 `ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。`TBLWIPMERGECONTENT_BIN` 有 22 欄、單欄 PK `FROMLOTSERIAL`，無 FK／trigger／其他 index。Oracle source/index DDL、metadata、PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp213_*`；CREATE 欄位與 Oracle metadata 已核 22/22。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL或輸出憑證。家用端先核 live schema/history 再決定 forward migration，不直接重播 CREATE-only。
+
+### 更新 2026-11-20：WIP WP214 併批處理_載具
+
+- 對照 WinForms `frmBR_CL_Merge_GEN`／`frmCarrierMerge_Comp`、Service `Exe_Manual_LotMerge_Carrier`、Core `BR_Manual_LotMerge_Carrier`。Core 字面直接引用 11 張表：`TBLEMSDISPATCHSTATE`、`TBLWIPAUTOMERGE`、`TBLWIPCARRIERSTATE`、`TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCARRIERSTATEDETAILLOG`、`TBLWIPCOMPONENTSTATE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`、`TBLWIPOSBASIS`、`TBLWIPOSDETAIL`；逐名核對 `database/reference/` 均有 Oracle source DDL 及 PostgreSQL CREATE-only，分別沿用 WP101、WP302、WP207 與 Carrier Basis refs。`tblCarrierDetailComp` 是記憶體 DataTable，不是資料庫表。本功能沒有新缺失的直接表，故不重複取得 Oracle DDL 或建立 CREATE SQL。
+- 公司端只讀原碼及現有來源 SQL，未讀 Oracle 業務資料列、未執行 DDL/DML、未連 YMES PostgreSQL、未輸出憑證。家用端仍須核 PostgreSQL live schema/history，追 Core helper 間接表，再依實際缺口建立 forward migration；既有 CREATE-only 不代表 live 表已建立。詳 `docs/modules/WIP/併批處理_載具.md`。
+
+### 更新 2026-11-20：WIP WP215 元件分片處理
+
+- 對照 `frmSplitComponent`、`wsWIP.InitRunSplitComponentNo`／`EXE_SplitComponent`、`clsWIP.InitRunSplitComponentNo`／`EXE_SplitComponent`。兩個 Core 方法字面直接引用 14 張實體表；12 張已有 Oracle source DDL／PostgreSQL CREATE-only，缺 `TBLWIPCOMPONENTBASIS` 與 `TBLWIPREVERSEHISTORY` reference。
+- 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 MESTEST profile，唯讀查 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。兩表均位於 MESTEST：ComponentBasis 32 欄、PK `COMPONENTNO`；ReverseHistory 11 欄、PK `(LOTNO,REVERSEID)`，另有非唯一 `LOTSERIAL` index；兩表無 FK／trigger。source DDL、index DDL、metadata、PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp215_*`。ComponentBasis 在 Core 是表存在才繼承的可選分支，家用端先核 live PG schema/history 再決定 forward migration；不要直接重播 CREATE-only。
+- 未讀 Oracle 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。完整來源與 API 守門見 `docs/modules/WIP/元件分片處理.md`。
+
+### 更新 2026-11-20：WIP WP914 生產批緊急狀態／優先權調整
+
+- 原生 `frmWIPLot_HotLotAndPriorityChange` 的 Set 呼叫 `wsWIP.EditLotBasis_Confirm`，Core `clsLot.EditLotBasis` 只直接 UPDATE `TBLWIPLOTBASIS.HotLot/Priority`，以 `BaseLotNo` 定位。表的 Oracle source DDL 和 PostgreSQL CREATE-only 已在 `database/reference/mestest_wip_wp101_*`。查詢／lookup 所需 LotState、`TBLOEROBASIS`、`TBLSMDAREABASIS`、`TBLOPBASIS`、`TBLPRDPRODUCTBASIS` 也已有 source／CREATE 參考。本功能沒有新直接表、無新 CREATE SQL；家用端先核 live PG schema/history，追 helper 間接表與權限／版本再做正式 API。
+- 公司端只讀 WinForms／Service／Core 與已交付 SQL reference，未連 Oracle 查業務資料、未執行 Oracle DDL/DML、未連 YMES PostgreSQL。原生逐列更新可能部分成功，正式整批交易／回應見 `docs/modules/WIP/生產批緊急狀態與優先權調整.md`。
+
+### 更新 2026-11-20：WIP WP501 立即異常設定
+
+- 公司端以 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 和受保護 MESTEST profile，唯讀 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。新增查證 `TBLWIPERFCREATEDATA`（15 欄、PK RepairNo）、`TBLWIPERFHOLDREASON`（9 欄、複合 PK ERFNo+ComponentNo+HoldItemNo+AreaNo、LotSerial 非唯一 index）、`BKTBLWIPERFCREATEDATA`（15 欄、無 PK、LotNo 非唯一 index）。三表均無 trigger；Backup.HoldUser 長 50，原表長 10。Oracle source DDL／index DDL／metadata 在 `database/reference/mestest_wip_wp501_*`。
+- `TBLWIPERFBASIS`、`TBLWIPERFHOLDREASONDISP`、`TBLWIPERF_ATTACHFILE` 的 Oracle source DDL 已在 `database/reference/mestest_qc409_wip_disposition_dependencies_source_ddl.sql`，本次補六表的 PostgreSQL CREATE-only 參考 `database/reference/mestest_wip_wp501_create.sql`。其他 Lot／QC／OCAP 共用表沿用既存 refs；正式 API 仍須追 Reverse/ReleaseLog/User Define hook 間接表。
+- CREATE-only 僅供家用端比對 YMES PostgreSQL live schema/history；若已存在不得重建或覆蓋資料，缺項才做 forward migration。公司端未查 Oracle 業務列、未執行 DDL/DML、未連 PostgreSQL，連線秘密未寫入 repo。來源與交易細節見 `docs/modules/WIP/立即異常設定.md`。
+
+### 更新 2026-11-20：WIP WP502 立即等待設定
+
+- `frmImmediateWaitSet`／`wsWIP.Exe_Wait_Set`／`clsLot.SetLotStateToWait` 直接使用 LotBasis、LotState、LotLog、Temp_LotState、WaitBasis、USRUserBasis、ComponentState。WaitBasis Oracle source DDL 已在 `database/reference/mestest_wip_wp201_additional_source_ddl.sql`，PG CREATE-only 已在 `mestest_wip_wp201_create.sql`；其餘直接表由 WP101、WP201、QC409/首批 refs 涵蓋。沒有新直接表需 Oracle DDL 或 CREATE SQL。家用端仍先核 YMES live schema/history、資料及 helper/adapter 間接表，再做 API/必要 forward migration。
+- 公司端只讀 WinForms/Service/Core 與既有 DDL，未查 Oracle 業務列、未寫 Oracle、未連 YMES PostgreSQL。原 Form 的批次包裝預檢以逗號串 LotNo，但 `CheckLotPackage` 將它當單一值；正式端要逐筆重查。完整規格見 `docs/modules/WIP/立即等待設定.md`。
+
+### 更新 2026-11-20：WIP WP503 批次立即異常設定
+
+- `frmImmediateHoldSet_Batch`／`frmBRERFCreate_Batch`／`wsWIP.Exe_ERF_Create_Batch`／`clsLot.UpdERF_Create_Batch` 的 `ERFBatchHoldGenType=0` 寫 `TBLWIPERFBATCHLOT`，`1` 改 `ERFType=2` 且不寫此表。BatchLot 的六欄 Oracle source DDL 已在 `database/reference/mestest_qc409_wip_disposition_dependencies_source_ddl.sql`；本批 `database/reference/mestest_wip_wp503_create.sql` 提供 PostgreSQL CREATE-only。其他 Lot/ERF/QC/設備查詢直接表沿用 WP101/WP201/WP305/WP501/QC refs，家用端須先核 live schema/history。
+- 同一 Core 的 `ERFType=3` Future Hold 分支使用 `TBLWIPFUTUREHOLDLOG`／`TBLWIPFUTUREHOLDREASON`。公司端以既有受保護 Oracle profile、PowerShell 5.1/ODP.NET **唯讀**取得這兩表的 DDL、欄位及索引供後續 Future Hold 規格；WP503 傳入 `6` 或轉 `2`，不執行該分支，兩表不可錯列為 WP503 migration。未查業務列、未寫 Oracle、未連 YMES PostgreSQL，也未保存連線字串或密碼。完整規格見 `docs/modules/WIP/批次立即異常設定.md`。
+
+### 更新 2026-11-20：WIP WP504 預先異常設定
+
+- `frmFutureHoldSet`／`wsWIP.Exe_FutureHold_Set`／`clsLot.UpdFutureHold_Set` 的 Set 直接替換 `TBLWIPFUTUREHOLD`、`TBLWIPFUTUREHOLDREASON`；後續 `ERFType=3` 生效才使用 `TBLWIPFUTUREHOLDLOG`。主表 source/CREATE 已在 WP201；Reason/Log 由受保護 MESTEST 唯讀 `DBMS_METADATA`、ALL_TAB_COLUMNS/CONSTRAINTS/INDEXES/TRIGGERS 取得，原始檔 `database/reference/mestest_wip_wp504_source_ddl.sql`、`mestest_wip_wp504_source_indexes.sql`、`mestest_wip_wp504_metadata.txt`。PostgreSQL **CREATE-only** 在 `mestest_wip_wp504_create.sql`：Reason 八欄七鍵 PK；Log 十欄、無 PK、LotNo 非唯一 index。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL；憑證仍只在受保護本機設定，不提交。家用端先核 live schema/history，缺項才 forward migration。
+- 原 Form 多批包裝預檢傳逗號字串而 Service 當一個 LotNo，正式端須逐批重查。`UpdFutureHold_Set` 刪除鍵未含 FutureHoldSerial，會覆蓋同鍵其他 Serial；此語義與後續 ERFType3 Log 的 NOT NULL 欄位需在正式 API 交易設計確認。詳見 `docs/modules/WIP/預先異常設定.md`。

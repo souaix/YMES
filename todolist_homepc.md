@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 本輪九個 WIP 入口整合中（2026-11-20；尚未建置／部署／驗收）
+
+本節是這次文件合併時的最新狀態：家用基底為已正常同步 feature 的 ET105 code `ab0f8269e9778d88811947512e6753e51437703d`／status `a921b44e9b46aba20f6a8f66f4bd8944d79a18fb`；API `8db4b840…`、Web `0c2852e1…`、DB `0059` 已有前述實證，ET105 完整 checkpoint metadata 的最後套用仍待 Root 親自執行與讀回，不能從本次文件解衝突推斷已完成。
+
+公司端 `095b3d267bc102687c32b25c9a3f593cf1ebfda9` 的九個新 UI、模組規格、來源 DDL／CREATE-only 與家用 handoff 在本工作區整合中；尚未完成這九頁的家用建置、正式部署與 app-browser 驗收，也未因本輪合併套用任何九頁 CREATE／migration 或完成 WIP 交易 provider。既有 reference 不代表 PostgreSQL live 表已建，家用端須先核實 live schema／history 再決定必要差異。
+
+本機維持 HOME PC：PostgreSQL 復刻庫、PPK／SSH、API／資料庫與發行由家用端負責。公司端只讀原生 MES Oracle 來源並復刻 UI；以下公司 handoff 內的「本機」Oracle profile 指公司電腦，不是家用 PostgreSQL。兩側原有內容與歷史均保留，後續狀態以實際 Root 收據為準。
+
 ## 最新接手：ET105取貨公司基本資料（DB/API/本次A2GUI已驗並同步feature，main待整合）
 
 本機為HOME PC（PostgreSQL復刻／API／PPK SSH／發行）；公司端維持Oracle唯讀來源與UI。以下待辦只列家用工作，不轉派公司端PG／SSH／部署，也不覆寫任何既有歷史heading。
@@ -2352,3 +2360,73 @@ API 工作：
 code `ab0f8269e9778d88811947512e6753e51437703d`已正常推送`refs/heads/codex/homepc-et105-20261120`並直接讀回相同；SQL1／API154／Web224共379份來源綁定通過，receipt SHA `2ac94056c8c82c76eedf698e64fcaa242f388a66f74a0777db1522c9c3690bae`，未允許差異0。後續純文件狀態提交不改本release code或重建產物。
 
 QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個新WIP頁及CREATE交接另行整合／建置／驗收。本次224來源保持，mainSyncPending=true；公司端與家用端歷史均保留，沒有force push。完整checkpoint以Root後續實際套用收據為準。
+
+## WIP WP212 併批處理_元件家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP212 規格](docs/modules/WIP/併批處理_元件.md) 與 `docs/DATABASE_CONNECTION.md` WP212 段落。Vue `web/src/components/WipLotMergeComponent.vue` 只供 DEV 假資料；正式環境禁用 `ymes-dev-mock:wip-lot-merge-component:records:v1` 與本機模擬確認。
+- [ ] 核對 YMES PostgreSQL live schema／migration history。Core 直接引用十張表已在 `database/reference/` 有 Oracle source DDL 和 PostgreSQL CREATE-only，不重建既有表；追 `SHR_Merge_Inherit`、Reverse、LotLog、`udWIP.clsWIP.BR_Manual_LotMerge_Component` 等 helper/hook 間接表及部署差異，再決定 forward migration。
+- [ ] 提供有權限的 Reference Lot／候選／MO／元件明細／Routing 查詢。一般模式參考 `Status=0|1|4`、`HaveComponent=1`、`LotState=1`、非 Partial／Stocker；候選同 OP／Product／BR／Status／CurUnit，`HaveLevel=0`，且 `AllowDiffMOMerge=0` 才限同工單。參考批的 HaveLevel 條件已註解，候選仍要求 0，須清楚處理兩者不一致；WIP Inventory 模式另限同 InventoryNo、BookingFlag=0 並核跨庫房元件。
+- [ ] 原 Form 每筆來源的載具檢查迴圈**誤用輸出 `txtLotNo`**。正式 POST 必須對每個選取來源 Lot 分別重查 CarrierState／CarrierStateDetail，任何已在載具的批次都拒絕並引導至 WP214，不能沿用原 bug。至少選兩批且保留參考批；server 鎖並重查 LotStamp、CurQty、ComponentState 全體元件、元件歸屬／數量／唯一性、輸出批號、Action／Assign NodeID、User／Shift／模式與系統參數。
+- [ ] 在同一交易完成來源 Lot 關閉、合併 Lot 建立、Reverse／LotLog、ComponentState、派工／AutoMerge／Cont Employee、WIP Inventory Semi／Component 與跨庫房回補；失敗回滾且防重。BR 宿主 Go 的 Form 另呼叫 TransferLot，Core 註解又寫一律手動 Transfer，需按實際宿主模式提供可查、可冪等重試的部分完成結果，避免重按 Confirm。Production API／PostgreSQL／部署驗收由家用端負責；公司端未連 PostgreSQL、未建正式 API/migration、未執行 build/test/browser。
+
+## WIP WP213 併批處理_等級家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP213 規格](docs/modules/WIP/併批處理_等級.md) 和 `docs/DATABASE_CONNECTION.md` WP213 段落。Vue `web/src/components/WipLotMergeBin.vue` 僅是 DEV 假資料；正式環境不得讀 `ymes-dev-mock:wip-lot-merge-bin:records:v1` 或使用固定三 Bin fixture。
+- [ ] `TBLWIPMERGECONTENT_BIN` 已由公司端 Oracle MESTEST 唯讀取得 source DDL、index DDL、metadata：`database/reference/mestest_wip_wp213_source_ddl.sql`、`mestest_wip_wp213_source_indexes.sql`、`mestest_wip_wp213_metadata.txt`；PG CREATE-only 為 `mestest_wip_wp213_create.sql`。22 欄、PK `FROMLOTSERIAL`、無 FK／trigger／額外 index。先核對 YMES PostgreSQL live schema/migration history，確實缺表才建 forward migration；其餘七張直接表沿既有 refs，helper 間接表另查。
+- [ ] 提供有權限的 Reference Lot／候選、SysBin 動態目錄、GoodBinState、Routing、`IC_FT_PKG` 查詢。參考批 `Status=0|1|4`、`HaveComponent=0`、`HaveContainGoobinState=True`、`LotState=1`、非 Partial／Stocker；候選同 OP／Product／BR／Status／CurUnit、`HaveLevel=1`，`AllowDiffMOMerge=0` 才限同工單。WIP Inventory 宿主另有 `_INV` 查詢與隱藏 Go／Assign，正式規則需依 source/部署核對。
+- [ ] 併批 POST 在同一交易鎖定來源 Lot、LotStamp、GoodBinState、SysBin／Bin 餘量、輸出批號、庫房半成品與派工狀態；至少兩批含參考批、CurQty 非零、Action/Assign NodeID 合法。同 OP 不同 NodeID 要明確確認。對每個動態 Bin 的數量、精度與歸屬做 server 重查，合併後 Bin／Pass／Fail 快照寫入 MergeContent；不信任瀏覽器傳來的 Bin、LotSerial、actor、模式或 `AllowDiffMOMerge`。原 Form 未明定每筆 Bin 總量必等 CurQty，應先追 Core helper/真資料再訂正式硬規則。
+- [ ] 把 LotBasis／State、Reverse／LotLog、GoodBin、`TBLWIPMERGECONTENT_BIN`、Dispatch／AutoMerge／Cont Employee 與 Inventory 副作用放在一致交易；失敗回滾且防重。BR 宿主 Go 之後另做 TransferLot，若不能同交易，須可查、可重試、冪等；Eletricbox 入口須串真服務及權限。Production API／PostgreSQL／部署驗收由家用端負責；公司端未連 PG、未建正式 API/migration、未執行 build/test/browser。
+
+## WIP WP214 併批處理_載具家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP214 規格](docs/modules/WIP/併批處理_載具.md) 與 `docs/DATABASE_CONNECTION.md` WP214 段落。Vue `web/src/components/WipLotMergeCarrier.vue` 只供 DEV 假資料；正式環境禁用 `ymes-dev-mock:wip-lot-merge-carrier:records:v1`、固定載具／元件 fixture 與本機模擬確認。
+- [ ] 核對 YMES PostgreSQL live schema／migration history。Core 直接引用的 11 表均已有 `database/reference/` Oracle source DDL／PostgreSQL CREATE-only；不要重建已存在的表。追 `NewLot_Merge`、`SHR_Merge_Inherit`、Reverse／LotLog／User Define hooks 的間接表與載具類別查找，缺口再做 forward migration。
+- [ ] 實作有權限的 Carrier→Lot／Detail／CarrierType 容量、可用空 Carrier、候選 Lot、MO 多選、路由、同 OS 未回貨及 `AllowDiffMOMerge` 讀取。參考 Carrier 有多筆 Lot 且有元件時拒絕；候選同 OP／Product／BR／Status／CurUnit、同 HaveComponent、HaveLevel=0、非 Stocker；`AllowDiffMOMerge=0` 才限同 MONo。Status=5 應按參考 **LotNo** 判定未回貨 OS 且強制 Go。原 Form 的 `funChkBeforeConfirm` 把 `txtRefCarrierNo` 誤傳給 LotNo helper，不能沿用。
+- [ ] 交易式 POST 重讀並鎖所有來源 LotStamp／CurQty／CarrierState／CarrierStateDetail／ComponentState、目標 CarrierState／CarrierType、OS／Route／部署參數；確認至少兩批、參考批固定、來源 CarrierNo 真歸屬、目標空載具可用、各 Slot 在容量內且唯一、每顆元件完整且唯一、每批元件數與 CurQty 一致。原 Core 同 OS 守門使用 `!beSameOSNo && outsorucingLotCount != mergeLotCount`，只有同時成立才拒絕；正式 API 要分別拒絕不同 OS 和未全部屬於同一有效 OS。拒絕瀏覽器自報的 HaveComponent、原 Slot、MergeType、UserNo、ShiftNo、時間與總量。
+- [ ] 同交易維護 Lot／Reverse／MergeContent／CarrierState／CarrierStateDetail／DetailLog／ComponentState.SlotNo／OSDetail／Dispatch／AutoMerge／Cont Employee／History 等，失敗回滾並防重。BR 宿主 Go 後另做 TransferLot，須回可查、可冪等重試的部分完成結果；Core 結尾另有手動 Transfer 註解，實際宿主分支請核對。正式 API、PostgreSQL migration、部署與驗收由家用端負責；公司端未連 PG、未建正式 API/migration、未執行 build/test/browser。
+
+## WIP WP215 元件分片處理家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP215 規格](docs/modules/WIP/元件分片處理.md) 與 `docs/DATABASE_CONNECTION.md` WP215 段落。Vue `web/src/components/WipComponentSplit.vue` 僅供 DEV 假資料；正式環境不得讀 `ymes-dev-mock:wip-component-split:state:v1` 或以 A–Z fixture 編號正式過帳。
+- [ ] 核 YMES PostgreSQL live schema／migration history。公司端 Oracle MESTEST 唯讀取得 `TBLWIPCOMPONENTBASIS` 32 欄、PK ComponentNo 與 `TBLWIPREVERSEHISTORY` 11 欄、PK LotNo+ReverseId 及 LotSerial 非唯一 index；source DDL、index DDL、metadata、PG CREATE-only 在 `database/reference/mestest_wip_wp215_*`。若 live 表不存在才建 forward migration；ComponentBasis 在 Core 為存在才繼承的選用分支。另 12 張直接表已有 refs，helper 的間接表與客製欄位另查。
+- [ ] 提供登入保護的可執行 Lot／ComponentState、GoodQty／ScrapQty、LotStamp、CarrierState／Detail 與編號預覽查詢。原 Form Lot 候選 Status=0/1/4/5、HaveComponent=1、LotState=1；有載具拒絕。`CarrierNo` 雖在 Form DataTable/Service，Grid 隱藏且 Core 新元件上載具 SQL 已註解，正式先維持無載具分片。
+- [ ] 交易式 POST 鎖定 Lot／來源元件／編號命名空間，重讀 LotStamp、元件歸屬、GoodQty／ScrapQty、載具現況；server 產生或原子保留 2–26 個唯一新元件號，逐列驗證非負／非全零、精度／長度，兩種數量合計各自完全等於來源。原 `EXE_SplitComponent` Core 沒有重新算數量守恆，Service 也只有三個欄位同時缺時才報缺欄；不可只靠 Form。分片成功後來源消失，新元件及 Lot CurQty／LotStamp 更新，重試須冪等。
+- [ ] 同交易繼承 ComponentState／Property／選用 Basis、站中 Temp/Cont ComponentAttrib 與 Cont Component、SEMI_WAFER／LED_PKG TestSummary、LotState／Temp_LotState、Carrier DetailLog（若部署允許）及 ReverseHistory CommitState；失敗整體回滾。正式 API、PostgreSQL migration、部署及驗收由家用端執行；公司端未連 PG、未建正式 API/migration、未執行 build/test/browser。
+
+## WIP WP914 生產批緊急狀態／優先權調整家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP914 規格](docs/modules/WIP/生產批緊急狀態與優先權調整.md)。公司頁 `web/src/components/WipHotLotPriority.vue` 只有 DEV 假資料，正式 API 不得讀 `ymes-dev-mock:wip-hotlot-priority:state:v1`。原 FunctionNo 的 `PRIPORITY` 拼字保留用於 menu mapping。
+- [ ] 核 YMES PostgreSQL live schema／migration history。Core 直接更新 `TBLWIPLOTBASIS`，WP101 已有 Oracle source DDL／PostgreSQL CREATE-only；查詢 LotState 和 RO／Area／OP／Product lookup 表也有既有 source refs。沒有本功能新表，不重建現存表；若 helper 另有間接表再核對。
+- [ ] 做登入授權的六欄候選 Lot 查詢與四類 lookup。固定 Status=0–5、LotState=1，至少一篩選條件；回傳 BaseLotNo、HotLot、Priority、LotNo、Status、18 欄顯示資料及可供衝突檢查的版本。排序 HotLot 降、Priority 升、LotNo 升；限制查詢量／分頁。掃描選取只對目前可見結果生效。
+- [ ] 做原子批次 Set API：必須至少一個有效選取、HotLot 0／1、Priority 整數 0–99；server 重讀／鎖定每個 BaseLotNo 及對應 Lot 歸屬、狀態、版本／權限，對同一 BaseLotNo 去重，參數化更新 `TBLWIPLOTBASIS.HotLot/Priority`，明確回報每個基礎批及影響 Lot、審計／衝突／重試結果。原 Form 逐列呼叫 `EditLotBasis_Confirm`，中途失敗可能部分完成；不要讓 browser 或 localStorage 決定已過帳狀態。正式部署與驗收由家用端負責。
+
+## WIP WP501 立即異常設定家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP501 規格](docs/modules/WIP/立即異常設定.md) 與 `docs/DATABASE_CONNECTION.md` WP501 段。公司端 `/YMES/WIP/ImmediateHoldSet` 是 DEV 假交易，正式環境不可讀 `ymes-dev-mock:wip-immediate-hold:state:v1`、使用本機 ERFNo 或把附件檔名當上傳成功。
+- [ ] 核 YMES PostgreSQL live schema、migration history、資料與權限。新增 Oracle source DDL/metadata 的 `TBLWIPERFCREATEDATA`、`TBLWIPERFHOLDREASON`、`BKTBLWIPERFCREATEDATA`，另三張 `TBLWIPERFBASIS`、`TBLWIPERFHOLDREASONDISP`、`TBLWIPERF_ATTACHFILE` 的 source DDL 已在 QC409 reference；六表 CREATE-only 是 `database/reference/mestest_wip_wp501_create.sql`。只對 live 確認缺少的結構做 forward migration，不直接執行整份 CREATE-only；Backup 表無 PK，不要自行補。Lot、QC、OCAP 及 System 既有表先重用，追 Reverse/ReleaseLog/User Define hook 間接依賴。
+- [ ] 提供有登入/功能權限的六欄 Lot 候選查詢、前五類 lookup、ERF 主次分類/HoldItem/元件/Area/OCAP/EquipmentState 查詢，限制查詢量或分頁。至少一個 filter；按 `ERFMultipleHold` 選 Status 0/1/4 或 0/1/3/4，固定 CurQty>0、LotState<>0；Partial 非 Queue 排除。Set 前與 POST 時重查包裝、批與 OP/Status/LotStamp，拒絕已 Final 處置及未處理 Dummy 衝突。
+- [ ] 做單一原子 Immediate Hold POST：server 保留 ERFNo、取登入使用者，驗證 MClass、HoldDescription、原因非空、Qty 四位精度、原因複合鍵唯一、OCAP 全有/全空、Release EQP 狀態及其他 Lot 使用；按原窗有元件時分派 Component+T1–T5，無元件用 N/A。寫 ERFBasis、兩張 HoldReason、LotState/Log/LoginState、Reverse/ReleaseLog、OCAP 及必要附件關聯，依 CreateERF/既有狀態與系統參數處理多重 Hold。重送/版本衝突應有明確回應；參數化 SQL，不能沿用舊 Core 拼字串。
+- [ ] 附件實際上傳/BLOB、PDF、郵件/訊息與交易內外的失敗補償或 outbox 一起設計。`TBLWIPERFCREATEDATA` 有資料時，原 Core 會複製到 BK 表再刪除；是否需要此流程由 live 狀態與 API 契約確認。完成 migration/API 後才接正式 Vue、做部署與驗收；公司端未連 PostgreSQL、未執行 build/test/browser。
+
+## WIP WP502 立即等待設定家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP502 規格](docs/modules/WIP/立即等待設定.md)。公司 `/YMES/WIP/ImmediateWaitSet` 只用 DEV 假資料，正式環境不得讀 `ymes-dev-mock:wip-immediate-wait:state:v1`、以本機 `DEV-WAIT-*` 作 WaitNo 或回報假成功。
+- [ ] 核 YMES PostgreSQL live schema/migration history、資料與權限，重用 WP101/WP201 已查的 LotBasis/State/Log/Temp_LotState/WaitBasis/ComponentState 與 USRUserBasis；WaitBasis source DDL 在 `mestest_wip_wp201_additional_source_ddl.sql`，CREATE-only 在 `mestest_wip_wp201_create.sql`。本功能無新直接表，不重建既有表。追包裝、Reverse/ReleaseLog、Adapter 等間接表，確實缺少才做 forward migration。
+- [ ] 做授權的七欄候選查詢與六類 lookup：至少一個 filter、Status 0/1/4、CurQty>0、LotState<>0；排除 PartialMode=1 且 PartialType 0/1 且 Status>1，以及 Complete+LinkName WAIT/HOLD。回傳 LotNo+OPNo、LotStamp、顯示欄與選取所需資料，限制結果量/分頁。
+- [ ] 批次 Set API 對**每筆**選取 Lot 重查包裝、Status、PartialType、LinkName、LotStamp、CurQty、權限和歸屬；原 Form 把多筆 LotNo 用逗號連接，但 Service 只接單一字面值，不能沿用。server 產各筆 WaitNo、共用第一筆 BatchWaitNo、WaitType=2/WaitSource=0/LotIsValid=1；Description 可空。維護 WaitBasis、LotState/Log、Temp_LotState、Reverse/ReleaseLog 及部署插件。先明定全批原子或相容逐批部分成功的契約、冪等/衝突/逐筆結果，不能把前幾筆成功後一筆失敗顯示成全成功。公司端未連 PG、未執行 build/test/browser；API 完成後才做正式 Vue 整合與驗收。
+
+## WIP WP503 批次立即異常設定家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP503 規格](docs/modules/WIP/批次立即異常設定.md)。公司 `/YMES/WIP/BatchImmediateHold` 只有 DEV 假資料，正式環境不可讀 `ymes-dev-mock:wip-batch-immediate-hold:state:v1`、使用 `DEV-BERF-*` 或回報假交易成功。
+- [ ] 核對 YMES PostgreSQL live schema/migration history、資料與權限；`TBLWIPERFBATCHLOT` Oracle source 已在 `mestest_qc409_wip_disposition_dependencies_source_ddl.sql`，CREATE-only 參考在 `mestest_wip_wp503_create.sql`，六欄、PK `(ERFNO,LOTNO,OPNO)`。僅實際缺項做 forward migration，不重建 WP101/WP201/WP305/WP501/QC 既有 Lot/ERF/設備查詢表。同 Core 的 FutureHoldLog/Reason 僅 `ERFType=3`，**不是 WP503 直接 migration**。
+- [ ] 建授權且分頁的十欄＋CheckInTime 候選查詢、七類 lookup、元件／主次分類／HoldItem／EquipmentState 資料。至少一個 filter；依 `ERFMultipleHold` 選 Status `0/1/4` 或 `0/1/3/4`、LotState=1、CurQty>0，排除非 Queue 的 Partial。設備查詢須重建目前 TempEquipment 與 CheckInTime 期間 LotLog_Report/ContEquipment 的 OR 語義，不接受 browser SQL Additional。
+- [ ] Batch Hold POST 從 server 讀 `ERFBatchHoldGenType`：`0` 一單多批、`ERFType=6` 並逐批寫 BatchLot；`1` 每批一 ERF、Core 語意 `ERFType=2`，不寫 BatchLot，且 Component 原因依該批元件過濾。選批須同 PartialMode，首批依 LotNo 排序作參考；重查每批 LotNo/OPNo/LotStamp/CurQty/狀態、原因、元件、權限、ERFNo、上機與設備釋放條件。OCAPNo 有值拒絕；附件、PDF、通知、Reverse/ReleaseLog 與部署 adapter 的真副作用要納入失敗設計。
+- [ ] 模式 0 整張 ERF 原子提交；模式 1 明定全批原子或相容原 Form 逐批部分成功的契約、冪等鍵、逐筆結果及重試。不得把部分成功當全成功。UserNo、時間、ERFNo、Mode 及狀態由 server 決定，SQL 參數化；正式 API 完成後才接正式 Vue／部署與驗收。公司端未連 PG、未執行 build/test/browser。
+
+## WIP WP504 預先異常設定家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，讀 [WP504 規格](docs/modules/WIP/預先異常設定.md)。公司 `/YMES/WIP/FutureHoldSet` 只有 DEV 假資料，正式環境不可讀 `ymes-dev-mock:wip-future-hold-set:state:v1` 或回報本機假 Set 成功。
+- [ ] 先核 YMES PostgreSQL live schema、migration history、資料和權限。`TBLWIPFUTUREHOLD` Oracle source/CREATE 已有 WP201 refs；新增 `TBLWIPFUTUREHOLDREASON`（Set 直接表）及 `TBLWIPFUTUREHOLDLOG`（後續 ERFType3 才寫）Oracle DDL/metadata/index 在 `mestest_wip_wp504_*`，PG CREATE-only 在 `mestest_wip_wp504_create.sql`。Reason 複合七鍵；Log 無 PK、只有 LotNo 非唯一索引，不能擅自加 unique。確實缺少才 forward migration，不重建 WP201 主表。
+- [ ] 建登入/Function ACL 的六欄候選查詢、五種 lookup、PS→有效 OP、QC M/S Class/Hold Description/HoldItem/FirstGroup 的正式讀取 API，限制結果量；Status `0|1|4`、ShowPartialLot=false、至少一個 filter。Selected Lot 是已勾列過濾，Lot/HoldItem 掃描在當前查詢或分類結果勾選。SClass 是 UI 必填與候選依據，原 Service 只收 MClass，不把 SClass 誤當主表欄。
+- [ ] Set POST 對每**一筆**所選 Lot 重查包裝、狀態、Partial、版本與權限；原 Form 把多筆 LotNo 逗號串送給單值 `CheckLotPackage`，有漏檢風險。確認選 PS/OP、MClass/SClass/HoldItem 合法、HoldTime 只能 0/1、說明非空。FirstGroup 缺對應 OP 而無 `*` 時提供可取消確認，不能把它當硬拒或忽略警示。
+- [ ] 按 Lot×OP 與 `(LotNo,OPNo,HoldTime,ModuleNo,ModuleVersion)` 在同一交易替換 FutureHold/Reason；此入口 ModuleNo/Version=`N/A`，`FutureHoldSerial` default=`N/A`，原刪除鍵**不含 Serial**，須確認不同 Serial 舊資料的覆蓋政策。Set 不立刻改 Lot/開 ERF；後續 Start/End 命中、ERFType3、FutureHoldLog、Reverse/ReleaseLog 與 WP506 Release 要設計一致。交易使用參數化 SQL、冪等鍵、server Creator/時間與並發衝突處理；API 完成後才接正式 Vue／部署/驗收。公司端未連 PG、未執行 build/test/browser。

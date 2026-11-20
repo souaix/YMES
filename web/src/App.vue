@@ -80,6 +80,15 @@ import WipLotSplitComponent from './components/WipLotSplitComponent.vue'
 import WipLotSplitBin from './components/WipLotSplitBin.vue'
 import WipLotSplitCarrier from './components/WipLotSplitCarrier.vue'
 import WipLotMerge from './components/WipLotMerge.vue'
+import WipLotMergeComponent from './components/WipLotMergeComponent.vue'
+import WipLotMergeBin from './components/WipLotMergeBin.vue'
+import WipLotMergeCarrier from './components/WipLotMergeCarrier.vue'
+import WipComponentSplit from './components/WipComponentSplit.vue'
+import WipHotLotPriority from './components/WipHotLotPriority.vue'
+import WipImmediateHoldSet from './components/WipImmediateHoldSet.vue'
+import WipImmediateWaitSet from './components/WipImmediateWaitSet.vue'
+import WipBatchImmediateHold from './components/WipBatchImmediateHold.vue'
+import WipFutureHoldSet from './components/WipFutureHoldSet.vue'
 import WipAreaShow from './components/AreaShowMaster.vue'
 import WipEquipmentFavorite from './components/WipEquipmentFavorite.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
@@ -500,6 +509,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:LOT SPLIT_BIN', label: '分批處理_等級', tableName: 'tblwipgoodbinstate', shortLabel: '等級分批', functionNo: 'LOT SPLIT_BIN', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT SPLIT_CARRIER', label: '分批處理_載具', tableName: 'tblwipcarrierstatedetail', shortLabel: '載具分批', functionNo: 'LOT SPLIT_CARRIER', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT MERGE', label: '併批處理', tableName: 'tblwiplotstate', shortLabel: '併批', functionNo: 'LOT MERGE', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT MERGE_COMP', label: '併批處理_元件', tableName: 'tblwipcomponentstate', shortLabel: '元件併批', functionNo: 'LOT MERGE_COMP', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT MERGE_BIN', label: '併批處理_等級', tableName: 'tblwipgoodbinstate', shortLabel: '等級併批', functionNo: 'LOT MERGE_BIN', moduleNo: 'WIP' },
     ],
   }, {
     id: 'menu:WIP:EQUIPMENT AND CARRIER', label: '設備與載具', shortLabel: '設備', children: [
@@ -549,6 +560,15 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:LOT SPLIT_BIN': appBasePath + '/WIP/LotSplitBin',
   'function:WIP:LOT SPLIT_CARRIER': appBasePath + '/WIP/LotSplitCarrier',
   'function:WIP:LOT MERGE': appBasePath + '/WIP/LotMerge',
+  'function:WIP:LOT MERGE_COMP': appBasePath + '/WIP/LotMergeComponent',
+  'function:WIP:LOT MERGE_BIN': appBasePath + '/WIP/LotMergeBin',
+  'function:WIP:LOT MERGE_CARRIER': appBasePath + '/WIP/LotMergeCarrier',
+  'function:WIP:LOT COMP SPLIT': appBasePath + '/WIP/ComponentSplit',
+  'function:WIP:LOT HOTLOT AND PRIPORITY CHANGE': appBasePath + '/WIP/HotLotPriority',
+  'function:WIP:IMMEDIATE HOLD SET': appBasePath + '/WIP/ImmediateHoldSet',
+  'function:WIP:IMMEDIATE WAIT SET': appBasePath + '/WIP/ImmediateWaitSet',
+  'function:WIP:IMMEDIATE HOLD SET_BATCH': appBasePath + '/WIP/BatchImmediateHold',
+  'function:WIP:FUTURE HOLD SET': appBasePath + '/WIP/FutureHoldSet',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
   'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
   'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
@@ -723,6 +743,15 @@ const functionRoutes: Record<string, string> = {
   'LOT SPLIT_BIN': appBasePath + '/WIP/LotSplitBin',
   'LOT SPLIT_CARRIER': appBasePath + '/WIP/LotSplitCarrier',
   'LOT MERGE': appBasePath + '/WIP/LotMerge',
+  'LOT MERGE_COMP': appBasePath + '/WIP/LotMergeComponent',
+  'LOT MERGE_BIN': appBasePath + '/WIP/LotMergeBin',
+  'LOT MERGE_CARRIER': appBasePath + '/WIP/LotMergeCarrier',
+  'LOT COMP SPLIT': appBasePath + '/WIP/ComponentSplit',
+  'LOT HOTLOT AND PRIPORITY CHANGE': appBasePath + '/WIP/HotLotPriority',
+  'IMMEDIATE HOLD SET': appBasePath + '/WIP/ImmediateHoldSet',
+  'IMMEDIATE WAIT SET': appBasePath + '/WIP/ImmediateWaitSet',
+  'IMMEDIATE HOLD SET_BATCH': appBasePath + '/WIP/BatchImmediateHold',
+  'FUTURE HOLD SET': appBasePath + '/WIP/FutureHoldSet',
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -891,6 +920,15 @@ const isWipLotSplitComponentPage = computed(() => activeMasterKey.value === 'fun
 const isWipLotSplitBinPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SPLIT_BIN')
 const isWipLotSplitCarrierPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SPLIT_CARRIER')
 const isWipLotMergePage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE')
+const isWipLotMergeComponentPage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE_COMP')
+const isWipLotMergeBinPage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE_BIN')
+const isWipLotMergeCarrierPage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE_CARRIER')
+const isWipComponentSplitPage = computed(() => activeMasterKey.value === 'function:WIP:LOT COMP SPLIT')
+const isWipHotLotPriorityPage = computed(() => activeMasterKey.value === 'function:WIP:LOT HOTLOT AND PRIPORITY CHANGE')
+const isWipImmediateHoldSetPage = computed(() => activeMasterKey.value === 'function:WIP:IMMEDIATE HOLD SET')
+const isWipImmediateWaitSetPage = computed(() => activeMasterKey.value === 'function:WIP:IMMEDIATE WAIT SET')
+const isWipBatchImmediateHoldPage = computed(() => activeMasterKey.value === 'function:WIP:IMMEDIATE HOLD SET_BATCH')
+const isWipFutureHoldSetPage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE HOLD SET')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
 const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
@@ -2513,6 +2551,15 @@ async function signOut(): Promise<void> {
         <WipLotSplitBin v-else-if="isWipLotSplitBinPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotSplitCarrier v-else-if="isWipLotSplitCarrierPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotMerge v-else-if="isWipLotMergePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotMergeComponent v-else-if="isWipLotMergeComponentPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotMergeBin v-else-if="isWipLotMergeBinPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotMergeCarrier v-else-if="isWipLotMergeCarrierPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipComponentSplit v-else-if="isWipComponentSplitPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipHotLotPriority v-else-if="isWipHotLotPriorityPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipImmediateHoldSet v-else-if="isWipImmediateHoldSetPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipImmediateWaitSet v-else-if="isWipImmediateWaitSetPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipBatchImmediateHold v-else-if="isWipBatchImmediateHoldPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipFutureHoldSet v-else-if="isWipFutureHoldSetPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
