@@ -1,6 +1,6 @@
 # 家裡電腦接手清單
 
-## 最新接手：ET105取貨公司基本資料（DB/API/本次A2GUI已驗，Git待同步）
+## 最新接手：ET105取貨公司基本資料（DB/API/本次A2GUI已驗並同步feature，main待整合）
 
 本機為HOME PC（PostgreSQL復刻／API／PPK SSH／發行）；公司端維持Oracle唯讀來源與UI。以下待辦只列家用工作，不轉派公司端PG／SSH／部署，也不覆寫任何既有歷史heading。
 
@@ -11,7 +11,9 @@
 - [x] Root已封存A2 app-browser本次scope：109raw／105有效pass＝102GUI＋3非GUI，四工具obs2/43/82/95全resolved且原false保留；A1 opaque真產品finding封存，A2 event5修復。真GUI NewApply/連存/clean Confirm、dirty/Tab/selection/duplicate/literal/approve/retire/harddelete/partial1/2完成，不把API-onlyNULL/signed/max等分支偽稱GUI實測。
 - [x] 7GUIcreated/harddeleted7，SQLfixture1只F stale stamp/revision、SQLcleanup0；Root final SQL7exact/logical/actor counts皆0，proof event74／rawlogc4db5ae4…。freshHome21收合106、icons107／展開108／末次logs[]109完成；105不是全純click。18nativeWIP＋1direct正式guard/Close及兩ENT read smoke通過，不代表WIP交易provider或populatedmap完成。
 - [x] GUI後Root再做正常TLS public7/7（root/deep/JS/CSS/ready200及兩小寫404）與runtime8db/0c285／UID1654/101／nonroot files／ready200純讀核對；不加到API或GUI通過數。
-- [ ] Root review／整合module及QA文件、採用真cleanup37525ba0…與Root批准final6734a15e…（舊pending draft不當final）、採用GUI peer03862512…passed／部署維護結論，正常Git379來源綁定（SQL1/API154/Web224）、commit與真feature target-ref push/readback；目前Git/最終checkpoint不預填完成，mainSyncPending=true。
+- [x] 模組／QA、共用風格及資料庫維護文件已整合；GUI驗收6734a15e…／cleanup37525ba0…／獨立peer03862512…已核對。
+- [x] code `ab0f8269e9778d88811947512e6753e51437703d`已正常推送`refs/heads/codex/homepc-et105-20261120`並直接讀回相同；SQL1／API154／Web224共379份來源綁定通過，receipt SHA `2ac94056c8c82c76eedf698e64fcaa242f388a66f74a0777db1522c9c3690bae`，未允許差異0。後續純文件狀態提交不改本release code或重建產物。
+- [ ] 純文件狀態提交及完整checkpoint最後核對；mainSyncPending=true，接續正常整合公司九頁後驗收。
 
 ### 下一項：ET106客戶出貨地址資料，先來源與schema稽核
 
@@ -2344,3 +2346,9 @@ API 工作：
 - [ ] 提供有權限的 Reference Lot／候選 Lot、MO 多選、Routing、未回貨 OS、GoodBin／包裝狀態查詢。原生參考條件 `Status=0|1|4|5`、`HaveComponent=0`、`NotContainGoobinState=True`、`LotState=1`、非 Partial／Stocker；一般候選同 OP／Product／BR／Status／Unit；`SysInfo/AllowDiffMOMerge=0` 才限同工單。Status=5 走同一未回貨外包單，Confirm 再重查。
 - [ ] 實作原子併批 POST，server 重讀並鎖定所有選取批及 LotStamp、CurQty、包裝／GoodBin／OS 現況與輸出批號；驗證 Action、Assign 路由／NodeID、數量與版本，完成 LotBasis／State、Reverse／Log、Dispatch／AutoMerge／OS／Inventory／員工副作用。原 Form 的至少兩筆檢查已註解，不能當來源硬規則；若產品需要禁止單批併批，應另外列為 YMES 新規則。相同 OP 不同 NodeID 要明確要求確認。
 - [ ] `MergeType`、WIPINV、UserNo、ShiftNo、時間與部署參數從可信 server 上下文取得，不能由瀏覽器任填。BR 宿主 Go 後另做 `BRTransferLot`；若不能同交易，提供可查詢且可冪等重試的部分完成狀態。電箱綁定須串接真權限／服務，不採 DEV 假確認。正式 API、PostgreSQL、部署與驗收均由家用端完成；公司端未連 PostgreSQL、未建 migration／Production API、未執行 build/test/browser。
+
+## ET105程式碼同步紀錄（2026-11-20；main仍待整合）
+
+code `ab0f8269e9778d88811947512e6753e51437703d`已正常推送`refs/heads/codex/homepc-et105-20261120`並直接讀回相同；SQL1／API154／Web224共379份來源綁定通過，receipt SHA `2ac94056c8c82c76eedf698e64fcaa242f388a66f74a0777db1522c9c3690bae`，未允許差異0。後續純文件狀態提交不改本release code或重建產物。
+
+QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個新WIP頁及CREATE交接另行整合／建置／驗收。本次224來源保持，mainSyncPending=true；公司端與家用端歷史均保留，沒有force push。完整checkpoint以Root後續實際套用收據為準。

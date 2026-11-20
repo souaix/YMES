@@ -6,7 +6,7 @@
 
 目前正式API為`8db4b84024af86a82cac448f38492bfba0122a24b3e0a3369fa90b649af9d04e`（154份來源），Web為`0c2852e15d14fe2c1e4a6ac396f7d815feef42695e0f88857cfd1fb7ca5ba815`（224份來源）；正常HTTPS七項、實際UID1654／101、必要檔案讀取與ready200均通過。API八組184HTTP／1853檢查、精準兩scope與Holder清零；GUI105有效檢查、七筆全GUI建刪與獨立七鍵清零完成，SQL僅一筆自有F版本負例，沒有SQL清理。
 
-Git379來源綁定及正常feature推送仍待填真結果，mainSyncPending=true；公司新增九頁UI／來源CREATE尚未合併本次224。公司端維持原生Oracle唯讀來源與UI，沒有PostgreSQL或SSH部署責任。以下C1／舊版本是各次歷史快照；C1完整checkpoint71933b09…已保留，舊0058與API151歷史不改寫成0059證據。
+code `ab0f8269e9778d88811947512e6753e51437703d`已正常推送`refs/heads/codex/homepc-et105-20261120`並直接讀回相同；SQL1／API154／Web224共379份來源綁定通過，receipt SHA `2ac94056c8c82c76eedf698e64fcaa242f388a66f74a0777db1522c9c3690bae`，未允許差異0。後續純文件狀態提交不改本release code或重建產物。 mainSyncPending=true；公司新增九頁UI／來源CREATE尚未合併本次224。公司端維持原生Oracle唯讀來源與UI，沒有PostgreSQL或SSH部署責任。以下C1／舊版本是各次歷史快照；C1完整checkpoint71933b09…已保留，舊0058與API151歷史不改寫成0059證據。
 
 ## 公司WIP載具拆批／併批Web224 C1（2026-11-20；無資料庫異動）
 
@@ -1022,3 +1022,9 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - 對照 `frmBR_L_Merge_GEN`、Service `Exe_Manual_LotMerge` 與 Core `BR_Manual_LotMerge`。Core 字面直接引用八張表：`TBLEMSDISPATCHSTATE`、`TBLINVWIPINVENTORY_SEMI`、`TBLWIPAUTOMERGE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`、`TBLWIPOSBASIS`、`TBLWIPOSDETAIL`。逐名核對 `database/reference/` 均已有 Oracle source DDL 與 PostgreSQL CREATE-only reference；本功能不新增重複 CREATE SQL。詳 `docs/modules/WIP/併批處理.md`。
 - 公司端未查 Oracle 業務資料、未執行 Oracle DDL/DML、未連 YMES PostgreSQL；家用端先核 live schema／migration history，再追 Core helper 的間接表、實作具交易性與冪等守門的正式 API。已有 CREATE-only reference 不能當作 live schema 已完成或可直接重播 migration。
+
+## ET105程式碼同步紀錄（2026-11-20；main仍待整合）
+
+code `ab0f8269e9778d88811947512e6753e51437703d`已正常推送`refs/heads/codex/homepc-et105-20261120`並直接讀回相同；SQL1／API154／Web224共379份來源綁定通過，receipt SHA `2ac94056c8c82c76eedf698e64fcaa242f388a66f74a0777db1522c9c3690bae`，未允許差異0。後續純文件狀態提交不改本release code或重建產物。
+
+QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個新WIP頁及CREATE交接另行整合／建置／驗收。本次224來源保持，mainSyncPending=true；公司端與家用端歷史均保留，沒有force push。完整checkpoint以Root後續實際套用收據為準。
