@@ -23,14 +23,16 @@ HOME已正常整合Office e5f與ET106完成歷史，API167／3f0b與Web256／ade
 
 Office維持MES原生Oracle唯讀來源／UI／規格；HOME維持復刻PostgreSQL／PPK SSH／API／部署／正式驗收。下方原生查證及尚未交付provider待辦完整保留，不要求Office操作HOME資料庫或上版。
 
-### WP109下一批：待補的精確原生來源（尚未實作完成）
+### WP109 精確原生來源補證
+
+已補 [WP109 取號、Lot／Device／工單、參數與作廢稽核](docs/modules/WIP/特殊生產需求維護.md)。附件 SQL helper 本體及實際時區未見可核來源，已在規格註明。
 
 三張SWR Basis15／Detail2／共用Serial2的Oracle DDL、index與metadata已交，不重複要求；HOME本機只讀readiness確認captured catalog缺這三表及LotBasis，沒有建表或接provider。Office請僅補下列原碼摘錄／必要Oracle唯讀metadata，不操作HOME PG、SSH、部署或業務列：
 
-- [ ] `wsWIP.InitSWRNo/AddSWRBasis`及`clsWIP.cs`約11213–11825的實際serial body：新日缺列怎麼起始、存last還是next、配置／rollback時點、超999與日期時區。DEV cap999不可當原生政策，既有SerialRule配置也不可當真counter。
-- [ ] Lot lookup的`TBLWIPLOTBASIS`原生DDL及`BASELOTNO`對CustomerNo的精確ownership join；Device／MO lookup的實體表、鍵、投影與資格條件。不可從DEV options猜表名或先假設state2。
-- [ ] `AbortSWRBasis/DelSWRBasis`寫SYS EventLog的Service/Core參數、實體／欄位DDL、SWRNo／reason／actor／時間映射及交易失敗分支；現有auth audit不能直接視為此provider。
-- [ ] `FileSizeLimit`與`InputAbortLog`的原生參數讀取表／row key／型別／單位／default及失敗分支；只知道名稱和MB尚不足以安全上傳或完整作廢。原生附件讀取少最後1 byte的問題不沿用。
+- [x] 補 next counter、初始化、建立交接及超 999 行為。
+- [x] 補 LotBasis DDL、客戶同表比對、Device 來源及 MONo 自由輸入。
+- [x] 補作廢及單獨刪除差異、EventLog metadata 與失敗交易。
+- [x] 補 FileSizeLimit／InputAbortLog 文字參數、單位與 fallback。
 
 HOME在任何SWR建表前須先補ET101 CustomerNo registry absent/present相容與防orphan；開放SWR寫入前補OP引用／鎖協作。這是HOME下一批責任，尚未完成；本輪ET101／Web256驗收不代表WP109正式交易交付。原生`issueoption=0/issuetable=NULL`，Approve為直接0→2，不新增無據SAP／generic IssueJob需求。
 
@@ -64,7 +66,7 @@ Code X ebc03a1已409來源綁定PASS、正常feature推送／ref讀回；文件Y
 - [x] [WP913 生產批屬性調整](docs/modules/WIP/生產批屬性調整.md) 完成 DEV 批／元件屬性查詢及增刪改。WP914 已有公司端交付。
 - [x] [WP915 生產批產品變更作業](docs/modules/WIP/生產批產品變更作業.md) 完成 DEV 篩選、聯產品、包裝預檢、逐批結果。正式 ERP 和流程改掛已交接。
 - [x] [WP916 生產批強制結批作業](docs/modules/WIP/生產批強制結批作業.md) 完成 DEV 單批結批、包裝守門與共同 CloseLot 依賴的唯讀結構交接。
-- [ ] WP901–WP916 公司端選單已齊。接續處理本頁 HOME 指明的 WP109 精確原生來源。
+- [x] WP901–WP916 公司端選單已齊；另已補本頁 HOME 指明的 WP109 精確原生來源。
 
 ## 2026-11-20 桌機再接手：從 WP401 開始
 
