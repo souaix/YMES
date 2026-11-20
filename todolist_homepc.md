@@ -2287,3 +2287,20 @@ API 工作：
 - [ ] 建登入保護的指定 Lot、GoodBinState、SysBin、Product／Routing 查詢。重現 WinForms Status `0|1|4`、LotState=1、HaveLevel=1、非 Partial／Stocker 與有 GoodBinState 守門。Bin 目錄依 `BinOrder, BinNo` 動態返回，不能固定 DEV 三 Bin。路由、產品及 `IC_FT_PKG`／`AllowLotProductChange` 由可信 server 讀取。
 - [ ] 拆批 POST 在交易內鎖定並重讀 LotStamp、GoodBinState、庫存、序號及每個 Bin 餘量。驗證每子批 Qty 等於 Bin 分配、全子批等於 CurQty、每 Bin 不超量且總分配與來源相等、非負及精度、Action／ReturnType／NodeID、產品／流程權限。序號以 server 原子保留，拒絕舊預覽號／重複提交；BR／Inventory／Electricbox 模式只接受可信 server 上下文。
 - [ ] 移植 `BR_Manual_LotSplit_Bin` 的 Lot、GoodBin、Temp、庫存、報工、派工、載具／靜電箱與歷程副作用，逐層追查 Core helper 的額外共用表。BR 宿主成功後的 TransferLot、`BindByMLotNo` 複製載具明細須有同交易或可恢復且冪等的階段結果。正式 PostgreSQL/API/部署與驗收仍由家用端負責；公司端未連 PostgreSQL、未建立 migration/API、未執行 build/test/browser。
+
+## WIP WP210 分批處理_載具家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP210 規格](docs/modules/WIP/分批處理_載具.md)。公司端 Vue `web/src/components/WipLotSplitCarrier.vue` 只有 DEV 假資料；正式 Web 不得讀 `ymes-dev-mock:wip-lot-split-carrier:state:v1` 或將 Slot 畫面假結果當正式過帳。
+- [ ] 核對 YMES PostgreSQL live schema／migration history。兩條 Core 直接引用的 17 張表已在 `database/reference/` 有來源 CREATE TABLE，Carrier Basis／Type 亦有既存共用 refs；按 live 差異補必要 forward migration，不重建已有表。逐層追查 `SHR_Split_GetReference`、`UpdLotAttrib`、Reverse／LotLog 等 helper 的其他間接表。
+- [ ] 建登入保護的指定 CarrierNo 查詢：先讀 CarrierState／Detail，必須有**唯一** Lot；LotState=1、HaveLevel=0、非 Partial，拒絕 Wait／Hold／Complete，Status=5 時 Confirm 查委外未回件。由 server 決定 HaveComponent，並提供空載具候選與 CarrierLayer×CarrierCapacity 的位置／類別，不能信任瀏覽器回傳的來源 Lot、原 CarrierNo、Status 或 HaveComponent。
+- [ ] 無元件拆批支援 Count／Qty、母批 Yes／No、每列 Qty／Carrier／Action／Route／ReturnType。POST 交易內重新鎖定 LotStamp、來源與目標載具、批號序號；驗證 Qty 正數及總量、不同且可用 Carrier、母批只能 Go、Go／Jump OP ReturnType=0、跳站 NodeID 存在。預覽子批號不得由瀏覽器保留或當可信識別。
+- [ ] 有元件拆批固定兩批，讀真實 ComponentState、CarrierStateDetail、載具容量與原位置；由 server 核對每顆元件完整、唯一、屬於原批，兩邊均非空，Slot 目標位置未占用、各 Carrier 容量與位置唯一。原元件／新元件、Lot、CarrierState／Detail／DetailLog、Temp／Cont、報工／逆轉／歷程須一致寫入；防重與失敗回復需覆蓋並行載具占用。
+- [ ] 原主 Form 的 Change Product 按鈕雖修改暫存列，Confirm XML **未送 ProductNo／Version**，不應直接當成正式已有的產品變更。請決定相容模式停用此按鈕或取得業務確認再擴充 API；不要從 DEV localStorage 推斷來源生效。BR SplitType=1 之後另做 TransferLot，若非同交易，須回可觀察、可重試、冪等的階段結果。公司端未連 PostgreSQL、未建正式 API/migration、未執行 build/test/browser。
+
+## WIP WP211 併批處理家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP211 規格](docs/modules/WIP/併批處理.md) 與 `docs/DATABASE_CONNECTION.md` WP211 段落。Vue `web/src/components/WipLotMerge.vue` 只供 DEV 假資料；正式路徑須禁用 `ymes-dev-mock:wip-lot-merge:records:v1`，不能把本機模擬結果當 MES 過帳。
+- [ ] 核對 YMES PostgreSQL live schema／migration history；Core 直接引用的八張表已在 `database/reference/` 有 Oracle source DDL 和 PostgreSQL CREATE-only，不要重建現存表。逐層追 `BR_Manual_LotMerge` helper 的間接表、索引、更新與資料一致性，確有缺口才建 forward migration。
+- [ ] 提供有權限的 Reference Lot／候選 Lot、MO 多選、Routing、未回貨 OS、GoodBin／包裝狀態查詢。原生參考條件 `Status=0|1|4|5`、`HaveComponent=0`、`NotContainGoobinState=True`、`LotState=1`、非 Partial／Stocker；一般候選同 OP／Product／BR／Status／Unit；`SysInfo/AllowDiffMOMerge=0` 才限同工單。Status=5 走同一未回貨外包單，Confirm 再重查。
+- [ ] 實作原子併批 POST，server 重讀並鎖定所有選取批及 LotStamp、CurQty、包裝／GoodBin／OS 現況與輸出批號；驗證 Action、Assign 路由／NodeID、數量與版本，完成 LotBasis／State、Reverse／Log、Dispatch／AutoMerge／OS／Inventory／員工副作用。原 Form 的至少兩筆檢查已註解，不能當來源硬規則；若產品需要禁止單批併批，應另外列為 YMES 新規則。相同 OP 不同 NodeID 要明確要求確認。
+- [ ] `MergeType`、WIPINV、UserNo、ShiftNo、時間與部署參數從可信 server 上下文取得，不能由瀏覽器任填。BR 宿主 Go 後另做 `BRTransferLot`；若不能同交易，提供可查詢且可冪等重試的部分完成狀態。電箱綁定須串接真權限／服務，不採 DEV 假確認。正式 API、PostgreSQL、部署與驗收均由家用端完成；公司端未連 PostgreSQL、未建 migration／Production API、未執行 build/test/browser。

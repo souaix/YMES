@@ -996,3 +996,13 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 對照標準 WinForms `frmBR_LB_Split_FT`、Bin Assign 對話框、Service `Exe_Manual_LotSplit_Bin` 與 Core `BR_Manual_LotSplit_Bin`。Core 直接引用 25 張表，23 張已有 WIP／主檔 reference。缺 reference 的兩張名稱是 `TBLWIPSPLITCONTENT_BIN` 與 `TBLWIPSORTERBINDATA`。
 - 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 及本機受保護 MESTEST profile 唯讀查 `DBMS_METADATA.GET_DDL` 和 `ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。`TBLWIPSPLITCONTENT_BIN` 存在，22 欄，單欄 PK `TOLOTSERIAL`，無 FK／trigger／其他 index；source/index DDL、metadata、PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp209_*`。CREATE-only 是結構參考，家用端先核對 live schema/history 再決定是否建 forward migration。
 - `TBLWIPSORTERBINDATA` 在目前連線的 `ALL_TABLES`／`ALL_SYNONYMS`／`ALL_OBJECTS` 均不可見；Core 只在 `LED_PKG` 分支使用。未猜測此表 CREATE SQL；取得正確 schema／環境或 vendor DDL 前，LED 分支不可視為正式 API 已完成。未查 Oracle 業務列、未執行 DDL/DML、未連 YMES PostgreSQL，且未輸出／提交連線秘密。
+
+### 更新 2026-11-20：WIP WP210 分批處理_載具
+
+- 對照 `frmBR_CL_Split_GEN`、`frmCarrierSplit_Comp`、Service `Exe_Manual_LotSplit_Carrier` 及 Core `BR_Manual_LotSplit_Carrier`／`BR_Manual_LotSplit_Carrier_Component`。兩條 Core 字面直接引用共 17 張表；逐名核對 `database/reference/` 中的來源 CREATE TABLE 結構，17 張均已有 reference。Carrier Basis／Type lookup 亦屬既有共用結構；本功能沒有新缺失的直接表，所以不重複取得 Oracle DDL 或產生 CREATE SQL。完整表名及來源行為見 `docs/modules/WIP/分批處理_載具.md`。
+- 公司端只讀 WinForms／Service／Core 和既有 source references；未連 YMES PostgreSQL、未讀 Oracle 業務資料列、未執行 Oracle DDL/DML。家用端仍須核對 PostgreSQL live schema／migration history，追查 Core helper 的其他間接表，並以真實載具容量、位置與元件現況建交易式 API；不可從已有 reference 推斷 live schema 必然完整。
+
+### 更新 2026-11-20：WIP WP211 併批處理
+
+- 對照 `frmBR_L_Merge_GEN`、Service `Exe_Manual_LotMerge` 與 Core `BR_Manual_LotMerge`。Core 字面直接引用八張表：`TBLEMSDISPATCHSTATE`、`TBLINVWIPINVENTORY_SEMI`、`TBLWIPAUTOMERGE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`、`TBLWIPOSBASIS`、`TBLWIPOSDETAIL`。逐名核對 `database/reference/` 均已有 Oracle source DDL 與 PostgreSQL CREATE-only reference；本功能不新增重複 CREATE SQL。詳 `docs/modules/WIP/併批處理.md`。
+- 公司端未查 Oracle 業務資料、未執行 Oracle DDL/DML、未連 YMES PostgreSQL；家用端先核 live schema／migration history，再追 Core helper 的間接表、實作具交易性與冪等守門的正式 API。已有 CREATE-only reference 不能當作 live schema 已完成或可直接重播 migration。
