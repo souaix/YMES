@@ -1,6 +1,6 @@
 # 家裡電腦接手清單
 
-## ET104 A1 正式驗收（2026-11-20；Git分支同步待實際讀回）
+## ET104 A1 正式驗收（2026-11-20；分支已同步65f17a0）
 
 本機是 HOME PC：PostgreSQL復刻庫／API／PPK SSH／部署；公司端是原生Oracle唯讀來源／UI。正式 API `6d2501aad008`、Web `56c31765e2af`、0058；路由 `/YMES/` 與 `/YMES/API/` 維持分離。
 
@@ -8,7 +8,7 @@
 - [x] API151／Web206固定來源完整建置與正式部署；API單輪八組169HTTP／621斷言，11自有範圍及Holder全0，獨立11項再讀0。
 - [x] 自行按Demo登入正式app-browser，87項（77GUI＋10SQL讀回）通過；90原始events與3項已解harness誤判保留，沒有因此修改產品。12筆Forwarder全由GUI建刪，SQL未新增／刪除Forwarder；最後11scope全0／三個原始資料陣列空，重載錯誤紀錄空。
 - [x] 補齊模組維護、QA、資料庫與部署紀錄；既有兩鍵raw／nullable／signed CAS、Edit0與2真更新、Apply乾淨停用、New才驗Broker2、舊parent缺失／退休、引用guard與workflow界線已記錄。
-- [ ] A1先正常同步 `codex/homepc-et104-20261120` 並核358份來源；actual codeX／statusY與遠端分支讀回後更新，不預告main同步。
+- [x] ET104 A1 release code `65f17a0c347acd4b5df2a1be1cad712138ececd6` 已正常推送 `refs/heads/codex/homepc-et104-20261120`，直接 `ls-remote` 讀回相同。358份來源綁定通過（SQL1／API151／Web206，未允許差異0；舊API131份僅representation、Web188份僅Git EOL差異），無force push。後續純文件狀態提交不改此release code；actual status SHA與遠端讀回另封存於checkpoint。mainSyncPending=true：公司b3f0f06的14個新WIP Vue／App／AreaShow將正常合併、另建新Web與驗收後再同步main，不能把A1的87項證據套用新產物。
 - [ ] GUI完成後fetch已有公司提交 `b3f0f062e22b1df3437868a2c29ec51e80ebbb92`；A1紀錄完成後正常merge，保留公司14個新WIP Vue與App／AreaShow修改，另建Web220／驗正式入口及ET104回歸，再正常同步main。不能拿A1的206份來源／87項證據冒充新版本。
 - [ ] 同步與整合後再fetch檢查下一交接；接續ET105等來源完整項目。完整Job／通知provider及其他WIP流程保持各自待辦。
 

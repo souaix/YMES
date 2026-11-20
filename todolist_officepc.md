@@ -2,6 +2,8 @@
 
 ## ET104 A1 正式驗收回饋（2026-11-20；main整合另記）
 
+ET104 A1 release code `65f17a0c347acd4b5df2a1be1cad712138ececd6` 已正常推送 `refs/heads/codex/homepc-et104-20261120`，直接 `ls-remote` 讀回相同。358份來源綁定通過（SQL1／API151／Web206，未允許差異0；舊API131份僅representation、Web188份僅Git EOL差異），無force push。後續純文件狀態提交不改此release code；actual status SHA與遠端讀回另封存於checkpoint。mainSyncPending=true：公司b3f0f06的14個新WIP Vue／App／AreaShow將正常合併、另建新Web與驗收後再同步main，不能把A1的87項證據套用新產物。
+
 HOME PC已完成0058、正式API `6d2501aad008`／Web `56c31765e2af`；API169HTTP／621斷言與app-browser87項（77GUI＋10SQL讀回）通過，12筆Forwarder由GUI建刪，11項資料範圍獨立全零。三個harness誤判原始紀錄與復驗保留；見[模組](docs/modules/ENT/貨運行基本資料.md)及[QA](docs/qa/20261120-et104.md)。
 
 公司端請對齊：列表 `{items}`、query-key item／approve、完整nullable十五欄，原ForwarderNo／BrokerNo在Edit均唯讀且不得trim／轉大寫。必帶nullable dataStamp，Delete204為硬刪、200為停用savedDTO；Apply先採新DTO/token轉Edit，乾淨停用。New才查真Broker2；既有0／2聯絡維護不重驗舊parent資格。未來Customer指定Forwarder時，家用API writer應合作Forwarder namespace／SHARE；不派公司端連PG或SSH。

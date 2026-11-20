@@ -2,6 +2,8 @@
 
 ## ET104 A1 正式驗收版本（2026-11-20；分支同步後續記錄）
 
+ET104 A1 release code `65f17a0c347acd4b5df2a1be1cad712138ececd6` 已正常推送 `refs/heads/codex/homepc-et104-20261120`，直接 `ls-remote` 讀回相同。358份來源綁定通過（SQL1／API151／Web206，未允許差異0；舊API131份僅representation、Web188份僅Git EOL差異），無force push。後續純文件狀態提交不改此release code；actual status SHA與遠端讀回另封存於checkpoint。mainSyncPending=true：公司b3f0f06的14個新WIP Vue／App／AreaShow將正常合併、另建新Web與驗收後再同步main，不能把A1的87項證據套用新產物。
+
 API `6d2501aad008b6b5ca0c11abae0700d1f7a00b74933645c83d3a4c183dd0c171`；Web `56c31765e2af045df561c288feee07d3258501f815577fcabdf188017ff052fa`；migration0058。Web `/YMES/`、API `/YMES/API/`同server分開容器，只更新YMES自己的API／Web，保留其他專案及ymes-master-web。
 
 固定API來源 `/opt/ymes/releases/et104-api-20261120-a1/main`151檔、canonical `434bd27f24545e452768022505cf92d21bbc7eab237bfab6816009a08fee1486`；Web私有來源 `/opt/ymes/checkpoints/web-et104-20261120-a1`206檔、canonical `aacf93de45c49d6d85b531f680bf578c9a54ecfa90c8436eee88383489df3311`。私有700／600、公開755／644，實際nonroot讀取通過；共用 `/opt/ymes/source`不作重建基底。
