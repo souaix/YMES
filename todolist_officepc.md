@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## WP401 外包單開立（2026-11-20）
+
+- [x] 桌機乾淨工作樹 fast-forward 至筆電交接 `d87c731`。依 Form／Designer、Service、Core 完成 Vue DEV 主明細、參考批／刷入批號、回貨站、增修、刪除與作廢。
+- [x] [WP401 規格](docs/modules/WIP/外包單開立.md) 交付交易和 API 契約；三張直接表均有 Oracle DDL／CREATE-only。
+- [ ] 下一項 WP402 外包單確認，按選單清冊接續。
+
 ## 2026-11-20 桌機再接手：從 WP401 開始
 
 - [x] 筆電接回桌機原工作後，WP509、WP106、WP109、WP112 的 Vue DEV、規格、缺表 Oracle 唯讀 DDL/metadata、PG CREATE-only 與家用端 TODO 已分段推 GitHub；WP112 程式提交 `ba20121` 已向 remote `main` 核對，交接詳 [桌機接手點](docs/CODEX_HANDOFF_DESKTOP_20261120.md)。本交接文件另有後續提交，桌機以 pull 後最新 main 為準。

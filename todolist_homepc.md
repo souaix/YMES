@@ -1,5 +1,9 @@
 # 家裡電腦接手清單
 
+## WP401 外包單開立（2026-11-20）
+
+- [ ] 讀 [WP401 規格](docs/modules/WIP/外包單開立.md)，比對既有 OS Basis、OS Detail、Future OS references 與 live schema。完成正式 WP401 權限、參考批 lookup、取號及跨表原子增修／刪除／作廢。
+
 ## 最新公司端交付：WP112 工單撤派工（2026-11-20）
 
 公司端完成 `/YMES/WIP/UndoDispatch` Vue DEV 示意與 [WP112 原始碼規格](docs/modules/WIP/工單撤派工.md)；未連 YMES PostgreSQL 或 SAP、未執行正式 API/部署。這個功能有外部 SAP DB link 與 Lot/Inventory 副作用，**不能只做狀態 UPDATE 就標示完成**。
