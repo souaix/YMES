@@ -2338,3 +2338,11 @@ API 工作：
 - [ ] 核 YMES PostgreSQL live schema/history、資料與權限。`TBLWIPFUTUREWAIT` 七欄、PK `(LOTNO,OPNO,WAITTIME)`，Oracle source `mestest_wip_wp201_dependency_source_ddl.sql`、PG CREATE-only `mestest_wip_wp201_create.sql` 已存在；無新直接表，缺項才 forward migration，別重建 WP201 既有結構。
 - [ ] 建有登入/Function ACL 的六欄候選查詢、五類 lookup、PS→有效 OP；至少一個 filter、Status `0|1|4`、ShowPartialLot=false、結果分頁/上限。Selected Lot 是檢視過濾，掃描只勾當前查詢列。
 - [ ] Set POST 逐批重查包裝、Status、Partial、版本、Lot/OP 和權限；原 Form 的多筆 LotNo 逗號串被 `CheckLotPackage` 當單值，不能沿用。WaitTime 只允許 Start=0/End=1，OP 至少一個，Description **可空**且最多 3000 字元。以參數化 SQL 交易按 Lot×OP×WaitTime 刪舊再插新 FutureWait，server 決定 Creator/日期、明確處理併發/冪等；Set 不直接改 LotState/WaitBasis。後續 `ChkFutureWait` 命中、WP502 等待交易及 WP507 Release 需生命週期一致。完成 API 才接正式 Vue/部署驗收；公司端未連 PG、未執行 build/test/browser。
+
+## WIP WP506 預先異常解除家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，讀 [WP506 規格](docs/modules/WIP/預先異常解除.md)。公司 `/YMES/WIP/FutureHoldRelease` 為 DEV 假資料，與 WP504 共用 `ymes-dev-mock:wip-future-hold-set:state:v1`；正式環境不可讀此 key 或回報本機假 Release 成功。
+- [ ] 核 YMES PostgreSQL live schema/history、資料與權限。主表 `TBLWIPFUTUREHOLD` Oracle source/PG CREATE-only 在 WP201 refs；原因表 `TBLWIPFUTUREHOLDREASON` 在 WP504 refs。本功能無新直接表；確有缺項才 forward migration，不重建既有結構。
+- [ ] 提供有登入與 `WP506` Function ACL 的四種可選條件查詢：LotNo、OPNo、HoldTime 0/1、MClassNo；OP/MClass 查找，九欄結果。來源 Form 可無條件查全部，正式端必須限制筆數／分頁、做可見範圍與參數化 SQL，不在瀏覽器一次載入全表。
+- [ ] 先決定 Release 的業務範圍：建議以主表六鍵 `(LotNo,ModuleNo,ModuleVersion,OPNo,HoldTime,FutureHoldSerial)` 精確刪單筆及對應原因；若相容來源三鍵 `(LotNo,OPNo,HoldTime)` 批量刪，須明示影響筆數並鎖定/重查**每筆** LockFlag，任何鎖定均拒絕。來源只檢選取列 LockFlag 而 Core 刪同鍵全部，可能誤刪其他鎖定列；不能照搬。
+- [ ] 在交易內刪主/原因、處理並發版本/冪等與審計事件，server 取得 actor/時間；已進入 ERF 處置的設定及 FutureHoldLog 必須遵守完整生命週期，不能把此刪除當成即時解除 ERF。不可相信 browser 的 LockFlag 或拼 SQL；API 完成後接正式 Vue/部署驗收。公司端未連 PG、未執行 build/test/browser。

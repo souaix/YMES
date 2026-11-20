@@ -1027,3 +1027,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-20：WIP WP505 預先等待設定
 
 - `frmFutureWaitSet`／`wsWIP.Exe_FutureWait_Set`／`clsLot.UpdFutureWait_Set` 直接替換 `TBLWIPFUTUREWAIT`，Set 不立即更新 LotState 或 WaitBasis。主表七欄、PK `(LOTNO,OPNO,WAITTIME)`，Oracle source DDL 已在 `database/reference/mestest_wip_wp201_dependency_source_ddl.sql`，PostgreSQL CREATE-only 在 `mestest_wip_wp201_create.sql`；沒有新缺的直接表，不重複產生 CREATE SQL。公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL。家用端仍須核 live schema/history、後續生效與 WP507 Release 依賴；原 Form 多批包裝預檢有逗號單值缺陷，正式 API 逐批重查。詳見 `docs/modules/WIP/預先等待設定.md`。
+
+### 更新 2026-11-20：WIP WP506 預先異常解除
+
+- `frmFutureHoldRelease`／`wsWIP.DelFutureHold`／`clsLot.DelFutureHold` 只直接刪 `TBLWIPFUTUREHOLD`、`TBLWIPFUTUREHOLDREASON`。兩表 source DDL／CREATE-only 已在 WP201、WP504 refs；沒有新增直接表，不重複產生 CREATE SQL。公司端只讀既有 source/DDL，未查 Oracle 業務列、未寫 Oracle、未連 YMES PostgreSQL。家用端先核 live schema/history，再決定精確六鍵或舊式三鍵批量解除；來源只檢選取列 LockFlag，Core 三鍵可刪同鍵其他鎖定列。詳見 `docs/modules/WIP/預先異常解除.md`。

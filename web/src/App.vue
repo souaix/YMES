@@ -90,6 +90,7 @@ import WipImmediateWaitSet from './components/WipImmediateWaitSet.vue'
 import WipBatchImmediateHold from './components/WipBatchImmediateHold.vue'
 import WipFutureHoldSet from './components/WipFutureHoldSet.vue'
 import WipFutureWaitSet from './components/WipFutureWaitSet.vue'
+import WipFutureHoldRelease from './components/WipFutureHoldRelease.vue'
 import WipAreaShow from './components/AreaShowMaster.vue'
 import WipEquipmentFavorite from './components/WipEquipmentFavorite.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
@@ -565,6 +566,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:IMMEDIATE HOLD SET_BATCH': appBasePath + '/WIP/BatchImmediateHold',
   'function:WIP:FUTURE HOLD SET': appBasePath + '/WIP/FutureHoldSet',
   'function:WIP:FUTURE WAIT SET': appBasePath + '/WIP/FutureWaitSet',
+  'function:WIP:FUTURE HOLD RELEASE': appBasePath + '/WIP/FutureHoldRelease',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
   'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
   'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
@@ -749,6 +751,7 @@ const functionRoutes: Record<string, string> = {
   'IMMEDIATE HOLD SET_BATCH': appBasePath + '/WIP/BatchImmediateHold',
   'FUTURE HOLD SET': appBasePath + '/WIP/FutureHoldSet',
   'FUTURE WAIT SET': appBasePath + '/WIP/FutureWaitSet',
+  'FUTURE HOLD RELEASE': appBasePath + '/WIP/FutureHoldRelease',
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -927,6 +930,7 @@ const isWipImmediateWaitSetPage = computed(() => activeMasterKey.value === 'func
 const isWipBatchImmediateHoldPage = computed(() => activeMasterKey.value === 'function:WIP:IMMEDIATE HOLD SET_BATCH')
 const isWipFutureHoldSetPage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE HOLD SET')
 const isWipFutureWaitSetPage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE WAIT SET')
+const isWipFutureHoldReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE HOLD RELEASE')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
 const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
@@ -2557,6 +2561,7 @@ async function signOut(): Promise<void> {
         <WipBatchImmediateHold v-else-if="isWipBatchImmediateHoldPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipFutureHoldSet v-else-if="isWipFutureHoldSetPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipFutureWaitSet v-else-if="isWipFutureWaitSetPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipFutureHoldRelease v-else-if="isWipFutureHoldReleasePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
