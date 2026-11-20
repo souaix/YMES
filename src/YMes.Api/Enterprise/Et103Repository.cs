@@ -118,7 +118,7 @@ public sealed class Et103Repository(NpgsqlDataSource dataSource)
         var no = Key(brokerNo); actor = Actor(actor); ValidateStamp(request.DataStamp);
         using var connection = dataSource.OpenConnection();
         using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
-        Acquire(connection, transaction, no); EnsureRegistry(connection, transaction);
+        Acquire(connection, transaction, no); var shipAddressPresent = EnsureRegistry(connection, transaction);
         var current = Read(connection, transaction, no, update: true);
         KnownState(current.IssueState); ExpectedState(current.IssueState, request.ExpectedIssueState);
         ExpectedStamp(current.DataStamp, request.DataStamp);
@@ -133,8 +133,8 @@ public sealed class Et103Repository(NpgsqlDataSource dataSource)
         // Explicit YMES integrity protection, not a claimed native delete rule.
         // Future reference writers must acquire this same Broker namespace and
         // parent SHARE before checking state2 and inserting through commit.
-        if (HasReferences(connection, transaction, current.BrokerNo))
-            throw Rule(409, "客戶或承攬商仍引用此報關行，資料已保留，不能實體刪除。");
+        if (HasReferences(connection, transaction, current.BrokerNo, shipAddressPresent))
+            throw Rule(409, "客戶、承攬商或出貨地址仍引用此報關行，資料已保留，不能實體刪除。");
         using (var command = new NpgsqlCommand($"DELETE FROM {Table} WHERE brokerno=@no AND issuestate IS NOT DISTINCT FROM @state AND datastamp IS NOT DISTINCT FROM @stamp;", connection, transaction))
         {
             Text(command, "no", current.BrokerNo); Number(command, "state", request.ExpectedIssueState); Number(command, "stamp", request.DataStamp);
@@ -180,13 +180,15 @@ public sealed class Et103Repository(NpgsqlDataSource dataSource)
         Text(command, "no", no); command.ExecuteNonQuery();
     }
 
-    private static bool HasReferences(NpgsqlConnection connection, NpgsqlTransaction transaction, string no)
+    private static bool HasReferences(NpgsqlConnection connection, NpgsqlTransaction transaction, string no, bool shipAddressPresent)
     {
         using var command = new NpgsqlCommand("""
             SELECT EXISTS(SELECT 1 FROM "YMES".tblentcustomerbasis WHERE lower(btrim(brokerassigned))=lower(btrim(@no)))
                 OR EXISTS(SELECT 1 FROM "YMES".tblentforwarderbasis WHERE lower(btrim(brokerno))=lower(btrim(@no)));
             """, connection, transaction);
-        Text(command, "no", no); return command.ExecuteScalar() is true;
+        Text(command, "no", no);
+        return command.ExecuteScalar() is true
+            || ShipAddressReferenceGuard.HasReferences(connection, transaction, ShipAddressReference.Broker, no, shipAddressPresent);
     }
 
     private static bool WorkflowMayExist(NpgsqlConnection connection, NpgsqlTransaction transaction)
@@ -202,7 +204,7 @@ public sealed class Et103Repository(NpgsqlDataSource dataSource)
         return command.ExecuteScalar() is true;
     }
 
-    private static void EnsureRegistry(NpgsqlConnection connection, NpgsqlTransaction transaction)
+    private static bool EnsureRegistry(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
         // Catalog-only discovery: never read business data from an unreviewed
         // table/column or accept a same-fold object in another schema/kind/case.
@@ -224,11 +226,13 @@ public sealed class Et103Repository(NpgsqlDataSource dataSource)
             }
             if (found.Count!=3) throw RegistryUnavailable();
         }
+        var shipAddressPresent = ShipAddressReferenceGuard.EnsureOptional(connection, transaction, ShipAddressReference.Broker, RegistryUnavailable);
         var expectedReferences = new HashSet<(string Table,string Column,bool NotNull)>
         {
             ("tblentbrokerbasis","brokerno",true),("tblentcustomerbasis","brokerassigned",false),
             ("tblentforwarderbasis","brokerno",true)
         };
+        if (shipAddressPresent) expectedReferences.Add(("tblentcustomershipaddr","broker",false));
         using (var command = new NpgsqlCommand("""
             SELECT n.nspname,c.relname,c.relkind::text,c.relrowsecurity,c.relforcerowsecurity,
                    a.attname,format_type(a.atttypid,a.atttypmod),a.attnotnull
@@ -281,6 +285,7 @@ public sealed class Et103Repository(NpgsqlDataSource dataSource)
         // table SELECT or reading any unreviewed reference value.
         using var probe = new NpgsqlCommand($"SELECT {Columns} FROM {Table} WHERE false; SELECT brokerassigned FROM \"YMES\".tblentcustomerbasis WHERE false; SELECT brokerno FROM \"YMES\".tblentforwarderbasis WHERE false;", connection, transaction);
         probe.ExecuteNonQuery();
+        return shipAddressPresent;
     }
 
     private static void ValidateFields(Et103WriteRequest request)

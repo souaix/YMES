@@ -118,7 +118,7 @@ public sealed class Et105Repository(NpgsqlDataSource dataSource)
         var no = Key(takerNo); actor = Actor(actor); ValidateStamp(request.DataStamp);
         using var connection = dataSource.OpenConnection();
         using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
-        Acquire(connection, transaction, no); EnsureRegistry(connection, transaction);
+        Acquire(connection, transaction, no); var shipAddressPresent = EnsureRegistry(connection, transaction);
         var current = Read(connection, transaction, no, update: true);
         KnownState(current.IssueState); ExpectedState(current.IssueState, request.ExpectedIssueState);
         ExpectedStamp(current.DataStamp, request.DataStamp);
@@ -130,12 +130,11 @@ public sealed class Et105Repository(NpgsqlDataSource dataSource)
             var saved = ChangeState(connection, transaction, current, -1, actor);
             transaction.Commit(); return new(false, saved);
         }
-        // Explicit YMES integrity policy, not a native FK/cascade claim:
-        // EnsureRegistry has already rejected every unreviewed actual Taker
-        // reference. The current reviewed registry has no external table.
-        // Future ET106 writers must take this same Taker namespace, then
-        // an approved parent SHARE through commit before inserting references.
-        // ShipAddr is absent today; do not query it or invent a false result.
+        // Explicit YMES reference protection; native state2 retirement above
+        // remains allowed. ET106 writers must use this same Taker namespace
+        // and approved parent SHARE through their child transaction commit.
+        if (ShipAddressReferenceGuard.HasReferences(connection, transaction, ShipAddressReference.Taker, current.TakerNo, shipAddressPresent))
+            throw Rule(409, "出貨地址仍引用此取貨公司，資料已保留，不能實體刪除。");
         using (var command = new NpgsqlCommand($"DELETE FROM {Table} WHERE takerno=@no AND issuestate IS NOT DISTINCT FROM @state AND datastamp IS NOT DISTINCT FROM @stamp;", connection, transaction))
         {
             Text(command, "no", current.TakerNo); Number(command, "state", request.ExpectedIssueState); Number(command, "stamp", request.DataStamp);
@@ -194,7 +193,7 @@ public sealed class Et105Repository(NpgsqlDataSource dataSource)
         return command.ExecuteScalar() is true;
     }
 
-    private static void EnsureRegistry(NpgsqlConnection connection, NpgsqlTransaction transaction)
+    private static bool EnsureRegistry(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
         // Catalog-only discovery: never read business data from an unreviewed
         // table/column or accept a same-fold object in another schema/kind/case.
@@ -216,13 +215,12 @@ public sealed class Et105Repository(NpgsqlDataSource dataSource)
             }
             if (found.Count!=1) throw RegistryUnavailable();
         }
+        var shipAddressPresent = ShipAddressReferenceGuard.EnsureOptional(connection, transaction, ShipAddressReference.Taker, RegistryUnavailable);
         var expectedReferences = new HashSet<(string Table,string Column,bool NotNull)>
         {
-            // The audited registry contains only this actual owner key.
-            // Native future ShipAddr.TakerNo is absent. Any newly appearing
-            // reference must be reviewed/activated, never queried by guess.
             ("tblenttakerbasis","takerno",true)
         };
+        if (shipAddressPresent) expectedReferences.Add(("tblentcustomershipaddr","takerno",false));
         using (var command = new NpgsqlCommand("""
             SELECT n.nspname,c.relname,c.relkind::text,c.relrowsecurity,c.relforcerowsecurity,
                    a.attname,format_type(a.atttypid,a.atttypmod),a.attnotnull
@@ -270,11 +268,12 @@ public sealed class Et105Repository(NpgsqlDataSource dataSource)
             }
             if (expected.Count!=0) throw RegistryUnavailable();
         }
-        // Verify the actual owner read grant with a zero-row probe and keep
-        // its relation ACCESS SHARE lock until commit. There are no reviewed
-        // external reference providers to query; new catalog mappings fail503.
+        // Keep the owner's read grant/relation lock as before. The optional
+        // reviewed ShipAddr column was separately probed in this transaction;
+        // any other newly appearing semantic mapping still fails503.
         using var probe = new NpgsqlCommand($"SELECT {Columns} FROM {Table} WHERE false;", connection, transaction);
         probe.ExecuteNonQuery();
+        return shipAddressPresent;
     }
 
     private static void ValidateFields(Et105WriteRequest request)
