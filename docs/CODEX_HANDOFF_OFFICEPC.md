@@ -2,10 +2,12 @@
 
 更新：2026-11-20。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
+> **最新桌機再接手（2026-11-20）**：先讀 [本次桌機交接點](CODEX_HANDOFF_DESKTOP_20261120.md)。筆電接回後的 WP509、WP106、WP109、WP112 已推 GitHub；下一個未有 Vue 路由的 WIP 功能是 WP401 `OS CREATE`。本檔早期「下一功能」文字保留歷史，不再當目前進度。
+
 ## 接手方式
 
 1. 在桌電開啟同一個 GitHub repository `souaix/YMES`，執行 `git pull origin main`。
-2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 及目前的 [WP601 包裝作業規格](modules/WIP/包裝作業.md)。
+2. 先讀 [本次桌機交接點](CODEX_HANDOFF_DESKTOP_20261120.md)、本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md`，再讀當前要做的 WP401 原始碼。
 3. 本機 Codex 使用 YMES repo；MES WinForms 原始碼在公司筆電 `D:\iMES\CSiMES`，桌電可能是另一個路徑。若桌電有既有 MES checkout，先核對路徑；不可用 UI 截圖代替 Form/Designer/Service/Core 原始碼。原始碼缺少時記錄具體缺檔，先做不依賴它的工作。
 4. 若在桌電打開同一個 Codex 對話，thread 對話與 Goal 脈絡仍在；若另開新對話，把本檔及 TODO 當成接手上下文，不要假設新 thread 自動有舊 Goal 狀態。
 
@@ -123,3 +125,5 @@
 - **2026-11-20 WP511 接續**：已核 THEIL BU1 等待處置主 Form、七個 Split/Merge 子窗入口、`wsWIP.LoadWaitBasisJoinLotState`、`THEIL.wsWIP_Wait.Exe_Wait_LotRelease`、`tcWIP.clsLot_Wait` 及群組權限 `LoadDispPriv`。Vue DEV `/YMES/WIP/WaitDisposition` 有六欄查詢、17 欄 Grid、10 個可見選項、批次/Partial/路由守門與簡化分併批對話框；WP510 會顯示其假解除結果。Oracle MESTEST 唯讀查得新表 `XX_TBLWAITPRIV` 14 欄／GROUPNO PK source DDL、metadata，PG CREATE-only 在 `database/reference/mestest_wip_wp511_priv_*`；其餘 Wait/USR/PRS 表沿現有 references。規格 `docs/modules/WIP/等待處置.md` 明列 DEV 簡化及真交易差異；家用端核 PG live schema、權限、分併批七種交易並做 API。公司端下一項 WP509；未連 PG、未執行 build/test/browser。
 - **2026-11-20 WP509 接續**：已核 THEIL BU1 未解除異常單主/處置 Form、七個分併批子窗入口及 `wsWIP`/THEIL `wsWIP_ERF`/Core。Vue DEV `/YMES/WIP/ErfUnreleased` 提供六條件、23 欄、ERF Disp/Abort/Create/Info、狀態 0–3/11 分頁、14 種 Lot 處置及簡化 OCAP/分併批；詳 `docs/modules/WIP/未解除異常單.md`。公司端以 PowerShell 5.1 + 受保護 MESTEST profile 唯讀查得新權限表 `XX_TBLQCHOLDPRIV` 18 欄／GROUPNO PK 原 DDL/index/metadata，PG CREATE-only 在 `database/reference/mestest_wip_wp509_priv_*`；無業務資料讀寫，未連 PG、未執行 build/test/browser。家用端做正式 API、群組/OCAP/ERF/Lot 原子交易及七子窗；公司端接續下一未完成 WIP 功能。
 - **2026-11-20 WP106 接續**：已核 `frmOperatorOnline`/Designer、`wsWIP_OperatorState`/`clsOperatorState`；Vue DEV `/YMES/WIP/OperatorOnline` 共用 WP104/105 假 State/Log，支援 OP/Area/Equipment 多選並集、七欄 Grid、逐列 SignOut/確認及外部唯讀入口。規格 `docs/modules/WIP/使用者登入資訊.md`、家用端 API 待辦已補；Oracle State/Log DDL/PG CREATE-only 沿 WP104，LotLoginState 沿 WP305，無新增表。公司端未連 YMES PostgreSQL、未 build/test/browser；下一項 WP109 SWR BASIS。
+- **2026-11-20 WP109 接續**：已核 `frmWIPSWRBasis`／Def、`wsWIP`／`clsWIP`，Vue DEV `/YMES/WIP/SwrBasis` 覆蓋七勾選查詢、四狀態、14 欄 JOIN Grid、右側操作鍵、ADD/EDIT/Copy/Approve/Void/附件檔名示意。公司 PowerShell 5.1 + 受保護 MESTEST profile 唯讀取得 `TBLWIPSWRBASIS` 15 欄、`TBLWIPSWRDETAIL` 2 欄、共用 `TBLSYSSERIALNO` 2 欄 source DDL/index/metadata；PG CREATE-only 在 `database/reference/mestest_wip_wp109_create.sql`。無 FK/trigger；正式 API 要修正原 PENDING 作廢假成功、JOIN 重複核准、附件末 byte、SQL 拼接。家用端核 live PG、實作交易/附件/稽核並驗收；公司端未查業務列、未寫 Oracle、未連 PG、未 build/test/browser。詳 `docs/modules/WIP/特殊生產需求維護.md`。下一項依 WIP 清冊找未完成功能。
+- **2026-11-20 WP112 接續**：已核 THEIL 撤派工 Form/Service/Core/SAP 拋轉來源；Vue DEV `/YMES/WIP/UndoDispatch` 兩模式、MO 查找、13 欄勾選 Grid、全選與逐批假 Confirm。公司端用受保護 MESTEST profile + PowerShell 5.1 **唯讀**取得六表 `TBLWIPCONT_MATERIALLOT`、`TBLSYSSERIALCREATEMAX`、`XX_TBLOEMO_OS_BU1`、`ZPPT0025A/B/C1` 原始 DDL/index/metadata 與 PG CREATE-only `database/reference/mestest_wip_wp112_create.sql`；外部 `THSAP.*@SAP_DBLINK` 真契約未核。家用端必須接 SAP/Log/Inventory provider，未具備時正式 POST 不可假成功；規格在 `docs/modules/WIP/工單撤派工.md`。公司端未查業務列、未寫 Oracle、未連 PG、未 build/test/browser；後續依 WIP 清冊選下一項。

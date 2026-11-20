@@ -70,6 +70,15 @@ import WipLotSheetPrint from './components/WipLotSheetPrint.vue'
 import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
 import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
 import WipOperatorOnline from './components/WipOperatorOnline.vue'
+import WipSwrBasis from './components/WipSwrBasis.vue'
+import WipUndoDispatch from './components/WipUndoDispatch.vue'
+import WipOutsourceCreate from './components/WipOutsourceCreate.vue'
+import WipLotReverse from './components/WipLotReverse.vue'
+import WipReleasedLotDelete from './components/WipReleasedLotDelete.vue'
+import WipReleasedLotBatchDelete from './components/WipReleasedLotBatchDelete.vue'
+import WipLotAreaChange from './components/WipLotAreaChange.vue'
+import WipProductVersionChange from './components/WipProductVersionChange.vue'
+import WipEcnWizard from './components/WipEcnWizard.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
 import WipOperatorLogin from './components/WipOperatorLogin.vue'
@@ -505,6 +514,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:OPERATOR CLOCKIN', label: '使用者登入作業（上工）', tableName: 'tblwipoperatorstate', shortLabel: '上工', functionNo: 'OPERATOR CLOCKIN', moduleNo: 'WIP' },
       { id: 'function:WIP:OPERATOR CLOCKOUT', label: '使用者登出作業（下工）', tableName: 'tblwipoperatorstate', shortLabel: '下工', functionNo: 'OPERATOR CLOCKOUT', moduleNo: 'WIP' },
       { id: 'function:WIP:OPERATOR ONLINE', label: '使用者登入(上工)資訊', tableName: 'tblwipoperatorstate', shortLabel: '上工資訊', functionNo: 'OPERATOR ONLINE', moduleNo: 'WIP' },
+      { id: 'function:WIP:SWR BASIS', label: '特殊生產需求維護', tableName: 'tblwipswrbasis', shortLabel: '特殊需求', functionNo: 'SWR BASIS', moduleNo: 'WIP' },
+      { id: 'function:WIP:UNDO DISPATCH', label: '工單撤派工', tableName: 'tblwiplotstate', shortLabel: '撤派工', functionNo: 'UNDO DISPATCH', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT OPERATOR CLOCKIN', label: '批次作業員上工', tableName: 'tblwipoperatorstate', shortLabel: '批次上工', functionNo: 'LOT OPERATOR CLOCKIN', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT OPERATOR CLOCKOUT', label: '批次作業員下工', tableName: 'tblwipoperatorstate', shortLabel: '批次下工', functionNo: 'LOT OPERATOR CLOCKOUT', moduleNo: 'WIP' },
       { id: 'function:WIP:CREATE LOT', label: '生產批開立', tableName: 'tblwiplotbasis', shortLabel: '批', functionNo: 'CREATE LOT', moduleNo: 'WIP' },
@@ -534,6 +545,13 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:CARRIER MANAGEMENT COMP', label: '載具管理_元件', tableName: 'tblwipcarrierstatedetail', shortLabel: '載具元件', functionNo: 'CARRIER MANAGEMENT COMP', moduleNo: 'WIP' },
     ],
   }, {
+    id: 'menu:WIP:OUT SOURCE', label: '外包處理', shortLabel: '包', children: [
+      { id: 'function:WIP:OS CREATE', label: '外包單開立', tableName: 'tblwiposbasis', shortLabel: '開立', functionNo: 'OS CREATE', moduleNo: 'WIP' },
+      { id: 'function:WIP:OS CONFIRM', label: '外包單確認', tableName: 'tblwiposbasis', shortLabel: '確認', functionNo: 'OS CONFIRM', moduleNo: 'WIP' },
+      { id: 'function:WIP:OS RETURN', label: '外包回貨', tableName: 'tblwiposdetail', shortLabel: '回貨', functionNo: 'OS RETURN', moduleNo: 'WIP' },
+      { id: 'function:WIP:OS CONFIRM_ERP_CANCEL', label: '取消外包出貨 ERP', tableName: 'tblwiposbasis', shortLabel: '取消', functionNo: 'OS CONFIRM_ERP_CANCEL', moduleNo: 'WIP' },
+    ],
+  }, {
     id: 'menu:WIP:PACKAGING', label: '包裝與庫房', shortLabel: '庫', children: [
       { id: 'function:WIP:PACKING_MOLINE', label: '包裝作業', tableName: 'tblwipmolinepackl1', shortLabel: '包裝', functionNo: 'PACKING_MOLINE', moduleNo: 'WIP' },
       { id: 'function:WIP:PACKING_MOLINE_INV', label: '在製品庫包裝作業', tableName: 'tblinvpackstate', shortLabel: '庫包', functionNo: 'PACKING_MOLINE_INV', moduleNo: 'WIP' },
@@ -555,6 +573,15 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:8D CLOSE', label: '8D 矯正單結案作業', tableName: 'tblwip8d_release', shortLabel: '結案', functionNo: '8D CLOSE', moduleNo: 'WIP' },
       { id: 'function:WIP:8D QUERY', label: '8D 矯正單查詢', tableName: 'tblwip8dbasis_factory', shortLabel: '查詢', functionNo: '8D QUERY', moduleNo: 'WIP' },
     ],
+  }, {
+    id: 'menu:WIP:EXCEPTION', label: '例外處理', shortLabel: '例外', children: [
+      { id: 'function:WIP:REVERSE LOT', label: '回復處理', tableName: 'tblwipreversehistory', shortLabel: '回復', functionNo: 'REVERSE LOT', moduleNo: 'WIP' },
+      { id: 'function:WIP:DELETE RELEASED LOT', label: '刪除已下線生產批', tableName: 'tblwiplotstate', shortLabel: '刪批', functionNo: 'DELETE RELEASED LOT', moduleNo: 'WIP' },
+      { id: 'function:WIP:DELETE BATCH LOT', label: '批次刪除已下線生產批', tableName: 'tblwiplotstate', shortLabel: '批刪', functionNo: 'DELETE BATCH LOT', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT OP AREA CHANGE', label: '生產批作業區變更', tableName: 'tblwiplotoparea', shortLabel: '作業區', functionNo: 'LOT OP AREA CHANGE', moduleNo: 'WIP' },
+      { id: 'function:WIP:PRODUCT VERSION CHANGE', label: '產品版本變更', tableName: 'tblwiplotbasis', shortLabel: '版本', functionNo: 'PRODUCT VERSION CHANGE', moduleNo: 'WIP' },
+      { id: 'function:WIP:ECN WIZARD', label: 'ECN 設定精靈', tableName: 'tblwipecnbasis', shortLabel: 'ECN', functionNo: 'ECN WIZARD', moduleNo: 'WIP' },
+    ],
   }] },
 ]
 
@@ -574,6 +601,18 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
   'function:WIP:OPERATOR CLOCKOUT': appBasePath + '/WIP/OperatorClockOut',
   'function:WIP:OPERATOR ONLINE': appBasePath + '/WIP/OperatorOnline',
+  'function:WIP:SWR BASIS': appBasePath + '/WIP/SwrBasis',
+  'function:WIP:UNDO DISPATCH': appBasePath + '/WIP/UndoDispatch',
+  'function:WIP:OS CREATE': appBasePath + '/WIP/OutsourceCreate',
+  'function:WIP:OS CONFIRM': appBasePath + '/WIP/OutsourceConfirm',
+  'function:WIP:OS RETURN': appBasePath + '/WIP/OutsourceReturn',
+  'function:WIP:OS CONFIRM_ERP_CANCEL': appBasePath + '/WIP/OutsourceErpCancel',
+  'function:WIP:REVERSE LOT': appBasePath + '/WIP/LotReverse',
+  'function:WIP:DELETE RELEASED LOT': appBasePath + '/WIP/ReleasedLotDelete',
+  'function:WIP:DELETE BATCH LOT': appBasePath + '/WIP/ReleasedLotBatchDelete',
+  'function:WIP:LOT OP AREA CHANGE': appBasePath + '/WIP/LotAreaChange',
+  'function:WIP:PRODUCT VERSION CHANGE': appBasePath + '/WIP/ProductVersionChange',
+  'function:WIP:ECN WIZARD': appBasePath + '/WIP/EcnWizard',
   'function:WIP:LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'function:WIP:LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
@@ -776,6 +815,18 @@ const functionRoutes: Record<string, string> = {
   'OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
   'OPERATOR CLOCKOUT': appBasePath + '/WIP/OperatorClockOut',
   'OPERATOR ONLINE': appBasePath + '/WIP/OperatorOnline',
+  'SWR BASIS': appBasePath + '/WIP/SwrBasis',
+  'UNDO DISPATCH': appBasePath + '/WIP/UndoDispatch',
+  'OS CREATE': appBasePath + '/WIP/OutsourceCreate',
+  'OS CONFIRM': appBasePath + '/WIP/OutsourceConfirm',
+  'OS RETURN': appBasePath + '/WIP/OutsourceReturn',
+  'OS CONFIRM_ERP_CANCEL': appBasePath + '/WIP/OutsourceErpCancel',
+  'REVERSE LOT': appBasePath + '/WIP/LotReverse',
+  'DELETE RELEASED LOT': appBasePath + '/WIP/ReleasedLotDelete',
+  'DELETE BATCH LOT': appBasePath + '/WIP/ReleasedLotBatchDelete',
+  'LOT OP AREA CHANGE': appBasePath + '/WIP/LotAreaChange',
+  'PRODUCT VERSION CHANGE': appBasePath + '/WIP/ProductVersionChange',
+  'ECN WIZARD': appBasePath + '/WIP/EcnWizard',
   'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'LOT SPLIT': appBasePath + '/WIP/LotSplit',
@@ -1006,6 +1057,18 @@ const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'func
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
 const isWipOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKOUT')
 const isWipOperatorOnlinePage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR ONLINE')
+const isWipSwrBasisPage = computed(() => activeMasterKey.value === 'function:WIP:SWR BASIS')
+const isWipUndoDispatchPage = computed(() => activeMasterKey.value === 'function:WIP:UNDO DISPATCH')
+const isWipOutsourceCreatePage = computed(() => activeMasterKey.value === 'function:WIP:OS CREATE')
+const isWipOutsourceConfirmPage = computed(() => activeMasterKey.value === 'function:WIP:OS CONFIRM')
+const isWipOutsourceReturnPage = computed(() => activeMasterKey.value === 'function:WIP:OS RETURN')
+const isWipOutsourceCancelPage = computed(() => activeMasterKey.value === 'function:WIP:OS CONFIRM_ERP_CANCEL')
+const isWipLotReversePage = computed(() => activeMasterKey.value === 'function:WIP:REVERSE LOT')
+const isWipReleasedLotDeletePage = computed(() => activeMasterKey.value === 'function:WIP:DELETE RELEASED LOT')
+const isWipReleasedLotBatchDeletePage = computed(() => activeMasterKey.value === 'function:WIP:DELETE BATCH LOT')
+const isWipLotAreaChangePage = computed(() => activeMasterKey.value === 'function:WIP:LOT OP AREA CHANGE')
+const isWipProductVersionChangePage = computed(() => activeMasterKey.value === 'function:WIP:PRODUCT VERSION CHANGE')
+const isWipEcnWizardPage = computed(() => activeMasterKey.value === 'function:WIP:ECN WIZARD')
 const isWipLotOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKIN')
 const isWipLotOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKOUT')
 const isWipCarrierStatePage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER STATE')
@@ -2720,6 +2783,15 @@ async function signOut(): Promise<void> {
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockOut v-else-if="isWipOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorOnline v-else-if="isWipOperatorOnlinePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipSwrBasis v-else-if="isWipSwrBasisPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipUndoDispatch v-else-if="isWipUndoDispatchPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipOutsourceCreate v-else-if="isWipOutsourceCreatePage || isWipOutsourceConfirmPage || isWipOutsourceReturnPage || isWipOutsourceCancelPage" :key="activeMasterKey" class="framework-content" :development-preview="isDevelopmentPreview" :page-mode="isWipOutsourceConfirmPage ? 'confirm' : isWipOutsourceReturnPage ? 'return' : isWipOutsourceCancelPage ? 'cancel' : undefined" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipLotReverse v-else-if="isWipLotReversePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipReleasedLotDelete v-else-if="isWipReleasedLotDeletePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipReleasedLotBatchDelete v-else-if="isWipReleasedLotBatchDeletePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotAreaChange v-else-if="isWipLotAreaChangePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipProductVersionChange v-else-if="isWipProductVersionChangePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipEcnWizard v-else-if="isWipEcnWizardPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />

@@ -331,6 +331,18 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 - WP104「使用者登入作業（上工）」：[功能規格](modules/WIP/使用者登入作業_上工.md)。依 `frmOperatorClockIn`、`wsUSR`、`wsOP`、`wsWIP_OperatorState` 與 `clsOperatorState` 完成 DEV 模擬驗證、班別日期、OP／Area／Equipment 地點及自動下工提示。DEV 路徑 `/YMES/WIP/OperatorClockIn`。公司端 Oracle 唯讀查得 `TBLWIPOPERATORSTATE`／`TBLWIPOPERATORLOG` source DDL 與 CREATE-only；Live PG schema 待家用端核對。
 - WP105「使用者登出作業（下工）」：[功能規格](modules/WIP/使用者登出作業_下工.md)。依 `frmOperatorClockOut`、`wsUSR`、`wsWIP_OperatorState`、`clsOperatorState` 完成 DEV 假資料批次選取與逐列下工；沿用 WP104 OperatorState／OperatorLog 與 WP305 LotLoginState Oracle references，沒有新增 table/DDL。DEV 路徑 `/YMES/WIP/OperatorClockOut`；Production API 和 live PG schema 交家用端核對。
 - WP106「使用者登入（上工）資訊」：[功能規格](modules/WIP/使用者登入資訊.md)。依 `frmOperatorOnline`、Designer、`wsWIP_OperatorState`/`clsOperatorState` 完成 OP/Area/Equipment 多選並集查詢、七欄 Grid、勾選逐列 SignOut、外部唯讀入口；與 WP104/WP105 共用 DEV State/Log。無新直接表，OperatorState/Log DDL/PG CREATE-only 沿 WP104，LotLoginState 沿 WP305；正式 API 交家用端。
+- WP109「特殊生產需求維護」：[功能規格](modules/WIP/特殊生產需求維護.md)。依 `frmWIPSWRBasis`／Def、`wsWIP`／`clsWIP` 完成七條件、四狀態、14 欄 JOIN Grid、右側按鈕、ADD/EDIT/Copy/Approve/Void 與假附件。公司端唯讀取得 SWR Basis/Detail/Serial 三表 Oracle 原 DDL/index/metadata，交 `database/reference/mestest_wip_wp109_create.sql` PG CREATE-only；正式交易、附件、EventLog、serial lock 與原程式缺陷修正由家用端接手。
+- WP401「外包單開立」見 [功能規格](modules/WIP/外包單開立.md)。Vue DEV 支援主明細、刷入批號、回貨站、增修、刪除和作廢。Oracle OS Basis、OS Detail 和 FutureOS 沿用 WP207／WP201 references。
+- WP402「外包單確認」見 [功能規格](modules/WIP/外包單確認.md)。Vue DEV 共用開立資料，補 FutureOSLog 與 ERP 設定表 Oracle 結構。
+- WP403「外包回貨」見 [功能規格](modules/WIP/外包回貨.md)。Vue DEV 支援分批回貨及良品／報廢／其他量，補兩張 Oracle 表的 DDL。
+- WP404「取消外包出貨 ERP」見 [功能規格](modules/WIP/取消外包出貨ERP.md)。DEV 可將合格的臨時外包單轉回未確認；正式 ERP／Reverse 分支已交接。
+- WP901「回復處理」見 [功能規格](modules/WIP/回復處理.md)。DEV 已交付歷程與回復守門，三張補表以 Oracle metadata 整理 CREATE-only；正式跨批回放及 SAP 由家用端接續。
+- WP902「刪除已下線生產批」見 [功能規格](modules/WIP/刪除已下線生產批.md)。DEV 完成雙 Grid、回復與刪除守門；五張補表的 Oracle metadata、CREATE-only 和正式交易已交接。
+- WP903「批次刪除已下線生產批」見 [功能規格](modules/WIP/批次刪除已下線生產批.md)。DEV 已交付批次過濾、勾選與部分成功結果，正式交易重用 WP902。
+- WP904「生產批作業區變更」見 [功能規格](modules/WIP/生產批作業區變更.md)。DEV 已交付流程節點／區域 override，正式整批替換與 LotState 交易使用既有表。
+- WP905「產品版本變更」見 [功能規格](modules/WIP/產品版本變更.md)。DEV 已交付基礎批版本查詢與變更，正式 API 需一併提交對應回復歷程。
+- WP906「ECN 設定精靈」見 [功能規格](modules/WIP/ECN設定精靈.md)。DEV 已交付六步與受影響批選擇，正式建立交易沿用 WP201 三張表。
+- WP112「工單撤派工」：[功能規格](modules/WIP/工單撤派工.md)。依 THEIL Form/Service/Core/SAP 流程完成兩模式、MOState 3/6 lookup、13 欄 Grid、逐批假 Confirm。公司端唯讀補 MaterialLot、SYSSerialCreateMax、MO OS、ZPPT0025A/B/C1 六表原 DDL/index/metadata，PG CREATE-only 在 `database/reference/mestest_wip_wp112_create.sql`；原實際寫 THSAP DB link，正式 SAP/Log/庫房交易及部分成功處理由家用端接手。
 - 「批次作業員上工（Lot Operator Clockin）」：[功能規格](modules/WIP/批次作業員上工.md)。依 `frmLotOperatorClockIn`、`wsWIP_OperatorState` 與 `clsOperatorState` 完成 DEV Lot 查詢篩選、全選、多 mode location 彙整及批次上工；重用 WP104/WP305 Oracle references，無新增 table/DDL。路徑 `/YMES/WIP/LotOperatorClockIn`。Form 原始碼未含數值 FunctionKey，fallback FunctionNo 尚待實際 menu metadata 確認。
 - 「批次作業員下工（Lot Operator ClockOut）」：[功能規格](modules/WIP/批次作業員下工.md)。依 `frmLotOperatorClockOut`、`wsWIP_OperatorState` 與 `clsOperatorState` 完成 DEV 查詢、UserNo+LoginPlace 同步勾選及批次假下工；重用 WP104/WP305 references，沒有新 table/DDL。路徑 `/YMES/WIP/LotOperatorClockOut`；FunctionKey/FunctionNo 尚待實際 menu metadata 核實。
 - 「作業員登入／登出（OP／Area）」：[功能規格](modules/WIP/作業員登入登出_OPArea.md)。依 `frmOperatorLogin`、`wsUSR`、`clsWorkTime` 完成 Employee/Shift 讀取、OP／Area 選擇、班別 WorkDay、LoginSerial 登入與工時登出 DEV。路徑 `/YMES/WIP/OperatorLogin`。MESTEST 所有可見 Owner/Synonym 都找不到 Core 使用的兩張 USR Login 表，source DDL 尚缺；不得推測 CREATE。

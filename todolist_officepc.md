@@ -1,5 +1,38 @@
 # 公司端待辦
 
+## 桌機進度（2026-11-20）
+
+- [x] 桌機乾淨工作樹 fast-forward 至筆電交接 `d87c731`。依 Form／Designer、Service、Core 完成 Vue DEV 主明細、參考批／刷入批號、回貨站、增修、刪除與作廢。
+- [x] [WP401 規格](docs/modules/WIP/外包單開立.md) 交付交易和 API 契約；三張直接表均有 Oracle DDL／CREATE-only。
+- [x] [WP402 外包單確認](docs/modules/WIP/外包單確認.md) 已依 Form／Service／Core 做 Vue DEV 單筆確認及共用單據，交付 FutureOSLog 與 ERP 設定表結構及正式 ERP API 規格。
+- [x] [WP403 外包回貨](docs/modules/WIP/外包回貨.md) 已依兩份 Form、Service 與 Core 做 DEV 分批回貨，補兩張 Oracle 直接表及 CREATE-only。
+- [x] [WP404 取消外包出貨 ERP](docs/modules/WIP/取消外包出貨ERP.md) 已完成公司端 DEV 守門與臨時外包模擬回復，正式 ERP／Reverse 交家用端。
+- [x] [WP901 回復處理](docs/modules/WIP/回復處理.md) 完成 Vue DEV 歷程、回復守門和 API/CREATE-only 交接。Oracle 原始 DDL 回 ORA-03135，三張補表以唯讀 metadata 核對。
+- [x] [WP902 刪除已下線生產批](docs/modules/WIP/刪除已下線生產批.md) 完成雙 Grid、刪除確認、DEV 守門與五張表的 metadata／CREATE-only。
+- [x] [WP903 批次刪除已下線生產批](docs/modules/WIP/批次刪除已下線生產批.md) 完成 DEV 過濾、全選、包裝預檢與逐筆結果。表結構和交易沿用 WP902。
+- [x] [WP904 生產批作業區變更](docs/modules/WIP/生產批作業區變更.md) 完成 DEV 選批、主子流程、變更與清除。沿用現有 DDL／CREATE-only 參考並交接整批替換交易。
+- [x] [WP905 產品版本變更](docs/modules/WIP/產品版本變更.md) 完成 DEV 產品與舊版查詢、基礎批選取、包裝守門與版本變更。正式交易沿用既有表。
+- [x] [WP906 ECN 設定精靈](docs/modules/WIP/ECN設定精靈.md) 完成 Vue DEV 六步、條件及受影響批。三張正式表沿用 WP201。
+- [ ] 依選單清冊接 WP907 生產批數量調整。
+
+## 2026-11-20 桌機再接手：從 WP401 開始
+
+- [x] 筆電接回桌機原工作後，WP509、WP106、WP109、WP112 的 Vue DEV、規格、缺表 Oracle 唯讀 DDL/metadata、PG CREATE-only 與家用端 TODO 已分段推 GitHub；WP112 程式提交 `ba20121` 已向 remote `main` 核對，交接詳 [桌機接手點](docs/CODEX_HANDOFF_DESKTOP_20261120.md)。本交接文件另有後續提交，桌機以 pull 後最新 main 為準。
+- [x] 桌機檢查乾淨工作樹並 fast-forward 至筆電交接點，讀交接與兩端 TODO。WP401 起依清冊核對 Form、Designer、Service、Core，進度見本頁最上方。
+- [ ] 保留公司／家用分工：桌機不連 YMES PostgreSQL、不做正式 API/migration/部署。WP112 真 SAP/Log/Inventory provider 未交付，家用端需按 [WP112 規格](docs/modules/WIP/工單撤派工.md) 接正式交易；公司端不把 DEV 假狀態視為正式完成。先前 vendor DLL 問題已取消，不接該項。
+
+## 筆電交接紀錄：WP112 UNDO DISPATCH（2026-11-20）
+
+- [x] 靜態核對 THEIL `frmUndoDispatch_THEIL_BU1`／`wsWIP.LoadUndoDispatch`／`exeUndoDispatch`／`clsLot.LoadUndoDispatch`／`clsSAP.GetSAP_ZPPT0025x_Data`。Vue DEV `/YMES/WIP/UndoDispatch` 有兩模式、MO lookup、13 欄 Grid、全選/取消全選、逐批假 Confirm；規格 [工單撤派工](docs/modules/WIP/工單撤派工.md) 明列 SAP/Inventory/Log 不在 DEV 實作。
+- [x] PowerShell 5.1 + 受保護 MESTEST profile 唯讀取得六張缺表的原始 DDL/index/metadata：MaterialLot、SAP 計數器、MO OS、ZPPT0025A/B/C1；PG CREATE-only 在 `database/reference/mestest_wip_wp112_create.sql`。MESTEST 本地 ZPPT 不能代替實際 `THSAP.*@SAP_DBLINK` 的契約，家用端另核。未查業務列、未寫 Oracle、未連 YMES PostgreSQL、未 build/test/browser。
+- [ ] 照 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 接續未完成 WIP 功能；公司端只做原碼／Oracle 唯讀／Vue DEV／規格/家用交接，避免覆蓋家用端正式變更。
+
+## 公司端最新進度：WP109 SWR BASIS（2026-11-20）
+
+- [x] 已依 `frmWIPSWRBasis`／Def、`wsWIP`、`clsWIP` 靜態核對七查詢條件、四狀態、14 欄 JOIN Grid、ADD/EDIT/Copy、Approve/Void、附件與流水號；Vue DEV 路徑 `/YMES/WIP/SwrBasis`，規格 [特殊生產需求維護](docs/modules/WIP/特殊生產需求維護.md)。
+- [x] 公司 PowerShell 5.1 + 受保護 Oracle profile 唯讀取得 `TBLWIPSWRBASIS`、`TBLWIPSWRDETAIL`、`TBLSYSSERIALNO` 原始 DDL/index/metadata；交 PostgreSQL CREATE-only `database/reference/mestest_wip_wp109_create.sql`。未查業務列、未寫 Oracle、未連 YMES PostgreSQL、未執行 build/test/browser；正式 API/PG/驗收交家用端。
+- [ ] 下一項依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 查未完成 WIP 功能；先看 Form/Service/Core，缺直接表才用公司受保護 Oracle 連線唯讀查 DDL。持續補 DEV UI、規格與 `todolist_homepc.md`，正常推送 GitHub main，勿覆蓋家用端變更。
+
 ## 家用端最新整合進度：Web224 C1（2026-11-20；限定GUI完成／main待同步）
 
 Office最新df10bd08的載具拆批／併批已正常合併至3f99c172，保留雙方來源。Web224來源f9bb9566…完整建置exit0、封裝／部署e2df5e3d…與公開HTTP七項已通過；Root封存限定GUI73通過檢查點／73events／0observations，含自行Demo登入、18native＋1direct、新兩頁guard／19KD／無假metadata／單一主標題／Close／重進／direct fresh、WP307／SD108空lookup界線及ET104真CRUD。2筆全GUI建刪、SQL fixture writes0、獨立精準B/F皆0，fresh reload21收合選單／空首頁／logs[]。C1 code bacf0ee5已完成376綁定399f648b…及featurebranch正常推送／遠端讀回，main仍pending。API6d／151份與DB0058未動，所有WIP正式providers仍由家用端接手。

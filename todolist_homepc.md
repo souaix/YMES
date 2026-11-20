@@ -1,5 +1,37 @@
 # 家裡電腦接手清單
 
+## 桌機交付 WP401–WP404、WP901–WP906（2026-11-20）
+
+- [ ] 讀 [WP401 規格](docs/modules/WIP/外包單開立.md)，比對既有 OS Basis、OS Detail、Future OS references 與 live schema。完成正式 WP401 權限、參考批 lookup、取號及跨表原子增修／刪除／作廢。
+- [ ] 讀 [WP402 規格](docs/modules/WIP/外包單確認.md)，比對 FutureOSLog 和 ERP settings 結構，實作出貨確認、Lot/流程/Reverse 原子更新及可復原的 ERP 請購與回寫。
+- [ ] 讀 [WP403 規格](docs/modules/WIP/外包回貨.md)，比對回貨元件及成本資源 DDL，完成批/元件量、庫房、ERP 回貨與原子交易。
+- [ ] 讀 [WP404 規格](docs/modules/WIP/取消外包出貨ERP.md)，使用既有 ReverseHistory、外包與 ERP references，實作跨 ERP 和 MES 可對帳的取消出貨。
+- [ ] 讀 [WP901 規格](docs/modules/WIP/回復處理.md)，比對三張補表與既有 LotState／ReverseHistory，實作權限、LotStamp／CreateDate、防重及 SAP 對帳。
+- [ ] 讀 [WP902 規格](docs/modules/WIP/刪除已下線生產批.md)，比對五張補表，交付統一包裝守門、先回復後刪除、工單、物料／庫位及載具交易。
+- [ ] 讀 [WP903 規格](docs/modules/WIP/批次刪除已下線生產批.md)，重用 WP902 單筆交易並提供批次預檢、逐筆版本重查和部分成功回應。
+- [ ] 讀 [WP904 規格](docs/modules/WIP/生產批作業區變更.md)，比對現有 batch override／流程／區域 schema，做有身分複核與版本保護的整批變更，排隊時按 Core 規則更新現況區及廠別。
+- [ ] 讀 [WP905 規格](docs/modules/WIP/產品版本變更.md)，將目前版本、基礎批、包裝守門與回復歷程提交做成可稽核交易。
+- [ ] 讀 [WP906 規格](docs/modules/WIP/ECN設定精靈.md)，完成 Setup 特性／批次預覽及 ECN 三表交易，驗證有效期、條件與 IssueState。
+
+## 筆電交付：WP112 工單撤派工（2026-11-20）
+
+公司端完成 `/YMES/WIP/UndoDispatch` Vue DEV 示意與 [WP112 原始碼規格](docs/modules/WIP/工單撤派工.md)；未連 YMES PostgreSQL 或 SAP、未執行正式 API/部署。這個功能有外部 SAP DB link 與 Lot/Inventory 副作用，**不能只做狀態 UPDATE 就標示完成**。
+
+- [ ] Pull 最新 `main`，先核 YMES PostgreSQL live schema/history/權限。六張 MESTEST 直接表 `TBLWIPCONT_MATERIALLOT`、`TBLSYSSERIALCREATEMAX`、`XX_TBLOEMO_OS_BU1`、`ZPPT0025A/B/C1` 的原始 DDL/index/metadata 在 `database/reference/mestest_wip_wp112_*`，PG CREATE-only 在 `mestest_wip_wp112_create.sql`。MaterialLot 無 PK、只有兩個非唯一 index；`VARCHAR2(n CHAR)` 按 source DDL 字數，勿用 DATA_LENGTH 位元組數。已存在表不重建，缺項才 forward migration；本地 MESTEST ZPPT 不等於外部 THSAP 契約。
+- [ ] 查詢 API：授權 MOState 3/6 的 MO lookup；DataType1 只取 LotState.Status3，DataType2 只取 Status99+Ex_LotState1 Y 且拒已關結 MO。LotBasis/MO/Product/OP/ERF 的 JOIN 可能重複 Lot，前後端以 LotNo 去重；參數化查詢、分頁與可見範圍。重用 WP101/WP201/WP501/Area/SYS/主檔已有表，不重複 CREATE。
+- [ ] Confirm API：ProgramType3/4 逐 Lot 重查鎖定狀態、MO 關結與 `SysInfo/LastEndTime`；讀 `SAP_UPLOAD='Y'` Report、MO SAP_WERKS、OS VORNR、物料批 SAP_CHARG。按 Core 產生 `THSAP.ZPPT0025A/B/C1`、TransactionLog/EventLog，ProgramType4 分配 `SAP_RMZHL` 新計數器，3 沿用舊值；接著 3→LotState99/ExY，4→LotState12/ExNULL 並依 AreaInventory 插入 INVWIP_Scrap。若零 Report 列，須明定是否允許，不能無聲宣稱 SAP 完成。
+- [ ] 外部 THSAP schema／DB link／重試補償與交易 Log provider 須驗證。若 provider 未具備，正式 POST 明確回未支援，不能只寫 PG 並回成功。逐批結果含已成功/失敗/未處理、跨系統識別、冪等鍵和並發防重；家用端完成 API/PG/正式 UI/建置/驗收/部署。
+
+## 最新公司端交付：WP109 特殊生產需求維護（2026-11-20）
+
+公司端新增 `/YMES/WIP/SwrBasis` Vue DEV 假資料頁；原碼核對及限制見 [WP109 規格](docs/modules/WIP/特殊生產需求維護.md)。公司端沒有連 YMES PostgreSQL、部署或建立正式 API。
+
+- [ ] Pull 最新 `main`，先查 PostgreSQL live schema/migration history/資料/權限。Oracle MESTEST **唯讀原始 DDL**：`database/reference/mestest_wip_wp109_{basis,detail,serial}_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt`；PostgreSQL 三表空表 CREATE-only：`database/reference/mestest_wip_wp109_create.sql`。主表 15 欄/SWRNO PK，明細 2 欄/(SWRNO,LOTNO) PK，共用流水號 2 欄/FUNCTIONNAME PK；均無 FK/trigger。已存在表只核差異，確實缺項才做 forward migration；不可直接認定 CREATE-only 已套用，也不要重建共用流水號表。
+- [ ] 實作登入/`WP109` ACL、分頁/上限 `LoadSWRBasis` 等效 GET（七個勾選條件，LotNo/OPNo 逗號多值改成驗證後陣列，狀態 0/1/2/99）、SWR 明細、Customer/OP/Device/MO/Lot 安全 lookup。JOIN 導致同單多列，讀取/批次命令以 SWRNo 去重；不接受原 Core SQL 字串。
+- [ ] Add/Copy 在交易與 row lock 下配置 `SWRyyMMdd###`，一起寫流水號、主表及 Lot 明細；Edit 鎖主表、限制 status0，替換 Lot 明細並更新所有欄/附件。每個 BaseLotNo 重查屬於 CustomerNo；Start/End 同填且 End>Start，依 Oracle 原長度驗證。Client 預覽號不得當唯一性保證；每日 999 後的策略需明確。
+- [ ] Approve 只准 0→2、重驗時間；Void 對 2→99、0/99→刪主明細，狀態 1 回明確衝突（原 Service 誤回 success）；依 `InputAbortLog` 要求原因並寫 SYS EventLog。逐筆批次要回每張成功/失敗/未處理，保留原本中途停止語義但防 JOIN 重複；狀態、ACL、actor、版本全部在 server 端重驗。
+- [ ] 附件 API 從 `ATTACHFILE BLOB` 完整上傳/下載，檢查大小與檔名、不要露 `ATTACHFILEPATH` 舊客戶端路徑。WinForms `fs.Read(...Length-1)` 少讀一 byte，正式版須修正；`HaveAttachFile` 目前用路徑算 Y/N，要兼容 BLOB/路徑不一致舊列。正式 UI 接 API，DEV localStorage 只供 preview；API/PG/build/browser/部署和驗收由家用端完成。
+
 ## 最新：F1 Web241四8D正式隔離與限定驗收完成（2026-11-20；status／metadata待Root）
 
 HOME仍負責PG復刻／API／PPK／部署，Office負責原生Oracle唯讀source與UI。Root已完成schema0060 metadata SHA `7f4c5ae33a72c9dd3b9599840523d5e89f600ca61998990b408c399ddf350e47`，schema statusY521／394來源綁定與正常feature同步已完成；下方舊pending均為歷史快照。兩表已present，禁止再absent-only或回不相容8db。
