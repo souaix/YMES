@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 2026-11-20 桌機再接手：從 WP401 開始
+
+- [x] 筆電接回桌機原工作後，WP509、WP106、WP109、WP112 的 Vue DEV、規格、缺表 Oracle 唯讀 DDL/metadata、PG CREATE-only 與家用端 TODO 已分段推 GitHub；WP112 程式提交 `ba20121` 已向 remote `main` 核對，交接詳 [桌機接手點](docs/CODEX_HANDOFF_DESKTOP_20261120.md)。本交接文件另有後續提交，桌機以 pull 後最新 main 為準。
+- [ ] 在桌機 `git fetch`/比對工作樹後 `git pull --ff-only origin main`，讀最新交接與兩端 TODO。下一個無 Vue 路由的 WIP 選單功能為 **WP401 `OS CREATE` 外包單開立**；筆電 source `D:\iMES\CSiMES\STD\MESWin\WIP\WP_OS\frmWIPOS.vb`、`frmWIPOSBasisDef.vb`，桌機先核本地路徑，再追 Service/Core。完成公司端 DEV UI/邏輯、規格、缺表 Oracle 唯讀 DDL/metadata、PG CREATE-only/API handoff，正常 push；後續依清冊 WP402/403/404、WP901–916 等缺口逐項接續。
+- [ ] 保留公司／家用分工：桌機不連 YMES PostgreSQL、不做正式 API/migration/部署。WP112 真 SAP/Log/Inventory provider 未交付，家用端需按 [WP112 規格](docs/modules/WIP/工單撤派工.md) 接正式交易；公司端不把 DEV 假狀態視為正式完成。先前 vendor DLL 問題已取消，不接該項。
+
 ## 公司端最新進度：WP112 UNDO DISPATCH（2026-11-20）
 
 - [x] 靜態核對 THEIL `frmUndoDispatch_THEIL_BU1`／`wsWIP.LoadUndoDispatch`／`exeUndoDispatch`／`clsLot.LoadUndoDispatch`／`clsSAP.GetSAP_ZPPT0025x_Data`。Vue DEV `/YMES/WIP/UndoDispatch` 有兩模式、MO lookup、13 欄 Grid、全選/取消全選、逐批假 Confirm；規格 [工單撤派工](docs/modules/WIP/工單撤派工.md) 明列 SAP/Inventory/Log 不在 DEV 實作。

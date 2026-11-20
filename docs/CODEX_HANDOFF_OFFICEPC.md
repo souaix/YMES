@@ -2,10 +2,12 @@
 
 更新：2026-11-20。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
+> **最新桌機再接手（2026-11-20）**：先讀 [本次桌機交接點](CODEX_HANDOFF_DESKTOP_20261120.md)。筆電接回後的 WP509、WP106、WP109、WP112 已推 GitHub；下一個未有 Vue 路由的 WIP 功能是 WP401 `OS CREATE`。本檔早期「下一功能」文字保留歷史，不再當目前進度。
+
 ## 接手方式
 
 1. 在桌電開啟同一個 GitHub repository `souaix/YMES`，執行 `git pull origin main`。
-2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 及目前的 [WP601 包裝作業規格](modules/WIP/包裝作業.md)。
+2. 先讀 [本次桌機交接點](CODEX_HANDOFF_DESKTOP_20261120.md)、本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md`，再讀當前要做的 WP401 原始碼。
 3. 本機 Codex 使用 YMES repo；MES WinForms 原始碼在公司筆電 `D:\iMES\CSiMES`，桌電可能是另一個路徑。若桌電有既有 MES checkout，先核對路徑；不可用 UI 截圖代替 Form/Designer/Service/Core 原始碼。原始碼缺少時記錄具體缺檔，先做不依賴它的工作。
 4. 若在桌電打開同一個 Codex 對話，thread 對話與 Goal 脈絡仍在；若另開新對話，把本檔及 TODO 當成接手上下文，不要假設新 thread 自動有舊 Goal 狀態。
 
