@@ -1,5 +1,18 @@
 # 家裡電腦接手清單
 
+## 最新：F1 Web241四8D正式隔離與限定驗收完成（2026-11-20；status／metadata待Root）
+
+HOME仍負責PG復刻／API／PPK／部署，Office負責原生Oracle唯讀source與UI。Root已完成schema0060 metadata SHA `7f4c5ae33a72c9dd3b9599840523d5e89f600ca61998990b408c399ddf350e47`，schema statusY521／394來源綁定與正常feature同步已完成；下方舊pending均為歷史快照。兩表已present，禁止再absent-only或回不相容8db。
+
+- [x] F1實Web241 `bd641471…`／來源canonical `4bbbf534…` 已完整build／package與正式部署，API155 compat466／DB0060不變。新WP801–804與ERF正式guard、四原生deep reload、Close／重進／KD/sidebar及限定既有主檔smoke已真app-browser驗收。
+- [x] 本批50 raw／46有效＝43GUI＋3nonGUI（初始SQL／最終SQL／runtime），4工具false保留並復驗；Taker `GF1T-1120A` 全GUI建刪、獨立3scope0、SQLfixture/cleanup0，正常TLS7項／runtimePASS。沒有重新宣稱舊28頁全數驗收，正式8D/WIP provider仍pending。
+- [x] CodeX `70722f89330555de98bc2d01030c58206eea5236` 真398＝SQL2＋API155＋Web241 binding PASS（`576076bc…`），正常推送feature並直接讀回同值。
+- [ ] Root提交本輪純文件statusY、再驗398／正常feature推送與直接讀回；最後按真sealed GUI＋readback原子收尾F1 metadata。當前7f4c保前一Web5ff歷史，不借runtimebd64改原proof。
+- [ ] 繼續ET106真正地址／報關writer；API161／Web242隔離候選仍prepared未發行。QA後Office main新增至d96b80d共5提交另輪整合，不能直接塞入已freeze F1或冒稱main同步。
+
+本輪實證與限制：[F1 QA](docs/qa/20261120-office-wip-8d-f1.md)。原生CREATE、公司交接、既有API／Web／schema／GUI全部歷史原文保留。
+
+
 ## 最新：ET106 原生兩表0060與present相容已驗（2026-11-20；writer／Git收尾待辦）
 
 HOME PC維持PostgreSQL復刻／API／PPK SSH／發行；Office只讀原生Oracle與開發UI。Root已在資料庫 `ymes`／`"YMES"` 真COMMIT0060，Address22＋Declaration13、source PK1／index1／defaults5／row-array types4與本表CRUD，父catalog／ACL／roles／schema保持；API155 actual466、Web237 actual5ff不變。下面舊0059／absent／prepared描述是當時歷史，不是現在DB狀態。
