@@ -15,17 +15,24 @@ interface UserOption { userNo: string; userName: string; departmentNo?: string }
 interface Operator { userNo: string; userName?: string; description: string | null; creator?: string | null; createDate?: string | null }
 interface LookupOption { value: string; label: string }
 interface OperatorPayload { assigned: Operator[]; available: UserOption[] }
+interface WipAreaOperatorState {
+  areaNo: string; departmentNo: string; shiftNo: string; userNo: string; loginComment: string; loginTime: string; exceptionTime: number
+}
+interface WipAreaOperatorLog extends WipAreaOperatorState { logoutComment: string; logoutTime: string }
 type ShiftFormMode = 'add' | 'edit' | 'copy'
 type InfoMode = 'state' | 'history' | null
 
-const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; enterpriseNo?: string; developmentPreview?: boolean; workAreaMode?: boolean }>(), { developmentPreview: false, workAreaMode: false, enterpriseNo: '' })
 const emit = defineEmits<{ close: [] }>()
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const mockMode = computed(() => import.meta.env.DEV && props.developmentPreview)
+const workAreaActionsVisible = computed(() => !props.workAreaMode || mockMode.value || props.enterpriseNo.trim().toUpperCase() === 'IMESTECH')
 const areasKey = 'ymes-dev-mock:smd-area-show:areas:v1'
 const layoutsKey = 'ymes-dev-mock:smd-area-show:layouts:v1'
 const shiftsKey = 'ymes-dev-mock:smd-area-show:shifts:v1'
 const operatorsKey = 'ymes-dev-mock:smd-area-show:operators:v1'
+const workAreaStateKey = 'ymes-dev-mock:wip-area-operator-state:v1'
+const workAreaLogKey = 'ymes-dev-mock:wip-area-operator-log:v1'
 const zoomLevels = [100, 150, 75, 50]
 const seedAreas: AreaRow[] = [
   { areaNo: 'DEV-BASE', areaName: '開發用基底區域', departmentNo: 'DEV-DEPT', issueState: 2, dataStamp: 2 },
@@ -52,6 +59,10 @@ const seedOperators: Record<string, Operator[]> = {
   'DEV-OP-01|DEV-DEPT|DAY': [{ userNo: 'DEV001', description: null, creator: 'DEV001' }],
   'DEV-OP-01|DEV-DEPT|NIGHT': [{ userNo: 'DEV002', description: null, creator: 'DEV001' }],
 }
+const seedWorkAreaStates: WipAreaOperatorState[] = []
+const seedWorkAreaLogs: WipAreaOperatorLog[] = [
+  { areaNo: 'DEV-OP-01', departmentNo: 'DEV-DEPT', shiftNo: 'DAY', userNo: 'DEV003', loginComment: '開發用歷程', loginTime: '2026-11-19T08:00:00+08:00', logoutComment: '交班', logoutTime: '2026-11-19T17:00:00+08:00', exceptionTime: 10 },
+]
 
 const areas = ref<AreaRow[]>([])
 const activeArea = ref<AreaRow | null>(null)
@@ -59,6 +70,26 @@ const shiftArea = ref<AreaRow | null>(null)
 const nodes = ref<LayoutNode[]>([])
 const zoom = ref(100)
 const gridVisible = ref(true)
+const gridSettingsOpen = ref(false)
+const gridSettingsError = ref('')
+const gridSettings = ref({ draw: true, snap: true, color: '#e9e7e2', style: 'Lines' as 'Pixels' | 'Lines' | 'DottedLines', sizeX: 20, sizeY: 20 })
+const gridSettingsDraft = ref({ ...gridSettings.value })
+const canvasGridVisible = computed(() => props.workAreaMode ? gridSettings.value.draw : gridVisible.value)
+const canvasGridStyle = computed<Record<string, string>>(() => {
+  if (!props.workAreaMode || !gridSettings.value.draw) return {}
+  const { color, style, sizeX, sizeY } = gridSettings.value
+  const backgroundImage = style === 'Pixels'
+    ? `radial-gradient(${color} 1px, transparent 1px)`
+    : style === 'DottedLines'
+      ? `repeating-linear-gradient(0deg, ${color} 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, ${color} 0 1px, transparent 1px 3px)`
+      : `linear-gradient(${color} 1px, transparent 1px), linear-gradient(90deg, ${color} 1px, transparent 1px)`
+  const backgroundSize = style === 'Pixels'
+    ? `${sizeX}px ${sizeY}px`
+    : style === 'DottedLines'
+      ? `1px ${sizeY}px, ${sizeX}px 1px`
+      : `${sizeX}px ${sizeY}px`
+  return { backgroundImage, backgroundSize }
+})
 const loading = ref(false)
 const errorMessage = ref('')
 const areaPickerOpen = ref(false)
@@ -67,6 +98,21 @@ const contextMenu = ref<{ x: number; y: number; node: LayoutNode } | null>(null)
 const infoMode = ref<InfoMode>(null)
 const infoNode = ref<LayoutNode | null>(null)
 const infoRows = ref<Record<string, string>[]>([])
+const infoSourceRows = ref<Record<string, string>[]>([])
+const infoBusy = ref(false)
+const infoDateTab = ref<'filter' | 'dateFilter'>('filter')
+const infoFilter = ref({ areaNo: '', departmentNo: '', shiftEnabled: false, shiftNo: '', userEnabled: false, userNo: '', startEnabled: false, startDate: '', endEnabled: false, endDate: '', loginStartEnabled: false, loginStartDate: '', loginEndEnabled: false, loginEndDate: '', logoutStartEnabled: false, logoutStartDate: '', logoutEndEnabled: false, logoutEndDate: '', exceptionEnabled: false, exceptionTime: 0 })
+const infoLookupKind = ref<'shift' | 'user' | null>(null)
+const infoLookupRows = ref<LookupOption[]>([])
+const infoLookupBusy = ref(false)
+const infoLookupSearch = ref('')
+const workAreaDialogOpen = ref(false)
+const workAreaBusy = ref(false)
+const workAreaError = ref('')
+const workAreaVerified = ref(false)
+const workAreaShiftOptions = ref<string[]>([])
+const workAreaForm = ref({ areaNo: '', areaName: '', departmentNo: '', shiftNo: '', userNo: '', comment: '' })
+const workAreaState = ref<WipAreaOperatorState[]>([])
 
 const shiftOpen = ref(false)
 const shiftBusy = ref(false)
@@ -87,6 +133,13 @@ const shiftOriginal = ref<AreaShift | null>(null)
 const shiftAudit = ref({ creator: '', createDate: '', reviser: '', reviseDate: '' })
 const shiftFormError = ref('')
 const areaDepartmentNo = computed(() => shiftArea.value?.departmentNo ?? '')
+const infoColumns = computed(() => props.workAreaMode
+  ? infoMode.value === 'history'
+    ? ['AreaNo', 'DepartmentNo', 'ShiftNo', 'UserNo', 'LoginTime', 'LogoutTime', 'ExceptionTime', 'LoginComment', 'LogoutComment']
+    : ['AreaNo', 'DepartmentNo', 'ShiftNo', 'UserNo', 'LoginComment', 'LoginTime']
+  : Object.keys(infoRows.value[0] ?? {}))
+const workAreaCurrentUser = computed(() => workAreaState.value.find(row => row.userNo.toUpperCase() === workAreaForm.value.userNo.trim().toUpperCase()) ?? null)
+const workAreaCanLogout = computed(() => workAreaCurrentUser.value?.areaNo === workAreaForm.value.areaNo)
 const visibleAreas = computed(() => areas.value.filter(row => !areaSearch.value.trim() ||
   row.areaNo.toLocaleLowerCase().includes(areaSearch.value.trim().toLocaleLowerCase()) ||
   row.areaName.toLocaleLowerCase().includes(areaSearch.value.trim().toLocaleLowerCase())))
@@ -112,7 +165,7 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
   if (response.status === 401) { window.location.assign(appBase + '/'); throw new Error('登入狀態已逾期，請重新登入。') }
   if (!response.ok) {
     const problem = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
-    if (response.status === 404) throw new Error('區域配置或班別 API 尚未建立；請依 todolist_homepc.md 完成 SMD SD108。')
+    if (response.status === 404) throw new Error(props.workAreaMode && path.includes('/api/wip/areas/') ? 'WP307 區域作業 API 尚未建立；請依 todolist_homepc.md 完成 WIP WP307。' : '區域配置或班別 API 尚未建立；請依 todolist_homepc.md 完成 SMD SD108。')
     throw new Error(problem?.detail || problem?.message || problem?.title || ('API 回應錯誤 (' + response.status + ')。'))
   }
   if (response.status === 204) return undefined as T
@@ -137,6 +190,17 @@ function nodeShape(node: LayoutNode): string {
 function nodeClass(node: LayoutNode): string { return 'node-' + node.objectType }
 function areaNode(node: LayoutNode): boolean { return node.objectType === 0 }
 function openAreaPicker(): void { areaPickerOpen.value = true; areaSearch.value = '' }
+function openGridProperties(): void { gridSettingsDraft.value = { ...gridSettings.value }; gridSettingsError.value = ''; gridSettingsOpen.value = true }
+function saveGridProperties(): void {
+  const { sizeX, sizeY } = gridSettingsDraft.value
+  if (!Number.isInteger(sizeX) || !Number.isInteger(sizeY) || sizeX < 1 || sizeY < 1 || sizeX > 500 || sizeY > 500) {
+    gridSettingsError.value = 'Grid Size Width/Height 必須為 1 至 500 的整數。'
+    return
+  }
+  gridSettingsError.value = ''
+  gridSettings.value = { ...gridSettingsDraft.value }
+  gridSettingsOpen.value = false
+}
 async function loadBaseAreas(): Promise<void> {
   loading.value = true; errorMessage.value = ''
   try {
@@ -162,7 +226,7 @@ async function chooseArea(row: AreaRow): Promise<void> {
   finally { loading.value = false }
 }
 function showContext(event: MouseEvent, node: LayoutNode): void {
-  if (!areaNode(node)) return
+  if (!areaNode(node) || !workAreaActionsVisible.value) return
   contextMenu.value = { x: event.clientX, y: event.clientY, node }
 }
 function openShiftFor(node: LayoutNode): void {
@@ -340,15 +404,268 @@ async function saveOperators(): Promise<void> {
 }
 async function openInfo(mode: Exclude<InfoMode, null>, node: LayoutNode): Promise<void> {
   contextMenu.value = null; infoMode.value = mode; infoNode.value = node; infoRows.value = []
+  infoSourceRows.value = []
+  infoDateTab.value = 'filter'
+  infoFilter.value = { areaNo: node.objectNo, departmentNo: activeArea.value?.departmentNo ?? '', shiftEnabled: false, shiftNo: '', userEnabled: false, userNo: '', startEnabled: false, startDate: '', endEnabled: false, endDate: '', loginStartEnabled: false, loginStartDate: '', loginEndEnabled: false, loginEndDate: '', logoutStartEnabled: false, logoutStartDate: '', logoutEndEnabled: false, logoutEndDate: '', exceptionEnabled: false, exceptionTime: 0 }
   if (mockMode.value) {
+    if (props.workAreaMode) {
+      if (mode === 'state') {
+        workAreaState.value = readStorage<WipAreaOperatorState[]>(workAreaStateKey, seedWorkAreaStates)
+        infoSourceRows.value = workAreaState.value.filter(row => row.areaNo === node.objectNo).map(row => ({
+          AreaNo: row.areaNo, DepartmentNo: row.departmentNo, ShiftNo: row.shiftNo, UserNo: row.userNo,
+          LoginComment: row.loginComment, LoginTime: formatDate(row.loginTime),
+        }))
+      } else {
+        infoSourceRows.value = readStorage<WipAreaOperatorLog[]>(workAreaLogKey, seedWorkAreaLogs).filter(row => row.areaNo === node.objectNo).map(row => ({
+          AreaNo: row.areaNo, DepartmentNo: row.departmentNo, ShiftNo: row.shiftNo, UserNo: row.userNo,
+          LoginTime: formatDate(row.loginTime), LogoutTime: formatDate(row.logoutTime),
+          ExceptionTime: String(row.exceptionTime), LoginComment: row.loginComment, LogoutComment: row.logoutComment,
+        }))
+      }
+      return
+    }
     infoRows.value = mode === 'state'
       ? [{ 使用者: 'DEV001', 姓名: '開發人員甲', 登入時間: '2026/11/16 08:00:00', 狀態: '作業中' }]
       : [{ 使用者: 'DEV001', 姓名: '開發人員甲', 登入時間: '2026/11/16 08:00:00', 登出時間: '2026/11/16 17:00:00' }, { 使用者: 'DEV002', 姓名: '開發人員乙', 登入時間: '2026/11/15 20:00:00', 登出時間: '2026/11/16 08:00:00' }]
     return
   }
   try {
-    infoRows.value = await requestJson<Record<string, string>[]>('api/wip/areas/' + encodeURIComponent(node.objectNo) + '/operator-' + (mode === 'state' ? 'state' : 'log'))
+    if (props.workAreaMode) {
+      const context = await requestJson<{ areaNo: string; departmentNo: string | null }>(areaPath(node.objectNo) + '/shift-context')
+      infoFilter.value.departmentNo = context.departmentNo ?? ''
+    }
+    else {
+      const suffix = '/operator-' + (mode === 'state' ? 'state' : 'log')
+      infoRows.value = await requestJson<Record<string, string>[]>('api/wip/areas/' + encodeURIComponent(node.objectNo) + suffix)
+    }
   } catch (error) { errorMessage.value = error instanceof Error ? error.message : '作業人員資訊載入失敗。' }
+}
+
+function filterWorkInfoRows(): void {
+  const filter = infoFilter.value
+  const shiftNo = filter.shiftNo.trim().toUpperCase()
+  const userNo = filter.userNo.trim().toUpperCase()
+  infoRows.value = infoSourceRows.value.filter(row => {
+    if (filter.shiftEnabled && shiftNo && (row.ShiftNo ?? '').toUpperCase() !== shiftNo) return false
+    if (filter.userEnabled && userNo && (row.UserNo ?? '').toUpperCase() !== userNo) return false
+    if (infoMode.value === 'history' && filter.exceptionEnabled && Number(row.ExceptionTime) !== Number(filter.exceptionTime)) return false
+    const ranges = infoMode.value === 'history'
+      ? [
+          { key: 'LoginTime', enabledStart: filter.loginStartEnabled, start: filter.loginStartDate, enabledEnd: filter.loginEndEnabled, end: filter.loginEndDate },
+          { key: 'LogoutTime', enabledStart: filter.logoutStartEnabled, start: filter.logoutStartDate, enabledEnd: filter.logoutEndEnabled, end: filter.logoutEndDate },
+        ]
+      : [{ key: 'LoginTime', enabledStart: filter.startEnabled, start: filter.startDate, enabledEnd: filter.endEnabled, end: filter.endDate }]
+    for (const range of ranges) {
+      const start = range.enabledStart && range.start ? new Date(range.start).valueOf() : null
+      const end = range.enabledEnd && range.end ? new Date(range.end).valueOf() : null
+      if (start === null && end === null) continue
+      const value = new Date(row[range.key] ?? '').valueOf()
+      if (Number.isNaN(value)) return false
+      if (start !== null && value < start) return false
+      if (end !== null && value > end) return false
+    }
+    return true
+  })
+}
+function normalizeWorkInfoRows(rows: Array<Record<string, unknown>>, history: boolean): Record<string, string>[] {
+  const value = (row: Record<string, unknown>, ...names: string[]): string => {
+    const key = Object.keys(row).find(candidate => names.some(name => candidate.toLowerCase() === name.toLowerCase()))
+    const item = key ? row[key] : ''
+    return item === null || item === undefined ? '' : String(item)
+  }
+  return rows.map(row => {
+    const mapped: Record<string, string> = {
+      AreaNo: value(row, 'areaNo'), DepartmentNo: value(row, 'departmentNo'), ShiftNo: value(row, 'shiftNo'),
+      UserNo: value(row, 'userNo'), LoginTime: formatDate(value(row, 'loginTime')), LoginComment: value(row, 'loginComment'),
+    }
+    if (history) Object.assign(mapped, { LogoutTime: formatDate(value(row, 'logoutTime')), ExceptionTime: value(row, 'exceptionTime'), LogoutComment: value(row, 'logoutComment') })
+    return mapped
+  })
+}
+async function queryWorkInfo(): Promise<void> {
+  if (!infoNode.value || !infoMode.value) return
+  if (mockMode.value) { filterWorkInfoRows(); return }
+  infoBusy.value = true
+  try {
+    const filter = infoFilter.value
+    const query = new URLSearchParams({ departmentNo: filter.departmentNo })
+    if (filter.shiftEnabled && filter.shiftNo.trim()) query.set('shiftNo', filter.shiftNo.trim().toUpperCase())
+    if (filter.userEnabled && filter.userNo.trim()) query.set('userNo', filter.userNo.trim().toUpperCase())
+    if (infoMode.value === 'state') {
+      if (filter.startEnabled && filter.startDate) query.set('startDate', new Date(filter.startDate).toISOString())
+      if (filter.endEnabled && filter.endDate) query.set('endDate', new Date(filter.endDate).toISOString())
+    } else {
+      if (filter.loginStartEnabled && filter.loginStartDate) query.set('loginStartDate', new Date(filter.loginStartDate).toISOString())
+      if (filter.loginEndEnabled && filter.loginEndDate) query.set('loginEndDate', new Date(filter.loginEndDate).toISOString())
+      if (filter.logoutStartEnabled && filter.logoutStartDate) query.set('logoutStartDate', new Date(filter.logoutStartDate).toISOString())
+      if (filter.logoutEndEnabled && filter.logoutEndDate) query.set('logoutEndDate', new Date(filter.logoutEndDate).toISOString())
+      if (filter.exceptionEnabled) query.set('exceptionTime', String(filter.exceptionTime))
+    }
+    const suffix = infoMode.value === 'state' ? 'current' : 'history'
+    const rows = await requestJson<Array<Record<string, unknown>>>(`api/wip/areas/${encodeURIComponent(infoNode.value.objectNo)}/operators/${suffix}?${query.toString()}`)
+    infoRows.value = normalizeWorkInfoRows(rows, infoMode.value === 'history')
+  } catch (error) { errorMessage.value = error instanceof Error ? error.message : '作業人員資料查詢失敗。' }
+  finally { infoBusy.value = false }
+}
+const filteredInfoLookupRows = computed(() => {
+  const search = infoLookupSearch.value.trim().toLocaleLowerCase()
+  return infoLookupRows.value.filter(row => !search || row.value.toLocaleLowerCase().includes(search) || row.label.toLocaleLowerCase().includes(search))
+})
+async function openInfoLookup(kind: 'shift' | 'user'): Promise<void> {
+  infoLookupKind.value = kind
+  infoLookupRows.value = []
+  infoLookupSearch.value = ''
+  infoLookupBusy.value = true
+  try {
+    if (mockMode.value) {
+      if (kind === 'shift') {
+        const rows = readStorage<AreaShift[]>(shiftsKey, seedShifts).filter(row => row.departmentNo === infoFilter.value.departmentNo)
+        infoLookupRows.value = [...new Map(rows.map(row => [row.shiftNo, { value: row.shiftNo, label: row.shiftNo + (row.description ? '　' + row.description : '') }])).values()]
+      } else {
+        infoLookupRows.value = readStorage<UserOption[]>('ymes-dev-mock:smd-area-show:users:v1', seedUsers)
+          .filter(row => !row.departmentNo || row.departmentNo === infoFilter.value.departmentNo)
+          .map(row => ({ value: row.userNo, label: row.userNo + '　' + row.userName }))
+      }
+      return
+    }
+    const query = new URLSearchParams({ departmentNo: infoFilter.value.departmentNo })
+    const result = await requestJson<{ shifts: LookupOption[]; users: UserOption[] }>(
+      `api/wip/areas/${encodeURIComponent(infoFilter.value.areaNo)}/operators/filter-options?${query.toString()}`,
+    )
+    infoLookupRows.value = kind === 'shift'
+      ? result.shifts
+      : result.users.map(row => ({ value: row.userNo, label: row.userNo + '　' + row.userName }))
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '篩選資料載入失敗。'
+    infoLookupKind.value = null
+  } finally { infoLookupBusy.value = false }
+}
+function chooseInfoLookup(row: LookupOption): void {
+  if (infoLookupKind.value === 'shift') {
+    infoFilter.value.shiftNo = row.value
+    infoFilter.value.shiftEnabled = true
+  } else if (infoLookupKind.value === 'user') {
+    infoFilter.value.userNo = row.value
+    infoFilter.value.userEnabled = true
+  }
+  infoLookupKind.value = null
+}
+
+function currentDevShiftNo(): string { const hour = new Date().getHours(); return hour >= 8 && hour < 20 ? 'DAY' : 'NIGHT' }
+function openWorkAreaDialog(node: LayoutNode): void {
+  contextMenu.value = null
+  workAreaDialogOpen.value = true
+  workAreaBusy.value = false
+  workAreaError.value = ''
+  workAreaVerified.value = false
+  workAreaShiftOptions.value = []
+  workAreaForm.value = { areaNo: node.objectNo, areaName: node.objectText, departmentNo: '', shiftNo: '', userNo: '', comment: '' }
+  workAreaState.value = mockMode.value ? readStorage<WipAreaOperatorState[]>(workAreaStateKey, seedWorkAreaStates) : []
+}
+function resetWorkAreaVerification(): void {
+  workAreaVerified.value = false
+  workAreaShiftOptions.value = []
+  workAreaForm.value.departmentNo = ''
+  workAreaForm.value.shiftNo = ''
+  workAreaError.value = ''
+}
+async function confirmWorkAreaUser(): Promise<void> {
+  const userNo = workAreaForm.value.userNo.trim().toUpperCase()
+  workAreaForm.value.userNo = userNo
+  workAreaVerified.value = false
+  workAreaError.value = ''
+  if (!userNo) { workAreaError.value = '請輸入使用者編號。'; return }
+  workAreaBusy.value = true
+  try {
+    if (mockMode.value) {
+      workAreaState.value = readStorage<WipAreaOperatorState[]>(workAreaStateKey, seedWorkAreaStates)
+      const active = workAreaState.value.find(row => row.userNo.toUpperCase() === userNo)
+      if (active) {
+        if (active.areaNo === workAreaForm.value.areaNo) {
+          workAreaForm.value.departmentNo = active.departmentNo
+          workAreaForm.value.shiftNo = active.shiftNo
+          workAreaShiftOptions.value = [active.shiftNo]
+          workAreaError.value = '此使用者已登入此區域；可直接登出。'
+        } else workAreaError.value = '此使用者已在其他區域登入。'
+        return
+      }
+      const shifts = readStorage<AreaShift[]>(shiftsKey, seedShifts).filter(row => row.areaNo === workAreaForm.value.areaNo)
+      const operators = readStorage<Record<string, Operator[]>>(operatorsKey, seedOperators)
+      const currentShift = currentDevShiftNo()
+      const matches = shifts.filter(row => row.shiftNo === currentShift && (operators[shiftKey(row)] ?? []).some(operator => operator.userNo.toUpperCase() === userNo))
+      if (!matches.length) { workAreaError.value = '此使用者不在目前時段的區域排班名單。'; return }
+      workAreaForm.value.departmentNo = matches[0].departmentNo
+      workAreaShiftOptions.value = [...new Set(matches.map(row => row.shiftNo))]
+      workAreaForm.value.shiftNo = workAreaShiftOptions.value[0]
+      workAreaVerified.value = true
+      workAreaError.value = '已確認目前班別，可以登入。'
+      return
+    }
+    const result = await requestJson<{ eligible: boolean; alreadyLoggedInAreaNo?: string; departmentNo?: string; shiftNo?: string; shiftNos?: string[] }>(
+      'api/wip/areas/' + encodeURIComponent(workAreaForm.value.areaNo) + '/operators/eligible?userNo=' + encodeURIComponent(userNo),
+    )
+    if (result.alreadyLoggedInAreaNo) {
+      workAreaError.value = result.alreadyLoggedInAreaNo === workAreaForm.value.areaNo ? '此使用者已登入此區域；可直接登出。' : '此使用者已在其他區域登入。'
+      workAreaForm.value.departmentNo = result.departmentNo ?? ''
+      workAreaForm.value.shiftNo = result.shiftNo ?? ''
+      workAreaShiftOptions.value = result.shiftNo ? [result.shiftNo] : []
+      workAreaState.value = [{ areaNo: result.alreadyLoggedInAreaNo, departmentNo: result.departmentNo ?? '', shiftNo: result.shiftNo ?? '', userNo, loginComment: '', loginTime: '', exceptionTime: 0 }]
+      return
+    }
+    const shiftNos = result.shiftNos?.length ? result.shiftNos : (result.shiftNo ? [result.shiftNo] : [])
+    if (!result.eligible || !result.departmentNo || !shiftNos.length) { workAreaError.value = '此使用者不在目前時段的區域排班名單。'; return }
+    workAreaForm.value.departmentNo = result.departmentNo
+    workAreaShiftOptions.value = shiftNos
+    workAreaForm.value.shiftNo = shiftNos[0]
+    workAreaVerified.value = true
+    workAreaError.value = '已確認目前班別，可以登入。'
+  } catch (error) { workAreaError.value = error instanceof Error ? error.message : '使用者班別確認失敗。' }
+  finally { workAreaBusy.value = false }
+}
+async function loginWorkArea(): Promise<void> {
+  if (!workAreaVerified.value || !workAreaForm.value.departmentNo || !workAreaForm.value.shiftNo) { workAreaError.value = '請先確認使用者及目前班別。'; return }
+  workAreaBusy.value = true; workAreaError.value = ''
+  try {
+    const now = new Date().toISOString()
+    if (mockMode.value) {
+      const states = readStorage<WipAreaOperatorState[]>(workAreaStateKey, seedWorkAreaStates)
+      if (states.some(row => row.userNo.toUpperCase() === workAreaForm.value.userNo)) throw new Error('此使用者已登入區域。')
+      const policy = readStorage<AreaShift[]>(shiftsKey, seedShifts).find(row => row.areaNo === workAreaForm.value.areaNo && row.departmentNo === workAreaForm.value.departmentNo && row.shiftNo === workAreaForm.value.shiftNo)
+      states.push({ areaNo: workAreaForm.value.areaNo, departmentNo: workAreaForm.value.departmentNo, shiftNo: workAreaForm.value.shiftNo, userNo: workAreaForm.value.userNo, loginComment: workAreaForm.value.comment.trim(), loginTime: now, exceptionTime: policy?.exceptionTime ?? 0 })
+      writeStorage(workAreaStateKey, states)
+    } else {
+      await requestJson('api/wip/areas/' + encodeURIComponent(workAreaForm.value.areaNo) + '/operators/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ departmentNo: workAreaForm.value.departmentNo, shiftNo: workAreaForm.value.shiftNo, userNo: workAreaForm.value.userNo, loginComment: workAreaForm.value.comment.trim() }),
+      })
+    }
+    workAreaDialogOpen.value = false
+  } catch (error) { workAreaError.value = error instanceof Error ? error.message : '區域登入失敗。' }
+  finally { workAreaBusy.value = false }
+}
+async function logoutWorkArea(): Promise<void> {
+  const userNo = workAreaForm.value.userNo.trim().toUpperCase()
+  if (!userNo) { workAreaError.value = '請輸入使用者編號並確認目前登入狀態。'; return }
+  workAreaBusy.value = true; workAreaError.value = ''
+  try {
+    if (mockMode.value) {
+      const states = readStorage<WipAreaOperatorState[]>(workAreaStateKey, seedWorkAreaStates)
+      const active = states.find(row => row.userNo.toUpperCase() === userNo && row.areaNo === workAreaForm.value.areaNo)
+      if (!active) throw new Error('此區域找不到該使用者的登入紀錄。')
+      const policy = readStorage<AreaShift[]>(shiftsKey, seedShifts).find(row => row.areaNo === active.areaNo && row.departmentNo === active.departmentNo && row.shiftNo === active.shiftNo)
+      const logs = readStorage<WipAreaOperatorLog[]>(workAreaLogKey, seedWorkAreaLogs)
+      logs.unshift({ ...active, exceptionTime: policy?.exceptionTime ?? active.exceptionTime, logoutComment: workAreaForm.value.comment.trim(), logoutTime: new Date().toISOString() })
+      writeStorage(workAreaLogKey, logs)
+      writeStorage(workAreaStateKey, states.filter(row => row.userNo.toUpperCase() !== userNo))
+    } else {
+      await requestJson('api/wip/areas/' + encodeURIComponent(workAreaForm.value.areaNo) + '/operators/logout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userNo, logoutComment: workAreaForm.value.comment.trim() }),
+      })
+    }
+    workAreaDialogOpen.value = false
+  } catch (error) { workAreaError.value = error instanceof Error ? error.message : '區域登出失敗。' }
+  finally { workAreaBusy.value = false }
 }
 
 </script>
@@ -360,14 +677,15 @@ async function openInfo(mode: Exclude<InfoMode, null>, node: LayoutNode): Promis
       <label class="base-select"><span>Base Area</span><input :value="activeArea ? activeArea.areaNo + '　' + activeArea.areaName : ''" readonly class="kd-input"><button class="win-btn picker" :disabled="loading" @click="loadBaseAreas">...</button></label>
       <span class="toolbar-spacer"></span>
       <label>縮放 <select v-model.number="zoom" class="plain-input"><option v-for="level in zoomLevels" :key="level" :value="level">{{ level }}%</option></select></label>
-      <button class="win-btn" :class="{ toggled: gridVisible }" @click="gridVisible = !gridVisible">網格線</button>
+      <button v-if="workAreaMode" class="win-btn" @click="openGridProperties">Grid</button>
+      <button v-else class="win-btn" :class="{ toggled: gridVisible }" @click="gridVisible = !gridVisible">網格線</button>
     </div>
     <p v-if="errorMessage" class="message error">{{ errorMessage }}</p>
-    <main class="canvas-frame" :class="{ 'with-grid': gridVisible }">
+    <main class="canvas-frame" :class="{ 'with-grid': canvasGridVisible }" :style="canvasGridStyle">
       <div v-if="!activeArea && !loading" class="canvas-empty">請選擇 Base Area 載入區域配置</div>
       <div v-else-if="loading" class="canvas-empty">載入中...</div>
       <svg v-else :width="984 * zoom / 100" :height="469 * zoom / 100" viewBox="0 0 984 469" class="layout-canvas" role="img" aria-label="區域配置圖">
-        <g v-for="node in nodes" :key="node.objectType + ':' + node.objectNo" class="layout-node" :class="nodeClass(node)" @click.stop="contextMenu = null" @contextmenu.prevent.stop="showContext($event, node)" @dblclick.stop="areaNode(node) && openShiftFor(node)">
+        <g v-for="node in nodes" :key="node.objectType + ':' + node.objectNo" class="layout-node" :class="nodeClass(node)" @click.stop="contextMenu = null" @contextmenu.prevent.stop="showContext($event, node)" @dblclick.stop="areaNode(node) && workAreaActionsVisible && (workAreaMode ? openWorkAreaDialog(node) : openShiftFor(node))">
           <rect v-if="nodeShape(node) === 'rect'" :x="node.objectX" :y="node.objectY" :width="node.objectWidth" :height="node.objectLength" :fill="colorCss(node.objectColor)" stroke="#555" />
           <rect v-else-if="nodeShape(node) === 'round'" :x="node.objectX" :y="node.objectY" :width="node.objectWidth" :height="node.objectLength" rx="12" :fill="colorCss(node.objectColor)" stroke="#555" />
           <ellipse v-else-if="nodeShape(node) === 'ellipse'" :cx="node.objectX + node.objectWidth / 2" :cy="node.objectY + node.objectLength / 2" :rx="node.objectWidth / 2" :ry="node.objectLength / 2" :fill="colorCss(node.objectColor)" stroke="#555" />
@@ -378,9 +696,16 @@ async function openInfo(mode: Exclude<InfoMode, null>, node: LayoutNode): Promis
         <text v-if="nodes.length === 0" x="492" y="235" text-anchor="middle" class="canvas-placeholder">目前沒有配置節點</text>
       </svg>
       <div v-if="contextMenu" class="context-menu" :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }" @click.stop>
-        <button @click="openShiftFor(contextMenu.node)">班別設定</button>
-        <button @click="openInfo('state', contextMenu.node)">目前作業人員</button>
-        <button @click="openInfo('history', contextMenu.node)">歷史紀錄</button>
+        <template v-if="workAreaMode">
+          <button @click="openWorkAreaDialog(contextMenu.node)">Login/Logout</button>
+          <button @click="openInfo('state', contextMenu.node)">State</button>
+          <button @click="openInfo('history', contextMenu.node)">History</button>
+        </template>
+        <template v-else>
+          <button @click="openShiftFor(contextMenu.node)">班別設定</button>
+          <button @click="openInfo('state', contextMenu.node)">目前作業人員</button>
+          <button @click="openInfo('history', contextMenu.node)">歷史紀錄</button>
+        </template>
       </div>
     </main>
     <footer class="status-line"><span>{{ activeArea ? activeArea.areaNo + '　' + activeArea.areaName : '未選擇區域' }}</span><span>節點數：{{ nodes.length }}</span><span>縮放 {{ zoom }}%</span><button class="win-btn footer-close" @click="emit('close')">關閉</button></footer>
@@ -393,6 +718,36 @@ async function openInfo(mode: Exclude<InfoMode, null>, node: LayoutNode): Promis
           <tr v-for="row in visibleAreas" :key="row.areaNo" @click="chooseArea(row)"><td>{{ row.areaNo }}</td><td>{{ row.areaName }}</td><td>{{ row.departmentNo }}</td></tr>
           <tr v-if="visibleAreas.length === 0"><td colspan="3" class="empty">沒有已核准的 Base Area</td></tr>
         </tbody></table></div>
+      </section>
+    </div>
+    <div v-if="workAreaMode && gridSettingsOpen" class="backdrop" @click.self="gridSettingsOpen = false">
+      <section class="dialog grid-properties-dialog">
+        <header class="dialog-title"><h2>Grid properties</h2><button class="x-button" @click="gridSettingsOpen = false">×</button></header>
+        <fieldset class="grid-properties-fields"><legend>Properties</legend>
+          <label><input v-model="gridSettingsDraft.draw" type="checkbox">Show Grid</label>
+          <label><input v-model="gridSettingsDraft.snap" type="checkbox">Snap To Grid</label>
+          <label class="grid-color-field"><span>Grid Color</span><input v-model="gridSettingsDraft.color" type="color"></label>
+          <label><span>Grid Style</span><select v-model="gridSettingsDraft.style" class="kd-input"><option value="Pixels">Pixels</option><option value="Lines">Lines</option><option value="DottedLines">DottedLines</option></select></label>
+          <label><span>Grid Size Width</span><input v-model.number="gridSettingsDraft.sizeX" type="number" min="1" max="500" class="kd-input"></label>
+          <label><span>Grid Size Height</span><input v-model.number="gridSettingsDraft.sizeY" type="number" min="1" max="500" class="kd-input"></label>
+        </fieldset>
+        <p v-if="gridSettingsError" class="message error">{{ gridSettingsError }}</p>
+        <footer class="dialog-actions"><button class="win-btn primary" @click="saveGridProperties">OK</button><button class="win-btn" @click="gridSettingsOpen = false">Close</button></footer>
+      </section>
+    </div>
+    <div v-if="workAreaMode && workAreaDialogOpen" class="backdrop" @click.self="workAreaDialogOpen = false">
+      <section class="dialog work-area-login-dialog">
+        <header class="dialog-title"><h2>區域 Login / Logout｜{{ workAreaForm.areaName }}</h2><button class="x-button" @click="workAreaDialogOpen = false">×</button></header>
+        <fieldset class="work-area-fields"><legend>作業區域人員</legend>
+          <label><span>AreaNo</span><input :value="workAreaForm.areaNo" readonly class="kd-input"></label>
+          <label><span>DepartmentNo</span><input :value="workAreaForm.departmentNo" readonly class="kd-input"></label>
+          <label><span>UserNo</span><input v-model="workAreaForm.userNo" class="kd-input" maxlength="10" @input="resetWorkAreaVerification" @keydown.enter.prevent="confirmWorkAreaUser"></label>
+          <button type="button" class="win-btn" :disabled="workAreaBusy" @click="confirmWorkAreaUser">Confirm</button>
+          <label><span>ShiftNo</span><select v-model="workAreaForm.shiftNo" :disabled="!workAreaShiftOptions.length || workAreaCanLogout" class="kd-input"><option v-for="shiftNo in workAreaShiftOptions" :key="shiftNo" :value="shiftNo">{{ shiftNo }}</option></select></label>
+          <label class="work-comment"><span>Comment</span><textarea v-model="workAreaForm.comment" class="kd-input" maxlength="255"></textarea></label>
+        </fieldset>
+        <p v-if="workAreaError" class="message" :class="{ error: !workAreaVerified }">{{ workAreaError }}</p>
+        <footer class="dialog-actions"><button class="win-btn primary" :disabled="workAreaBusy || !workAreaVerified || workAreaCanLogout" @click="loginWorkArea">Login</button><button class="win-btn" :disabled="workAreaBusy || !workAreaCanLogout" @click="logoutWorkArea">Logout</button><button class="win-btn" :disabled="workAreaBusy" @click="workAreaDialogOpen = false">Close</button></footer>
       </section>
     </div>
     <div v-if="shiftOpen" class="backdrop" @click.self="shiftOpen = false">
@@ -436,15 +791,50 @@ async function openInfo(mode: Exclude<InfoMode, null>, node: LayoutNode): Promis
       </form>
     </div>
     <div v-if="infoMode && infoNode" class="backdrop" @click.self="infoMode = null">
-      <section class="dialog info-dialog">
+      <section class="dialog info-dialog" :class="{ 'work-info-dialog': workAreaMode }">
         <header class="dialog-title"><h2>{{ infoMode === 'state' ? '目前作業人員' : '作業歷史紀錄' }}｜{{ infoNode.objectText }}</h2><button class="x-button" @click="infoMode = null">×</button></header>
-        <div class="table-wrap"><table><thead><tr><th v-for="key in (infoRows[0] ? Object.keys(infoRows[0]) : [])" :key="key">{{ key }}</th></tr></thead><tbody><tr v-for="(row, index) in infoRows" :key="index"><td v-for="value in Object.values(row)" :key="value">{{ value }}</td></tr><tr v-if="!infoRows.length"><td class="empty">目前沒有資料</td></tr></tbody></table></div>
-        <footer class="dialog-actions"><button class="win-btn" @click="infoMode = null">關閉</button></footer>
+        <div v-if="workAreaMode" class="work-info-filters">
+          <div class="work-info-identity"><label>AreaNo<input :value="infoFilter.areaNo" readonly></label><label>DepartmentNo<input :value="infoFilter.departmentNo" readonly></label></div>
+          <template v-if="infoMode === 'history'">
+            <div class="work-info-tabs"><button type="button" :class="{ selected: infoDateTab === 'filter' }" @click="infoDateTab = 'filter'">Filter</button><button type="button" :class="{ selected: infoDateTab === 'dateFilter' }" @click="infoDateTab = 'dateFilter'">DateFilter</button></div>
+            <div v-if="infoDateTab === 'filter'" class="work-info-row">
+              <div class="work-info-lookup"><label class="work-info-check"><input v-model="infoFilter.shiftEnabled" type="checkbox">ShiftNo</label><input v-model="infoFilter.shiftNo" :disabled="!infoFilter.shiftEnabled" class="kd-input"><button type="button" class="win-btn lookup-button" aria-label="查找班別" @click="openInfoLookup('shift')">...</button></div>
+              <div class="work-info-lookup"><label class="work-info-check"><input v-model="infoFilter.userEnabled" type="checkbox">UserNo</label><input v-model="infoFilter.userNo" :disabled="!infoFilter.userEnabled" class="kd-input"><button type="button" class="win-btn lookup-button" aria-label="查找使用者" @click="openInfoLookup('user')">...</button></div>
+              <div class="work-info-lookup"><label class="work-info-check"><input v-model="infoFilter.exceptionEnabled" type="checkbox">ExceptionTime</label><input v-model.number="infoFilter.exceptionTime" type="number" min="0" :disabled="!infoFilter.exceptionEnabled" class="kd-input"></div>
+            </div>
+            <div v-else class="work-date-filter">
+              <label class="work-info-check"><input v-model="infoFilter.loginStartEnabled" type="checkbox">LoginStartDate</label><input v-model="infoFilter.loginStartDate" type="datetime-local" :disabled="!infoFilter.loginStartEnabled" class="kd-input"><label class="work-info-check"><input v-model="infoFilter.loginEndEnabled" type="checkbox">LoginEndDate</label><input v-model="infoFilter.loginEndDate" type="datetime-local" :disabled="!infoFilter.loginEndEnabled" class="kd-input">
+              <label class="work-info-check"><input v-model="infoFilter.logoutStartEnabled" type="checkbox">LogoutStartDate</label><input v-model="infoFilter.logoutStartDate" type="datetime-local" :disabled="!infoFilter.logoutStartEnabled" class="kd-input"><label class="work-info-check"><input v-model="infoFilter.logoutEndEnabled" type="checkbox">LogoutEndDate</label><input v-model="infoFilter.logoutEndDate" type="datetime-local" :disabled="!infoFilter.logoutEndEnabled" class="kd-input">
+            </div>
+            <div class="work-info-query"><button class="win-btn primary" :disabled="infoBusy" @click="queryWorkInfo">查詢</button></div>
+          </template>
+          <template v-else>
+            <div class="work-info-row">
+              <div class="work-info-lookup"><label class="work-info-check"><input v-model="infoFilter.shiftEnabled" type="checkbox">ShiftNo</label><input v-model="infoFilter.shiftNo" :disabled="!infoFilter.shiftEnabled" class="kd-input"><button type="button" class="win-btn lookup-button" aria-label="查找班別" @click="openInfoLookup('shift')">...</button></div>
+              <div class="work-info-lookup"><label class="work-info-check"><input v-model="infoFilter.userEnabled" type="checkbox">UserNo</label><input v-model="infoFilter.userNo" :disabled="!infoFilter.userEnabled" class="kd-input"><button type="button" class="win-btn lookup-button" aria-label="查找使用者" @click="openInfoLookup('user')">...</button></div>
+            </div>
+            <div class="work-info-row"><label class="work-info-check"><input v-model="infoFilter.startEnabled" type="checkbox">StartDateTime</label><input v-model="infoFilter.startDate" type="datetime-local" :disabled="!infoFilter.startEnabled" class="kd-input"><label class="work-info-check"><input v-model="infoFilter.endEnabled" type="checkbox">EndDateTime</label><input v-model="infoFilter.endDate" type="datetime-local" :disabled="!infoFilter.endEnabled" class="kd-input"></div>
+            <div class="work-info-query"><button class="win-btn primary" :disabled="infoBusy" @click="queryWorkInfo">查詢</button></div>
+          </template>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th v-for="key in infoColumns" :key="key">{{ key }}</th></tr></thead><tbody><tr v-for="(row, index) in infoRows" :key="index"><td v-for="key in infoColumns" :key="key">{{ row[key] }}</td></tr><tr v-if="!infoRows.length"><td :colspan="Math.max(infoColumns.length, 1)" class="empty">目前沒有資料</td></tr></tbody></table></div>
+        <footer class="dialog-actions"><button class="win-btn" @click="infoMode = null">{{ workAreaMode ? 'Close' : '關閉' }}</button></footer>
       </section>
+      <div v-if="infoLookupKind" class="backdrop nested lookup-backdrop" @click.self="infoLookupKind = null">
+        <section class="dialog info-lookup-dialog">
+          <header class="dialog-title"><h2>{{ infoLookupKind === 'shift' ? '選擇班別' : '選擇使用者' }}</h2><button type="button" class="x-button" @click="infoLookupKind = null">×</button></header>
+          <input v-model="infoLookupSearch" class="kd-input info-lookup-search" :placeholder="infoLookupKind === 'shift' ? '搜尋班別' : '搜尋編號或姓名'" autofocus>
+          <p v-if="infoLookupBusy" class="empty">載入中…</p>
+          <div v-else class="info-lookup-list"><button v-for="row in filteredInfoLookupRows" :key="row.value" type="button" @click="chooseInfoLookup(row)">{{ row.label }}</button><p v-if="!filteredInfoLookupRows.length" class="empty">沒有可選資料</p></div>
+          <footer class="dialog-actions"><button type="button" class="win-btn" @click="infoLookupKind = null">關閉</button></footer>
+        </section>
+      </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.area-show-page{height:100%;min-height:0;display:flex;flex-direction:column;background:#fff;color:#292929;font:14px "Microsoft JhengHei",Arial,sans-serif}.page-title{height:50px;flex:none;display:flex;align-items:center;padding:0 24px;border-bottom:1px solid #ddd8ce;background:#f7f5ef}.page-title h1{margin:0;font-size:20px;font-weight:500}.toolbar{flex:none;min-height:42px;display:flex;align-items:center;gap:10px;padding:5px 12px;border-bottom:1px solid #ccc}.base-select{display:flex;align-items:center;gap:7px;min-width:320px}.base-select .kd-input{width:340px}.toolbar-spacer{flex:1}.toolbar label:not(.base-select){display:flex;align-items:center;gap:5px}.kd-input,.plain-input{box-sizing:border-box;height:27px;border:1px solid #999;border-radius:0;padding:3px 6px;font:inherit;color:#222}.kd-input{background:#ffffc0}.kd-input:read-only,.kd-input:disabled{background:#eee}.plain-input{background:#fff}.win-btn{min-height:29px;padding:3px 10px;border:1px solid #bbb;border-radius:3px;background:linear-gradient(#fff,#f1efeb);font:inherit;white-space:nowrap;cursor:pointer}.win-btn:hover:not(:disabled){border-color:#e39a37;background:#fff8e8}.win-btn:disabled{opacity:.5;cursor:default}.win-btn.primary{border-color:#e69520;background:#f7a52a;color:#fff;font-weight:600}.win-btn.danger{color:#8b3030}.win-btn.toggled{background:#fff1c2;border-color:#d4a13b}.win-btn.picker{min-width:32px}.message{margin:5px 12px;padding:6px 9px;border:1px solid #ddd}.message.error{color:#8d2222;background:#fff3f1}.canvas-frame{position:relative;flex:1;min-height:0;margin:8px 12px;border:1px solid #aaa;overflow:auto;background:#fff}.canvas-frame.with-grid{background-image:linear-gradient(#e9e7e2 1px,transparent 1px),linear-gradient(90deg,#e9e7e2 1px,transparent 1px);background-size:20px 20px}.layout-canvas{display:block;min-width:984px;min-height:469px}.layout-node{cursor:default}.layout-node.node-0{cursor:pointer}.layout-node:hover>rect,.layout-node:hover>ellipse,.layout-node:hover>polygon{stroke:#a36f25;stroke-width:2}.layout-node text{fill:#222;font-size:13px;pointer-events:none}.layout-node .node-code{fill:#555;font-size:10px}.canvas-empty{height:100%;min-height:240px;display:grid;place-items:center;color:#777}.canvas-placeholder{fill:#777;font-size:16px}.status-line{height:34px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-top:1px solid #ccc;color:#666;font-size:12px}.status-line .footer-close{min-height:24px;padding:1px 12px}.backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:10px;background:#0005}.backdrop.nested{z-index:1020}.dialog{box-sizing:border-box;display:flex;flex-direction:column;max-height:96vh;border:1px solid #999;background:#f9f8f4;box-shadow:0 8px 28px #0004}.dialog-title{height:37px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 10px;border-bottom:1px solid #ccc;background:#f1efe9}.dialog-title h2{margin:0;font-size:15px;font-weight:500}.x-button{border:0;background:transparent;color:#555;font-size:24px;line-height:1;cursor:pointer}.area-dialog{width:min(660px,96vw);height:min(490px,92vh)}.picker-search{flex:none;padding:9px 12px}.picker-search label{display:flex;align-items:center;gap:8px}.picker-search input{flex:1}.table-wrap{min-height:0;overflow:auto;border:1px solid #aaa;background:white}table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:12px}th,td{height:25px;padding:3px 7px;border:1px solid #c9c9c9;text-align:left}th{position:sticky;top:0;background:#e7e5df;font-weight:500;z-index:1}tbody tr{cursor:pointer}tbody tr:hover{background:#fff4d1}.empty{text-align:center;color:#777;padding:20px}.context-menu{position:fixed;z-index:1100;display:flex;flex-direction:column;min-width:150px;padding:4px;border:1px solid #999;background:#fff;box-shadow:0 3px 12px #0004}.context-menu button{border:0;padding:7px 10px;text-align:left;background:#fff;font:inherit;cursor:pointer}.context-menu button:hover{background:#fff1c2}.shift-dialog{width:min(1008px,98vw);height:min(591px,95vh);padding:0 9px 5px}.shift-dialog>.dialog-title{margin:0 -9px}.area-fields{height:38px;flex:none;display:flex;align-items:center;gap:24px}.area-fields label{display:grid;grid-template-columns:75px 170px;align-items:center;gap:6px}.area-fields input,.audit-fields input{height:22px;box-sizing:border-box;border:1px solid #aaa;background:#eee;padding:2px 5px}.shift-master{height:235px;flex:none;display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:8px}.shift-master .table-wrap{height:100%}.shift-master tbody tr.active{background:#fff0c4;outline:1px solid #d5a13d;outline-offset:-1px}.check-col{width:28px;text-align:center}.check-col input{accent-color:#e7a137}.shift-actions{display:flex;flex-direction:column;gap:6px}.operators{position:relative;flex:1;min-height:150px;display:grid;grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr) 76px;align-items:stretch;gap:8px;margin:7px 0 3px;padding:8px;border:1px solid #aaa}.operators legend,.shift-fields legend,.audit-fields legend{padding:0 5px;color:#555}.operator-pane{min-width:0;display:flex;flex-direction:column;gap:5px}.operator-pane strong{font-weight:500}.operator-list{min-height:0;flex:1;overflow:auto;border:1px solid #aaa;background:white;display:flex;flex-direction:column}.operator-list button{border:0;border-bottom:1px solid #ddd;padding:5px 7px;text-align:left;background:#fff;font:inherit;cursor:pointer}.operator-list button.checked{background:#fff0c4}.move-actions{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}.move-actions button{min-width:42px}.save-operators{align-self:center;padding-inline:8px}.dialog-actions{display:flex;justify-content:flex-end;gap:7px;padding:5px 0 2px}.shift-editor{width:min(492px,96vw);height:min(326px,94vh);padding:0 10px}.shift-editor>.dialog-title{margin:0 -10px}.shift-fields{flex:none;height:180px;display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;margin:7px 0 4px;padding:7px;border:1px solid #aaa}.shift-fields .field-row{display:grid;grid-template-columns:85px minmax(0,1fr);align-items:center;gap:5px}.field-row>span{text-align:right}.shift-fields input,.shift-fields select{min-width:0;width:100%}.description-row{grid-column:1 / -1;align-items:start}.description-row textarea{height:40px;resize:none}.audit-fields{flex:none;height:53px;display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin:0;padding:4px 7px;border:1px solid #aaa}.audit-fields label{display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:4px;font-size:10px;white-space:nowrap}.audit-fields input{min-width:0;width:100%;font-size:10px}.shift-editor .dialog-actions{margin-top:auto}.shift-editor .message{margin:2px 0}.info-dialog{width:min(760px,96vw);height:min(420px,90vh);padding:0 10px 5px}.info-dialog>.dialog-title{margin:0 -10px}.info-dialog .table-wrap{margin-top:10px}.context-menu,.dialog button,.toolbar button{user-select:none}@media(max-width:760px){.base-select{min-width:0;flex:1}.base-select .kd-input{min-width:80px;width:100%}.toolbar{flex-wrap:wrap}.shift-dialog{overflow:auto;height:95vh}.shift-master{height:210px;grid-template-columns:minmax(0,1fr) 75px}.operators{grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);min-height:300px}.save-operators{grid-column:1/-1}.shift-fields{height:auto;grid-template-columns:1fr}.description-row{grid-column:auto}.shift-editor{height:auto;min-height:326px}.area-fields{gap:8px}.area-fields label{grid-template-columns:65px minmax(90px,1fr)}}
+.work-area-login-dialog{width:min(420px,96vw);min-height:304px;padding:0 10px 7px}.work-area-login-dialog>.dialog-title{margin:0 -10px}.work-area-fields{display:grid;grid-template-columns:minmax(0,1fr) 82px;gap:7px 9px;margin:10px 0 4px;padding:10px;border:1px solid #aaa}.work-area-fields legend{padding:0 5px;color:#555}.work-area-fields label{display:grid;grid-template-columns:105px minmax(0,1fr);align-items:center;gap:6px}.work-area-fields label>span{text-align:right}.work-area-fields input{width:100%}.work-area-fields textarea{height:52px;resize:vertical}.work-area-fields .work-comment{grid-column:1/-1;grid-template-columns:105px minmax(0,1fr);align-items:start}.work-area-fields>button{align-self:center}.work-area-login-dialog>.message{margin:3px 0}.work-area-login-dialog>.dialog-actions{margin-top:auto}
+.work-info-dialog{width:min(820px,98vw);height:min(560px,94vh);padding:0 10px 6px}.work-info-dialog>.dialog-title{margin:0 -10px}.work-info-filters{flex:none;display:flex;flex-direction:column;gap:5px;margin-top:7px}.work-info-identity,.work-info-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:6px}.work-info-identity label{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:5px}.work-info-identity input{width:100%;height:24px;box-sizing:border-box;border:1px solid #aaa;background:#eee;padding:2px 5px}.work-info-row input.kd-input{width:100%;min-width:0}.work-info-lookup{display:grid;grid-template-columns:auto minmax(0,1fr) 27px;align-items:center;gap:4px;min-width:0}.work-info-lookup .lookup-button{height:24px;min-width:26px;padding:0 3px}.work-info-check{display:flex;align-items:center;gap:4px;white-space:nowrap}.work-info-check input{accent-color:#e7a137}.work-info-query{display:flex;justify-content:flex-end}.work-info-tabs{display:flex;gap:2px;border-bottom:1px solid #aaa}.work-info-tabs button{padding:4px 12px;border:1px solid #aaa;border-bottom:0;background:#efeee9;cursor:pointer}.work-info-tabs button.selected{background:#fff;font-weight:600}.work-date-filter{display:grid;grid-template-columns:126px minmax(0,1fr) 126px minmax(0,1fr);align-items:center;gap:5px}.work-info-dialog .table-wrap{flex:1;margin-top:7px}.work-info-dialog .dialog-actions{flex:none}.lookup-backdrop{z-index:20}.info-lookup-dialog{width:min(420px,94vw);max-height:min(480px,85vh);padding:0 10px 7px}.info-lookup-dialog>.dialog-title{margin:0 -10px}.info-lookup-search{width:100%;margin:9px 0 5px;box-sizing:border-box}.info-lookup-list{display:flex;flex-direction:column;overflow:auto;min-height:100px;max-height:330px;border:1px solid #aaa}.info-lookup-list button{padding:7px 9px;border:0;border-bottom:1px solid #ddd;background:#fff;text-align:left;cursor:pointer}.info-lookup-list button:hover{background:#ffe7a0}.info-lookup-list .empty{padding:12px;text-align:center}.info-lookup-dialog>.dialog-actions{flex:none;margin-top:7px}
+.grid-properties-dialog{width:min(420px,96vw);min-height:285px;padding:0 10px 6px}.grid-properties-dialog>.dialog-title{margin:0 -10px}.grid-properties-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:10px 0 4px;padding:10px;border:1px solid #aaa}.grid-properties-fields legend{padding:0 5px;color:#555}.grid-properties-fields label{display:flex;align-items:center;gap:6px;min-width:0}.grid-properties-fields label>span{width:104px;flex:none;text-align:right}.grid-properties-fields input.kd-input,.grid-properties-fields select{width:90px;min-width:0}.grid-properties-fields .grid-color-field{grid-column:1/-1}.grid-properties-fields input[type=color]{width:42px;height:26px;padding:1px;border:1px solid #999;background:#eee}.grid-properties-dialog>.dialog-actions{margin-top:auto}
 </style>

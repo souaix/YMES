@@ -819,6 +819,12 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 使用既有受保護 Oracle profile，以 Windows PowerShell 5.1 + STD/MES_S_DLL/Oracle.ManagedDataAccess.dll 直連 MESTEST，唯讀取得 TBLEQPFAVORITE、TBLWIPLOTGPEQUIPMENT、TBLPRDSTAGESTEPSET、TBLPRDSTAGESTEPSETDETAIL 的 DBMS_METADATA.GET_DDL 與該批表的索引 DDL。
 - 僅查 metadata／DDL，未讀業務資料列、未執行 Oracle DDL/DML，未輸出連線字串或憑證。來源與 CREATE-only 參考為 database/reference/mestest_wip_wp204_source_ddl.sql、mestest_wip_wp204_create.sql；家用端須先核 PostgreSQL live schema／migrations。
 
+### 更新 2026-11-20：WIP WP203 過帳設備設定
+
+- 依 `frmEquipmentFavorite`/`frmEquipmentFavoriteDef`、`wsEQP.LoadEQPFavorite*`、`AddEQPFavorite`/`DelEQPFavorite` 與 `clsEQPBasis` 查證，本功能只讀寫 `TBLEQPFAVORITE`，設備候選沿用已查證 Equipment Type/Basis 表。沒有新 Oracle table，未另行連 Oracle 或重複產生 CREATE SQL。
+- `TBLEQPFAVORITE` Oracle DDL、metadata 與 PostgreSQL CREATE-only 已由 WP204 於 2026-11-19 查得，保存在 `database/reference/mestest_wip_wp204_source_ddl.sql`、`mestest_wip_wp204_create.sql`。來源沒有 PK/index/FK/trigger；不得建立猜測唯一約束。公司端未連 YMES PostgreSQL，家用端需先核 live schema/migration。
+- WinForms HostId 取自客戶端 ComputerName。Web API 必須以可信登入 session/伺服器端 workstation mapping 解析 HostId，不得信任瀏覽器 query/body；完整交易與 DTO 約束見 `docs/modules/WIP/過帳設備設定.md`。
+
 ### 更新 2026-11-19：WIP WP605 成品庫帳務維護
 
 - 公司端以 Windows PowerShell 5.1 + `STD/MES_S_DLL/Oracle.ManagedDataAccess.dll`，使用本機受保護的 `DatabaseConfigs.CS.Test.Mes.ConnectionString` 直連 MESTEST，只讀取得 `TBLINVFGDINVENTORYCOMPONENT`、`TBLINVFGDINBASIS`、`TBLINVFGDINDETAIL`、`TBLINVFGDINCOMPONENT`、`TBLINVTRANSACTIONSTATE`、`TBLINVTRANSACTIONLOG` 的 DBMS_METADATA DDL、ALL_INDEXES、ALL_CONSTRAINTS、ALL_TRIGGERS。
@@ -881,3 +887,81 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - WP304 僅以設備、耗品及建立時間讀取 `TBLWIPEQPCONSUMELOG`；此表已由 WP303 直連 MESTEST Oracle dictionary 取得 DDL／metadata，source、metadata 與 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp303_*`。
 - 本功能沒有新表，不重複 query Oracle metadata 或產生 CREATE-only；設備及耗品 lookup 沿用既有 WP303／設備主檔 references。本頁未查 Oracle 業務資料列、未執行 Oracle DDL/DML，亦未連 YMES PostgreSQL。
 - WinForms 允許不帶條件查整張歷程；家用端 API 必須登入保護、參數化及分頁，限制單次回傳量，並核對使用者可查詢範圍。
+
+### 更新 2026-11-20：WIP WP305 設備線上點檢
+
+- 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 Oracle profile 直連 MESTEST，只讀取得六張表的 DBMS_METADATA DDL、ALL_TAB_COLUMNS、ALL_CONSTRAINTS/ALL_CONS_COLUMNS、ALL_INDEXES/ALL_IND_COLUMNS 及 ALL_TRIGGERS：`TBLWIPEQPQCLISTLOG`、`TBLWIPEQPQCLISTDETAIL`、`TBLWIPEQPQCTASK`、`TBLEMSEQUIPMENTSTATELOG`、`TBLWIPCONT_EQUIPMENT`、`TBLWIPLOTLOGINSTATE`。
+- 六表均無外鍵或 trigger。前三表各只有 PK index；設備狀態 Log 有兩個 non-unique index；`TBLWIPCONT_EQUIPMENT` 無 PK/unique index且有兩個 non-unique index；LotLoginState 有一個額外 non-unique index。詳細欄位、constraint、index 及原始查詢輸出見 `database/reference/mestest_wip_wp305_metadata.txt`、`mestest_wip_wp305_source_ddl.sql`、`mestest_wip_wp305_source_indexes.sql`。
+- PostgreSQL 空表與索引參考為 `database/reference/mestest_wip_wp305_create.sql`，包括三張 WP305 Log/Task 表與三張目前 YMES reference 未涵蓋的設備失敗／下機副作用表。設備狀態 Basis 沿用既有 equipment-state reference，`TBLWIPTEMP_EQUIPMENT` 沿用 WP201 reference。
+- 原始 DDL、metadata、index 查詢均只讀結構資料，未讀 MES 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交受保護連線秘密。CREATE-only 不是 migration；家用端須先查 live schema／migration history，尤其不可為 `TBLWIPCONT_EQUIPMENT` 自行發明 PK。
+
+### 更新 2026-11-20：WIP WP307 設備狀態監控_區域
+
+- 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 Oracle profile 直連 MESTEST，只讀取得 `TBLSMDAREARELATION`、`TBLWIPAREAOPERATORSTATE`、`TBLWIPAREAOPERATORLOG` 的 DBMS_METADATA DDL 與欄位、constraint、index、trigger metadata。未查業務資料列，未執行 Oracle DDL/DML。
+- `TBLSMDAREARELATION` 已有共用的 Oracle source／PostgreSQL CREATE reference `mestest_equipment_group_smd_*`，WP307 不重複產生 table CREATE。新查兩張 WIP 表：OperatorState 以 UserNo 為 PK，OperatorLog 沒有 PK／index/FK/trigger；PostgreSQL CREATE-only 只新增兩張表，不杜撰 Log key。完整 source DDL、索引、metadata、CREATE-only 位於 `database/reference/mestest_wip_wp307_*`。
+- Oracle profile 僅在公司本機讀取，IP、帳號、密碼、SID 及連線字串未輸出或提交。CREATE-only 不是 migration；家用端先核對 YMES live schema/migration history，只為確實缺少的資料表建立 migration。
+
+### 更新 2026-11-20：WIP WP103 列印流程卡
+
+- WP103 查詢及報表讀取既有 WIP Lot Basis/State、Process Node/Relation、OP、Product、Customer、RunCard Log、`TBLPRDRUNCARDMAP`、User Defined Report 與 System Parameter。功能沒有新增專用 Oracle table；本輪沿用已存在的 schema/reference，不重複查 DDL，也未產生重複 CREATE-only。
+- WinForms Source/Service/Core 證據記錄於 `docs/modules/WIP/列印流程卡.md`。家用端需先核對上述依賴在 YMES PostgreSQL live schema/API 中的實際可用性；只為實際缺少的表查來源 DDL並新增 forward migration，不能直接套用推測的 CREATE。
+- 公司端僅閱讀程式碼並使用 DEV 假資料，未讀 MES 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未執行 build/test/browser；未輸出或提交連線秘密。
+
+### 更新 2026-11-20：WIP WP113 THEIL LOT SHEET PRINT
+
+- 公司端已找到 THEIL 專用 WinForms／Service／Core。功能重用 Lot Basis/State/Property、MO／產品／流程／OP 屬性／BOM／材料／處置／使用者資料及 `XX_TBLLOTMARITX_THEIL_BU1`。Matrix 的 Oracle source DDL、metadata、PG CREATE-only 已在 `database/reference/mestest_wip_wp201_*`，其他共用結構沿用既有 references；沒有新專用表，不重複查 DDL或建立 CREATE-only。
+- 家用端先核對 YMES PostgreSQL live schema/migration history，只有缺少已由 Oracle metadata 證實的共用物件才新增 forward migration。正式 API 與 ActiveReports/PDF renderer 尚未完成，依 `docs/modules/WIP/LOT_SHEET_PRINT.md` 及 `todolist_homepc.md` 實作。
+- 公司端僅使用固定假資料，不查 Oracle 業務列、不執行 Oracle DDL/DML、不連 YMES PostgreSQL；未輸出或提交受保護連線資訊。
+
+### 更新 2026-11-20：WIP WP104 使用者登入作業（上工）
+
+- 公司端使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護的 MESTEST 設定，唯讀呼叫 `DBMS_METADATA.GET_DDL` 並查 ALL_TAB_COLUMNS、ALL_CONSTRAINTS/ALL_CONS_COLUMNS、ALL_INDEXES/ALL_IND_COLUMNS、ALL_TRIGGERS：`TBLWIPOPERATORSTATE`、`TBLWIPOPERATORLOG`。未查 MES 業務資料列，未執行 Oracle DDL/DML。
+- OperatorState 7 欄，PK `(USERNO,MULTIOPERATORMODE,LOGINPLACENO)`；OperatorLog 15 欄，PK `(SID)`。只有 PK index，無外鍵、trigger 或其他 index。Source、metadata、index 與 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp104_*`。
+- `TBLWIPLOTLOGINSTATE` 沿用 WP305 的 Oracle source DDL/metadata/CREATE；其餘 User/Shift/OP/Area/Equipment/System Parameter 等共用 references 重用。本功能未查得其他新專用資料表。
+- Profile 的 IP、帳號、密碼、SID 與連線字串留在公司本機受保護設定，未輸出或提交。家用端先查 YMES PostgreSQL live schema/migration history；只為真正缺少的 OperatorState／OperatorLog 建 migration，CREATE-only 不可直接部署。
+
+### 更新 2026-11-20：WIP WP105 使用者登出作業（下工）
+
+- WP105 不涉及新的 Oracle table；其 `TBLWIPOPERATORSTATE`／`TBLWIPOPERATORLOG` 欄位、PK、索引及 CREATE-only 取自 WP104 references，`TBLWIPLOTLOGINSTATE` 取自 WP305 references。未為 WP105 重複查 DDL 或產生 CREATE-only。
+- 本輪只核對 WinForms、Service、Core 原始碼與 DEV 假頁，沒有讀 Oracle 業務資料列、執行 Oracle DDL/DML 或連 YMES PostgreSQL。家用端先檢查 live schema/migration，再重用既有 migration/API schema；WP105 的逐筆下工需在交易內更新 OperatorLog、OperatorState 及必要 LotLoginState。
+
+### 更新 2026-11-20：WIP Lot Operator Clockin 批次作業員上工
+
+- 本功能沒有新資料表，不重複查 DDL或產生 CREATE-only。OperatorState／OperatorLog 沿用 WP104 的 Oracle source/metadata/CREATE-only；LotLoginState 沿用 WP305 references。LotState、OP、Area、Equipment、Equipment Group、Temporary Equipment、User/Shift、Group/Privilege、System Parameter 都是既有共用結構。
+- 公司端只核對 WinForms、Service、Core 與上述已知 schema metadata，未查業務資料列、執行 Oracle DDL/DML 或連 YMES PostgreSQL。特別確認 WP104 OperatorState DDL 沒有 POSITIONNO；標準 Lot Operator Clockin Form 未傳工位，Core 走不含此欄的 insert。
+- 家用端先比對 YMES live PostgreSQL schema/migrations，再重用共用 OperatorState、OperatorLog、LotLoginState 和既有 lookup。Form 未提供數值 FunctionKey；應由可靠 menu/function metadata 核實，不能把目前 fallback 推導值當成正式資料庫值。
+
+### 更新 2026-11-20：WIP Lot Operator ClockOut 批次作業員下工
+
+- 本功能沒有新表，OperatorState／OperatorLog 與 LotLoginState 沿用 WP104/WP305 Oracle references；查詢所需 LotState、OP、Area、Equipment、Group、Temporary Equipment 等沿用共用 references，未重複查 DDL。
+- 公司端只核對 WinForms、Service、Core 原始碼與既有 schema references，未讀 Oracle 業務資料列、執行 Oracle DDL/DML 或連 YMES PostgreSQL。家用端先核對 live schema，再實作登入授權 query 與批次下工 API。
+
+### 更新 2026-11-20：WIP 作業員登入登出（OP／Area）
+
+- Core 寫入 `TBLUSROPERATORLOGINSTATE`、`TBLUSROPERATORLOGINLOG`。受保護 Oracle profile 直連 MESTEST 後，`ALL_TABLES`、`ALL_SYNONYMS` 對兩個名稱均未回傳列；DBMS_METADATA 無法取得不存在物件的 DDL。精確查詢結果是 `TABLE NOT FOUND`，不是尚未執行查詢。
+- 查詢 script 與結果在 `fetch_usr_operator_login_ddl.ps1`、`lookup_usr_operator_login_owners.ps1` 及 `database/reference/mestest_usr_operator_login_*`。未查 Oracle business rows、未執行 DDL/DML；未產生 CREATE-only。需要正確有該表的 Oracle schema/環境提供 source DDL，或由家用端證實 YMES PostgreSQL 已有可重用對應結構，再決定 migration。
+- IP、帳號、密碼、SID、連線字串未輸出或提交。公司端未連 YMES PostgreSQL，也未建立 Production API。
+
+### 更新 2026-11-20：WIP 生產批作業員登入登出（OPERATOR LOGIN_LOT）
+
+- 本功能沿用 `TBLWIPOPERATORSTATE`／`TBLWIPOPERATORLOG`（WP104）及 `TBLWIPLOTLOGINSTATE`（WP305）Oracle DDL/metadata/CREATE-only，不新增專用表或重複查 DDL。其他 Lot/OP/User 共用表沿用既有 references。
+- 只核對 WinForms／Service／Core source 與已取得的結構 references；沒有讀 Oracle business rows、執行 Oracle DDL/DML、連 YMES PostgreSQL或建立 API/migration。
+
+### 更新 2026-11-20：WIP WP205 生產批選用生產設備
+
+- WP205 使用 Lot／Temp LotState、Temp Equipment、Equipment/EMS 狀態、Area Equipment Relation、Equipment Group 及產品 OP Capability 等既有共用表；Lot State 由 WP101／WP201 references 管理，Equipment 與 Temp Equipment references 由 WP204 管理。本功能沒有專用新表，不重複查 Oracle DDL，也不產生重複 PostgreSQL CREATE-only。
+- 公司端只核對 WinForms `frmLotChoiceEqp`、`wsWIP.LoadAvailableEquipment_All/LoadTemp_Equipment/Exe_LotChoiceEQP`、`clsLot.ShowAvailableEquipment_All/Exe_LotChoiceEQP` 及 `clsOperatorState.SHR_CI_EMP`。未查業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL。
+- 家用端先對照 PostgreSQL live schema／migration history，再把 LotStamp、設備可用性／容量與 Port 占用守門移入交易式 API。公司端 DEV localStorage 假指派不是正式資料；沒有更新或輸出連線秘密。
+
+### 更新 2026-11-20：WIP WP206 計數不良原因收集
+
+- 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 Oracle profile 直連 MESTEST，唯讀查 `TBLOPABNORMAL`、`TBLQCABNORMALBASIS`、`TBLQCABNORMALPOSITION`、`TBLWIPCONT_ABNORMAL` 的 DBMS_METADATA DDL 與 columns/constraints/indexes/triggers metadata；未讀 business rows、未執行 Oracle DDL/DML。
+- `TBLOPABNORMAL`、`TBLQCABNORMALBASIS`、`TBLQCABNORMALPOSITION` 各有來源 PK；`TBLWIPCONT_ABNORMAL` 沒有 PK/FK/Trigger，只含 `LOTSERIAL` 非唯一 index。Source DDL/index/metadata、CREATE-only 在 `database/reference/mestest_wip_wp206_*`。`TBLOPABNORMAL` CREATE-only 已在 Operation/System reference，不另重複產生。
+- Oracle IP、帳號、密碼、SID 與連線字串留在公司本機受保護設定；本輪沒有輸出或提交秘密，也未連 YMES PostgreSQL。
+
+### 更新 2026-11-20：WIP WP207 分批處理
+
+- 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 MESTEST profile，唯讀取得 `TBLEMSDISPATCHSTATE`、`TBLWIPAUTOMERGE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTOPECNRECORD`、`TBLWIPOSBASIS`、`TBLWIPOSDETAIL` 的 `DBMS_METADATA.GET_DDL` 與 `ALL_TAB_COLUMNS`、`ALL_CONSTRAINTS`、`ALL_INDEXES`、`ALL_TRIGGERS` metadata；沒有讀取業務資料列或執行 Oracle DDL/DML。
+- 六張表都在 MESTEST，均無 FK/trigger。除 `TBLWIPCONT_EMPLOYEE` 外都有來源 PK；Employee 表無 PK/unique index，只有三個 non-unique index。原始 source/index DDL、metadata 及 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp207_*`；完整欄位與限制見 `docs/modules/WIP/分批處理.md`。
+- 其餘 Lot、Product、Process、Temp、Inventory、Matrix 等共用結構沿用 WP101／WP201／主檔 reference，不重複建表。CREATE-only 不是 migration；家用端先核對 YMES PostgreSQL live schema/history，只為缺失表新增 forward migration，並實作標準拆批與 THEIL 客製更新的交易 API。
+- 本輪未連 YMES PostgreSQL、未輸出或提交 IP／帳號／密碼／SID／連線字串。`fetch_wp207_ddl.ps1` 只有受保護 profile 的本機路徑與讀取程序，不含憑證值。
