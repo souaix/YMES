@@ -366,7 +366,7 @@ button {
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: auto;
-  scrollbar-color: #938d7d #f1efe8;
+  scrollbar-color: rgba(147, 141, 125, 0.4) transparent;
   scrollbar-width: thin;
 }
 
@@ -376,13 +376,14 @@ button {
 
 .framework-sidebar nav::-webkit-scrollbar-track {
   border-radius: 8px;
-  background: #f1efe8;
+  background: transparent;
 }
 
 .framework-sidebar nav::-webkit-scrollbar-thumb {
-  border: 2px solid #f1efe8;
+  border: 2px solid transparent;
   border-radius: 8px;
-  background: #938d7d;
+  background: rgba(147, 141, 125, 0.4);
+  background-clip: padding-box;
 }
 
 .framework-menu-item,

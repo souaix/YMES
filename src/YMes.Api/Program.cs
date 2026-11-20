@@ -64,6 +64,7 @@ if (!localDemoAuth)
     builder.Services.AddSingleton<YMes.Api.Enterprise.Et102Repository>();
     builder.Services.AddSingleton<YMes.Api.Enterprise.Et103Repository>();
     builder.Services.AddSingleton<YMes.Api.Enterprise.Et104Repository>();
+    builder.Services.AddSingleton<YMes.Api.Enterprise.Et105Repository>();
 }
 builder.Services.AddControllers();
 

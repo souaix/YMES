@@ -1,5 +1,32 @@
 # 家裡電腦接手清單
 
+## 最新接手：ET105取貨公司基本資料（DB/API/本次A2GUI已驗，Git待同步）
+
+本機為HOME PC（PostgreSQL復刻／API／PPK SSH／發行）；公司端維持Oracle唯讀來源與UI。以下待辦只列家用工作，不轉派公司端PG／SSH／部署，也不覆寫任何既有歷史heading。
+
+- [x] 依原生13欄完成ET105 query-key API、nullable／signed CAS、state0 Edit、直接無Job核准／停用／硬刪、server UTC actor及同Taker namespace鎖序；Vue正式13DTO、Apply採真DTO、多選partial／dirty／焦點／DEV隔離與CloseHome程式已整合。這是實作紀錄，不是正式驗收結論。
+- [x] Root0059實際套用／backup634856B＋restore1806＋c3200aaf…／native13三defaults本表CRUD與額外獨立readback；receipt a5de922d…、Root額外readback1116a7e5…已補維護／QA文件。沒有建表、回填NULL或擴parent/schema/role權限。
+- [x] API154 source56f2568b…、SDK9正式build/publish0warnings/errors、actual8db4b840…ready/nonroot通過；Web A2 actual0c2852e1…／source224fcbb3577…、HTTPS資產與public755/644 gate通過；host source/backup700/600保持。
+- [x] fresh API C3BFA7DF16CB48579DCDB00DB44598C0八組單輪184HTTP1853assert全PASS，兩exact scopes＋Holder0；Root獨立counts810536b5…再次全0。原055CE…43/355 FAIL原樣保留，日期helper窄修71262765…；recovery3874…只API retire/delete精準清理原inventory1，沒有重跑或洗掉原FAIL。
+- [x] Root已封存A2 app-browser本次scope：109raw／105有效pass＝102GUI＋3非GUI，四工具obs2/43/82/95全resolved且原false保留；A1 opaque真產品finding封存，A2 event5修復。真GUI NewApply/連存/clean Confirm、dirty/Tab/selection/duplicate/literal/approve/retire/harddelete/partial1/2完成，不把API-onlyNULL/signed/max等分支偽稱GUI實測。
+- [x] 7GUIcreated/harddeleted7，SQLfixture1只F stale stamp/revision、SQLcleanup0；Root final SQL7exact/logical/actor counts皆0，proof event74／rawlogc4db5ae4…。freshHome21收合106、icons107／展開108／末次logs[]109完成；105不是全純click。18nativeWIP＋1direct正式guard/Close及兩ENT read smoke通過，不代表WIP交易provider或populatedmap完成。
+- [x] GUI後Root再做正常TLS public7/7（root/deep/JS/CSS/ready200及兩小寫404）與runtime8db/0c285／UID1654/101／nonroot files／ready200純讀核對；不加到API或GUI通過數。
+- [ ] Root review／整合module及QA文件、採用真cleanup37525ba0…與Root批准final6734a15e…（舊pending draft不當final）、採用GUI peer03862512…passed／部署維護結論，正常Git379來源綁定（SQL1/API154/Web224）、commit與真feature target-ref push/readback；目前Git/最終checkpoint不預填完成，mainSyncPending=true。
+
+### 下一項：ET106客戶出貨地址資料，先來源與schema稽核
+
+- [x] ET106只讀來源預盤已備`.tools/et106-source-audit.md`及metadata-only`.tools/et106-liveaudit-before.sql`，獨立readonlypeer通過、未DBrun。核正FunctionNo=`CUSTOMER SHIP ADDRESS`／FunctionKeyET106、雙grid、來源Apply/Confirm/rekey。repo有公司WinForms/Service/Core查證規格但未找到完整原方法檔，不冒稱已逐行讀CoreSQL。
+- [x] CREATE早已完整交付，不再重問公司同DDL；已逐欄靜態對照Addr22/NN4/default3（createdate無default）與Declaration13/NN8/default2/noPK/index/FK。
+- [ ] Root凍結報關自然七欄重複組的snapshot/CAS/affectedRows、地址raw rekey與parent/new/unchanged legacy資格等現代政策，不任選first row／造PK／ctid永久ID；metadata未知保留pending。
+- [ ] HOME透過已授權方式只讀核PG現存表／型別／欄位／grants與migration history；只有來源證實且真缺的表／預設／權限才提出forward migration，不能重建共用表或把Oracle CREATE直接套為現況。
+- [ ] 核真Customer／Taker／Forwarder／Broker lookup的來源資格與共用引用協作，特別啟用ET105目前尚未交付的ShipAddr真Taker引用registry／SELECT與writer鎖序；先形成可信API契約，且先準備允許ShipAddr optional-absent的Broker/Forwarder/Taker相容registry/API，再引入表及writer，避免新引用使既有三master全部503；未知provider不造假。需要公司來源證據時再列精準類別／方法／DDL欄位缺件，不把家用實作工作塞入officeTODO。
+
+### 後續公司新UI整合（不混本次ET105或ET106）
+
+- [ ] QA後fetch看到公司origin/main d5a8bd1→095b3d2，WP212/213/214/215/914/501/502/503/504共9新WIP UI＋CREATE交接尚未merge／未部署。保本輪ET105固定224，不混入canonical；下一integration scope正常merge／freeze/fullbuild／正式guard與影響GUI驗收後再同步main，禁止force push。
+
+同步後接續公司九頁整合：已fetch至`095b3d2`，新增WP212／213／214／215／914／501／502／503／504及其CREATE交接。這些尚未合併、建置、部署或驗收，不混入本輪Web224／379來源。先保留正常feature同步，再逐頁整合與驗收後同步main；不使用force push。ET106來源／metadata稽核準備沿下方待辦繼續。
+
 ## 最新接手：公司WIP載具拆批／併批Web224 C1（2026-11-20；限定GUI完成／main待同步）
 
 - [x] 保留已驗Web220 dc34／372及Web222 3953／374的正常featurebranch推送／遠端讀回；各版proof86／69保持原樣，222小型本機紀錄71fa671a…的私有上傳尚待實證。

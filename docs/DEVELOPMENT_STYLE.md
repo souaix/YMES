@@ -51,7 +51,7 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 - 字型使用 `Segoe UI`、`Microsoft JhengHei` 與系統 sans-serif fallback。
 - 畫面以白色內容卡片、淺暖色背景、細邊框和清楚留白為主。互動焦點使用 KD 黃色系；錯誤與成功訊息只用必要的語意色，不擴大成裝飾色塊。
 - GitHub 主檔原型的欄位、資料表、按鈕邏輯和業務資訊優先保留；套用 KD 色票時，不改變其資料欄位意義、狀態語意或 API 行為。
-- 公司端新增 WIP 頁面由 App 在指定的 15 個新 render 入口加上 `framework-content office-wip-module`；`web/src/style.css` 只在此 class 與框架內統一灰米表頭、墨色主要按鈕、淡黃可輸入欄位與 KD 黃焦點／選取。共用 SD108 不加此 class，不改其他頁面色彩或原型邏輯。
+- 公司端新增 WIP 頁面，由 App 在已核對的對應 render 入口加上 `framework-content office-wip-module`；`web/src/style.css` 只在此 class 與框架內統一灰米表頭、墨色主要按鈕、淡黃可輸入欄位與 KD 黃焦點／選取。共用 SD108 不加此 class，不改其他頁面色彩或原型邏輯。
 - 框架已顯示頁面名稱時，這批 WIP 頁面僅隱藏根部純標題；保留 DEV 提示、對話框標題與按鈕。OP/Area 登入頁的動態 Login／Logout 屬功能狀態，保留為小型次要文字。
 - 避免使用與 KD 主色競爭的亮粉、亮藍作為全站品牌色。既有主檔原型中的狀態提示只保留必要的語意區分，後續樣式整理時應轉為共用色票。
 
@@ -62,6 +62,7 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 - 登入後使用 KD Logo 與固定側欄/主內容區。主內容首頁先留白，不自行增加儀表板或統計卡片。
 - 選單預設全部收合，依舊系統 Module → Menu Group → Function 的三層結構呈現；不得把第三層主檔功能誤列為第一層。
 - 每一層選單項目都顯示語意相符的圖示；側欄收合時只顯示圖示，隱藏文字與展開箭頭。
+- 選單捲動區使用 `overflow-y: auto`，內容超出高度才出現捲軸。標準 `scrollbar-color` 使用 `rgba(147, 141, 125, 0.4) transparent`；WebKit thumb 同樣使用 40% 透明度、透明 track／border 及 `background-clip: padding-box`。保持原生細捲軸，不改成常駐或實色背景。
 - 側欄收合時取消所有層級的水平縮排，圖示完整置中於窄欄；不得被子層邊框或捲動條裁切。每個選單按鈕以完整階層名稱提供 `title` 與 `aria-label`，收合後仍能辨識、點選並導向原功能。
 - 主選單項目由 API 提供，Vue 不自行猜測舊系統的 Module、MenuNo、FunctionNo 或翻譯名稱。API 尚未提供完整選單時，Development 可以清楚標示並使用五個已開發主檔的簡化導覽；Production 不以簡化導覽假裝完整。
 - 已有 Web 畫面的功能導向既有 Vue 頁面；公司電腦遷移期間，尚無 API 的頁面可使用 Development 本地假資料完成畫面與互動，必須在頁面清楚標示「開發假資料」；Production 對未完成 API 的功能顯示未遷移狀態，不可回傳假成功。
@@ -121,7 +122,9 @@ API 從 YMES 復刻資料庫的 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunct
 
 相關文件：[GitHub 原型整合](GITHUB_INTEGRATION.md)、[共用系統架構](../ARCHITECTURE_BASE.md)、[部署設定](../DEPLOYMENT_PROFILES.md)。
 
-2026-11-20最新Web224 C1沿原KD色票擴至19個入口，新增WP210載具拆批／WP211併批，只套既有框架主題並保留各頁DEV banner、dialog與正式不可用界線。來源f9bb9566…完整建置exit0並部署e2df5e3d…，Root限定GUI73檢查點／73events／0observations已封存，含新兩頁19入口KD／無假metadata／單一主標題與Close／重進；code bacf0ee5的376綁定及featurebranch正常同步已完成，main仍pending，見[Web224 QA](qa/20261120-office-wip-carrier-merge-integration.md)。不將舊17入口proof改配19入口，樣式不代表WIP provider或原生交易交付。
+2026-11-20 ET105 Web224 A2維持既有KD框架，修復正式站選單捲軸變回實色的問題。Root在正式app-browser確認40%透明度、透明底、圖示收合與21項選單；本輪105個有效檢查點包含102項GUI與3項SQL證據，原109筆事件中的4個已解測試工具觀察完整保留。取貨公司實際主檔操作與維護範圍見[ET105 QA](qa/20261120-et105.md)，Git同步狀態以該文件為準。
+
+前版歷史：Web224 C1沿原KD色票擴至19個入口，新增WP210載具拆批／WP211併批，只套既有框架主題並保留各頁DEV banner、dialog與正式不可用界線。來源f9bb9566…完整建置exit0並部署e2df5e3d…，Root限定GUI73檢查點／73events／0observations已封存，含新兩頁19入口KD／無假metadata／單一主標題與Close／重進；code bacf0ee5的376綁定及featurebranch正常同步已完成，當時main仍pending，見[Web224 QA](qa/20261120-office-wip-carrier-merge-integration.md)。不將舊17入口proof改配19入口，樣式不代表WIP provider或原生交易交付。
 
 前版歷史：Web222沿KD色票擴至17個入口，新增WP208／WP209；限定GUI69項已封存，兩新頁無DEV Bin、單一框架主標題及Close／重進均實測。release3953bbad已完成374綁定與featurebranch正常推送，當時main待同步，見[Web222 QA](qa/20261120-office-wip-split-integration.md)。既有SD108資料契約不變。
 

@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## ET105取貨公司：0059已套用，API與正式頁面已驗（2026-11-20）
+
+本機是HOME PC，維護資料庫`ymes`、schema `"YMES"`的PostgreSQL復刻庫。Root以既有PPK SSH核對原生13欄表已存在，完成備份後，0059只補三個default與ymes_app本表CRUD；沒有重建表、回填舊資料或新增ET106表。custom備份634856 bytes／restore-list1806，SHA`c3200aaf96648827d980f6725ba9a11152d39a649d924754a268a876505af51d`；原子allowlist與額外獨立讀回通過，完整證據見[ET105 QA](qa/20261120-et105.md)。
+
+目前正式API為`8db4b84024af86a82cac448f38492bfba0122a24b3e0a3369fa90b649af9d04e`（154份來源），Web為`0c2852e15d14fe2c1e4a6ac396f7d815feef42695e0f88857cfd1fb7ca5ba815`（224份來源）；正常HTTPS七項、實際UID1654／101、必要檔案讀取與ready200均通過。API八組184HTTP／1853檢查、精準兩scope與Holder清零；GUI105有效檢查、七筆全GUI建刪與獨立七鍵清零完成，SQL僅一筆自有F版本負例，沒有SQL清理。
+
+Git379來源綁定及正常feature推送仍待填真結果，mainSyncPending=true；公司新增九頁UI／來源CREATE尚未合併本次224。公司端維持原生Oracle唯讀來源與UI，沒有PostgreSQL或SSH部署責任。以下C1／舊版本是各次歷史快照；C1完整checkpoint71933b09…已保留，舊0058與API151歷史不改寫成0059證據。
+
 ## 公司WIP載具拆批／併批Web224 C1（2026-11-20；無資料庫異動）
 
 Office df10bd08與已驗Web222 release3953bbad正常合併至3f99c172，Web224 canonical `f9bb95660175064e2b0c989df9f09dbe52adf18f85c3a0650bf5753960c072e7` 已完整建置exit0、封裝並部署Web `e2df5e3df9884894f3805f5f454053c8e748c6256314ddc41f0ee4cf27988375`，公開HTTP七項通過。Root限定GUI73檢查點／73events／0observations封存；ET104 smoke兩筆全GUI建刪，SQL fixture writes0、獨立精準Broker／Forwarder皆0，清理SHA256 `3a5c9a4a387a8a8ae44d6a5c7d18aea36877502956eb61da1c2c3c8aac46e36d`；fresh reload空首頁21收合選單／logs[]。C1 code bacf0ee5的376綁定399f648b…與featurebranch正常推送／遠端讀回已完成，main／feature-only checkpoint仍待後續實證。本版API仍6d2501…／151份，DB `ymes`／schema `YMES`仍0058；未新增DDL、grant、資料回填或WIP交易provider，不能把公司新reference當成已套schema。
