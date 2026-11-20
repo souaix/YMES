@@ -2353,3 +2353,11 @@ API 工作：
 - [ ] 核 YMES PostgreSQL live schema/history、資料與權限。`TBLWIPFUTUREWAIT` 七欄、PK `(LOTNO,OPNO,WAITTIME)` 的 Oracle source 在 `mestest_wip_wp201_dependency_source_ddl.sql`、PG CREATE-only 在 `mestest_wip_wp201_create.sql`；無新直接表。只對實際缺項 forward migration，不重建既有表。
 - [ ] 提供登入/`WP507` Function ACL 的 LotNo、OPNo、WaitTime 可選查詢和 OP lookup，顯示六欄；原 Form 可無條件查全表，正式 API 要分頁／結果上限、可見範圍和參數化 SQL。
 - [ ] Release POST 必須完整提供 LotNo/OPNo/WaitTime，WaitTime 僅 0/1；server 鎖定並重查該 PK、版本與權限，以參數化 SQL 交易刪單筆並記 actor/事件，提供不存在／衝突／冪等回應。舊 Core 允許缺鍵造成廣域刪除，絕不可照搬。Release 只刪未來設定，不解除已生效 WaitBasis/Lot Wait；須與 WP505 Set、`ChkFutureWait`、WP502 真等待交易分清生命週期。API 完成後接正式 Vue/部署驗收；公司端未連 PG、未執行 build/test/browser。
+
+## WIP WP508 異常單資料家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP508 規格](docs/modules/WIP/異常單資料.md)。公司 `/YMES/WIP/ErfBasis` 的三筆 ERF、ERF Info 五頁摘要與 8D 視窗都是 DEV 預覽，正式環境不得使用 fixture 或把 8D 提示當建立成功。
+- [ ] 核 YMES PostgreSQL live schema/history、資料、權限。主查詢 ERFBasis/BatchLot 與 Lot/Product/OP/Material/Vendor/Customer 直接表已有 Oracle/PG refs；新補 `TBLWIP8DBASIS_FACTORY` Oracle source DDL/index/metadata `database/reference/mestest_wip_wp508_*` 及 PG CREATE-only `mestest_wip_wp508_create.sql`（43 欄、PK QRSNo）。確有缺項才 forward migration；完整 WP801 還有別表，不能只靠這一張宣稱完成 8D。
+- [ ] 提供登入/`WP508` Function ACL 的 ERF 查詢：六個可選文字欄、Create/Release 日期區，至少一有效條件，固定 `ERFSource=0`，分頁/上限，返回 25 欄及 batch member Lot/OP/Customer 比對語義。LotNo 是包含查詢；batch ERF 應能因任一成員命中而返回一張主 ERF。StatusShow、ERFRecordQty=ScrapQty、CalHoldTime 等派生欄由 server 計算；不得直接移植 Core 拼字串 SQL。
+- [ ] `ERF Info` 依 ERFNo 精確、授權讀主表、HoldReason、HoldReasonDisp、ERFDisposition、LotDisposition、ERF/OCAP 附件，做五頁完整查詢和受權限控制的附件下載。公司 DEV 僅做摘要/空附件預覽；正式端要按 `WP_ERFInformation/frmERFInformation.vb` 補所有欄位、跨表關聯、顯示與下載。
+- [ ] `8D` 有 QRSNo 時查 8D Basis，無結果或 IssueState=-1 不開維護；沒有 QRSNo 時走 WP801 建立並回寫 ERFBasis.QRSNo。此為跨模組交易：需先追 `WP_8DBasis_Factory`／`WP_8DMaintainDef` 及其他 8D 表、版本/簽核/附件/權限，再設計 API 和冪等回寫；不要從 browser 接受任意 QRSNo、IssueState。正式 API 完成後接 Vue/部署驗收。公司端未連 PG、未執行 build/test/browser。

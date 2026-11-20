@@ -1035,3 +1035,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-20：WIP WP507 預先等待解除
 
 - `frmFutureWaitRelease`／`wsWIP.DelFutureWait`／`clsLot.DelFutureWait` 直接刪 `TBLWIPFUTUREWAIT`；七欄、PK `(LOTNO,OPNO,WAITTIME)` 的 Oracle source DDL 與 PostgreSQL CREATE-only 已在 WP201 refs。沒有新增直接表/CREATE SQL。公司端只讀來源碼與已交付 DDL，未查 Oracle 業務列、未寫 Oracle、未連 YMES PostgreSQL。正式 API 應限制查詢筆數並強制完整三鍵、0/1 WaitTime、參數化交易；家用端先核 live schema/history。詳見 `docs/modules/WIP/預先等待解除.md`。
+
+### 更新 2026-11-20：WIP WP508 異常單資料
+
+- `frmERFBasis` 的主查詢使用 ERFBasis/BatchLot 和 Lot/Product/OP/Material/Vendor/Customer 既有 source/CREATE refs，不重複建表；8D 分支直接讀 `TBLWIP8DBASIS_FACTORY`。公司端以受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得新表 source DDL、index、metadata：`database/reference/mestest_wip_wp508_source_ddl.sql`、`mestest_wip_wp508_source_indexes.sql`、`mestest_wip_wp508_metadata.txt`。PG CREATE-only 在 `mestest_wip_wp508_create.sql`：43 欄、PK `QRSNO`、無 FK/trigger/額外 index。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證未提交。家用端先核 live schema/history，確有缺項才 forward migration；完整 WP801 8D 仍有其他表，見 `docs/modules/WIP/異常單資料.md`。
