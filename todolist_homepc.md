@@ -2308,3 +2308,10 @@ API 工作：
 - [ ] 提供有登入/功能權限的六欄 Lot 候選查詢、前五類 lookup、ERF 主次分類/HoldItem/元件/Area/OCAP/EquipmentState 查詢，限制查詢量或分頁。至少一個 filter；按 `ERFMultipleHold` 選 Status 0/1/4 或 0/1/3/4，固定 CurQty>0、LotState<>0；Partial 非 Queue 排除。Set 前與 POST 時重查包裝、批與 OP/Status/LotStamp，拒絕已 Final 處置及未處理 Dummy 衝突。
 - [ ] 做單一原子 Immediate Hold POST：server 保留 ERFNo、取登入使用者，驗證 MClass、HoldDescription、原因非空、Qty 四位精度、原因複合鍵唯一、OCAP 全有/全空、Release EQP 狀態及其他 Lot 使用；按原窗有元件時分派 Component+T1–T5，無元件用 N/A。寫 ERFBasis、兩張 HoldReason、LotState/Log/LoginState、Reverse/ReleaseLog、OCAP 及必要附件關聯，依 CreateERF/既有狀態與系統參數處理多重 Hold。重送/版本衝突應有明確回應；參數化 SQL，不能沿用舊 Core 拼字串。
 - [ ] 附件實際上傳/BLOB、PDF、郵件/訊息與交易內外的失敗補償或 outbox 一起設計。`TBLWIPERFCREATEDATA` 有資料時，原 Core 會複製到 BK 表再刪除；是否需要此流程由 live 狀態與 API 契約確認。完成 migration/API 後才接正式 Vue、做部署與驗收；公司端未連 PostgreSQL、未執行 build/test/browser。
+
+## WIP WP502 立即等待設定家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP502 規格](docs/modules/WIP/立即等待設定.md)。公司 `/YMES/WIP/ImmediateWaitSet` 只用 DEV 假資料，正式環境不得讀 `ymes-dev-mock:wip-immediate-wait:state:v1`、以本機 `DEV-WAIT-*` 作 WaitNo 或回報假成功。
+- [ ] 核 YMES PostgreSQL live schema/migration history、資料與權限，重用 WP101/WP201 已查的 LotBasis/State/Log/Temp_LotState/WaitBasis/ComponentState 與 USRUserBasis；WaitBasis source DDL 在 `mestest_wip_wp201_additional_source_ddl.sql`，CREATE-only 在 `mestest_wip_wp201_create.sql`。本功能無新直接表，不重建既有表。追包裝、Reverse/ReleaseLog、Adapter 等間接表，確實缺少才做 forward migration。
+- [ ] 做授權的七欄候選查詢與六類 lookup：至少一個 filter、Status 0/1/4、CurQty>0、LotState<>0；排除 PartialMode=1 且 PartialType 0/1 且 Status>1，以及 Complete+LinkName WAIT/HOLD。回傳 LotNo+OPNo、LotStamp、顯示欄與選取所需資料，限制結果量/分頁。
+- [ ] 批次 Set API 對**每筆**選取 Lot 重查包裝、Status、PartialType、LinkName、LotStamp、CurQty、權限和歸屬；原 Form 把多筆 LotNo 用逗號連接，但 Service 只接單一字面值，不能沿用。server 產各筆 WaitNo、共用第一筆 BatchWaitNo、WaitType=2/WaitSource=0/LotIsValid=1；Description 可空。維護 WaitBasis、LotState/Log、Temp_LotState、Reverse/ReleaseLog 及部署插件。先明定全批原子或相容逐批部分成功的契約、冪等/衝突/逐筆結果，不能把前幾筆成功後一筆失敗顯示成全成功。公司端未連 PG、未執行 build/test/browser；API 完成後才做正式 Vue 整合與驗收。

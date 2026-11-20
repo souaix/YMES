@@ -1008,3 +1008,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端以 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 和受保護 MESTEST profile，唯讀 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。新增查證 `TBLWIPERFCREATEDATA`（15 欄、PK RepairNo）、`TBLWIPERFHOLDREASON`（9 欄、複合 PK ERFNo+ComponentNo+HoldItemNo+AreaNo、LotSerial 非唯一 index）、`BKTBLWIPERFCREATEDATA`（15 欄、無 PK、LotNo 非唯一 index）。三表均無 trigger；Backup.HoldUser 長 50，原表長 10。Oracle source DDL／index DDL／metadata 在 `database/reference/mestest_wip_wp501_*`。
 - `TBLWIPERFBASIS`、`TBLWIPERFHOLDREASONDISP`、`TBLWIPERF_ATTACHFILE` 的 Oracle source DDL 已在 `database/reference/mestest_qc409_wip_disposition_dependencies_source_ddl.sql`，本次補六表的 PostgreSQL CREATE-only 參考 `database/reference/mestest_wip_wp501_create.sql`。其他 Lot／QC／OCAP 共用表沿用既存 refs；正式 API 仍須追 Reverse/ReleaseLog/User Define hook 間接表。
 - CREATE-only 僅供家用端比對 YMES PostgreSQL live schema/history；若已存在不得重建或覆蓋資料，缺項才做 forward migration。公司端未查 Oracle 業務列、未執行 DDL/DML、未連 PostgreSQL，連線秘密未寫入 repo。來源與交易細節見 `docs/modules/WIP/立即異常設定.md`。
+
+### 更新 2026-11-20：WIP WP502 立即等待設定
+
+- `frmImmediateWaitSet`／`wsWIP.Exe_Wait_Set`／`clsLot.SetLotStateToWait` 直接使用 LotBasis、LotState、LotLog、Temp_LotState、WaitBasis、USRUserBasis、ComponentState。WaitBasis Oracle source DDL 已在 `database/reference/mestest_wip_wp201_additional_source_ddl.sql`，PG CREATE-only 已在 `mestest_wip_wp201_create.sql`；其餘直接表由 WP101、WP201、QC409/首批 refs 涵蓋。沒有新直接表需 Oracle DDL 或 CREATE SQL。家用端仍先核 YMES live schema/history、資料及 helper/adapter 間接表，再做 API/必要 forward migration。
+- 公司端只讀 WinForms/Service/Core 與既有 DDL，未查 Oracle 業務列、未寫 Oracle、未連 YMES PostgreSQL。原 Form 的批次包裝預檢以逗號串 LotNo，但 `CheckLotPackage` 將它當單一值；正式端要逐筆重查。完整規格見 `docs/modules/WIP/立即等待設定.md`。
