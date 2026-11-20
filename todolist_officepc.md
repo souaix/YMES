@@ -10,7 +10,8 @@
 - [x] [WP901 回復處理](docs/modules/WIP/回復處理.md) 完成 Vue DEV 歷程、回復守門和 API/CREATE-only 交接。Oracle 原始 DDL 回 ORA-03135，三張補表以唯讀 metadata 核對。
 - [x] [WP902 刪除已下線生產批](docs/modules/WIP/刪除已下線生產批.md) 完成雙 Grid、刪除確認、DEV 守門與五張表的 metadata／CREATE-only。
 - [x] [WP903 批次刪除已下線生產批](docs/modules/WIP/批次刪除已下線生產批.md) 完成 DEV 過濾、全選、包裝預檢與逐筆結果。表結構和交易沿用 WP902。
-- [ ] 依選單清冊接 WP904 生產批作業區變更。
+- [x] [WP904 生產批作業區變更](docs/modules/WIP/生產批作業區變更.md) 完成 DEV 選批、主子流程、變更與清除。沿用現有 DDL／CREATE-only 參考並交接整批替換交易。
+- [ ] 依選單清冊接 WP905 產品版本變更。
 
 ## 2026-11-20 桌機再接手：從 WP401 開始
 

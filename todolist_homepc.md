@@ -9,6 +9,7 @@
 - [ ] 讀 [WP901 規格](docs/modules/WIP/回復處理.md)，比對三張補表與既有 LotState／ReverseHistory，實作權限、LotStamp／CreateDate、防重及 SAP 對帳。
 - [ ] 讀 [WP902 規格](docs/modules/WIP/刪除已下線生產批.md)，比對五張補表，交付統一包裝守門、先回復後刪除、工單、物料／庫位及載具交易。
 - [ ] 讀 [WP903 規格](docs/modules/WIP/批次刪除已下線生產批.md)，重用 WP902 單筆交易並提供批次預檢、逐筆版本重查和部分成功回應。
+- [ ] 讀 [WP904 規格](docs/modules/WIP/生產批作業區變更.md)，比對現有 batch override／流程／區域 schema，做有身分複核與版本保護的整批變更，排隊時按 Core 規則更新現況區及廠別。
 
 ## 最新公司端交付：WP112 工單撤派工（2026-11-20）
 
