@@ -1,6 +1,19 @@
 # YMES / MES 資料庫連線與憑證處理
 
-## 最新：0061客戶主檔兩預設與本表權限已套用（2026-11-20）
+## 最新：ET101與DB0061結案已完成（2026-11-20）
+
+Root已完成69份私有證據上傳、真正Ready計畫、A2 dry／apply及另一連線獨立下載核對；目前正式checkpoint為 `496ae4bdd3c1cd8d4ecea8d8c16bd9ac35bd843118f97ab965e03651737fd7e9`，獨立讀回收據SHA `3e98979bea11b013ed9e760cdc643fb1f0e4ea50331fd23d4b9c55e5382b534c`，本輪ET101限定結案已完成。API167／3f0bdc7c…、Web256／ade411cc…及DB0061穩定；catalog2349、native35、全部167＋256私有來源、46項原有欄位及history prefixes保持，原2c23 checkpoint的完整raw備份保留。
+
+Code X `f82f183fcd3dfc78d5a690d3c43a15ec64f820b3` 與status Y `faf14b2fd2875464bf280294b681056433b19019` 均完成426來源綁定、正常feature／main推送及直接ref讀回；本批發行對應main提交為Y，`mainSyncConfirmed=true/mainSyncPending=false`。本次結案後文件補記不改本批X／Y紀錄，後續純文件提交不變更此發行對應。
+
+本輪只完成已記錄ET101操作、12個Office WIP入口防護及指定smoke；GUI132raw／124驗證＝117GUI＋5獨立SQL journal項＋2背景API，另3解釋／復驗筆記及五原false保留；六份實際唯讀收據與獨立GUI21範圍全0分開記。global QA／WIP正式providers仍未完成。下一WP109僅reference-compat A2 prepared候選，未執DDL或部署，不代表SWR交易已交付。
+
+以下原文中的收尾／pending為先前時點，完整保留為歷史；本節是目前結案狀態。
+
+HOME負責PG復刻／PPK／API發行；Office維持原生Oracle唯讀來源／UI，不新增Office資料庫或部署工作。
+
+
+## 0061套用與結案前階段紀錄（2026-11-20；原文保留）
 
 Root在CP `2c23af30…`／API976／Webeb1基準，以新full custom backup639181B（SHA `6ae87759…`）及restore-list1814項後，實際COMMIT0061。只將既有`"YMES".tblentcustomerbasis` IssueState與DataStamp設原生DEFAULT0、將原app SELECT加INSERT／UPDATE／DELETE；原column ACL、資料／NULL、CreateDate無default、其他表與16類目錄保持。apply SHA `d07b40f130d3ddb229ac8e522a454a37a96f136430ca6373066874d334a66301`，另條READ ONLY SHA `43a0144b11f55e243562702a12419c61b3b305a8f0adb7494c043b1186507660`，真after catalog `2349d0f0f8444c675044339ef586e934d6dde091de39560ec263ded0d411590b`；native35亦保持。
 

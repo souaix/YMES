@@ -1,6 +1,17 @@
 # 家裡電腦接手清單
 
-## 最新接手：ET106收尾完成，ET101＋Office e5f發行進行中（2026-11-20）
+## 最新完成：ET101＋Office e5f限定結案與main同步（2026-11-20）
+
+Root已完成69份私有證據上傳、真正Ready計畫、A2 dry／apply及另一連線獨立下載核對；目前正式checkpoint為 `496ae4bdd3c1cd8d4ecea8d8c16bd9ac35bd843118f97ab965e03651737fd7e9`，獨立讀回收據SHA `3e98979bea11b013ed9e760cdc643fb1f0e4ea50331fd23d4b9c55e5382b534c`，本輪ET101限定結案已完成。API167／3f0bdc7c…、Web256／ade411cc…及DB0061穩定；catalog2349、native35、全部167＋256私有來源、46項原有欄位及history prefixes保持，原2c23 checkpoint的完整raw備份保留。
+
+Code X `f82f183fcd3dfc78d5a690d3c43a15ec64f820b3` 與status Y `faf14b2fd2875464bf280294b681056433b19019` 均完成426來源綁定、正常feature／main推送及直接ref讀回；本批發行對應main提交為Y，`mainSyncConfirmed=true/mainSyncPending=false`。本次結案後文件補記不改本批X／Y紀錄，後續純文件提交不變更此發行對應。
+
+本輪只完成已記錄ET101操作、12個Office WIP入口防護及指定smoke；GUI132raw／124驗證＝117GUI＋5獨立SQL journal項＋2背景API，另3解釋／復驗筆記及五原false保留；六份實際唯讀收據與獨立GUI21範圍全0分開記。global QA／WIP正式providers仍未完成。下一WP109僅reference-compat A2 prepared候選，未執DDL或部署，不代表SWR交易已交付。
+
+以下原文中的收尾／pending為先前時點，完整保留為歷史；本節是目前結案狀態。
+
+
+## 結案前接手紀錄：ET101＋Office e5f發行中（2026-11-20；原文保留）
 
 - [x] ET106 writer完成正式API121／961、A1＋修正A2指定GUI與清理、codeXebc／statusY24ee409來源綁定及正常feature推送／直接ref讀回。完整checkpoint已真更新並獨立下載：`2c23af30ac36103f5393bc0ab23012845ad00c4258889ca24b3e206ef932513f`；F1／schema60／compat／E1／D1／ET105與舊GUI歷史保留，main待本輪Office整合。
 - [x] 正常合併Office e5f的15提交／12新WIP入口，保留雙方source／TODO。九新元件正式DEV資料／查找／storage／命令隔離、KD／單標題與ET101真owner API／UI已Root採用；兩個獨立source peers通過，未以pure測試冒GUI。
