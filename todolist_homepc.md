@@ -2226,3 +2226,12 @@ API 工作：
 - [ ] 實作分批 POST command，使用 LotNo、LotStamp、IncludeMother、各列 LotQty／SysQty／SAP_PRDQTY／SAP_PCSQTY／Action／NodeID／Product／Version／UnitNo。Server 在交易內重驗正數、四組合計、ReturnType、包裝／GoodBin／委外守門、LotStamp、產品與流程有效性；按來源 `GetSplitLotNo_Multiple` 語意原子保留子批號，拒絕舊預覽號與重複提交。BR／WIP Inventory 宿主模式須由可信內部上下文區分，不接受瀏覽器任意指定。
 - [ ] 以 `BR_Manual_LotSplit` 的 Lot/Temp、報工、屬性、流程、庫存、歷程、委外、派工等多表變更為規格，追查 Core helper 的額外共享表。標準拆批成功後 Form 另呼叫 THEIL `UPD_SplitLot` 寫 `TBLWIPLOTBASIS.SAP_PRDQTY/SAP_PCSQTY`、`TBLWIPLOTPROPERTY.WIP_BIGQTY`、`XX_TBLLOTMARITX_THEIL_BU1`；正式端要同一原子交易，或明確可恢復且冪等的二階段流程。失敗回應需區分標準拆批未提交與客製更新失敗，避免重複拆批。
 - [ ] 客製 Core 的 `UPDATE ... SAP_PCSQTY = <value>WHERE ...` 字串缺空白，依原始碼字面可能 SQL 無效；請以參數化 SQL 修正，確認 BaseLotNo/OrgLotNo 映射與 Matrix 複製。不複製字串拼接或瀏覽器 localStorage `ymes-dev-mock:wip-lot-split:*`。完成 migration/API/授權/交易驗證與部署紀錄後更新 TODO。
+
+## WIP WP208 分批處理_元件家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP208 規格](docs/modules/WIP/分批處理_元件.md)、[WP207 共用拆批規格](docs/modules/WIP/分批處理.md) 與 `docs/DATABASE_CONNECTION.md` WP208 段落。公司端 UI 是 `web/src/components/WipLotSplitComponent.vue`，只有 DEV 假資料。
+- [ ] WP208 的 `TBLSYSPARAMETER` 原先缺 SQL reference；公司端已從 MESTEST 唯讀取得 `database/reference/mestest_wip_wp208_source_ddl.sql`、`mestest_wip_wp208_source_indexes.sql`、`mestest_wip_wp208_metadata.txt`，並提供 `mestest_wip_wp208_create.sql`。Oracle 原表 25 欄，PK `PARAMETERNO`，無 FK／trigger／其他 index。先核對 YMES live schema/migration history；這是共用參數表，已有就不重建，只為真正缺口做 forward migration，不用 CREATE-only 重播。
+- [ ] 其餘 26 張直接依賴表沿用已交付 reference：`TBLINVWIPINVENTORY_COMPONENT` 用 WP603；`TBLWIPCOMPONENTSTATE` 用 WP101；ComponentProperty／Cont／Temp ComponentAttrib／Temp Equipment 用 WP201；`TBLWIPCONT_EQUIPMENT` 用 WP305；派工／AutoMerge／Cont Employee／Lot OP ECN／OS 六表用 WP207；其他 Lot／Product／Process／System 用既有主檔與 WP201。不要重複建表或自創無來源 PK。
+- [ ] 建登入保護的指定 Lot 與 Component 查詢，限制 Status、HaveComponent、LotState、非 Partial／Stocker、載具／庫存範圍與使用者權限；產品和路由 lookup 依真實 `AllowLotProductChange`、ECN／流程設定回傳。WIP Inventory／BR 宿主模式只由可信 server 上下文設定。
+- [ ] 實作拆批 POST command：在交易內重讀／鎖定 LotStamp、ComponentState、Inventory 和序號，驗證每列數量、元件完整／唯一分配、未被其他子批／庫房占用、Action／ReturnType／NodeID、產品／路由；產生並保留批號，執行 `BR_Manual_LotSplit_Component` 對應的 Lot、Component、Temp、報工、庫存、派工及歷程副作用。不要信任 DEV 預覽號、localStorage 或瀏覽器提交的 SplitType=1。
+- [ ] 逐層追查 Core helper 對其他表的讀寫，並處理 BR 模式成功後 TransferLot、SEMI_Wafer `S_BatchID`／`LC_CI` 的後續轉站。若不能與拆批同一交易，提供可觀察且冪等的第二階段，避免已拆成功後重按 Confirm。WP208 不呼叫 WP207 的 THEIL `UPD_SplitLot`，不可把兩者誤併成同一輸入／SAP 規格。
