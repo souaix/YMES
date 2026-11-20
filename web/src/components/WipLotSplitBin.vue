@@ -73,8 +73,9 @@ const remaining = computed(() => {
 function readState(): { records: SplitRecord[]; nextSequence: number } {
   const stored = JSON.parse(window.localStorage.getItem(storageKey) || 'null') as { records?: SplitRecord[]; nextSequence?: number } | null
   const rawSequence = stored?.nextSequence
+  const rawRecords = stored?.records
   return {
-    records: Array.isArray(stored?.records) ? stored.records : [],
+    records: Array.isArray(rawRecords) ? rawRecords : [],
     nextSequence: typeof rawSequence === 'number' && Number.isSafeInteger(rawSequence) && rawSequence > 0 ? rawSequence : 1,
   }
 }
