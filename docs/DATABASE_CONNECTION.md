@@ -997,3 +997,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 對照 `frmSplitComponent`、`wsWIP.InitRunSplitComponentNo`／`EXE_SplitComponent`、`clsWIP.InitRunSplitComponentNo`／`EXE_SplitComponent`。兩個 Core 方法字面直接引用 14 張實體表；12 張已有 Oracle source DDL／PostgreSQL CREATE-only，缺 `TBLWIPCOMPONENTBASIS` 與 `TBLWIPREVERSEHISTORY` reference。
 - 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 MESTEST profile，唯讀查 `DBMS_METADATA.GET_DDL`、`ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。兩表均位於 MESTEST：ComponentBasis 32 欄、PK `COMPONENTNO`；ReverseHistory 11 欄、PK `(LOTNO,REVERSEID)`，另有非唯一 `LOTSERIAL` index；兩表無 FK／trigger。source DDL、index DDL、metadata、PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp215_*`。ComponentBasis 在 Core 是表存在才繼承的可選分支，家用端先核 live PG schema/history 再決定 forward migration；不要直接重播 CREATE-only。
 - 未讀 Oracle 業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，未輸出或提交連線秘密。完整來源與 API 守門見 `docs/modules/WIP/元件分片處理.md`。
+
+### 更新 2026-11-20：WIP WP914 生產批緊急狀態／優先權調整
+
+- 原生 `frmWIPLot_HotLotAndPriorityChange` 的 Set 呼叫 `wsWIP.EditLotBasis_Confirm`，Core `clsLot.EditLotBasis` 只直接 UPDATE `TBLWIPLOTBASIS.HotLot/Priority`，以 `BaseLotNo` 定位。表的 Oracle source DDL 和 PostgreSQL CREATE-only 已在 `database/reference/mestest_wip_wp101_*`。查詢／lookup 所需 LotState、`TBLOEROBASIS`、`TBLSMDAREABASIS`、`TBLOPBASIS`、`TBLPRDPRODUCTBASIS` 也已有 source／CREATE 參考。本功能沒有新直接表、無新 CREATE SQL；家用端先核 live PG schema/history，追 helper 間接表與權限／版本再做正式 API。
+- 公司端只讀 WinForms／Service／Core 與已交付 SQL reference，未連 Oracle 查業務資料、未執行 Oracle DDL/DML、未連 YMES PostgreSQL。原生逐列更新可能部分成功，正式整批交易／回應見 `docs/modules/WIP/生產批緊急狀態與優先權調整.md`。
