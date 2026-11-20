@@ -1,5 +1,14 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## F1 Web241／schema0060已完成基準（2026-11-20；本批只換Web）
+
+實際HOME PostgreSQL ymes／quoted YMES維持0060，API155 compat466保持；F1 Web241已正式啟用 `bd6414710b2bcbb60e577903ee306d79f5a682f13253472561de9ba9fd3f3150`（source `4bbbf534…`）。本輪沒有WIP CREATE、DDL、ACL變更、SQLfixture或cleanup。此前ET106 schema60 metadata已完成，Root原子apply／獨立下載 SHA `7f4c5ae33a72c9dd3b9599840523d5e89f600ca61998990b408c399ddf350e47`，schema code800564／status521正常feature同步及394來源綁定已完成；其Web5ff是當時歷史。
+
+新F1正式app-browser封存50raw／46有效＝43GUI＋3nonGUI、4已解工具觀察；WP801–804／ERF guard與Close/deep重進、KD/sidebar／限定既有主檔smoke，GUI Taker1建1硬刪、READ ONLY exact/logical/actorMarkers3scope0、SQLfixture/cleanup0。正常TLS7與UID1654/101/current tags/requiredfiles/ready通過；前後CP7f4c未改。F1 code70722真398綁定與正常feature推送／直接讀回已完成，statusY與F1 metadata待Root。原API155 snapshot／regression、ET106原生35欄／ACL與全歷史保留，不把8D空畫面guard當作其DB／交易provider交付。
+
+詳見[F1 QA](qa/20261120-office-wip-8d-f1.md)。Office新main d96b80d另輪整合、main同步仍pending；ET106 writer161/242僅prepared。HOME只管PG復刻／PPK／API發行，Office只讀原生Oracle／UI，不互換角色。下面舊0059／absent／prepared／status pending段落完整保留為當時歷史。
+
+
 ## ET106 0060 已真建立／三主檔present相容已驗（2026-11-20；最新實況）
 
 實際PostgreSQL `ymes`／quoted schema `"YMES"` 已套 [0060](../database/migrations/0060_et106_customer_ship_address_tables.sql)，原LF SQL SHA `382b6b775de9e3d03df228a9ab63e5be7aa2275e2bbe43bb9d7b303d995ab9de`。Address原生22欄／四NN／PK(customerno,shipaddr)＋一index／三defaults；Declaration原生13欄／八NN／兩defaults，無PK／unique／index／FK。只授兩新表appCRUD，不改父table／column ACL、schema／roles／defaultACL，不回填NULL或加來源外唯一性；35業務欄位及PK index兩attribute的37catalog增量精準檢核。
