@@ -118,3 +118,5 @@
 - Vue DEV 使用 localStorage `ymes.dev.wp305-equipment-online-qc.v1`，測項涵蓋 QCType 0–3、多筆 D01-D10、Wait QC、Re QC、未完成確認及結果存檔。NG + UnValidAction 的設備狀態/生產下機副作用尚未在 DEV 寫假 DB 狀態，已明列於規格。
 - 正式 API 需保留 Header/Detail/Task 原子交易、server-side QC 結果計算、check-in 不允許部分存檔，以及失敗設備狀態變更時共用 WP201/WP204 下機 command；家用端先比對 live schema/migrations，只補缺少物件。
 - 下一功能為 WP306「設備點檢歷程」。繼續讀該 Form/Designer/Service/Core，沿用 WP305 Log/Detail references；若查到未收錄表才以公司 PowerShell 5.1 + Oracle profile 唯讀查 DDL。公司端不連 YMES PostgreSQL、不改 API/migration、不部署/執行 build/test/browser。
+
+- **2026-11-20 WP510 接續**：已依 `STD/MESWin/WIP/WP_WaitBasis` 與 `WP_WaitInformation`、wsWIP/clsLot 完成 `/YMES/WIP/WaitBasis` Vue DEV 六組勾選查詢、15 欄 Grid、七欄唯讀 Wait Info，並合併 WP502 已建立的本機 Wait。Oracle MESTEST 只讀查得 `TBLWIPWAITLOTDISPOSITION` 13 欄、無 PK/trigger、WAITNO 非唯一 index 的 DDL/metadata，PG CREATE-only 在 `database/reference/mestest_wip_wp510_disposition_*`；主表沿 WP201、NodeBasis 沿 PRS104。家用端接授權分頁 API；公司端下一項 WP509 或 WP511。未連 PG、未執行 build/test/browser。

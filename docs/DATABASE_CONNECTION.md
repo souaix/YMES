@@ -1057,3 +1057,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-20：WIP WP803 8D 矯正單結案作業
 
 - Release/ReleaseLog/TeamMember 直接表沿 WP802，Basis 沿 WP508。Def 的 D1 部門/人員選擇由 `clsWIP.Load8DTeamMember` 左連 `TBLUSRDEPARTMENTBASIS` 帶 DepartmentName；公司端以既有受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp803_department_source_ddl.sql` 及 `mestest_wip_wp803_department_metadata.txt`。原表 14 欄、DepartmentNo PK/單一 unique index、無 trigger，四個 `DEFAULT 0` 為 IssueState、ControlDtConect、DtConectQty、DataStamp。`mestest_first_phase_create_tables.sql` 欄/PK 已有但少四 default；準確 PG CREATE-only 為 `mestest_wip_wp803_department_create.sql`。家用端先核 live schema/history，缺 default 才 forward ALTER；公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL，憑證未提交。
+
+### 更新 2026-11-20：WIP WP510 等待單資料
+
+- 公司端以受保護 MESTEST profile、Windows PowerShell 5.1 與 Oracle.ManagedDataAccess 唯讀取得 `TBLWIPWAITLOTDISPOSITION` 的 DBMS_METADATA table/index DDL 與 ALL_TAB_COLUMNS／CONSTRAINTS／INDEXES／TRIGGERS：13 欄、5 個 NOT NULL、無 PK/FK/unique/trigger，只有 WAITNO 非唯一索引。`database/reference/mestest_wip_wp510_disposition_source_ddl.sql`、`mestest_wip_wp510_disposition_source_indexes.sql`、`mestest_wip_wp510_disposition_metadata.txt` 與 PG CREATE-only `mestest_wip_wp510_disposition_create.sql` 已交付。主表 WaitBasis 沿 WP201，NodeBasis 沿 PRS104。未查業務列、未寫 Oracle、未連 YMES PostgreSQL；家用端核 live schema/history 後只補缺項。

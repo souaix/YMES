@@ -2395,3 +2395,10 @@ API 工作：
 - [ ] Pull 最新 `main`，閱讀 [WP804 規格](docs/modules/WIP/8D矯正單查詢.md)。公司 `/YMES/WIP/8DQuery` 為 WP801 本機 8D 假資料與 WP802 唯讀十頁，正式模式要接真 API；現有 WP508 `8D` 建立/維護入口不改成 WP804，來源另有 ERF/SPC 查詢可傳 ERFNo。
 - [ ] 主表僅 `TBLWIP8DBASIS_FACTORY`，Oracle source/metadata/PG CREATE-only 沿 `database/reference/mestest_wip_wp508_*`，先核 YMES PostgreSQL live schema/history，無新 WP804 table。提供登入/`WP804` ACL 的分頁 GET：QRSClass 任意 1/2/3/4 集合、QRSNo/QRSSummary 包含、FactoryNo/ProjectDepartment/ProjectManager 精確、Basis CreateDate/PlanCloseDate/CloseDate 區間、CloseState closed/open/all、可選 ERFNo；不固定 IssueState，只讀所有狀態。要求至少一個有效條件與 pageSize 上限，不接受僅「Closed+NotClose」當篩選。來源 QRSType 顯示 0 但未送出查詢；WIPERF/Other 單勾來源漏送條件，正式 API 應照意圖正確過濾。
 - [ ] 8DQuery 詳細頁重查 QRSNo 與 WP802 十頁子表/附件，強制 server 端讀取權限，與 WP802 寫入 ACL 分離；驗收封存/已結案/未簽核/作廢查詢、QRSClass 每一單獨勾選、日期尾日、ERFNo 外部入口、無條件拒絕及大結果分頁。公司端未連 PG、未 build/test/browser。
+
+## WIP WP510 等待單資料家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP510 規格](docs/modules/WIP/等待單資料.md)。公司 Vue `/YMES/WIP/WaitBasis` 僅 DEV 唯讀假資料，會合併 WP502 本機 Wait；正式環境要用真 API，不讀 localStorage。
+- [ ] 核 YMES PostgreSQL live schema/migration history、資料與權限。主表 `TBLWIPWAITBASIS` 沿 WP201 source/CREATE；Wait Info 左連 `TBLPRSNODEBASIS` 沿 PRS104。新增 `TBLWIPWAITLOTDISPOSITION` 的 Oracle source/index DDL、13 欄 metadata 與 PG CREATE-only 在 `database/reference/mestest_wip_wp510_disposition_*`。源表無 PK/FK/unique/trigger，只有 WAITNO 非唯一 index；不能臆造主鍵。只對確定缺項做 forward migration，不直接執行 CREATE-only。
+- [ ] 提供登入/`WP510` ACL 的分頁 waits GET：四文字條件各以勾選且非空才生效，CreateDate/ReleaseDate 可選起訖、至少一有效條件、後端固定 WaitSource=0；LotNo 包含，其餘精確；回傳 WinForms 15 欄及 Status 0/1/2/3/11/12/21/31 顯示。日期與時區/含端點契約、NULL ReleaseDate、分頁上限、參數化 SQL 需明確處理。OP/Customer lookup 要限權/限量。
+- [ ] 提供 waits/{waitNo}/dispositions 唯讀 GET：按 WaitNo 讀 `TBLWIPWAITLOTDISPOSITION` 左連 `TBLPRSNODEBASIS`，回傳 LotDispType/Description/Creator/CreateDate/OPNo/ProcessNo/ProcessVersion，CreateDate DESC。核查 WaitNo 可見範圍；源明細無唯一鍵，不可假定單一 WaitNo 僅一列。正式 API 接線、部署與驗收由家用端負責；公司端未執行 build/test/browser。
