@@ -2346,3 +2346,10 @@ API 工作：
 - [ ] 提供有登入與 `WP506` Function ACL 的四種可選條件查詢：LotNo、OPNo、HoldTime 0/1、MClassNo；OP/MClass 查找，九欄結果。來源 Form 可無條件查全部，正式端必須限制筆數／分頁、做可見範圍與參數化 SQL，不在瀏覽器一次載入全表。
 - [ ] 先決定 Release 的業務範圍：建議以主表六鍵 `(LotNo,ModuleNo,ModuleVersion,OPNo,HoldTime,FutureHoldSerial)` 精確刪單筆及對應原因；若相容來源三鍵 `(LotNo,OPNo,HoldTime)` 批量刪，須明示影響筆數並鎖定/重查**每筆** LockFlag，任何鎖定均拒絕。來源只檢選取列 LockFlag 而 Core 刪同鍵全部，可能誤刪其他鎖定列；不能照搬。
 - [ ] 在交易內刪主/原因、處理並發版本/冪等與審計事件，server 取得 actor/時間；已進入 ERF 處置的設定及 FutureHoldLog 必須遵守完整生命週期，不能把此刪除當成即時解除 ERF。不可相信 browser 的 LockFlag 或拼 SQL；API 完成後接正式 Vue/部署驗收。公司端未連 PG、未執行 build/test/browser。
+
+## WIP WP507 預先等待解除家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，讀 [WP507 規格](docs/modules/WIP/預先等待解除.md)。公司 `/YMES/WIP/FutureWaitRelease` 與 WP505 共用 `ymes-dev-mock:wip-future-wait-set:state:v1`，只有 DEV 假資料；正式環境不得讀此 key 或回報假 Release 成功。
+- [ ] 核 YMES PostgreSQL live schema/history、資料與權限。`TBLWIPFUTUREWAIT` 七欄、PK `(LOTNO,OPNO,WAITTIME)` 的 Oracle source 在 `mestest_wip_wp201_dependency_source_ddl.sql`、PG CREATE-only 在 `mestest_wip_wp201_create.sql`；無新直接表。只對實際缺項 forward migration，不重建既有表。
+- [ ] 提供登入/`WP507` Function ACL 的 LotNo、OPNo、WaitTime 可選查詢和 OP lookup，顯示六欄；原 Form 可無條件查全表，正式 API 要分頁／結果上限、可見範圍和參數化 SQL。
+- [ ] Release POST 必須完整提供 LotNo/OPNo/WaitTime，WaitTime 僅 0/1；server 鎖定並重查該 PK、版本與權限，以參數化 SQL 交易刪單筆並記 actor/事件，提供不存在／衝突／冪等回應。舊 Core 允許缺鍵造成廣域刪除，絕不可照搬。Release 只刪未來設定，不解除已生效 WaitBasis/Lot Wait；須與 WP505 Set、`ChkFutureWait`、WP502 真等待交易分清生命週期。API 完成後接正式 Vue/部署驗收；公司端未連 PG、未執行 build/test/browser。

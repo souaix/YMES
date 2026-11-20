@@ -1031,3 +1031,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-20：WIP WP506 預先異常解除
 
 - `frmFutureHoldRelease`／`wsWIP.DelFutureHold`／`clsLot.DelFutureHold` 只直接刪 `TBLWIPFUTUREHOLD`、`TBLWIPFUTUREHOLDREASON`。兩表 source DDL／CREATE-only 已在 WP201、WP504 refs；沒有新增直接表，不重複產生 CREATE SQL。公司端只讀既有 source/DDL，未查 Oracle 業務列、未寫 Oracle、未連 YMES PostgreSQL。家用端先核 live schema/history，再決定精確六鍵或舊式三鍵批量解除；來源只檢選取列 LockFlag，Core 三鍵可刪同鍵其他鎖定列。詳見 `docs/modules/WIP/預先異常解除.md`。
+
+### 更新 2026-11-20：WIP WP507 預先等待解除
+
+- `frmFutureWaitRelease`／`wsWIP.DelFutureWait`／`clsLot.DelFutureWait` 直接刪 `TBLWIPFUTUREWAIT`；七欄、PK `(LOTNO,OPNO,WAITTIME)` 的 Oracle source DDL 與 PostgreSQL CREATE-only 已在 WP201 refs。沒有新增直接表/CREATE SQL。公司端只讀來源碼與已交付 DDL，未查 Oracle 業務列、未寫 Oracle、未連 YMES PostgreSQL。正式 API 應限制查詢筆數並強制完整三鍵、0/1 WaitTime、參數化交易；家用端先核 live schema/history。詳見 `docs/modules/WIP/預先等待解除.md`。
