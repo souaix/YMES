@@ -1,5 +1,7 @@
 # YMES / MES 資料庫連線與憑證處理
 
+已驗證程式提交 X `50cf3a6dfb3cd6b310c35c4e98310b59c30eab0d` 完成436份來源綁定（SQL6／API172／Web258，回條SHA `2c04f82d3ba5de2e6c2f1f57c14921643160efdbbd8b100e6e59ccd315ed0759`），已正常推送 `codex/homepc-wp109-read-20261120` 並直接讀回GitHub ref一致，未force。驗收後fetch發現Office main已到 `8ff405290a7f55bfd1e2261f8d85dec97f363409`，新增9提交／8個WIP DEV入口與WP109來源；這些尚未混入本輪正式c828。接著正常合併並驗新入口，保留兩端成果；本輪status／metadata收尾與main整合分開記錄。
+
 ## 最新：WP109讀取版API172／Web258／DB0062讀取範圍驗收及清理完成（Git／metadata收尾中）
 
 目前實際API為 `502f88704b928ffcfd0b5dedf6e3c469707e301ac7d04e961be59ce19ca8c614`，修正後Web為 `c8284e0ed4482a35ebdebc6de53c5ce5ad063ce517d62fa03604c5a40f677871`；A4活化成功log SHA `4533e0f636cf461f055c59e5c8d76f26898543f8dab91e15507c4ed1d7aae71e`。0062已真備份／單交易COMMIT及另連線獨立讀回，apply SHA1959a9d1…，catalog `62d9f825dd249d679b08f5a4cde21386158aef6c5737d0d86d75efc417e7a6ae`，原生19欄／3PK／3index／6types及Basis、Detail唯讀SELECT保持，Serial未授app權限。API172已交付SWR引用存在／缺席相容及正式查詢／單張／附件串流；完整writer仍未交付。
