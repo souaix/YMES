@@ -6,7 +6,8 @@
 - [x] [WP401 規格](docs/modules/WIP/外包單開立.md) 交付交易和 API 契約；三張直接表均有 Oracle DDL／CREATE-only。
 - [x] [WP402 外包單確認](docs/modules/WIP/外包單確認.md) 已依 Form／Service／Core 做 Vue DEV 單筆確認及共用單據，交付 FutureOSLog 與 ERP 設定表結構及正式 ERP API 規格。
 - [x] [WP403 外包回貨](docs/modules/WIP/外包回貨.md) 已依兩份 Form、Service 與 Core 做 DEV 分批回貨，補兩張 Oracle 直接表及 CREATE-only。
-- [ ] 下一項 WP404 取消外包出貨 ERP。
+- [x] [WP404 取消外包出貨 ERP](docs/modules/WIP/取消外包出貨ERP.md) 已完成公司端 DEV 守門與臨時外包模擬回復，正式 ERP／Reverse 交家用端。
+- [ ] 依選單清冊接 WP901 回復處理。
 
 ## 2026-11-20 桌機再接手：從 WP401 開始
 

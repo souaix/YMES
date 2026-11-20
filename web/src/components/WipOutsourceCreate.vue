@@ -31,12 +31,19 @@ interface Order {
   stamp: number
   shippedAt?: string
   shippedBy?: string
+  erpNo?: string
+  reverseLots?: string[]
 }
 
-const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; confirmationOnly?: boolean; returnOnly?: boolean }>()
+const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; pageMode?: 'confirm' | 'return' | 'cancel' }>()
 const emit = defineEmits<{ close: [] }>()
 const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
 const isDev = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const confirmationOnly = computed(() => props.pageMode === 'confirm')
+const returnOnly = computed(() => props.pageMode === 'return')
+const cancelOnly = computed(() => props.pageMode === 'cancel')
+const pageTitles = { confirm: '外包單確認', return: '外包回貨', cancel: '取消外包出貨 ERP' }
+const pageTitle = computed(() => props.pageMode ? pageTitles[props.pageMode] : '外包單開立')
 const storageKey = 'ymes-dev-mock:wip-outsource:orders:v1'
 const stations = ['DEV-OS-OP', 'DEV-QC-OP']
 const vendors = ['DEV-VENDOR-01', 'DEV-VENDOR-02']
@@ -76,12 +83,13 @@ const scannedLotNo = ref('')
 const error = ref('')
 const editError = ref('')
 const notice = ref('')
+const simulateErp = ref(false)
 const receiptRows = ref<{ lot: Lot; checked: boolean; good: number; scrap: number; unitPrice: number; unit: string }[]>()
 const receiptOrder = ref<Order>()
 
 const visibleOrders = computed(() => {
   const filters = appliedFilters.value
-  return orders.value.filter(row => (props.returnOnly ? row.status === 1 || row.status === 10 : row.status === 0) &&
+  return orders.value.filter(row => (returnOnly.value ? row.status === 1 || row.status === 10 : row.status === (cancelOnly.value ? 1 : 0)) &&
     mainFields.every(({ key }) => !upper(filters[key]) || upper(row[key]) === upper(filters[key])) &&
     (!filters.from || row.createdAt >= filters.from) && (!filters.to || row.createdAt <= filters.to) &&
     (!filters.shippedFrom || !!row.shippedAt && row.shippedAt >= filters.shippedFrom) &&
@@ -259,7 +267,7 @@ async function remove(action: 'delete' | 'abort'): Promise<void> {
 
 async function confirmShipment(): Promise<void> {
   const order = active.value
-  if (!isDev.value || !props.confirmationOnly || !order) return
+  if (!isDev.value || !confirmationOnly.value || !order) return
   error.value = ''
   notice.value = ''
   const blockedLot = order.lots.find(lot => lot.opNo !== order.opNo)
@@ -274,7 +282,9 @@ async function confirmShipment(): Promise<void> {
     return
   }
   const updated: Order = { ...current, status: 1, stamp: current.stamp + 1,
-    shippedAt: today(), shippedBy: props.currentUserNo || 'DEV001' }
+    shippedAt: today(), shippedBy: props.currentUserNo || 'DEV001',
+    erpNo: simulateErp.value ? 'DEV-ERP-' + current.osNo : undefined,
+    reverseLots: current.lots.map(lot => lot.lotNo) }
   if (!persist(orders.value.map(row => row.osNo === updated.osNo ? updated : row))) {
     error.value = '無法儲存 DEV 確認。'
     return
@@ -284,7 +294,7 @@ async function confirmShipment(): Promise<void> {
 }
 
 function openReceipt(): void {
-  if (!isDev.value || !props.returnOnly || !active.value) return
+  if (!isDev.value || !returnOnly.value || !active.value) return
   receiptOrder.value = active.value
   receiptRows.value = active.value.lots.map(lot => ({
     lot, checked: false, good: lot.receipt?.good ?? lot.qty, scrap: lot.receipt?.scrap ?? 0,
@@ -300,7 +310,7 @@ function otherQty(row: { lot: Lot; good: number; scrap: number }): number {
 
 async function saveReceipt(): Promise<void> {
   const original = receiptOrder.value
-  if (!isDev.value || !props.returnOnly || !original) return
+  if (!isDev.value || !returnOnly.value || !original) return
   const selected = receiptRows.value?.filter(row => row.checked && !row.lot.receipt) ?? []
   if (!selected.length) { editError.value = '請選擇至少一筆待回貨批號。'; return }
   const bad = selected.find(row => ![row.good, row.scrap, row.unitPrice].every(value => Number.isFinite(value) && value >= 0) ||
@@ -327,17 +337,43 @@ async function saveReceipt(): Promise<void> {
   receiptOrder.value = undefined
   notice.value = '已模擬回貨 ' + selected.length + ' 批。'
 }
+
+async function cancelShipment(): Promise<void> {
+  const row = active.value
+  if (!cancelOnly.value || !isDev.value || !row) return
+  error.value = ''
+  notice.value = ''
+  if (!row.erpNo) { error.value = '這筆沒有可取消的 ERP 出貨單號。'; return }
+  const blocked = row.lots.filter(lot => lot.receipt || lot.opNo !== row.opNo || !row.reverseLots?.includes(lot.lotNo))
+  if (blocked.length) {
+    error.value = '缺少可回復記錄的批號 ' + blocked.map(lot => lot.lotNo).join('、')
+    return
+  }
+  if (!await requestConfirmation('確定模擬取消出貨 ' + row.erpNo + '？')) return
+  const current = orders.value.find(order => order.osNo === row.osNo)
+  if (!current || current.stamp !== row.stamp || current.status !== 1) {
+    error.value = '外包單已變更，請重新查詢。'
+    return
+  }
+  const updated: Order = { ...current, status: 0, stamp: current.stamp + 1,
+    erpNo: undefined, shippedAt: undefined, shippedBy: undefined, reverseLots: undefined }
+  if (!persist(orders.value.map(order => order.osNo === updated.osNo ? updated : order))) {
+    error.value = '無法儲存 DEV 取消出貨。'
+    return
+  }
+  notice.value = '已模擬取消出貨 ' + current.osNo + '，單據已回到未確認。'
+}
 </script>
 
 <template>
   <section class="outsource">
-    <h2>{{ returnOnly ? '外包回貨' : confirmationOnly ? '外包單確認' : '外包單開立' }}</h2>
+    <h2>{{ pageTitle }}</h2>
     <template v-if="isDev">
       <form class="toolbar" @submit.prevent="search">
         <label v-for="field in mainFields" :key="field.key">{{ field.label }} <input v-model="filters[field.key]" maxlength="20"></label>
         <label>建立起日 <input v-model="filters.from" type="date"></label>
         <label>建立迄日 <input v-model="filters.to" type="date"></label>
-        <template v-if="returnOnly">
+        <template v-if="returnOnly || cancelOnly">
           <label>出貨起日 <input v-model="filters.shippedFrom" type="date"></label>
           <label>出貨迄日 <input v-model="filters.shippedTo" type="date"></label>
         </template>
@@ -346,7 +382,11 @@ async function saveReceipt(): Promise<void> {
       <div v-if="returnOnly" class="toolbar">
         <button type="button" :disabled="!active" @click="openReceipt">外包回貨</button>
       </div>
+      <div v-else-if="cancelOnly" class="toolbar">
+        <button type="button" :disabled="!active" @click="cancelShipment">模擬取消出貨</button>
+      </div>
       <div v-else-if="confirmationOnly" class="toolbar">
+        <label><input v-model="simulateErp" type="checkbox"> 產生 DEV ERP 單號</label>
         <button type="button" :disabled="!active" @click="confirmShipment">確認</button>
       </div>
       <div v-else class="toolbar">
@@ -357,18 +397,19 @@ async function saveReceipt(): Promise<void> {
       </div>
       <p v-if="error" role="alert">{{ error }}</p><p v-if="notice" role="status">{{ notice }}</p>
       <div class="grid"><table>
-        <thead><tr><th>選取</th><th>外包單號</th><th>外包站</th><th>項目</th><th>外包商</th><th>承辦人</th><th>需求日</th><th>外包量</th><th>狀態</th><th>建立人員</th><th>建立日</th><th>說明</th></tr></thead>
+        <thead><tr><th>選取</th><th>外包單號</th><th>外包站</th><th>項目</th><th>外包商</th><th>承辦人</th><th>需求日</th><th>外包量</th><th>狀態</th><th>建立人員</th><th>建立日</th><th>說明</th><th v-if="cancelOnly">ERP 單號</th></tr></thead>
         <tbody>
           <tr v-for="row in visibleOrders" :key="row.osNo" :class="{ active: active?.osNo === row.osNo }" @click="selectedNo = row.osNo">
             <td>
-              <input v-if="confirmationOnly || returnOnly" name="os-order" type="radio" :aria-label="'選取 ' + row.osNo" :checked="active?.osNo === row.osNo" @change="selectedNo = row.osNo">
+              <input v-if="pageMode" name="os-order" type="radio" :aria-label="'選取 ' + row.osNo" :checked="active?.osNo === row.osNo" @change="selectedNo = row.osNo">
               <input v-else v-model="selected" :aria-label="'選取 ' + row.osNo" type="checkbox" :value="row.osNo">
             </td>
             <td><button type="button" class="link" @click="selectedNo = row.osNo">{{ row.osNo }}</button></td>
             <td>{{ row.opNo }}</td><td>{{ row.itemNo }}</td><td>{{ row.vendorNo }}</td><td>{{ row.preparer }}</td><td>{{ row.due }}</td>
             <td>{{ lotTotal(row.lots) }}</td><td>{{ row.status === 10 ? '部分回貨' : row.status === 1 ? '已出貨' : '未確認' }}</td><td>{{ row.creator }}</td><td>{{ row.createdAt }}</td><td>{{ row.description }}</td>
+            <td v-if="cancelOnly">{{ row.erpNo }}</td>
           </tr>
-          <tr v-if="!visibleOrders.length"><td colspan="12">{{ returnOnly ? '查無待回貨外包單' : '查無未確認的臨時外包單' }}</td></tr>
+          <tr v-if="!visibleOrders.length"><td :colspan="cancelOnly ? 13 : 12">{{ cancelOnly ? '查無已出貨外包單' : returnOnly ? '查無待回貨外包單' : '查無未確認的臨時外包單' }}</td></tr>
         </tbody>
       </table></div>
       <h3>批號明細 {{ active?.osNo }}</h3>
