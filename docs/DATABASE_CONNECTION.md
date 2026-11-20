@@ -976,3 +976,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - 對照 `frmBR_L_Merge_GEN`、Service `Exe_Manual_LotMerge` 與 Core `BR_Manual_LotMerge`。Core 字面直接引用八張表：`TBLEMSDISPATCHSTATE`、`TBLINVWIPINVENTORY_SEMI`、`TBLWIPAUTOMERGE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`、`TBLWIPOSBASIS`、`TBLWIPOSDETAIL`。逐名核對 `database/reference/` 均已有 Oracle source DDL 與 PostgreSQL CREATE-only reference；本功能不新增重複 CREATE SQL。詳 `docs/modules/WIP/併批處理.md`。
 - 公司端未查 Oracle 業務資料、未執行 Oracle DDL/DML、未連 YMES PostgreSQL；家用端先核 live schema／migration history，再追 Core helper 的間接表、實作具交易性與冪等守門的正式 API。已有 CREATE-only reference 不能當作 live schema 已完成或可直接重播 migration。
+
+### 更新 2026-11-20：WIP WP212 併批處理_元件
+
+- 對照 `frmBR_LC_Merge_GEN`、Service `Exe_Manual_LotMerge_Component`、Core `BR_Manual_LotMerge_Component`。Core 直接引用十張表：`TBLEMSDISPATCHSTATE`、`TBLINVWIPINVENTORY_COMPONENT`、`TBLINVWIPINVENTORY_SEMI`、`TBLWIPAUTOMERGE`、`TBLWIPCARRIERSTATE`、`TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCOMPONENTSTATE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`。逐名核對 `database/reference/`，每張已有 Oracle source DDL 和 PostgreSQL CREATE-only；不重複取 DDL 或產生 CREATE SQL。完整來源與載具檢查缺陷見 `docs/modules/WIP/併批處理_元件.md`。
+- 公司端未查 Oracle 業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL。家用端須核 live schema/migration history，追 helper/User Define hook 間接表，並將所有來源 Lot／元件／載具／Inventory 放在同一交易守門；reference 不能當成已建表證據。

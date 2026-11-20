@@ -2261,3 +2261,11 @@ API 工作：
 - [ ] 提供有權限的 Reference Lot／候選 Lot、MO 多選、Routing、未回貨 OS、GoodBin／包裝狀態查詢。原生參考條件 `Status=0|1|4|5`、`HaveComponent=0`、`NotContainGoobinState=True`、`LotState=1`、非 Partial／Stocker；一般候選同 OP／Product／BR／Status／Unit；`SysInfo/AllowDiffMOMerge=0` 才限同工單。Status=5 走同一未回貨外包單，Confirm 再重查。
 - [ ] 實作原子併批 POST，server 重讀並鎖定所有選取批及 LotStamp、CurQty、包裝／GoodBin／OS 現況與輸出批號；驗證 Action、Assign 路由／NodeID、數量與版本，完成 LotBasis／State、Reverse／Log、Dispatch／AutoMerge／OS／Inventory／員工副作用。原 Form 的至少兩筆檢查已註解，不能當來源硬規則；若產品需要禁止單批併批，應另外列為 YMES 新規則。相同 OP 不同 NodeID 要明確要求確認。
 - [ ] `MergeType`、WIPINV、UserNo、ShiftNo、時間與部署參數從可信 server 上下文取得，不能由瀏覽器任填。BR 宿主 Go 後另做 `BRTransferLot`；若不能同交易，提供可查詢且可冪等重試的部分完成狀態。電箱綁定須串接真權限／服務，不採 DEV 假確認。正式 API、PostgreSQL、部署與驗收均由家用端完成；公司端未連 PostgreSQL、未建 migration／Production API、未執行 build/test/browser。
+
+## WIP WP212 併批處理_元件家用端 handoff（2026-11-20）
+
+- [ ] Pull 最新 `main`，閱讀 [WP212 規格](docs/modules/WIP/併批處理_元件.md) 與 `docs/DATABASE_CONNECTION.md` WP212 段落。Vue `web/src/components/WipLotMergeComponent.vue` 只供 DEV 假資料；正式環境禁用 `ymes-dev-mock:wip-lot-merge-component:records:v1` 與本機模擬確認。
+- [ ] 核對 YMES PostgreSQL live schema／migration history。Core 直接引用十張表已在 `database/reference/` 有 Oracle source DDL 和 PostgreSQL CREATE-only，不重建既有表；追 `SHR_Merge_Inherit`、Reverse、LotLog、`udWIP.clsWIP.BR_Manual_LotMerge_Component` 等 helper/hook 間接表及部署差異，再決定 forward migration。
+- [ ] 提供有權限的 Reference Lot／候選／MO／元件明細／Routing 查詢。一般模式參考 `Status=0|1|4`、`HaveComponent=1`、`LotState=1`、非 Partial／Stocker；候選同 OP／Product／BR／Status／CurUnit，`HaveLevel=0`，且 `AllowDiffMOMerge=0` 才限同工單。參考批的 HaveLevel 條件已註解，候選仍要求 0，須清楚處理兩者不一致；WIP Inventory 模式另限同 InventoryNo、BookingFlag=0 並核跨庫房元件。
+- [ ] 原 Form 每筆來源的載具檢查迴圈**誤用輸出 `txtLotNo`**。正式 POST 必須對每個選取來源 Lot 分別重查 CarrierState／CarrierStateDetail，任何已在載具的批次都拒絕並引導至 WP214，不能沿用原 bug。至少選兩批且保留參考批；server 鎖並重查 LotStamp、CurQty、ComponentState 全體元件、元件歸屬／數量／唯一性、輸出批號、Action／Assign NodeID、User／Shift／模式與系統參數。
+- [ ] 在同一交易完成來源 Lot 關閉、合併 Lot 建立、Reverse／LotLog、ComponentState、派工／AutoMerge／Cont Employee、WIP Inventory Semi／Component 與跨庫房回補；失敗回滾且防重。BR 宿主 Go 的 Form 另呼叫 TransferLot，Core 註解又寫一律手動 Transfer，需按實際宿主模式提供可查、可冪等重試的部分完成結果，避免重按 Confirm。Production API／PostgreSQL／部署驗收由家用端負責；公司端未連 PostgreSQL、未建正式 API/migration、未執行 build/test/browser。
