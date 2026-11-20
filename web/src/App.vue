@@ -81,6 +81,7 @@ import WipLotSplitBin from './components/WipLotSplitBin.vue'
 import WipLotSplitCarrier from './components/WipLotSplitCarrier.vue'
 import WipLotMerge from './components/WipLotMerge.vue'
 import WipLotMergeComponent from './components/WipLotMergeComponent.vue'
+import WipLotMergeBin from './components/WipLotMergeBin.vue'
 import WipAreaShow from './components/AreaShowMaster.vue'
 import WipEquipmentFavorite from './components/WipEquipmentFavorite.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
@@ -502,6 +503,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:LOT SPLIT_CARRIER', label: '分批處理_載具', tableName: 'tblwipcarrierstatedetail', shortLabel: '載具分批', functionNo: 'LOT SPLIT_CARRIER', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT MERGE', label: '併批處理', tableName: 'tblwiplotstate', shortLabel: '併批', functionNo: 'LOT MERGE', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT MERGE_COMP', label: '併批處理_元件', tableName: 'tblwipcomponentstate', shortLabel: '元件併批', functionNo: 'LOT MERGE_COMP', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT MERGE_BIN', label: '併批處理_等級', tableName: 'tblwipgoodbinstate', shortLabel: '等級併批', functionNo: 'LOT MERGE_BIN', moduleNo: 'WIP' },
     ],
   }, {
     id: 'menu:WIP:EQUIPMENT AND CARRIER', label: '設備與載具', shortLabel: '設備', children: [
@@ -546,6 +548,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:LOT SPLIT_CARRIER': appBasePath + '/WIP/LotSplitCarrier',
   'function:WIP:LOT MERGE': appBasePath + '/WIP/LotMerge',
   'function:WIP:LOT MERGE_COMP': appBasePath + '/WIP/LotMergeComponent',
+  'function:WIP:LOT MERGE_BIN': appBasePath + '/WIP/LotMergeBin',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
   'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
   'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
@@ -721,6 +724,7 @@ const functionRoutes: Record<string, string> = {
   'LOT SPLIT_CARRIER': appBasePath + '/WIP/LotSplitCarrier',
   'LOT MERGE': appBasePath + '/WIP/LotMerge',
   'LOT MERGE_COMP': appBasePath + '/WIP/LotMergeComponent',
+  'LOT MERGE_BIN': appBasePath + '/WIP/LotMergeBin',
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -890,6 +894,7 @@ const isWipLotSplitBinPage = computed(() => activeMasterKey.value === 'function:
 const isWipLotSplitCarrierPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SPLIT_CARRIER')
 const isWipLotMergePage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE')
 const isWipLotMergeComponentPage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE_COMP')
+const isWipLotMergeBinPage = computed(() => activeMasterKey.value === 'function:WIP:LOT MERGE_BIN')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
 const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
@@ -2511,6 +2516,7 @@ async function signOut(): Promise<void> {
         <WipLotSplitCarrier v-else-if="isWipLotSplitCarrierPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotMerge v-else-if="isWipLotMergePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotMergeComponent v-else-if="isWipLotMergeComponentPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotMergeBin v-else-if="isWipLotMergeBinPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />

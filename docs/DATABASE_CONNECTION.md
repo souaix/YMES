@@ -981,3 +981,8 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 
 - 對照 `frmBR_LC_Merge_GEN`、Service `Exe_Manual_LotMerge_Component`、Core `BR_Manual_LotMerge_Component`。Core 直接引用十張表：`TBLEMSDISPATCHSTATE`、`TBLINVWIPINVENTORY_COMPONENT`、`TBLINVWIPINVENTORY_SEMI`、`TBLWIPAUTOMERGE`、`TBLWIPCARRIERSTATE`、`TBLWIPCARRIERSTATEDETAIL`、`TBLWIPCOMPONENTSTATE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`。逐名核對 `database/reference/`，每張已有 Oracle source DDL 和 PostgreSQL CREATE-only；不重複取 DDL 或產生 CREATE SQL。完整來源與載具檢查缺陷見 `docs/modules/WIP/併批處理_元件.md`。
 - 公司端未查 Oracle 業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL。家用端須核 live schema/migration history，追 helper/User Define hook 間接表，並將所有來源 Lot／元件／載具／Inventory 放在同一交易守門；reference 不能當成已建表證據。
+
+### 更新 2026-11-20：WIP WP213 併批處理_等級
+
+- 對照 `frmBR_LB_Merge_FT`、Service `Exe_Manual_LotMerge_Bin`、Core `BR_Manual_LotMerge_Bin`。Core 字面直接引用八表：`TBLEMSDISPATCHSTATE`、`TBLINVWIPINVENTORY_SEMI`、`TBLSYSBIN`、`TBLWIPAUTOMERGE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTBASIS`、`TBLWIPLOTSTATE`、`TBLWIPMERGECONTENT_BIN`。前七張沿用 WP101／WP201／WP207／PRD Bin refs；最後一張原缺 SQL reference。
+- 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 MESTEST profile 唯讀 `DBMS_METADATA.GET_DDL` 及 `ALL_TAB_COLUMNS`／`ALL_CONSTRAINTS`／`ALL_INDEXES`／`ALL_TRIGGERS`。`TBLWIPMERGECONTENT_BIN` 有 22 欄、單欄 PK `FROMLOTSERIAL`，無 FK／trigger／其他 index。Oracle source/index DDL、metadata、PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp213_*`；CREATE 欄位與 Oracle metadata 已核 22/22。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL或輸出憑證。家用端先核 live schema/history 再決定 forward migration，不直接重播 CREATE-only。
