@@ -73,6 +73,7 @@ import WipOperatorOnline from './components/WipOperatorOnline.vue'
 import WipSwrBasis from './components/WipSwrBasis.vue'
 import WipUndoDispatch from './components/WipUndoDispatch.vue'
 import WipOutsourceCreate from './components/WipOutsourceCreate.vue'
+import WipLotReverse from './components/WipLotReverse.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
 import WipOperatorLogin from './components/WipOperatorLogin.vue'
@@ -567,6 +568,10 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:8D CLOSE', label: '8D 矯正單結案作業', tableName: 'tblwip8d_release', shortLabel: '結案', functionNo: '8D CLOSE', moduleNo: 'WIP' },
       { id: 'function:WIP:8D QUERY', label: '8D 矯正單查詢', tableName: 'tblwip8dbasis_factory', shortLabel: '查詢', functionNo: '8D QUERY', moduleNo: 'WIP' },
     ],
+  }, {
+    id: 'menu:WIP:EXCEPTION', label: '例外處理', shortLabel: '例外', children: [
+      { id: 'function:WIP:REVERSE LOT', label: '回復處理', tableName: 'tblwipreversehistory', shortLabel: '回復', functionNo: 'REVERSE LOT', moduleNo: 'WIP' },
+    ],
   }] },
 ]
 
@@ -586,6 +591,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:OS CONFIRM': appBasePath + '/WIP/OutsourceConfirm',
   'function:WIP:OS RETURN': appBasePath + '/WIP/OutsourceReturn',
   'function:WIP:OS CONFIRM_ERP_CANCEL': appBasePath + '/WIP/OutsourceErpCancel',
+  'function:WIP:REVERSE LOT': appBasePath + '/WIP/LotReverse',
   'function:WIP:LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'function:WIP:LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
@@ -794,6 +800,7 @@ const functionRoutes: Record<string, string> = {
   'OS CONFIRM': appBasePath + '/WIP/OutsourceConfirm',
   'OS RETURN': appBasePath + '/WIP/OutsourceReturn',
   'OS CONFIRM_ERP_CANCEL': appBasePath + '/WIP/OutsourceErpCancel',
+  'REVERSE LOT': appBasePath + '/WIP/LotReverse',
   'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'LOT SPLIT': appBasePath + '/WIP/LotSplit',
@@ -1030,6 +1037,7 @@ const isWipOutsourceCreatePage = computed(() => activeMasterKey.value === 'funct
 const isWipOutsourceConfirmPage = computed(() => activeMasterKey.value === 'function:WIP:OS CONFIRM')
 const isWipOutsourceReturnPage = computed(() => activeMasterKey.value === 'function:WIP:OS RETURN')
 const isWipOutsourceCancelPage = computed(() => activeMasterKey.value === 'function:WIP:OS CONFIRM_ERP_CANCEL')
+const isWipLotReversePage = computed(() => activeMasterKey.value === 'function:WIP:REVERSE LOT')
 const isWipLotOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKIN')
 const isWipLotOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKOUT')
 const isWipCarrierStatePage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER STATE')
@@ -2739,6 +2747,7 @@ async function signOut(): Promise<void> {
         <WipSwrBasis v-else-if="isWipSwrBasisPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipUndoDispatch v-else-if="isWipUndoDispatchPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipOutsourceCreate v-else-if="isWipOutsourceCreatePage || isWipOutsourceConfirmPage || isWipOutsourceReturnPage || isWipOutsourceCancelPage" :key="activeMasterKey" class="framework-content" :development-preview="isDevelopmentPreview" :page-mode="isWipOutsourceConfirmPage ? 'confirm' : isWipOutsourceReturnPage ? 'return' : isWipOutsourceCancelPage ? 'cancel' : undefined" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipLotReverse v-else-if="isWipLotReversePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />

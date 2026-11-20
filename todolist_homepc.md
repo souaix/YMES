@@ -6,6 +6,7 @@
 - [ ] 讀 [WP402 規格](docs/modules/WIP/外包單確認.md)，比對 FutureOSLog 和 ERP settings 結構，實作出貨確認、Lot/流程/Reverse 原子更新及可復原的 ERP 請購與回寫。
 - [ ] 讀 [WP403 規格](docs/modules/WIP/外包回貨.md)，比對回貨元件及成本資源 DDL，完成批/元件量、庫房、ERP 回貨與原子交易。
 - [ ] 讀 [WP404 規格](docs/modules/WIP/取消外包出貨ERP.md)，使用既有 ReverseHistory、外包與 ERP references，實作跨 ERP 和 MES 可對帳的取消出貨。
+- [ ] 讀 [WP901 規格](docs/modules/WIP/回復處理.md)，比對三張補表與既有 LotState／ReverseHistory，實作權限、LotStamp／CreateDate、防重及 SAP 對帳。
 
 ## 最新公司端交付：WP112 工單撤派工（2026-11-20）
 
