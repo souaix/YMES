@@ -13,7 +13,7 @@ type DetailRecord = Record<string, string | number>
 type MockAttachment = { source: 'ERF' | 'OCAP'; name: string; attachType: number; creator: string; createdAt: string; ocapNo: string }
 
 const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; initialErfNo?: string }>()
-const emit = defineEmits<{ close: []; create8d: [erf: { erfNo: string; lotNo: string; productNo: string; opNo: string; customerNo: string; lotQty: number; errorQty: number; holdDescription: string }] }>()
+const emit = defineEmits<{ close: []; create8d: [erf: { erfNo: string; lotNo: string; productNo: string; opNo: string; customerNo: string; lotQty: number; errorQty: number; holdDescription: string }]; open8dMaintain: [qrsNo: string] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
 const filters = reactive<Record<FilterKey, string>>({ lotNo: '', opNo: '', customerNo: '', mClassNo: '', curGroupNo: '', erfNo: '' })
 const checked = reactive<Record<FilterKey, boolean>>({ lotNo: false, opNo: false, customerNo: false, mClassNo: false, curGroupNo: false, erfNo: false })
@@ -149,7 +149,7 @@ function open8d(): void {
     return
   }
   if (row.qrsIssueState === -1) { errorText.value = '此 8D 單已作廢，來源畫面不開啟。'; return }
-  dialog.value = '8d'
+  emit('open8dMaintain', row.qrsNo)
 }
 watch(dev, enabled => { if (!enabled) { rows.value = []; activeNo.value = ''; closeDialog(); searched.value = false } })
 onMounted(() => {

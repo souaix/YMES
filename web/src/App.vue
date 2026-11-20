@@ -94,6 +94,7 @@ import WipFutureHoldRelease from './components/WipFutureHoldRelease.vue'
 import WipFutureWaitRelease from './components/WipFutureWaitRelease.vue'
 import WipErfBasis from './components/WipErfBasis.vue'
 import Wip8DBasisFactory from './components/Wip8DBasisFactory.vue'
+import Wip8DMaintain from './components/Wip8DMaintain.vue'
 import WipAreaShow from './components/AreaShowMaster.vue'
 import WipEquipmentFavorite from './components/WipEquipmentFavorite.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
@@ -573,6 +574,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'function:WIP:ERF BASIS': appBasePath + '/WIP/ErfBasis',
   'function:WIP:8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
+  'function:WIP:8D MAINTAIN': appBasePath + '/WIP/8DMaintain',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
   'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
   'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
@@ -761,6 +763,7 @@ const functionRoutes: Record<string, string> = {
   'FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'ERF BASIS': appBasePath + '/WIP/ErfBasis',
   '8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
+  '8D MAINTAIN': appBasePath + '/WIP/8DMaintain',
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -943,6 +946,7 @@ const isWipFutureHoldReleasePage = computed(() => activeMasterKey.value === 'fun
 const isWipFutureWaitReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE WAIT RELEASE')
 const isWipErfBasisPage = computed(() => activeMasterKey.value === 'function:WIP:ERF BASIS')
 const isWip8DBasisFactoryPage = computed(() => activeMasterKey.value === 'function:WIP:8D BASIS_FACTORY')
+const isWip8DMaintainPage = computed(() => activeMasterKey.value === 'function:WIP:8D MAINTAIN')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
 const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
@@ -1290,6 +1294,7 @@ function toggleMenuNode(id: string): void {
 function selectMenuNode(id: string): void {
   pendingErfInfoNo.value = ''
   pending8dErf.value = null
+  pending8dMaintainNo.value = ''
   selectedMenuKey.value = id
   const item = findMenuNode(menuTree.value, id)
   if (!item || item.children?.length) return
@@ -1301,22 +1306,33 @@ function selectMenuNode(id: string): void {
 function navigateHome(): void {
   pendingErfInfoNo.value = ''
   pending8dErf.value = null
+  pending8dMaintainNo.value = ''
   window.history.pushState({}, '', appHomeRoute)
   syncRouteState()
 }
 
 const pendingErfInfoNo = ref('')
 const pending8dErf = ref<{ erfNo: string; lotNo: string; productNo: string; opNo: string; customerNo: string; lotQty: number; errorQty: number; holdDescription: string } | null>(null)
+const pending8dMaintainNo = ref('')
 function openErfInfoFrom8d(erfNo: string): void {
   pendingErfInfoNo.value = erfNo
   pending8dErf.value = null
+  pending8dMaintainNo.value = ''
   window.history.pushState({}, '', appBasePath + '/WIP/ErfBasis')
   syncRouteState()
 }
 function open8dFromErf(erf: NonNullable<typeof pending8dErf.value>): void {
   pending8dErf.value = erf
   pendingErfInfoNo.value = ''
+  pending8dMaintainNo.value = ''
   window.history.pushState({}, '', appBasePath + '/WIP/8DBasisFactory')
+  syncRouteState()
+}
+function open8dMaintainFromErf(qrsNo: string): void {
+  pending8dMaintainNo.value = qrsNo
+  pending8dErf.value = null
+  pendingErfInfoNo.value = ''
+  window.history.pushState({}, '', appBasePath + '/WIP/8DMaintain')
   syncRouteState()
 }
 
@@ -2594,8 +2610,9 @@ async function signOut(): Promise<void> {
         <WipFutureWaitSet v-else-if="isWipFutureWaitSetPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipFutureHoldRelease v-else-if="isWipFutureHoldReleasePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFutureWaitRelease v-else-if="isWipFutureWaitReleasePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipErfBasis v-else-if="isWipErfBasisPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-erf-no="pendingErfInfoNo" @create8d="open8dFromErf" @close="navigateHome" />
+        <WipErfBasis v-else-if="isWipErfBasisPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-erf-no="pendingErfInfoNo" @create8d="open8dFromErf" @open8d-maintain="open8dMaintainFromErf" @close="navigateHome" />
         <Wip8DBasisFactory v-else-if="isWip8DBasisFactoryPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :linked-erf="pending8dErf" @open-erf-info="openErfInfoFrom8d" @close="navigateHome" />
+        <Wip8DMaintain v-else-if="isWip8DMaintainPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-qrs-no="pending8dMaintainNo" @open-erf-info="openErfInfoFrom8d" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
