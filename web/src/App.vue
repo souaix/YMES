@@ -93,6 +93,10 @@ import WipFutureWaitSet from './components/WipFutureWaitSet.vue'
 import WipFutureHoldRelease from './components/WipFutureHoldRelease.vue'
 import WipFutureWaitRelease from './components/WipFutureWaitRelease.vue'
 import WipErfBasis from './components/WipErfBasis.vue'
+import Wip8DBasisFactory from './components/Wip8DBasisFactory.vue'
+import Wip8DMaintain from './components/Wip8DMaintain.vue'
+import Wip8DClose from './components/Wip8DClose.vue'
+import Wip8DQuery from './components/Wip8DQuery.vue'
 import WipAreaShow from './components/AreaShowMaster.vue'
 import WipEquipmentFavorite from './components/WipEquipmentFavorite.vue'
 import WipFgdInventory from './components/WipFgdInventory.vue'
@@ -532,6 +536,17 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:SEMI INV', label: '半成品庫帳務維護', tableName: 'tblinvsemiinventory', shortLabel: '半成品庫', functionNo: 'SEMI INV', moduleNo: 'WIP' },
       { id: 'function:WIP:FGD INV', label: '成品庫帳務維護', tableName: 'tblinvfgdinventory', shortLabel: '成品庫', functionNo: 'FGD INV', moduleNo: 'WIP' },
     ],
+  }, {
+    id: 'menu:WIP:HOLD AND WAIT', label: '異常與等待', shortLabel: '異常', children: [
+      { id: 'function:WIP:ERF BASIS', label: '異常單資料', tableName: 'tblwiperfbasis', shortLabel: '異常', functionNo: 'ERF BASIS', moduleNo: 'WIP' },
+    ],
+  }, {
+    id: 'menu:WIP:8D MANAGEMENT', label: '8D 管理', shortLabel: '8D', children: [
+      { id: 'function:WIP:8D BASIS_FACTORY', label: '廠內 8D 矯正單', tableName: 'tblwip8dbasis_factory', shortLabel: '8D', functionNo: '8D BASIS_FACTORY', moduleNo: 'WIP' },
+      { id: 'function:WIP:8D MAINTAIN', label: '8D 矯正單維護作業', tableName: 'tblwip8dbasis_factory', shortLabel: '維護', functionNo: '8D MAINTAIN', moduleNo: 'WIP' },
+      { id: 'function:WIP:8D CLOSE', label: '8D 矯正單結案作業', tableName: 'tblwip8d_release', shortLabel: '結案', functionNo: '8D CLOSE', moduleNo: 'WIP' },
+      { id: 'function:WIP:8D QUERY', label: '8D 矯正單查詢', tableName: 'tblwip8dbasis_factory', shortLabel: '查詢', functionNo: '8D QUERY', moduleNo: 'WIP' },
+    ],
   }] },
 ]
 
@@ -577,6 +592,10 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:FUTURE HOLD RELEASE': appBasePath + '/WIP/FutureHoldRelease',
   'function:WIP:FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'function:WIP:ERF BASIS': appBasePath + '/WIP/ErfBasis',
+  'function:WIP:8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
+  'function:WIP:8D MAINTAIN': appBasePath + '/WIP/8DMaintain',
+  'function:WIP:8D CLOSE': appBasePath + '/WIP/8DClose',
+  'function:WIP:8D QUERY': appBasePath + '/WIP/8DQuery',
   'function:WIP:EQP MOUNT MATERIAL': appBasePath + '/WIP/EquipmentMaterialLoading',
   'function:WIP:EQP CONSUME STATUS': appBasePath + '/WIP/EquipmentConsumeStatus',
   'function:WIP:EQP CONSUME STATUS LOG': appBasePath + '/WIP/EquipmentConsumeStatusLog',
@@ -764,6 +783,10 @@ const functionRoutes: Record<string, string> = {
   'FUTURE HOLD RELEASE': appBasePath + '/WIP/FutureHoldRelease',
   'FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'ERF BASIS': appBasePath + '/WIP/ErfBasis',
+  '8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
+  '8D MAINTAIN': appBasePath + '/WIP/8DMaintain',
+  '8D CLOSE': appBasePath + '/WIP/8DClose',
+  '8D QUERY': appBasePath + '/WIP/8DQuery',
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -945,6 +968,10 @@ const isWipFutureWaitSetPage = computed(() => activeMasterKey.value === 'functio
 const isWipFutureHoldReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE HOLD RELEASE')
 const isWipFutureWaitReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE WAIT RELEASE')
 const isWipErfBasisPage = computed(() => activeMasterKey.value === 'function:WIP:ERF BASIS')
+const isWip8DBasisFactoryPage = computed(() => activeMasterKey.value === 'function:WIP:8D BASIS_FACTORY')
+const isWip8DMaintainPage = computed(() => activeMasterKey.value === 'function:WIP:8D MAINTAIN')
+const isWip8DClosePage = computed(() => activeMasterKey.value === 'function:WIP:8D CLOSE')
+const isWip8DQueryPage = computed(() => activeMasterKey.value === 'function:WIP:8D QUERY')
 const isWipEquipmentLotStatePage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT_EQP')
 const isWipEquipmentMaterialLoadingPage = computed(() => activeMasterKey.value === 'function:WIP:EQP MOUNT MATERIAL')
 const isWipEquipmentConsumeStatusPage = computed(() => activeMasterKey.value === 'function:WIP:EQP CONSUME STATUS')
@@ -1290,6 +1317,11 @@ function toggleMenuNode(id: string): void {
 }
 
 function selectMenuNode(id: string): void {
+  pendingErfInfoNo.value = ''
+  pending8dErf.value = null
+  pending8dMaintainNo.value = ''
+  pending8dMaintainReadOnly.value = false
+  pending8dQueryReturnPath.value = ''
   selectedMenuKey.value = id
   const item = findMenuNode(menuTree.value, id)
   if (!item || item.children?.length) return
@@ -1299,7 +1331,73 @@ function selectMenuNode(id: string): void {
 }
 
 function navigateHome(): void {
+  pendingErfInfoNo.value = ''
+  pending8dErf.value = null
+  pending8dMaintainNo.value = ''
+  pending8dMaintainReadOnly.value = false
+  pending8dQueryReturnPath.value = ''
   window.history.pushState({}, '', appHomeRoute)
+  syncRouteState()
+}
+
+const pendingErfInfoNo = ref('')
+const pending8dErf = ref<{ erfNo: string; lotNo: string; productNo: string; opNo: string; customerNo: string; lotQty: number; errorQty: number; holdDescription: string } | null>(null)
+const pending8dMaintainNo = ref('')
+const pending8dMaintainReadOnly = ref(false)
+const pending8dQueryReturnPath = ref('')
+function openErfInfoFrom8d(erfNo: string): void {
+  if (!isDevelopmentPreview.value) return
+  pendingErfInfoNo.value = erfNo
+  pending8dErf.value = null
+  pending8dMaintainNo.value = ''
+  pending8dMaintainReadOnly.value = false
+  pending8dQueryReturnPath.value = ''
+  window.history.pushState({}, '', appBasePath + '/WIP/ErfBasis')
+  syncRouteState()
+}
+function open8dFromErf(erf: NonNullable<typeof pending8dErf.value>): void {
+  if (!isDevelopmentPreview.value) return
+  pending8dErf.value = erf
+  pendingErfInfoNo.value = ''
+  pending8dMaintainNo.value = ''
+  pending8dMaintainReadOnly.value = false
+  pending8dQueryReturnPath.value = ''
+  window.history.pushState({}, '', appBasePath + '/WIP/8DBasisFactory')
+  syncRouteState()
+}
+function open8dMaintainFromErf(qrsNo: string): void {
+  if (!isDevelopmentPreview.value) return
+  pending8dMaintainNo.value = qrsNo
+  pending8dMaintainReadOnly.value = false
+  pending8dQueryReturnPath.value = ''
+  pending8dErf.value = null
+  pendingErfInfoNo.value = ''
+  window.history.pushState({}, '', appBasePath + '/WIP/8DMaintain')
+  syncRouteState()
+}
+function open8dQueryFromClose(qrsNo: string): void {
+  if (!isDevelopmentPreview.value) return
+  pending8dMaintainNo.value = qrsNo
+  pending8dMaintainReadOnly.value = true
+  pending8dQueryReturnPath.value = appBasePath + '/WIP/8DClose'
+  window.history.pushState({}, '', appBasePath + '/WIP/8DMaintain')
+  syncRouteState()
+}
+function open8dQueryFromQuery(qrsNo: string): void {
+  if (!isDevelopmentPreview.value) return
+  pending8dMaintainNo.value = qrsNo
+  pending8dMaintainReadOnly.value = true
+  pending8dQueryReturnPath.value = appBasePath + '/WIP/8DQuery'
+  window.history.pushState({}, '', appBasePath + '/WIP/8DMaintain')
+  syncRouteState()
+}
+function close8dMaintain(): void {
+  if (!isDevelopmentPreview.value || !pending8dMaintainReadOnly.value) { navigateHome(); return }
+  const returnPath = pending8dQueryReturnPath.value || appBasePath + '/WIP/8DClose'
+  pending8dMaintainNo.value = ''
+  pending8dMaintainReadOnly.value = false
+  pending8dQueryReturnPath.value = ''
+  window.history.pushState({}, '', returnPath)
   syncRouteState()
 }
 
@@ -2579,7 +2677,11 @@ async function signOut(): Promise<void> {
         <WipFutureWaitSet v-else-if="isWipFutureWaitSetPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipFutureHoldRelease v-else-if="isWipFutureHoldReleasePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFutureWaitRelease v-else-if="isWipFutureWaitReleasePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipErfBasis v-else-if="isWipErfBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipErfBasis v-else-if="isWipErfBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-erf-no="pendingErfInfoNo" @create8d="open8dFromErf" @open8d-maintain="open8dMaintainFromErf" @close="navigateHome" />
+        <Wip8DBasisFactory v-else-if="isWip8DBasisFactoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :linked-erf="pending8dErf" @open-erf-info="openErfInfoFrom8d" @close="navigateHome" />
+        <Wip8DMaintain v-else-if="isWip8DMaintainPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-qrs-no="pending8dMaintainNo" :read-only="pending8dMaintainReadOnly" @open-erf-info="openErfInfoFrom8d" @close="close8dMaintain" />
+        <Wip8DClose v-else-if="isWip8DClosePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromClose" @close="navigateHome" />
+        <Wip8DQuery v-else-if="isWip8DQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromQuery" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />

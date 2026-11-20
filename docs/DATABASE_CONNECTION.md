@@ -1,5 +1,18 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## ET106 0060 已真建立／三主檔present相容已驗（2026-11-20；最新實況）
+
+實際PostgreSQL `ymes`／quoted schema `"YMES"` 已套 [0060](../database/migrations/0060_et106_customer_ship_address_tables.sql)，原LF SQL SHA `382b6b775de9e3d03df228a9ab63e5be7aa2275e2bbe43bb9d7b303d995ab9de`。Address原生22欄／四NN／PK(customerno,shipaddr)＋一index／三defaults；Declaration原生13欄／八NN／兩defaults，無PK／unique／index／FK。只授兩新表appCRUD，不改父table／column ACL、schema／roles／defaultACL，不回填NULL或加來源外唯一性；35業務欄位及PK index兩attribute的37catalog增量精準檢核。
+
+Root成功A3前完整custom備份 `/opt/ymes/backups/et106_0060_reviewed_6cvkefrw/ymes_before_0060_et106.dump` 635278B，SHA `a498455bc24eddb2eb1eb78e81c1f6a83b01cff418ebec1de72a5c9d317c897e`，restore-list1807、700／600；交易內核對及COMMIT後新連線native35／fullcatalog after保持通過，receipt `022ee4a4…`。另獨立READ ONLY native35／types／PK／default／ACL及fresh fullcatalog等atomic after，receipt `e3eb5e44…`。
+
+原A2真PG14 CASE語法錯誤未COMMIT，證據getacq3m／result `2ce9c7c5…`保留；Root先READ ONLY確認tables/types/index absent、fullpermanent catalog／ACL等失敗前before與CP保持，再以新A3 verifier兩處括號／新備份／新完整交易執行。不是盲重送或事後把原FAIL洗掉。
+
+API155 actual466與E1Web237 actual5ff保持，present55HTTP／299assert PASS，三主檔全API建刪、明載自有SQL地址fixture3／精準cleanup3／獨立16scope0；建表後另15個app-browser checkpoint＝14GUI＋1SQL、GUI建刪Taker1／SQLfixture與cleanup0／獨立3scope0。地址／報關writer未交付，沒有測其業務DML。兩表已present後禁止回8db或再執行absent-only suite。詳見[QA](qa/20261120-et106-schema60.md)。
+
+原CP `7a9191309d3bdb86fb8f496711e24ed87cc70e0f9175ec5b7791b835db4dc324`仍保留前一compat59metadata；code X `800564271c7d92fba7472c28783a6bd4b8d03d49` 已真394來源binding PASS（receipt `16039d4a…`），正常feature `codex/homepc-et106-schema-20261120` 推送並直接讀回相同；status Y及其binding／推送／讀回、本批實際DB60 metadata收尾待Root，未冒稱main同步。下方「schema0059／兩表absent／a2 prepared」段落為當時歷史。HOME維持PG復刻／PPK／API與發行、Office維持Oracle唯讀來源／UI，不互換身份或連線責任。
+
+
 ## ET106前置相容已正式驗證（2026-11-20；最新實況）
 
 Root已正式啟用API155 `466ff88469c70ce08cfd13b6210f986796aa848b8f24d62ee3470da939402487`，canonical `7e795d7013a804b6f8ab848f4d0a5454ec613744ca2c68b6010e6a2273368202`；Web維持E1 Web237 `5ff068fc556b6449485dc40ea5b399ff2f773609c59ee19ee529aab1fbd9faae`。本批只改三個既有主檔的未來出貨地址引用相容性，schema仍0059、ET106兩表／types仍absent，地址／報關writer未交，a2 schema wrapper只是prepared，沒有新增migration／seed或WIP provider。
@@ -1136,3 +1149,15 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 ### 更新 2026-11-20：WIP WP508 ERF Info 補查
 
 - `WP_ERFInformation` 的 Lot Disposition 直接表 `TBLWIPERFLOTDISPOSITION`，公司端由受保護 MESTEST profile 以 PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp508info_source_ddl.sql`、`mestest_wip_wp508info_source_indexes.sql`、`mestest_wip_wp508info_metadata.txt`；16 欄，PK `(ERFNO, LOTDISPORDER)`，另有非唯一 `LOTSERIAL` 索引，無 trigger。PG CREATE-only `mestest_wip_wp508info_create.sql` 包含 LotDisposition 與 `TBLWIPERFOCAP_ATTACHFILE`。後者 Oracle source 已在 QC409 refs，11 欄，PK `(LOTNO,ERFNO,ATTACHNAME,OCAPNO)`，原先欠 PG CREATE。一般 ERF 附件 PG CREATE 在 WP501，NodeBasis 在 PRS104。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證/受保護附件路徑未提交。家用端先比對 live schema/history，僅對缺項做 forward migration。
+
+### 更新 2026-11-20：WIP WP801 廠內 8D 矯正單
+
+- 直接主表 `TBLWIP8DBASIS_FACTORY` 及 ERF 關聯表已有 WP508/QC409 source+CREATE。流水號 `8DNO_FACTORY` 讀 `TBLSYSSERIALRULEBASIS` 與 `TBLSYSSERIALRULEDETAIL`；公司端從受保護 MESTEST 以 PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp801_serial_source_ddl.sql`、`mestest_wip_wp801_serial_source_indexes.sql`、`mestest_wip_wp801_serial_metadata.txt`。Basis 9 欄、Detail 13 欄，PK 各為 `(SERIALTYPE,SERIALTYPENO)` 與 `(SERIALTYPE,SERIALTYPENO,ITEMNO)`，無其他 index/trigger。`mestest_first_phase_create_tables.sql` 兩表欄位/PK 已有，但少 Oracle 五個 default；精確 PG CREATE-only 在 `mestest_wip_wp801_serial_create.sql`。家用端核 live schema/history，缺 default 時 forward ALTER，不直接因 `CREATE IF NOT EXISTS` 推定現有表已對齊。未查 Oracle 業務列、未執行 Oracle DDL/DML、未連 PostgreSQL，憑證/受保護附件路徑未提交。
+
+### 更新 2026-11-20：WIP WP802 8D 矯正單維護作業
+
+- `WP_8DMaintainDef`/`clsWIP` 直接使用 `TBLWIP8D_ACTION`、`ACTIONDETAIL`、`ATTACHFILE`、`DISPOSITION`、`PREVENTION`、`PREVENTIONTRACK`、`QA`、`QUESTION`、`RELEASE`、`RELEASELOG`、`ROOTCAUSE`、`TEAMMEMBER` 共 12 表。公司端用既有受保護 MESTEST profile，以 PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**查得全部 12 表 DDL、欄位/constraints/index/trigger metadata，檔案 `database/reference/mestest_wip_wp802_source_ddl.sql`、`mestest_wip_wp802_source_indexes.sql`、`mestest_wip_wp802_metadata.txt`；PG CREATE-only 是 `mestest_wip_wp802_create.sql`。12 表皆無 trigger；TeamMember 有 `(QRSNO,MEMBERTYPE,MEMBERNO)` 唯一索引但無主鍵約束，原表 `PMFLAG DEFAULT 0`。家用端先核 live schema/history，僅缺表/欄/索引才 forward migration，不因 `CREATE IF NOT EXISTS` 假設既有 schema 已一致。未查業務列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL，憑證未提交。
+
+### 更新 2026-11-20：WIP WP803 8D 矯正單結案作業
+
+- Release/ReleaseLog/TeamMember 直接表沿 WP802，Basis 沿 WP508。Def 的 D1 部門/人員選擇由 `clsWIP.Load8DTeamMember` 左連 `TBLUSRDEPARTMENTBASIS` 帶 DepartmentName；公司端以既有受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp803_department_source_ddl.sql` 及 `mestest_wip_wp803_department_metadata.txt`。原表 14 欄、DepartmentNo PK/單一 unique index、無 trigger，四個 `DEFAULT 0` 為 IssueState、ControlDtConect、DtConectQty、DataStamp。`mestest_first_phase_create_tables.sql` 欄/PK 已有但少四 default；準確 PG CREATE-only 為 `mestest_wip_wp803_department_create.sql`。家用端先核 live schema/history，缺 default 才 forward ALTER；公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL，憑證未提交。
