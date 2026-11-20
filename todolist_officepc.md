@@ -56,7 +56,8 @@ Code X ebc03a1已409來源綁定PASS、正常feature推送／ref讀回；文件Y
 - [x] [WP904 生產批作業區變更](docs/modules/WIP/生產批作業區變更.md) 完成 DEV 選批、主子流程、變更與清除。沿用現有 DDL／CREATE-only 參考並交接整批替換交易。
 - [x] [WP905 產品版本變更](docs/modules/WIP/產品版本變更.md) 完成 DEV 產品與舊版查詢、基礎批選取、包裝守門與版本變更。正式交易沿用既有表。
 - [x] [WP906 ECN 設定精靈](docs/modules/WIP/ECN設定精靈.md) 完成 Vue DEV 六步、條件及受影響批。三張正式表沿用 WP201。
-- [ ] 依選單清冊接 WP907 生產批數量調整。
+- [x] [WP907 生產批數量調整](docs/modules/WIP/生產批數量調整.md) 完成整批、Bin、元件三種 Vue DEV 與 Oracle 調整歷程兩表的 metadata／CREATE-only。
+- [ ] 依選單清冊接 WP908 標籤列印。
 
 ## 2026-11-20 桌機再接手：從 WP401 開始
 

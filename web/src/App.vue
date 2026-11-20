@@ -79,6 +79,7 @@ import WipReleasedLotBatchDelete from './components/WipReleasedLotBatchDelete.vu
 import WipLotAreaChange from './components/WipLotAreaChange.vue'
 import WipProductVersionChange from './components/WipProductVersionChange.vue'
 import WipEcnWizard from './components/WipEcnWizard.vue'
+import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
 import WipOperatorLogin from './components/WipOperatorLogin.vue'
@@ -581,6 +582,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:LOT OP AREA CHANGE', label: '生產批作業區變更', tableName: 'tblwiplotoparea', shortLabel: '作業區', functionNo: 'LOT OP AREA CHANGE', moduleNo: 'WIP' },
       { id: 'function:WIP:PRODUCT VERSION CHANGE', label: '產品版本變更', tableName: 'tblwiplotbasis', shortLabel: '版本', functionNo: 'PRODUCT VERSION CHANGE', moduleNo: 'WIP' },
       { id: 'function:WIP:ECN WIZARD', label: 'ECN 設定精靈', tableName: 'tblwipecnbasis', shortLabel: 'ECN', functionNo: 'ECN WIZARD', moduleNo: 'WIP' },
+      { id: 'function:WIP:LOT QTY ADJUST', label: '生產批數量調整', tableName: 'tblwipadjustlog', shortLabel: '數量', functionNo: 'LOT QTY ADJUST', moduleNo: 'WIP' },
     ],
   }] },
 ]
@@ -613,6 +615,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:LOT OP AREA CHANGE': appBasePath + '/WIP/LotAreaChange',
   'function:WIP:PRODUCT VERSION CHANGE': appBasePath + '/WIP/ProductVersionChange',
   'function:WIP:ECN WIZARD': appBasePath + '/WIP/EcnWizard',
+  'function:WIP:LOT QTY ADJUST': appBasePath + '/WIP/LotQuantityAdjust',
   'function:WIP:LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'function:WIP:LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'function:WIP:CREATE LOT': appBasePath + '/WIP/LotBasisCreate',
@@ -827,6 +830,7 @@ const functionRoutes: Record<string, string> = {
   'LOT OP AREA CHANGE': appBasePath + '/WIP/LotAreaChange',
   'PRODUCT VERSION CHANGE': appBasePath + '/WIP/ProductVersionChange',
   'ECN WIZARD': appBasePath + '/WIP/EcnWizard',
+  'LOT QTY ADJUST': appBasePath + '/WIP/LotQuantityAdjust',
   'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'LOT SPLIT': appBasePath + '/WIP/LotSplit',
@@ -1069,6 +1073,7 @@ const isWipReleasedLotBatchDeletePage = computed(() => activeMasterKey.value ===
 const isWipLotAreaChangePage = computed(() => activeMasterKey.value === 'function:WIP:LOT OP AREA CHANGE')
 const isWipProductVersionChangePage = computed(() => activeMasterKey.value === 'function:WIP:PRODUCT VERSION CHANGE')
 const isWipEcnWizardPage = computed(() => activeMasterKey.value === 'function:WIP:ECN WIZARD')
+const isWp907Page = computed(() => activeMasterKey.value === 'function:WIP:LOT QTY ADJUST')
 const isWipLotOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKIN')
 const isWipLotOperatorClockOutPage = computed(() => activeMasterKey.value === 'function:WIP:LOT OPERATOR CLOCKOUT')
 const isWipCarrierStatePage = computed(() => activeMasterKey.value === 'function:WIP:CARRIER STATE')
@@ -2793,6 +2798,7 @@ async function signOut(): Promise<void> {
         <WipLotAreaChange v-else-if="isWipLotAreaChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipProductVersionChange v-else-if="isWipProductVersionChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEcnWizard v-else-if="isWipEcnWizardPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotQuantityAdjust v-else-if="isWp907Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />

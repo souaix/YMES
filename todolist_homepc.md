@@ -52,6 +52,7 @@ Code X `ebc03a106ebd5d47a1a47bf6dcc172fc3bdb8ef1` 已409來源綁定PASS、正�
 - [ ] 讀 [WP904 規格](docs/modules/WIP/生產批作業區變更.md)，比對現有 batch override／流程／區域 schema，做有身分複核與版本保護的整批變更，排隊時按 Core 規則更新現況區及廠別。
 - [ ] 讀 [WP905 規格](docs/modules/WIP/產品版本變更.md)，將目前版本、基礎批、包裝守門與回復歷程提交做成可稽核交易。
 - [ ] 讀 [WP906 規格](docs/modules/WIP/ECN設定精靈.md)，完成 Setup 特性／批次預覽及 ECN 三表交易，驗證有效期、條件與 IssueState。
+- [ ] 讀 [WP907 規格](docs/modules/WIP/生產批數量調整.md)，核對 AdjustLog／AdjustDetail schema，完成三種數量調整和庫存、原因、稽核與回復交易。
 
 ## 筆電交付：WP112 工單撤派工（2026-11-20）
 
