@@ -54,6 +54,7 @@ Code X `ebc03a106ebd5d47a1a47bf6dcc172fc3bdb8ef1` 已409來源綁定PASS、正�
 - [ ] 讀 [WP906 規格](docs/modules/WIP/ECN設定精靈.md)，完成 Setup 特性／批次預覽及 ECN 三表交易，驗證有效期、條件與 IssueState。
 - [ ] 讀 [WP907 規格](docs/modules/WIP/生產批數量調整.md)，核對 AdjustLog／AdjustDetail schema，完成三種數量調整和庫存、原因、稽核與回復交易。
 - [ ] 讀 [WP908 規格](docs/modules/WIP/標籤列印.md)，比對列印歷程 CLOB、受控樣板、印表機整合與列印回執。
+- [ ] 讀 [WP909 規格](docs/modules/WIP/換廠作業.md)，實作目的區對應、批與靜電箱版本鎖定和同一交易。
 
 ## 筆電交付：WP112 工單撤派工（2026-11-20）
 
