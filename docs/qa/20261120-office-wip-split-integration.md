@@ -1,6 +1,6 @@
 # 2026-11-20 公司WIP拆批Web222整合驗證（限定GUI完成；main待同步）
 
-本輪將已完成Web220 featurebranch同步的release `dc34ee6fc02f5949f4ffdfbbd4673e4232a9957a`，與Office最新 `12c6a2e8b98be035a82993fcaf3354a555ce31fa` 正常合併至 `32d422b5fe98cfd06338af9a0a6319f53473bfbb`。保留雙方工作，新增WP208元件拆批及WP209等級拆批的入口／KD框架整合，正式未交付provider保持明確不可用。**本版限定GUI已通過；374來源綁定、新release commit及正常main同步仍待實證，mainSyncPending=true。**
+本輪將已完成Web220 featurebranch同步的release `dc34ee6fc02f5949f4ffdfbbd4673e4232a9957a`，與Office最新 `12c6a2e8b98be035a82993fcaf3354a555ce31fa` 正常合併至 `32d422b5fe98cfd06338af9a0a6319f53473bfbb`。保留雙方工作，新增WP208元件拆批及WP209等級拆批的入口／KD框架整合，正式未交付provider保持明確不可用。**本版限定GUI已通過；release `3953bbad60df3ce2f94d7420135f4286e1366493` 的374來源綁定與featurebranch正常推送／遠端讀回已完成，mainSyncPending=true。** 後續Office新兩頁另做[Web224驗證](20261120-office-wip-carrier-merge-integration.md)，不重寫本版證據。
 
 ## 固定來源與實際部署
 
@@ -31,7 +31,7 @@ Root封存proof `.tools/gui-proof-20261120/office-wip-split-current.json`，1052
 
 獨立SQL只讀兩個自有smoke精確鍵，broker=0／forwarder=0。`.tools/office-wip-split-smoke-cleanup-20261120.json` SHA256 `d8075801657e31dfed1aa792ca63a7affc1bb2323738ef0f46b5110d8f619c46` 記錄GUI created2／hardDeleted2／SQL fixture writes0；沒有廣刪業務資料。
 
-Root收據 `.tools/office-wip-split-integration-gui-receipt-20261120.json` SHA256 `fbb8441053bb20ff95f5d6d68b0304f3b1dfb081825a24776d0576ba415cbd82`。獨立peer另由實際收據記錄，不預填尚未提供結果。
+Root收據 `.tools/office-wip-split-integration-gui-receipt-20261120.json` SHA256 `fbb8441053bb20ff95f5d6d68b0304f3b1dfb081825a24776d0576ba415cbd82`；獨立peer核對同一封存proof通過，收據 `.tools/office-wip-split-gui-peer-20261120.json` SHA256 `3638d1bae6ef97c54678a478612f02ab9319eb6cdbe22379cb31403b132cb4e4`，未見確定blocker。
 
 ## 既有版本與尚待完成
 
@@ -39,4 +39,6 @@ Web220 release dc34ee6已完成372來源綁定（收據SHA256 `9c186dc0efe913bed
 
 ET104 A1完整checkpoint仍為 `9cbe89c5eef1ad06b72f5782a6ba6b42a8665e1b514f99768db5e4b3548d8fd5`；API169HTTP／621assert與GUI87為原A1已完成證據，本版沒有重跑或重新命名。Web220 metadata未套用，本輪後續新metadata必須保留完整A1歷史。
 
-本版374＝SQL1＋API151＋Web222綁定、新commit／main正常推送與新metadata仍待Root實際完成；目前不填假Git SHA或main完成。WIP正式providers／HostId、人員與拆批原生交易仍待逐項實作；ET105僅隔離候選與純讀peer，尚未build、migration或正式部署。完整MES及未列分支不在本次完成範圍。
+本版374＝SQL1＋API151＋Web222綁定已通過，收據SHA256 `c0eed78c80760b1aa7381a5dcc6f2a2c4c97d4f671649a0edbb7fff6ae3b8c32`；release `3953bbad60df3ce2f94d7420135f4286e1366493` 已正常推送 `refs/heads/codex/homepc-office-wip-integration-20261120` 並遠端讀回相同。小型本機分支紀錄 `.tools/office-wip-split-feature-release-20261120.json` SHA256 `71fa671a2aecbc720014be331734ce0c3dfedfdd78f90f299f540d3c9a6741d4`，私有上傳另待實證；222 metadata未套用，mainSyncPending=true。
+
+Root後續正常合併Office carrier／merge新頁至3f99c172；automatic review因新兩頁尚未驗證而拒絕main push，沒有執行該次push。改以Web224完整建置／部署／GUI驗證後再正常同步，不把尚未建置的224當成已驗222。WIP providers／HostId、人員與拆批原生交易仍待逐項實作；ET105僅隔離候選與純讀peer，尚未build、migration或正式部署。完整MES及未列分支不在本次完成範圍。

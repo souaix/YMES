@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 type Action = 0 | 1 | 2
 type ReturnType = 0 | 1 | 2
@@ -23,6 +23,7 @@ type Persisted = { records: SplitRecord[]; nextSequence: number }
 const props = defineProps<{ developmentPreview?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
+const unavailableMessage = '正式環境尚未開放此功能。'
 const storageKey = 'ymes-dev-mock:wip-lot-split-carrier:state:v1'
 
 const fixtures: Lot[] = [
@@ -70,12 +71,14 @@ const canEdit = computed(() => dev.value && lot.value !== null && !submitted.val
 const totalQty = computed(() => rows.value.reduce((sum, row) => sum + row.splitLotQty, 0))
 const slotCounts = computed(() => [slots.value[0].filter(slot => !!slot.componentNo).length, slots.value[1].filter(slot => !!slot.componentNo).length])
 const availableEmptyCarriers = computed(() => {
+  if (!dev.value) return []
   const occupied = new Set(records.value.flatMap(record => record.rows.map(row => row.carrierNo)))
   return emptyCarriers.filter(item => !occupied.has(item.carrierNo))
 })
-const sourceCarrierOptions = computed(() => lot.value ? [{ carrierNo: lot.value.carrierNo, carrierType: 'DEV-TRAY', capacity: 6 }, ...availableEmptyCarriers.value] : availableEmptyCarriers.value)
+const sourceCarrierOptions = computed(() => !dev.value ? [] : lot.value ? [{ carrierNo: lot.value.carrierNo, carrierType: 'DEV-TRAY', capacity: 6 }, ...availableEmptyCarriers.value] : availableEmptyCarriers.value)
 
 function readState(): Persisted {
+  if (!dev.value) return { records: [], nextSequence: 1 }
   const raw = JSON.parse(window.localStorage.getItem(storageKey) || 'null') as Partial<Persisted> | null
   const next = raw?.nextSequence
   const rawRecords = raw?.records
@@ -93,7 +96,7 @@ function clearDraft(): void {
 }
 function queryCarrier(): void {
   clearDraft(); errorText.value = ''; lot.value = null
-  if (!dev.value) { errorText.value = '此頁目前僅提供 DEV 假資料預覽。'; return }
+  if (!dev.value) { errorText.value = unavailableMessage; return }
   const source = fixtures.find(item => item.carrierNo === carrierInput.value.trim().toUpperCase())
   if (!source) { errorText.value = '找不到有批次的 DEV 載具；可試 DEV-CAR-101 或 DEV-CAR-202。'; return }
   if ([2, 3, 4].includes(source.status)) { errorText.value = '參考批為 Wait／Hold／Complete，不允許載具分批。'; return }
@@ -101,11 +104,12 @@ function queryCarrier(): void {
   lot.value = source; carrierInput.value = source.carrierNo; mode.value = 'count'; amountInput.value = '2'; includeMother.value = true
   message.value = source.haveComponent ? '有元件批：固定以 Count 2 拆分，Slot 視窗須分配每顆元件。' : '無元件批：可選 Count／Qty 並指定每個子批的載具。'
 }
-function chooseReferenceCarrier(carrierNo: string): void { carrierInput.value = carrierNo; queryCarrier() }
+function chooseReferenceCarrier(carrierNo: string): void { if (!dev.value) return; carrierInput.value = carrierNo; queryCarrier() }
 function childLotNo(sequence: number): string { return `DEV-CAR-SPLIT-${String(sequence).padStart(6, '0')}` }
 function emptySlots(capacity: number): Slot[] { return Array.from({ length: capacity }, (_, i) => ({ position: i + 1, componentNo: '', originPosition: 0 })) }
 function carrierCapacity(carrierNo: string): number { return sourceCarrierOptions.value.find(item => item.carrierNo === carrierNo)?.capacity ?? 0 }
 function setupSlots(source: Lot): void {
+  if (!dev.value) return
   const left = emptySlots(carrierCapacity(source.carrierNo))
   source.components.forEach((componentNo, i) => { if (left[i]) { left[i].componentNo = componentNo; left[i].originPosition = i + 1 } })
   slots.value = [left, []]
@@ -147,6 +151,7 @@ function split(): void {
   else message.value = `已產生 ${rows.value.length} 個子批；請逐列指定載具。`
 }
 function updateQty(row: Row, raw: string): void {
+  if (!dev.value) return
   const value = Number(raw)
   if (!Number.isInteger(value) || value < 0) { errorText.value = 'Split Lot Qty 必須是非負整數。'; return }
   row.splitLotQty = rows.value.length === 2 && lot.value ? Math.min(value, lot.value.curQty) : value
@@ -157,22 +162,26 @@ function updateQty(row: Row, raw: string): void {
   errorText.value = ''
 }
 function changeAction(row: Row, raw: string): void {
+  if (!dev.value) return
   row.action = Number(raw) as Action; row.nodeId = ''; row.processNo = ''; row.processVersion = ''; row.opNo = ''
 }
-function changeReturnType(row: Row, raw: string): void { row.returnType = Number(raw) as ReturnType }
+function changeReturnType(row: Row, raw: string): void { if (!dev.value) return; row.returnType = Number(raw) as ReturnType }
 function chooseRoute(option: (typeof routes)[number]): void {
+  if (!dev.value) return
   const row = activeRow.value
   if (!row) return
   row.action = option.action; row.nodeId = option.nodeId; row.processNo = option.processNo
   row.processVersion = option.processVersion; row.opNo = option.opNo; dialog.value = null
 }
 function chooseProduct(option: (typeof products)[number]): void {
+  if (!dev.value) return
   const row = activeRow.value
   if (!row) return
   row.productNo = option.productNo; row.productVersion = option.productVersion; dialog.value = null
   message.value = 'DEV 已顯示產品選擇；原 WinForms Confirm XML 未送出 ProductNo／Version，正式相容性待確認。'
 }
 function chooseSlotCarrier(side: 0 | 1, carrierNo: string): void {
+  if (!dev.value) return
   errorText.value = ''
   if (carrierNo && carrierNo === slotCarriers.value[side === 0 ? 1 : 0]) { errorText.value = '兩個子批不可使用同一載具。'; return }
   const capacity = carrierCapacity(carrierNo)
@@ -185,9 +194,11 @@ function chooseSlotCarrier(side: 0 | 1, carrierNo: string): void {
   carrierPickerSide.value = null
 }
 function chooseSlotCarrierFromPicker(carrierNo: string): void {
+  if (!dev.value) return
   if (carrierPickerSide.value !== null) chooseSlotCarrier(carrierPickerSide.value, carrierNo)
 }
 function moveComponent(fromSide: 0 | 1): void {
+  if (!dev.value) return
   errorText.value = ''
   const toSide: 0 | 1 = fromSide === 0 ? 1 : 0
   const fromPos = fromSide === 0 ? selectedSlot1.value : selectedSlot2.value
@@ -200,6 +211,7 @@ function moveComponent(fromSide: 0 | 1): void {
   from.componentNo = ''; from.originPosition = 0; slotsConfirmed.value = false
 }
 function moveWithin(side: 0 | 1, direction: -1 | 1): void {
+  if (!dev.value) return
   errorText.value = ''
   const selected = side === 0 ? selectedSlot1 : selectedSlot2
   const position = selected.value
@@ -213,6 +225,7 @@ function moveWithin(side: 0 | 1, direction: -1 | 1): void {
   selected.value = to.position; slotsConfirmed.value = false
 }
 function confirmSlots(): void {
+  if (!dev.value) return
   errorText.value = ''
   const source = lot.value
   if (!source || rows.value.length !== 2 || !slotCarriers.value[0] || !slotCarriers.value[1] || slotCarriers.value[0] === slotCarriers.value[1]) { errorText.value = '請先選兩個不同的載具與兩個子批。'; return }
@@ -259,6 +272,11 @@ function confirmSplit(): void {
   catch { records.value.pop(); nextSequence.value -= children.length; errorText.value = '瀏覽器無法儲存 DEV 模擬結果。'; return }
   submitted.value = true; message.value = 'DEV 已模擬載具分批；結果只保存在此瀏覽器，未更新 MES。'
 }
+watch(dev, enabled => {
+  if (enabled) return
+  lot.value = null; carrierInput.value = ''; records.value = []; errorText.value = ''
+  clearDraft()
+}, { immediate: true })
 onMounted(loadState)
 </script>
 
@@ -266,7 +284,7 @@ onMounted(loadState)
   <section class="wp210-page">
     <div v-if="dev" class="dev-banner">DEV 假資料預覽；載具、元件位置與拆批結果只保存在此瀏覽器。</div>
     <h1>分批處理_載具 <small>LOT SPLIT_CARRIER · WP210</small></h1>
-    <p v-if="errorText" class="notice error" role="alert">{{ errorText }}</p><p v-else class="notice" role="status">{{ message }}</p>
+    <p v-if="errorText" class="notice error" role="alert">{{ errorText }}</p><p v-else class="notice" role="status">{{ dev ? message : unavailableMessage }}</p>
 
     <fieldset class="reference-frame"><legend>Reference Lot</legend>
       <div class="query-row"><label for="wp210-carrier">Carrier No</label><input id="wp210-carrier" v-model="carrierInput" class="mes-input editable" :disabled="!dev" @keydown.enter.prevent="queryCarrier"><button type="button" class="mes-button" :disabled="!dev" @click="dialog = 'carrierLookup'">...</button><button type="button" class="mes-button" :disabled="!dev" @click="queryCarrier">Query</button></div>
@@ -291,7 +309,7 @@ onMounted(loadState)
     </fieldset>
     <footer class="form-footer"><span>原生確認會檢查 LotStamp、載具與數量守恆。</span><button type="button" class="mes-button confirm" :disabled="!canEdit || rows.length === 0" @click="confirmSplit">Confirm(&amp;C)</button><button type="button" class="mes-button" @click="emit('close')">Close (&amp;X)</button></footer>
 
-    <div v-if="dialog" class="modal-backdrop" @click.self="dialog = null">
+    <div v-if="dev && dialog" class="modal-backdrop" @click.self="dialog = null">
       <section v-if="dialog === 'slots'" class="dialog slot-dialog" role="dialog" aria-modal="true" aria-label="Manual Split"><header><strong>Manual Split · 載具元件 Slot 配置</strong><span>{{ lot?.lotNo }}</span></header><p class="dialog-hint">左側為子批 1，右側為子批 2。選取有元件的位置及另一側空位置，再按箭頭。</p>
         <div class="slot-columns"><div class="slot-side"><label>Split Lot No 1 <input :value="rows[0]?.splitLotNo" class="mes-input" readonly></label><label>Split Lot 1 Carrier <select :value="slotCarriers[0]" class="mes-input editable" @change="chooseSlotCarrier(0, ($event.target as HTMLSelectElement).value)"><option v-for="item in sourceCarrierOptions" :key="item.carrierNo" :value="item.carrierNo" :disabled="item.carrierNo === slotCarriers[1]">{{ item.carrierNo }}</option></select><button type="button" class="mes-button" @click="carrierPickerSide = carrierPickerSide === 0 ? null : 0">...</button></label><div class="grid-wrap slot-grid"><table><thead><tr><th>Position</th><th>Component No</th><th>Original Pos.</th></tr></thead><tbody><tr v-for="slot in slots[0]" :key="slot.position" :class="{ selected: selectedSlot1 === slot.position }" @click="selectedSlot1 = slot.position"><td>{{ slot.position }}</td><td>{{ slot.componentNo }}</td><td>{{ slot.originPosition || '' }}</td></tr></tbody></table></div><div class="slot-actions"><button type="button" class="mes-button" @click="moveWithin(0,-1)">↑</button><button type="button" class="mes-button" @click="moveWithin(0,1)">↓</button><span>元件 {{ slotCounts[0] }}</span></div></div>
           <div class="transfer-buttons"><button type="button" class="mes-button" @click="moveComponent(0)">→</button><button type="button" class="mes-button" @click="moveComponent(1)">←</button></div>

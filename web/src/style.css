@@ -797,7 +797,7 @@ button {
 }
 
 /* The framework owns page titles. Keep dialog controls and DEV badges visible. */
-.framework-main .framework-content.office-wip-module:is(.operator-login-lot-page, .wp205-page, .wp206-page, .wp207-page, .wp208-page, .wp209-page) > h1,
+.framework-main .framework-content.office-wip-module:is(.operator-login-lot-page, .wp205-page, .wp206-page, .wp207-page, .wp208-page, .wp209-page, .wp210-page, .wp211-page) > h1,
 .framework-main .framework-content.office-wip-module.area-show-page > header.page-title,
 .framework-main .framework-content.office-wip-module.favorite-page > header.page-heading > h1 {
   display: none;

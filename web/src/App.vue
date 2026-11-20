@@ -2510,8 +2510,8 @@ async function signOut(): Promise<void> {
         <WipLotSplit v-else-if="isWipLotSplitPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotSplitComponent v-else-if="isWipLotSplitComponentPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotSplitBin v-else-if="isWipLotSplitBinPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipLotSplitCarrier v-else-if="isWipLotSplitCarrierPage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <WipLotMerge v-else-if="isWipLotMergePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotSplitCarrier v-else-if="isWipLotSplitCarrierPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotMerge v-else-if="isWipLotMergePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />

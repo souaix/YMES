@@ -1,5 +1,11 @@
 # 部署設定檔
 
+## 公司WIP載具拆批／併批Web224 C1（2026-11-20；限定GUI完成，main待同步）
+
+Office最新df10bd08已與已驗Web222 release3953bbad正常合併至3f99c172。224檔來源canonical `f9bb95660175064e2b0c989df9f09dbe52adf18f85c3a0650bf5753960c072e7` 已完成完整建置exit0、封裝與實際部署Web `e2df5e3df9884894f3805f5f454053c8e748c6256314ddc41f0ee4cf27988375`，公開HTTP七項通過。Root封存限定GUI73通過檢查點／73events／0observations：自行Demo登入、18native＋1direct、新兩頁guard／19入口KD／無假metadata／單一主標題／Close／重進／direct fresh、WP307 Grid30×40／四zoom、SD108空lookup及ET104新Web真CRUD均通過。2筆全GUI建刪、SQL fixture writes0、獨立Broker／Forwarder精準兩鍵皆0；fresh reload空首頁21收合選單／logs[]。376綁定／新commit與main同步仍pending。
+
+本版預定只切Web，API6d2501…／151份及PostgreSQL0058不變。新增WP210載具拆批／WP211併批入口與19入口KD樣式，正式provider仍未交付。先前main push因新兩頁未驗遭automatic review拒絕且未執行；Root依完整C1驗證再同步，不繞過。220 dc34／372及222 3953／374正常featurebranch推送已完成，保留各版86／69項proof及main待同步歷史；C1進度見[Web224 QA](docs/qa/20261120-office-wip-carrier-merge-integration.md)。
+
 ## 公司WIP拆批整合Web222（2026-11-20；限定GUI完成，main待同步）
 
 已將Office最新12c6a2e與已正常推送的Web220 release dc34ee6合併至32d422b5。固定222檔來源canonical `ee360b1d9fd47f130df900de539402bda2a2e73a1cd5e6acdcdbca1c9f5df0d5`，完整型別／Vite建置exit0，已實際部署Web `b330b9b009670ea092218b8ecffdc6f1c389e9595a572ebf5ab471afd3e377e8`；公開七項HTTP檢查通過。API仍6d2501…／151份，資料庫仍0058，本版未重建API、未套DDL或權限。

@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## 最新接手：公司WIP載具拆批／併批Web224 C1（2026-11-20；限定GUI完成／main待同步）
+
+- [x] 保留已驗Web220 dc34／372及Web222 3953／374的正常featurebranch推送／遠端讀回；各版proof86／69保持原樣，222小型本機紀錄71fa671a…的私有上傳尚待實證。
+- [x] 正常合併Office最新df10bd08至3f99c172，凍結Web224 canonical f9bb9566…；新WP210／WP211只補正式隔離與既有KD框架，Bin只保留Office rawRecords alias，正式providers未交付。
+- [x] C1完整建置exit0、封裝／部署Web e2df5e3d…與公開HTTP七項通過，224來源f9bb9566…保持；Root已Demo登入操作新兩頁guard／19入口KD／無假metadata／單一主標題／Close／重進／direct fresh、舊16native／direct OP、WP30730×40／四zoom與SD108空lookup。
+- [x] 封存限定GUI73通過檢查點／73events／0observations：18native＋1direct、新兩頁重進／direct fresh、19KD／無假metadata／單一主標題、WP307／SD108空lookup界線與ET104真CRUD均通過；2筆全GUI建刪、SQL fixture writes0、獨立精準B/F皆0，fresh reload21收合選單／空首頁／logs[]。proof f2fa8af9…／receipt87802ec4…／cleanup3a5c9a4a…保持原檔。
+- [ ] 執行376來源綁定及正常main推送；新Git與main仍pending。先前automatic review拒絕未驗兩新頁的main push且未執行；目前完成C1限定GUI後依安全流程再重試，不繞過。
+- [ ] API6d／151份及DB0058保持，不重建API或套新schema；WIP providers持續由HOME接手。ET105僅隔離候選與純讀peer，尚未build／migration／正式部署。
+
+本機仍為HOME（PostgreSQL clone／API／SSH），公司端為Oracle唯讀來源與UI；[Web224 QA](docs/qa/20261120-office-wip-carrier-merge-integration.md)記本版證據，mainSyncPending=true。下方220／222最新段為當次歷史，不將其proof改配224。
+
 ## 最新接手：公司WIP拆批Web222（2026-11-20；限定GUI完成／main待同步）
 
 本機為HOME PC，負責PostgreSQL復刻、API、SSH與發行；公司端維持Oracle唯讀來源與UI。Office12c6a2e已與Web220 release dc34ee6正常合併至32d422b5，兩端工作保留。

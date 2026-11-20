@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 type Lot = {
   lotNo: string; moNo: string; curQty: number; sysQty: number; lotStamp: number
@@ -11,6 +11,7 @@ type MergeRecord = { refLotNo: string; newLotNo: string; sourceLots: string[]; l
 const props = defineProps<{ developmentPreview?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
+const unavailableMessage = '正式環境尚未開放此功能。'
 const storageKey = 'ymes-dev-mock:wip-lot-merge:records:v1'
 const fixtures: Lot[] = [
   { lotNo: 'DEV-MERGE-001', moNo: 'DEV-MO-A', curQty: 5, sysQty: 5, lotStamp: 2111, status: 1, productNo: 'DEV-PROD-A', processNo: 'DEV-PROC-A', opNo: 'DEV-OP-10', nodeId: 'DEV-NODE-10A', brNo: 'DEV-BR-1', unitNo: 'PCS', osNo: '', packaged: false, allowDiffMO: true },
@@ -61,6 +62,7 @@ function clearSelection(): void {
   submitted.value = false; dialog.value = null
 }
 function invalidateReference(): void {
+  if (!dev.value) return
   if (refLot.value && refInput.value.trim().toUpperCase() !== refLot.value.lotNo) {
     clearSelection()
     refLot.value = null
@@ -74,7 +76,7 @@ function eligible(ref: Lot, item: Lot): boolean {
 }
 function queryReference(): void {
   errorText.value = ''; clearSelection(); refLot.value = null
-  if (!dev.value) { errorText.value = '此頁目前僅提供 DEV 假資料預覽。'; return }
+  if (!dev.value) { errorText.value = unavailableMessage; return }
   const source = fixtures.find(item => item.lotNo === refInput.value.trim().toUpperCase())
   if (!source) { errorText.value = '找不到 DEV 參考批；可試 DEV-MERGE-001 或 DEV-MERGE-OS-001。'; return }
   if (source.packaged) { errorText.value = '參考批已有包裝現況，不允許併批。'; return }
@@ -84,7 +86,7 @@ function queryReference(): void {
   selectedLots.value = [source.lotNo]
   message.value = source.status === 5 ? '委外併批：只能選同一未回貨外包單，Transfer Type 必須 Go。' : `已載入 ${candidates.value.length} 筆候選；AllowDiffMOMerge=${source.allowDiffMO ? '1' : '0'}。`
 }
-function chooseReference(lotNo: string): void { refInput.value = lotNo; queryReference() }
+function chooseReference(lotNo: string): void { if (!dev.value) return; refInput.value = lotNo; queryReference() }
 function setSelected(lotNo: string, checked: boolean): void {
   if (!canEdit.value || lotNo === refLot.value?.lotNo) return
   selectedLots.value = checked ? [...new Set([...selectedLots.value, lotNo])] : selectedLots.value.filter(item => item !== lotNo)
@@ -98,6 +100,7 @@ function selectAll(): void {
 function unselectAll(): void { if (canEdit.value && refLot.value) selectedLots.value = [refLot.value.lotNo] }
 function openMO(): void { if (!canEdit.value) return; moDraft.value = moFilters.value ? [...moFilters.value] : [...allMOs.value]; dialog.value = 'mo' }
 function applyMO(): void {
+  if (!dev.value) return
   if (!refLot.value) return
   const selected = new Set(moDraft.value)
   selected.add(refLot.value.moNo)
@@ -107,10 +110,10 @@ function applyMO(): void {
   if (!selectedLots.value.includes(refLot.value.lotNo)) selectedLots.value.push(refLot.value.lotNo)
   dialog.value = null
 }
-function clearMO(): void { moFilters.value = null; dialog.value = null }
-function chooseRoute(option: (typeof routeOptions)[number]): void { targetRoute.value = option; dialog.value = null }
-function changeAction(raw: string): void { action.value = Number(raw) as 0 | 1; if (action.value === 0) targetRoute.value = null }
-function bindElectricBox(): void { electricBox.value = true; message.value = 'DEV 靜電箱綁定已模擬；未寫入 MES。'; dialog.value = null }
+function clearMO(): void { if (!dev.value) return; moFilters.value = null; dialog.value = null }
+function chooseRoute(option: (typeof routeOptions)[number]): void { if (!dev.value) return; targetRoute.value = option; dialog.value = null }
+function changeAction(raw: string): void { if (!dev.value) return; action.value = Number(raw) as 0 | 1; if (action.value === 0) targetRoute.value = null }
+function bindElectricBox(): void { if (!dev.value) return; electricBox.value = true; message.value = 'DEV 靜電箱綁定已模擬；未寫入 MES。'; dialog.value = null }
 
 function confirmMerge(ackNodeDifference = false): void {
   errorText.value = ''
@@ -137,6 +140,11 @@ function confirmMerge(ackNodeDifference = false): void {
   records.value = [...current, record]; submitted.value = true; dialog.value = null
   message.value = `DEV 已模擬 ${selected.length} 筆併為 ${newLotNo}，Qty ${totalQty.value}／SysQty ${totalSysQty.value}；未更新 MES。`
 }
+watch(dev, enabled => {
+  if (enabled) return
+  refLot.value = null; refInput.value = ''; records.value = []; errorText.value = ''
+  clearSelection()
+}, { immediate: true })
 onMounted(loadRecords)
 </script>
 
@@ -144,14 +152,14 @@ onMounted(loadRecords)
   <section class="wp211-page">
     <div v-if="dev" class="dev-banner">DEV 假資料預覽；參考批 DEV-MERGE-001 可跨工單，DEV-MERGE-OS-001 為同外包單案例。</div>
     <h1>併批處理 <small>LOT MERGE · WP211</small></h1>
-    <p v-if="errorText" class="notice error" role="alert">{{ errorText }}</p><p v-else class="notice" role="status">{{ message }}</p>
+    <p v-if="errorText" class="notice error" role="alert">{{ errorText }}</p><p v-else class="notice" role="status">{{ dev ? message : unavailableMessage }}</p>
     <fieldset class="reference-frame"><legend>Reference Lot</legend><div class="query-row"><label for="wp211-ref">RefLot No</label><input id="wp211-ref" v-model="refInput" class="mes-input editable" :disabled="!dev" @input="invalidateReference" @keydown.enter.prevent="queryReference"><button type="button" class="mes-button" :disabled="!dev" @click="dialog = 'reference'">...</button><button type="button" class="mes-button" :disabled="!dev" @click="queryReference">Query</button></div><div class="grid-wrap reference-grid"><table><thead><tr><th>Lot No</th><th>MO No</th><th>Cur Qty</th><th>Product No</th><th>OP No</th><th>Node ID</th><th>Status</th></tr></thead><tbody><tr v-if="refLot"><td>{{ refLot.lotNo }}</td><td>{{ refLot.moNo }}</td><td class="number">{{ refLot.curQty }}</td><td>{{ refLot.productNo }}</td><td>{{ refLot.opNo }}</td><td>{{ refLot.nodeId }}</td><td>{{ refLot.status }}</td></tr><tr v-else><td colspan="7" class="empty">請輸入參考批號。</td></tr></tbody></table></div></fieldset>
     <fieldset class="merge-frame"><legend>Merge Lot</legend><div class="merge-controls"><button type="button" class="mes-button" :disabled="!canEdit" @click="selectAll">Select All</button><button type="button" class="mes-button" :disabled="!canEdit" @click="unselectAll">UnSelect All</button><label for="wp211-mo">MO No</label><input id="wp211-mo" :value="moFilters?.join(', ') ?? ''" class="mes-input" readonly><button type="button" class="mes-button" :disabled="!canEdit" @click="openMO">...</button><button v-if="electricBoxEnabled" type="button" class="mes-button" :disabled="!canEdit || !outputLotNo" @click="dialog = 'electricBox'">Eletricbox</button></div>
       <div class="grid-wrap merge-grid"><table><thead><tr><th>Check</th><th>Lot No</th><th>MO No</th><th>Cur Qty</th><th>Sys Qty</th><th>Product No</th><th>OP No</th><th>Node ID</th><th>Status</th></tr></thead><tbody><tr v-for="item in visibleLots" :key="item.lotNo" :class="{ reference: item.lotNo === refLot?.lotNo }"><td><input type="checkbox" :checked="selectedLots.includes(item.lotNo)" :disabled="!canEdit || item.lotNo === refLot?.lotNo" :aria-label="'選取 ' + item.lotNo" @change="setSelected(item.lotNo, ($event.target as HTMLInputElement).checked)"></td><td>{{ item.lotNo }}</td><td>{{ item.moNo }}</td><td class="number">{{ item.curQty }}</td><td class="number">{{ item.sysQty }}</td><td>{{ item.productNo }}</td><td>{{ item.opNo }}</td><td>{{ item.nodeId }}</td><td>{{ item.status }}</td></tr><tr v-if="!visibleLots.length"><td colspan="9" class="empty">查詢參考批後顯示候選批。</td></tr></tbody></table></div><div class="summary-row">選取 {{ selectedRows.length }} 筆 · CurQty {{ totalQty }} · SysQty {{ totalSysQty }}</div>
     </fieldset>
     <fieldset class="process-frame"><legend>Transfer Type</legend><label><input type="radio" :checked="action === 0" :disabled="!canEdit" @change="changeAction('0')">Go</label><label><input type="radio" :checked="action === 1" :disabled="!canEdit || refLot?.status === 5" @change="changeAction('1')">Assign</label><label for="wp211-output">LotNo</label><input id="wp211-output" v-model="outputLotNo" class="mes-input editable" :disabled="!canEdit"><label>Process No <input :value="targetRoute?.processNo || ''" class="mes-input" readonly></label><label>Version <input :value="targetRoute?.processVersion || ''" class="mes-input" readonly></label><label>OP No <input :value="targetRoute?.opNo || ''" class="mes-input" readonly></label><button type="button" class="mes-button" :disabled="!canEdit || action !== 1" @click="dialog = 'route'">...</button></fieldset>
     <footer class="form-footer"><span>原生參考批固定選取；同 OP 不同 NodeID 確認前會提示。</span><button type="button" class="mes-button confirm" :disabled="!canEdit" @click="confirmMerge()">Confirm(&amp;C)</button><button type="button" class="mes-button" @click="emit('close')">Close(&amp;X)</button></footer>
-    <div v-if="dialog" class="modal-backdrop" @click.self="dialog = null">
+    <div v-if="dev && dialog" class="modal-backdrop" @click.self="dialog = null">
       <section v-if="dialog === 'reference'" class="dialog" role="dialog" aria-modal="true" aria-label="Reference Lot"><header><strong>Reference Lot</strong></header><button v-for="item in fixtures.filter(lot => !lot.packaged)" :key="item.lotNo" type="button" class="option" @click="chooseReference(item.lotNo)">{{ item.lotNo }}<small>{{ item.moNo }} · Qty {{ item.curQty }} · Status {{ item.status }}</small></button><footer><button type="button" class="mes-button" @click="dialog = null">Close</button></footer></section>
       <section v-else-if="dialog === 'mo'" class="dialog" role="dialog" aria-modal="true" aria-label="MO No"><header><strong>MO No</strong><span>參考批工單會固定保留</span></header><label v-for="mo in allMOs" :key="mo" class="mo-option"><input v-model="moDraft" type="checkbox" :value="mo" :disabled="mo === refLot?.moNo">{{ mo }}</label><footer><button type="button" class="mes-button confirm" @click="applyMO">確定</button><button type="button" class="mes-button" @click="clearMO">清除篩選</button><button type="button" class="mes-button" @click="dialog = null">取消</button></footer></section>
       <section v-else-if="dialog === 'route'" class="dialog" role="dialog" aria-modal="true" aria-label="Assign Routing"><header><strong>Assign Routing</strong></header><button v-for="option in routeOptions" :key="option.nodeId" type="button" class="option" @click="chooseRoute(option)">{{ option.processNo }} / {{ option.processVersion }} / {{ option.opNo }}<small>{{ option.nodeId }}</small></button><footer><button type="button" class="mes-button" @click="dialog = null">Close</button></footer></section>

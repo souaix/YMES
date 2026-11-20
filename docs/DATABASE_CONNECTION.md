@@ -1,5 +1,11 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 公司WIP載具拆批／併批Web224 C1（2026-11-20；無資料庫異動）
+
+Office df10bd08與已驗Web222 release3953bbad正常合併至3f99c172，Web224 canonical `f9bb95660175064e2b0c989df9f09dbe52adf18f85c3a0650bf5753960c072e7` 已完整建置exit0、封裝並部署Web `e2df5e3df9884894f3805f5f454053c8e748c6256314ddc41f0ee4cf27988375`，公開HTTP七項通過。Root限定GUI73檢查點／73events／0observations封存；ET104 smoke兩筆全GUI建刪，SQL fixture writes0、獨立精準Broker／Forwarder皆0，清理SHA256 `3a5c9a4a387a8a8ae44d6a5c7d18aea36877502956eb61da1c2c3c8aac46e36d`；fresh reload空首頁21收合選單／logs[]。376綁定／main同步仍pending。本版API仍6d2501…／151份，DB `ymes`／schema `YMES`仍0058；未新增DDL、grant、資料回填或WIP交易provider，不能把公司新reference當成已套schema。
+
+220 dc34／372及222 3953／374正常featurebranch推送與原proof86／69保留；完整A1 checkpoint仍9cbe，220／222 metadata未套用。WIP providers待逐項接手，ET105僅隔離候選與純讀peer，尚未build／migration。C1實證另見[Web224 QA](qa/20261120-office-wip-carrier-merge-integration.md)，mainSyncPending=true。
+
 ## 公司WIP拆批Web222（2026-11-20；資料庫仍0058）
 
 Office12c6a2e與已完成分支同步的Web220 dc34ee6正常合併至32d422b5，新Web來源222檔canonical `ee360b1d9fd47f130df900de539402bda2a2e73a1cd5e6acdcdbca1c9f5df0d5` 已完整建置並部署 `b330b9b009670ea092218b8ecffdc6f1c389e9595a572ebf5ab471afd3e377e8`，公開HTTP七項通過。API仍6d2501…／151份，DB `ymes`／schema `YMES`仍0058；本輪未新增DDL、grant、backfill或資料庫交易provider。

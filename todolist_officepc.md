@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 家用端最新整合進度：Web224 C1（2026-11-20；限定GUI完成／main待同步）
+
+Office最新df10bd08的載具拆批／併批已正常合併至3f99c172，保留雙方來源。Web224來源f9bb9566…完整建置exit0、封裝／部署e2df5e3d…與公開HTTP七項已通過；Root封存限定GUI73通過檢查點／73events／0observations，含自行Demo登入、18native＋1direct、新兩頁guard／19KD／無假metadata／單一主標題／Close／重進／direct fresh、WP307／SD108空lookup界線及ET104真CRUD。2筆全GUI建刪、SQL fixture writes0、獨立精準B/F皆0，fresh reload21收合選單／空首頁／logs[]；376綁定／新Git與main仍pending。API6d／151份與DB0058未動，所有WIP正式providers仍由家用端接手。
+
+220 dc34／372及222 3953／374已正常同步featurebranch並讀回相同，各版86／69項proof不改。先前新兩頁未驗的main push遭automatic review拒絕且未執行，Root會完成C1驗證後再正常同步；mainSyncPending=true。ET105僅隔離候選與純讀peer，尚未build或migration；本節不新增公司端PG／SSH／部署工作，既有Oracle唯讀來源與UI待辦保留。見[Web224 QA](docs/qa/20261120-office-wip-carrier-merge-integration.md)。
+
 ## 家用端最新整合進度：Web222（2026-11-20；限定GUI完成／main待同步）
 
 公司12c6a2e的WP208／WP209已與家用Web220 dc34ee6正常合併至32d422b5，保留雙方來源。Web222／B330b9…（來源222檔canonical ee360b1d…）完整建置與七項HTTP已通過；API6d／151份、PostgreSQL0058保持不變。17入口採既有KD框架，WIP正式providers仍待家用端實作。

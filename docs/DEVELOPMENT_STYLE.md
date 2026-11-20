@@ -121,6 +121,8 @@ API 從 YMES 復刻資料庫的 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunct
 
 相關文件：[GitHub 原型整合](GITHUB_INTEGRATION.md)、[共用系統架構](../ARCHITECTURE_BASE.md)、[部署設定](../DEPLOYMENT_PROFILES.md)。
 
-2026-11-20最新Web222沿既有KD色票擴至17個入口，新增WP208／WP209並保留各頁DEV／正式不可用界線；Root限定GUI69檢查點已封存，實測兩新頁無DEV Bin、框架只有一個主標題、Close／重進及相關顯示操作。main仍待374綁定後正常同步，見[Web222 QA](qa/20261120-office-wip-split-integration.md)。樣式整合不代表WIP provider交付，既有SD108資料契約不變。
+2026-11-20最新Web224 C1沿原KD色票擴至19個入口，新增WP210載具拆批／WP211併批，只套既有框架主題並保留各頁DEV banner、dialog與正式不可用界線。來源f9bb9566…完整建置exit0並部署e2df5e3d…，Root限定GUI73檢查點／73events／0observations已封存，含新兩頁19入口KD／無假metadata／單一主標題與Close／重進；376綁定及main仍pending，見[Web224 QA](qa/20261120-office-wip-carrier-merge-integration.md)。不將舊17入口proof改配19入口，樣式不代表WIP provider或原生交易交付。
+
+前版歷史：Web222沿KD色票擴至17個入口，新增WP208／WP209；限定GUI69項已封存，兩新頁無DEV Bin、單一框架主標題及Close／重進均實測。release3953bbad已完成374綁定與featurebranch正常推送，當時main待同步，見[Web222 QA](qa/20261120-office-wip-split-integration.md)。既有SD108資料契約不變。
 
 前版歷史：2026-11-20公司WIP Web220只對15個新入口套KD主題，保留DEV／不可用提示與業務按鈕，限定GUI86項已封存；原SD108與資料契約保持。Web220 dc34ee6已完成372綁定及featurebranch正常推送，當時main待同步；見[Web220 QA](qa/20261120-office-wip-integration.md)，不把其15入口／86項證據改配222。
