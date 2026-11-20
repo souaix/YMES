@@ -1061,3 +1061,7 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 ### 更新 2026-11-20：WIP WP510 等待單資料
 
 - 公司端以受保護 MESTEST profile、Windows PowerShell 5.1 與 Oracle.ManagedDataAccess 唯讀取得 `TBLWIPWAITLOTDISPOSITION` 的 DBMS_METADATA table/index DDL 與 ALL_TAB_COLUMNS／CONSTRAINTS／INDEXES／TRIGGERS：13 欄、5 個 NOT NULL、無 PK/FK/unique/trigger，只有 WAITNO 非唯一索引。`database/reference/mestest_wip_wp510_disposition_source_ddl.sql`、`mestest_wip_wp510_disposition_source_indexes.sql`、`mestest_wip_wp510_disposition_metadata.txt` 與 PG CREATE-only `mestest_wip_wp510_disposition_create.sql` 已交付。主表 WaitBasis 沿 WP201，NodeBasis 沿 PRS104。未查業務列、未寫 Oracle、未連 YMES PostgreSQL；家用端核 live schema/history 後只補缺項。
+
+### 更新 2026-11-20：WIP WP511 等待處置
+
+- 使用同一受保護 Oracle profile，在 Windows PowerShell 5.1 載入 `D:\iMES\CSiMES\STD\MES_S_DLL\Oracle.ManagedDataAccess.dll`，只讀 `MESTEST.XX_TBLWAITPRIV` 的 DBMS_METADATA table/index DDL 與 ALL_TAB_COLUMNS／CONSTRAINTS／INDEXES／TRIGGERS；沒有查業務資料列。14 欄全部 NOT NULL，`GROUPNO` 主鍵、單一 unique index、無 FK/trigger。`database/reference/mestest_wip_wp511_priv_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt` 與 `_create.sql` 已交付；PG CREATE-only 只供家用端核 live schema/history 後建 forward migration。權限關聯的 `TBLUSRUSERGROUP` 沿既有設備工程群組 reference，Wait 主/明細沿 WP201/WP510；公司端未連 YMES PostgreSQL、未寫 Oracle，憑證未提交。

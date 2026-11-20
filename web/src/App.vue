@@ -94,6 +94,7 @@ import WipFutureHoldRelease from './components/WipFutureHoldRelease.vue'
 import WipFutureWaitRelease from './components/WipFutureWaitRelease.vue'
 import WipErfBasis from './components/WipErfBasis.vue'
 import WipWaitBasis from './components/WipWaitBasis.vue'
+import WipWaitDisposition from './components/WipWaitDisposition.vue'
 import Wip8DBasisFactory from './components/Wip8DBasisFactory.vue'
 import Wip8DMaintain from './components/Wip8DMaintain.vue'
 import Wip8DClose from './components/Wip8DClose.vue'
@@ -589,6 +590,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'function:WIP:ERF BASIS': appBasePath + '/WIP/ErfBasis',
   'function:WIP:WAIT BASIS': appBasePath + '/WIP/WaitBasis',
+  'function:WIP:WIP WAIT DISPOSITION': appBasePath + '/WIP/WaitDisposition',
   'function:WIP:8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
   'function:WIP:8D MAINTAIN': appBasePath + '/WIP/8DMaintain',
   'function:WIP:8D CLOSE': appBasePath + '/WIP/8DClose',
@@ -781,6 +783,7 @@ const functionRoutes: Record<string, string> = {
   'FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'ERF BASIS': appBasePath + '/WIP/ErfBasis',
   'WAIT BASIS': appBasePath + '/WIP/WaitBasis',
+  'WIP WAIT DISPOSITION': appBasePath + '/WIP/WaitDisposition',
   '8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
   '8D MAINTAIN': appBasePath + '/WIP/8DMaintain',
   '8D CLOSE': appBasePath + '/WIP/8DClose',
@@ -967,6 +970,7 @@ const isWipFutureHoldReleasePage = computed(() => activeMasterKey.value === 'fun
 const isWipFutureWaitReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE WAIT RELEASE')
 const isWipErfBasisPage = computed(() => activeMasterKey.value === 'function:WIP:ERF BASIS')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
+const isWipWaitDispositionPage = computed(() => activeMasterKey.value === 'function:WIP:WIP WAIT DISPOSITION')
 const isWip8DBasisFactoryPage = computed(() => activeMasterKey.value === 'function:WIP:8D BASIS_FACTORY')
 const isWip8DMaintainPage = computed(() => activeMasterKey.value === 'function:WIP:8D MAINTAIN')
 const isWip8DClosePage = computed(() => activeMasterKey.value === 'function:WIP:8D CLOSE')
@@ -2671,6 +2675,7 @@ async function signOut(): Promise<void> {
         <WipFutureWaitRelease v-else-if="isWipFutureWaitReleasePage" class="framework-content" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipErfBasis v-else-if="isWipErfBasisPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-erf-no="pendingErfInfoNo" @create8d="open8dFromErf" @open8d-maintain="open8dMaintainFromErf" @close="navigateHome" />
         <WipWaitBasis v-else-if="isWipWaitBasisPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <WipWaitDisposition v-else-if="isWipWaitDispositionPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <Wip8DBasisFactory v-else-if="isWip8DBasisFactoryPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :linked-erf="pending8dErf" @open-erf-info="openErfInfoFrom8d" @close="navigateHome" />
         <Wip8DMaintain v-else-if="isWip8DMaintainPage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-qrs-no="pending8dMaintainNo" :read-only="pending8dMaintainReadOnly" @open-erf-info="openErfInfoFrom8d" @close="close8dMaintain" />
         <Wip8DClose v-else-if="isWip8DClosePage" class="framework-content" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromClose" @close="navigateHome" />

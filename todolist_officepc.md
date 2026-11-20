@@ -1644,4 +1644,5 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] WP501 共用異常單 Release EQP 分支已追 `frmBRERFCreate` → `wsWIP.LoadWIPTemp_Equipment` → `clsLot.LoadWIPTemp_Equipment`/`UpdERF_Create`：Form 對 0 行錯稱「其他 Lot」且警告後仍提交。DEV 補 Vendor/Material 唯讀欄、設備狀態主檔數字選項、共用設備拒絕／獨佔成功及 v1 假資料增量升級；交家用端交易內設備占用守門。直接表 DDL/CREATE 已在 WP201／設備狀態 refs，無新 SQL。未連 PostgreSQL、未執行 build/test/browser。
 
 - [x] WP510「等待單資料」已核 `frmWaitBasis`／`frmWaitInformation`、wsWIP/clsLot，完成六組勾選條件、15 欄主 Grid、七欄 Wait Info、WP502 假 Wait 唯讀合併的 Vue DEV 頁與規格。受保護 MESTEST 唯讀取得 `TBLWIPWAITLOTDISPOSITION` 13 欄 source/index DDL、metadata；無 PK/trigger、WAITNO 非唯一 index，交 PG CREATE-only。主表沿 WP201、NodeBasis 沿 PRS104。未連 PostgreSQL、未執行 build/test/browser。
-- [ ] 接續 WIP WP509「未解除異常單」或 WP511「等待處置」，先核 Form／Service／Core；WP509 含多個分併批子窗，先劃分主頁與共用子窗，再做 DEV 與規格。公司端只讀 Oracle DDL/metadata，不接正式 PostgreSQL/API。
+- [x] WP511「等待處置」已核 THEIL BU1 主窗／七個分併批子窗入口、Service/Core、權限表；完成 `/YMES/WIP/WaitDisposition` Vue DEV 六欄查詢、17 欄 Grid、十個可見處置、Partial/同流程/同 PS 守門、簡化分併批子窗，WP510 可讀假解除結果。MESTEST 唯讀取得 `XX_TBLWAITPRIV` 14 欄／GROUPNO PK source/index DDL 與 metadata，交 PG CREATE-only/API 規格。七個子窗的 Bin/Component/Carrier 交易仍須家用端依來源實作。未連 PG、未執行 build/test/browser。
+- [ ] 接續 WIP WP509「未解除異常單」：先核 Form／Service／Core；WP509 含多個分併批子窗，劃分主頁與共用子窗，再做 DEV 與規格。公司端只讀 Oracle DDL/metadata，不接正式 PostgreSQL/API。

@@ -17,6 +17,7 @@ const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
 const wp502StorageKey = 'ymes-dev-mock:wip-immediate-wait:state:v1'
+const wp511StorageKey = 'ymes-dev-mock:wip-wait-disposition:state:v1'
 const statuses: Record<number, string> = {
   0: 'Wait Undisposition', 1: 'Wait Wait Disposition',
   2: 'Notice Customer and Wait Disposition', 3: 'Waive',
@@ -56,6 +57,8 @@ function sampleRows(): WaitRow[] {
     { waitNo: 'DEV-WB-001', lotNo: 'DEV-WAIT-001', productNo: 'PRD-A', lotSerial: 'DEV-WS-101', status: 0, opNo: 'OP-TEST', customerNo: 'CUS-A', waitDescription: '待測試確認', ruleNo: '', createQty: 12, creator: 'DEV', createDate: stamp(1), releaseQty: null, releaser: '', releaseDate: null, waitSource: 0 },
     { waitNo: 'DEV-WB-002', lotNo: 'DEV-WAIT-002', productNo: 'PRD-A', lotSerial: 'DEV-WS-102', status: 11, opNo: 'OP-TEST', customerNo: 'CUS-A', waitDescription: '待處置', ruleNo: 'DEV-RULE', createQty: 6, creator: 'DEV', createDate: stamp(2), releaseQty: null, releaser: '', releaseDate: null, waitSource: 0 },
     { waitNo: 'DEV-WB-003', lotNo: 'DEV-WAIT-003', productNo: 'PRD-B', lotSerial: 'DEV-WS-103', status: 21, opNo: 'OP-PACK', customerNo: 'CUS-B', waitDescription: '已解除', ruleNo: '', createQty: 8, creator: 'DEV', createDate: stamp(5), releaseQty: 8, releaser: 'DEV', releaseDate: stamp(4), waitSource: 0 },
+    { waitNo: 'DEV-WB-004', lotNo: 'DEV-WAIT-004', productNo: 'PRD-A', lotSerial: 'DEV-WS-104', status: 0, opNo: 'OP-TEST', customerNo: 'CUS-A', waitDescription: '等待工程處置', ruleNo: 'RULE-A', createQty: 8, creator: 'DEV', createDate: stamp(0.5), releaseQty: null, releaser: '', releaseDate: null, waitSource: 0 },
+    { waitNo: 'DEV-WB-005', lotNo: 'DEV-WAIT-005', productNo: 'PRD-B', lotSerial: 'DEV-WS-105', status: 0, opNo: 'OP-PACK', customerNo: 'CUS-B', waitDescription: '部分過帳等待', ruleNo: '', createQty: 5, creator: 'DEV', createDate: stamp(0.2), releaseQty: null, releaser: '', releaseDate: null, waitSource: 0 },
   ]
 }
 function load(): void {
@@ -76,6 +79,15 @@ function load(): void {
       }
     }
   } catch { /* show built-in DEV examples */ }
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(wp511StorageKey) || 'null') as { releases?: { waitNo: string; lotDispType: number; description: string; actor: string; releasedAt: string }[] } | null
+    if (Array.isArray(saved?.releases)) for (const release of saved.releases) {
+      const row = result.find(item => item.waitNo === release.waitNo)
+      if (!row) continue
+      row.status = 21; row.releaseQty = row.createQty; row.releaser = release.actor; row.releaseDate = release.releasedAt
+      detail.push({ waitNo: row.waitNo, lotDispType: release.lotDispType, description: release.description, creator: release.actor, createDate: release.releasedAt, opNo: row.opNo, processNo: '', processVersion: '' })
+    }
+  } catch { /* show original DEV rows */ }
   allRows.value = result
   dispositions.value = detail
 }
