@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## E1 四個 WIP 入口已部署與限定驗收（2026-11-20；最新實況）
+
+Root 已實際部署 Web `5ff068fc556b6449485dc40ea5b399ff2f773609c59ee19ee529aab1fbd9faae`，237份來源 canonical `25bd965ebc6e71dc41468b9a11102d53a4444a82aadc48ac12985dfdd76dde8a`，API154 `8db4b84024af86a82cac448f38492bfba0122a24b3e0a3369fa90b649af9d04e`／PostgreSQL `ymes` schema `YMES` migration `0059` 保持；本輪只改 Web，不套 WIP CREATE-only、不加權限或完成交易 provider。D1 metadata 已實際套用與獨立下載，checkpoint SHA `8918a1748840b791ac63a618222fc60b7f71465864bf8980a4fdb0439faf4037`，保留原 API154 snapshot／regression／ET105105及所有歷史；下方舊 pending 文字都是當時快照。
+
+四個原生入口 WP505／506／507／508 的正式隔離、空 metadata、KD／單標題、重進／fresh直接路由／Close，以及28項既有頁含區域圖與 direct OperatorLogin 回歸已實測。封存89raw／85有效＝84GUI＋1SQL／四observations：67是真HTTP520傳輸結果不明，雖原passed=true仍有expectedOperationPassed=false，不算New成功；72訊息文案／74空白比對／84reload登入初始化是三個工具觀察。原事件保留，68關閉重查後69新建／70修改／71clean確定／73核准／75篩選／76停用／77篩選／78取消／79硬刪／80–83四狀態空／89獨立SQL零均完成；520根因及第一次提交時點仍未確定。這是帶有已復驗傳輸限制的限定驗收，不是所有流程無異常。
+
+獨立最終正常TLS七項與runtime讀回全通過，正確E1 release receipt SHA `2dc935b8b97fcdaca5ac5e46834c0545f71f475d9a8c2b9e50d2b04b85074c0e`；`GE1T-1120A` exact／logical／actor+兩marker三範圍均0，cleanup receipt SHA `e2047126fd390fa270490df5ac931feb91ebd09873a1631212b005176f6a773a`，全由GUI建刪，SQL fixture0／cleanup0。fresh Home21預設折疊／scrollbar alpha.4、收合寬72／21icons／展開及最後fresh scope logs[]完成。詳見 [E1 QA](docs/qa/20261120-office-wip-next4-e1.md)。
+
+本機已正常合併 D1／a074與Office `f43fac5a0a600a1674e05664ad8156f2107d12b9`，HEAD `47c8e549c9f2b8b75635fd1d5406b2c2b67afcea`，SQL1＋API154＋Web237＝392來源綁定PASS，receipt SHA `4c478e6005a4a9af4a6aa74b3fe798af3e45fb296d8a0ed2136c583617c7b49e`。code 47c8e549c9f2b8b75635fd1d5406b2c2b67afcea 已正常推送 refs/heads/codex/homepc-office-wip-next4-20261120 並直接讀回同值；文件狀態提交與E1 metadata收尾待完成。QA後正常fetch發現Office 6870eaf 的WP801／802兩個8D頁，另輪接手，mainSyncPending=true，未覆蓋公司工作。ET106相容API155另僅候選建置，沒有放進本輪已部署API154實況。HOME維持PG復刻／PPK SSH／API／資料庫／發行；Office維持MES原生Oracle唯讀與UI，原生來源／CREATE-only／所有歷史全文保留。
+
+
 ## D1 九個 WIP 入口正式已驗（2026-11-20；最新權威狀態）
 
 Root 已完成 Web233 正式部署 `423552b638fe578066905ef72d98b58c50e0645519dc7cfc64ae2ce95a715e75`，source canonical `6a8b5567ca0d633c93c7a0d4d2f92f9d4ceb8bf0e57e9d0e74ded1f013e29590`；API154 `8db4b84024af86a82cac448f38492bfba0122a24b3e0a3369fa90b649af9d04e` 與 PostgreSQL `ymes`／schema `YMES`／migration `0059` 保持。HOME 負責 PostgreSQL 復刻、PPK SSH、API／資料庫與發行；Office 維持原生 MES Oracle 唯讀來源及 UI，沒有 PG／SSH 工作轉派。
