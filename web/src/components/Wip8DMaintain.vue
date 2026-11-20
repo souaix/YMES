@@ -141,7 +141,7 @@ function saveSummary(): void {
   row.dataStamp++; saveBasis(); saveChild(); message.value = summary.autoClose ? 'DEV 總結並模擬自動結案。' : 'DEV 總結已存，待結案申請。'; error.value = ''
 }
 function takeFile(event: Event): void { const input = event.target as HTMLInputElement; const file = input.files?.[0]; const row = current.value; if (!file || !row || locked.value) return; const stage = stageTabs.find(item => item[0] === tab.value)?.[2] || 'N/A'; if (file.name.length > 60) { error.value = '附件名稱超過 60 字元。'; return }; if (attachments[stage].includes(file.name)) { error.value = '同階段同名附件已存在。'; return }; attachments[stage].push(file.name); saveChild(); message.value = `${stage} DEV 假附件 ${file.name} 已加入；未上傳檔案內容。`; input.value = '' }
-onMounted(() => { if (!dev.value) return; loadBasis(); if (props.initialQrsNo) { checked.qrsNo = true; filters.qrsNo = props.initialQrsNo; query(); const row = basisRows.value.find(item => item.qrsNo === props.initialQrsNo && item.issueState !== -1); if (row) openDetail(row) } })
+onMounted(() => { if (!dev.value) return; loadBasis(); if (props.initialQrsNo) { checked.qrsNo = true; filters.qrsNo = props.initialQrsNo; query(); const row = basisRows.value.find(item => item.qrsNo === props.initialQrsNo && (props.readOnly || item.issueState !== -1)); if (row) openDetail(row) } })
 watch(dev, enabled => { if (!enabled) { basisRows.value = []; results.value = []; activeNo.value = ''; detailNo.value = ''; searched.value = false; editSection.value = null; confirmDelete.value = null; fishbone.value = false; for (const section of sections) child[section.id] = []; child.release = []; child.releaseLog = []; for (const stage of stageTabs) attachments[stage[2]] = [] } })
 </script>
 
