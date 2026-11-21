@@ -4,6 +4,8 @@
 
 以 GitHub `main` 的公司端版本 `262613e13069843c9c44d05f870a46d2a234508c` 為基底，先修正 `deploy/Dockerfile.web.prebuilt` 對 root-only 封裝檔案的讀取權限，部署來源 commit 為 `09bd776a259bafeeb2fec28d393f8af5149392e8`。API `sha256:80a35f68286527282c92efbd966542973bb06365b4902f189e415d6ecf5b7bc8`、Web `sha256:d262d8d1f97fd9cfe378ed35815d0757d55293fc9bff296dcfe255cd57aad76f` 分開建置及切換；保留 `ymes-api:rollback-before-09bd776-a2` 與 `ymes-web:rollback-before-09bd776-a2`。
 
+部署期間公司端另提交 `bc61853`（WP621 E10ICD 入庫 DEV UI／規格）；此較新頁面未包含在本次 runtime image，已正常合併至家用工作分支並列入接手待辦。
+
 候選 API readiness 200、候選 Web 七個靜態檔案雜湊／大小驗證通過；正式 API/Web 容器 healthy，`/YMES/`、`/YMES/API/health/ready` 為 200，公開 JS/CSS 的 MIME、大小及 SHA 與產物相符，`environments.json` 正式 API base 為 `/YMES/API`，小寫 `/ymes/` 為 404。正式 PostgreSQL 0063/0064 結構只讀核實，未在本次部署執行 SQL。其他專案容器不變。
 
 Chrome 已顯示正式登入頁並讀到環境選項及 Demo 按鈕；Windows UI 擷取逾時，按鈕操作回報 `coordinate input geometry is unavailable`，因此本次沒有完成 Demo 登入或模組操作。此部署不能算 GUI 全驗收；後續以 `todolist_homepc.md` 補驗。

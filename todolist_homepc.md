@@ -3,9 +3,20 @@
 ## 家用正式站部署：API/Web（2026-11-21）
 
 - [x] 先同步公司端最新 `main`（`262613e`），再以合併後來源建置；Web 預建 Dockerfile 補上 Nginx 非 root 可讀權限。
+- [x] 部署後公司端又提交 `bc61853`（WP621 E10ICD 入庫 UI／規格）；已以正常 Git merge 保留。該頁未包含在本次正式映像，完成下方 WP621 API/schema work 及驗收前不部署。
 - [x] 正式站 API 與 Web 分開切換。API image `80a35f682865…`、Web image `d262d8d1f97f…`；保留回復標籤 `rollback-before-09bd776-a2`。未執行資料庫 DDL，未碰其他專案容器。
 - [x] 正式 API readiness、Web/API 路由均為 HTTP 200；公開 JS/CSS 與建置雜湊、大小及 MIME 相符；正式環境 API base 是 `/YMES/API`，小寫 `/ymes/` 回 404。正式資料庫既有 0063/0064 結構已唯讀核實。
 - [ ] GUI 操作驗收未完成：Chrome 已載入正式登入頁，輔助樹顯示正式區、測試區、開發區及 Demo 登入；畫面擷取回報 `window capture timed out`，按 Demo 回報 `coordinate input geometry is unavailable`，所以沒有完成 Demo 登入或主選單操作。瀏覽器工具恢復後先補登入、Menu、WIP 頁操作，再標記 GUI 完成。
+
+## 公司端交接：FGDSTOCKIN_E10ICD 入庫至 E10ICD ERP（WP621，2026-11-21）
+
+公司端依 `frmInventory_FGDStockIN_E10ICD`／Designer、E10ICD ERP Service、`wsMES`、`clsERP`／`clsWIP`／`clsINV` 完成 DEV 假資料流程與[WP621 規格](docs/modules/WIP/入庫至E10ICD_ERP.md)。本機 fallback DEV 頁為 `/YMES/WIP/FgdStockInE10Icd`；原 Function `FGDSTOCKIN_E10ICD` 未掛正式 `MenuItem`。DEV 只模擬 ERP 建單→MES 入庫、ERP W 警告續行及失敗補償，不連 E10ICD、MES Service 或資料庫。
+
+- [ ] 比對 YMES PostgreSQL live schema、migration 與現有擴充欄，重用 WP605 的 `TBLINVFGDINBASIS`／Detail／Component、WP201 的 FGD/WIP Semi Inventory、WP603 Component 及既有 Lot／MO／Product／OP／Locator references。
+- [ ] `TBLINVFGDINBIN` 為 Core 明確讀寫的 Bin 入庫表，但 repository 尚無 Oracle DDL／metadata；公司桌機目前沒有可用受保護 Oracle profile。待取得安全 profile 後由公司端只讀補查 DDL／欄位／索引／約束／trigger；未查前不猜欄、不產 CREATE-only、不做 migration。
+- [ ] 確認 `ExecuteSQLNoneQuery_UPD` 的原子性；`clsINV.MOStockIn_E10` 的 transaction 範例已註解。正式命令須同時維持 ERP 建單、MES 入庫單、FGD／WIP Qty、LotState CurQty／SysQty、Component／Bin、結批、操作／下線歷程及包裝清除的一致性。
+- [ ] 提供授權保護 MO／Lot／Inventory／Locator／ERP 單別查詢與具 idempotency／預約鎖的建立命令。伺服器重查 Qty、Lot status、BookingFlag、MO ERP/state／廠區、庫房類別、BoxNo／DateCode、包裝成員及 Bin／Component，不信任瀏覽器數量或狀態；保留 ERP `W` 可續行，MES 失敗時可靠取消 ERP 單，處理取消失敗與 timeout unknown outcome。
+- [ ] 確認 `FGDSTOCKIN_E10ICD` 的正式 ACL／選單是否開放；未確認前不要將 fallback DEV 可見視為正式授權。
 
 ## 公司端交接：P_BUMP MAP MERGE Bump MAP 疊圖作業（WPP07，2026-11-21）
 
