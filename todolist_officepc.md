@@ -1,11 +1,17 @@
 # 公司端待辦
 
-## 公司端最新交付：Skip Inspection Setting 免檢批設定（2026-11-21）
+## 公司端最新交付：P_BUMP MAP MERGE Bump MAP 疊圖作業（2026-11-21）
+
+- [x] 依 IC/CP Form、MAP Viewer、`wsWIP`／`wsPRD`／`wsSYS`、`clsLot`／`clsProduct`／`clsSYSEng` 核對 Lot、Component／Wafer、Golden／Bump MAP 狀態、IssueState=2 規則、Template Detail、Merge、UndoFrozen 及檔案流程；完成 Vue DEV 假資料互動頁。
+- [x] 重用 `mestest_prd_cp_merge_map_*`、WP101 ComponentState、WP215 ComponentBasis 的既有 references；本項未連 Oracle、未查業務資料、未新增猜測 CREATE-only，也未連 YMES PostgreSQL。
+- [x] 新增 [WPP07 規格](docs/modules/WIP/Bump_MAP疊圖作業.md)、索引與家用端 handoff；明列六張缺 Oracle DDL／metadata 的 CP MAP table、目前受保護 Oracle profile 不可用、Core 查詢參數串錯及真正二進位／FTP 合併由 DEV 示意簡化。
+- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 繼續；WP301、WP629、WP112、WORKORDER PRINT、Skip Inspection Setting、WP113、WP307 已完成或略過，下一項尚缺規格／DEV 的 FGDSTOCKIN_E10ICD「入庫至E10ICD ERP」（WP621，Function 未掛入 MenuItem）。
+
+## 前一項公司端交付：Skip Inspection Setting 免檢批設定（2026-11-21）
 
 - [x] 依 THEIL 主 Form、新增／狀態視窗、`wsWIP`、`clsLot` 與 WP201 執行流程核對查詢、Lot×OP 新增、狀態往返及免檢原因提示；完成 DEV 假資料互動頁。
-- [x] 重用 `XX_TBLSPCWAIVE` 的既有 Oracle source DDL／metadata 及 PostgreSQL CREATE-only reference；沒有查業務資料、增加 DDL，也未連 YMES PostgreSQL。
-- [x] 新增 [免檢批設定規格](docs/modules/WIP/免檢批設定.md)、索引、DEV 路由與 WP201 查詢 handoff；記錄 searchBy 未傳入 Core、Creator filter 未用、SQL 字串串接、批次 INSERT ALL、狀態更新缺少並發條件及 FunctionKey 空白。
-- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 繼續；WP301、WP629、WP112、WORKORDER PRINT、WP113、WP307 已完成或略過，下一項 P_BUMP MAP MERGE（WPP07），其本機 WinForms Form 已找到。
+- [x] 重用 `XX_TBLSPCWAIVE` 的既有 Oracle source DDL／metadata 及 PostgreSQL CREATE-only reference；沒有查業務資料或新增 DDL，也未連 YMES PostgreSQL。
+- [x] 新增 [免檢批設定規格](docs/modules/WIP/免檢批設定.md)及 WP201 查詢 handoff；FunctionKey 空白。
 
 ## 前一項公司端交付：WORKORDER PRINT 工令單列印（2026-11-21）
 

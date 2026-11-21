@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：P_BUMP MAP MERGE Bump MAP 疊圖作業（WPP07，2026-11-21）
+
+公司端依 IC/CP `frmMergeStandardMAP`／MAP Viewer、`wsWIP`／`wsPRD`／`wsSYS` 及 `clsLot`／`clsProduct`／`clsSYSEng` 完成 DEV 假資料互動與[WPP07 規格](docs/modules/WIP/Bump_MAP疊圖作業.md)。Form 涵蓋 Lot/Component/Wafer、Golden/Bump MAP、核准規則與模板、Merge、UndoFrozen、UFMAP 檢視。DEV 不處理真實 MAP binary／FTP、不呼叫 API。
+
+- [ ] Pull 最新 `main` 並比對 live schema；既有 `TBL_BPRDMERGEMAPRULE`／Detail／Sub、`TBLWIPCOMPONENTSTATE`、`TBLWIPCOMPONENTBASIS` 依現有 references 核實與保留 YMES 擴充欄位。
+- [ ] 公司端尚缺 Oracle metadata 的六張表是 `TBL_PWIPGOLDENMAPFILESTATE`、`TBL_PWIPBUMPMAPFILESTATE`、`TBL_PWIPBUMPMAPMERGESTATE`、`TBL_PWIPBUMPMAPMERGELOG`、`TBL_BSYSMAPTEMPLATEDETAIL`、`TBL_BSYSMAPTEMPLATEDETAILB`；收到唯讀 Oracle metadata／CREATE-only handoff 前，不替這六表建 migration 或推測欄位。
+- [ ] 核實 CP 檔案服務與正式 MAP engine 的部署／呼叫介面，再做授權保護的 Lot/component/file/rule/template 查詢及 Merge／UndoFrozen commands。Merge 需涵蓋檔案下載、WaferLot／ID／方向／座標驗證、輸出 checksum／上傳確認、原子 current/log/component 更新與可恢復失敗；不可把公司端 DEV 假流程當正式疊圖 API。
+- [ ] `clsLot.LoadBumpMapMergeState` 有 BumpMergeSerial／WaferId 條件拼接錯誤且使用字串 SQL；新 API 用參數化條件及穩定排序。Service 的 EventLog 在 Core 狀態寫入後另呼叫；確認 `ExecuteSQLNoneQuery_UPD` 交易行為並避免假設跨檔案服務與 DB 原子。
+
 ## 公司端交接：Skip Inspection Setting 免檢批設定（2026-11-21）
 
 公司端依 THEIL 主 Form、新增／狀態視窗、`wsWIP`、`clsLot` 與 WP201 執行流程完成 DEV 假資料頁及[免檢批設定規格](docs/modules/WIP/免檢批設定.md)。清冊 FunctionKey 空白。直接表 `XX_TBLSPCWAIVE` 的 Oracle DDL 與 CREATE-only 已存在於 repository reference；本項沒有新增 schema，也沒有查 Oracle 業務資料或連 YMES PostgreSQL。

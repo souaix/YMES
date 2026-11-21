@@ -382,7 +382,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 | EQP CAP MAPPING | 設備能力設定 | EMS設定 | frmEQPCapMapping | ES_EQPCapMapping.dll | ES108 | 0 |
 | ACC STATE CHANGE DESCRIPTION | 配件狀態變更原因描述 | 未掛入 MenuItem | frmACCStateChangeDescription | ES_ACCStateChangeDescription.dll |  | 0 |
 
-公司端復刻進度（2026-11-21）：WP916 後依清冊順序略過已完成 WP301、WP629、WP112、LOT SHEET PRINT（WP113）及 PRODUCTION STATE BY AREA（WP307）；WORKORDER PRINT「工令單列印」與無 FunctionKey 的 Skip Inspection Setting「免檢批設定」均已完成 DEV、規格及家用端 handoff。下一項尚無規格與 DEV 的清冊列為 P_BUMP MAP MERGE「Bump MAP疊圖作業」（WPP07）。EMS 已完成 ES204、ES102、ES409、ES106；WIP 最新接續狀態見 `todolist_officepc.md` 最上方。
+公司端復刻進度（2026-11-21）：WP916 後依清冊順序略過已完成 WP301、WP629、WP112、LOT SHEET PRINT（WP113）及 PRODUCTION STATE BY AREA（WP307）；WORKORDER PRINT、無 FunctionKey 的 Skip Inspection Setting，以及 P_BUMP MAP MERGE（WPP07）均已完成 DEV、規格與家用端 handoff。WPP07 六張 CP MAP state/file/template 表的 Oracle DDL／metadata 缺項與實際 MAP binary/FTP 的 DEV 簡化已明載；下一項尚未復刻清冊列為 FGDSTOCKIN_E10ICD「入庫至E10ICD ERP」（WP621，未掛入 MenuItem）。EMS 已完成 ES204、ES102、ES409、ES106；WIP 最新接續狀態見 `todolist_officepc.md` 最上方。
 
 ### SPC — 品質管理（順序 12）
 

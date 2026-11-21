@@ -69,6 +69,7 @@ import WipRunCard from './components/WipRunCard.vue'
 import WipLotSheetPrint from './components/WipLotSheetPrint.vue'
 import WipWorkorderPrint from './components/WipWorkorderPrint.vue'
 import WipSkipInspectionSetting from './components/WipSkipInspectionSetting.vue'
+import WipBumpMapMerge from './components/WipBumpMapMerge.vue'
 import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
 import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
 import WipOperatorOnline from './components/WipOperatorOnline.vue'
@@ -553,6 +554,10 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:LOT MERGE_BIN', label: '併批處理_等級', tableName: 'tblwipgoodbinstate', shortLabel: '等級併批', functionNo: 'LOT MERGE_BIN', moduleNo: 'WIP' },
     ],
   }, {
+    id: 'menu:WIP:CHIP TEST PRODUCTION MANAGEMENT', label: '芯片測試生產管理', shortLabel: '芯片', children: [
+      { id: 'function:WIP:P_BUMP MAP MERGE', label: 'Bump MAP疊圖作業', shortLabel: 'MAP疊圖', functionNo: 'P_BUMP MAP MERGE', moduleNo: 'WIP' },
+    ],
+  }, {
     id: 'menu:WIP:EQUIPMENT AND CARRIER', label: '設備與載具', shortLabel: '設備', children: [
       { id: 'function:WIP:EQP MOUNT MATERIAL', label: '設備上料', tableName: 'tblwipeqpmaterialstate', shortLabel: '上料', functionNo: 'EQP MOUNT MATERIAL', moduleNo: 'WIP' },
       { id: 'function:WIP:EQP CONSUME STATUS', label: '設備耗品現況', tableName: 'tblwipeqpconsumestatus', shortLabel: '耗品', functionNo: 'EQP CONSUME STATUS', moduleNo: 'WIP' },
@@ -638,6 +643,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'function:WIP:WORKORDER PRINT': appBasePath + '/WIP/WorkorderPrint',
   'function:WIP:SKIP INSPECTION SETTING': appBasePath + '/WIP/SkipInspectionSetting',
+  'function:WIP:P_BUMP MAP MERGE': appBasePath + '/WIP/BumpMapMerge',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'function:WIP:EQP QCLIST ONLINE CHECK': appBasePath + '/WIP/EquipmentOnlineQC',
   'function:WIP:EQP QCLIST LOG': appBasePath + '/WIP/EquipmentQcListLog',
@@ -921,6 +927,7 @@ const functionRoutes: Record<string, string> = {
   'WORKORDER PRINT': appBasePath + '/WIP/WorkorderPrint',
   'SKIP INSPECTION SETTING': appBasePath + '/WIP/SkipInspectionSetting',
   'Skip Inspection Setting': appBasePath + '/WIP/SkipInspectionSetting',
+  'P_BUMP MAP MERGE': appBasePath + '/WIP/BumpMapMerge',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'CARRIER STATE': appBasePath + '/WIP/CarrierState',
   'CARRIER MANAGEMENT COMP': appBasePath + '/WIP/CarrierManagement',
@@ -1127,6 +1134,7 @@ const isWipRunCardPage = computed(() => activeMasterKey.value === 'function:WIP:
 const isWipLotSheetPrintPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SHEET PRINT')
 const isWipWorkorderPrintPage = computed(() => activeMasterKey.value === 'function:WIP:WORKORDER PRINT')
 const isWipSkipInspectionSettingPage = computed(() => activeMasterKey.value === 'function:WIP:SKIP INSPECTION SETTING')
+const isWipBumpMapMergePage = computed(() => activeMasterKey.value === 'function:WIP:P_BUMP MAP MERGE')
 const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN')
 const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
@@ -2941,6 +2949,7 @@ async function signOut(): Promise<void> {
         <WipLotSheetPrint v-else-if="isWipLotSheetPrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipWorkorderPrint v-else-if="isWipWorkorderPrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipSkipInspectionSetting v-else-if="isWipSkipInspectionSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipBumpMapMerge v-else-if="isWipBumpMapMergePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
