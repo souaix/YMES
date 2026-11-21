@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 公司端交接：FGDSTOCKIN_T100 入庫至 T100 ERP（WP616，2026-11-21）
+
+公司端依 T100 Stock In Form／Designer、`wsERP_T100`、`wsMES`、`clsWIP`／`clsINV` 完成良品整列入庫的 DEV 假資料流程及[WP616 規格](docs/modules/WIP/入庫至T100_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInT100`；原 Function 未掛正式 `MenuItem`。DEV 模擬 T100 Sheet Type、MO／來源 WIP Lot、Select／UnSelect、ERP code W 警告續行、ERP fail 與 MES fail 後 ERP 取消；不連 T100／MES Service 或資料庫。
+
+- [ ] 比對 PostgreSQL live schema／migration 與 WP201／WP605 references；本項使用的 Oracle source DDL／CREATE 已在 repository，桌機未連 Oracle，沒有新增 CREATE-only。
+- [ ] 核實 T100 實際 ERP Web Service `stockin.data.create` 在現行 `ERP_Stock_IN` 呼叫未傳 `auto` 時的確認／過帳預設；Form 區域變數 `auto=N` 沒有被 serialise。
+- [ ] 以 idempotency key／來源 Lot row version 預約所有 WIP rows，重查工單、來源庫、Qty、BookingFlag、目的庫與權限；ERP W 按既有合同保留警告並允許 MES。
+- [ ] ERP timeout／unknown outcome 先查 ERP 單；MES 失敗後 ERP cancel 必須持久化其成功／失敗，取消失敗不能只釋放 BookingFlag 後允許重送。確認 MES Basis／Detail／FGD Inventory／WIP SEMI／Component／Lot Qty／CloseLot／ProductOperation／Log 在本地交易內原子更新。
+- [ ] 核對 T100 多 MO 及 `OrgLotNoToERP` 設定；正式 ACL／MenuItem 待確認。公司端未連 PostgreSQL、未實作或驗收正式 API／schema、未 SSH 部署。
+
 ## 公司端交接：FGDSTOCKIN_E10ICD_CANCEL 取消入庫 E10ICD ERP（WP623，2026-11-21）
 
 公司端依取消 Form／inline Designer、`wsINV`、`wsERP_E10ICD`、`clsInventory` 完成良品 FGD 與不良品 SCRIN 整張取消的 DEV 假資料流程及[WP623 規格](docs/modules/WIP/取消入庫E10ICD_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInE10IcdCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2 且 ERPNo 非空守門、ERP RequestType 0／1、ERP 失敗還原、ERP code=0 後 MES 回復與 State=-2 失敗待恢復；不呼叫 ERP／MES 或資料庫。
