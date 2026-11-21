@@ -90,6 +90,7 @@ import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
 import EmsEquipmentStateControlSetting from './components/EmsEquipmentStateControlSetting.vue'
 import EmsEquipmentStateStatistics from './components/EmsEquipmentStateStatistics.vue'
+import EmsEquipmentReasonBasis from './components/EmsEquipmentReasonBasis.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
 import WipOperatorLogin from './components/WipOperatorLogin.vue'
@@ -610,6 +611,7 @@ const fallbackMenuTree: MenuNode[] = [
     }, {
       id: 'menu:EMS:EMS CONFIG', label: 'EMS設定', shortLabel: '設', children: [
         { id: 'function:EMS:EQP STATE CONTROL SETTING', label: '設備狀態控制設定', shortLabel: '控', functionNo: 'EQP STATE CONTROL SETTING', moduleNo: 'EMS' },
+        { id: 'function:EMS:EQUIPMENT REASON BASIS', label: '設備狀態變更原因資料', shortLabel: '原因', functionNo: 'EQUIPMENT REASON BASIS', moduleNo: 'EMS' },
       ],
     }, {
       id: 'menu:EMS:ACC EXECUTION', label: '配件_執行', shortLabel: '配', children: [
@@ -627,6 +629,7 @@ const menuRoutes: Record<string, string> = {
   'function:EMS:EQP STATE CHANGE': appBasePath + '/EMS/EquipmentStateChange',
   'function:EMS:EQP STATE CONTROL SETTING': appBasePath + '/EMS/EqpStateControlSet',
   'function:EMS:EQP STATE STATISTICS_EMS': appBasePath + '/EMS/EquipmentStateStatistics',
+  'function:EMS:EQUIPMENT REASON BASIS': appBasePath + '/EMS/EquipmentReasonBasis',
   'function:WIP:RUN CARD': appBasePath + '/WIP/RunCard',
   'function:WIP:LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -1067,6 +1070,7 @@ const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'func
 const isEmsEquipmentStateChangePage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CHANGE')
 const isEmsEquipmentStateControlSettingPage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CONTROL SETTING')
 const isEmsEquipmentStateStatisticsPage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE STATISTICS_EMS')
+const isEmsEquipmentReasonBasisPage = computed(() => activeMasterKey.value === 'function:EMS:EQUIPMENT REASON BASIS')
 const isWipLotBasisCreatePage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT')
 const isWipLotBasisBatchPage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT_BATCH')
 const isWipLotExecutionPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT')
@@ -2892,6 +2896,7 @@ async function signOut(): Promise<void> {
         <EmsEquipmentStateChange v-else-if="isEmsEquipmentStateChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsEquipmentStateControlSetting v-else-if="isEmsEquipmentStateControlSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateStatistics v-else-if="isEmsEquipmentStateStatisticsPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsEquipmentReasonBasis v-else-if="isEmsEquipmentReasonBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />

@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES106 設備狀態變更原因資料（2026-11-21）
+
+公司端依 `frmEquipmentReasonBasis`／Def、`wsQC.Load/Add/Edit/Del/ApproveReasonBasis` 與 `clsQCBasis` 完成 DEV 假資料頁及 [ES106 規格](docs/modules/EMS/設備狀態變更原因資料.md)。功能涵蓋 ReasonType=6、四種 IssueState、子類別選擇、複製、Apply／Confirm、依狀態刪除與直接核准／送簽模擬。Oracle 原因主檔與子類別 DDL/metadata 已在 repository；未查 Oracle 業務列、未連 PostgreSQL。
+
+- [ ] Pull 最新 `main` 後比對 `TBLQCREASONBASIS`／`TBLQCREASONSUBTYPEBASIS` live schema；僅缺表或欄位時規劃 forward migration，保留 YMES 擴充欄位。
+- [ ] 核對本機 legacy wsQC 傳入 `DataStamp`／`Reviser`／`ReviseDate` named arguments，而 `clsQCBasis.cs` 宣告未包含這些參數且更新狀態 SQL 未寫稽核欄位的來源差異。正式 PUT／狀態 API 應在交易內以舊 DataStamp 條件更新並遞增，寫入修訂人／時間。
+- [ ] 完成登入與 ES106 權限保護的原因／Active EQP subtype 查詢、ReasonType 固定為 6 的新增與未凍結編輯；ReasonNo/name/description/subtype 長度分別遵守 20/100/255/50，ReasonLevel 僅 0–9。查詢及更新全部參數化。
+- [ ] 實作狀態 API：未凍結／停用資料刪除前檢查參照；已核准資料轉 Unused；簽核中拒絕刪除。核准需依 IssueJobMap 直接 Active 或建立 Pending Issue Master、approve/reject 狀態 SQL、事件／通知，確保 DB 狀態原子及通知可靠；記錄操作者與前後值。
+
 ## 公司端交接：ES409 設備狀態期間統計查詢（2026-11-21）
 
 公司端已依標準 Form、`wsRPT.LoadEQPRealTimeReport`／`LoadEQPRealTimeReport_Chamber` 與 Core `clsReport` 完成 ES409 DEV 假資料查詢頁和 [來源規格](docs/modules/EMS/設備狀態期間統計查詢.md)。DEV 模擬狀態／設備多選、區間裁切、分鐘向上取整，以及由 Chamber 子設備投影母設備欄位；不連家用 PostgreSQL、不呼叫正式 API。所需來源結構都已有 repository Oracle DDL/metadata 參考，沒有查 Oracle 使用者資料，沒有新增表。

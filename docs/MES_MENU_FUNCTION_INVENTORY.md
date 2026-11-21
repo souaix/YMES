@@ -382,7 +382,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 | EQP CAP MAPPING | 設備能力設定 | EMS設定 | frmEQPCapMapping | ES_EQPCapMapping.dll | ES108 | 0 |
 | ACC STATE CHANGE DESCRIPTION | 配件狀態變更原因描述 | 未掛入 MenuItem | frmACCStateChangeDescription | ES_ACCStateChangeDescription.dll |  | 0 |
 
-公司端復刻進度（2026-11-21）：ES204「改變設備狀態」、ES102「設備狀態控制設定」及 ES409「設備狀態期間統計查詢」已完成 Vue DEV 與來源／規格交接，見各自 EMS 規格。依本清冊順序，下一項為 ES106「設備狀態變更原因資料」；已完成項目跳過。
+公司端復刻進度（2026-11-21）：ES204「改變設備狀態」、ES102「設備狀態控制設定」、ES409「設備狀態期間統計查詢」及 ES106「設備狀態變更原因資料」已完成 Vue DEV 與來源／規格交接，見各自 EMS 規格。依本清冊順序，下一項為 ES402「設備狀態記錄查詢」；已完成項目跳過。
 
 ### SPC — 品質管理（順序 12）
 

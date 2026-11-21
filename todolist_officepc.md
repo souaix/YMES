@@ -1,25 +1,32 @@
 # 公司端待辦
 
+## 公司端最新交付：ES106 設備狀態變更原因資料（2026-11-21）
+
+- [x] 依 `frmEquipmentReasonBasis`／`frmEquipmentReasonBasisDef`、`wsQC` 與 `clsQCBasis` 核對狀態篩選、EQP ReasonType=6、子類別查找、新增／編輯／複製／刪除／核准；完成 DEV 假資料互動頁。
+- [x] 沿用既有 `TBLQCREASONBASIS`、`TBLQCREASONSUBTYPEBASIS` Oracle DDL/metadata 及 CREATE-only 參考；本項未查 Oracle 業務列，未連 YMES PostgreSQL，沒有新建表。
+- [x] 新增 [ES106 規格](docs/modules/EMS/設備狀態變更原因資料.md)、索引和家用端狀態／簽核 API handoff；記錄 wsQC 傳 DataStamp／修訂欄但本機 Core method 未宣告／更新的來源差異。
+- [ ] 接續 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md)；下一個未完成項目 ES402「設備狀態記錄查詢」，已完成項目略過。
+
 ## 公司端最新交付：ES409 設備狀態期間統計查詢（2026-11-21）
 
 - [x] 核對標準 Form/Designer、`wsRPT.LoadEQPRealTimeReport`／`LoadEQPRealTimeReport_Chamber` 與 `clsReport`；完成 DEV 假資料篩選、區間裁切、分鐘向上取整、結果表格和 Chamber 母子設備投影。
 - [x] 重用設備狀態歷程／目前狀態、狀態 basis、設備 basis、區域映射的既有唯讀 Oracle DDL/metadata 參考；未查 Oracle 使用者資料，未連 YMES PostgreSQL，沒有新增 CREATE-only。
 - [x] 新增 [ES409 規格](docs/modules/EMS/設備狀態期間統計查詢.md)、索引和登入保護／參數化唯讀 API handoff。
-- [ ] 接續 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md)；下一個未完成項目 ES106「設備狀態變更原因資料」，已完成項目略過。
+- [x] 接續清冊並完成 ES106「設備狀態變更原因資料」；下一個未完成項目 ES402「設備狀態記錄查詢」。
 
 ## 公司端最新交付：ES102 設備狀態控制設定（2026-11-21）
 
 - [x] 依 `frmEQPStateControlSet.vb`（Form/Designer 同檔）、`wsEQP.LoadStateControlType`／`UpdStateControlType` 及 `clsEQPStateControl` 核對三分頁、七控制鍵、狀態 lookup、Apply／Confirm 與原批次 Delete+Add 寫入方式；完成 Vue DEV 假資料頁及 EMS設定選單路由。
 - [x] 沿用 2026-11-16 已唯讀核實的 `TBLEQPSTATECONTROL` Oracle DDL、複合 PK `(CONTROLTYPE, CONTROLNO)` 及 PostgreSQL CREATE-only；ES102 沒有新增查詢或匯出 Oracle 結構，也未連 YMES PostgreSQL。
 - [x] 新增 [ES102 規格](docs/modules/EMS/設備狀態控制設定.md)、索引及家用端原子批次更新 handoff。來源原批次逐列 Delete+Add 未證明交易，正式 API 應完整回滾。
-- [x] 續接清冊並完成 ES409「設備狀態期間統計查詢」；下一個未完成項目 ES106「設備狀態變更原因資料」。
+- [x] 續接清冊並完成 ES409、ES106；下一個未完成項目 ES402「設備狀態記錄查詢」。
 
 ## 公司端交付：ES204 改變設備狀態（2026-11-21）
 
 - [x] 依 THEIL Form（控制項配置內嵌主 VB）、STD wsEMS／clsEMSEquipment 核對設備查詢、互斥、原因、PM 工單守門、生產批 CheckInConfirm、狀態歷程與設備／批／人員副作用；完成 Vue DEV 假資料頁及路由。
 - [x] PowerShell 5.1 + ODP.NET 唯讀取得 `TBLEMSEQUIPMENTREASONS` 欄位與 constraint/index/trigger metadata；`GET_DDL` 回 `ORA-03135`，沒有 Oracle 原始 DDL，CREATE-only 按字典重建且不猜 PK/FK。資料見 `database/reference/mestest_es204_equipment_reasons_metadata.txt`。
 - [x] 規格與家用端原子 API／序號並發 handoff 已寫入 [ES204 規格](docs/modules/EMS/改變設備狀態.md)；公司端未連 YMES PostgreSQL、未做正式 API/schema。
-- [x] 續接 ES102 後已完成 ES409；目前下一項為 ES106「設備狀態變更原因資料」。
+- [x] 續接 ES102 後已完成 ES409、ES106；目前下一項為 ES402「設備狀態記錄查詢」。
 
 ## HOME本輪已結案並同步main（2026-11-21）
 
