@@ -1,5 +1,12 @@
 # 家裡電腦接手清單
 
+## 公司端交接：INV COUNT PRINT 列印盤點清冊（WP607，2026-11-22）
+
+公司端依本機 `D:\iMES\CSiMES\STD\MESWin\WIP\WP_InvCountStatePrint\frmInvCountStatePrint.vb`（Designer 內嵌）、`wsWIP.LoadInvCountStateWithDetail`、`clsINVCount` 及 General／MTL／PRD ActiveReports 完成盤點清冊 DEV 假資料頁及[WP607 規格](docs/modules/WIP/盤點清冊列印.md)。Fallback 路由 `/YMES/WIP/InvCountStatePrint`；原 Function 未掛正式 `MenuItem`。DEV 模擬六種 DataType 的 State=0 全部已關帳明細查詢、Grid 排序、Barcode／NoBarcode report class 選擇及預覽，不產生 PDF／條碼、不呼叫正式 Service／資料庫／印表機。
+
+- [ ] 與 WP608 共用讀取資料；先查 YMES PostgreSQL live schema／migration history，再核對 `TBLWIPINVCOUNTSTATE`、`TBLWIPINVCOUNTDETAIL`、`TBLWIPINVCOUNTDETAIL_MTL`、`TBLWIPINVCOUNTDETAIL_PRD`。桌機沒有受保護 Oracle profile，未查 DDL 或猜 CREATE-only。
+- [ ] 正式 Web 報表須選定可部署方案並確認掃碼規格、版面／分頁／頁首頁尾；重用登入保護的盤點 query。不可假設公司端 ActiveReports runtime 或桌機 DLL 能部署到正式 API/Web。
+
 ## 公司端交接：INV COUNT ADJUST 盤點調帳（WP608，2026-11-22）
 
 公司端依 `frmInvCountStateAdjust`、`frmInvCountAdjust`／`_MTL`／`_PRD`、`wsWIP`、`clsINVCount` 完成六種 DataType 的 DEV 假資料畫面及[WP608 規格](docs/modules/WIP/盤點調帳.md)。Fallback 路由 `/YMES/WIP/InvCountStateAdjust`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=0 查詢、NewCurQty／AdjustQty 暫存、AdjustState 1→2 Confirm、逐筆更新部分失敗及報表預覽，不呼叫正式 Service、資料庫或印表機。

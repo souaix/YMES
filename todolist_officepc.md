@@ -1,11 +1,18 @@
 # 公司端待辦
 
+## 公司端最新交付：INV COUNT PRINT 列印盤點清冊（WP607，2026-11-22）
+
+- [x] 依本機 `D:\iMES\CSiMES\STD\MESWin\WIP\WP_InvCountStatePrint\frmInvCountStatePrint.vb`（Designer 內嵌）、`wsWIP.LoadInvCountStateWithDetail`、`clsINVCount` 及 General／MTL／PRD ActiveReports，核對 State=0 六類查詢、欄位／排序、BarCode 預設值與六種報表選擇。
+- [x] 完成 Vue DEV 假資料查詢、WIP／SEMIWIP／FGD／SEMI／RAW／MTLWIP Grid、條碼／無條碼報表切換及列印預覽；新增 [WP607 規格](docs/modules/WIP/盤點清冊列印.md)、索引及家用端 handoff。
+- [x] 路由 `/YMES/WIP/InvCountStatePrint` 僅供 DEV fallback，不呼叫 ActiveReports、資料庫或印表機。未增加資料表；WP608 四張盤點 state/detail 的 Oracle DDL／metadata 仍缺、桌機無受保護 Oracle profile。沒有執行 build、test 或 browser。
+- [ ] 下一項依清冊為 INV COUNT STATE「盤點關/開帳」（WP606）；先核對 WinForms／Designer／Service／Core。
+
 ## 公司端最新交付：INV COUNT ADJUST 盤點調帳（WP608，2026-11-22）
 
 - [x] 依 `frmInvCountStateAdjust`、三個數量調整 Dialog、`wsWIP.LoadInvCountStateWithDetail`／`ExeInvCountAdjust`／`ExeInvCountConfirm`、`clsINVCount` 完成六種 WIP／SEMIWIP／FGD／SEMI／RAW／MTLWIP 流程核對。
 - [x] 完成 Vue DEV 假資料查詢、New CurQty／AdjustQty 暫存、逐筆 Confirm、部分完成失敗模擬及 General／MTL／PRD 報表預覽；新增 [WP608 規格](docs/modules/WIP/盤點調帳.md)、索引與家用端 handoff。修正 MTL request 欄位名稱缺陷的 DEV 行為，記錄舊 Form 的兩處 MaterialLotNo typo。
 - [x] WIP 路由 `/YMES/WIP/InvCountStateAdjust` 僅在 DEV fallback 顯示，不呼叫 Service／Oracle／PostgreSQL／印表機。四張盤點 state/detail 表無 Oracle DDL／metadata reference；無受保護 Oracle profile，未猜 CREATE-only。沒有執行 build、test 或 browser。
-- [ ] 下一項依清冊為 INV COUNT PRINT「列印盤點清冊」（WP607）；先核對 WinForms／Designer／Service／Core。
+- [x] 後續 WP607「列印盤點清冊」已完成，下一項依清冊為 WP606「盤點關/開帳」；進度見本檔最上方及功能清冊。
 
 ## 公司端最新交付：FGDSTOCKIN_WF_CANCEL 取消入庫 WorkFlow ERP（WP619，2026-11-22）
 
