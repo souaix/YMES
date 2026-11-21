@@ -68,6 +68,7 @@ import WipEquipmentQcListLog from './components/WipEquipmentQcListLog.vue'
 import WipRunCard from './components/WipRunCard.vue'
 import WipLotSheetPrint from './components/WipLotSheetPrint.vue'
 import WipWorkorderPrint from './components/WipWorkorderPrint.vue'
+import WipSkipInspectionSetting from './components/WipSkipInspectionSetting.vue'
 import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
 import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
 import WipOperatorOnline from './components/WipOperatorOnline.vue'
@@ -538,6 +539,7 @@ const fallbackMenuTree: MenuNode[] = [
   }, {
     id: 'menu:WIP:PRODUCTION REPORTING', label: '生產報工', shortLabel: '報', children: [
       { id: 'function:WIP:EXECUTE LOT', label: '生產批執行', tableName: 'tblwiplotstate', shortLabel: '執', functionNo: 'EXECUTE LOT', moduleNo: 'WIP' },
+      { id: 'function:WIP:SKIP INSPECTION SETTING', label: '免檢批設定', tableName: 'xx_tblspcwaive', shortLabel: '免檢', functionNo: 'Skip Inspection Setting', moduleNo: 'WIP' },
       { id: 'function:WIP:EXECUTE LOT_COMP', label: '生產批執行_元件', tableName: 'tblwipcomponentstate', shortLabel: '元', functionNo: 'EXECUTE LOT_COMP', moduleNo: 'WIP' },
       { id: 'function:WIP:EXECUTE LOT_EQP', label: '生產批執行_設備', tableName: 'tbleqpfavorite', shortLabel: '設備', functionNo: 'EXECUTE LOT_EQP', moduleNo: 'WIP' },
       { id: 'function:WIP:LOT CHOICE EQP', label: '生產批選用生產設備', tableName: 'tblwiplotstate', shortLabel: '選機', functionNo: 'LOT CHOICE EQP', moduleNo: 'WIP' },
@@ -635,6 +637,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:RUN CARD': appBasePath + '/WIP/RunCard',
   'function:WIP:LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'function:WIP:WORKORDER PRINT': appBasePath + '/WIP/WorkorderPrint',
+  'function:WIP:SKIP INSPECTION SETTING': appBasePath + '/WIP/SkipInspectionSetting',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'function:WIP:EQP QCLIST ONLINE CHECK': appBasePath + '/WIP/EquipmentOnlineQC',
   'function:WIP:EQP QCLIST LOG': appBasePath + '/WIP/EquipmentQcListLog',
@@ -916,6 +919,8 @@ const functionRoutes: Record<string, string> = {
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'WORKORDER PRINT': appBasePath + '/WIP/WorkorderPrint',
+  'SKIP INSPECTION SETTING': appBasePath + '/WIP/SkipInspectionSetting',
+  'Skip Inspection Setting': appBasePath + '/WIP/SkipInspectionSetting',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'CARRIER STATE': appBasePath + '/WIP/CarrierState',
   'CARRIER MANAGEMENT COMP': appBasePath + '/WIP/CarrierManagement',
@@ -1121,6 +1126,7 @@ const isWipEquipmentFavoritePage = computed(() => activeMasterKey.value === 'fun
 const isWipRunCardPage = computed(() => activeMasterKey.value === 'function:WIP:RUN CARD')
 const isWipLotSheetPrintPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SHEET PRINT')
 const isWipWorkorderPrintPage = computed(() => activeMasterKey.value === 'function:WIP:WORKORDER PRINT')
+const isWipSkipInspectionSettingPage = computed(() => activeMasterKey.value === 'function:WIP:SKIP INSPECTION SETTING')
 const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN')
 const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
@@ -2934,6 +2940,7 @@ async function signOut(): Promise<void> {
         <WipRunCard v-else-if="isWipRunCardPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotSheetPrint v-else-if="isWipLotSheetPrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipWorkorderPrint v-else-if="isWipWorkorderPrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipSkipInspectionSetting v-else-if="isWipSkipInspectionSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

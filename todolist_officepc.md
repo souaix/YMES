@@ -1,11 +1,17 @@
 # 公司端待辦
 
-## 公司端最新交付：WORKORDER PRINT 工令單列印（2026-11-21）
+## 公司端最新交付：Skip Inspection Setting 免檢批設定（2026-11-21）
+
+- [x] 依 THEIL 主 Form、新增／狀態視窗、`wsWIP`、`clsLot` 與 WP201 執行流程核對查詢、Lot×OP 新增、狀態往返及免檢原因提示；完成 DEV 假資料互動頁。
+- [x] 重用 `XX_TBLSPCWAIVE` 的既有 Oracle source DDL／metadata 及 PostgreSQL CREATE-only reference；沒有查業務資料、增加 DDL，也未連 YMES PostgreSQL。
+- [x] 新增 [免檢批設定規格](docs/modules/WIP/免檢批設定.md)、索引、DEV 路由與 WP201 查詢 handoff；記錄 searchBy 未傳入 Core、Creator filter 未用、SQL 字串串接、批次 INSERT ALL、狀態更新缺少並發條件及 FunctionKey 空白。
+- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 繼續；WP301、WP629、WP112、WORKORDER PRINT、WP113、WP307 已完成或略過，下一項 P_BUMP MAP MERGE（WPP07），其本機 WinForms Form 已找到。
+
+## 前一項公司端交付：WORKORDER PRINT 工令單列印（2026-11-21）
 
 - [x] 依 THEIL Form／inline Designer、`wsWIP.LoadWorkorder`／`LoadMOTypeDesc`／`LoadLotDetail`、`clsLot` 與 ActiveReport 核對 MO／日期篩選、批次選取、同 MO 守門、報表欄位及數量彙總；完成 Vue DEV 假資料查詢與工令單預覽。
-- [x] 重用 WP101、OE、PRD、OP／系統的既有 Oracle source DDL／metadata references；沒有連 Oracle、查業務列或增加 CREATE-only，也未連 YMES PostgreSQL。
-- [x] 新增 [WORKORDER PRINT 規格](docs/modules/WIP/工令單列印.md)、功能索引、DEV 路由與家用端唯讀 API handoff；記錄「下線批」註解與 Core SQL 條件差異、前工程 P/N 未填、日期查詢下 MO Type description 可能空白及 FunctionKey 缺漏。
-- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 從 WP916 後續接做；已完成 WP301、WP629、WP112 略過，下一個無規格／DEV 的項目為「免檢批設定」（FunctionKey 空白）。
+- [x] 重用 WP101、OE、PRD、OP／系統的既有 Oracle source DDL／metadata references；沒有查 Oracle 業務列或增加 CREATE-only，也未連 YMES PostgreSQL。
+- [x] 新增 [WORKORDER PRINT 規格](docs/modules/WIP/工令單列印.md)及家用端唯讀 API handoff；記錄來源差異與 FunctionKey 缺漏。
 
 ## OFFICE最新：ES102／ES409／ES106 DEV交付已正常合併；接續來源原型工作（2026-11-21）
 

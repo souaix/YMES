@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：Skip Inspection Setting 免檢批設定（2026-11-21）
+
+公司端依 THEIL 主 Form、新增／狀態視窗、`wsWIP`、`clsLot` 與 WP201 執行流程完成 DEV 假資料頁及[免檢批設定規格](docs/modules/WIP/免檢批設定.md)。清冊 FunctionKey 空白。直接表 `XX_TBLSPCWAIVE` 的 Oracle DDL 與 CREATE-only 已存在於 repository reference；本項沒有新增 schema，也沒有查 Oracle 業務資料或連 YMES PostgreSQL。
+
+- [ ] Pull 最新 `main` 後比對 `ymes.xx_tblspcwaive` live schema；表已存在且欄位／`(lotno, opno)` 複合 PK 相符時不新增 migration，保留 YMES 擴充欄位。
+- [ ] 確認實際 Function ACL 對應。實作授權保護的篩選、Lot／OP 候選、Lot×OP 批次建立、單列狀態變更及 WP201 Status=0 免檢原因查詢；所有查詢／寫入參數化，服務端重驗候選 Lot、OP 與輸入長度。
+- [ ] 建立交易需回報複合 PK 衝突並保持整批原子；狀態更新帶預期舊狀態，建立／狀態原因、authenticated actor、時間和事件記錄採一致交易或可靠 outbox。UI 的 `9=全部` 僅為查詢選項，不是可存狀態。
+- [ ] WP201 在當前 LotNo+OPNo 查到 Status=0 時顯示免檢原因，依規格維持執行流程語義；先核實正式 UI 契約再整合，不把免檢主檔查詢與報工命令混為一個未驗證的寫入。
+
 ## 公司端交接：WORKORDER PRINT 工令單列印（2026-11-21）
 
 公司端依 THEIL `frmWP_WorkorderPrint_THEIL_BU1`／ActiveReport、`wsWIP.LoadWorkorder`／`LoadMOTypeDesc`／`LoadLotDetail`、`clsLot` 完成 DEV 假資料查詢及工令單預覽；規格見 [工令單列印](docs/modules/WIP/工令單列印.md)。Function inventory 的 FunctionKey 為空白。資料來源皆沿用既有 Oracle references，本次沒有新增表或資料庫 DDL；公司端未連 YMES PostgreSQL。
