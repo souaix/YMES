@@ -1,14 +1,16 @@
 # 公司端待辦
 
-## HOME最新：Office9dc入口整合已驗證，接新三項（2026-11-21）
+## OFFICE最新：ES102／ES409／ES106 DEV交付已正常合併；接續來源原型工作（2026-11-21）
 
-正式Web278／4b8、API176／497、DB0063；獨立11項讀回395a1f7c…與真GUI15／15（99f3a3d7…）通過。ES204本版是正式未開放守門／Close，真正轉態API仍待辦，詳[QA](docs/qa/20261121-office9dc-integration.md)。71份驗證檔封存的自動審查拒絕及待授權仍保持，CP33是歷史資訊，不冒充已結案。
+三個新EMS功能的WinForms來源整理、DEV原型與模組.md已整合至Home分支；Home正式Web284目前只呈現未開放guard，沒有宣稱正式API或資料庫已完成。office8e1的原生表單來源與原有三層選單仍由公司端繼續核對。
 
-- [x] HOME正常合併9dc與已驗證ET202，保留Auth A2、KD與原生三層menu；完整Web建置、部署及app-browser限定驗收通過。
-- [ ] HOME保存已驗證feature／463來源綁定，正常合併新Office ES102／ES409／ES106三提交（main已8e1fdfb），驗證後再合併main，保留兩端。
-- [ ] HOME完成WP109空Lot writer：184完整候選build／publish零警告錯誤已通，真PG兩provider／最小grant／交易QA／正式UI接續；尚未部署或宣稱交易完成。
-- [ ] Office補ES204 CHAR_USED／CHAR_LENGTH、互斥key、InitEQPSerialNo、Reverse／結算／簽退與Adapter完整來源；另保留Lot39精確DDL與helper補證。HOME無原Oracle連線，不把此來源查核交給PG猜測。
+- [x] ES102設備狀態控制設定、ES409設備狀態期間統計查詢、ES106設備狀態變更原因資料DEV原型及各自維護.md已在正常merge 6cadf433…；正式站驗收範圍見 docs/qa/20261121-office8e1-web284.md。
+- [ ] 接續清冊下一項ES402「設備狀態記錄查詢」：依WinForms／Service／Core及公司端原生Oracle metadata整理DEV頁面與規格。
+- [ ] 補齊ES204原生來源細節：CHAR_USED／CHAR_LENGTH、互斥key、InitEQPSerialNo、Reverse／結算／簽退及Adapter行為。
+- [ ] 補Lot39精確DDL與舊CREATE38差異的原生來源證據；不要以Home PostgreSQL推測Oracle結構。
+- [ ] 公司電腦維持DEV UI／按鈕邏輯與原生來源核對角色；不連Home PostgreSQL、不做SSH部署。
 
+## 下方保留完整先前進度作歷史資料；本節為目前狀態。
 ## 先前進度原文（保留歷史）
 
 ## 目前狀態：ET202操作驗收完成，Git／checkpoint同步中（2026-11-21）

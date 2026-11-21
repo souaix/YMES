@@ -1,14 +1,18 @@
 # 家裡電腦接手清單
 
-## HOME最新：Office9dc入口整合已驗證，接新三項（2026-11-21）
+## HOME最新：Office8e1正式站驗收與GitHub同步完成，接續WP109真QA（2026-11-21）
 
-正式Web278／4b8、API176／497、DB0063；獨立11項讀回395a1f7c…與真GUI15／15（99f3a3d7…）通過。ES204本版是正式未開放守門／Close，真正轉態API仍待辦，詳[QA](docs/qa/20261121-office9dc-integration.md)。71份驗證檔封存的自動審查拒絕及待授權仍保持，CP33是歷史資訊，不冒充已結案。
+正式Web284（d670221e…）已切換並完成app-browser；API176（49765314…）與DB0063維持不變。Office ES102／ES409／ES106與Home提交以6cadf4335384a205418812dd82664dd52b7ee04a正常雙親merge，驗收文件與三份EMS模組文件在1c7e88f74577cf5b827ca880eacfb104dd6d8333；GitHub main及家用feature都已讀回包含此版本，沒有force。469來源綁定通過（receipt SHA-256 f68c5238a2d691715dd31bec93abbd3a4ee9da5400caa3c408cdca8ab25673df）。
 
-- [x] HOME正常合併9dc與已驗證ET202，保留Auth A2、KD與原生三層menu；完整Web建置、部署及app-browser限定驗收通過。
-- [ ] HOME保存已驗證feature／463來源綁定，正常合併新Office ES102／ES409／ES106三提交（main已8e1fdfb），驗證後再合併main，保留兩端。
-- [ ] HOME完成WP109空Lot writer：184完整候選build／publish零警告錯誤已通，真PG兩provider／最小grant／交易QA／正式UI接續；尚未部署或宣稱交易完成。
-- [ ] Office補ES204 CHAR_USED／CHAR_LENGTH、互斥key、InitEQPSerialNo、Reverse／結算／簽退與Adapter完整來源；另保留Lot39精確DDL與helper補證。HOME無原Oracle連線，不把此來源查核交給PG猜測。
+正式頁面的ES102／ES409／ES106仍是「正式環境尚未開放」提示和Close，不表示三個正式API已完成。42個GUI觀察、141個條件通過；7個初次false保留並由後續事件復驗，最後warn/error為空、無業務資料寫入。完整紀錄：docs/qa/20261121-office8e1-web284.md；本機proof SHA-256 754ad31fadfde4295362cabe5f5fc1a382ca54a8a80d8ea7f1cf7582adff752b。
 
+- [x] Office8e1正常合併、Web284完整建置與正式切換、獨立讀回及app-browser三層選單／ET202查詢與查找／WP109唯讀Query／自適應與空白首頁驗收完成。
+- [x] 三份EMS模組.md補上正式端範圍；驗收QA已寫入GitHub，main與家用feature均已同步。
+- [ ] WP109 writer：完成隔離PG14 QA冷／暖實際Prepare guard、EventLog同交易、Detail S/D鎖與附件／端到端操作。API184離線build已通過，WP109 UI/API仍在本機隔離工作分支，尚未合入正式分支；目前尚未建立QA cluster、未驗證warm guard、未部署或寫入正式資料。warm guard若失敗須修產品實作並重build，不可加權限或略過鎖來造通過。
+- [ ] WP109 provider 0064：核對Web284／API版本的fresh前置、備份／restore list、精確migration與獨立post；目前僅有提案，未上傳、未執行；資料庫migration與grant尚未執行。
+- [ ] 71份舊驗證封存上傳被自動核准審查拒絕，指定內部部署／驗證資料與目的地的外傳授權不足；沒有上傳或繞道，先跳過並保留CP33歷史狀態。
+
+## 下方保留完整先前進度作歷史資料；本節為目前狀態。
 ## 先前進度原文（保留歷史）
 
 ## 目前狀態：ET202操作驗收完成，Git／checkpoint同步中（2026-11-21）
