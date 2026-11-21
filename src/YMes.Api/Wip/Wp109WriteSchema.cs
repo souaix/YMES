@@ -12,6 +12,11 @@ internal static class Wp109WriteSchema
     private readonly record struct Relation(long Id, long RowType);
     private static Exception Unavailable() => new Wp109WriteRuleException(503, "必要來源結構或權限尚未就緒。");
     private static string Table(string name) => "\"YMES\"." + name;
+    private const string EventInsertSql = """
+        INSERT INTO "YMES".tblsyseventlog
+            (userid,recorddate,servicename,description,keyfield,keyvalue,computername)
+        VALUES (@actor,@at,'wsWIP',@description,'SWRNo',@no,NULL);
+        """;
 
     internal static void EnsureGroup(NpgsqlConnection c, NpgsqlTransaction t, bool write) => Ready(() =>
     {
@@ -102,17 +107,19 @@ internal static class Wp109WriteSchema
         {
             var before = EventShape(c, t);
             Privileges(c, t, "tblsyseventlog", "INSERT");
-            insert = new NpgsqlCommand("""
-                INSERT INTO "YMES".tblsyseventlog
-                    (userid,recorddate,servicename,description,keyfield,keyvalue,computername)
-                VALUES (@actor,@at,'wsWIP',@description,'SWRNo',@no,NULL);
-                """, c, t);
-            insert.Parameters.Add("actor", NpgsqlDbType.Varchar).Value = DBNull.Value;
-            insert.Parameters.Add("at", NpgsqlDbType.Timestamp).Value = DBNull.Value;
-            insert.Parameters.Add("description", NpgsqlDbType.Text).Value = DBNull.Value;
-            insert.Parameters.Add("no", NpgsqlDbType.Varchar).Value = DBNull.Value;
-            // Real Parse/Describe obtains the INSERT relation lock without
-            // executing even an empty INSERT or firing a statement trigger.
+            // PostgreSQL reuses a named Npgsql prepared statement on the same
+            // physical connection; preparing that cached statement again does
+            // not reacquire its relation lock for the new transaction. Explain
+            // the exact INSERT on each transaction to obtain RowExclusiveLock
+            // during planning, without executing DML or firing triggers.
+            using (var plan = new NpgsqlCommand("EXPLAIN (COSTS OFF)\n" + EventInsertSql, c, t))
+            {
+                EventParameters(plan);
+                plan.ExecuteNonQuery();
+            }
+            insert = new NpgsqlCommand(EventInsertSql, c, t);
+            EventParameters(insert);
+            // Keep the actual parameterized INSERT prepared for the later write.
             insert.Prepare();
             using (var held = new NpgsqlCommand("""
                 SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_locks l
@@ -389,4 +396,12 @@ internal static class Wp109WriteSchema
 
     private static void Text(NpgsqlCommand command, string name, string value) => command.Parameters.Add(name, NpgsqlDbType.Text).Value = value;
     private static void Number(NpgsqlCommand command, string name, long value) => command.Parameters.Add(name, NpgsqlDbType.Bigint).Value = value;
+
+    private static void EventParameters(NpgsqlCommand command)
+    {
+        command.Parameters.Add("actor", NpgsqlDbType.Varchar).Value = DBNull.Value;
+        command.Parameters.Add("at", NpgsqlDbType.Timestamp).Value = DBNull.Value;
+        command.Parameters.Add("description", NpgsqlDbType.Text).Value = DBNull.Value;
+        command.Parameters.Add("no", NpgsqlDbType.Varchar).Value = DBNull.Value;
+    }
 }

@@ -2,11 +2,11 @@
 
 ## HOME最新：Office9dc入口整合已驗證，接新三項（2026-11-21）
 
-正式Web278／4b8、API176／497、DB0063；獨立11項讀回395a1f7c…與真GUI15／15（99f3a3d7…）通過。ES204本版是正式未開放守門／Close，真正轉態API仍待辦，詳[QA](docs/qa/20261121-office9dc-integration.md)。71份驗證檔封存的自動審查拒絕及待授權仍保持，CP33是歷史資訊，不冒充已結案。
+正式Web278／4b8、API176／497、DB0063；獨立11項讀回395a1f7c…與真GUI15／15（99f3a3d7…）通過。ES204本版是正式未開放守門／Close，真正轉態API仍待辦，詳[QA](docs/qa/20261121-office9dc-integration.md)。WP109 API185 暖連線鎖守衛已在隔離 PG14／Npgsql 實測六項通過，完整catalog與provider提交後基準一致；仍是候選，沒有正式migration或部署。71份驗證檔封存的自動審查拒絕及待授權仍保持，CP33是歷史資訊，不冒充已結案。
 
 - [x] HOME正常合併9dc與已驗證ET202，保留Auth A2、KD與原生三層menu；完整Web建置、部署及app-browser限定驗收通過。
 - [ ] HOME保存已驗證feature／463來源綁定，正常合併新Office ES102／ES409／ES106三提交（main已8e1fdfb），驗證後再合併main，保留兩端。
-- [ ] HOME完成WP109空Lot writer：184完整候選build／publish零警告錯誤已通，真PG兩provider／最小grant／交易QA／正式UI接續；尚未部署或宣稱交易完成。
+- [ ] HOME完成WP109空Lot writer：API185為184來源、單檔暖連線修正，SDK9離線build／publish 0 warning／0 error；隔離真Npgsql冷／暖鎖、INSERT rollback、Detail強鎖及獨立完整catalog核對通過（探針SHA `80d533241a13dcda73147909dc2e3bbe927151424cce494b60566329ca17dfba`，post SHA `c435cdbd440df82db957a958e4451aefa118a77ad79d7b0a55b2e2170443fd19`）。正式provider SQL仍有CASE語法待修，QA副本修正不可當正式migration；後續完成正式 SQL 校正／fresh live schema核對、API HTTP完整操作與衝突／附件／回滾驗收、正式UI接續；目前未migration、未部署、未宣稱writer交易完成。
 - [ ] Office補ES204 CHAR_USED／CHAR_LENGTH、互斥key、InitEQPSerialNo、Reverse／結算／簽退與Adapter完整來源；另保留Lot39精確DDL與helper補證。HOME無原Oracle連線，不把此來源查核交給PG猜測。
 
 ## 先前進度原文（保留歷史）
