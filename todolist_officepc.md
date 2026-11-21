@@ -1,11 +1,19 @@
 # 公司端待辦
 
+## 公司端最新交付：FGDSTOCKIN_E10ICD 入庫至 E10ICD ERP（WP621，2026-11-21）
+
+- [x] 依 `frmInventory_FGDStockIN_E10ICD`／Designer、`wsERP_E10ICD`、`wsMES`、`clsERP`、`clsWIP`、`clsINV` 核對 MO/Lot 查詢、ERP 建單、MES 入庫、W 警告續行、ERP 補償取消與 BookingFlag 回復。
+- [x] 完成 Vue DEV 假資料頁：MO／成品庫／儲位、批次勾選、InInvNum、條件式 BoxNo／DateCode、Bin／Component 明細及 ERP/MES 成功、W 警告、ERP 失敗、MES 失敗補償情境。
+- [x] 重用 WP605／WP201／WP603 與 MO、Lot、產品、OP、Locator 的既有 Oracle／CREATE references；無可用桌機 Oracle profile，缺 `TBLINVFGDINBIN` DDL／metadata 已記錄，沒有猜 CREATE-only，未連 YMES PostgreSQL。
+- [x] 新增 [WP621 規格](docs/modules/WIP/入庫至E10ICD_ERP.md)、規格索引及家用端 schema／API handoff。Function 原生未掛 MenuItem；DEV fallback 入口有標示。
+- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 繼續；下一項未復刻功能為 SCRAPSTOCKIN_E10ICD「不良品入庫至E10ICD ERP」（WP622，Function 未掛入 MenuItem）。
+
 ## 公司端最新交付：P_BUMP MAP MERGE Bump MAP 疊圖作業（2026-11-21）
 
 - [x] 依 IC/CP Form、MAP Viewer、`wsWIP`／`wsPRD`／`wsSYS`、`clsLot`／`clsProduct`／`clsSYSEng` 核對 Lot、Component／Wafer、Golden／Bump MAP 狀態、IssueState=2 規則、Template Detail、Merge、UndoFrozen 及檔案流程；完成 Vue DEV 假資料互動頁。
 - [x] 重用 `mestest_prd_cp_merge_map_*`、WP101 ComponentState、WP215 ComponentBasis 的既有 references；本項未連 Oracle、未查業務資料、未新增猜測 CREATE-only，也未連 YMES PostgreSQL。
 - [x] 新增 [WPP07 規格](docs/modules/WIP/Bump_MAP疊圖作業.md)、索引與家用端 handoff；明列六張缺 Oracle DDL／metadata 的 CP MAP table、目前受保護 Oracle profile 不可用、Core 查詢參數串錯及真正二進位／FTP 合併由 DEV 示意簡化。
-- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 繼續；WP301、WP629、WP112、WORKORDER PRINT、Skip Inspection Setting、WP113、WP307 已完成或略過，下一項尚缺規格／DEV 的 FGDSTOCKIN_E10ICD「入庫至E10ICD ERP」（WP621，Function 未掛入 MenuItem）。
+- [x] FGDSTOCKIN_E10ICD WP621 已於本輪完成；後續狀態以本檔最上方交付記錄為準。
 
 ## 前一項公司端交付：Skip Inspection Setting 免檢批設定（2026-11-21）
 
