@@ -67,6 +67,7 @@ import WipEquipmentOnlineQc from './components/WipEquipmentOnlineQc.vue'
 import WipEquipmentQcListLog from './components/WipEquipmentQcListLog.vue'
 import WipRunCard from './components/WipRunCard.vue'
 import WipLotSheetPrint from './components/WipLotSheetPrint.vue'
+import WipWorkorderPrint from './components/WipWorkorderPrint.vue'
 import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
 import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
 import WipOperatorOnline from './components/WipOperatorOnline.vue'
@@ -532,6 +533,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:LOT OPERATOR CLOCKOUT', label: '批次作業員下工', tableName: 'tblwipoperatorstate', shortLabel: '批次下工', functionNo: 'LOT OPERATOR CLOCKOUT', moduleNo: 'WIP' },
       { id: 'function:WIP:CREATE LOT', label: '生產批開立', tableName: 'tblwiplotbasis', shortLabel: '批', functionNo: 'CREATE LOT', moduleNo: 'WIP' },
       { id: 'function:WIP:CREATE LOT_BATCH', label: '生產批開立_批次', tableName: 'tblwiplotbasis', shortLabel: '批次', functionNo: 'CREATE LOT_BATCH', moduleNo: 'WIP' },
+      { id: 'function:WIP:WORKORDER PRINT', label: '工令單列印', tableName: 'tblwiplotstate', shortLabel: '工令', functionNo: 'WORKORDER PRINT', moduleNo: 'WIP' },
     ],
   }, {
     id: 'menu:WIP:PRODUCTION REPORTING', label: '生產報工', shortLabel: '報', children: [
@@ -632,6 +634,7 @@ const menuRoutes: Record<string, string> = {
   'function:EMS:EQUIPMENT REASON BASIS': appBasePath + '/EMS/EquipmentReasonBasis',
   'function:WIP:RUN CARD': appBasePath + '/WIP/RunCard',
   'function:WIP:LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
+  'function:WIP:WORKORDER PRINT': appBasePath + '/WIP/WorkorderPrint',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'function:WIP:EQP QCLIST ONLINE CHECK': appBasePath + '/WIP/EquipmentOnlineQC',
   'function:WIP:EQP QCLIST LOG': appBasePath + '/WIP/EquipmentQcListLog',
@@ -912,6 +915,7 @@ const functionRoutes: Record<string, string> = {
   '8D QUERY': appBasePath + '/WIP/8DQuery',
   'RUN CARD': appBasePath + '/WIP/RunCard',
   'LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
+  'WORKORDER PRINT': appBasePath + '/WIP/WorkorderPrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'CARRIER STATE': appBasePath + '/WIP/CarrierState',
   'CARRIER MANAGEMENT COMP': appBasePath + '/WIP/CarrierManagement',
@@ -1116,6 +1120,7 @@ const isWipAreaShowPage = computed(() => activeMasterKey.value === 'function:WIP
 const isWipEquipmentFavoritePage = computed(() => activeMasterKey.value === 'function:WIP:EQP FAVORITE SETUP')
 const isWipRunCardPage = computed(() => activeMasterKey.value === 'function:WIP:RUN CARD')
 const isWipLotSheetPrintPage = computed(() => activeMasterKey.value === 'function:WIP:LOT SHEET PRINT')
+const isWipWorkorderPrintPage = computed(() => activeMasterKey.value === 'function:WIP:WORKORDER PRINT')
 const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN')
 const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
@@ -2928,6 +2933,7 @@ async function signOut(): Promise<void> {
         <WipAreaShow v-else-if="isWipAreaShowPage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :current-user-no="currentUser?.userNo || ''" :enterprise-no="currentUser?.enterpriseNo || ''" :development-preview="isDevelopmentPreview" :work-area-mode="true" @close="navigateHome" />
         <WipRunCard v-else-if="isWipRunCardPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotSheetPrint v-else-if="isWipLotSheetPrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipWorkorderPrint v-else-if="isWipWorkorderPrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

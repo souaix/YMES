@@ -1,11 +1,18 @@
 # 公司端待辦
 
+## 公司端最新交付：WORKORDER PRINT 工令單列印（2026-11-21）
+
+- [x] 依 THEIL Form／inline Designer、`wsWIP.LoadWorkorder`／`LoadMOTypeDesc`／`LoadLotDetail`、`clsLot` 與 ActiveReport 核對 MO／日期篩選、批次選取、同 MO 守門、報表欄位及數量彙總；完成 Vue DEV 假資料查詢與工令單預覽。
+- [x] 重用 WP101、OE、PRD、OP／系統的既有 Oracle source DDL／metadata references；沒有連 Oracle、查業務列或增加 CREATE-only，也未連 YMES PostgreSQL。
+- [x] 新增 [WORKORDER PRINT 規格](docs/modules/WIP/工令單列印.md)、功能索引、DEV 路由與家用端唯讀 API handoff；記錄「下線批」註解與 Core SQL 條件差異、前工程 P/N 未填、日期查詢下 MO Type description 可能空白及 FunctionKey 缺漏。
+- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 從 WP916 後續接做；已完成 WP301、WP629、WP112 略過，下一個無規格／DEV 的項目為「免檢批設定」（FunctionKey 空白）。
+
 ## OFFICE最新：ES102／ES409／ES106 DEV交付已正常合併；接續來源原型工作（2026-11-21）
 
 三個新EMS功能的WinForms來源整理、DEV原型與模組.md已整合至Home分支；Home正式Web284目前只呈現未開放guard，沒有宣稱正式API或資料庫已完成。office8e1的原生表單來源與原有三層選單仍由公司端繼續核對。
 
 - [x] ES102設備狀態控制設定、ES409設備狀態期間統計查詢、ES106設備狀態變更原因資料DEV原型及各自維護.md已在正常merge 6cadf433…；正式站驗收範圍見 docs/qa/20261121-office8e1-web284.md。
-- [ ] 接續清冊下一項ES402「設備狀態記錄查詢」：依WinForms／Service／Core及公司端原生Oracle metadata整理DEV頁面與規格。
+- [x] 已依新的選單游標改從 WP916 後續接做；WP301、WP629、WP112 已完成並略過，當前最新狀態見本檔最上方。
 - [ ] 補齊ES204原生來源細節：CHAR_USED／CHAR_LENGTH、互斥key、InitEQPSerialNo、Reverse／結算／簽退及Adapter行為。
 - [ ] 補Lot39精確DDL與舊CREATE38差異的原生來源證據；不要以Home PostgreSQL推測Oracle結構。
 - [ ] 公司電腦維持DEV UI／按鈕邏輯與原生來源核對角色；不連Home PostgreSQL、不做SSH部署。
@@ -35,7 +42,7 @@ HOME已完成API176／497653缺表相容測試及獨立26zero，完整備份後�
 - [x] 依 `frmEquipmentReasonBasis`／`frmEquipmentReasonBasisDef`、`wsQC` 與 `clsQCBasis` 核對狀態篩選、EQP ReasonType=6、子類別查找、新增／編輯／複製／刪除／核准；完成 DEV 假資料互動頁。
 - [x] 沿用既有 `TBLQCREASONBASIS`、`TBLQCREASONSUBTYPEBASIS` Oracle DDL/metadata 及 CREATE-only 參考；本項未查 Oracle 業務列，未連 YMES PostgreSQL，沒有新建表。
 - [x] 新增 [ES106 規格](docs/modules/EMS/設備狀態變更原因資料.md)、索引和家用端狀態／簽核 API handoff；記錄 wsQC 傳 DataStamp／修訂欄但本機 Core method 未宣告／更新的來源差異。
-- [ ] 接續 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md)；下一個未完成項目 ES402「設備狀態記錄查詢」，已完成項目略過。
+- [x] 接續清冊完成 ES402 前先回到 WP916 後未完成清冊項目；最新順序見本檔最上方。
 
 ## 公司端最新交付：ES409 設備狀態期間統計查詢（2026-11-21）
 

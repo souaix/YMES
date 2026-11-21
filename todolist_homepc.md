@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：WORKORDER PRINT 工令單列印（2026-11-21）
+
+公司端依 THEIL `frmWP_WorkorderPrint_THEIL_BU1`／ActiveReport、`wsWIP.LoadWorkorder`／`LoadMOTypeDesc`／`LoadLotDetail`、`clsLot` 完成 DEV 假資料查詢及工令單預覽；規格見 [工令單列印](docs/modules/WIP/工令單列印.md)。Function inventory 的 FunctionKey 為空白。資料來源皆沿用既有 Oracle references，本次沒有新增表或資料庫 DDL；公司端未連 YMES PostgreSQL。
+
+- [ ] Pull 最新 `main` 並先比對 YMES live schema；重用既有 `TBLWIPLOTSTATE`、`TBLWIPLOTBASIS`、`TBLOEMOBASIS`、產品／OP／MO Type、Lot Property 結構，不新增專屬 migration。
+- [ ] 先確認 `WORKORDER PRINT` 的正式 Function ACL 對應。提供授權保護的唯讀 MO／建立日期批號查詢與報表預覽 API；服務端重查 MO 與所選批號，拒絕跨 MO，參數化 LotNo 清單／日期／MO，回傳來源欄位及 SAP_PCSQTY、SAP_ARGQTY、SAP_PRDQTY 合計。
+- [ ] 核實來源 Core「只抓已下線」註解與 SQL 未限制 `STATUS` 的落差；日期查詢時 Form 可能漏傳 MOTypeNo、報表 `PrePN` 欄未填的行為。若改正需保留來源相容規則並明確記錄，不要把猜測欄位當正式資料。
+- [ ] 報表輸出可由正式端的報表元件或列印版頁面產生；此功能只讀，不需資料寫入 API 或資料表 migration。
+
 ## HOME最新：WP109 API186與0064套用驗證完成並同步GitHub；GUI／部署待完成（2026-11-21）
 
 API185 暖連線鎖修正後的 API186 離線 build／publish 為 0 warning、0 error；隔離 PostgreSQL 14 HTTP 驗證 26 項通過。API185 原先 multipart 上傳 503，已確認是 MVC 表單 value provider 預讀 request body，API186 停用 Create／Edit 的三種預設 form value provider 後，73,729-byte 附件上傳、下載、替換、保留與清除都通過。結果 SHA-256 `6c5de6392d2727f784ba2baa56ca5b368d09c6748101b9516eeede5947fea3cd`；`YMes.Api.dll` SHA-256 `bcc8529c84ed657cb100c45854ad6b01f8c212ab758565315a0f13d92cce6b85`。
