@@ -1,5 +1,12 @@
 # 家裡電腦接手清單
 
+## 家用端驗收服務固定啟動流程（2026-11-22）
+
+- [x] 本機 Vite `127.0.0.1:18749` 與 API `127.0.0.1:5080` 都仍在監聽，但 SSH DB 隧道 `127.0.0.1:15432` 曾中斷，造成 API readiness 與 Vite API proxy 回 503；遠端正式站同時保持 healthy／200。
+- [x] 啟動 `plink` PPK 隧道到家用 PostgreSQL clone 後，API `/health/ready` 與 Vite `/YMES/API/health/ready` 立即恢復 200。沒有資料庫寫入或正式站異動。
+- [x] 建立並實際驗證 [`scripts/Start-HomePcQa.ps1`](scripts/Start-HomePcQa.ps1)：停止本輪自有測試隧道後，API 先回 503；執行腳本自動重開隧道，API、Web 與代理均回 200。腳本重用健康服務、只在埠空閒時啟動，遇未知程序占埠會停止並報明，不會殺掉該程序；API 連線使用經認證 SSH 隧道與 `SslMode=Disable`。PPK 保持在桌面，連線密碼只由腳本記憶體讀取、不輸出。
+- [ ] Chrome/app-browser GUI 驗收仍待補；Computer-use 本次再因無法確認目前網址停止，尚未逐項操作 API186 頁面。此狀況不代表服務未啟動；先確認上列健康檢查，再用瀏覽器工具操作。
+
 ## 公司端交接：FGDSTOCKIN_E10ICD_CANCEL 取消入庫 E10ICD ERP（WP623，2026-11-21）
 
 公司端依取消 Form／inline Designer、`wsINV`、`wsERP_E10ICD`、`clsInventory` 完成良品 FGD 與不良品 SCRIN 整張取消的 DEV 假資料流程及[WP623 規格](docs/modules/WIP/取消入庫E10ICD_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInE10IcdCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2 且 ERPNo 非空守門、ERP RequestType 0／1、ERP 失敗還原、ERP code=0 後 MES 回復與 State=-2 失敗待恢復；不呼叫 ERP／MES 或資料庫。
