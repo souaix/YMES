@@ -20,6 +20,8 @@
 - [x] 完成 Vue DEV 假資料查詢、New CurQty／AdjustQty 暫存、逐筆 Confirm、部分完成失敗模擬及 General／MTL／PRD 報表預覽；新增 [WP608 規格](docs/modules/WIP/盤點調帳.md)、索引與家用端 handoff。修正 MTL request 欄位名稱缺陷的 DEV 行為，記錄舊 Form 的兩處 MaterialLotNo typo。
 - [x] WIP 路由 `/YMES/WIP/InvCountStateAdjust` 僅在 DEV fallback 顯示，不呼叫 Service／Oracle／PostgreSQL／印表機。四張盤點 state/detail 表無 Oracle DDL／metadata reference；無受保護 Oracle profile，未猜 CREATE-only。沒有執行 build、test 或 browser。
 - [x] WP606「盤點關／開帳」與 WP607「列印盤點清冊」均已完成；接續項目見本檔最新交付及功能清冊。
+- [x] 家用端已以只讀 catalog 核實 YMES PostgreSQL 缺少四張盤點 state/detail 表；未查業務資料列，也未執行 DDL/DML。
+- [ ] 待桌機取得受保護 Oracle profile 後唯讀取四表 `DBMS_METADATA` table/index DDL 與 columns／constraints／indexes／triggers metadata，並補 `clsINVCount` 中 RAW／MTLWIP 目標表的精確 SQL 映射；來源未確認前不可猜 CREATE-only。
 
 ## 公司端最新交付：FGDSTOCKIN_WF_CANCEL 取消入庫 WorkFlow ERP（WP619，2026-11-22）
 

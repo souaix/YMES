@@ -16,16 +16,17 @@
 
 ## 家用端驗收服務固定啟動流程（2026-11-22）
 
-- [x] 本機 Vite `127.0.0.1:18749` 與 API `127.0.0.1:5080` 都仍在監聽，但 SSH DB 隧道 `127.0.0.1:15432` 曾中斷，造成 API readiness 與 Vite API proxy 回 503；遠端正式站同時保持 healthy／200。
+- [x] 本機 Vite `127.0.0.1:18749` 與 API `127.0.0.1:5080` 都仍在監聽，但 SSH DB 隧道 `127.0.0.1:15432` 曾中斷，造成 API readiness 與 Vite API proxy 回 503。2026-11-22 再次由 SSH 核對遠端 `ymes-api`／`ymes-web` 均 running／healthy，正式 `/YMES/` 與 `/YMES/API/health/ready` 都回 HTTP 200。
 - [x] 啟動 `plink` PPK 隧道到家用 PostgreSQL clone 後，API `/health/ready` 與 Vite `/YMES/API/health/ready` 立即恢復 200。沒有資料庫寫入或正式站異動。
 - [x] 建立並實際驗證 [`scripts/Start-HomePcQa.ps1`](scripts/Start-HomePcQa.ps1)：停止本輪自有測試隧道後，API 先回 503；執行腳本自動重開隧道，API、Web 與代理均回 200。腳本重用健康服務、只在埠空閒時啟動，遇未知程序占埠會停止並報明，不會殺掉該程序；API 連線使用經認證 SSH 隧道與 `SslMode=Disable`。PPK 保持在桌面，連線密碼只由腳本記憶體讀取、不輸出。
-- [ ] Chrome/app-browser GUI 驗收仍待補；Computer-use 本次再因無法確認目前網址停止，尚未逐項操作 API186 頁面。此狀況不代表服務未啟動；先確認上列健康檢查，再用瀏覽器工具操作。
+- [ ] Chrome/app-browser GUI 驗收仍待補；Chrome 視窗已重新定位，但兩次畫面擷取都回 `window capture timed out`，沒有進行登入或頁面操作。這是 GUI 擷取失敗；本機與正式站健康檢查均正常，瀏覽器工具恢復後再逐項驗收。
 
 ## 公司端交接：INV COUNT ADJUST 盤點調帳（WP608，2026-11-22）
 
 公司端依 `frmInvCountStateAdjust`、`frmInvCountAdjust`／`_MTL`／`_PRD`、`wsWIP`、`clsINVCount` 完成六種 DataType 的 DEV 假資料畫面及[WP608 規格](docs/modules/WIP/盤點調帳.md)。Fallback 路由 `/YMES/WIP/InvCountStateAdjust`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=0 查詢、NewCurQty／AdjustQty 暫存、AdjustState 1→2 Confirm、逐筆更新部分失敗及報表預覽，不呼叫正式 Service、資料庫或印表機。
 
-- [ ] 先查 YMES PostgreSQL live schema／migration history，再核對 `TBLWIPINVCOUNTSTATE`、`TBLWIPINVCOUNTDETAIL`、`TBLWIPINVCOUNTDETAIL_MTL`、`TBLWIPINVCOUNTDETAIL_PRD` 的實際 schema、PK/index/constraint；桌機沒有 Oracle DDL／metadata，也沒有可用受保護 Oracle profile，未猜 CREATE-only SQL。
+- [x] 以 PPK SSH 隧道對遠端 `ymes`／YMES 做只讀 catalog audit；四張盤點表均不存在，未找到可辨識的 migration-history table。Repository migrations 有到 `0064_wp109_writer_provider.sql`，但檔案存在不能證明已套用。未查業務資料、未執行 DDL/DML。
+- [ ] 待公司端提供四張盤點表的原生 Oracle DDL／metadata 與 `clsINVCount` 對 RAW／MTLWIP 目標表的 Core SQL 映射；來源未確認前不猜 schema、不建立 migration。取得來源後才核 PK/index/constraint 並實作正式 API。
 - [ ] 依實際 Core SQL 映射 WIP、SEMIWIP、FGD、SEMI、RAW、MTLWIP 目標表與單位換算服務。實作登入／ACL 保護 Query／調帳／Confirm／報表 API；明確限定 CountSerial+DataType、鎖定並重讀 State=0／AdjustState=1、庫存量與版本，以同一本地交易更新庫存、detail state 及 audit，任何失敗整批 rollback。
 - [ ] 修正舊 MTL request 將 `MaterialLotNo` 傳成 `LocatorNo` 及初始化比較錯欄位；Confirm 需防同一 DataType 多個 CountSerial 混批。正式單位換算不可沿用 DEV 的 2:1 fixture。
 
