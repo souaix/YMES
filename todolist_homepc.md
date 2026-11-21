@@ -1,15 +1,16 @@
 # 家裡電腦接手清單
 
-## HOME最新：WP109 API186與0064家用PG clone 套用驗證完成；GUI／API部署待完成（2026-11-21）
+## HOME最新：WP109 API186與0064套用驗證完成並同步GitHub；GUI／部署待完成（2026-11-21）
 
 API185 暖連線鎖修正後的 API186 離線 build／publish 為 0 warning、0 error；隔離 PostgreSQL 14 HTTP 驗證 26 項通過。API185 原先 multipart 上傳 503，已確認是 MVC 表單 value provider 預讀 request body，API186 停用 Create／Edit 的三種預設 form value provider 後，73,729-byte 附件上傳、下載、替換、保留與清除都通過。結果 SHA-256 `6c5de6392d2727f784ba2baa56ca5b368d09c6748101b9516eeede5947fea3cd`；`YMes.Api.dll` SHA-256 `bcc8529c84ed657cb100c45854ad6b01f8c212ab758565315a0f13d92cce6b85`。
 
 - [x] API186 隔離 HTTP：登入／session、讀取與版本、建立／刪除、附件上傳／替換／保留／清除、舊零長度 BLOB、過期版本衝突、核准、作廢與 EventLog 共 26 項通過。
 - [x] QA 合成資料已在 run `c75d52550387b135b57d5cadf993c6cb` 的獨立 PG14 clone 內，以 run ID、system identifier、資料目錄和精確資料條件守衛後清除；另一唯讀連線確認十個相關表及三個 SWR 測試編號皆為 0。清理後驗證 SQL SHA-256 `AB311705F08011EF05D77DA61B7B38E478982303985304B71FFF94C087D4368D`。API186 QA 容器已停止；隔離 PostgreSQL clone 保留。
 - [x] Provider migration `0064_wp109_writer_provider.sql` 已先在隔離 QA clone 回滾測試，再在家用 PostgreSQL clone 的 `ymes` main instance（PG14／port 5432／system ID `7483802566828922547`）備份後套用並提交；這是鼎華 MES Oracle 原生資料庫的 PostgreSQL 復刻，不是公司 Oracle。0062 SWR native19、full16 allowlist／32 欄／12 defaults／最小 ACL 與獨立唯讀 post verifier 全通過。家用 clone full backup 645,040 bytes，SHA-256 `9747846d56708a00a684545a00a5f9933a388f973a926a5a3839ed5df21880e7`，保留於遠端 `/var/tmp/ymes-main-before-0064-a1.dump`；restore-list 1,834 TOC 項目，SHA-256 `46e6cb7bc3e3235a50ea623a509784619fac6096fd44ca886a6b7818099a3c88`。備份、restore-list、catalog snapshot 及執行 SQL 均已設遠端權限 600。fresh pre-provider full16 canonical SHA-256 `67ccdae32b8607fc626e373cbbc0e641659d1d4e87f3ee84225163860b567b86`；migration 結果 SHA-256 `dbf448887e89772dfed8db62dc80a862e4f5fa70a32f214c337969b10ffb42ea`；post verifier SHA-256 `ce8b034b0e592edc4a22b0eadaff4fcda220af9b99706e23a0382d338fe3d9ea`；post full16 SHA-256 `929ecf57a82c9d51528d9d643f4f9ec57cbe1cb9d449e125a9e4496620801d1e`。兩張新表 7／25 欄，沒有業務資料寫入。
+- [x] 程式與 migration 以 feature branch `codex/homepc-wp109-writer-20261121`（`9eab9ebe7420450e6ca08ba919d95a52081ba85a`）正常合併至 GitHub `main`；GitHub 直接讀回 main 為 `662c5cf27fdc10b8110a3fcde4d872df063373f1`。沒有 force push。
 - [ ] app-browser GUI 操作驗證：Edge 擷取回 `FrameArrived timed out: timed out waiting on channel`／`window capture timed out: timed out waiting on channel`。Chrome 已多次重新選取；本輪 fresh `sky.list_apps`、重新選取並擷取，首次與恢復重試仍回 `window capture timed out: timed out waiting on channel`。沒有進入或操作頁面；HTTP 測試不等於 GUI 驗證。待工具恢復後用 Chrome 對隔離頁逐步驗證。
 - [x] 家用 PostgreSQL clone 的 main `ymes` 已完成 0064；公司 Oracle 原生 MES 未連線、未改動。
-- [ ] 程式目前只有家用 writer feature worktree 的本機修改，尚未部署 API、未推 GitHub。app-browser GUI 工具恢復後，驗證 YMES／YMES/API 實際操作，再部署與正常 fetch／merge／來源綁定／push，並讀 Office／Home 待辦接手。
+- [ ] 正式 API／Web 尚未部署 API186 與對應 writer 頁面。app-browser 工具恢復後，先驗證 YMES／YMES/API 實際操作，再部署；部署及逐項驗收完成後重新讀 Office／Home 待辦接手。
 
 ## 前一輪待辦紀錄（保留歷史）
 
