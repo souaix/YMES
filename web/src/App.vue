@@ -80,6 +80,7 @@ import WipFgdStockInTpCancel from './components/WipFgdStockInTpCancel.vue'
 import WipFgdStockInWorkFlow from './components/WipFgdStockInWorkFlow.vue'
 import WipFgdStockInWorkFlowCancel from './components/WipFgdStockInWorkFlowCancel.vue'
 import WipInvCountStateAdjust from './components/WipInvCountStateAdjust.vue'
+import WipInvCountStatePrint from './components/WipInvCountStatePrint.vue'
 import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
 import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
 import WipOperatorOnline from './components/WipOperatorOnline.vue'
@@ -594,6 +595,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:FGDSTOCKIN_E10ICD_CANCEL', label: '取消入庫 E10ICD ERP（DEV）', shortLabel: '取消入庫', functionNo: 'FGDSTOCKIN_E10ICD_CANCEL', moduleNo: 'WIP' },
       { id: 'function:WIP:SCRAPSTOCKIN_E10ICD', label: '不良品入庫至 E10ICD ERP（DEV）', shortLabel: '不良入庫', functionNo: 'SCRAPSTOCKIN_E10ICD', moduleNo: 'WIP' },
       { id: 'function:WIP:INV COUNT ADJUST', label: '盤點調帳（DEV）', shortLabel: '盤點調帳', functionNo: 'INV COUNT ADJUST', moduleNo: 'WIP' },
+      { id: 'function:WIP:INV COUNT PRINT', label: '列印盤點清冊（DEV）', shortLabel: '盤點列印', functionNo: 'INV COUNT PRINT', moduleNo: 'WIP' },
       { id: 'function:WIP:PACKING_MOLINE', label: '包裝作業', tableName: 'tblwipmolinepackl1', shortLabel: '包裝', functionNo: 'PACKING_MOLINE', moduleNo: 'WIP' },
       { id: 'function:WIP:PACKING_MOLINE_INV', label: '在製品庫包裝作業', tableName: 'tblinvpackstate', shortLabel: '庫包', functionNo: 'PACKING_MOLINE_INV', moduleNo: 'WIP' },
       { id: 'function:WIP:WIP INV', label: '在製品庫帳務維護', tableName: 'tblinvwipinventory_semi', shortLabel: '在製品庫', functionNo: 'WIP INV', moduleNo: 'WIP' },
@@ -674,6 +676,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:FGDSTOCKIN_E10ICD_CANCEL': appBasePath + '/WIP/FgdStockInE10IcdCancel',
   'function:WIP:SCRAPSTOCKIN_E10ICD': appBasePath + '/WIP/ScrapStockInE10Icd',
   'function:WIP:INV COUNT ADJUST': appBasePath + '/WIP/InvCountStateAdjust',
+  'function:WIP:INV COUNT PRINT': appBasePath + '/WIP/InvCountStatePrint',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'function:WIP:EQP QCLIST ONLINE CHECK': appBasePath + '/WIP/EquipmentOnlineQC',
   'function:WIP:EQP QCLIST LOG': appBasePath + '/WIP/EquipmentQcListLog',
@@ -965,6 +968,7 @@ const functionRoutes: Record<string, string> = {
   'FGDSTOCKIN_E10ICD_CANCEL': appBasePath + '/WIP/FgdStockInE10IcdCancel',
   'SCRAPSTOCKIN_E10ICD': appBasePath + '/WIP/ScrapStockInE10Icd',
   'INV COUNT ADJUST': appBasePath + '/WIP/InvCountStateAdjust',
+  'INV COUNT PRINT': appBasePath + '/WIP/InvCountStatePrint',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'CARRIER STATE': appBasePath + '/WIP/CarrierState',
   'CARRIER MANAGEMENT COMP': appBasePath + '/WIP/CarrierManagement',
@@ -1182,6 +1186,7 @@ const isWipFgdStockInT100CancelPage = computed(() => activeMasterKey.value === '
 const isWipFgdStockInE10IcdCancelPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_E10ICD_CANCEL')
 const isWipScrapStockInE10IcdPage = computed(() => activeMasterKey.value === 'function:WIP:SCRAPSTOCKIN_E10ICD')
 const isWipInvCountStateAdjustPage = computed(() => activeMasterKey.value === 'function:WIP:INV COUNT ADJUST')
+const isWipInvCountStatePrintPage = computed(() => activeMasterKey.value === 'function:WIP:INV COUNT PRINT')
 const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN')
 const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
@@ -3007,6 +3012,7 @@ async function signOut(): Promise<void> {
         <WipFgdStockInE10IcdCancel v-else-if="isWipFgdStockInE10IcdCancelPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipScrapStockInE10Icd v-else-if="isWipScrapStockInE10IcdPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipInvCountStateAdjust v-else-if="isWipInvCountStateAdjustPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipInvCountStatePrint v-else-if="isWipInvCountStatePrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
