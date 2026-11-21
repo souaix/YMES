@@ -87,6 +87,7 @@ import WipLotMaterialAdjust from './components/WipLotMaterialAdjust.vue'
 import WipTransferFactory from './components/WipTransferFactory.vue'
 import WipLabelPrint from './components/WipLabelPrint.vue'
 import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
+import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
 import WipOperatorLogin from './components/WipOperatorLogin.vue'
@@ -599,6 +600,13 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:LOT QTY ADJUST', label: '生產批數量調整', tableName: 'tblwipadjustlog', shortLabel: '數量', functionNo: 'LOT QTY ADJUST', moduleNo: 'WIP' },
     ],
   }] },
+  {
+    id: 'module:EMS', label: '設備管理', shortLabel: '設', moduleNo: 'EMS', children: [{
+      id: 'menu:EMS:EQP EXECUTION', label: '設備_執行', shortLabel: '設', children: [
+        { id: 'function:EMS:EQP STATE CHANGE', label: '改變設備狀態', shortLabel: '狀', functionNo: 'EQP STATE CHANGE', moduleNo: 'EMS' },
+      ],
+    }],
+  },
 ]
 
 const menuTree = ref<MenuNode[]>(fallbackMenuTree)
@@ -606,6 +614,7 @@ const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
 const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
+  'function:EMS:EQP STATE CHANGE': appBasePath + '/EMS/EquipmentStateChange',
   'function:WIP:RUN CARD': appBasePath + '/WIP/RunCard',
   'function:WIP:LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -1047,6 +1056,7 @@ const isUserDefinedRunCardPage = computed(() => activeMasterKey.value === 'funct
 const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'function:PRD:PRODUCT RUN CARD MAP BASIS')
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
+const isEmsEquipmentStateChangePage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CHANGE')
 const isWipLotBasisCreatePage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT')
 const isWipLotBasisBatchPage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT_BATCH')
 const isWipLotExecutionPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT')
@@ -1378,6 +1388,29 @@ function addDevelopmentInspectionMachineFunctions(items: MenuNode[]): MenuNode[]
   return result
 }
 
+function addDevelopmentEmsFunctions(items: MenuNode[]): MenuNode[] {
+  const cloneTree = (nodes: MenuNode[]): MenuNode[] => nodes.map((item) => ({ ...item, children: item.children ? cloneTree(item.children) : undefined }))
+  const result = cloneTree(items)
+  const fallbackEms = fallbackMenuTree.find((item) => item.moduleNo?.toUpperCase() === 'EMS')
+  const fallbackGroup = fallbackEms?.children?.[0]
+  if (!fallbackEms || !fallbackGroup) return result
+  const ems = result.find((item) => item.moduleNo?.toUpperCase() === 'EMS')
+  if (!ems) { result.push(cloneTree([fallbackEms])[0]); return result }
+  let group = ems.children?.find((item) => item.label.trim() === fallbackGroup.label.trim())
+  if (!group) {
+    group = { ...fallbackGroup, children: [] }
+    ems.children = [...(ems.children ?? []), group]
+  }
+  const hasFunction = (nodes: MenuNode[] | undefined, functionNo: string): boolean => Boolean(nodes?.some((node) =>
+    node.functionNo?.trim().toUpperCase() === functionNo || hasFunction(node.children, functionNo)))
+  for (const feature of fallbackGroup.children ?? []) {
+    if (feature.functionNo && !hasFunction(ems.children, feature.functionNo.trim().toUpperCase())) {
+      group.children = [...(group.children ?? []), cloneTree([feature])[0]]
+    }
+  }
+  return result
+}
+
 function routeForMenuNode(item: MenuNode): string {
   const functionNo = item.functionNo?.trim().toUpperCase()
   const functionRouteKey = item.moduleNo && functionNo
@@ -1417,7 +1450,7 @@ async function loadMenuTree(): Promise<void> {
       return mapMenuTree(await response.json() as MenuTreeApiResponse)
     }, '主選單載入', menuControllers, 20000)
     if (!current()) return
-    menuTree.value = import.meta.env.DEV ? addDevelopmentOperationIndustryFunctions(addDevelopmentInspectionMachineFunctions(addDevelopmentEquipmentFunctions(tree))) : tree
+    menuTree.value = import.meta.env.DEV ? addDevelopmentEmsFunctions(addDevelopmentOperationIndustryFunctions(addDevelopmentInspectionMachineFunctions(addDevelopmentEquipmentFunctions(tree)))) : tree
     menuSource.value = 'api'
   } catch (error) {
     if (!current()) return
@@ -2898,6 +2931,7 @@ async function signOut(): Promise<void> {
         <WipTransferFactory v-else-if="isWp909Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLabelPrint v-else-if="isWp908Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotQuantityAdjust v-else-if="isWp907Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsEquipmentStateChange v-else-if="isEmsEquipmentStateChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />
