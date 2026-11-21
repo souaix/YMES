@@ -8,6 +8,17 @@
 - [x] 正式 API readiness、Web/API 路由均為 HTTP 200；公開 JS/CSS 與建置雜湊、大小及 MIME 相符；正式環境 API base 是 `/YMES/API`，小寫 `/ymes/` 回 404。正式資料庫既有 0063/0064 結構已唯讀核實。
 - [ ] GUI 操作驗收未完成：Chrome 已載入正式登入頁，輔助樹顯示正式區、測試區、開發區及 Demo 登入；畫面擷取回報 `window capture timed out`，按 Demo 回報 `coordinate input geometry is unavailable`，所以沒有完成 Demo 登入或主選單操作。瀏覽器工具恢復後先補登入、Menu、WIP 頁操作，再標記 GUI 完成。
 
+## 公司端交接：SCRAPSTOCKIN_E10ICD 不良品入庫至 E10ICD ERP（WP622，2026-11-21）
+
+公司端依 Scrap Stock In Form／inline Designer、`wsERP_E10ICD`、`wsMES`、`clsERP`／`clsWIP`／`clsINV` 完成 Source 0 Lot Scrap、Source 1 Component Scrap、Source 2 Fail Bin 的 DEV 假資料流程及[WP622 規格](docs/modules/WIP/不良品入庫至E10ICD_ERP.md)。本機 fallback DEV 路由為 `/YMES/WIP/ScrapStockInE10Icd`；原 Function `SCRAPSTOCKIN_E10ICD` 未掛正式 `MenuItem`。DEV 模擬 ERP→MES、ERP W 非成功及 MES 失敗 ERP 取消，不連 E10ICD、MES Service 或資料庫。
+
+- [ ] 比對 YMES PostgreSQL live schema、migration 與 YMES 擴充欄；重用 WP201／WP603／WP215、QC／PRD／OE／OP references。
+- [ ] `TBLINVSCRINVENTORY`、`TBLINVSCRINVENTORYCOMPONENT`、`TBLINVSCRINVENTORYFAILBIN` 為 Core 明確寫入的目的表，但 repository 尚無 Oracle DDL／metadata。桌機沒有可用受保護 Oracle profile；待安全 profile 後由公司端只讀查 DDL／欄位／索引／約束／trigger，查前不猜欄、不產 CREATE-only、不做 migration。
+- [ ] 確認 `ExecuteSQLNoneQuery_UPD` 的原子性；正式交易需同步 SCRIN Basis／Detail、目的 Scrap Inventory、Component／FailBin 搬移、來源刪除、ReverseHistory、BookingFlag 與 Lot 結批。
+- [ ] 實作授權保護的 MO／LotSerial／Error／Component／FailBin／Inventory／Locator／ERP Doc Type 查詢與 idempotent Create／Cancel 命令。服務端重查 Source、Qty、狀態、MO ERP eligibility、BookingFlag、庫別型別、BoxNo／DateCode 及動態 Bin；來源可依 Source 0／1／2 不同，保留明確來源鍵及 row version。
+- [ ] 以來源列預約鎖防止重複入庫。舊 Core 會跨 Source 0／1／2 用 LotSerial 查核並對多種表設 BookingFlag，且前端傳 `AllIn=True`；測清楚來源副作用後再設計相容或修正。ERP 必須 code=0 才進 MES；MES 失敗須可追蹤 ERP 取消是否成功與 timeout unknown outcome。
+- [ ] 確認 `SCRAPSTOCKIN_E10ICD` 正式 ACL／選單是否開放；fallback DEV 可見不代表正式授權。
+
 ## 公司端交接：FGDSTOCKIN_E10ICD 入庫至 E10ICD ERP（WP621，2026-11-21）
 
 公司端依 `frmInventory_FGDStockIN_E10ICD`／Designer、E10ICD ERP Service、`wsMES`、`clsERP`／`clsWIP`／`clsINV` 完成 DEV 假資料流程與[WP621 規格](docs/modules/WIP/入庫至E10ICD_ERP.md)。本機 fallback DEV 頁為 `/YMES/WIP/FgdStockInE10Icd`；原 Function `FGDSTOCKIN_E10ICD` 未掛正式 `MenuItem`。DEV 只模擬 ERP 建單→MES 入庫、ERP W 警告續行及失敗補償，不連 E10ICD、MES Service 或資料庫。

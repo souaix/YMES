@@ -1,12 +1,20 @@
 # 公司端待辦
 
+## 公司端最新交付：SCRAPSTOCKIN_E10ICD 不良品入庫至 E10ICD ERP（WP622，2026-11-21）
+
+- [x] 依 Scrap Stock In Form／inline Designer、`wsERP_E10ICD`、`wsMES`、`clsERP`、`clsWIP`、`clsINV` 核對 Source 0 Lot Scrap、1 Component Scrap、2 Fail Bin、原因明細、LotSerial 全量入庫、ERP→MES 及失敗取消／BookingFlag 回復。
+- [x] 完成 Vue DEV 假資料互動頁：Source 類別篩選、LotSerial 勾選、BoxNo／DateCode、Error／Component／動態 Bin 明細，及 ERP/MES 成功、ERP W 非成功、ERP 失敗、MES 失敗補償情境。
+- [x] 重用 WP201／WP603／WP215、QC／PRD／OE／OP／SMD references；缺 `TBLINVSCRINVENTORY`、`TBLINVSCRINVENTORYCOMPONENT`、`TBLINVSCRINVENTORYFAILBIN` DDL／metadata 已記錄。無可用桌機 Oracle profile，未連 Oracle、未猜 CREATE-only，也未連 YMES PostgreSQL。
+- [x] 新增 [WP622 規格](docs/modules/WIP/不良品入庫至E10ICD_ERP.md)、索引與家用端 schema／API handoff。Function 原生未掛 MenuItem；DEV fallback 有標示。
+- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 繼續；下一項未復刻功能為 FGDSTOCKIN_E10ICD_CANCEL「取消入庫 E10ICD ERP」（WP623，Function 未掛入 MenuItem）。
+
 ## 公司端最新交付：FGDSTOCKIN_E10ICD 入庫至 E10ICD ERP（WP621，2026-11-21）
 
 - [x] 依 `frmInventory_FGDStockIN_E10ICD`／Designer、`wsERP_E10ICD`、`wsMES`、`clsERP`、`clsWIP`、`clsINV` 核對 MO/Lot 查詢、ERP 建單、MES 入庫、W 警告續行、ERP 補償取消與 BookingFlag 回復。
 - [x] 完成 Vue DEV 假資料頁：MO／成品庫／儲位、批次勾選、InInvNum、條件式 BoxNo／DateCode、Bin／Component 明細及 ERP/MES 成功、W 警告、ERP 失敗、MES 失敗補償情境。
 - [x] 重用 WP605／WP201／WP603 與 MO、Lot、產品、OP、Locator 的既有 Oracle／CREATE references；無可用桌機 Oracle profile，缺 `TBLINVFGDINBIN` DDL／metadata 已記錄，沒有猜 CREATE-only，未連 YMES PostgreSQL。
 - [x] 新增 [WP621 規格](docs/modules/WIP/入庫至E10ICD_ERP.md)、規格索引及家用端 schema／API handoff。Function 原生未掛 MenuItem；DEV fallback 入口有標示。
-- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 繼續；下一項未復刻功能為 SCRAPSTOCKIN_E10ICD「不良品入庫至E10ICD ERP」（WP622，Function 未掛入 MenuItem）。
+- [x] SCRAPSTOCKIN_E10ICD WP622 已於本輪完成；後續狀態以本檔最上方交付記錄為準。
 
 ## 公司端最新交付：P_BUMP MAP MERGE Bump MAP 疊圖作業（2026-11-21）
 
