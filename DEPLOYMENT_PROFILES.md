@@ -1,5 +1,13 @@
 # 部署設定檔
 
+## 家用端 API/Web 正式站部署（2026-11-21；GUI驗收待補）
+
+以 GitHub `main` 的公司端版本 `262613e13069843c9c44d05f870a46d2a234508c` 為基底，先修正 `deploy/Dockerfile.web.prebuilt` 對 root-only 封裝檔案的讀取權限，部署來源 commit 為 `09bd776a259bafeeb2fec28d393f8af5149392e8`。API `sha256:80a35f68286527282c92efbd966542973bb06365b4902f189e415d6ecf5b7bc8`、Web `sha256:d262d8d1f97fd9cfe378ed35815d0757d55293fc9bff296dcfe255cd57aad76f` 分開建置及切換；保留 `ymes-api:rollback-before-09bd776-a2` 與 `ymes-web:rollback-before-09bd776-a2`。
+
+候選 API readiness 200、候選 Web 七個靜態檔案雜湊／大小驗證通過；正式 API/Web 容器 healthy，`/YMES/`、`/YMES/API/health/ready` 為 200，公開 JS/CSS 的 MIME、大小及 SHA 與產物相符，`environments.json` 正式 API base 為 `/YMES/API`，小寫 `/ymes/` 為 404。正式 PostgreSQL 0063/0064 結構只讀核實，未在本次部署執行 SQL。其他專案容器不變。
+
+Chrome 已顯示正式登入頁並讀到環境選項及 Demo 按鈕；Windows UI 擷取逾時，按鈕操作回報 `coordinate input geometry is unavailable`，因此本次沒有完成 Demo 登入或模組操作。此部署不能算 GUI 全驗收；後續以 `todolist_homepc.md` 補驗。
+
 ## 公司WIP載具拆批／併批Web224 C1（2026-11-20；限定GUI完成，main待同步）
 
 Office最新df10bd08已與已驗Web222 release3953bbad正常合併至3f99c172。224檔來源canonical `f9bb95660175064e2b0c989df9f09dbe52adf18f85c3a0650bf5753960c072e7` 已完成完整建置exit0、封裝與實際部署Web `e2df5e3df9884894f3805f5f454053c8e748c6256314ddc41f0ee4cf27988375`，公開HTTP七項通過。Root封存限定GUI73通過檢查點／73events／0observations：自行Demo登入、18native＋1direct、新兩頁guard／19入口KD／無假metadata／單一主標題／Close／重進／direct fresh、WP307 Grid30×40／四zoom、SD108空lookup及ET104新Web真CRUD均通過。2筆全GUI建刪、SQL fixture writes0、獨立Broker／Forwarder精準兩鍵皆0；fresh reload空首頁21收合選單／logs[]。release code `bacf0ee58288d1a4f1bec41a5a6bde00053d02bf` 已完成376綁定（399f648b…）與featurebranch正常推送／遠端讀回，main仍待同步。

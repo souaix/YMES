@@ -1,5 +1,12 @@
 # 家裡電腦接手清單
 
+## 家用正式站部署：API/Web（2026-11-21）
+
+- [x] 先同步公司端最新 `main`（`262613e`），再以合併後來源建置；Web 預建 Dockerfile 補上 Nginx 非 root 可讀權限。
+- [x] 正式站 API 與 Web 分開切換。API image `80a35f682865…`、Web image `d262d8d1f97f…`；保留回復標籤 `rollback-before-09bd776-a2`。未執行資料庫 DDL，未碰其他專案容器。
+- [x] 正式 API readiness、Web/API 路由均為 HTTP 200；公開 JS/CSS 與建置雜湊、大小及 MIME 相符；正式環境 API base 是 `/YMES/API`，小寫 `/ymes/` 回 404。正式資料庫既有 0063/0064 結構已唯讀核實。
+- [ ] GUI 操作驗收未完成：Chrome 已載入正式登入頁，輔助樹顯示正式區、測試區、開發區及 Demo 登入；畫面擷取回報 `window capture timed out`，按 Demo 回報 `coordinate input geometry is unavailable`，所以沒有完成 Demo 登入或主選單操作。瀏覽器工具恢復後先補登入、Menu、WIP 頁操作，再標記 GUI 完成。
+
 ## 公司端交接：P_BUMP MAP MERGE Bump MAP 疊圖作業（WPP07，2026-11-21）
 
 公司端依 IC/CP `frmMergeStandardMAP`／MAP Viewer、`wsWIP`／`wsPRD`／`wsSYS` 及 `clsLot`／`clsProduct`／`clsSYSEng` 完成 DEV 假資料互動與[WPP07 規格](docs/modules/WIP/Bump_MAP疊圖作業.md)。Form 涵蓋 Lot/Component/Wafer、Golden/Bump MAP、核准規則與模板、Merge、UndoFrozen、UFMAP 檢視。DEV 不處理真實 MAP binary／FTP、不呼叫 API。
