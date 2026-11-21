@@ -7,6 +7,13 @@
 - [ ] 與 WP608 共用讀取資料；先查 YMES PostgreSQL live schema／migration history，再核對 `TBLWIPINVCOUNTSTATE`、`TBLWIPINVCOUNTDETAIL`、`TBLWIPINVCOUNTDETAIL_MTL`、`TBLWIPINVCOUNTDETAIL_PRD`。桌機沒有受保護 Oracle profile，未查 DDL 或猜 CREATE-only。
 - [ ] 正式 Web 報表須選定可部署方案並確認掃碼規格、版面／分頁／頁首頁尾；重用登入保護的盤點 query。不可假設公司端 ActiveReports runtime 或桌機 DLL 能部署到正式 API/Web。
 
+## 家用端驗收服務固定啟動流程（2026-11-22）
+
+- [x] 本機 Vite `127.0.0.1:18749` 與 API `127.0.0.1:5080` 都仍在監聽，但 SSH DB 隧道 `127.0.0.1:15432` 曾中斷，造成 API readiness 與 Vite API proxy 回 503；遠端正式站同時保持 healthy／200。
+- [x] 啟動 `plink` PPK 隧道到家用 PostgreSQL clone 後，API `/health/ready` 與 Vite `/YMES/API/health/ready` 立即恢復 200。沒有資料庫寫入或正式站異動。
+- [x] 建立並實際驗證 [`scripts/Start-HomePcQa.ps1`](scripts/Start-HomePcQa.ps1)：停止本輪自有測試隧道後，API 先回 503；執行腳本自動重開隧道，API、Web 與代理均回 200。腳本重用健康服務、只在埠空閒時啟動，遇未知程序占埠會停止並報明，不會殺掉該程序；API 連線使用經認證 SSH 隧道與 `SslMode=Disable`。PPK 保持在桌面，連線密碼只由腳本記憶體讀取、不輸出。
+- [ ] Chrome/app-browser GUI 驗收仍待補；Computer-use 本次再因無法確認目前網址停止，尚未逐項操作 API186 頁面。此狀況不代表服務未啟動；先確認上列健康檢查，再用瀏覽器工具操作。
+
 ## 公司端交接：INV COUNT ADJUST 盤點調帳（WP608，2026-11-22）
 
 公司端依 `frmInvCountStateAdjust`、`frmInvCountAdjust`／`_MTL`／`_PRD`、`wsWIP`、`clsINVCount` 完成六種 DataType 的 DEV 假資料畫面及[WP608 規格](docs/modules/WIP/盤點調帳.md)。Fallback 路由 `/YMES/WIP/InvCountStateAdjust`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=0 查詢、NewCurQty／AdjustQty 暫存、AdjustState 1→2 Confirm、逐筆更新部分失敗及報表預覽，不呼叫正式 Service、資料庫或印表機。
