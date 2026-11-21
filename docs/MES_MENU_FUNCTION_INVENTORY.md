@@ -382,7 +382,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 | EQP CAP MAPPING | 設備能力設定 | EMS設定 | frmEQPCapMapping | ES_EQPCapMapping.dll | ES108 | 0 |
 | ACC STATE CHANGE DESCRIPTION | 配件狀態變更原因描述 | 未掛入 MenuItem | frmACCStateChangeDescription | ES_ACCStateChangeDescription.dll |  | 0 |
 
-公司端復刻進度（2026-11-21）：WP916 後依清冊順序略過已完成 WP301、WP629、WP112、LOT SHEET PRINT（WP113）及 PRODUCTION STATE BY AREA；WORKORDER PRINT、無 FunctionKey 的 Skip Inspection Setting、P_BUMP MAP MERGE（WPP07）、FGDSTOCKIN_E10ICD（WP621）及 SCRAPSTOCKIN_E10ICD（WP622）均已完成 DEV、規格與家用端 handoff。WPP07 六張 CP MAP state/file/template 表、WP621 的 `TBLINVFGDINBIN`，以及 WP622 的 `TBLINVSCRINVENTORY`、`TBLINVSCRINVENTORYCOMPONENT`、`TBLINVSCRINVENTORYFAILBIN` 缺 Oracle DDL／metadata；此桌機無可用受保護 Oracle profile，未猜 CREATE-only。WP621／622 的 ERP 建單→MES 入庫、W 回應差異及取消補償亦有記錄；下一項尚未復刻清冊列為 FGDSTOCKIN_E10ICD_CANCEL「取消入庫 E10ICD ERP」（WP623，未掛入 MenuItem）。EMS 已完成 ES204、ES102、ES409、ES106；WIP 最新接續狀態見 `todolist_officepc.md` 最上方。
+公司端復刻進度（2026-11-21）：WP916 後依清冊順序略過已完成 WP301、WP629、WP112、LOT SHEET PRINT（WP113）及 PRODUCTION STATE BY AREA；WORKORDER PRINT、無 FunctionKey 的 Skip Inspection Setting、P_BUMP MAP MERGE（WPP07）、FGDSTOCKIN_E10ICD（WP621）、SCRAPSTOCKIN_E10ICD（WP622）及 FGDSTOCKIN_E10ICD_CANCEL（WP623）均已完成 DEV、規格與家用端 handoff。WPP07 六張 CP MAP state/file/template 表、WP621／623 的 `TBLINVFGDINBIN`，以及 WP622 的 `TBLINVSCRINVENTORY`、`TBLINVSCRINVENTORYCOMPONENT`、`TBLINVSCRINVENTORYFAILBIN` 缺 Oracle DDL／metadata；此桌機無可用受保護 Oracle profile，未猜 CREATE-only。WP621／622／623 的 ERP／MES 交易與取消補償、State=-2 恢復及舊流程 `OrgState` 覆寫差異均有記錄；下一項尚未復刻清冊列為 FGDSTOCKIN_T100「入庫至 T100 ERP」（WP616，未掛入 MenuItem）。EMS 已完成 ES204、ES102、ES409、ES106；WIP 最新接續狀態見 `todolist_officepc.md` 最上方。
 
 ### SPC — 品質管理（順序 12）
 

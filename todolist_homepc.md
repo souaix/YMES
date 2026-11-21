@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：FGDSTOCKIN_E10ICD_CANCEL 取消入庫 E10ICD ERP（WP623，2026-11-21）
+
+公司端依取消 Form／inline Designer、`wsINV`、`wsERP_E10ICD`、`clsInventory` 完成良品 FGD 與不良品 SCRIN 整張取消的 DEV 假資料流程及[WP623 規格](docs/modules/WIP/取消入庫E10ICD_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInE10IcdCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2 且 ERPNo 非空守門、ERP RequestType 0／1、ERP 失敗還原、ERP code=0 後 MES 回復與 State=-2 失敗待恢復；不呼叫 ERP／MES 或資料庫。
+
+- [ ] 比對 PostgreSQL live schema／migration 及 WP201／WP603／WP605／WP215 已有 refs；`TBLINVFGDINBIN` Oracle metadata 沿 WP621 缺項，需安全公司端 profile 唯讀補查後再確認 FGD 動態 Bin 回復欄位，不猜 CREATE-only。
+- [ ] 設計帶 idempotency key／期望版本的單據級取消命令，重查權限、State=2、ERPNo、單據種類與明細並鎖單；ERP 良品 RequestType=0、不良品=1，僅 code=0 才執行 MES 回復。
+- [ ] ERP timeout／unknown outcome 必須先對帳，不能盲重送或重新開放；ERP 成功而 MES 失敗時保留可恢復狀態，補償良品／不良品庫存、Component／動態 Bin、線邊來源庫、BookingFlag、Lot Qty／Log 與最終 State。
+- [ ] 修正舊 `UpdINVInfo` 每步覆寫 `OrgState` 的問題；家用端保存原始狀態與取消操作歷程。公司端未連 PostgreSQL、未實作正式 API／schema、未 SSH 部署。
+
 ## 家用正式站部署：API/Web（2026-11-21）
 
 - [x] 先同步公司端最新 `main`（`262613e`），再以合併後來源建置；Web 預建 Dockerfile 補上 Nginx 非 root 可讀權限。
