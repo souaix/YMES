@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：FGDSTOCKIN_WF 入庫至 WorkFlow ERP（WP614，2026-11-22）
+
+公司端依主 Form／Designer、`frmFGDStockIN_ReThorwERP` 重拋 Form／Designer、EAI `wsMES`、`clsWIP`／`clsINV` 完成 DEV 假資料入庫與重拋頁及[WP614 規格](docs/modules/WIP/入庫至WorkFlow_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInWorkFlow`；原 Function 未掛正式 `MenuItem`。DEV 模擬 ALLOWINV2ERP 0／1／2、多 MO Lot、MES-first、ERP success／fail rollback／timeout State=1 retry ticket、重拋 success／fail／timeout；不呼叫 WorkFlow SOAP、MES EAI Service 或資料庫。
+
+- [ ] Formal provider 應從伺服器配置讀 `ALLOWINV2ERP`、`ShowLossData_FGDStockIN_WF`、ERP SheetType、`WFERPUseMESUserNo`、`OrgLotNoToERP`，不可接受 browser 自選值。模式 2 需修正舊 Form SheetType 只在模式 1 去名稱的缺陷。
+- [ ] MO／Lot 完整重查、鎖定、單位／ERP 品號／Factory／Inventory／Locator、工單累計 Good+Scrap 限制、ERP 淨發料及 booking flag 必須伺服器驗證；批次量檢查需 aggregate 全部勾選列，不沿用舊 Core 每列重用相同既有量的漏算。
+- [ ] MES 庫存交易完成前建立 ERP intent／冪等 key；明確 ERP fail 可安全補償 MES，timeout／unknown outcome 保留可恢復 State，不盲目 replay。`TBLERPRETHROWTICKET` 原始 RequestXML 需改受 ACL 保護的 reconciliation workflow／audit，不提供任意 XML 重放；ERP/MES 結果、MES 失敗後 WorkFlow Undo helper 順序需家用端實測核對。
+- [ ] 先比對 live schema／migrations。`TBLINVWIP_SCRAP`、`TBLOEMOMATERIALINBASIS_ERP`、`TBLERPRETHROWTICKET` Oracle source DDL／metadata 缺項，需桌機有受保護 Oracle profile 後唯讀補查；公司端本次沒有 Oracle／PostgreSQL/API/schema／部署操作。家用端負責 migration、正式 API、部署及驗收。
+
 ## 公司端交接：FGDSTOCKIN_TP_CANCEL 取消入庫至 TipTop ERP（WP610，2026-11-22）
 
 公司端依 TipTop Cancel Form／Designer、`wsINV`、TipTop SOAP `UndoCreateStockInData`、`clsInventory` 完成 DEV 假資料取消流程及[WP610 規格](docs/modules/WIP/取消入庫至TipTop_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInTpCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2／ERPNo、MOState=99、FGD／SCRIN、ERP 來源、ERP 失敗回復 State=2、MES 失敗保留 State=-2 及成功取消；原查詢未限制 ERP source，DEV 阻擋非 TipTop 來源。不呼叫 TipTop、MES Service 或資料庫。
@@ -8,8 +17,6 @@
 - [ ] 持久化 `UndoCreateStockInData` intent／response；ERP timeout／unknown outcome 先查 TipTop 或排對帳。ERP 確認成功後，在單一本地交易回復 FGD／WIP／Component／Good Bin／Lot Qty／reservation／release log 並寫最終狀態。
 - [ ] ERP 已取消但 MES 回復失敗時保留可恢復狀態與人工／自動對帳；補建 State=-2 恢復流程與冪等 key。比較舊 `UpdINVInfo` 對 `OrgState` 的逐步覆寫與既有 schema。
 - [ ] `TBLINVFGDINBIN` Oracle DDL／metadata 沿 WP621／WP623 缺項；需桌機有受保護 Oracle profile 後唯讀補查。本次公司端未連 Oracle/PostgreSQL，未做 API/schema 或部署；家用端比對 live schema／migration 後實作。
-
-## 公司端交接：FGDSTOCKIN_TP 入庫至 TipTop ERP（WP609，2026-11-21）
 
 ## 公司端交接：FGDSTOCKIN_TP 入庫至 TipTop ERP（WP609，2026-11-21）
 
