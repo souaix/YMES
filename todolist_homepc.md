@@ -1,5 +1,12 @@
 # 家裡電腦接手清單
 
+## 公司端交接：INV COUNT STATE 盤點關／開帳（WP606，2026-11-22）
+
+公司端依本機 `D:\iMES\CSiMES\STD\MESWin\WIP\WP_InvCountState\frmInvCountState.vb`（Designer 內嵌）、`wsWIP`、`clsINVCount`／`clsSYSParameter` 完成關帳／開帳 DEV 假資料頁及[WP606 規格](docs/modules/WIP/盤點關開帳.md)。Fallback 路由 `/YMES/WIP/InvCountState`。DEV 模擬 State=0 關帳、六類 detail snapshot、State=1 開帳、跨 detail AdjustState=1 守門、`AllowExecuteLot` 及兩處失敗情境，不呼叫正式 Service／資料庫。
+
+- [ ] 先核對 YMES PostgreSQL live schema／migration history 及共享 `AllowExecuteLot` 系統參數，再比對 WP608 的四張盤點 state/detail 表；桌機沒有受保護 Oracle profile，缺 Oracle DDL／metadata，未猜 CREATE-only。
+- [ ] 正式 API 從登入身分取操作者；以跨請求鎖或 CAS 保護唯一 State=0 cycle 與 `yyMMddNNN` 序號。關帳至少要求一種 Close Option，將 `AllowExecuteLot=0`、State 主檔與六類快照原子化；開帳先守住所有 detail 無 AdjustState=1，再原子更新 State=1／OpenUserNo／OpenDate 與 `AllowExecuteLot=1`，並提供失敗後可恢復的 audit／reconciliation。
+
 ## 公司端交接：INV COUNT PRINT 列印盤點清冊（WP607，2026-11-22）
 
 公司端依本機 `D:\iMES\CSiMES\STD\MESWin\WIP\WP_InvCountStatePrint\frmInvCountStatePrint.vb`（Designer 內嵌）、`wsWIP.LoadInvCountStateWithDetail`、`clsINVCount` 及 General／MTL／PRD ActiveReports 完成盤點清冊 DEV 假資料頁及[WP607 規格](docs/modules/WIP/盤點清冊列印.md)。Fallback 路由 `/YMES/WIP/InvCountStatePrint`；原 Function 未掛正式 `MenuItem`。DEV 模擬六種 DataType 的 State=0 全部已關帳明細查詢、Grid 排序、Barcode／NoBarcode report class 選擇及預覽，不產生 PDF／條碼、不呼叫正式 Service／資料庫／印表機。
