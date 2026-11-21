@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：FGDSTOCKIN_WF_CANCEL 取消入庫 WorkFlow ERP（WP619，2026-11-22）
+
+公司端依取消 Form／Designer、`wsINV`／`kcINV.clsInventory`、EAI `wsMES`／`clsINV` 完成 DEV 假資料取消頁及[WP619 規格](docs/modules/WIP/取消入庫WorkFlow_ERP.md)。Fallback 路由 `/YMES/WIP/FgdStockInWorkFlowCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2／ERPNo、混合 FGD／SCRIN、WorkFlow Undo 成功／明確失敗／timeout、MES 回復成功／失敗及 1→-2→3→-1；其他 ERP 來源會顯示但被阻擋。不呼叫 ERP、MES Service 或資料庫。
+
+- [ ] 正式 API 重新確認 ACL、ERP source、ERPNo、FGD／SCRIN 同號明細及 State=2，使用 CAS／冪等 intent；`LoadFGDInNoUnionSCRInNo` 舊查詢只有 `ERPNo IS NOT NULL`，把其他 ERP 單據也列入 WorkFlow 取消清單。
+- [ ] WorkFlow `ReferenceCase=4` Undo timeout／例外不可當明確失敗後直接復原 State=2；先查 ERP 或排 reconciliation。MES 回復失敗需保留 State=-2 並提供可恢復交易及 audit；舊 Core 多表更新未包有效 transaction，Form `UpdINVInfo` 亦不比對 OriginState。
+- [ ] 先對照 PostgreSQL live schema／migrations。`TBLINVSCRINVENTORY`、`TBLINVSCRINVENTORYCOMPONENT`、`TBLINVSCRINVENTORYFAILBIN` Oracle source DDL／metadata 沿 WP622 缺項，待公司端取得受保護 Oracle profile 後唯讀補查。家用端負責正式 API、migration、部署與驗收；公司端未連 Oracle／PostgreSQL或部署。
+
 ## 公司端交接：FGDSTOCKIN_WF 入庫至 WorkFlow ERP（WP614，2026-11-22）
 
 公司端依主 Form／Designer、`frmFGDStockIN_ReThorwERP` 重拋 Form／Designer、EAI `wsMES`、`clsWIP`／`clsINV` 完成 DEV 假資料入庫與重拋頁及[WP614 規格](docs/modules/WIP/入庫至WorkFlow_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInWorkFlow`；原 Function 未掛正式 `MenuItem`。DEV 模擬 ALLOWINV2ERP 0／1／2、多 MO Lot、MES-first、ERP success／fail rollback／timeout State=1 retry ticket、重拋 success／fail／timeout；不呼叫 WorkFlow SOAP、MES EAI Service 或資料庫。
