@@ -2755,3 +2755,6 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] 核 YMES PostgreSQL live schema/history。WP106 沒有新直接表，`TBLWIPOPERATORSTATE`/`TBLWIPOPERATORLOG` Oracle DDL/metadata/PG CREATE-only 沿 `database/reference/mestest_wip_wp104_*`，`TBLWIPLOTLOGINSTATE` 沿 WP305，UserBasis/OP/Area/Equipment 沿既有 refs。只補真缺項，無需新增 WP106 CREATE SQL。
 - [ ] 提供登入/`WP106` Function ACL 的在線人員分頁/有上限 GET。OP/Area/Equipment/Lot 多值條件是 **LoginPlaceNo 的聯集**，以值陣列參數化，不接受 Form 原始 `AdditionalXml` SQL 字串。無條件查詢須有授權範圍與 pageSize 上限；回七欄、WorkDate/OPNo/版本鍵。OP/Area/Equipment lookup 依權限、現行狀態限量查。
 - [ ] SignOut command 檢查員工與地點可見/可操作權限，用 server LogoutDate、UserNo+MultiOperatorMode+LoginPlaceNo 重新查/鎖 State；單筆交易插 OperatorLog、刪 State、更新相關 LotLoginState，保留多人加工 side effect。需冪等、併發保護，逐筆結果表明成功/失敗/未處理；來源 Form 逐筆呼叫可能部分成功。`EnableSignOut=False` 僅是 UI 唯讀提示，不能當 API 權限。家用端接正式 Vue、PG migration/部署並驗收。
+
+
+本版限定GUI的獨立證據peer `c21d7e7e220a09f64d320cc9eff0309e9be8df0a21088cceece0eecbbcc08d52` 無阻擋；Root接受回條 `69b38e831ac1a469bea728665bee2e97c05414a48b13527ab0fcc4f587cfc172`，保留90raw／83通過／7原false及復驗，非全系統驗收。程式提交 X `aa3be9528880d03f74370b22ac979dff4227570d` 已通過461來源綁定 `032ea499e39664af8558b6d148ed25fe74face9b462a9f7af7e8a77f5d88b555`，正常推送功能分支並直接讀回同ref（`30e5dd7e1b5832e3f3c4fbb08cb5956bcab15a26730af6fc164cc35890dca2cb`）。接續本份純文件status提交與main正常快轉；原checkpoint33保持至新metadata真結案，不預填已完成。

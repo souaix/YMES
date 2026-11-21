@@ -1824,3 +1824,6 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [ ] 接續核對 `docs/MES_MENU_FUNCTION_INVENTORY.md` 下一個未完成 WIP FunctionNo；從 Form/Designer/Service/Core 查，再做 DEV 及規格。公司端仍只讀 Oracle DDL/metadata，不接正式 PostgreSQL/API。
 - [x] WP106「使用者登入（上工）資訊」已核 `frmOperatorOnline`／Designer、`wsWIP_OperatorState`/`clsOperatorState`，完成三種地點多選並集查詢、七欄 Grid、逐筆 SignOut 與唯讀外部入口的 Vue DEV；與 WP104/105 共用假 State/Log。直接表的 Oracle source/PG CREATE-only 沿 WP104/WP305，無新 DDL。正式 API/PG 交家用端；未連 PostgreSQL、未執行 build/test/browser。
 - [ ] 下一個可接 WP109「特殊生產需求維護」：先核 `STD/MESWin/WIP/WP_SWRBasis/frmWIPSWRBasis.vb` 與 `frmWIPSWRBasisDef.vb`、Service/Core、SWR 直接表；若無 source DDL 以公司 Oracle profile/PowerShell 5.1 唯讀查。公司端只做 DEV UI/邏輯及規格，不連 YMES PostgreSQL/API。
+
+
+本版限定GUI的獨立證據peer `c21d7e7e220a09f64d320cc9eff0309e9be8df0a21088cceece0eecbbcc08d52` 無阻擋；Root接受回條 `69b38e831ac1a469bea728665bee2e97c05414a48b13527ab0fcc4f587cfc172`，保留90raw／83通過／7原false及復驗，非全系統驗收。程式提交 X `aa3be9528880d03f74370b22ac979dff4227570d` 已通過461來源綁定 `032ea499e39664af8558b6d148ed25fe74face9b462a9f7af7e8a77f5d88b555`，正常推送功能分支並直接讀回同ref（`30e5dd7e1b5832e3f3c4fbb08cb5956bcab15a26730af6fc164cc35890dca2cb`）。接續本份純文件status提交與main正常快轉；原checkpoint33保持至新metadata真結案，不預填已完成。
