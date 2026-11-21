@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES204 改變設備狀態（2026-11-21）
+
+公司端已依 THEIL Form／STD wsEMS／clsEMSEquipment 完成 DEV 假資料畫面與 [原始碼規格](docs/modules/EMS/改變設備狀態.md)，未連家用 PostgreSQL，也未實作正式 API。原因歷程 `TBLEMSEQUIPMENTREASONS` 的 Oracle 原始 `GET_DDL` 回 `ORA-03135`；可用唯讀字典 metadata 與 CREATE-only 參考位於 `database/reference/mestest_es204_equipment_reasons_metadata.txt`、`database/reference/mestest_es204_equipment_reasons_create.sql`。
+
+- [ ] 比對 PostgreSQL live schema/migration，僅在缺表時依 CREATE-only 設計 forward migration；核對表欄位及 Oracle BYTE/CHAR 長度語意。
+- [ ] 依 ES204 規格完成登入保護的設備／狀態／互斥／原因／保養工單／Lot lookup 與狀態變更 API。交易中重讀並鎖定設備目前序號，防止並發 serial／狀態覆寫；整合設備歷程、原因、Lot／設備關聯、用料結算及操作員簽退，失敗完整回滾。
+- [ ] 驗證 CheckInConfirm、ChangePRODEQPStateMode、PMWoReleased、`pModule != KMI` 的來源規則與 production side effects；不要直接套 Oracle 重建 DDL或把 DEV 狀態當正式資料。
+
 ## Office 8ff整合結案及main同步完成（2026-11-21）
 
 本輪已完成結案與main同步。current-checkpoint SHA `33bd353dd129962d2e2cf196aa5b628cdc4b176be1495e58972621f69dd78f58`，另一連線獨立raw下載／64個保護欄位／歷史與服務核對通過，回條SHA `49925286533ee240e7a1b8a5f58513059c69b8646dd185aec8cfb4a51edb1a3d`。原7d0完整raw備份、API與DB所有段落、WP109讀取版結案及history前綴保持。發行對應code X `7c5ba15af622fe4776fecfb9bddc96cabd250ee5`、status Y `23559909602900349e5bf6018a0e9027bf9d64c2`，均真452來源綁定／正常推送／直接ref核回；main已到Y，`mainSyncConfirmed=true/mainSyncPending=false`。本次後補文件提交不改此發行對應。八個WIP provider、global MES QA與偶發登入載入根因仍待辦。

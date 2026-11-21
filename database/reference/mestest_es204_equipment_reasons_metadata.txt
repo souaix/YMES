@@ -1,0 +1,18 @@
+# MES Oracle source metadata snapshot
+# Captured 2026-11-21 using Windows PowerShell 5.1 + Oracle.ManagedDataAccess and the desktop protected MESTEST profile.
+# Read-only data dictionary queries only. No business rows, DDL, or DML were queried/executed.
+# DBMS_METADATA.GET_DDL('TABLE','TBLEMSEQUIPMENTREASONS','MESTEST') returned ORA-03135 in this session.
+# The CREATE-only handoff is reconstructed from the returned dictionary metadata below; this is not raw Oracle DDL.
+# CHAR_USED / CHAR_LENGTH were not captured in this snapshot; verify Oracle BYTE-vs-CHAR semantics before any home-side migration.
+TABLE|MESTEST|TBLEMSEQUIPMENTREASONS
+COLUMN|1|EQPSERIALNO|VARCHAR2|precision=|scale=|length=30|nullable=N|default=
+COLUMN|2|EQUIPMENTNO|VARCHAR2|precision=|scale=|length=50|nullable=N|default=
+COLUMN|3|REASONNO|VARCHAR2|precision=|scale=|length=50|nullable=Y|default=
+COLUMN|4|REASONNAME|VARCHAR2|precision=|scale=|length=100|nullable=Y|default=
+CONSTRAINT|N_TBLEMSEQUIPMENTREASONS_01|C|ENABLED|EQPSERIALNO
+CONSTRAINT|N_TBLEMSEQUIPMENTREASONS_02|C|ENABLED|EQUIPMENTNO
+PRIMARY_KEY|NONE_VISIBLE
+UNIQUE_CONSTRAINT|NONE_VISIBLE
+FOREIGN_KEY|NONE_VISIBLE
+INDEX|NONE_VISIBLE
+TRIGGER|NONE_VISIBLE

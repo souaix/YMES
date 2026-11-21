@@ -1,5 +1,12 @@
 # 公司端待辦
 
+## 公司端最新交付：ES204 改變設備狀態（2026-11-21）
+
+- [x] 依 THEIL Form（控制項配置內嵌主 VB）、STD wsEMS／clsEMSEquipment 核對設備查詢、互斥、原因、PM 工單守門、生產批 CheckInConfirm、狀態歷程與設備／批／人員副作用；完成 Vue DEV 假資料頁及路由。
+- [x] PowerShell 5.1 + ODP.NET 唯讀取得 `TBLEMSEQUIPMENTREASONS` 欄位與 constraint/index/trigger metadata；`GET_DDL` 回 `ORA-03135`，沒有 Oracle 原始 DDL，CREATE-only 按字典重建且不猜 PK/FK。資料見 `database/reference/mestest_es204_equipment_reasons_metadata.txt`。
+- [x] 規格與家用端原子 API／序號並發 handoff 已寫入 [ES204 規格](docs/modules/EMS/改變設備狀態.md)；公司端未連 YMES PostgreSQL、未做正式 API/schema。
+- [ ] 接續 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md)；下一個未完成項目 ES102「設備狀態控制設定」，已完成項目略過。
+
 ## HOME本輪已結案並同步main（2026-11-21）
 
 本輪已完成結案與main同步。current-checkpoint SHA `33bd353dd129962d2e2cf196aa5b628cdc4b176be1495e58972621f69dd78f58`，另一連線獨立raw下載／64個保護欄位／歷史與服務核對通過，回條SHA `49925286533ee240e7a1b8a5f58513059c69b8646dd185aec8cfb4a51edb1a3d`。原7d0完整raw備份、API與DB所有段落、WP109讀取版結案及history前綴保持。發行對應code X `7c5ba15af622fe4776fecfb9bddc96cabd250ee5`、status Y `23559909602900349e5bf6018a0e9027bf9d64c2`，均真452來源綁定／正常推送／直接ref核回；main已到Y，`mainSyncConfirmed=true/mainSyncPending=false`。本次後補文件提交不改此發行對應。八個WIP provider、global MES QA與偶發登入載入根因仍待辦。
