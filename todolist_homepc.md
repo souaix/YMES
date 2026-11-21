@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 公司端交接：FGDSTOCKIN_TP 入庫至 TipTop ERP（WP609，2026-11-21）
+
+公司端依 TipTop Stock In Form／Designer、TipTop SOAP `CreateStockInData`、EAI `wsMES`、`clsWIP`／`clsINV` 完成 DEV 假資料流程及[WP609 規格](docs/modules/WIP/入庫至TipTop_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInTp`；原 Function 未掛正式 `MenuItem`。DEV 有 MO／Ref Lot、來源 WIP／目的 FGD／Locator、雙 Grid、InInvNum 部分入庫、ERP 建單／MES 入庫／ERP Undo 情境；不呼叫 TipTop、MES EAI 或資料庫。
+
+- [ ] 將 CreateStockInData 前驗證、Lot row version／鎖、權限、來源／目的庫、Component／Good Bin 與冪等鍵放在伺服器；舊程式部分入庫沒有 BookingFlag reservation。
+- [ ] 持久化 ERP Create intent、response 及 Undo 結果。ERP 建單成功、MES 失敗時若 Undo 失敗，不能只釋放 BookingFlag 並允許同 Lot 重送；timeout／unknown outcome 先查 ERP 或排對帳。
+- [ ] 核實 Good Bin 在 TipTop 整批入庫的來源規則：Form 對部分入庫有 Good Bin 守門，但目前 active `MOStockIn_TP`／`MOStockIn_TP_Component` 沒找到 Bin 更新；確認是否另有 helper，再決定 Bin 轉移及取消回復。
+- [ ] 比較包裝批 ERP Qty=`SysQty` 與 MES Qty=`InInvNum` 的單位換算；以本地交易原子更新 FGD Basis／Detail／Inventory、WIP SEMI、Lot Qty、Component、CloseLot／ProductOperation 與 release log。
+- [ ] 沿用 WP605／WP201 references 後仍須比對 PostgreSQL live schema／migration；本功能無新 Oracle table DDL，桌機沒有連 PostgreSQL、未實作或驗收正式 API／schema。
+
 ## 公司端交接：FGDSTOCKIN_T100_CANCEL 取消入庫 T100 ERP（WP620，2026-11-21）
 
 公司端依 T100 Cancel Form／Designer、`wsINV`、`wsERP_T100`、`clsInventory` 完成 FGD／SCRIN 整張入庫取消的 DEV 假資料流程及[WP620 規格](docs/modules/WIP/取消入庫T100_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInT100Cancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 RequestType 0／1、ERP 失敗還原 State=2、ERP 成功但 MES 回復失敗保留 State=-2；原查詢缺 ERP source 篩選，DEV 阻擋非 T100 來源以展示正式端必要的防護。不連 T100／MES Service 或資料庫。

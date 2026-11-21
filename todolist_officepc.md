@@ -1,11 +1,19 @@
 # 公司端待辦
 
+## 公司端最新交付：FGDSTOCKIN_TP 入庫至 TipTop ERP（WP609，2026-11-21）
+
+- [x] 依 Form／Designer、TipTop `CreateStockInData`、EAI `wsMES`、`clsWIP`／`clsINV` 核對 Sheet Type、MO／Ref Lot、來源／目的庫、可部分入庫與 Core 更新。確認來源程式只對整批 Lot 設 BookingFlag；部分 Lot 並無 reservation。
+- [x] 完成 Vue DEV 假資料雙 Grid、MO／Ref Lot、掃描 Select／UnSelect、InInvNum 驗證、Component／Good Bin 部分入庫守門、ERP code／MES／ERP Undo 成敗情境。TipTop pack Lot ERP qty=SysQty，MES qty=InInvNum。
+- [x] 新增 [WP609 規格](docs/modules/WIP/入庫至TipTop_ERP.md)、索引、清冊進度與家用端交接。Good Bin active `MOStockIn_TP` Core 未找到更新語句，列為來源待確認；ERP Undo 失敗後仍可能釋放 BookingFlag。
+- [x] 沿用 WP605／WP201 已有 Oracle DDL／CREATE refs，沒有新增缺表；未做重複 CREATE-only，未連 Oracle 或 YMES PostgreSQL。
+- [ ] 下一項依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 為 FGDSTOCKIN_TP_CANCEL「取消入庫至 TipTop ERP」（WP610）；先核對取消 Form／Service／Core。
+
 ## 公司端最新交付：FGDSTOCKIN_T100_CANCEL 取消入庫 T100 ERP（WP620，2026-11-21）
 
 - [x] 依 Form／Designer、`wsINV`、`wsERP_T100`、`clsInventory` 核對取消查詢、ERP 呼叫、Core 庫存回復及狀態轉移。查詢只篩 State=2，未篩 ERP source；Confirm 有 State／ERPNo 守門但仍可能將非 T100 單送往 T100，已在規格及 DEV 明確呈現並阻擋跨 ERP 模擬取消。
 - [x] 新增 [WP620 規格](docs/modules/WIP/取消入庫T100_ERP.md)、索引、清冊進度及家用端 source guard／冪等／unknown outcome handoff。沿用 WP201／WP603／WP605／WP215 references；`TBLINVFGDINBIN` metadata 缺項沿 WP621／WP623，桌機無可用受保護 Oracle profile，未連 Oracle 或 YMES PostgreSQL、未猜 CREATE-only。
 - [x] DEV 頁模擬 FGD／SCRIN RequestType 0／1、ERP code=0 成功、ERP 失敗還原 State=2、MES 失敗保留 State=-2 及成功取消；Function 未掛正式 MenuItem，fallback 路由為 `/YMES/WIP/FgdStockInT100Cancel`。
-- [ ] 下一項依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 為 FGDSTOCKIN_TP「入庫至 TipTop ERP」（WP609）；先核對 Form／Service／Core，再完成 DEV、規格及兩端 handoff。
+- [x] 後續 FGDSTOCKIN_TP（WP609）已完成；目前轉接 WP610。
 
 ## 公司端交付：FGDSTOCKIN_T100 入庫至 T100 ERP（WP616，2026-11-21）
 
