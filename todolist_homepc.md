@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## 公司端交接：FGDSTOCKIN_TP_CANCEL 取消入庫至 TipTop ERP（WP610，2026-11-22）
+
+公司端依 TipTop Cancel Form／Designer、`wsINV`、TipTop SOAP `UndoCreateStockInData`、`clsInventory` 完成 DEV 假資料取消流程及[WP610 規格](docs/modules/WIP/取消入庫至TipTop_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInTpCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2／ERPNo、MOState=99、FGD／SCRIN、ERP 來源、ERP 失敗回復 State=2、MES 失敗保留 State=-2 及成功取消；原查詢未限制 ERP source，DEV 阻擋非 TipTop 來源。不呼叫 TipTop、MES Service 或資料庫。
+
+- [ ] 正式取消命令需重新查 State=2、ERPNo、ERP source、INVType、每筆 MOState、ACL 與庫存前置條件；依 ERP source 路由或拒絕，不可把其他 ERP 入庫單送往 TipTop。
+- [ ] 持久化 `UndoCreateStockInData` intent／response；ERP timeout／unknown outcome 先查 TipTop 或排對帳。ERP 確認成功後，在單一本地交易回復 FGD／WIP／Component／Good Bin／Lot Qty／reservation／release log 並寫最終狀態。
+- [ ] ERP 已取消但 MES 回復失敗時保留可恢復狀態與人工／自動對帳；補建 State=-2 恢復流程與冪等 key。比較舊 `UpdINVInfo` 對 `OrgState` 的逐步覆寫與既有 schema。
+- [ ] `TBLINVFGDINBIN` Oracle DDL／metadata 沿 WP621／WP623 缺項；需桌機有受保護 Oracle profile 後唯讀補查。本次公司端未連 Oracle/PostgreSQL，未做 API/schema 或部署；家用端比對 live schema／migration 後實作。
+
+## 公司端交接：FGDSTOCKIN_TP 入庫至 TipTop ERP（WP609，2026-11-21）
+
 ## 公司端交接：FGDSTOCKIN_TP 入庫至 TipTop ERP（WP609，2026-11-21）
 
 公司端依 TipTop Stock In Form／Designer、TipTop SOAP `CreateStockInData`、EAI `wsMES`、`clsWIP`／`clsINV` 完成 DEV 假資料流程及[WP609 規格](docs/modules/WIP/入庫至TipTop_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInTp`；原 Function 未掛正式 `MenuItem`。DEV 有 MO／Ref Lot、來源 WIP／目的 FGD／Locator、雙 Grid、InInvNum 部分入庫、ERP 建單／MES 入庫／ERP Undo 情境；不呼叫 TipTop、MES EAI 或資料庫。

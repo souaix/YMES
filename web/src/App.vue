@@ -76,6 +76,7 @@ import WipFgdStockInE10IcdCancel from './components/WipFgdStockInE10IcdCancel.vu
 import WipFgdStockInT100 from './components/WipFgdStockInT100.vue'
 import WipFgdStockInT100Cancel from './components/WipFgdStockInT100Cancel.vue'
 import WipFgdStockInTp from './components/WipFgdStockInTp.vue'
+import WipFgdStockInTpCancel from './components/WipFgdStockInTpCancel.vue'
 import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
 import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
 import WipOperatorOnline from './components/WipOperatorOnline.vue'
@@ -581,6 +582,7 @@ const fallbackMenuTree: MenuNode[] = [
   }, {
     id: 'menu:WIP:PACKAGING', label: '包裝與庫房', shortLabel: '庫', children: [
       { id: 'function:WIP:FGDSTOCKIN_TP', label: '入庫至 TipTop ERP（DEV）', shortLabel: 'TipTop入庫', functionNo: 'FGDSTOCKIN_TP', moduleNo: 'WIP' },
+      { id: 'function:WIP:FGDSTOCKIN_TP_CANCEL', label: '取消入庫至 TipTop ERP（DEV）', shortLabel: 'TipTop取消', functionNo: 'FGDSTOCKIN_TP_CANCEL', moduleNo: 'WIP' },
       { id: 'function:WIP:FGDSTOCKIN_T100', label: '入庫至 T100 ERP（DEV）', shortLabel: 'T100入庫', functionNo: 'FGDSTOCKIN_T100', moduleNo: 'WIP' },
       { id: 'function:WIP:FGDSTOCKIN_T100_CANCEL', label: '取消入庫 T100 ERP（DEV）', shortLabel: 'T100取消', functionNo: 'FGDSTOCKIN_T100_CANCEL', moduleNo: 'WIP' },
       { id: 'function:WIP:FGDSTOCKIN_E10ICD', label: '入庫至 E10ICD ERP（DEV）', shortLabel: 'ERP入庫', functionNo: 'FGDSTOCKIN_E10ICD', moduleNo: 'WIP' },
@@ -659,6 +661,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:FGDSTOCKIN_E10ICD': appBasePath + '/WIP/FgdStockInE10Icd',
   'function:WIP:FGDSTOCKIN_T100': appBasePath + '/WIP/FgdStockInT100',
   'function:WIP:FGDSTOCKIN_TP': appBasePath + '/WIP/FgdStockInTp',
+  'function:WIP:FGDSTOCKIN_TP_CANCEL': appBasePath + '/WIP/FgdStockInTpCancel',
   'function:WIP:FGDSTOCKIN_T100_CANCEL': appBasePath + '/WIP/FgdStockInT100Cancel',
   'function:WIP:FGDSTOCKIN_E10ICD_CANCEL': appBasePath + '/WIP/FgdStockInE10IcdCancel',
   'function:WIP:SCRAPSTOCKIN_E10ICD': appBasePath + '/WIP/ScrapStockInE10Icd',
@@ -1162,6 +1165,7 @@ const isWipBumpMapMergePage = computed(() => activeMasterKey.value === 'function
 const isWipFgdStockInE10IcdPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_E10ICD')
 const isWipFgdStockInT100Page = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_T100')
 const isWipFgdStockInTpPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_TP')
+const isWipFgdStockInTpCancelPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_TP_CANCEL')
 const isWipFgdStockInT100CancelPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_T100_CANCEL')
 const isWipFgdStockInE10IcdCancelPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_E10ICD_CANCEL')
 const isWipScrapStockInE10IcdPage = computed(() => activeMasterKey.value === 'function:WIP:SCRAPSTOCKIN_E10ICD')
@@ -2983,6 +2987,7 @@ async function signOut(): Promise<void> {
         <WipFgdStockInE10Icd v-else-if="isWipFgdStockInE10IcdPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInT100 v-else-if="isWipFgdStockInT100Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInTp v-else-if="isWipFgdStockInTpPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipFgdStockInTpCancel v-else-if="isWipFgdStockInTpCancelPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInT100Cancel v-else-if="isWipFgdStockInT100CancelPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInE10IcdCancel v-else-if="isWipFgdStockInE10IcdCancelPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipScrapStockInE10Icd v-else-if="isWipScrapStockInE10IcdPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
