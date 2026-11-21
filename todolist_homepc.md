@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES409 設備狀態期間統計查詢（2026-11-21）
+
+公司端已依標準 Form、`wsRPT.LoadEQPRealTimeReport`／`LoadEQPRealTimeReport_Chamber` 與 Core `clsReport` 完成 ES409 DEV 假資料查詢頁和 [來源規格](docs/modules/EMS/設備狀態期間統計查詢.md)。DEV 模擬狀態／設備多選、區間裁切、分鐘向上取整，以及由 Chamber 子設備投影母設備欄位；不連家用 PostgreSQL、不呼叫正式 API。所需來源結構都已有 repository Oracle DDL/metadata 參考，沒有查 Oracle 使用者資料，沒有新增表。
+
+- [ ] Pull 最新 `main` 後比對 YMES live schema；依 ES409 規格提供登入及 FunctionKey 權限保護的唯讀查詢 API，參數化日期區間、設備／狀態清單與 Chamber 模式，限制最大查詢區間及設備範圍。
+- [ ] 查詢時合併 `TBLEMSEQUIPMENTSTATELOG` 與 `TBLEMSEQUIPMENTSTATE`，依起訖 overlap 篩選並裁切邊界；套用狀態名稱、區域映射及 Core `CEIL` 分鐘規則，穩定依區域／設備類型／設備／開始時間排序。
+- [ ] Chamber 模式核對 `TBLSMDAREARELATION` 與 `TBLEQPEQUIPMENTBASIS` 的母子關係及 `ChamberFlag`；保留母設備和 ChamberNo 顯示欄位。此功能只讀現有資料，無需專屬 migration 或寫入 API；不可照抄 Core 的 SQL 字串拼接。
+
 ## 公司端交接：ES102 設備狀態控制設定（2026-11-21）
 
 公司端已依標準 Form／Designer、`wsEQP.LoadStateControlType`／`UpdStateControlType`、`clsEQPStateControl` 完成三分頁、七個固定 ControlType／ControlNo、DEV 狀態選擇及 Apply／Confirm 模擬；沒有連 YMES PostgreSQL 或做正式 API。詳細 [ES102 規格](docs/modules/EMS/設備狀態控制設定.md)。既有 `database/reference/mestest_equipment_state_references_source_ddl.sql` 與 `mestest_equipment_state_references_create.sql` 已包含 `TBLEQPSTATECONTROL`，本項沒有新增 Oracle DDL。

@@ -89,6 +89,7 @@ import WipLabelPrint from './components/WipLabelPrint.vue'
 import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
 import EmsEquipmentStateControlSetting from './components/EmsEquipmentStateControlSetting.vue'
+import EmsEquipmentStateStatistics from './components/EmsEquipmentStateStatistics.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
 import WipOperatorLogin from './components/WipOperatorLogin.vue'
@@ -610,6 +611,10 @@ const fallbackMenuTree: MenuNode[] = [
       id: 'menu:EMS:EMS CONFIG', label: 'EMS設定', shortLabel: '設', children: [
         { id: 'function:EMS:EQP STATE CONTROL SETTING', label: '設備狀態控制設定', shortLabel: '控', functionNo: 'EQP STATE CONTROL SETTING', moduleNo: 'EMS' },
       ],
+    }, {
+      id: 'menu:EMS:ACC EXECUTION', label: '配件_執行', shortLabel: '配', children: [
+        { id: 'function:EMS:EQP STATE STATISTICS_EMS', label: '設備狀態期間統計查詢', shortLabel: '統計', functionNo: 'EQP STATE STATISTICS_EMS', moduleNo: 'EMS' },
+      ],
     }],
   },
 ]
@@ -621,6 +626,7 @@ const menuError = ref('')
 const menuRoutes: Record<string, string> = {
   'function:EMS:EQP STATE CHANGE': appBasePath + '/EMS/EquipmentStateChange',
   'function:EMS:EQP STATE CONTROL SETTING': appBasePath + '/EMS/EqpStateControlSet',
+  'function:EMS:EQP STATE STATISTICS_EMS': appBasePath + '/EMS/EquipmentStateStatistics',
   'function:WIP:RUN CARD': appBasePath + '/WIP/RunCard',
   'function:WIP:LOT SHEET PRINT': appBasePath + '/WIP/LotSheetPrint',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
@@ -1060,6 +1066,7 @@ const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
 const isEmsEquipmentStateChangePage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CHANGE')
 const isEmsEquipmentStateControlSettingPage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CONTROL SETTING')
+const isEmsEquipmentStateStatisticsPage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE STATISTICS_EMS')
 const isWipLotBasisCreatePage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT')
 const isWipLotBasisBatchPage = computed(() => activeMasterKey.value === 'function:WIP:CREATE LOT_BATCH')
 const isWipLotExecutionPage = computed(() => activeMasterKey.value === 'function:WIP:EXECUTE LOT')
@@ -2884,6 +2891,7 @@ async function signOut(): Promise<void> {
         <WipLotQuantityAdjust v-else-if="isWp907Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateChange v-else-if="isEmsEquipmentStateChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsEquipmentStateControlSetting v-else-if="isEmsEquipmentStateControlSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsEquipmentStateStatistics v-else-if="isEmsEquipmentStateStatisticsPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentFavorite v-else-if="isWipEquipmentFavoritePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />
