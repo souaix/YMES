@@ -1,5 +1,31 @@
 # 家裡電腦接手清單
 
+## 目前狀態：ET202操作驗收完成，Git／checkpoint同步中（2026-11-21）
+
+正式API176／497、Web276修正版4f、DB0063。Present API127 HTTP／600檢查及獨立44zero；新app-browser90raw／83成功、7測試觀察false原件及實際復驗；首輪Web76a的真focus／Escape缺陷在新Web實操作確認修復。五個項目全GUI建刪、三父API清理，最後獨立39範圍全0。正常auth／原生三層選單／兩尺寸／四個舊頁read smoke通過。詳[本輪QA](docs/qa/20261121-et202-os-items.md)與[ET202維護](docs/modules/ENT/外包項目設定.md)。下方早期pending與Web76a描述保留作歷史，本段優先。
+
+- [x] HOME完成ET202原生11欄建立、最小權限、API與正式UI及限定app-browser逐操作驗收；API／GUI／非GUI fixture與精確清理分列。
+- [x] HOME完成Auth A2正常還原／Demo／重載／原生menu與ET202焦點修正；未宣稱故障注入或舊偶發延遲唯一根因。
+- [ ] HOME完成正常fetch／merge、461來源綁定、feature／main同步及新checkpoint，保留Office同時開發成果；完成後再讀兩台TODO接下一項。
+- [ ] HOME接續WP109空Lot writer：原子取號、附件、Edit／Copy／Approve／Void；8份source候選已備妥，尚未整合／真PG／API／GUI驗收或部署。新權限需新native verifier／精確catalog allowlist，不沿用舊Serial app ACL0收據。
+- [ ] Office補最新Lot39與舊CREATE38的精確差異及原生來源；Oracle唯讀／UI契約由Office負責，HOME不猜建Lot表。其他已提供CREATE與原生規則不重複列缺件。
+- [ ] HOME後續補未自然重現的unknown-write／Auth故障UI、legacy duplicate raw alias與大量列縱捲；有明確工具限制才列待辦，繼續可做工作，不等人員登入。
+
+## 先前接手紀錄（保留原文）
+
+## HOME目前進行中：ET202（2026-11-21）
+
+API176／497653已上線，缺表完整測試40 HTTP／128檢查及獨立26zero通過；0063已完整備份、同交易建表／CRUD4 grant／native11／allow16及獨立post核對。現行schema catalog `2add5224b4e8b090191a8ef1b634ad99a58d7655a20004851507413bd3281c59`，Web276／76a已切換且獨立11項讀回通過，current-checkpoint33仍記錄前版0062／API502，尚未本版結案。首輪GUI有32成功／2真焦點缺陷／1恢復；三父已清、39範圍全0，正修picker查詢後焦點及Escape。詳[ET202 QA](docs/qa/20261121-et202-os-items.md)及[模組維護](docs/modules/ENT/外包項目設定.md)。下方原「0063未建」等描述為先前時點。
+
+- [x] API176相容部署、Process退用／硬刪原生流程真測；完整備份後建立tblentositem原生11欄及最小CRUD4權限，既有結構／服務保持。
+- [x] ET202 present API127 HTTP／600檢查、四次明列stamp-only fixture與八子／三父API清理，獨立44zero；Web276／public8真切換及獨立11項讀回。
+- [ ] 修正首輪GUI picker查詢後focusBody／Escape無效（真事件33／34保留），新Web加上已獨立source審查的Auth A2載入順序保護；新scope完整app-browser，精確清理後補MD、正常fetch／merge／push，再看Office新接手事項。
+- [ ] HOME修正登入還原／選單非同步狀態：source audit c98665a9…已確認auth/me尚待回應時Login／Demo會提前可按，以及loadMenuTree缺session／environment世代隔離、舊response可能覆寫新menu。先加明確還原中／失敗可重試與過期回應保護，下一版完整build／app-browser重載復驗；尚未證實為先前偶發事件唯一根因。工具做不到的個別操作列具體TODO後繼續，不等待使用者。
+- [ ] 下一WP109 writer空Lot分支、原子取號／附件／核准／作廢；非空Lot依原生來源與真provider接續。Lot39／舊38差異由Office補證，HOME可先做空Lot與API／DB。
+
+使用者離線期間已授權自行操作Demo與確認；只將工具確實無法完成之事項列待辦，不以無人登入停止。
+
+
 ## Office 8ff整合結案及main同步完成（2026-11-21）
 
 本輪已完成結案與main同步。current-checkpoint SHA `33bd353dd129962d2e2cf196aa5b628cdc4b176be1495e58972621f69dd78f58`，另一連線獨立raw下載／64個保護欄位／歷史與服務核對通過，回條SHA `49925286533ee240e7a1b8a5f58513059c69b8646dd185aec8cfb4a51edb1a3d`。原7d0完整raw備份、API與DB所有段落、WP109讀取版結案及history前綴保持。發行對應code X `7c5ba15af622fe4776fecfb9bddc96cabd250ee5`、status Y `23559909602900349e5bf6018a0e9027bf9d64c2`，均真452來源綁定／正常推送／直接ref核回；main已到Y，`mainSyncConfirmed=true/mainSyncPending=false`。本次後補文件提交不改此發行對應。八個WIP provider、global MES QA與偶發登入載入根因仍待辦。

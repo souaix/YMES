@@ -27,3 +27,20 @@ database/migrations/0001_authentication.sql 建立登入狀態與稽核事件表
 API 對外基底路徑為 `/YMES/API`；Nginx 將此路徑轉送給獨立 API 服務。API 透過部署環境或 Secret Manager 設定 ConnectionStrings__YMes、YMES_ALLOWED_ORIGINS、YMES_ENVIRONMENT、YMES_PATH_BASE、YMES_DATA_PROTECTION_PATH 與 AllowedHosts。正式環境的資料保護金鑰需持久化保存並限制檔案權限。不得將資料庫密碼、初始密碼或金鑰寫進版控。
 
 Web 的 public/environments.json 只放 API 位址，不放資料庫帳密。尚未部署隔離的測試 API 時，測試區位址保持空白，避免帳密送進正式資料庫；正式區預設選中。
+
+
+## Web登入還原與選單請求（2026-11-21修正版已上線）
+
+入口與選單由`web/src/App.vue`維護。Root已採用Auth A2候選，原frozen App與A1失敗來源保持；整合採用回條`635fca3745f14064878913294148df410c4c17933c35affb5d6b7a04c54a4943`。完整276份Web建置與Web4f部署已通過，獨立上線讀回 `ed9d4097942c58011c19bb1bd74382a7f34c7f9f46f2b958e4189d84c1f26cf0`；正常Demo、session restore、登出、deep reload與完整原生menu已在新GUI scope真驗，封存 `5bc4b35b9619830b7bbcaa4783e83214b750479ef41552658e8996ac95fa78ad`。API497／DB0063保持，見[本輪QA](qa/20261121-et202-os-items.md)。
+
+| 階段 | 顯示及互動 | 請求 |
+|---|---|---|
+| 還原中 | 短登入狀態提示；登入／Demo／環境切換暫不可用 | 設定檔→`/auth/me`，各15秒；有效session再載入menu |
+| 未登入 | 正式區預設、帳密與Demo；401視為正常未登入 | 使用者明確登入，不自動重送 |
+| 還原失敗 | 可見短錯誤與「重新確認登入狀態」 | 手動重試，舊請求失效 |
+| 已登入 | 原三層選單與空白Home／目前深連結 | menu20秒，失敗可手動「重試」 |
+| 登出中／失敗 | 登出與登入互斥；失敗保留原畫面並明示未確認 | 成功才清本機session；取消中的menu改為可重試 |
+
+`sessionEpoch`與環境／API base識別當代session，menu另有`menuRequestEpoch`；開始新登入、切環境、登出與unmount會使舊請求失效並取消。所有await後的commit、catch與finally核當代，避免舊menu或auth回應覆蓋新畫面。`boundedRequest`的15／20秒涵蓋fetch及JSON body，API URL仍經既有HTTPS／本機開發檢查。
+
+Auth A1來源審查另抓到「取消menu retry後登出失敗，menu卡loading且沒有重試」的可達缺陷；A2只在當代登出catch將loading轉error，恢復手動重試，不自動重送。A1 19項延遲回應mock、A2的503／network／timeout三條實函式檢查與獨立source／單路徑複核已通過；peer A2 `43dd3d1e22d7227c528415fe4426fcb08751be9bb679c87b1f288ff78d1836ef`。這些是本機來源／mock證據，不能當作正式站故障分支已GUI重現，也不斷言是前一輪偶發延遲的唯一根因。正常Demo、session reload、深連結與選單已真驗；故障注入與未知網路寫入UI仍未在正式站重現，不把mock當GUI，也不將本輪限定驗收當全域MES QA。

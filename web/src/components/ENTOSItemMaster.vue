@@ -1,413 +1,326 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import ActionConfirmationDialog from './ActionConfirmationDialog.vue'
+import { useActionConfirmation } from '../composables/useActionConfirmation'
+import { createEt202Service, editOsItem, copyOsItem, validateOsItemWrite, scalarLength, Et202Error,
+  type OsItemDto, type OsItemWrite, type ProcessOption } from '../services/et202'
 
-interface OsItem {
-  osItemNo: string
-  osItemName: string
-  planDays: number
-  processNo: string
-  returnType: number
-  description: string
-  creator: string | null
-  createDate: string | null
-  dataStamp: number | null
-  reviser: string | null
-  reviseDate: string | null
-}
-
-interface ProcessRow {
-  processNo: string
-  processVersion: string
-  processClass: number
-  issueState: number
-  description?: string
-  currentVersion?: boolean
-}
-
-type FormMode = 'add' | 'edit' | 'copy' | null
-type OsItemForm = Pick<OsItem, 'osItemNo' | 'osItemName' | 'planDays' | 'processNo' | 'returnType' | 'description'>
-
-const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { currentUserNo: '', developmentPreview: false })
 const emit = defineEmits<{ close: [] }>()
-const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
-const mockMode = computed(() => import.meta.env.DEV && props.developmentPreview)
-const storageKey = 'ymes-dev-mock:ent-os-item:v1'
-
-const seedRows: OsItem[] = [
-  { osItemNo: 'OS', osItemName: '開發用外包加工', planDays: 5, processNo: 'DEV-OUTSOURCE', returnType: 0, description: '僅供 Development 預覽', creator: 'DEV001', createDate: '2026-11-10T08:00:00+08:00', dataStamp: 1, reviser: 'DEV002', reviseDate: '2026-11-12T09:00:00+08:00' },
-  { osItemNo: 'PK', osItemName: '開發用包裝加工', planDays: 2, processNo: 'DEV-PACK', returnType: 1, description: '模擬回原製程的外包項目', creator: 'DEV001', createDate: '2026-11-11T08:00:00+08:00', dataStamp: 0, reviser: null, reviseDate: null },
-]
-const seedProcesses: ProcessRow[] = [
-  { processNo: 'DEV-OUTSOURCE', processVersion: '01', processClass: 3, issueState: 2, description: '開發用外包製程' },
-  { processNo: 'DEV-PACK', processVersion: '01', processClass: 3, issueState: 2, description: '開發用包裝製程' },
-  { processNo: 'DEV-INACTIVE', processVersion: '01', processClass: 3, issueState: 0, description: '未核准流程，不可選' },
-]
-
-const rows = ref<OsItem[]>([])
-const processes = ref<ProcessRow[]>([])
-const searchText = ref('')
-const processSearch = ref('')
-const selectedNos = ref<string[]>([])
-const activeNo = ref('')
-const selectionAnchorNo = ref('')
-const loading = ref(false)
-const busy = ref(false)
-const processLoading = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
-const formError = ref('')
-const processError = ref('')
-const formMode = ref<FormMode>(null)
-const processPickerOpen = ref(false)
-const form = ref<OsItemForm>(blankForm())
-const audit = ref({ creator: '', createDate: '', reviser: '', reviseDate: '' })
-const formDataStamp = ref<number | null>(null)
-
-function blankForm(): OsItemForm {
-  return { osItemNo: '', osItemName: '', planDays: 0, processNo: '', returnType: 0, description: '' }
-}
-
-const visibleRows = computed(() => {
-  const term = searchText.value.trim().toLocaleLowerCase()
-  return [...rows.value]
-    .filter(row => !term || row.osItemNo.toLocaleLowerCase().includes(term))
-    .sort((a, b) => a.osItemNo.localeCompare(b.osItemNo))
-})
-const activeRow = computed(() => rows.value.find(row => row.osItemNo === activeNo.value) ?? null)
+const devEnabled = computed(() => import.meta.env.DEV && props.developmentPreview === true)
+const devComponent = computed(() => devEnabled.value ? defineAsyncComponent(() => import('./ENTOSItemDevPreview.vue')) : null)
+type Mode = '' | 'add' | 'edit' | 'copy'
+interface Draft { osItemNo: string; osItemName: string; planDays: string; processNo: string; returnType: number; description: string | null }
+const rows = ref<OsItemDto[]>([]), query = ref(''), selected = ref<string[]>([]), active = ref(''), anchor = ref('')
+const loading = ref(false), rowsReady = ref(false), saving = ref(false), deleting = ref(false), uncertain = ref(false)
+const error = ref(''), notice = ref(''), mode = ref<Mode>(''), draft = ref<Draft>(blank())
+const source = ref<OsItemDto | null>(null), savedAudit = ref<OsItemDto | null>(null), original = ref('')
+const formLoading = ref(false), formReady = ref(false), formError = ref(''), formNotice = ref('')
+const pickerOpen = ref(false), processes = ref<ProcessOption[]>([]), processQuery = ref(''), processLoading = ref(false), processError = ref('')
+const editor = ref<HTMLElement | null>(null), picker = ref<HTMLElement | null>(null)
+const queryInput = ref<HTMLInputElement | null>(null), queryButton = ref<HTMLButtonElement | null>(null)
+const { confirmationMessage, requestConfirmation, resolveConfirmation } = useActionConfirmation()
+let disposed = false, listEpoch = 0, formEpoch = 0, processEpoch = 0
+let listAbort: AbortController | null = null, formAbort: AbortController | null = null, processAbort: AbortController | null = null
+let returnFocus: HTMLElement | null = null, pickerReturnFocus: HTMLElement | null = null
+const writing = computed(() => saving.value || deleting.value)
+const dirty = computed(() => JSON.stringify(draft.value) !== original.value)
+const blocked = computed(() => writing.value || loading.value || mode.value !== '' || confirmationMessage.value !== null)
+const single = computed(() => selected.value.length === 1 ? rows.value.find(row => row.osItemNo === selected.value[0]) : undefined)
+const allSelected = computed(() => rows.value.length > 0 && rows.value.every(row => selected.value.includes(row.osItemNo)))
+const title = computed(() => mode.value === 'edit' ? '修改外包項目' : mode.value === 'copy' ? '複製外包項目' : '新增外包項目')
+const auditRow = computed(() => mode.value === 'edit' || savedAudit.value?.osItemNo === draft.value.osItemNo ? savedAudit.value : null)
 const visibleProcesses = computed(() => {
-  const term = processSearch.value.trim().toLocaleLowerCase()
-  return processes.value
-    .filter(row => row.issueState === 2 && row.processClass === 3)
-    .filter(row => !term || row.processNo.toLocaleLowerCase().includes(term) || (row.description ?? '').toLocaleLowerCase().includes(term))
-    .sort((a, b) => a.processNo.localeCompare(b.processNo) || a.processVersion.localeCompare(b.processVersion))
+  const text = processQuery.value.toLowerCase()
+  return processes.value.filter(row => !text || row.processNo.toLowerCase().includes(text) || (row.description || '').toLowerCase().includes(text))
 })
-
-function apiUrl(path: string): string {
-  const base = props.apiBaseUrl.trim()
-  if (!base) throw new Error('目前環境尚未設定 API 位址。')
-  return new URL(path.replace(/^\/+/, ''), new URL(base.replace(/\/+$/, '') + '/', window.location.origin)).toString()
+const service = () => createEt202Service(props.apiBaseUrl, window.location.origin)
+const failure = (value: unknown): string => value instanceof Error ? value.message : '操作未完成，請重新查詢。'
+function blank(): Draft { return { osItemNo: '', osItemName: '', planDays: '0', processNo: '', returnType: 0, description: '' } }
+function adopt(body: OsItemWrite): void { draft.value = { ...body, planDays: String(body.planDays) }; original.value = JSON.stringify(draft.value) }
+function body(): OsItemWrite {
+  if (!/^\d+$/.test(draft.value.planDays)) throw new Error('預計天數必須為 0 到 999 的整數。')
+  return validateOsItemWrite({ ...draft.value, planDays: Number(draft.value.planDays) })
 }
-
-async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(apiUrl(path), { credentials: 'include', ...init })
-  if (response.status === 401) {
-    window.location.assign(appBase + '/')
-    throw new Error('登入狀態已逾期，請重新登入。')
-  }
-  if (!response.ok) {
-    const problem = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
-    if (response.status === 404) throw new Error('外包項目 API 尚未建立；請依 todolist_homepc.md 完成 ET202 API。')
-    throw new Error(problem?.detail || problem?.message || problem?.title || `API 回應錯誤 (${response.status})。`)
-  }
-  if (response.status === 204) return undefined as T
-  return await response.json() as T
-}
-
-function readMockRows(): OsItem[] {
-  try {
-    const value = window.localStorage.getItem(storageKey)
-    return value ? JSON.parse(value) as OsItem[] : structuredClone(seedRows)
-  } catch { return structuredClone(seedRows) }
-}
-function saveMockRows(value: OsItem[]): void { window.localStorage.setItem(storageKey, JSON.stringify(value)) }
-function formatDate(value: string | null): string {
-  if (!value) return ''
+function formatDate(value: string | null | undefined): string {
+  if (value == null) return ''
   const date = new Date(value)
-  return Number.isNaN(date.valueOf()) ? value : new Intl.DateTimeFormat('zh-TW', { dateStyle: 'short', timeStyle: 'medium', hour12: false }).format(date)
+  return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).format(date) : value
 }
-function returnTypeLabel(value: number): string { return value === 1 ? '回原製程' : '不回原製程' }
-function osItemPath(no: string): string { return `api/ent/os-items/${encodeURIComponent(no)}` }
-function selectRow(row: OsItem, event: MouseEvent): void {
-  const index = visibleRows.value.findIndex(item => item.osItemNo === row.osItemNo)
-  if (event.shiftKey && selectionAnchorNo.value) {
-    const anchorIndex = visibleRows.value.findIndex(item => item.osItemNo === selectionAnchorNo.value)
-    if (anchorIndex >= 0) {
-      const start = Math.min(anchorIndex, index)
-      const end = Math.max(anchorIndex, index)
-      selectedNos.value = visibleRows.value.slice(start, end + 1).map(item => item.osItemNo)
-    } else selectedNos.value = [row.osItemNo]
+function returnLabel(value: number): string { return value === 0 ? '不回原製程' : value === 1 ? '回原製程' : String(value) }
+function current(epoch: number): boolean { return !disposed && epoch === formEpoch && mode.value !== '' }
+function markFailure(value: unknown): string {
+  if (value instanceof Et202Error && value.unknownWrite) uncertain.value = true
+  return failure(value) + (uncertain.value ? ' 請先重新查詢核對，勿重複送出。' : '')
+}
+async function readRows(selectNo?: string): Promise<boolean> {
+  if (devEnabled.value || disposed) return false
+  const epoch = ++listEpoch; listAbort?.abort(); listAbort = new AbortController(); loading.value = true; rowsReady.value = false
+  selected.value = []; active.value = ''; anchor.value = ''; error.value = ''
+  try {
+    const result = await service().list(query.value, listAbort.signal)
+    if (disposed || epoch !== listEpoch || devEnabled.value) return false
+    rows.value = result; rowsReady.value = true
+    if (selectNo !== undefined && result.some(row => row.osItemNo === selectNo)) { selected.value = [selectNo]; active.value = selectNo; anchor.value = selectNo }
+    return true
+  } catch (value) {
+    if (!disposed && epoch === listEpoch) { rows.value = []; error.value = failure(value) }
+    return false
+  } finally { if (!disposed && epoch === listEpoch) loading.value = false }
+}
+async function queryRows(): Promise<void> {
+  if (devEnabled.value || writing.value || mode.value || confirmationMessage.value !== null) return
+  const wasUncertain = uncertain.value; notice.value = ''
+  if (await readRows()) {
+    uncertain.value = false
+    if (wasUncertain) notice.value = '已重新查詢，請核對上次操作的實際結果後再繼續。'
+  }
+}
+function selectRow(row: OsItemDto, event: MouseEvent | KeyboardEvent): void {
+  if (blocked.value || !rowsReady.value) return
+  if (event.shiftKey && anchor.value) {
+    const a = rows.value.findIndex(x => x.osItemNo === anchor.value), b = rows.value.indexOf(row)
+    selected.value = a >= 0 ? rows.value.slice(Math.min(a, b), Math.max(a, b) + 1).map(x => x.osItemNo) : [row.osItemNo]
   } else if (event.ctrlKey || event.metaKey) {
-    selectedNos.value = selectedNos.value.includes(row.osItemNo)
-      ? selectedNos.value.filter(no => no !== row.osItemNo)
-      : [...selectedNos.value, row.osItemNo]
-    selectionAnchorNo.value = row.osItemNo
-  } else {
-    selectedNos.value = [row.osItemNo]
-    selectionAnchorNo.value = row.osItemNo
+    selected.value = selected.value.includes(row.osItemNo) ? selected.value.filter(no => no !== row.osItemNo) : [...selected.value, row.osItemNo]
+    anchor.value = row.osItemNo
+  } else { selected.value = [row.osItemNo]; anchor.value = row.osItemNo }
+  active.value = selected.value.includes(row.osItemNo) ? row.osItemNo : selected.value[selected.value.length - 1] || ''
+}
+function toggleRow(row: OsItemDto, checked: boolean): void {
+  if (blocked.value || !rowsReady.value) return
+  selected.value = checked ? [...new Set([...selected.value, row.osItemNo])] : selected.value.filter(no => no !== row.osItemNo)
+  active.value = checked ? row.osItemNo : selected.value[selected.value.length - 1] || ''; anchor.value = row.osItemNo
+}
+function toggleAll(checked: boolean): void {
+  if (blocked.value || !rowsReady.value) return
+  selected.value = checked ? rows.value.map(row => row.osItemNo) : []; active.value = selected.value[0] || ''; anchor.value = active.value
+}
+function tryReturnFocus(target: HTMLElement | null | undefined): boolean {
+  if (!target?.isConnected || target.matches(':disabled') || target.closest('[inert],[hidden]') || target.getClientRects().length === 0) return false
+  if (!target.matches('button,input:not([type="hidden"]),textarea,select,a[href],[tabindex],[contenteditable="true"]')) return false
+  target.focus()
+  return document.activeElement === target
+}
+function restoreReturnFocus(target: HTMLElement | null): void {
+  if (disposed || tryReturnFocus(target)) return
+  if (mode.value) {
+    const field = editor.value?.querySelector<HTMLInputElement>(mode.value === 'edit' ? '[data-focus="edit"]' : '[data-focus="new"]')
+    if (!tryReturnFocus(field)) tryReturnFocus(editor.value)
+    return
   }
-  activeNo.value = row.osItemNo
+  if (!tryReturnFocus(queryInput.value)) tryReturnFocus(queryButton.value)
 }
-
-async function loadRows(): Promise<void> {
-  loading.value = true
-  errorMessage.value = ''
-  successMessage.value = ''
+function hasUsableDialogFocus(shell: HTMLElement): boolean {
+  const target = document.activeElement
+  return target instanceof HTMLElement && shell.contains(target) && target.isConnected && !target.matches(':disabled') && !target.closest('[inert],[hidden]') && target.getClientRects().length > 0
+    && target.matches('button,input:not([type="hidden"]),textarea,select,a[href],[tabindex],[contenteditable="true"]')
+}
+async function focusEditor(epoch = formEpoch, onlyIfLost = false): Promise<void> {
+  await nextTick()
+  const shell = editor.value
+  if (!current(epoch) || devEnabled.value || pickerOpen.value || confirmationMessage.value !== null || !shell?.isConnected) return
+  if (onlyIfLost && hasUsableDialogFocus(shell) && document.activeElement !== shell) return
+  const target = shell.querySelector<HTMLInputElement>(mode.value === 'edit' ? '[data-focus="edit"]' : '[data-focus="new"]')
+  if (!formReady.value || uncertain.value || !tryReturnFocus(target)) tryReturnFocus(shell)
+}
+async function restorePickerFocus(epoch: number, owner: number, target: HTMLElement | null): Promise<void> {
+  await nextTick()
+  const shell = picker.value
+  if (!current(owner) || devEnabled.value || epoch !== processEpoch || !pickerOpen.value || writing.value || confirmationMessage.value !== null || !shell?.isConnected) return
+  if (hasUsableDialogFocus(shell)) return
+  if (target && shell.contains(target) && tryReturnFocus(target)) return
+  if (!tryReturnFocus(shell.querySelector<HTMLInputElement>('[aria-label="流程編號查找條件"]'))) tryReturnFocus(shell)
+}
+async function openForm(next: Exclude<Mode, ''>): Promise<void> {
+  if (devEnabled.value || blocked.value || !rowsReady.value || uncertain.value || (next !== 'add' && !single.value)) return
+  const chosen = single.value; const epoch = ++formEpoch
+  formAbort?.abort(); formAbort = new AbortController(); returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  mode.value = next; formReady.value = false; formLoading.value = next !== 'add'; source.value = null; savedAudit.value = null
+  formError.value = ''; formNotice.value = ''; adopt({ osItemNo: '', osItemName: '', planDays: 0, processNo: '', returnType: 0, description: '' })
+  await nextTick(); editor.value?.focus()
+  if (next === 'add') { formReady.value = true; await focusEditor(epoch); return }
   try {
-    if (mockMode.value) {
-      rows.value = readMockRows()
-      if (!window.localStorage.getItem(storageKey)) saveMockRows(rows.value)
-    } else {
-      const query = new URLSearchParams()
-      if (searchText.value.trim()) query.set('osItemNo', searchText.value.trim())
-      rows.value = await requestJson<OsItem[]>(`api/ent/os-items${query.size ? `?${query.toString()}` : ''}`)
-    }
-    const visibleNos = new Set(visibleRows.value.map(row => row.osItemNo))
-    selectedNos.value = selectedNos.value.filter(no => visibleNos.has(no))
-    if (!visibleNos.has(activeNo.value)) {
-      activeNo.value = visibleRows.value[0]?.osItemNo ?? ''
-      selectedNos.value = activeNo.value ? [activeNo.value] : []
-    }
-  } catch (error) { errorMessage.value = error instanceof Error ? error.message : '外包項目資料載入失敗。' }
-  finally { loading.value = false }
+    const row = await service().get(chosen!.osItemNo, formAbort.signal)
+    if (!current(epoch)) return
+    if (row.osItemNo !== chosen!.osItemNo) throw new Error('資料身份已變更，請關閉後重新查詢。')
+    if (next === 'edit') { source.value = row; savedAudit.value = row; adopt(editOsItem(row)) }
+    else adopt(copyOsItem(row))
+    formReady.value = true
+  } catch (value) { if (current(epoch)) formError.value = failure(value) }
+  finally { if (current(epoch)) { formLoading.value = false; await focusEditor(epoch) } }
 }
-
-async function loadProcesses(): Promise<void> {
-  processLoading.value = true
-  processError.value = ''
+function dismissForm(): void {
+  ++formEpoch; formAbort?.abort(); closePicker(); mode.value = ''; formReady.value = false; source.value = null
+  void nextTick(() => restoreReturnFocus(returnFocus))
+}
+async function closeForm(): Promise<void> {
+  if (writing.value || confirmationMessage.value !== null) return
+  if (pickerOpen.value) { closePicker(); return }
+  const epoch = formEpoch
+  if (dirty.value && !await requestConfirmation('尚有未儲存內容，要放棄變更嗎？')) return
+  if (current(epoch)) dismissForm()
+}
+function closePage(): void {
+  if (writing.value || confirmationMessage.value !== null || mode.value) return
+  ++listEpoch; listAbort?.abort(); emit('close')
+}
+async function reconcile(): Promise<void> {
+  if (writing.value || confirmationMessage.value !== null) return
+  if (!await requestConfirmation('將關閉編輯並重新查詢，請核對上次操作的實際結果。')) return
+  if (disposed) return
+  dismissForm(); await queryRows()
+}
+async function save(closeAfter: boolean): Promise<void> {
+  if (devEnabled.value || !mode.value || writing.value || formLoading.value || !formReady.value || pickerOpen.value || confirmationMessage.value !== null || uncertain.value) return
+  if (mode.value === 'edit' && !dirty.value) { if (closeAfter) dismissForm(); return }
+  let request: OsItemWrite
+  try { request = body() } catch (value) { formError.value = failure(value); return }
+  const epoch = formEpoch, existing = source.value; formError.value = ''; formNotice.value = ''; saving.value = true
+  await nextTick(); editor.value?.focus()
+  let saved: OsItemDto
   try {
-    if (mockMode.value) processes.value = structuredClone(seedProcesses)
-    else processes.value = await requestJson<ProcessRow[]>('api/processes?issueState=2')
-  } catch (error) {
-    processes.value = []
-    processError.value = error instanceof Error ? error.message : '流程資料載入失敗。'
-  } finally { processLoading.value = false }
-}
-
-function clearAudit(): void { audit.value = { creator: '', createDate: '', reviser: '', reviseDate: '' } }
-function openForm(mode: Exclude<FormMode, null>): void {
-  const source = activeRow.value
-  if (mode !== 'add' && !source) { errorMessage.value = '請先選取一筆外包項目資料。'; return }
-  formError.value = ''
-  successMessage.value = ''
-  formMode.value = mode
-  formDataStamp.value = mode === 'edit' ? source?.dataStamp ?? 0 : null
-  if (mode === 'add') {
-    form.value = blankForm()
-    clearAudit()
-    audit.value.creator = props.currentUserNo || 'DEV001'
-    audit.value.createDate = formatDate(new Date().toISOString())
-  } else if (source) {
-    form.value = { osItemNo: source.osItemNo, osItemName: source.osItemName, planDays: source.planDays, processNo: source.processNo, returnType: source.returnType, description: source.description ?? '' }
-    audit.value = {
-      creator: mode === 'edit' ? source.creator ?? '' : props.currentUserNo || 'DEV001',
-      createDate: mode === 'edit' ? formatDate(source.createDate) : formatDate(new Date().toISOString()),
-      reviser: mode === 'edit' ? props.currentUserNo || source.reviser || '' : '',
-      reviseDate: mode === 'edit' ? formatDate(new Date().toISOString()) : '',
-    }
-    if (mode === 'copy') form.value.osItemNo = ''
+    if (mode.value === 'edit') {
+      if (!existing) throw new Error('未取得完整原始資料，請重新查詢。')
+      saved = await service().update(existing.osItemNo, request, existing.dataStamp)
+    } else saved = await service().create(request) // Add/Copy Apply deliberately stays Add/Copy.
+  } catch (value) {
+    if (current(epoch)) formError.value = markFailure(value)
+    saving.value = false; if (current(epoch)) await focusEditor(epoch, true); return
   }
-  processPickerOpen.value = false
-  processSearch.value = ''
-  void loadProcesses()
+  if (!current(epoch)) { saving.value = false; return }
+  savedAudit.value = saved; if (mode.value === 'edit') source.value = saved
+  adopt(editOsItem(saved)); formNotice.value = '資料已儲存。'; notice.value = '資料已儲存。'
+  if (closeAfter) dismissForm()
+  await readRows(saved.osItemNo) // Read failure does not reclassify an acknowledged save or replay it.
+  saving.value = false
+  if (mode.value) await focusEditor(epoch, true)
+  else await nextTick(() => restoreReturnFocus(returnFocus))
 }
-
-function validateForm(): string {
-  form.value.osItemNo = form.value.osItemNo.trim().toLocaleUpperCase()
-  form.value.osItemName = form.value.osItemName.trim()
-  form.value.processNo = form.value.processNo.trim()
-  if (!form.value.osItemNo) return '外包項目編號為必填。'
-  if (form.value.osItemNo.length > 2) return '外包項目編號最多 2 個字元。'
-  if (!form.value.osItemName) return '外包項目名稱為必填。'
-  if (form.value.osItemName.length > 50) return '外包項目名稱最多 50 個字元。'
-  if (!Number.isInteger(Number(form.value.planDays)) || Number(form.value.planDays) < 0 || Number(form.value.planDays) > 999) return '預計天數必須是 0 到 999 的整數。'
-  if (!form.value.processNo) return '流程編號為必填。'
-  if (form.value.processNo.length > 25) return '流程編號最多 25 個字元。'
-  if (processLoading.value) return '流程資料載入中，請稍候再儲存。'
-  if (!processes.value.some(row => row.issueState === 2 && row.processClass === 3 && row.processNo.toLocaleUpperCase() === form.value.processNo.toLocaleUpperCase())) return '流程編號必須是已簽核的外包類流程。'
-  if (form.value.description.length > 255) return '說明最多 255 個字元。'
-  return ''
-}
-
-async function saveForm(closeAfterSave: boolean): Promise<void> {
-  if (!formMode.value || busy.value) return
-  const validation = validateForm()
-  if (validation) { formError.value = validation; return }
-  busy.value = true
-  formError.value = ''
-  errorMessage.value = ''
-  const now = new Date().toISOString()
-  try {
-    const body = {
-      osItemNo: form.value.osItemNo,
-      osItemName: form.value.osItemName,
-      planDays: Number(form.value.planDays),
-      processNo: form.value.processNo,
-      returnType: Number(form.value.returnType),
-      description: form.value.description,
-      ...(formMode.value === 'edit' ? { dataStamp: formDataStamp.value } : {}),
-    }
-    let saved: OsItem
-    if (mockMode.value) {
-      const current = readMockRows()
-      if (formMode.value !== 'edit' && current.some(row => row.osItemNo.toLocaleUpperCase() === body.osItemNo.toLocaleUpperCase())) throw new Error('外包項目編號已存在。')
-      const previous = current.find(row => row.osItemNo === body.osItemNo)
-      saved = {
-        ...body,
-        creator: formMode.value === 'edit' ? previous?.creator ?? null : props.currentUserNo || 'DEV001',
-        createDate: formMode.value === 'edit' ? previous?.createDate ?? null : now,
-        reviser: formMode.value === 'edit' ? props.currentUserNo || 'DEV001' : null,
-        reviseDate: formMode.value === 'edit' ? now : null,
-        dataStamp: formMode.value === 'edit' ? (previous?.dataStamp ?? 0) + 1 : 0,
-      }
-      const next = formMode.value === 'edit' ? current.map(row => row.osItemNo === body.osItemNo ? saved : row) : [...current, saved]
-      saveMockRows(next)
-      rows.value = next
-    } else if (formMode.value === 'edit') {
-      saved = await requestJson<OsItem>(`${osItemPath(body.osItemNo)}?dataStamp=${encodeURIComponent(String(formDataStamp.value ?? 0))}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      rows.value = rows.value.map(row => row.osItemNo === saved.osItemNo ? saved : row)
-    } else {
-      saved = await requestJson<OsItem>('api/ent/os-items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      rows.value = [...rows.value, saved].sort((a, b) => a.osItemNo.localeCompare(b.osItemNo))
-    }
-    activeNo.value = saved.osItemNo
-    selectedNos.value = [saved.osItemNo]
-    successMessage.value = '資料已儲存。'
-    if (formMode.value === 'edit') {
-      formDataStamp.value = saved.dataStamp ?? (formDataStamp.value ?? 0) + 1
-      audit.value.reviser = props.currentUserNo || audit.value.reviser
-      audit.value.reviseDate = formatDate(saved.reviseDate ?? now)
-    } else {
-      audit.value.creator = props.currentUserNo || 'DEV001'
-      audit.value.createDate = formatDate(saved.createDate ?? now)
-    }
-    if (closeAfterSave) formMode.value = null
-  } catch (error) { formError.value = error instanceof Error ? error.message : '外包項目儲存失敗。' }
-  finally { busy.value = false }
-}
-
 async function deleteSelected(): Promise<void> {
-  if (!selectedNos.value.length || busy.value) return
-  const toDelete = [...selectedNos.value]
-  if (!window.confirm(`確定刪除選取的 ${toDelete.length} 筆外包項目？`)) return
-  busy.value = true
-  errorMessage.value = ''
-  successMessage.value = ''
-  let completed = 0
+  if (devEnabled.value || blocked.value || !rowsReady.value || uncertain.value || !selected.value.length) return
+  const queue = rows.value.filter(row => selected.value.includes(row.osItemNo)).map(row => ({ ...row }))
+  if (!queue.length || !await requestConfirmation(`確定刪除選取的 ${queue.length} 筆外包項目？`)) return
+  if (disposed || writing.value) return
+  deleting.value = true; error.value = ''; notice.value = ''; let completed = 0; let caught: unknown
+  for (const row of queue) {
+    try {
+      const result = await service().remove(row.osItemNo, row.dataStamp)
+      if (disposed) { deleting.value = false; return }
+      completed += result.deletedCount; rows.value = rows.value.filter(x => x.osItemNo !== row.osItemNo)
+      selected.value = selected.value.filter(no => no !== row.osItemNo)
+    } catch (value) { caught = value; break }
+  }
+  if (!disposed) {
+    notice.value = `已刪除 ${completed}/${queue.length} 筆。`
+    if (caught) error.value = markFailure(caught)
+    const problem = error.value
+    if (!uncertain.value) { await readRows(); if (problem) error.value = problem }
+    active.value = ''; anchor.value = ''; deleting.value = false
+  }
+}
+async function openPicker(): Promise<void> {
+  if (!mode.value || writing.value || !formReady.value || uncertain.value || confirmationMessage.value !== null || pickerOpen.value) return
+  pickerReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  pickerOpen.value = true; processQuery.value = ''; processes.value = []; processError.value = ''
+  await nextTick(); picker.value?.focus(); await loadProcesses()
+}
+async function loadProcesses(): Promise<void> {
+  if (!pickerOpen.value || writing.value || devEnabled.value) return
+  const target = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  const epoch = ++processEpoch, owner = formEpoch; processAbort?.abort(); processAbort = new AbortController(); processLoading.value = true; processError.value = ''
   try {
-    if (mockMode.value) {
-      const remove = new Set(toDelete)
-      rows.value = readMockRows().filter(row => !remove.has(row.osItemNo))
-      saveMockRows(rows.value)
-      completed = toDelete.length
-    } else {
-      for (const no of toDelete) {
-        const item = rows.value.find(row => row.osItemNo === no)
-        await requestJson<void>(`${osItemPath(no)}?dataStamp=${encodeURIComponent(String(item?.dataStamp ?? 0))}`, { method: 'DELETE' })
-        completed += 1
-      }
-      rows.value = rows.value.filter(row => !toDelete.includes(row.osItemNo))
-    }
-    selectedNos.value = []
-    if (toDelete.includes(activeNo.value)) activeNo.value = visibleRows.value[0]?.osItemNo ?? ''
-    successMessage.value = `已刪除 ${completed} 筆資料。`
-  } catch (error) {
-    const message = `${error instanceof Error ? error.message : '外包項目刪除失敗。'}（已完成 ${completed}/${toDelete.length} 筆）`
-    if (completed > 0) await loadRows()
-    errorMessage.value = message
-  } finally { busy.value = false }
+    const result = await service().processes(processAbort.signal)
+    if (!disposed && epoch === processEpoch && owner === formEpoch && pickerOpen.value) processes.value = result
+  } catch (value) { if (!disposed && epoch === processEpoch && pickerOpen.value) processError.value = failure(value) }
+  finally { if (!disposed && epoch === processEpoch) { processLoading.value = false; await restorePickerFocus(epoch, owner, target) } }
 }
-
-function chooseProcess(row: ProcessRow): void {
-  form.value.processNo = row.processNo
-  processPickerOpen.value = false
+function closePicker(): void {
+  ++processEpoch; processAbort?.abort(); pickerOpen.value = false; processLoading.value = false
+  void nextTick(() => { if (!disposed && mode.value) restoreReturnFocus(pickerReturnFocus) })
 }
-
-onMounted(() => { void loadRows() })
+function chooseProcess(row: ProcessOption): void {
+  if (!pickerOpen.value || processLoading.value || writing.value || uncertain.value || row.issueState !== 2 || row.processClass !== 3) return
+  if (row.processNo.replace(/^ +| +$/g, '') === '' || scalarLength(row.processNo) > 30 || /[\u0000-\u001F\u007F-\u009F]/.test(row.processNo)) { processError.value = '此流程編號不符合外包項目的必填及 30 字元限制。'; return }
+  draft.value.processNo = row.processNo; closePicker()
+}
+function trapTab(event: KeyboardEvent): void {
+  const shell = event.currentTarget as HTMLElement
+  const controls = Array.from(shell.querySelectorAll<HTMLElement>('button,input,textarea,select,[tabindex="0"]')).filter(x => !x.matches(':disabled') && !x.closest('[inert]') && x.getClientRects().length > 0)
+  const first = controls[0], last = controls[controls.length - 1]
+  if (!first) { event.preventDefault(); shell.focus(); return }
+  if (!shell.contains(document.activeElement) || document.activeElement === shell || event.shiftKey && document.activeElement === first || !event.shiftKey && document.activeElement === last) {
+    event.preventDefault(); (event.shiftKey ? last : first)?.focus()
+  }
+}
+onMounted(() => { if (!devEnabled.value) void queryRows() })
+onBeforeUnmount(() => { disposed = true; ++listEpoch; ++formEpoch; ++processEpoch; listAbort?.abort(); formAbort?.abort(); processAbort?.abort() })
 </script>
 
 <template>
-  <section class="ositem-master">
-    <header class="page-heading"><h1>外包項目設定</h1></header>
-
-    <form class="query-strip" @submit.prevent="loadRows">
-      <label for="ositem-query">外包項目編號</label>
-      <input id="ositem-query" v-model="searchText" maxlength="2" @input="searchText = searchText.toLocaleUpperCase()" />
-      <span class="query-percent">%</span>
-      <button class="btn" type="submit" :disabled="loading">查詢</button>
-      <span v-if="loading" class="muted">載入中…</span>
-    </form>
-
-    <div class="work-area">
-      <div class="grid-panel">
+  <component v-if="devEnabled && devComponent" :is="devComponent" :api-base-url="apiBaseUrl" :current-user-no="currentUserNo" :development-preview="true" @close="emit('close')" />
+  <section v-else class="ositem-formal">
+    <div class="page-layer" :inert="mode!=='' || writing || confirmationMessage!==null">
+      <form class="query-strip" novalidate @submit.prevent="queryRows">
+        <label for="et202-query">外包項目編號</label><input ref="queryInput" id="et202-query" v-model="query" class="kd-input" aria-label="外包項目編號查詢" :disabled="writing"><span>%</span>
+        <button ref="queryButton" type="submit" class="btn" :disabled="loading || writing">查詢</button><span v-if="loading" role="status">載入中…</span>
+      </form>
+      <div class="work-area"><div class="grid-panel">
         <div class="toolbar">
-          <button class="btn btn-primary" type="button" @click="openForm('add')">新增(A)</button>
-          <button class="btn" type="button" :disabled="!activeRow" @click="openForm('edit')">修改(E)</button>
-          <button class="btn" type="button" :disabled="!selectedNos.length || busy" @click="deleteSelected">刪除(D)</button>
-          <button class="btn" type="button" :disabled="!activeRow" @click="openForm('copy')">複製(C)</button>
+          <button class="btn primary" type="button" :disabled="blocked || uncertain || !rowsReady" @click="openForm('add')">新增(A)</button>
+          <button class="btn" type="button" :disabled="blocked || uncertain || !single" @click="openForm('edit')">修改(E)</button>
+          <button class="btn" type="button" :disabled="blocked || uncertain || !selected.length || !rowsReady" @click="deleteSelected">刪除(D)</button>
+          <button class="btn" type="button" :disabled="blocked || uncertain || !single" @click="openForm('copy')">複製(C)</button>
         </div>
-        <div class="table-scroll">
-          <table class="data-grid">
-            <thead>
-              <tr>
-                <th class="row-selector" aria-label="選取列"></th>
-                <th>外包項目編號</th><th>外包項目名稱</th><th class="numeric">預計天數</th><th>流程編號</th><th>退回原流程</th><th>說明</th><th>建立人</th><th>建立日期</th><th>修改人</th><th>修改日期</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in visibleRows" :key="row.osItemNo" :class="{ active: row.osItemNo === activeNo, selected: selectedNos.includes(row.osItemNo) }" @click="selectRow(row, $event)">
-                <td class="row-selector">{{ row.osItemNo === activeNo ? '▶' : '' }}</td>
-                <td>{{ row.osItemNo }}</td><td>{{ row.osItemName }}</td><td class="numeric">{{ row.planDays }}</td><td>{{ row.processNo }}</td><td>{{ returnTypeLabel(row.returnType) }}</td><td class="description-cell">{{ row.description }}</td><td>{{ row.creator }}</td><td>{{ formatDate(row.createDate) }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.reviseDate) }}</td>
-              </tr>
-              <tr v-if="!loading && visibleRows.length === 0"><td class="empty" colspan="11">沒有符合條件的資料</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <footer class="grid-footer">資料總筆數 {{ visibleRows.length }}</footer>
-      </div>
-      <aside class="side-actions">
-        <button class="btn close-btn" type="button" @click="emit('close')">關閉(X)</button>
-      </aside>
+        <div class="table-scroll"><table class="data-grid"><thead><tr>
+          <th class="selector"><input type="checkbox" aria-label="選取所有外包項目" :checked="allSelected" :indeterminate="selected.length>0 && !allSelected" :disabled="blocked || !rowsReady || !rows.length" @change="toggleAll(($event.target as HTMLInputElement).checked)"></th>
+          <th>外包項目編號</th><th>外包項目名稱</th><th>預計天數</th><th>流程編號</th><th>退回原流程</th><th>說明</th><th>建立人</th><th>建立日期</th><th>修改人</th><th>修改日期</th>
+        </tr></thead><tbody>
+          <tr v-for="row in rows" :key="row.osItemNo" :class="{selected:selected.includes(row.osItemNo),active:active===row.osItemNo}" :aria-selected="selected.includes(row.osItemNo)" :tabindex="blocked || !rowsReady ? -1 : 0" @click="selectRow(row,$event)" @keydown.enter.prevent="selectRow(row,$event)">
+            <td class="selector" @click.stop><input type="checkbox" :checked="selected.includes(row.osItemNo)" :disabled="blocked || !rowsReady" :aria-label="'選取外包項目 '+row.osItemNo" @change="toggleRow(row,($event.target as HTMLInputElement).checked)"></td>
+            <td>{{ row.osItemNo }}</td><td>{{ row.osItemName }}</td><td class="numeric">{{ row.planDays }}</td><td>{{ row.processNo }}</td><td>{{ returnLabel(row.returnType) }}</td><td class="description">{{ row.description }}</td><td>{{ row.creator }}</td><td>{{ formatDate(row.createDate) }}</td><td>{{ row.reviser }}</td><td>{{ formatDate(row.reviseDate) }}</td>
+          </tr>
+          <tr v-if="!rows.length"><td colspan="11" class="empty">{{ loading?'載入中…':rowsReady?'沒有符合條件的資料。':'尚未取得資料，請重新查詢。' }}</td></tr>
+        </tbody></table></div><footer class="grid-footer">資料總筆數 {{ rows.length }}</footer>
+      </div><aside class="side-actions"><button type="button" class="btn" :disabled="writing || confirmationMessage!==null" @click="closePage">關閉(X)</button></aside></div>
+      <p v-if="error" class="notice error" role="alert">{{ error }}</p><p v-if="notice" class="notice success" role="status">{{ notice }}</p>
     </div>
-
-    <p v-if="errorMessage" class="notice error" role="alert">{{ errorMessage }}</p>
-    <p v-if="successMessage" class="notice success" role="status">{{ successMessage }}</p>
-    <p v-if="mockMode" class="preview-note">Development 假資料預覽；不會寫入 MES 或 Production 資料庫。</p>
-
-    <div v-if="formMode" class="modal-backdrop" @click.self="formMode = null">
-      <section class="editor-modal" role="dialog" aria-modal="true" :aria-label="formMode === 'edit' ? '修改外包項目' : formMode === 'copy' ? '複製外包項目' : '新增外包項目'">
-        <header class="modal-heading"><h2>外包項目資料（{{ formMode === 'edit' ? '修改' : formMode === 'copy' ? '複製' : '新增' }}）</h2><button type="button" class="icon-close" aria-label="關閉" @click="formMode = null">×</button></header>
-        <fieldset class="editor-fields">
-          <legend>外包項目資料</legend>
-          <div class="field-row"><label for="ositem-no">外包項目編號</label><input id="ositem-no" v-model="form.osItemNo" maxlength="2" :disabled="formMode === 'edit'" class="kd-input" @blur="form.osItemNo = form.osItemNo.toLocaleUpperCase()" /></div>
-          <div class="field-row"><label for="ositem-name">外包項目名稱</label><input id="ositem-name" v-model="form.osItemName" maxlength="50" class="kd-input" /></div>
-          <div class="field-row"><label for="ositem-days">預計天數</label><input id="ositem-days" v-model.number="form.planDays" type="number" min="0" max="999" step="1" class="kd-input short-input" /><span class="field-unit">天</span></div>
-          <div class="field-row"><label for="ositem-process">流程編號</label><input id="ositem-process" v-model="form.processNo" maxlength="25" class="kd-input" /><button class="btn lookup-btn" type="button" aria-label="查找流程" @click="processPickerOpen = true">…</button></div>
-          <div class="field-row"><span class="field-label">退回原流程</span><div class="radio-options"><label><input v-model.number="form.returnType" type="radio" :value="0" /> 不回原流程</label><label><input v-model.number="form.returnType" type="radio" :value="1" /> 回原流程</label></div></div>
-          <div class="field-row description-row"><label for="ositem-description">說明</label><textarea id="ositem-description" v-model="form.description" maxlength="255" rows="5"></textarea></div>
-        </fieldset>
-        <fieldset class="audit-fields">
-          <legend>建立／修改資訊</legend>
-          <label>建立人<input :value="audit.creator" readonly /></label><label>建立日期<input :value="audit.createDate" readonly /></label>
-          <label>修改人<input :value="audit.reviser" readonly /></label><label>修改日期<input :value="audit.reviseDate" readonly /></label>
-        </fieldset>
-        <p v-if="formError" class="notice error" role="alert">{{ formError }}</p>
-        <footer class="modal-actions"><button class="btn btn-primary" type="button" :disabled="busy" @click="saveForm(true)">確定</button><button class="btn" type="button" @click="formMode = null">關閉</button><button class="btn" type="button" :disabled="busy" @click="saveForm(false)">套用</button></footer>
-      </section>
-    </div>
-
-    <div v-if="processPickerOpen" class="modal-backdrop nested-backdrop" @click.self="processPickerOpen = false">
-      <section class="picker-modal" role="dialog" aria-modal="true" aria-label="選擇外包流程">
-        <header class="modal-heading"><h2>選擇流程（已簽核／外包類）</h2><button type="button" class="icon-close" aria-label="關閉" @click="processPickerOpen = false">×</button></header>
-        <div class="picker-search"><label for="process-query">流程編號</label><input id="process-query" v-model="processSearch" /><button class="btn" type="button" @click="loadProcesses">查詢</button></div>
-        <p v-if="processError" class="notice error">{{ processError }}</p>
-        <div v-if="processLoading" class="picker-empty">流程資料載入中…</div>
-        <div v-else class="table-scroll picker-table-scroll"><table class="data-grid"><thead><tr><th>流程編號</th><th>版本</th><th>說明</th></tr></thead><tbody>
-          <tr v-for="row in visibleProcesses" :key="`${row.processNo}/${row.processVersion}`" tabindex="0" @click="chooseProcess(row)" @keydown.enter="chooseProcess(row)"><td>{{ row.processNo }}</td><td>{{ row.processVersion }}</td><td>{{ row.description }}</td></tr>
-          <tr v-if="!visibleProcesses.length"><td colspan="3" class="empty">沒有可選的已簽核外包流程</td></tr>
-        </tbody></table></div>
-        <footer class="modal-actions"><button class="btn" type="button" @click="processPickerOpen = false">關閉</button></footer>
-      </section>
-    </div>
+    <Teleport to="body">
+      <div v-if="mode" class="et202-shade" @click.self="closeForm"><section ref="editor" class="et202-dialog" role="dialog" aria-modal="true" :aria-label="title" tabindex="-1" :inert="pickerOpen || confirmationMessage!==null" @keydown.esc.stop.prevent="closeForm" @keydown.tab="trapTab">
+        <div :inert="saving || formLoading"><header class="modal-heading"><h2>{{ title }}</h2><button class="btn" type="button" aria-label="關閉外包項目編輯" :disabled="writing" @click="closeForm">×</button></header>
+          <form novalidate @submit.prevent="save(true)"><fieldset class="editor-fields" :disabled="writing || !formReady || uncertain"><legend>外包項目資料</legend>
+            <label>外包項目編號<input v-model="draft.osItemNo" class="kd-input" :readonly="mode==='edit'" aria-label="外包項目編號" data-focus="new"></label>
+            <label>外包項目名稱<input v-model="draft.osItemName" class="kd-input" aria-label="外包項目名稱" data-focus="edit"></label>
+            <label>預計天數<span><input v-model="draft.planDays" class="kd-input days" inputmode="numeric" aria-label="預計天數"> 天</span></label>
+            <label>流程編號<span class="process-input"><input v-model="draft.processNo" class="kd-input" aria-label="流程編號"><button class="btn" type="button" aria-label="查找流程" @click="openPicker">…</button></span></label>
+            <div class="radio-row"><span>退回原流程</span><label><input v-model="draft.returnType" type="radio" :value="0">不回原流程</label><label><input v-model="draft.returnType" type="radio" :value="1">回原流程</label></div>
+            <label>說明<textarea v-model="draft.description" class="kd-input" rows="4" aria-label="說明"></textarea></label>
+          </fieldset><fieldset class="audit-fields"><legend>建立／修改資訊</legend>
+            <label>建立人<input :value="auditRow?.creator ?? ''" readonly aria-label="外包項目建立人"></label><label>建立日期<input :value="formatDate(auditRow?.createDate)" readonly aria-label="外包項目建立日期"></label>
+            <label>修改人<input :value="auditRow?.reviser ?? ''" readonly aria-label="外包項目修改人"></label><label>修改日期<input :value="formatDate(auditRow?.reviseDate)" readonly aria-label="外包項目修改日期"></label>
+          </fieldset>
+          <p v-if="formError" class="notice error" role="alert">{{ formError }}</p><p v-if="formNotice" class="notice success" role="status">{{ formNotice }}</p>
+          <footer class="modal-actions"><button class="btn" type="button" :disabled="writing" @click="closeForm">關閉</button><button v-if="uncertain" class="btn" type="button" :disabled="writing" @click="reconcile">重新查詢核對</button>
+            <button class="btn" type="button" :disabled="writing || !formReady || uncertain || mode==='edit' && !dirty" @click="save(false)">套用</button><button class="btn primary" type="submit" :disabled="writing || !formReady || uncertain">確定</button></footer>
+          </form></div><p v-if="saving || formLoading" class="notice" role="status">{{ saving?'儲存中，請稍候…':'載入原始資料中…' }}</p>
+      </section></div>
+      <div v-if="pickerOpen" class="et202-shade picker-shade" @click.self="closePicker"><section ref="picker" class="et202-dialog picker-dialog" role="dialog" aria-modal="true" aria-label="選擇外包流程" tabindex="-1" @keydown.esc.stop.prevent="closePicker" @keydown.tab="trapTab">
+        <header class="modal-heading"><h2>選擇流程（已簽核／外包類）</h2><button type="button" class="btn" aria-label="關閉流程查找" @click="closePicker">×</button></header>
+        <form class="picker-search" @submit.prevent="loadProcesses"><label>流程編號<input v-model="processQuery" class="kd-input" aria-label="流程編號查找條件"></label><button class="btn" type="submit" :disabled="processLoading">查詢</button></form>
+        <p v-if="processError" class="notice error" role="alert">{{ processError }}</p>
+        <div class="table-scroll picker-scroll"><table class="data-grid"><thead><tr><th>流程編號</th><th>版本</th><th>說明</th></tr></thead><tbody>
+          <tr v-for="row in visibleProcesses" :key="JSON.stringify([row.processNo,row.processVersion])" :tabindex="processLoading?-1:0" @click="chooseProcess(row)" @keydown.enter.prevent="chooseProcess(row)"><td>{{ row.processNo }}</td><td>{{ row.processVersion }}</td><td>{{ row.description }}</td></tr>
+          <tr v-if="!visibleProcesses.length"><td colspan="3" class="empty">{{ processLoading?'流程資料載入中…':'沒有可選的已簽核外包流程。' }}</td></tr>
+        </tbody></table></div><footer class="modal-actions"><button class="btn" type="button" @click="closePicker">關閉</button></footer>
+      </section></div>
+    </Teleport>
+    <ActionConfirmationDialog :message="confirmationMessage" @resolve="resolveConfirmation" />
   </section>
 </template>
 
 <style scoped>
-.ositem-master{height:100%;min-height:0;display:flex;flex-direction:column;background:#fff;color:#333;font-size:14px}.page-heading{padding:8px 14px;border-bottom:1px solid #d5d5d5;background:#f5f3ed}.page-heading h1{margin:0;font-size:20px;font-weight:500}.query-strip{min-height:48px;display:flex;align-items:center;gap:8px;padding:6px 14px;border-bottom:1px solid #d4d4d4}.query-strip label,.picker-search label{font-weight:500}.query-strip input,.picker-search input{height:29px;width:190px;border:1px solid #aaa;padding:3px 7px}.query-percent{margin-left:-4px}.work-area{display:flex;flex:1;min-height:0;gap:10px;padding:7px}.grid-panel{display:flex;flex:1;min-width:0;min-height:0;flex-direction:column;border:1px solid #c7c7c7}.toolbar{display:flex;flex-wrap:wrap;gap:5px;padding:6px;border-bottom:1px solid #ccc}.btn{min-height:30px;padding:4px 12px;border:1px solid #b8b8b8;border-radius:3px;background:linear-gradient(#fff,#f1f1f1);color:#333;white-space:nowrap}.btn:hover:not(:disabled){border-color:#888;background:#eee}.btn:disabled{opacity:.52}.btn-primary{border-color:#ed9c21;background:#ffa928;color:#fff}.btn-primary:hover:not(:disabled){background:#ed991f}.table-scroll{flex:1;min-height:0;overflow:auto}.data-grid{width:100%;border-collapse:collapse;white-space:nowrap}.data-grid th{position:sticky;top:0;z-index:1;background:#48a3df;color:#fff;font-weight:500;text-align:left}.data-grid th,.data-grid td{height:29px;padding:4px 7px;border:1px solid #d2d2d2}.data-grid tbody tr{cursor:pointer}.data-grid tbody tr:hover{background:#fff4ca}.data-grid tbody tr.active{background:#ffe699}.data-grid tbody tr.active:hover{background:#ffdf7a}.check-cell{width:28px;text-align:center}.check-cell input{accent-color:#f4a21c}.numeric{text-align:right}.description-cell{max-width:300px;overflow:hidden;text-overflow:ellipsis}.empty{text-align:center;color:#777;padding:18px!important}.grid-footer{min-height:25px;padding:4px 8px;color:#666;border-top:1px solid #ccc}.side-actions{width:112px;display:flex;flex-direction:column;align-items:stretch;gap:7px;padding-top:42px}.close-btn{margin-top:auto}.notice{margin:4px 12px;padding:7px 10px;border-radius:3px}.error{color:#9b1c1c;background:#fff1f0;border:1px solid #e6b3ae}.success{color:#32633a;background:#f0f8ef;border:1px solid #b9d6b7}.muted,.preview-note{color:#777}.preview-note{margin:2px 14px 7px;font-size:12px}.modal-backdrop{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.28)}.editor-modal,.picker-modal{width:min(540px,96vw);max-height:94vh;overflow:auto;border:1px solid #aaa;border-radius:4px;background:#fff;box-shadow:0 5px 24px #0004}.modal-heading{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #ccc;background:#f5f3ed}.modal-heading h2{margin:0;font-size:17px;font-weight:500}.icon-close{border:0;background:transparent;font-size:25px;line-height:1;color:#555}.editor-fields{margin:12px 14px 7px;padding:10px 12px 12px;border:1px solid #bbb}.editor-fields legend,.audit-fields legend{padding:0 5px;color:#555}.field-row{display:grid;grid-template-columns:105px minmax(150px,1fr) 30px;align-items:center;gap:8px;min-height:35px}.field-row>label,.field-label{text-align:right}.kd-input{height:27px;width:100%;border:1px solid #999;border-radius:0;background:#fff0ad;padding:3px 6px;color:#222}.kd-input:disabled{background:#eee;color:#777}.short-input{width:100px}.field-unit{margin-left:-18px}.lookup-btn{grid-column:3}.radio-options{grid-column:2/4;display:flex;gap:18px}.radio-options input{accent-color:#f1a021;vertical-align:middle}.description-row{align-items:start;padding-top:5px}.description-row textarea{grid-column:2/4;min-height:100px;resize:vertical;border:1px solid #999;padding:5px}.audit-fields{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;margin:8px 14px;padding:10px 12px;border:1px solid #bbb}.audit-fields label{display:flex;align-items:center;gap:7px;white-space:nowrap}.audit-fields input{min-width:0;width:100%;height:25px;border:1px solid #bbb;background:#eee;padding:3px 5px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:10px 14px}.nested-backdrop{z-index:50}.picker-modal{width:min(680px,96vw)}.picker-search{display:flex;align-items:center;gap:8px;padding:10px 14px}.picker-table-scroll{max-height:50vh}.picker-table-scroll tbody tr{cursor:pointer}.picker-empty{padding:20px;text-align:center;color:#777}
-@media(max-width:760px){.work-area{padding:5px}.side-actions{width:86px}.audit-fields{grid-template-columns:1fr}.query-strip{flex-wrap:wrap}.field-row{grid-template-columns:95px minmax(100px,1fr) 30px}.editor-modal{max-height:98vh}}
-</style>
-
-<style scoped>
-.side-actions{width:88px}
-.row-selector{width:24px;padding:2px!important;text-align:center;color:#333}
-.data-grid tbody tr.selected:not(.active){background:#fff1c3}
+:global(.framework-main:has(> .ositem-formal)){display:flex;flex-direction:column;height:100dvh;min-height:0;overflow:hidden}
+:global(.framework-main:has(> .ositem-formal) > .framework-header){flex-shrink:0}
+.ositem-formal.framework-content{flex:1;height:auto}
+.ositem-formal{height:100%;max-height:100%;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:#fff;color:#30302e;font:14px/1.4 "Segoe UI","Microsoft JhengHei",sans-serif}.page-layer{display:flex;flex:1;min-height:0;flex-direction:column}.query-strip{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px;border-bottom:1px solid #d5d1c8}.query-strip input{width:170px}.work-area{display:flex;flex:1;min-height:0;gap:10px;padding:8px}.grid-panel{display:flex;flex:1;min-width:0;min-height:0;flex-direction:column;border:1px solid #c8c4bb}.toolbar{display:flex;gap:5px;flex-wrap:wrap;padding:6px;border-bottom:1px solid #ccc7bc}.btn{min-height:30px;border:1px solid #bdb9b0;border-radius:3px;background:#faf9f6;color:#30302e;padding:4px 12px;white-space:nowrap;cursor:pointer;font:inherit}.btn:hover:not(:disabled){background:#eeece6}.btn:disabled{opacity:.5;cursor:default}.primary{background:#3e3d39;color:#fff;border-color:#3e3d39}.primary:hover:not(:disabled){background:#53514c}.table-scroll{flex:1;min-height:0;overflow:auto}.data-grid{border-collapse:separate;border-spacing:0;white-space:nowrap;min-width:1280px;width:100%}.data-grid th,.data-grid td{height:29px;padding:4px 7px;border-right:1px solid #d2cec4;border-bottom:1px solid #d2cec4;text-align:left}.data-grid th{position:sticky;top:0;z-index:1;background:#ece9e1;color:#30302e;font-weight:500}.data-grid tbody tr{cursor:pointer}.data-grid tbody tr:hover{background:#faf5dd}.data-grid tbody tr.selected{background:#fff0bb}.data-grid tbody tr.active{background:#f6e6a7}.data-grid .selector{width:28px;text-align:center}.selector input{accent-color:#61594c}.numeric{text-align:right!important}.description{min-width:250px;max-width:400px;white-space:pre-wrap;overflow-wrap:anywhere}.empty{text-align:center!important;color:#777;padding:18px!important}.grid-footer{padding:4px 8px;color:#666;border-top:1px solid #c8c4bb}.side-actions{display:flex;flex-direction:column;justify-content:flex-end;width:88px}.notice{margin:6px 12px;padding:7px 9px;overflow-wrap:anywhere}.error{color:#8e2525;background:#fff2ef;border:1px solid #d9b8b0}.success{color:#365b39;background:#f0f6ec;border:1px solid #c6d6bd}.kd-input{box-sizing:border-box;min-width:0;height:29px;border:1px solid #aaa69c;padding:3px 6px;background:#fff2bf;color:#282825;border-radius:0;font:inherit}.kd-input[readonly]{background:#ecebe7}.et202-shade{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:14px;background:#19181666;color:#30302e;font:14px/1.4 "Segoe UI","Microsoft JhengHei",sans-serif}.et202-dialog{box-sizing:border-box;width:min(560px,96vw);max-height:94vh;overflow:auto;outline:none;border:1px solid #aaa69c;background:#fff;box-shadow:0 6px 28px #0003}.modal-heading{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #c8c4bb;background:#f1eee6}.modal-heading h2{margin:0;font-size:17px;font-weight:500}.editor-fields{display:flex;flex-direction:column;gap:8px;margin:10px 12px;padding:10px 12px;border:1px solid #c8c4bb}.editor-fields>label{display:grid;grid-template-columns:110px minmax(0,1fr);align-items:center;gap:9px}.editor-fields legend,.audit-fields legend{padding:0 5px;color:#666}.days{width:90px}.process-input{display:flex;gap:5px}.process-input input{flex:1;min-width:0}.radio-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.radio-row>span{width:107px}.radio-row label{display:flex;gap:4px;align-items:center}.radio-row input{accent-color:#61594c}.editor-fields textarea{height:auto;min-height:92px;resize:vertical}.audit-fields{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;margin:8px 12px;padding:10px;border:1px solid #c8c4bb}.audit-fields label{display:flex;gap:7px;align-items:center;white-space:nowrap}.audit-fields input{box-sizing:border-box;min-width:0;width:100%;height:27px;background:#eeede9;border:1px solid #c4c0b7;padding:3px 5px;color:#444}.modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;padding:9px 12px}.picker-shade{z-index:950}.picker-dialog{width:min(700px,96vw)}.picker-search{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px}.picker-search label{display:flex;gap:8px;align-items:center}.picker-scroll{max-height:50vh;min-height:90px}.picker-scroll .data-grid{min-width:560px}.btn:focus-visible,input:focus-visible,textarea:focus-visible,tr:focus-visible{outline:2px solid #82734f;outline-offset:1px}@media(max-width:650px){.work-area{gap:5px;padding:5px}.side-actions{width:78px}.audit-fields{grid-template-columns:1fr}.editor-fields>label{grid-template-columns:90px minmax(0,1fr)}.et202-shade{padding:7px}}
 </style>

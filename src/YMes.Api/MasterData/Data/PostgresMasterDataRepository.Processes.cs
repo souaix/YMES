@@ -185,6 +185,7 @@ public sealed partial class PostgresMasterDataRepository
         var next=(number+1).ToString(new string('0',Math.Max(2,old.ProcessVersion.Length)));
         if(next.Length>3) throw BadRequest("流程版本已達資料表可用長度，無法建立下一版。");
         using var connection=_dataSource.OpenConnection(); using var transaction=connection.BeginTransaction();
+        YMes.Api.Enterprise.Et202ProcessReferenceGuard.LockProcessNamespace(connection, transaction, old.ProcessNo, (status, message) => new MasterDataRuleException(status, message));
         using(var command=new NpgsqlCommand(@"
             INSERT INTO ""YMES"".tblprsprocessbasis(processno,processclass,psno,processtype,issuestate,creator,createdate,description,tuningprocess,processversion,curversion,partialtype,datastamp)
             SELECT processno,processclass,psno,processtype,0,@actor,now(),description,tuningprocess,@next,0,partialtype,1
@@ -206,6 +207,7 @@ public sealed partial class PostgresMasterDataRepository
     {
         ValidateActor(actorUserNo); var current=GetProcess(no,version); if(current.IssueState!=2) throw Conflict("只有 ACTIVE 流程版本可以設為目前版本。"); EnsureStamp(current.DataStamp,dataStamp);
         using var connection=_dataSource.OpenConnection(); using var transaction=connection.BeginTransaction();
+        YMes.Api.Enterprise.Et202ProcessReferenceGuard.LockProcessNamespace(connection, transaction, current.ProcessNo, (status, message) => new MasterDataRuleException(status, message));
         using(var command=new NpgsqlCommand(@"UPDATE ""YMES"".tblprsprocessbasis SET curversion=0,datastamp=COALESCE(datastamp,0)+1,reviser=@actor,revisedate=now() WHERE lower(processno)=lower(@no) AND curversion=1 AND lower(processversion)<>lower(@version);",connection,transaction))
         {AddVarchar(command,"actor",actorUserNo.Trim());AddVarchar(command,"no",current.ProcessNo);AddVarchar(command,"version",current.ProcessVersion);command.ExecuteNonQuery();}
         using(var command=new NpgsqlCommand(@"UPDATE ""YMES"".tblprsprocessbasis SET curversion=1,datastamp=COALESCE(datastamp,0)+1,reviser=@actor,revisedate=now() WHERE lower(processno)=lower(@no) AND lower(processversion)=lower(@version) AND issuestate=2 AND COALESCE(datastamp,0)=@stamp;",connection,transaction))
@@ -216,6 +218,9 @@ public sealed partial class PostgresMasterDataRepository
     public void DeleteProcess(string no,string version,int issueState,int dataStamp,string actorUserNo)
     {
         ValidateActor(actorUserNo); using var connection=_dataSource.OpenConnection(); using var transaction=connection.BeginTransaction();
+        // ET202 writers use the existing PRS identifier mutex before Process
+        // SHARE locks; deletion takes the same namespace before parent UPDATE.
+        YMes.Api.Enterprise.Et202ProcessReferenceGuard.LockProcessNamespace(connection, transaction, no, (status, message) => new MasterDataRuleException(status, message));
         var current=GetProcessForUpdate(connection,transaction,no,version); EnsureRemoval(current.IssueState,issueState,current.DataStamp,dataStamp);
         if(current.IssueState==2)
         {
@@ -224,10 +229,22 @@ public sealed partial class PostgresMasterDataRepository
         }
         else
         {
+            if (current.IssueState is not (0 or -1)) throw Conflict("只有 UNFROZEN0 或 UNUSED-1 流程可實體刪除；未知狀態資料已保留。");
+            try
+            {
+                var osItemsPresent = YMes.Api.Enterprise.Et202ProcessReferenceGuard.EnsureOptional(
+                    connection, transaction, () => new MasterDataRuleException(503, "外包項目原生結構尚未確認，暫停流程實體刪除。"));
+                if (YMes.Api.Enterprise.Et202ProcessReferenceGuard.HasReferences(connection, transaction, current.ProcessNo, osItemsPresent))
+                    throw Conflict("流程仍被外包項目引用，不能物理刪除；已核准流程仍可依既有規則退用。");
+            }
+            catch (NpgsqlException)
+            {
+                throw new MasterDataRuleException(503, "無法核對外包項目的流程引用，請確認資料表與 processno 讀取權限。");
+            }
             using(var dependent=new NpgsqlCommand(@"SELECT EXISTS(SELECT 1 FROM ""YMES"".ym_product_process WHERE lower(processno)=lower(@no) AND (process_version_selector='*' OR lower(process_version_selector)=lower(@version)));",connection,transaction))
             {AddVarchar(dependent,"no",current.ProcessNo);AddVarchar(dependent,"version",current.ProcessVersion);if((bool)(dependent.ExecuteScalar()??false))throw Conflict("流程仍被產品流程使用，不能物理刪除。");}
-            using var command=new NpgsqlCommand(@"DELETE FROM ""YMES"".tblprsprocessbasis WHERE processno=@no AND processversion=@version AND issuestate=0 AND COALESCE(datastamp,0)=@stamp;",connection,transaction);
-            AddVarchar(command,"no",current.ProcessNo);AddVarchar(command,"version",current.ProcessVersion);AddNumeric(command,"stamp",dataStamp);ExecuteOptimisticUpdate(command,"流程資料已變更，請重新載入後再操作。");
+            using var command=new NpgsqlCommand(@"DELETE FROM ""YMES"".tblprsprocessbasis WHERE processno=@no AND processversion=@version AND issuestate=@state AND issuestate IN (0,-1) AND COALESCE(datastamp,0)=@stamp;",connection,transaction);
+            AddVarchar(command,"no",current.ProcessNo);AddVarchar(command,"version",current.ProcessVersion);AddNumeric(command,"state",current.IssueState);AddNumeric(command,"stamp",dataStamp);ExecuteOptimisticUpdate(command,"流程資料已變更，請重新載入後再操作。");
         }
         transaction.Commit();
     }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import MenuTree from './components/MenuTree.vue'
 import MenuIcon from './components/MenuIcon.vue'
 import EquipmentMaster from './components/EquipmentMaster.vue'
@@ -1006,6 +1006,10 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const currentUser = ref<AuthResponse | null>(null)
 const configLoaded = ref(false)
+const restoringSession = ref(true)
+const restoreRetryAvailable = ref(false)
+const configurationError = ref('')
+const authBlocked = computed(() => busy.value || restoringSession.value || !configLoaded.value)
 const selectedMenuKey = ref<string | null>(null)
 const expandedMenuKeys = ref<string[]>([])
 const sidebarOpen = ref(true)
@@ -1398,34 +1402,30 @@ function findMenuNodeByRoute(items: MenuNode[], route: string): MenuNode | null 
 }
 
 async function loadMenuTree(): Promise<void> {
+  if (appDisposed || screen.value !== 'signed-in' || !currentUser.value) return
+  invalidateMenuRequests()
+  const context = authContext()
+  const requestEpoch = menuRequestEpoch
+  const current = () => isCurrentAuth(context) && requestEpoch === menuRequestEpoch && screen.value === 'signed-in'
   menuSource.value = 'loading'
   menuError.value = ''
-  let url: string | null
   try {
-    url = apiUrl('/api/navigation/menu-tree')
-  } catch (error) {
-    url = null
-    menuError.value = error instanceof Error ? error.message : '主選單環境設定錯誤。'
-  }
-  if (!url) {
-    menuTree.value = import.meta.env.DEV ? fallbackMenuTree : []
-    menuSource.value = import.meta.env.DEV ? 'fallback' : 'error'
-    if (!menuError.value) menuError.value = '尚未設定主選單 API 位址。'
-    syncRouteState()
-    return
-  }
-  try {
-    const response = await fetch(url, { credentials: 'include', cache: 'no-store' })
-    if (!response.ok) throw new Error(`主選單 API 回應錯誤 (${response.status})。`)
-    const apiMenuTree = mapMenuTree(await response.json() as MenuTreeApiResponse)
-    menuTree.value = import.meta.env.DEV ? addDevelopmentOperationIndustryFunctions(addDevelopmentInspectionMachineFunctions(addDevelopmentEquipmentFunctions(apiMenuTree))) : apiMenuTree
+    const url = apiUrl('/api/navigation/menu-tree')
+    if (!url) throw new Error('尚未設定主選單 API 位址。')
+    const tree = await boundedRequest(url, { credentials: 'include', cache: 'no-store' }, async (response) => {
+      if (!response.ok) throw new Error(`主選單 API 回應錯誤 (${response.status})。`)
+      return mapMenuTree(await response.json() as MenuTreeApiResponse)
+    }, '主選單載入', menuControllers, 20000)
+    if (!current()) return
+    menuTree.value = import.meta.env.DEV ? addDevelopmentOperationIndustryFunctions(addDevelopmentInspectionMachineFunctions(addDevelopmentEquipmentFunctions(tree))) : tree
     menuSource.value = 'api'
   } catch (error) {
-    menuError.value = error instanceof Error ? error.message : '主選單載入失敗。'
+    if (!current()) return
+    menuError.value = error instanceof Error ? error.message : '主選單載入失敗，請重試。'
     menuTree.value = import.meta.env.DEV ? fallbackMenuTree : []
     menuSource.value = import.meta.env.DEV ? 'fallback' : 'error'
   }
-  syncRouteState()
+  if (current()) syncRouteState()
 }
 
 function syncRouteState(): void {
@@ -1534,57 +1534,150 @@ const selectedEnvironmentLabel = computed(
 
 const passwordLength = computed(() => Array.from(nextPassword.value).length)
 
-onMounted(async () => {
+type AuthContext = { epoch: number; environment: EnvironmentKey; apiBaseUrl: string }
+let sessionEpoch = 0
+let menuRequestEpoch = 0
+let appDisposed = false
+let applyingConfiguration = false
+const authControllers = new Set<AbortController>()
+const menuControllers = new Set<AbortController>()
+
+function invalidateMenuRequests(): void {
+  menuRequestEpoch += 1
+  for (const controller of menuControllers) controller.abort()
+  menuControllers.clear()
+}
+
+function invalidateAuthRequests(): void {
+  sessionEpoch += 1
+  for (const controller of authControllers) controller.abort()
+  authControllers.clear()
+  invalidateMenuRequests()
+}
+
+function authContext(): AuthContext {
+  return { epoch: sessionEpoch, environment: selectedEnvironment.value, apiBaseUrl: selectedEnvironmentConfig.value.apiBaseUrl }
+}
+
+function isCurrentAuth(context: AuthContext): boolean {
+  return !appDisposed && context.epoch === sessionEpoch && context.environment === selectedEnvironment.value && context.apiBaseUrl === selectedEnvironmentConfig.value.apiBaseUrl
+}
+
+async function boundedRequest<T>(url: string, init: RequestInit, consume: (response: Response) => Promise<T>, role: string,
+  controllers = authControllers, timeoutMs = 15000): Promise<T> {
+  const controller = new AbortController()
+  controllers.add(controller)
+  let timedOut = false
+  const timer = window.setTimeout(() => { timedOut = true; controller.abort() }, timeoutMs)
+  try {
+    return await consume(await fetch(url, { ...init, signal: controller.signal }))
+  } catch (error) {
+    if (timedOut) throw new Error(`${role}逾時，請重試。`)
+    throw error
+  } finally {
+    window.clearTimeout(timer)
+    controllers.delete(controller)
+  }
+}
+
+function resetLocalSession(): void {
+  currentUser.value = null
+  username.value = ''
+  password.value = ''
+  nextPassword.value = ''
+  confirmPassword.value = ''
+  selectedMenuKey.value = null
+  expandedMenuKeys.value = []
+  menuTree.value = import.meta.env.DEV ? fallbackMenuTree : []
+  menuSource.value = import.meta.env.DEV ? 'fallback' : 'error'
+  menuError.value = ''
+  screen.value = 'login'
+}
+
+watch([selectedEnvironment, () => selectedEnvironmentConfig.value.apiBaseUrl], () => {
+  if (appDisposed || !configLoaded.value || applyingConfiguration) return
+  invalidateAuthRequests()
+  resetLocalSession()
+  busy.value = false
+  restoringSession.value = false
+  errorMessage.value = ''
+  successMessage.value = ''
+  restoreRetryAvailable.value = true
+}, { flush: 'sync' })
+
+async function restoreSession(reloadConfiguration = false): Promise<void> {
+  invalidateAuthRequests()
+  const epoch = sessionEpoch
+  restoringSession.value = true
+  restoreRetryAvailable.value = false
+  errorMessage.value = ''
+  successMessage.value = ''
+  try {
+    if (!configLoaded.value || reloadConfiguration) {
+      try {
+        const config = await boundedRequest(`${import.meta.env.BASE_URL}environments.json`, { cache: 'no-store' }, async (response) => {
+          if (!response.ok) throw new Error(`環境設定載入失敗 (${response.status})。`)
+          return await response.json() as Partial<RuntimeConfig>
+        }, '環境設定載入')
+        if (appDisposed || epoch !== sessionEpoch) return
+        applyingConfiguration = true
+        try {
+          for (const key of environmentKeys) {
+            const entry = config[key]
+            if (entry && typeof entry.apiBaseUrl === 'string') runtimeConfig.value[key] = { label: environmentLabels[key], apiBaseUrl: entry.apiBaseUrl.trim() }
+          }
+          configurationError.value = ''
+        } finally { applyingConfiguration = false }
+      } catch (error) {
+        if (appDisposed || epoch !== sessionEpoch) return
+        configurationError.value = error instanceof Error ? error.message : '環境設定載入失敗，可重試。'
+        // Keep the original safe defaults; never substitute a remote credential target.
+      }
+      if (appDisposed || epoch !== sessionEpoch) return
+      applyingConfiguration = true
+      try { if (localDemoApi) runtimeConfig.value.development.apiBaseUrl = '/YMES/API' }
+      finally { applyingConfiguration = false }
+      configLoaded.value = true
+    }
+    const context = authContext()
+    const url = apiUrl('/auth/me')
+    if (!url) throw new Error(selectedEnvironmentLabel.value + '尚未設定登入服務位址。')
+    const user = await boundedRequest(url, { credentials: 'include', cache: 'no-store' }, async (response) => {
+      if (response.status === 401) return null
+      if (!response.ok) throw new Error(`登入狀態確認失敗 (${response.status})，可重試。`)
+      return await response.json() as AuthResponse
+    }, '登入狀態確認')
+    if (!isCurrentAuth(context)) return
+    if (user && !user.mustChangePassword) {
+      currentUser.value = user
+      screen.value = 'signed-in'
+      await loadMenuTree()
+    }
+  } catch (error) {
+    if (appDisposed || epoch !== sessionEpoch) return
+    errorMessage.value = error instanceof Error ? error.message : '無法確認登入狀態，請重試。'
+    restoreRetryAvailable.value = true
+  } finally {
+    if (!appDisposed && epoch === sessionEpoch) restoringSession.value = false
+  }
+}
+
+async function retrySessionRestore(): Promise<void> {
+  if (authBlocked.value || appDisposed || screen.value !== 'login') return
+  await restoreSession(true)
+}
+
+onMounted(() => {
   syncRouteState()
   window.addEventListener('popstate', syncRouteState)
-  try {
-    const response = await fetch(`${import.meta.env.BASE_URL}environments.json`, { cache: 'no-store' })
-    if (response.ok) {
-      const config = (await response.json()) as Partial<RuntimeConfig>
-      for (const key of environmentKeys) {
-        const entry = config[key]
-        if (entry && typeof entry.apiBaseUrl === 'string') {
-          runtimeConfig.value[key] = {
-            label: environmentLabels[key],
-            apiBaseUrl: entry.apiBaseUrl.trim(),
-          }
-        }
-      }
-    }
-  } catch {
-    // Keep the safe defaults. A missing environment file must never redirect credentials.
-  } finally {
-    configLoaded.value = true
-  }
-
-  if (localDemoApi) {
-    runtimeConfig.value.development.apiBaseUrl = '/YMES/API'
-  }
-
-  let sessionUrl: string | null
-  try {
-    sessionUrl = apiUrl('/auth/me')
-  } catch {
-    return
-  }
-  if (!sessionUrl) return
-
-  try {
-    const response = await fetch(sessionUrl, { credentials: 'include' })
-    if (response.ok) {
-      const user = (await response.json()) as AuthResponse
-      if (!user.mustChangePassword) {
-        currentUser.value = user
-        screen.value = 'signed-in'
-        await loadMenuTree()
-      }
-    }
-  } catch {
-    // Stay on the login screen when there is no reachable session.
-  }
+  void restoreSession()
 })
 
-onBeforeUnmount(() => window.removeEventListener('popstate', syncRouteState))
+onBeforeUnmount(() => {
+  appDisposed = true
+  invalidateAuthRequests()
+  window.removeEventListener('popstate', syncRouteState)
+})
 
 function apiUrl(path: string): string | null {
   const baseUrl = selectedEnvironmentConfig.value.apiBaseUrl.trim()
@@ -1617,49 +1710,28 @@ async function readMessage(response: Response): Promise<string> {
 }
 
 async function submitLogin(): Promise<void> {
+  if (authBlocked.value || appDisposed || screen.value !== 'login') return
   errorMessage.value = ''
   successMessage.value = ''
-
-  if (!configLoaded.value) {
-    errorMessage.value = '環境設定載入中，請稍候。'
-    return
-  }
   if (!username.value.trim() || !password.value) {
     errorMessage.value = '請輸入帳號和密碼。'
     return
   }
-
   let url: string | null
-  try {
-    url = apiUrl('/auth/login')
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '登入環境設定錯誤。'
-    return
-  }
-
-  if (!url) {
-    errorMessage.value = selectedEnvironmentLabel.value + '尚未設定登入服務位址；帳號密碼未送出。'
-    return
-  }
-
+  try { url = apiUrl('/auth/login') }
+  catch (error) { errorMessage.value = error instanceof Error ? error.message : '登入環境設定錯誤。'; return }
+  if (!url) { errorMessage.value = selectedEnvironmentLabel.value + '尚未設定登入服務位址；帳號密碼未送出。'; return }
+  invalidateAuthRequests()
+  const context = authContext()
+  const credentials = { username: username.value.trim(), password: password.value }
   busy.value = true
+  restoreRetryAvailable.value = false
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: username.value.trim(),
-        password: password.value,
-      }),
-    })
-
-    if (!response.ok) {
-      errorMessage.value = await readMessage(response)
-      return
-    }
-
-    const result = (await response.json()) as AuthResponse
+    const result = await boundedRequest(url, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) }, async (response) => {
+      if (!response.ok) throw new Error(await readMessage(response))
+      return await response.json() as AuthResponse
+    }, '登入驗證')
+    if (!isCurrentAuth(context)) return
     currentUser.value = result
     if (result.mustChangePassword) {
       screen.value = 'change-password'
@@ -1669,14 +1741,15 @@ async function submitLogin(): Promise<void> {
       password.value = ''
       void loadMenuTree()
     }
-  } catch {
-    errorMessage.value = selectedEnvironmentLabel.value + '登入服務目前無法連線。'
+  } catch (error) {
+    if (isCurrentAuth(context)) errorMessage.value = error instanceof Error ? error.message : selectedEnvironmentLabel.value + '登入服務目前無法連線。'
   } finally {
-    busy.value = false
+    if (isCurrentAuth(context)) busy.value = false
   }
 }
 
 async function submitDemoLogin(): Promise<void> {
+  if (authBlocked.value || appDisposed || screen.value !== 'login') return
   selectedEnvironment.value = localDemoApi ? 'development' : 'production'
   username.value = 'ymes'
   password.value = '1234'
@@ -1684,50 +1757,25 @@ async function submitDemoLogin(): Promise<void> {
 }
 
 async function submitPasswordChange(): Promise<void> {
+  if (authBlocked.value || appDisposed || screen.value !== 'change-password') return
   errorMessage.value = ''
   successMessage.value = ''
-
-  if (passwordLength.value < 4) {
-    errorMessage.value = '新密碼至少需要 4 個字元。'
-    return
-  }
-  if (passwordLength.value > 128) {
-    errorMessage.value = '新密碼最多可輸入 128 個字元。'
-    return
-  }
-  if (nextPassword.value !== confirmPassword.value) {
-    errorMessage.value = '兩次輸入的新密碼不一致。'
-    return
-  }
-
+  if (passwordLength.value < 4) { errorMessage.value = '新密碼至少需要 4 個字元。'; return }
+  if (passwordLength.value > 128) { errorMessage.value = '新密碼最多可輸入 128 個字元。'; return }
+  if (nextPassword.value !== confirmPassword.value) { errorMessage.value = '兩次輸入的新密碼不一致。'; return }
   let url: string | null
-  try {
-    url = apiUrl('/auth/change-password')
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '登入環境設定錯誤。'
-    return
-  }
-  if (!url) {
-    errorMessage.value = selectedEnvironmentLabel.value + '尚未設定登入服務位址。'
-    return
-  }
-
+  try { url = apiUrl('/auth/change-password') }
+  catch (error) { errorMessage.value = error instanceof Error ? error.message : '登入環境設定錯誤。'; return }
+  if (!url) { errorMessage.value = selectedEnvironmentLabel.value + '尚未設定登入服務位址。'; return }
+  invalidateAuthRequests()
+  const context = authContext()
+  const body = JSON.stringify({ currentPassword: password.value, newPassword: nextPassword.value })
   busy.value = true
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        currentPassword: password.value,
-        newPassword: nextPassword.value,
-      }),
-    })
-    if (!response.ok) {
-      errorMessage.value = await readMessage(response)
-      return
-    }
-
+    await boundedRequest(url, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body }, async (response) => {
+      if (!response.ok) throw new Error(await readMessage(response))
+    }, '密碼更新')
+    if (!isCurrentAuth(context)) return
     password.value = ''
     nextPassword.value = ''
     confirmPassword.value = ''
@@ -1735,40 +1783,44 @@ async function submitPasswordChange(): Promise<void> {
     screen.value = 'signed-in'
     successMessage.value = '密碼已更新。'
     void loadMenuTree()
-  } catch {
-    errorMessage.value = selectedEnvironmentLabel.value + '登入服務目前無法連線。'
+  } catch (error) {
+    if (isCurrentAuth(context)) errorMessage.value = error instanceof Error ? error.message : selectedEnvironmentLabel.value + '登入服務目前無法連線。'
   } finally {
-    busy.value = false
+    if (isCurrentAuth(context)) busy.value = false
   }
 }
 
 async function signOut(): Promise<void> {
+  if (busy.value || restoringSession.value || appDisposed || screen.value !== 'signed-in') return
   let url: string | null
-  try {
-    url = apiUrl('/auth/logout')
-  } catch {
-    url = null
-  }
-  if (url) {
-    try {
-      await fetch(url, { method: 'POST', credentials: 'include' })
-    } catch {
-      // Clear the local screen even if the server cannot be reached.
-    }
-  }
-  currentUser.value = null
-  username.value = ''
-  password.value = ''
-  nextPassword.value = ''
-  confirmPassword.value = ''
+  try { url = apiUrl('/auth/logout') }
+  catch (error) { errorMessage.value = error instanceof Error ? error.message : '登出環境設定錯誤。'; return }
+  if (!url) { errorMessage.value = '尚未設定登出服務位址，登出未確認。'; return }
+  invalidateAuthRequests()
+  const context = authContext()
+  busy.value = true
   errorMessage.value = ''
   successMessage.value = ''
-  selectedMenuKey.value = null
-  menuTree.value = fallbackMenuTree
-  menuSource.value = 'fallback'
-  menuError.value = ''
-  screen.value = 'login'
+  try {
+    await boundedRequest(url, { method: 'POST', credentials: 'include', cache: 'no-store' }, async (response) => {
+      if (!response.ok) throw new Error(`登出未確認 (${response.status})，請再按登出。`)
+    }, '登出')
+    if (!isCurrentAuth(context)) return
+    resetLocalSession()
+    restoreRetryAvailable.value = false
+  } catch (error) {
+    if (isCurrentAuth(context)) {
+      errorMessage.value = error instanceof Error ? error.message : '登出未確認，請再按登出。'
+      if (menuSource.value === 'loading') {
+        menuSource.value = 'error'
+        menuError.value = '選單載入已取消，請重試。'
+      }
+    }
+  } finally {
+    if (isCurrentAuth(context)) busy.value = false
+  }
 }
+
 </script>
 
 <template>
@@ -1786,8 +1838,8 @@ async function signOut(): Promise<void> {
             <h1 id="login-title">{{ screen === 'change-password' ? '設定新密碼' : '登入 YMES' }}</h1>
           </div>
 
-          <form v-if="screen === 'login'" class="login-form" @submit.prevent="submitLogin">
-            <fieldset class="environment-fieldset">
+          <form v-if="screen === 'login'" class="login-form" :aria-busy="authBlocked" @submit.prevent="submitLogin">
+            <fieldset class="environment-fieldset" :disabled="authBlocked">
               <legend>作業環境</legend>
               <div class="environment-options">
                 <label
@@ -1845,6 +1897,8 @@ async function signOut(): Promise<void> {
               </button>
             </div>
 
+            <p v-if="restoringSession" class="form-message" role="status">正在確認登入狀態…</p>
+            <p v-if="configurationError" class="form-message error-message" role="alert">{{ configurationError }}</p>
             <p v-if="errorMessage" class="form-message error-message" role="alert">
               {{ errorMessage }}
             </p>
@@ -1852,12 +1906,13 @@ async function signOut(): Promise<void> {
               {{ successMessage }}
             </p>
 
-            <button class="submit-button" type="submit" :disabled="busy || !configLoaded">
-              {{ busy ? '正在驗證…' : '登入' }}
+            <button class="submit-button" type="submit" :disabled="authBlocked">
+              {{ restoringSession ? '正在確認登入狀態…' : busy ? '正在驗證…' : '登入' }}
             </button>
-            <button class="demo-button" type="button" :disabled="busy || !configLoaded" @click="submitDemoLogin">
+            <button class="demo-button" type="button" :disabled="authBlocked" @click="submitDemoLogin">
               Demo 登入
             </button>
+            <button v-if="restoreRetryAvailable || configurationError" class="demo-button" type="button" :disabled="authBlocked" @click="retrySessionRestore">重新確認登入狀態</button>
           </form>
 
           <form
@@ -1902,7 +1957,7 @@ async function signOut(): Promise<void> {
             <p v-if="errorMessage" class="form-message error-message" role="alert">
               {{ errorMessage }}
             </p>
-            <button class="submit-button" type="submit" :disabled="busy">
+            <button class="submit-button" type="submit" :disabled="authBlocked">
               {{ busy ? '正在更新…' : '更新密碼並繼續' }}
             </button>
           </form>
@@ -1910,7 +1965,7 @@ async function signOut(): Promise<void> {
       </section>
     </main>
 
-    <main v-else-if="screen === 'signed-in'" class="framework-shell" :class="{ 'sidebar-collapsed': !sidebarOpen }">
+    <main v-else-if="screen === 'signed-in'" class="framework-shell" :class="{ 'sidebar-collapsed': !sidebarOpen }" :aria-busy="busy || restoringSession" :inert="busy || restoringSession">
       <aside class="framework-sidebar" :class="{ collapsed: !sidebarOpen }">
         <div class="framework-brand">
           <img class="brand-logo" :src="brandLogoUrl" alt="KD 科定企業" />
@@ -1943,7 +1998,7 @@ async function signOut(): Promise<void> {
             <span class="framework-avatar">{{ (currentUser?.displayName || currentUser?.userNo || 'Y').slice(0, 1) }}</span>
             <span class="framework-user-name">{{ currentUser?.displayName || currentUser?.userNo }}</span>
           </div>
-          <button type="button" class="framework-logout" aria-label="登出" title="登出" @click="signOut"><MenuIcon kind="logout" /><span class="menu-full-label">登出</span></button>
+          <button type="button" class="framework-logout" aria-label="登出" title="登出" :disabled="busy || restoringSession" @click="signOut"><MenuIcon kind="logout" /><span class="menu-full-label">登出</span></button>
         </div>
       </aside>
 
@@ -1952,14 +2007,16 @@ async function signOut(): Promise<void> {
           <h1>{{ currentMasterTitle }}</h1>
           <div class="framework-header-user">
             <span>{{ currentUser?.displayName || currentUser?.userNo }}</span>
-            <button type="button" aria-label="登出" title="登出" @click="signOut">登出</button>
+            <button type="button" aria-label="登出" title="登出" :disabled="busy || restoringSession" @click="signOut">登出</button>
           </div>
         </header>
+        <div v-if="errorMessage" class="framework-menu-note error" role="alert">{{ errorMessage }}</div>
         <div v-if="menuSource === 'fallback'" class="framework-menu-note" role="status">
           目前顯示簡化選單；尚未遷移的功能會標示待處理。
         </div>
-        <div v-else-if="menuSource === 'error'" class="framework-menu-note error" role="alert">
+        <div v-if="menuSource === 'error' || menuError" class="framework-menu-note error" role="alert">
           主選單載入失敗：{{ menuError }}
+          <button type="button" :disabled="busy || restoringSession" @click="loadMenuTree">重試</button>
         </div>
         <ProcessBasisMaster
           v-if="isPrsProcessBasisPage"
