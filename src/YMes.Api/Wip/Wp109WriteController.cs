@@ -2,6 +2,8 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
@@ -32,6 +34,7 @@ public sealed class Wp109WriteController(Wp109WriteRepository repository, Wp109D
         Execute(() => Task.FromResult(devices.List(keyword, limit)));
 
     [HttpPost]
+    [DisableFormValueModelBinding]
     [DisableRequestSizeLimit]
     public Task<IActionResult> Create(CancellationToken token) => Execute(async () =>
     {
@@ -41,6 +44,7 @@ public sealed class Wp109WriteController(Wp109WriteRepository repository, Wp109D
     });
 
     [HttpPut("item")]
+    [DisableFormValueModelBinding]
     [DisableRequestSizeLimit]
     public Task<IActionResult> Edit([FromQuery] string swrNo, CancellationToken token) => Execute(async () =>
     {
@@ -143,4 +147,20 @@ public sealed class Wp109WriteController(Wp109WriteRepository repository, Wp109D
 
     private void Failure(Exception ex) => logger.LogWarning("WP109 write failed ({ErrorType}) for {Actor}",
         ex.GetType().Name, Actor);
+}
+
+// MVC's default form value providers parse multipart bodies before the action
+// runs. This endpoint streams multipart sections directly so large PDFs do not
+// get buffered or consume Request.Body before MultipartReader sees it.
+[AttributeUsage(AttributeTargets.Method)]
+internal sealed class DisableFormValueModelBindingAttribute : Attribute, IResourceFilter
+{
+    public void OnResourceExecuting(ResourceExecutingContext context)
+    {
+        var formFactories = context.ValueProviderFactories.Where(factory => factory is
+            FormValueProviderFactory or FormFileValueProviderFactory or JQueryFormValueProviderFactory).ToArray();
+        foreach (var factory in formFactories) context.ValueProviderFactories.Remove(factory);
+    }
+
+    public void OnResourceExecuted(ResourceExecutedContext context) { }
 }
