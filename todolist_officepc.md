@@ -1,5 +1,16 @@
 # 公司端待辦
 
+## HOME最新：Office9dc入口整合已驗證，接新三項（2026-11-21）
+
+正式Web278／4b8、API176／497、DB0063；獨立11項讀回395a1f7c…與真GUI15／15（99f3a3d7…）通過。ES204本版是正式未開放守門／Close，真正轉態API仍待辦，詳[QA](docs/qa/20261121-office9dc-integration.md)。71份驗證檔封存的自動審查拒絕及待授權仍保持，CP33是歷史資訊，不冒充已結案。
+
+- [x] HOME正常合併9dc與已驗證ET202，保留Auth A2、KD與原生三層menu；完整Web建置、部署及app-browser限定驗收通過。
+- [ ] HOME保存已驗證feature／463來源綁定，正常合併新Office ES102／ES409／ES106三提交（main已8e1fdfb），驗證後再合併main，保留兩端。
+- [ ] HOME完成WP109空Lot writer：184完整候選build／publish零警告錯誤已通，真PG兩provider／最小grant／交易QA／正式UI接續；尚未部署或宣稱交易完成。
+- [ ] Office補ES204 CHAR_USED／CHAR_LENGTH、互斥key、InitEQPSerialNo、Reverse／結算／簽退與Adapter完整來源；另保留Lot39精確DDL與helper補證。HOME無原Oracle連線，不把此來源查核交給PG猜測。
+
+## 先前進度原文（保留歷史）
+
 ## 目前狀態：ET202操作驗收完成，Git／checkpoint同步中（2026-11-21）
 
 正式API176／497、Web276修正版4f、DB0063。Present API127 HTTP／600檢查及獨立44zero；新app-browser90raw／83成功、7測試觀察false原件及實際復驗；首輪Web76a的真focus／Escape缺陷在新Web實操作確認修復。五個項目全GUI建刪、三父API清理，最後獨立39範圍全0。正常auth／原生三層選單／兩尺寸／四個舊頁read smoke通過。詳[本輪QA](docs/qa/20261121-et202-os-items.md)與[ET202維護](docs/modules/ENT/外包項目設定.md)。下方早期pending與Web76a描述保留作歷史，本段優先。
@@ -1834,3 +1845,10 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 
 
 本版限定GUI的獨立證據peer `c21d7e7e220a09f64d320cc9eff0309e9be8df0a21088cceece0eecbbcc08d52` 無阻擋；Root接受回條 `69b38e831ac1a469bea728665bee2e97c05414a48b13527ab0fcc4f587cfc172`，保留90raw／83通過／7原false及復驗，非全系統驗收。程式提交 X `aa3be9528880d03f74370b22ac979dff4227570d` 已通過461來源綁定 `032ea499e39664af8558b6d148ed25fe74face9b462a9f7af7e8a77f5d88b555`，正常推送功能分支並直接讀回同ref（`30e5dd7e1b5832e3f3c4fbb08cb5956bcab15a26730af6fc164cc35890dca2cb`）。接續本份純文件status提交與main正常快轉；原checkpoint33保持至新metadata真結案，不預填已完成。
+
+
+### 遠端驗證檔封存待授權（2026-11-21）
+
+- [ ] HOME：71份版本驗證檔整包上傳在程序建立前遭自動核准審查拒絕；原因是缺這批內部程式／部署／驗證資料與指定私有目的地的明確外傳授權。未連線、未上傳、未改checkpoint；已另送精確授權問題，不等待使用者而繼續其他開發。
+- [ ] 原CP33及Ready=false計畫保持，9224／f2c1工具均未遠端執行。若後續網站或API版本已前進，禁止直接執行綁舊497／4f runtime的73e結案器；須以新live版本與既有ET202歷史實證重新審查整合結案，不倒退服務或改寫舊證據。
+
