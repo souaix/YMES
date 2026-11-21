@@ -1,12 +1,19 @@
 # 公司端待辦
 
+## 公司端最新交付：INV COUNT ADJUST 盤點調帳（WP608，2026-11-22）
+
+- [x] 依 `frmInvCountStateAdjust`、三個數量調整 Dialog、`wsWIP.LoadInvCountStateWithDetail`／`ExeInvCountAdjust`／`ExeInvCountConfirm`、`clsINVCount` 完成六種 WIP／SEMIWIP／FGD／SEMI／RAW／MTLWIP 流程核對。
+- [x] 完成 Vue DEV 假資料查詢、New CurQty／AdjustQty 暫存、逐筆 Confirm、部分完成失敗模擬及 General／MTL／PRD 報表預覽；新增 [WP608 規格](docs/modules/WIP/盤點調帳.md)、索引與家用端 handoff。修正 MTL request 欄位名稱缺陷的 DEV 行為，記錄舊 Form 的兩處 MaterialLotNo typo。
+- [x] WIP 路由 `/YMES/WIP/InvCountStateAdjust` 僅在 DEV fallback 顯示，不呼叫 Service／Oracle／PostgreSQL／印表機。四張盤點 state/detail 表無 Oracle DDL／metadata reference；無受保護 Oracle profile，未猜 CREATE-only。沒有執行 build、test 或 browser。
+- [ ] 下一項依清冊為 INV COUNT PRINT「列印盤點清冊」（WP607）；先核對 WinForms／Designer／Service／Core。
+
 ## 公司端最新交付：FGDSTOCKIN_WF_CANCEL 取消入庫 WorkFlow ERP（WP619，2026-11-22）
 
 - [x] 核對取消 Form／Designer、`wsINV`／`kcINV.clsInventory`、EAI `wsMES`／`clsINV`；確認查詢 State=2／ERPNo 非空，送 WorkFlow `ReferenceCase=4` Undo，MES Core 回復 FGD／SCRIN 庫存與狀態 1→-2→3→-1。
 - [x] 完成 Vue DEV 假資料候選清單、FGD／SCRIN 明細、WorkFlow Undo success／fail／timeout 與 MES 回復 success／fail；列表保留混合 ERP 來源並阻擋非 WorkFlow。記錄舊查詢無 source filter、timeout 被當明確失敗回 State=2、MES failure 停 State=-2、`UpdINVInfo` 無狀態條件。
 - [x] 新增 [WP619 規格](docs/modules/WIP/取消入庫WorkFlow_ERP.md)、規格索引、清冊進度及家用端 handoff。沿用 WP201／WP603／WP605；`TBLINVSCRINVENTORY`、`TBLINVSCRINVENTORYCOMPONENT`、`TBLINVSCRINVENTORYFAILBIN` metadata 缺項沿 WP622。桌機沒有可用受保護 Oracle profile，未連 Oracle、未猜 CREATE-only；未連 YMES PostgreSQL。
 - [x] 原 Function 未掛正式 MenuItem；DEV fallback `/YMES/WIP/FgdStockInWorkFlowCancel`，不呼叫 ERP、MES Service 或資料庫。未執行 build、test 或 browser。
-- [ ] 下一項依清冊為 INV COUNT ADJUST「盤點調帳」（WP608，未掛入 MenuItem）；先核對 WinForms／Designer／Service／Core。
+- [x] 後續 WP608「盤點調帳」已完成，下一項依清冊為 WP607「列印盤點清冊」；進度見本檔最上方及功能清冊。
 
 ## 公司端最新交付：FGDSTOCKIN_WF 入庫至 WorkFlow ERP（WP614，2026-11-22）
 

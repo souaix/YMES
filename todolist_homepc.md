@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：INV COUNT ADJUST 盤點調帳（WP608，2026-11-22）
+
+公司端依 `frmInvCountStateAdjust`、`frmInvCountAdjust`／`_MTL`／`_PRD`、`wsWIP`、`clsINVCount` 完成六種 DataType 的 DEV 假資料畫面及[WP608 規格](docs/modules/WIP/盤點調帳.md)。Fallback 路由 `/YMES/WIP/InvCountStateAdjust`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=0 查詢、NewCurQty／AdjustQty 暫存、AdjustState 1→2 Confirm、逐筆更新部分失敗及報表預覽，不呼叫正式 Service、資料庫或印表機。
+
+- [ ] 先查 YMES PostgreSQL live schema／migration history，再核對 `TBLWIPINVCOUNTSTATE`、`TBLWIPINVCOUNTDETAIL`、`TBLWIPINVCOUNTDETAIL_MTL`、`TBLWIPINVCOUNTDETAIL_PRD` 的實際 schema、PK/index/constraint；桌機沒有 Oracle DDL／metadata，也沒有可用受保護 Oracle profile，未猜 CREATE-only SQL。
+- [ ] 依實際 Core SQL 映射 WIP、SEMIWIP、FGD、SEMI、RAW、MTLWIP 目標表與單位換算服務。實作登入／ACL 保護 Query／調帳／Confirm／報表 API；明確限定 CountSerial+DataType、鎖定並重讀 State=0／AdjustState=1、庫存量與版本，以同一本地交易更新庫存、detail state 及 audit，任何失敗整批 rollback。
+- [ ] 修正舊 MTL request 將 `MaterialLotNo` 傳成 `LocatorNo` 及初始化比較錯欄位；Confirm 需防同一 DataType 多個 CountSerial 混批。正式單位換算不可沿用 DEV 的 2:1 fixture。
+
 ## 公司端交接：FGDSTOCKIN_WF_CANCEL 取消入庫 WorkFlow ERP（WP619，2026-11-22）
 
 公司端依取消 Form／Designer、`wsINV`／`kcINV.clsInventory`、EAI `wsMES`／`clsINV` 完成 DEV 假資料取消頁及[WP619 規格](docs/modules/WIP/取消入庫WorkFlow_ERP.md)。Fallback 路由 `/YMES/WIP/FgdStockInWorkFlowCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2／ERPNo、混合 FGD／SCRIN、WorkFlow Undo 成功／明確失敗／timeout、MES 回復成功／失敗及 1→-2→3→-1；其他 ERP 來源會顯示但被阻擋。不呼叫 ERP、MES Service 或資料庫。
