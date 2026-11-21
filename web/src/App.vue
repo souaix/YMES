@@ -73,6 +73,13 @@ import WipBumpMapMerge from './components/WipBumpMapMerge.vue'
 import WipFgdStockInE10Icd from './components/WipFgdStockInE10Icd.vue'
 import WipScrapStockInE10Icd from './components/WipScrapStockInE10Icd.vue'
 import WipFgdStockInE10IcdCancel from './components/WipFgdStockInE10IcdCancel.vue'
+import WipFgdStockInT100 from './components/WipFgdStockInT100.vue'
+import WipFgdStockInT100Cancel from './components/WipFgdStockInT100Cancel.vue'
+import WipFgdStockInTp from './components/WipFgdStockInTp.vue'
+import WipFgdStockInTpCancel from './components/WipFgdStockInTpCancel.vue'
+import WipFgdStockInWorkFlow from './components/WipFgdStockInWorkFlow.vue'
+import WipFgdStockInWorkFlowCancel from './components/WipFgdStockInWorkFlowCancel.vue'
+import WipInvCountStateAdjust from './components/WipInvCountStateAdjust.vue'
 import WipOperatorClockIn from './components/WipOperatorClockIn.vue'
 import WipOperatorClockOut from './components/WipOperatorClockOut.vue'
 import WipOperatorOnline from './components/WipOperatorOnline.vue'
@@ -577,9 +584,16 @@ const fallbackMenuTree: MenuNode[] = [
     ],
   }, {
     id: 'menu:WIP:PACKAGING', label: '包裝與庫房', shortLabel: '庫', children: [
+      { id: 'function:WIP:FGDSTOCKIN_TP', label: '入庫至 TipTop ERP（DEV）', shortLabel: 'TipTop入庫', functionNo: 'FGDSTOCKIN_TP', moduleNo: 'WIP' },
+      { id: 'function:WIP:FGDSTOCKIN_TP_CANCEL', label: '取消入庫至 TipTop ERP（DEV）', shortLabel: 'TipTop取消', functionNo: 'FGDSTOCKIN_TP_CANCEL', moduleNo: 'WIP' },
+      { id: 'function:WIP:FGDSTOCKIN_WF', label: '入庫至 WorkFlow ERP（DEV）', shortLabel: 'WF入庫', functionNo: 'FGDSTOCKIN_WF', moduleNo: 'WIP' },
+      { id: 'function:WIP:FGDSTOCKIN_WF_CANCEL', label: '取消入庫 WorkFlow ERP（DEV）', shortLabel: 'WF取消', functionNo: 'FGDSTOCKIN_WF_CANCEL', moduleNo: 'WIP' },
+      { id: 'function:WIP:FGDSTOCKIN_T100', label: '入庫至 T100 ERP（DEV）', shortLabel: 'T100入庫', functionNo: 'FGDSTOCKIN_T100', moduleNo: 'WIP' },
+      { id: 'function:WIP:FGDSTOCKIN_T100_CANCEL', label: '取消入庫 T100 ERP（DEV）', shortLabel: 'T100取消', functionNo: 'FGDSTOCKIN_T100_CANCEL', moduleNo: 'WIP' },
       { id: 'function:WIP:FGDSTOCKIN_E10ICD', label: '入庫至 E10ICD ERP（DEV）', shortLabel: 'ERP入庫', functionNo: 'FGDSTOCKIN_E10ICD', moduleNo: 'WIP' },
       { id: 'function:WIP:FGDSTOCKIN_E10ICD_CANCEL', label: '取消入庫 E10ICD ERP（DEV）', shortLabel: '取消入庫', functionNo: 'FGDSTOCKIN_E10ICD_CANCEL', moduleNo: 'WIP' },
       { id: 'function:WIP:SCRAPSTOCKIN_E10ICD', label: '不良品入庫至 E10ICD ERP（DEV）', shortLabel: '不良入庫', functionNo: 'SCRAPSTOCKIN_E10ICD', moduleNo: 'WIP' },
+      { id: 'function:WIP:INV COUNT ADJUST', label: '盤點調帳（DEV）', shortLabel: '盤點調帳', functionNo: 'INV COUNT ADJUST', moduleNo: 'WIP' },
       { id: 'function:WIP:PACKING_MOLINE', label: '包裝作業', tableName: 'tblwipmolinepackl1', shortLabel: '包裝', functionNo: 'PACKING_MOLINE', moduleNo: 'WIP' },
       { id: 'function:WIP:PACKING_MOLINE_INV', label: '在製品庫包裝作業', tableName: 'tblinvpackstate', shortLabel: '庫包', functionNo: 'PACKING_MOLINE_INV', moduleNo: 'WIP' },
       { id: 'function:WIP:WIP INV', label: '在製品庫帳務維護', tableName: 'tblinvwipinventory_semi', shortLabel: '在製品庫', functionNo: 'WIP INV', moduleNo: 'WIP' },
@@ -651,8 +665,15 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:SKIP INSPECTION SETTING': appBasePath + '/WIP/SkipInspectionSetting',
   'function:WIP:P_BUMP MAP MERGE': appBasePath + '/WIP/BumpMapMerge',
   'function:WIP:FGDSTOCKIN_E10ICD': appBasePath + '/WIP/FgdStockInE10Icd',
+  'function:WIP:FGDSTOCKIN_T100': appBasePath + '/WIP/FgdStockInT100',
+  'function:WIP:FGDSTOCKIN_TP': appBasePath + '/WIP/FgdStockInTp',
+  'function:WIP:FGDSTOCKIN_TP_CANCEL': appBasePath + '/WIP/FgdStockInTpCancel',
+  'function:WIP:FGDSTOCKIN_WF': appBasePath + '/WIP/FgdStockInWorkFlow',
+  'function:WIP:FGDSTOCKIN_WF_CANCEL': appBasePath + '/WIP/FgdStockInWorkFlowCancel',
+  'function:WIP:FGDSTOCKIN_T100_CANCEL': appBasePath + '/WIP/FgdStockInT100Cancel',
   'function:WIP:FGDSTOCKIN_E10ICD_CANCEL': appBasePath + '/WIP/FgdStockInE10IcdCancel',
   'function:WIP:SCRAPSTOCKIN_E10ICD': appBasePath + '/WIP/ScrapStockInE10Icd',
+  'function:WIP:INV COUNT ADJUST': appBasePath + '/WIP/InvCountStateAdjust',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'function:WIP:EQP QCLIST ONLINE CHECK': appBasePath + '/WIP/EquipmentOnlineQC',
   'function:WIP:EQP QCLIST LOG': appBasePath + '/WIP/EquipmentQcListLog',
@@ -938,8 +959,12 @@ const functionRoutes: Record<string, string> = {
   'Skip Inspection Setting': appBasePath + '/WIP/SkipInspectionSetting',
   'P_BUMP MAP MERGE': appBasePath + '/WIP/BumpMapMerge',
   'FGDSTOCKIN_E10ICD': appBasePath + '/WIP/FgdStockInE10Icd',
+  'FGDSTOCKIN_T100': appBasePath + '/WIP/FgdStockInT100',
+  'FGDSTOCKIN_TP': appBasePath + '/WIP/FgdStockInTp',
+  'FGDSTOCKIN_T100_CANCEL': appBasePath + '/WIP/FgdStockInT100Cancel',
   'FGDSTOCKIN_E10ICD_CANCEL': appBasePath + '/WIP/FgdStockInE10IcdCancel',
   'SCRAPSTOCKIN_E10ICD': appBasePath + '/WIP/ScrapStockInE10Icd',
+  'INV COUNT ADJUST': appBasePath + '/WIP/InvCountStateAdjust',
   'EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'CARRIER STATE': appBasePath + '/WIP/CarrierState',
   'CARRIER MANAGEMENT COMP': appBasePath + '/WIP/CarrierManagement',
@@ -1148,8 +1173,15 @@ const isWipWorkorderPrintPage = computed(() => activeMasterKey.value === 'functi
 const isWipSkipInspectionSettingPage = computed(() => activeMasterKey.value === 'function:WIP:SKIP INSPECTION SETTING')
 const isWipBumpMapMergePage = computed(() => activeMasterKey.value === 'function:WIP:P_BUMP MAP MERGE')
 const isWipFgdStockInE10IcdPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_E10ICD')
+const isWipFgdStockInT100Page = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_T100')
+const isWipFgdStockInTpPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_TP')
+const isWipFgdStockInTpCancelPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_TP_CANCEL')
+const isWipFgdStockInWorkFlowPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_WF')
+const isWipFgdStockInWorkFlowCancelPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_WF_CANCEL')
+const isWipFgdStockInT100CancelPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_T100_CANCEL')
 const isWipFgdStockInE10IcdCancelPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_E10ICD_CANCEL')
 const isWipScrapStockInE10IcdPage = computed(() => activeMasterKey.value === 'function:WIP:SCRAPSTOCKIN_E10ICD')
+const isWipInvCountStateAdjustPage = computed(() => activeMasterKey.value === 'function:WIP:INV COUNT ADJUST')
 const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN')
 const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
@@ -2966,8 +2998,15 @@ async function signOut(): Promise<void> {
         <WipSkipInspectionSetting v-else-if="isWipSkipInspectionSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipBumpMapMerge v-else-if="isWipBumpMapMergePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInE10Icd v-else-if="isWipFgdStockInE10IcdPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipFgdStockInT100 v-else-if="isWipFgdStockInT100Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipFgdStockInTp v-else-if="isWipFgdStockInTpPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipFgdStockInTpCancel v-else-if="isWipFgdStockInTpCancelPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipFgdStockInWorkFlow v-else-if="isWipFgdStockInWorkFlowPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipFgdStockInWorkFlowCancel v-else-if="isWipFgdStockInWorkFlowCancelPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipFgdStockInT100Cancel v-else-if="isWipFgdStockInT100CancelPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInE10IcdCancel v-else-if="isWipFgdStockInE10IcdCancelPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipScrapStockInE10Icd v-else-if="isWipScrapStockInE10IcdPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipInvCountStateAdjust v-else-if="isWipInvCountStateAdjustPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

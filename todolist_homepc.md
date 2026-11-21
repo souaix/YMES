@@ -7,6 +7,69 @@
 - [x] 建立並實際驗證 [`scripts/Start-HomePcQa.ps1`](scripts/Start-HomePcQa.ps1)：停止本輪自有測試隧道後，API 先回 503；執行腳本自動重開隧道，API、Web 與代理均回 200。腳本重用健康服務、只在埠空閒時啟動，遇未知程序占埠會停止並報明，不會殺掉該程序；API 連線使用經認證 SSH 隧道與 `SslMode=Disable`。PPK 保持在桌面，連線密碼只由腳本記憶體讀取、不輸出。
 - [ ] Chrome/app-browser GUI 驗收仍待補；Computer-use 本次再因無法確認目前網址停止，尚未逐項操作 API186 頁面。此狀況不代表服務未啟動；先確認上列健康檢查，再用瀏覽器工具操作。
 
+## 公司端交接：INV COUNT ADJUST 盤點調帳（WP608，2026-11-22）
+
+公司端依 `frmInvCountStateAdjust`、`frmInvCountAdjust`／`_MTL`／`_PRD`、`wsWIP`、`clsINVCount` 完成六種 DataType 的 DEV 假資料畫面及[WP608 規格](docs/modules/WIP/盤點調帳.md)。Fallback 路由 `/YMES/WIP/InvCountStateAdjust`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=0 查詢、NewCurQty／AdjustQty 暫存、AdjustState 1→2 Confirm、逐筆更新部分失敗及報表預覽，不呼叫正式 Service、資料庫或印表機。
+
+- [ ] 先查 YMES PostgreSQL live schema／migration history，再核對 `TBLWIPINVCOUNTSTATE`、`TBLWIPINVCOUNTDETAIL`、`TBLWIPINVCOUNTDETAIL_MTL`、`TBLWIPINVCOUNTDETAIL_PRD` 的實際 schema、PK/index/constraint；桌機沒有 Oracle DDL／metadata，也沒有可用受保護 Oracle profile，未猜 CREATE-only SQL。
+- [ ] 依實際 Core SQL 映射 WIP、SEMIWIP、FGD、SEMI、RAW、MTLWIP 目標表與單位換算服務。實作登入／ACL 保護 Query／調帳／Confirm／報表 API；明確限定 CountSerial+DataType、鎖定並重讀 State=0／AdjustState=1、庫存量與版本，以同一本地交易更新庫存、detail state 及 audit，任何失敗整批 rollback。
+- [ ] 修正舊 MTL request 將 `MaterialLotNo` 傳成 `LocatorNo` 及初始化比較錯欄位；Confirm 需防同一 DataType 多個 CountSerial 混批。正式單位換算不可沿用 DEV 的 2:1 fixture。
+
+## 公司端交接：FGDSTOCKIN_WF_CANCEL 取消入庫 WorkFlow ERP（WP619，2026-11-22）
+
+公司端依取消 Form／Designer、`wsINV`／`kcINV.clsInventory`、EAI `wsMES`／`clsINV` 完成 DEV 假資料取消頁及[WP619 規格](docs/modules/WIP/取消入庫WorkFlow_ERP.md)。Fallback 路由 `/YMES/WIP/FgdStockInWorkFlowCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2／ERPNo、混合 FGD／SCRIN、WorkFlow Undo 成功／明確失敗／timeout、MES 回復成功／失敗及 1→-2→3→-1；其他 ERP 來源會顯示但被阻擋。不呼叫 ERP、MES Service 或資料庫。
+
+- [ ] 正式 API 重新確認 ACL、ERP source、ERPNo、FGD／SCRIN 同號明細及 State=2，使用 CAS／冪等 intent；`LoadFGDInNoUnionSCRInNo` 舊查詢只有 `ERPNo IS NOT NULL`，把其他 ERP 單據也列入 WorkFlow 取消清單。
+- [ ] WorkFlow `ReferenceCase=4` Undo timeout／例外不可當明確失敗後直接復原 State=2；先查 ERP 或排 reconciliation。MES 回復失敗需保留 State=-2 並提供可恢復交易及 audit；舊 Core 多表更新未包有效 transaction，Form `UpdINVInfo` 亦不比對 OriginState。
+- [ ] 先對照 PostgreSQL live schema／migrations。`TBLINVSCRINVENTORY`、`TBLINVSCRINVENTORYCOMPONENT`、`TBLINVSCRINVENTORYFAILBIN` Oracle source DDL／metadata 沿 WP622 缺項，待公司端取得受保護 Oracle profile 後唯讀補查。家用端負責正式 API、migration、部署與驗收；公司端未連 Oracle／PostgreSQL或部署。
+
+## 公司端交接：FGDSTOCKIN_WF 入庫至 WorkFlow ERP（WP614，2026-11-22）
+
+公司端依主 Form／Designer、`frmFGDStockIN_ReThorwERP` 重拋 Form／Designer、EAI `wsMES`、`clsWIP`／`clsINV` 完成 DEV 假資料入庫與重拋頁及[WP614 規格](docs/modules/WIP/入庫至WorkFlow_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInWorkFlow`；原 Function 未掛正式 `MenuItem`。DEV 模擬 ALLOWINV2ERP 0／1／2、多 MO Lot、MES-first、ERP success／fail rollback／timeout State=1 retry ticket、重拋 success／fail／timeout；不呼叫 WorkFlow SOAP、MES EAI Service 或資料庫。
+
+- [ ] Formal provider 應從伺服器配置讀 `ALLOWINV2ERP`、`ShowLossData_FGDStockIN_WF`、ERP SheetType、`WFERPUseMESUserNo`、`OrgLotNoToERP`，不可接受 browser 自選值。模式 2 需修正舊 Form SheetType 只在模式 1 去名稱的缺陷。
+- [ ] MO／Lot 完整重查、鎖定、單位／ERP 品號／Factory／Inventory／Locator、工單累計 Good+Scrap 限制、ERP 淨發料及 booking flag 必須伺服器驗證；批次量檢查需 aggregate 全部勾選列，不沿用舊 Core 每列重用相同既有量的漏算。
+- [ ] MES 庫存交易完成前建立 ERP intent／冪等 key；明確 ERP fail 可安全補償 MES，timeout／unknown outcome 保留可恢復 State，不盲目 replay。`TBLERPRETHROWTICKET` 原始 RequestXML 需改受 ACL 保護的 reconciliation workflow／audit，不提供任意 XML 重放；ERP/MES 結果、MES 失敗後 WorkFlow Undo helper 順序需家用端實測核對。
+- [ ] 先比對 live schema／migrations。`TBLINVWIP_SCRAP`、`TBLOEMOMATERIALINBASIS_ERP`、`TBLERPRETHROWTICKET` Oracle source DDL／metadata 缺項，需桌機有受保護 Oracle profile 後唯讀補查；公司端本次沒有 Oracle／PostgreSQL/API/schema／部署操作。家用端負責 migration、正式 API、部署及驗收。
+
+## 公司端交接：FGDSTOCKIN_TP_CANCEL 取消入庫至 TipTop ERP（WP610，2026-11-22）
+
+公司端依 TipTop Cancel Form／Designer、`wsINV`、TipTop SOAP `UndoCreateStockInData`、`clsInventory` 完成 DEV 假資料取消流程及[WP610 規格](docs/modules/WIP/取消入庫至TipTop_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInTpCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2／ERPNo、MOState=99、FGD／SCRIN、ERP 來源、ERP 失敗回復 State=2、MES 失敗保留 State=-2 及成功取消；原查詢未限制 ERP source，DEV 阻擋非 TipTop 來源。不呼叫 TipTop、MES Service 或資料庫。
+
+- [ ] 正式取消命令需重新查 State=2、ERPNo、ERP source、INVType、每筆 MOState、ACL 與庫存前置條件；依 ERP source 路由或拒絕，不可把其他 ERP 入庫單送往 TipTop。
+- [ ] 持久化 `UndoCreateStockInData` intent／response；ERP timeout／unknown outcome 先查 TipTop 或排對帳。ERP 確認成功後，在單一本地交易回復 FGD／WIP／Component／Good Bin／Lot Qty／reservation／release log 並寫最終狀態。
+- [ ] ERP 已取消但 MES 回復失敗時保留可恢復狀態與人工／自動對帳；補建 State=-2 恢復流程與冪等 key。比較舊 `UpdINVInfo` 對 `OrgState` 的逐步覆寫與既有 schema。
+- [ ] `TBLINVFGDINBIN` Oracle DDL／metadata 沿 WP621／WP623 缺項；需桌機有受保護 Oracle profile 後唯讀補查。本次公司端未連 Oracle/PostgreSQL，未做 API/schema 或部署；家用端比對 live schema／migration 後實作。
+
+## 公司端交接：FGDSTOCKIN_TP 入庫至 TipTop ERP（WP609，2026-11-21）
+
+公司端依 TipTop Stock In Form／Designer、TipTop SOAP `CreateStockInData`、EAI `wsMES`、`clsWIP`／`clsINV` 完成 DEV 假資料流程及[WP609 規格](docs/modules/WIP/入庫至TipTop_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInTp`；原 Function 未掛正式 `MenuItem`。DEV 有 MO／Ref Lot、來源 WIP／目的 FGD／Locator、雙 Grid、InInvNum 部分入庫、ERP 建單／MES 入庫／ERP Undo 情境；不呼叫 TipTop、MES EAI 或資料庫。
+
+- [ ] 將 CreateStockInData 前驗證、Lot row version／鎖、權限、來源／目的庫、Component／Good Bin 與冪等鍵放在伺服器；舊程式部分入庫沒有 BookingFlag reservation。
+- [ ] 持久化 ERP Create intent、response 及 Undo 結果。ERP 建單成功、MES 失敗時若 Undo 失敗，不能只釋放 BookingFlag 並允許同 Lot 重送；timeout／unknown outcome 先查 ERP 或排對帳。
+- [ ] 核實 Good Bin 在 TipTop 整批入庫的來源規則：Form 對部分入庫有 Good Bin 守門，但目前 active `MOStockIn_TP`／`MOStockIn_TP_Component` 沒找到 Bin 更新；確認是否另有 helper，再決定 Bin 轉移及取消回復。
+- [ ] 比較包裝批 ERP Qty=`SysQty` 與 MES Qty=`InInvNum` 的單位換算；以本地交易原子更新 FGD Basis／Detail／Inventory、WIP SEMI、Lot Qty、Component、CloseLot／ProductOperation 與 release log。
+- [ ] 沿用 WP605／WP201 references 後仍須比對 PostgreSQL live schema／migration；本功能無新 Oracle table DDL，桌機沒有連 PostgreSQL、未實作或驗收正式 API／schema。
+
+## 公司端交接：FGDSTOCKIN_T100_CANCEL 取消入庫 T100 ERP（WP620，2026-11-21）
+
+公司端依 T100 Cancel Form／Designer、`wsINV`、`wsERP_T100`、`clsInventory` 完成 FGD／SCRIN 整張入庫取消的 DEV 假資料流程及[WP620 規格](docs/modules/WIP/取消入庫T100_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInT100Cancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 RequestType 0／1、ERP 失敗還原 State=2、ERP 成功但 MES 回復失敗保留 State=-2；原查詢缺 ERP source 篩選，DEV 阻擋非 T100 來源以展示正式端必要的防護。不連 T100／MES Service 或資料庫。
+
+- [ ] 實作時重新查核 ERP source、State=2、ERPNo、單據版本／明細與 ACL；避免把 E10ICD 等其他 ERP 單送往 T100。採單據鎖及 idempotency key。
+- [ ] T100 FGD 使用 RequestType=0，SCRIN 使用 RequestType=1；僅 code=0 後回復 MES。timeout／unknown outcome 先查 ERP 或進對帳佇列，不盲目重送。
+- [ ] 將 ERP 結果及 MES 庫存／Lot／Component／動態 Bin／BookingFlag 回復協調成可恢復流程。ERP 成功、MES 失敗時保留待恢復狀態；比對 live schema 後在本地交易完成回復與最終狀態。
+- [ ] `TBLINVFGDINBIN` Oracle metadata 沿 WP621／WP623 待公司端使用安全 profile 唯讀補查；缺項確認前不猜 CREATE-only SQL／migration。
+
+## 公司端交接：FGDSTOCKIN_T100 入庫至 T100 ERP（WP616，2026-11-21）
+
+公司端依 T100 Stock In Form／Designer、`wsERP_T100`、`wsMES`、`clsWIP`／`clsINV` 完成良品整列入庫的 DEV 假資料流程及[WP616 規格](docs/modules/WIP/入庫至T100_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInT100`；原 Function 未掛正式 `MenuItem`。DEV 模擬 T100 Sheet Type、MO／來源 WIP Lot、Select／UnSelect、ERP code W 警告續行、ERP fail 與 MES fail 後 ERP 取消；不連 T100／MES Service 或資料庫。
+
+- [ ] 比對 PostgreSQL live schema／migration 與 WP201／WP605 references；本項使用的 Oracle source DDL／CREATE 已在 repository，桌機未連 Oracle，沒有新增 CREATE-only。
+- [ ] 核實 T100 實際 ERP Web Service `stockin.data.create` 在現行 `ERP_Stock_IN` 呼叫未傳 `auto` 時的確認／過帳預設；Form 區域變數 `auto=N` 沒有被 serialise。
+- [ ] 以 idempotency key／來源 Lot row version 預約所有 WIP rows，重查工單、來源庫、Qty、BookingFlag、目的庫與權限；ERP W 按既有合同保留警告並允許 MES。
+- [ ] ERP timeout／unknown outcome 先查 ERP 單；MES 失敗後 ERP cancel 必須持久化其成功／失敗，取消失敗不能只釋放 BookingFlag 後允許重送。確認 MES Basis／Detail／FGD Inventory／WIP SEMI／Component／Lot Qty／CloseLot／ProductOperation／Log 在本地交易內原子更新。
+- [ ] 核對 T100 多 MO 及 `OrgLotNoToERP` 設定；正式 ACL／MenuItem 待確認。公司端未連 PostgreSQL、未實作或驗收正式 API／schema、未 SSH 部署。
+
 ## 公司端交接：FGDSTOCKIN_E10ICD_CANCEL 取消入庫 E10ICD ERP（WP623，2026-11-21）
 
 公司端依取消 Form／inline Designer、`wsINV`、`wsERP_E10ICD`、`clsInventory` 完成良品 FGD 與不良品 SCRIN 整張取消的 DEV 假資料流程及[WP623 規格](docs/modules/WIP/取消入庫E10ICD_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInE10IcdCancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 State=2 且 ERPNo 非空守門、ERP RequestType 0／1、ERP 失敗還原、ERP code=0 後 MES 回復與 State=-2 失敗待恢復；不呼叫 ERP／MES 或資料庫。
