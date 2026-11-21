@@ -345,6 +345,7 @@ PD102 的 [產品 Bin 定義](modules/PRD/產品Bin定義.md) 已完成 DEV 主�
 - WP907「生產批數量調整」見 [功能規格](modules/WIP/生產批數量調整.md)。DEV 已交付整批／Bin／元件分流，調整歷程與原因表附 Oracle metadata 及 CREATE-only。
 - WP916「生產批強制結批作業」見 [功能規格](modules/WIP/生產批強制結批作業.md)。DEV 已交付單批結批，正式 EndOP／工單用料及清理交易與補表 metadata 已交接。
 - ES204「改變設備狀態」見 [功能規格](modules/EMS/改變設備狀態.md)。依 THEIL Form、標準 Service/Core 完成 DEV 設備狀態、互斥、原因、PM 工單守門及生產批綁定；原因歷程表已唯讀查 metadata 並提供 CREATE-only。家用端需核對 live schema，實作具序號並發保護及整個設備／Lot／人員副作用的原子 API。
+- ES102「設備狀態控制設定」見 [功能規格](modules/EMS/設備狀態控制設定.md)。依標準 Form／Designer、wsEQP／clsEQPStateControl 完成三分頁、七控制項及 DEV lookup／Apply／Confirm；重用既有 TBLEQPSTATECONTROL Oracle DDL／CREATE-only。家用端需比對 live schema 並以交易原子更新已修改設定群組。
 - WP915「生產批產品變更作業」見 [功能規格](modules/WIP/生產批產品變更作業.md)。DEV 已交付聯產品查找及逐批換料號，正式 ERP／ECN／流程重掛待家用端。
 - WP913「生產批屬性調整」見 [功能規格](modules/WIP/生產批屬性調整.md)。DEV 已交付批與元件屬性 CRUD，沿用既有直接表。
 - WP912「生產批作業站製程特性值調整」見 [功能規格](modules/WIP/生產批作業站製程特性值調整.md)。DEV 已交付批及元件特性調整；Oracle 稽核表 metadata／CREATE-only 已交接。

@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES102 設備狀態控制設定（2026-11-21）
+
+公司端已依標準 Form／Designer、`wsEQP.LoadStateControlType`／`UpdStateControlType`、`clsEQPStateControl` 完成三分頁、七個固定 ControlType／ControlNo、DEV 狀態選擇及 Apply／Confirm 模擬；沒有連 YMES PostgreSQL 或做正式 API。詳細 [ES102 規格](docs/modules/EMS/設備狀態控制設定.md)。既有 `database/reference/mestest_equipment_state_references_source_ddl.sql` 與 `mestest_equipment_state_references_create.sql` 已包含 `TBLEQPSTATECONTROL`，本項沒有新增 Oracle DDL。
+
+- [ ] Pull 最新 `main` 後先比對 PostgreSQL live schema/migration；已存在表不重建，只在確認缺項後新增 forward migration。`TBLEQPSTATECONTROL` key 是 `(CONTROLTYPE, CONTROLNO)`，沒有來源 FK 或 unique EquipmentState 約束。
+- [ ] 實作登入與 ES102 權限保護的 GET：回傳全部七個設定及狀態 lookup；只接受三種固定 ControlType、七個固定 ControlNo，狀態需存在於 `TBLEQPSTATEBASIS` 且名稱與主檔一致。
+- [ ] 實作批次 PUT：只收已修改群組的完整控制項清單，交易內比對目前值／鎖定後使用參數化 upsert；任一控制項失敗整個群組回滾。不要複製 WinForms Service 的逐列 Delete+Add 部分寫入，也不要把翻譯後分頁標題當 key。
+- [ ] 記錄 actor、request id 及各控制鍵前後值；核對 `STATENAME` Oracle BYTE／CHAR 長度語意。來源 Form `ContinueToProduction` 名稱檢查有引用錯欄位，正式驗證須檢查該列本身。
+
 ## 公司端交接：ES204 改變設備狀態（2026-11-21）
 
 公司端已依 THEIL Form／STD wsEMS／clsEMSEquipment 完成 DEV 假資料畫面與 [原始碼規格](docs/modules/EMS/改變設備狀態.md)，未連家用 PostgreSQL，也未實作正式 API。原因歷程 `TBLEMSEQUIPMENTREASONS` 的 Oracle 原始 `GET_DDL` 回 `ORA-03135`；可用唯讀字典 metadata 與 CREATE-only 參考位於 `database/reference/mestest_es204_equipment_reasons_metadata.txt`、`database/reference/mestest_es204_equipment_reasons_create.sql`。

@@ -1,11 +1,18 @@
 # 公司端待辦
 
-## 公司端最新交付：ES204 改變設備狀態（2026-11-21）
+## 公司端最新交付：ES102 設備狀態控制設定（2026-11-21）
+
+- [x] 依 `frmEQPStateControlSet.vb`（Form/Designer 同檔）、`wsEQP.LoadStateControlType`／`UpdStateControlType` 及 `clsEQPStateControl` 核對三分頁、七控制鍵、狀態 lookup、Apply／Confirm 與原批次 Delete+Add 寫入方式；完成 Vue DEV 假資料頁及 EMS設定選單路由。
+- [x] 沿用 2026-11-16 已唯讀核實的 `TBLEQPSTATECONTROL` Oracle DDL、複合 PK `(CONTROLTYPE, CONTROLNO)` 及 PostgreSQL CREATE-only；ES102 沒有新增查詢或匯出 Oracle 結構，也未連 YMES PostgreSQL。
+- [x] 新增 [ES102 規格](docs/modules/EMS/設備狀態控制設定.md)、索引及家用端原子批次更新 handoff。來源原批次逐列 Delete+Add 未證明交易，正式 API 應完整回滾。
+- [ ] 接續 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md)；下一個未完成項目 ES409「設備狀態期間統計查詢」，已完成項目略過。
+
+## 公司端交付：ES204 改變設備狀態（2026-11-21）
 
 - [x] 依 THEIL Form（控制項配置內嵌主 VB）、STD wsEMS／clsEMSEquipment 核對設備查詢、互斥、原因、PM 工單守門、生產批 CheckInConfirm、狀態歷程與設備／批／人員副作用；完成 Vue DEV 假資料頁及路由。
 - [x] PowerShell 5.1 + ODP.NET 唯讀取得 `TBLEMSEQUIPMENTREASONS` 欄位與 constraint/index/trigger metadata；`GET_DDL` 回 `ORA-03135`，沒有 Oracle 原始 DDL，CREATE-only 按字典重建且不猜 PK/FK。資料見 `database/reference/mestest_es204_equipment_reasons_metadata.txt`。
 - [x] 規格與家用端原子 API／序號並發 handoff 已寫入 [ES204 規格](docs/modules/EMS/改變設備狀態.md)；公司端未連 YMES PostgreSQL、未做正式 API/schema。
-- [ ] 接續 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md)；下一個未完成項目 ES102「設備狀態控制設定」，已完成項目略過。
+- [x] 續接 ES102「設備狀態控制設定」後，選單下一項已更新為 ES409「設備狀態期間統計查詢」。
 
 ## HOME本輪已結案並同步main（2026-11-21）
 
