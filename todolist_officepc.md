@@ -1,12 +1,19 @@
 # 公司端待辦
 
-## 公司端最新交付：FGDSTOCKIN_T100 入庫至 T100 ERP（WP616，2026-11-21）
+## 公司端最新交付：FGDSTOCKIN_T100_CANCEL 取消入庫 T100 ERP（WP620，2026-11-21）
+
+- [x] 依 Form／Designer、`wsINV`、`wsERP_T100`、`clsInventory` 核對取消查詢、ERP 呼叫、Core 庫存回復及狀態轉移。查詢只篩 State=2，未篩 ERP source；Confirm 有 State／ERPNo 守門但仍可能將非 T100 單送往 T100，已在規格及 DEV 明確呈現並阻擋跨 ERP 模擬取消。
+- [x] 新增 [WP620 規格](docs/modules/WIP/取消入庫T100_ERP.md)、索引、清冊進度及家用端 source guard／冪等／unknown outcome handoff。沿用 WP201／WP603／WP605／WP215 references；`TBLINVFGDINBIN` metadata 缺項沿 WP621／WP623，桌機無可用受保護 Oracle profile，未連 Oracle 或 YMES PostgreSQL、未猜 CREATE-only。
+- [x] DEV 頁模擬 FGD／SCRIN RequestType 0／1、ERP code=0 成功、ERP 失敗還原 State=2、MES 失敗保留 State=-2 及成功取消；Function 未掛正式 MenuItem，fallback 路由為 `/YMES/WIP/FgdStockInT100Cancel`。
+- [ ] 下一項依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 為 FGDSTOCKIN_TP「入庫至 TipTop ERP」（WP609）；先核對 Form／Service／Core，再完成 DEV、規格及兩端 handoff。
+
+## 公司端交付：FGDSTOCKIN_T100 入庫至 T100 ERP（WP616，2026-11-21）
 
 - [x] 依 Form／Designer、`wsERP_T100`、`wsMES`、`clsWIP`／`clsINV` 核對 DocType=1、InventoryType 1／6、MO 多選、Lot Select／UnSelect、Reservation、ERP `RequestType=0` 與 T100／MES 流程。
 - [x] 完成 Vue DEV 假資料雙 Grid、掃描選／取消、全選／清除、完整 Lot Qty、ERP W warning 續行、ERP fail、MES fail 後 ERP cancel success／fail 情境。
 - [x] 重用 WP201／WP605 已有 Oracle DDL／CREATE references；沒有新增缺表。此桌機無可用受保護 Oracle profile，未連 Oracle、未做 CREATE-only，也未連 YMES PostgreSQL。
 - [x] 新增 [WP616 規格](docs/modules/WIP/入庫至T100_ERP.md)、索引與家用端 ERP／schema handoff。記錄現行路徑未序列化區域變數 `auto=N`，以及 ERP 取消失敗仍釋放 BookingFlag 的補償風險；Function 原生未掛 MenuItem，DEV fallback 有標示。
-- [ ] 依 [MES 選單清冊](docs/MES_MENU_FUNCTION_INVENTORY.md) 繼續；下一項尚未復刻功能為 FGDSTOCKIN_T100_CANCEL「取消入庫 T100 ERP」（WP620，Function 未掛入 MenuItem）。
+- [x] 後續 FGDSTOCKIN_T100_CANCEL（WP620）已完成；目前轉接 WP609。
 
 ## 公司端最新交付：FGDSTOCKIN_E10ICD_CANCEL 取消入庫 E10ICD ERP（WP623，2026-11-21）
 

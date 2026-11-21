@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：FGDSTOCKIN_T100_CANCEL 取消入庫 T100 ERP（WP620，2026-11-21）
+
+公司端依 T100 Cancel Form／Designer、`wsINV`、`wsERP_T100`、`clsInventory` 完成 FGD／SCRIN 整張入庫取消的 DEV 假資料流程及[WP620 規格](docs/modules/WIP/取消入庫T100_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInT100Cancel`；原 Function 未掛正式 `MenuItem`。DEV 模擬 RequestType 0／1、ERP 失敗還原 State=2、ERP 成功但 MES 回復失敗保留 State=-2；原查詢缺 ERP source 篩選，DEV 阻擋非 T100 來源以展示正式端必要的防護。不連 T100／MES Service 或資料庫。
+
+- [ ] 實作時重新查核 ERP source、State=2、ERPNo、單據版本／明細與 ACL；避免把 E10ICD 等其他 ERP 單送往 T100。採單據鎖及 idempotency key。
+- [ ] T100 FGD 使用 RequestType=0，SCRIN 使用 RequestType=1；僅 code=0 後回復 MES。timeout／unknown outcome 先查 ERP 或進對帳佇列，不盲目重送。
+- [ ] 將 ERP 結果及 MES 庫存／Lot／Component／動態 Bin／BookingFlag 回復協調成可恢復流程。ERP 成功、MES 失敗時保留待恢復狀態；比對 live schema 後在本地交易完成回復與最終狀態。
+- [ ] `TBLINVFGDINBIN` Oracle metadata 沿 WP621／WP623 待公司端使用安全 profile 唯讀補查；缺項確認前不猜 CREATE-only SQL／migration。
+
 ## 公司端交接：FGDSTOCKIN_T100 入庫至 T100 ERP（WP616，2026-11-21）
 
 公司端依 T100 Stock In Form／Designer、`wsERP_T100`、`wsMES`、`clsWIP`／`clsINV` 完成良品整列入庫的 DEV 假資料流程及[WP616 規格](docs/modules/WIP/入庫至T100_ERP.md)。Fallback 路由為 `/YMES/WIP/FgdStockInT100`；原 Function 未掛正式 `MenuItem`。DEV 模擬 T100 Sheet Type、MO／來源 WIP Lot、Select／UnSelect、ERP code W 警告續行、ERP fail 與 MES fail 後 ERP 取消；不連 T100／MES Service 或資料庫。
