@@ -118,6 +118,8 @@ import EmsAccessoryStateMonitor from './components/EmsAccessoryStateMonitor.vue'
 import EmsAccessoryStateMonitorByEquipment from './components/EmsAccessoryStateMonitorByEquipment.vue'
 import EmsAccessoryStateControlSetting from './components/EmsAccessoryStateControlSetting.vue'
 import EmsAccessoryStateLogQuery from './components/EmsAccessoryStateLogQuery.vue'
+import EmsAccessoryStateQuery from './components/EmsAccessoryStateQuery.vue'
+import EmsAccessoryStateMonitorBu1 from './components/EmsAccessoryStateMonitorBu1.vue'
 import EmsEquipmentStateViolativeSetting from './components/EmsEquipmentStateViolativeSetting.vue'
 import EmsEquipmentStateLog from './components/EmsEquipmentStateLog.vue'
 import EmsEquipmentStateLogQuery from './components/EmsEquipmentStateLogQuery.vue'
@@ -684,6 +686,8 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:EMS:ACC MONITOR', label: '配件狀態監控', shortLabel: '監控', functionNo: 'ACC MONITOR', moduleNo: 'EMS' },
         { id: 'function:EMS:ACC MONITOR BY EQP', label: '配件狀態監控_設備', shortLabel: '設備配', functionNo: 'ACC MONITOR BY EQP', moduleNo: 'EMS' },
         { id: 'function:EMS:ACC STATE LOG QUERY', label: '配件歷史資料查詢', shortLabel: '配件歷程', functionNo: 'ACC STATE LOG QUERY', moduleNo: 'EMS' },
+        { id: 'function:EMS:ACC STATE QUERY', label: '配件狀態查詢', shortLabel: '配件狀態', functionNo: 'ACC STATE QUERY', moduleNo: 'EMS' },
+        { id: 'function:EMS:ACC MONITOR_BU1', label: '配件狀態監控_管理', shortLabel: '管理配件', functionNo: 'ACC MONITOR_BU1', moduleNo: 'EMS' },
         { id: 'function:EMS:RETURN EQP ACCESSORY', label: '配件下機', shortLabel: '下機', functionNo: 'RETURN EQP ACCESSORY', moduleNo: 'EMS' },
         { id: 'function:EMS:SHOW EQP LOG', label: '設備歷史資料查詢', shortLabel: '統計', functionNo: 'SHOW EQP LOG', moduleNo: 'EMS' },
         { id: 'function:EMS:SHOW EQP LOG BY STATE', label: '設備歷史資料查詢_狀態', shortLabel: '日統計', functionNo: 'SHOW EQP LOG BY STATE', moduleNo: 'EMS' },
@@ -705,6 +709,8 @@ const menuRoutes: Record<string, string> = {
   'function:EMS:ACC MONITOR BY EQP': appBasePath + '/EMS/AccessoryStateMonitorByEquipment',
   'function:EMS:ACC STATE CONTROL SETTING': appBasePath + '/EMS/AccessoryStateControlSet',
   'function:EMS:ACC STATE LOG QUERY': appBasePath + '/EMS/AccessoryStateLogQuery',
+  'function:EMS:ACC STATE QUERY': appBasePath + '/EMS/AccessoryStateQuery',
+  'function:EMS:ACC MONITOR_BU1': appBasePath + '/EMS/AccessoryStateMonitorBu1',
   'function:EMS:VIOLATIVE STATE SETTING': appBasePath + '/EMS/ViolateStateChangeSetMatrix',
   'function:EMS:RETURN EQP ACCESSORY': appBasePath + '/EMS/ReturnEquipmentAccessory',
   'function:EMS:SHOW EQP LOG': appBasePath + '/EMS/EquipmentStateLogQuery',
@@ -997,6 +1003,8 @@ const functionRoutes: Record<string, string> = {
   'ACC MONITOR BY EQP': appBasePath + '/EMS/AccessoryStateMonitorByEquipment',
   'ACC STATE CONTROL SETTING': appBasePath + '/EMS/AccessoryStateControlSet',
   'ACC STATE LOG QUERY': appBasePath + '/EMS/AccessoryStateLogQuery',
+  'ACC STATE QUERY': appBasePath + '/EMS/AccessoryStateQuery',
+  'ACC MONITOR_BU1': appBasePath + '/EMS/AccessoryStateMonitorBu1',
   'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
   'LOT SPLIT': appBasePath + '/WIP/LotSplit',
@@ -1212,6 +1220,8 @@ const isEmsAccessoryStateMonitorPage = computed(() => activeMasterKey.value === 
 const isEmsAccessoryStateMonitorByEquipmentPage = computed(() => activeMasterKey.value === 'function:EMS:ACC MONITOR BY EQP')
 const isEmsAccessoryStateControlSettingPage = computed(() => activeMasterKey.value === 'function:EMS:ACC STATE CONTROL SETTING')
 const isEmsAccessoryStateLogQueryPage = computed(() => activeMasterKey.value === 'function:EMS:ACC STATE LOG QUERY')
+const isEmsAccessoryStateQueryPage = computed(() => activeMasterKey.value === 'function:EMS:ACC STATE QUERY')
+const isEmsAccessoryStateMonitorBu1Page = computed(() => activeMasterKey.value === 'function:EMS:ACC MONITOR_BU1')
 const isEmsEquipmentStateViolativeSettingPage = computed(() => activeMasterKey.value === 'function:EMS:VIOLATIVE STATE SETTING')
 const isEmsReturnEquipmentAccessoryPage = computed(() => activeMasterKey.value === 'function:EMS:RETURN EQP ACCESSORY')
 const isEmsEquipmentStateLogPage = computed(() => activeMasterKey.value === 'function:EMS:EQUIPMENT STATE LOG')
@@ -3151,6 +3161,8 @@ async function signOut(): Promise<void> {
         <EmsAccessoryStateMonitorByEquipment v-else-if="isEmsAccessoryStateMonitorByEquipmentPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsAccessoryStateControlSetting v-else-if="isEmsAccessoryStateControlSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsAccessoryStateLogQuery v-else-if="isEmsAccessoryStateLogQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsAccessoryStateQuery v-else-if="isEmsAccessoryStateQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsAccessoryStateMonitorBu1 v-else-if="isEmsAccessoryStateMonitorBu1Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateViolativeSetting v-else-if="isEmsEquipmentStateViolativeSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsReturnEquipmentAccessory v-else-if="isEmsReturnEquipmentAccessoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsEquipmentStateLogQuery v-else-if="isEmsEquipmentStateLogQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
