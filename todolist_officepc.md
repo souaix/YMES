@@ -1,12 +1,20 @@
 # 公司端待辦
 
+## 家用端補件：WPP05 Golden MAP 原生資料與 File Service 契約（2026-11-23）
+
+- [ ] 以受保護的 Oracle profile 唯讀確認權威 MES owner／schema 與 synonym，並查 `TBL_PWIPGoldenMAPFileState`、`TBL_PWIPGoldenMAPFileLog` 是否存在；如不存在，記錄查詢範圍與結果，不從 INSERT／SELECT 欄位推測表結構。
+- [ ] 對上述兩表提供同一 MESTEST／MES 版本的 Oracle `DBMS_METADATA` CREATE DDL，以及欄位 metadata（型別、BYTE／CHAR 長度、nullable、default、comment）、PK／UK／FK、index、trigger 與 sequence（若有）。需確認 State 的 `(ProductNo, ProductVersion)` 唯一性、Log 的識別鍵與 `UpdGoldenMAPFileLog` 更新條件；不得帶回業務資料列或把 secrets 寫進 repo。
+- [ ] 補 `wsWIP.LoadGoldenMAPFileState`／`LoadGoldenMAPFileLog`／`UpdGoldenMAPFileState`／`AddGoldenMAPFileLog`／`ScrapGoldenMAPFile`／`UpdGoldenMAPFileLog` 的實際 SQL／交易邊界與各步驟回傳語意；特別說明 State 刪後重建、Log 追加／更新及失敗時是否 rollback。
+- [ ] 補 `wsSYS.LoadParameter` 的 File Service 設定參數編號／名稱、解析型別及缺值／錯誤行為（File Service type、host、port、user、password、Golden MAP state path、backup path）。只交參數定義與讀取流程，不交實際 credential／secret 值。
+- [ ] 找出可供正式 API 使用的受支援 File Service/provider 介面：上傳、下載、存在檢查、刪除、移動／備份、overwrite 與錯誤／timeout 回應格式；補服務端實際部署位置／相依元件及設定來源，不提供明文連線密碼。若沒有可重用 provider，明確註明需新建的服務端元件與安全設定位置。
+- [ ] 確認並記錄來源 Form 將 DeviceNo XML 參數下一行覆蓋成 ProductNo 的缺陷；由家用 API 按規格實作 DeviceNo→ProductNo 查詢，不需公司端改原型或重交假資料。
+
 ## 公司端最新交付：WPP05 P_GOLDENMAP FILE MANAGEMENT／Golden MAP檔案管理（2026-11-23）
 
-- [x] 依 THEIL 主／Update 子 Form、IC_CP_PKG.wsWIP、clsLot 核對 DeviceNo 參數被 ProductNo 覆蓋的來源缺陷、Product／UploadTime 現況與歷程查詢、Org File Update／Assign Product Info、逐檔上傳、backup／Scrap／下載及其檔案服務參數。
-- [x] 完成 DEV fallback /YMES/WIP/GoldenMapFileManage：假資料 State／History、多選、產品 fixture 選擇、DeviceNo／ProductNo checkbox 預期查詢、檔名／副檔名驗證、更新替換／歷程、Scrap、下載模擬；新增 Golden_MAP檔案管理.md 並更新索引。
-- [x] 僅操作固定 DEV fixtures 與 localStorage；不讀／寫本機檔案、不呼叫 legacy Service、Oracle／YMES PostgreSQL、FTP 或正式 File Service。未執行 build、test 或 browser。
-- [ ] WPP05 專屬 TBL_PWIPGoldenMAPFileState／TBL_PWIPGoldenMAPFileLog 同版 Oracle DDL／metadata 缺項；桌機受保護 Oracle profile 不存在，未猜欄位或 CREATE-only。共享 TBLPRDPRODUCTBASIS 參考 DDL／metadata 沿既有 references。
-- [ ] 家用端先核對兩張 Golden MAP 表的 PostgreSQL live schema／migration，再設計登入保護、參數化的 State／History／Product lookup 與逐檔 upload／scrap／download API。File Service 路徑／憑證由 server 受保護設定管理，逐檔補冪等、部分成功回報及 file／DB 對帳。
+- [x] 依 THEIL 主／Update 子 Form、`IC_CP_PKG.wsWIP`、`clsLot` 核對 DeviceNo 參數覆蓋缺陷、目前／歷程查詢、產品指派、逐檔替換、備份、Scrap、下載及設定參數；完成 DEV fallback `/YMES/WIP/GoldenMapFileManage`。
+- [x] DEV 僅操作固定 fixtures／localStorage；不讀寫本機檔案、不呼叫 legacy Service、Oracle／YMES PostgreSQL、FTP 或正式 File Service。未執行 build、test 或 browser。
+- [ ] WPP05 兩張 Oracle 原生表 DDL／metadata 與正式 File Service/provider 契約仍待上方補件；不要從 WinForms 欄位推測 CREATE SQL。
+- [ ] `TBL_PWIPGoldenMAPFileState` 亦是 WPP07「Bump MAP 疊圖」直接相依表；請在同一來源補件標明 WPP05／WPP07 共用此表。WPP07 其餘五張 CP MAP state／merge／template 表 DDL／metadata 仍待補，詳 [WPP07 規格](docs/modules/WIP/Bump_MAP疊圖作業.md)。
 - [ ] CP 清冊其餘 WPP02、WPP04、WPP08 尚無本索引中的交付項；下一項依原始 FunctionOrder 確認順序後接續。
 
 ## 公司端最新交付：WPP03 P_EQP SETUP BASIS／設備設置單維護_晶片測試（2026-11-22）
