@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 清冊交接：WPI05 原始來源缺失，接續 ES402（2026-11-23）
+
+- [x] 查驗 `D:\iMES\CSiMES`、`D:\TP-iMes\iMES_THEIL_TP`、`D:\TP-iMes\DEV_SILVA`，未找到 WPI05 `frmEQPAccessoryBasis`／其專案或直接 Service/Core；EP203 配件主檔、ES 配件上機與 CP Setup 配件查詢不是同一功能。詳見[來源狀態](docs/modules/WIP/配件領用單維護作業.md)。
+- [ ] 取得缺少的 WPI05 Form／Designer、Service、Core 後，再按來源復刻；公司端 Oracle 僅在受保護 profile 可用時唯讀查 metadata，不猜欄位／DDL。
+- [ ] 跳過無法由現有來源核實的 WPI05，接續 ES402「設備狀態記錄查詢」。
+
 ## 公司端最新交付：WPP08 P_LOT COMP GEN／生產批自主產生元件（2026-11-23）
 
 - [x] 依 THEIL `frmLotComponentGen`／`frmNewComponent` 與 Designer、CP `wsWIP.LoadComponentBasis`／`LoadComponentState`／`UpdComponent`、共用 `wsWIP`／`wsSYS`／`wsPRD` 及 Core `clsLot.UpdComponent` 核對查詢、重複阻擋、流程資格、序號、Unit transfer、Wafer ID、GoodQty 總量及三表新增契約。

@@ -1,5 +1,12 @@
 # 家裡電腦接手清單
 
+## 公司端來源缺口：WPI05 配件領用單維護作業（2026-11-23）
+
+公司端檢查 `D:\iMES\CSiMES`、`D:\TP-iMes\iMES_THEIL_TP`、`D:\TP-iMes\DEV_SILVA`，未找到 WPI05 選單指定的 `frmEQPAccessoryBasis`／專案或其直接 Service/Core。相似的設備配件主檔 EP203、ES 配件上機與 CP Setup 配件查詢均不可代替。詳見[來源狀態](docs/modules/WIP/配件領用單維護作業.md)。
+
+- [ ] 如家用端或其他核准來源樹有 WPI05 Form／Service／Core，先補齊來源再定義 API/schema；不可只據 menu title 或通用 `TBLEQPACCESSORYBASIS` 推測領用流程。
+- [ ] 在來源缺口未解前，不新增 WPI05 正式 API／schema；公司端接續 ES402。
+
 ## 公司端交接：WPP08 生產批自主產生元件（2026-11-23）
 
 公司端依 THEIL `frmLotComponentGen`／`frmNewComponent`、CP `wsWIP.UpdComponent`、`clsLot.UpdComponent` 和相關查詢 Service 完成 [WPP08 DEV 頁](docs/modules/WIP/生產批自主產生元件.md)，fallback `/YMES/WIP/LotComponentGen`。DEV 模擬 MOState 3／6、LotState=0、批次查詢、Component State/Basis 重複阻擋、HaveComponent／Enterprise gate、SerialConfig auto/manual、Wafer ID 範圍、Unit conversion、GoodQty 編輯及 SumQty 總量守恆；Confirm 只更新虛構 Component State 記憶體，不呼叫服務或預約正式序號。
