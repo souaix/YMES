@@ -1,11 +1,20 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES402 設備狀態記錄查詢（2026-11-23）
+
+公司端依 THEIL `frmEquipmentStateLog`／`frmEQPStateLog_GanttChart`、`wsEMS.LoadEquipmentStateLog`、Core `LoadEquipmentStateLogJoinStateBasis` 完成 [ES402 DEV 頁](docs/modules/EMS/設備狀態記錄查詢.md)，fallback `/YMES/EMS/EquipmentStateLog`。DEV 只使用虛構 fixture，模擬 EquipmentType／EquipmentNo／UserNo／EquipmentState 及 Start／End 時間各自的包含式範圍、結果排序、隱藏 LotNo／OPNo 欄與 StateColor Gantt；`strEquipmentNo` 可由 query string 帶入並自動查詢。
+
+- [ ] Pull 最新 `main` 後先唯讀比對 `TBLEMSEQUIPMENTSTATELOG`、`TBLEQPSTATEBASIS`、`TBLWIPCONT_EQUIPMENT`、`TBLWIPLOTLOG` 的 live schema／現有 migrations；來源 Oracle DDL 與 references 詳見規格及 `database/reference/mestest_wip_lot_log_create.sql`。CREATE-only 不是 migration，不可盲目套用；來源未宣告 `TBLWIPCONT_EQUIPMENT` 主鍵。
+- [ ] 實作登入與 ES402 權限保護、參數化及分頁的唯讀設備狀態歷程 API；驗證兩組起訖範圍及使用者可查設備，設日期跨度／筆數上限。設備使用關聯應同時比對 EquipmentNo／StartTime／EndTime；Oracle Core 以三欄關聯，非 Oracle 分支漏 EndTime，另需避免 Core SQL 字串串接。
+- [ ] `TBLWIPLOTLOG` Oracle source DDL 先前已有但無 PG CREATE-only；公司端依既有 source 補出 `database/reference/mestest_wip_lot_log_create.sql`，家用端確認 live schema 與 migration history 後才決定是否需要 migration。
+- [ ] 公司端接續 ES302「配件下機」。WPI05「配件領用單維護」在桌機、THEIL、DEV_SILVA 來源樹未找到 Form／Service／Core，詳 [來源狀態](docs/modules/WIP/配件領用單維護作業.md)；如家用端有核准原始來源再補做。
+
 ## 公司端來源缺口：WPI05 配件領用單維護作業（2026-11-23）
 
 公司端檢查 `D:\iMES\CSiMES`、`D:\TP-iMes\iMES_THEIL_TP`、`D:\TP-iMes\DEV_SILVA`，未找到 WPI05 選單指定的 `frmEQPAccessoryBasis`／專案或其直接 Service/Core。相似的設備配件主檔 EP203、ES 配件上機與 CP Setup 配件查詢均不可代替。詳見[來源狀態](docs/modules/WIP/配件領用單維護作業.md)。
 
 - [ ] 如家用端或其他核准來源樹有 WPI05 Form／Service／Core，先補齊來源再定義 API/schema；不可只據 menu title 或通用 `TBLEQPACCESSORYBASIS` 推測領用流程。
-- [ ] 在來源缺口未解前，不新增 WPI05 正式 API／schema；公司端接續 ES402。
+- [ ] 在來源缺口未解前，不新增 WPI05 正式 API／schema；ES402 已完成公司端 handoff，公司端接續 ES302。
 
 ## 公司端交接：WPP08 生產批自主產生元件（2026-11-23）
 

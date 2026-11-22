@@ -1,10 +1,19 @@
 # 公司端待辦
 
-## 清冊交接：WPI05 原始來源缺失，接續 ES402（2026-11-23）
+## 公司端最新交付：ES402 設備狀態記錄查詢（2026-11-23）
+
+- [x] 依 THEIL `frmEquipmentStateLog`（Designer 內嵌）／Gantt 子窗、`wsEMS.LoadEquipmentStateLog`、Core `clsEMSEquipment.LoadEquipmentStateLogJoinStateBasis` 核對日期與設備／狀態／使用者條件、Lot／OP 隱藏欄、狀態色及查詢排序。
+- [x] 完成 `/YMES/EMS/EquipmentStateLog` DEV 假資料頁：勾選式 lookup、四個可選日期邊界、查詢結果表、設備狀態 Gantt；支援 `strEquipmentNo` query string 深連結。新增 [ES402 規格](docs/modules/EMS/設備狀態記錄查詢.md)、索引與家用端 handoff。
+- [x] DEV 僅用虛構資料與頁面記憶體，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫入；未執行 build、test 或 browser。
+- [x] Oracle 結構引用沿用 WP305／設備狀態 basis references；為既有 Oracle source `TBLWIPLOTLOG` 新增 PG CREATE-only 參考，未執行 migration。受保護 Oracle profile 不可用，本次未連 Oracle、未查業務資料或 YMES PostgreSQL。
+- [ ] 家用端先比對四張來源表 live schema／migrations，尤其 `TBLWIPCONT_EQUIPMENT` 無 PK；以登入者 ES402 權限做唯讀 API，參數化所有 filters、限制日期跨度與結果數、採完整 EquipmentNo＋StartTime＋EndTime 關聯並分頁。Oracle／非 Oracle legacy join 有 EndTime 條件差異；不要照搬 Core 字串 SQL。
+- [ ] 接續清冊下一項 ES302「配件下機」，先確認來源及是否已交付。
+
+## 清冊交接：WPI05 原始來源缺失，跳過後接續 EMS 清冊（2026-11-23）
 
 - [x] 查驗 `D:\iMES\CSiMES`、`D:\TP-iMes\iMES_THEIL_TP`、`D:\TP-iMes\DEV_SILVA`，未找到 WPI05 `frmEQPAccessoryBasis`／其專案或直接 Service/Core；EP203 配件主檔、ES 配件上機與 CP Setup 配件查詢不是同一功能。詳見[來源狀態](docs/modules/WIP/配件領用單維護作業.md)。
 - [ ] 取得缺少的 WPI05 Form／Designer、Service、Core 後，再按來源復刻；公司端 Oracle 僅在受保護 profile 可用時唯讀查 metadata，不猜欄位／DDL。
-- [ ] 跳過無法由現有來源核實的 WPI05，接續 ES402「設備狀態記錄查詢」。
+- [x] 跳過無法由現有來源核實的 WPI05，接續 ES402；ES402 已完成公司端 DEV／規格，現在下一項 ES302「配件下機」。
 
 ## 公司端最新交付：WPP08 P_LOT COMP GEN／生產批自主產生元件（2026-11-23）
 
