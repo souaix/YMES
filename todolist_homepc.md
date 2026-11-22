@@ -11,7 +11,8 @@
 
 公司端依本機 `D:\iMES\CSiMES\STD\MESWin\WIP\WP_InvCountStatePrint\frmInvCountStatePrint.vb`（Designer 內嵌）、`wsWIP.LoadInvCountStateWithDetail`、`clsINVCount` 及 General／MTL／PRD ActiveReports 完成盤點清冊 DEV 假資料頁及[WP607 規格](docs/modules/WIP/盤點清冊列印.md)。Fallback 路由 `/YMES/WIP/InvCountStatePrint`；原 Function 未掛正式 `MenuItem`。DEV 模擬六種 DataType 的 State=0 全部已關帳明細查詢、Grid 排序、Barcode／NoBarcode report class 選擇及預覽，不產生 PDF／條碼、不呼叫正式 Service／資料庫／印表機。
 
-- [ ] 與 WP608 共用讀取資料；先查 YMES PostgreSQL live schema／migration history，再核對 `TBLWIPINVCOUNTSTATE`、`TBLWIPINVCOUNTDETAIL`、`TBLWIPINVCOUNTDETAIL_MTL`、`TBLWIPINVCOUNTDETAIL_PRD`。桌機沒有受保護 Oracle profile，未查 DDL 或猜 CREATE-only。
+- [x] 與 WP608 共用讀取資料；家用端以 PPK SSH 隧道做過只讀 catalog audit，已確認四張盤點 state/detail 表都不存在，且沒有找到可辨識的 migration-history table。未查業務資料、未執行 DDL/DML。
+- [ ] 等公司端提供四表原生 Oracle DDL／metadata；資料表結構取得後，與 WP608 共用正式盤點讀取 API。
 - [ ] 正式 Web 報表須選定可部署方案並確認掃碼規格、版面／分頁／頁首頁尾；重用登入保護的盤點 query。不可假設公司端 ActiveReports runtime 或桌機 DLL 能部署到正式 API/Web。
 
 ## 家用端驗收服務固定啟動流程（2026-11-22）
