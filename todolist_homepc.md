@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：WPP03 設備設置單維護_晶片測試（2026-11-22）
+
+公司端依 THEIL CP 主／ADD／EDIT／CLOSE Form、VIEW Form、`IC_CP_PKG.wsWIP` 與 `clsLot` 完成 [WPP03 DEV 頁](docs/modules/WIP/設備設置單維護_晶片測試.md)，fallback `/YMES/WIP/EqpSetupBasisCp`。DEV 以獨立 localStorage fixtures 模擬設備設置單查詢、SFN 單號、PROBER／TESTER、Accessory Release、配件數量與 Site 實物確認，以及 ADD／EDIT／VIEW／CLOSE 和設備使用中守門；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫設備關聯、serial 或 EMS 配件狀態。
+
+- [ ] 公司桌機缺受保護 Oracle profile；WPP03 專屬 `TBLWIPEQPSETUPBASIS`、`TBLWIPEQPSETUPDETAIL`、`TBLWIPEQPSETUPACCESSORY`、`TBLWIPEQPSETUPACCESSORYSTATE`、`TBLWIPEQPACCESSORYBASIS`／`DETAIL`、`TBLWIPEQUIPMENTLINKSTATE`／`LOG`，以及 `TBLPRDACCESSORYGROUP_SUB`／`TBLEMSACCVIOLATESTATUSCHANGE` 同版 source DDL／metadata 缺項，沒有猜 CREATE-only。`TBLWIPTEMP_EQUIPMENT`／`TBLSYSSERIALNO`／EMS accessory state/control 沿 WP201／WP109／accessory references。家用端先核 PostgreSQL live schema／migration，再依 [WPP03 規格](docs/modules/WIP/設備設置單維護_晶片測試.md)決定補同版 Oracle DDL 與 PostgreSQL CREATE-only handoff。
+- [ ] 正式 ADD／EDIT/CLOSE API 需以登入者身分、參數化條件、狀態比較／鎖與冪等保護 Setup serial、主／附屬設備、Accessory Apply、現場 Site 確認；結單須將設備使用守門、舊／新設備 Link State／Log、Setup 狀態及 EMS 配件狀態納入一筆可恢復交易或 saga。
+- [x] 公司端下一項依 FunctionOrder 清冊為 WPP05「P_GOLDENMAP FILE MANAGEMENT／Golden MAP檔案管理」。
+
 ## 公司端交接：WPP01 生產批開立_晶片測試（2026-11-22）
 
 公司端依 CP `frmLotBasis_CP`／`frmLotBasisDef_CP`／FT 子窗、`IC_CP_PKG.wsWIP`、共用 `wsWIP`、CP／共用 `clsLot` 完成 [WPP01 DEV 頁](docs/modules/WIP/生產批開立_晶片測試.md)，fallback `/YMES/WIP/LotBasisCreateCp`。DEV 以獨立 localStorage fixtures 模擬 CP MO 查詢、Lot Basis、ECN、MO 流程唯讀、元件／屬性／載具、Add／Edit／Copy／逐批 Delete／Release；不呼叫 API／Service，不連 Oracle／YMES PostgreSQL，不執行序號、扣料、StartLot、CloseLot、載具交易或自動報工。
@@ -8,7 +16,7 @@
 - [ ] 注意 `TBLWIPLOTBASIS` 參考版本未一致：舊 WP101 source DDL 38 欄、DESCRIPTION 255，8ff lookup 為 39 欄、DESCRIPTION 400 並含 `XX_MARKING`。公司桌機未能使用受保護 Oracle profile，本次未補取同版 Oracle DDL；以 YMES 目標版本決定 schema。
 - [ ] 建立登入保護的 CP MO／Lot／ECN／Component／Carrier／Lot Property lookups 與 Add/Edit/Delete/Release API。新增同步 Lot Basis、LotState、Process、ComponentState／Basis、MO Component BookingFlag、Property receive/value、OP ECN 及可選 Carrier In；使用 server-side serial、metadata allowlist 與登入者 audit。
 - [ ] 每批次各自鎖定／重查 MO UnReleaseLotQty、LotState、元件預約與 ECN 後交易；Delete 保留 CloseLot event 200 語意；Release 包含物料扣帳、StartLot、MO 數量與 Component 狀態，提交後自動 BR／報工需可追蹤。舊 WinForms 多選逐筆處理，首筆錯誤停止但保留之前成功列，正式 API 必須回傳逐列結果。
-- [x] 公司端下一項依選單清冊為 WPP03「P_EQP SETUP BASIS／設備設置單維護_晶片測試」。
+- [x] 公司端後續已完成 WPP03「P_EQP SETUP BASIS／設備設置單維護_晶片測試」；現在接續 WPP05。
 
 ## 公司端交接：WPP06 Bump MAP 檔案管理（2026-11-22）
 
