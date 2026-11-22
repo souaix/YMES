@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 公司端交接：WPP01 生產批開立_晶片測試（2026-11-22）
+
+公司端依 CP `frmLotBasis_CP`／`frmLotBasisDef_CP`／FT 子窗、`IC_CP_PKG.wsWIP`、共用 `wsWIP`、CP／共用 `clsLot` 完成 [WPP01 DEV 頁](docs/modules/WIP/生產批開立_晶片測試.md)，fallback `/YMES/WIP/LotBasisCreateCp`。DEV 以獨立 localStorage fixtures 模擬 CP MO 查詢、Lot Basis、ECN、MO 流程唯讀、元件／屬性／載具、Add／Edit／Copy／逐批 Delete／Release；不呼叫 API／Service，不連 Oracle／YMES PostgreSQL，不執行序號、扣料、StartLot、CloseLot、載具交易或自動報工。
+
+- [ ] 正式 API 前唯讀核對 YMES live schema／migration；沿用 WP101 Lot Basis／State／Process／Property、WP207 OP ECN、WP215 Component Basis、WP302 Carrier Detail、OE `TBLOEMOCOMPONENT`，不要重建共享表。
+- [ ] 注意 `TBLWIPLOTBASIS` 參考版本未一致：舊 WP101 source DDL 38 欄、DESCRIPTION 255，8ff lookup 為 39 欄、DESCRIPTION 400 並含 `XX_MARKING`。公司桌機未能使用受保護 Oracle profile，本次未補取同版 Oracle DDL；以 YMES 目標版本決定 schema。
+- [ ] 建立登入保護的 CP MO／Lot／ECN／Component／Carrier／Lot Property lookups 與 Add/Edit/Delete/Release API。新增同步 Lot Basis、LotState、Process、ComponentState／Basis、MO Component BookingFlag、Property receive/value、OP ECN 及可選 Carrier In；使用 server-side serial、metadata allowlist 與登入者 audit。
+- [ ] 每批次各自鎖定／重查 MO UnReleaseLotQty、LotState、元件預約與 ECN 後交易；Delete 保留 CloseLot event 200 語意；Release 包含物料扣帳、StartLot、MO 數量與 Component 狀態，提交後自動 BR／報工需可追蹤。舊 WinForms 多選逐筆處理，首筆錯誤停止但保留之前成功列，正式 API 必須回傳逐列結果。
+- [x] 公司端下一項依選單清冊為 WPP03「P_EQP SETUP BASIS／設備設置單維護_晶片測試」。
+
 ## 公司端交接：WPP06 Bump MAP 檔案管理（2026-11-22）
 
 公司端核對 THEIL `frmBumpMAPFileManage`／Update File 子 Form、`wsWIP`／`wsSYS`、`clsLot`／`clsSYSEng` 及 `clsMergeMAPHandler`，完成 [WPP06 DEV 頁](docs/modules/WIP/Bump_MAP檔案管理.md)，fallback `/YMES/WIP/BumpMapFileManage`。DEV 僅操作記憶體中的假 state/history、template 和 `.txt` fixture；不碰本機檔案、不呼叫 FTP(S)、legacy Service、Oracle、正式 API 或 PostgreSQL。Core 涉及 `TBL_PWIPBumpMAPFileState`、`TBL_PWIPBumpMAPFileLog`、`TBL_BSYSMAPTEMPLATEBASIS`、`TBL_BSYSMAPTEMPLATEDETAIL`；桌機受保護 Oracle attachment/profile 不可用，未取得 source DDL／metadata，未產生猜測 SQL。
@@ -7,7 +17,7 @@
 - [ ] 家用端唯讀核 live schema／migration 與既有 template API，確認上述四表及可重用 File Service provider。未核 Oracle 型別、PK／index/default 前不照 WinForms INSERT 欄位自造 migration。
 - [ ] 建立登入保護的 State／History 查詢、template lookup、逐檔 upload／archive／Scrap／download API。File root 與 FTP credential 只由 server 受保護設定解析，不接受 browser 傳任意 server path 或 credential；Lot／日期條件參數化，空 Lot prefix 不可退化成無界查詢。
 - [ ] 保持 MAP encoding、template detail parser、header／X/Y row-size 驗證相容；明確規範多檔部分成功、State／Log 和 file provider 一致性、冪等／重送與逾時 reconciliation，並提供人工修復紀錄。
-- [ ] 清冊下一項 WPP01「P_CREATE LOT_CP／生產批開立_晶片測試」由公司端接續復刻。
+- [x] 後續清冊 WPP01「P_CREATE LOT_CP／生產批開立_晶片測試」已由公司端交付；公司端現在接續 WPP03。
 
 ## 公司端交接：WIPUNINV 取消入庫作業（2026-11-22）
 

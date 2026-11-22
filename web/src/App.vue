@@ -71,6 +71,7 @@ import WipWorkorderPrint from './components/WipWorkorderPrint.vue'
 import WipSkipInspectionSetting from './components/WipSkipInspectionSetting.vue'
 import WipBumpMapMerge from './components/WipBumpMapMerge.vue'
 import WipBumpMapFileManage from './components/WipBumpMapFileManage.vue'
+import WipLotBasisCreateCp from './components/WipLotBasisCreateCp.vue'
 import WipFgdStockInE10Icd from './components/WipFgdStockInE10Icd.vue'
 import WipScrapStockInE10Icd from './components/WipScrapStockInE10Icd.vue'
 import WipFgdStockInE10IcdCancel from './components/WipFgdStockInE10IcdCancel.vue'
@@ -570,6 +571,7 @@ const fallbackMenuTree: MenuNode[] = [
     ],
   }, {
     id: 'menu:WIP:CHIP TEST PRODUCTION MANAGEMENT', label: '芯片測試生產管理', shortLabel: '芯片', children: [
+      { id: 'function:WIP:WPP01', label: '生產批開立_晶片測試（DEV）', shortLabel: 'CP開批', functionNo: 'WPP01', moduleNo: 'WIP' },
       { id: 'function:WIP:P_BUMP MAP MERGE', label: 'Bump MAP疊圖作業', shortLabel: 'MAP疊圖', functionNo: 'P_BUMP MAP MERGE', moduleNo: 'WIP' },
       { id: 'function:WIP:WPP06', label: 'Bump MAP 檔案管理（DEV）', shortLabel: 'MAP檔案', functionNo: 'WPP06', moduleNo: 'WIP' },
     ],
@@ -674,6 +676,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:WORKORDER PRINT': appBasePath + '/WIP/WorkorderPrint',
   'function:WIP:SKIP INSPECTION SETTING': appBasePath + '/WIP/SkipInspectionSetting',
   'function:WIP:P_BUMP MAP MERGE': appBasePath + '/WIP/BumpMapMerge',
+  'function:WIP:WPP01': appBasePath + '/WIP/LotBasisCreateCp',
   'function:WIP:WPP06': appBasePath + '/WIP/BumpMapFileManage',
   'function:WIP:FGDSTOCKIN_E10ICD': appBasePath + '/WIP/FgdStockInE10Icd',
   'function:WIP:FGDSTOCKIN_T100': appBasePath + '/WIP/FgdStockInT100',
@@ -975,6 +978,7 @@ const functionRoutes: Record<string, string> = {
   'SKIP INSPECTION SETTING': appBasePath + '/WIP/SkipInspectionSetting',
   'Skip Inspection Setting': appBasePath + '/WIP/SkipInspectionSetting',
   'P_BUMP MAP MERGE': appBasePath + '/WIP/BumpMapMerge',
+  WPP01: appBasePath + '/WIP/LotBasisCreateCp',
   WPP06: appBasePath + '/WIP/BumpMapFileManage',
   'FGDSTOCKIN_E10ICD': appBasePath + '/WIP/FgdStockInE10Icd',
   'FGDSTOCKIN_T100': appBasePath + '/WIP/FgdStockInT100',
@@ -1193,6 +1197,7 @@ const isWipWorkorderPrintPage = computed(() => activeMasterKey.value === 'functi
 const isWipSkipInspectionSettingPage = computed(() => activeMasterKey.value === 'function:WIP:SKIP INSPECTION SETTING')
 const isWipBumpMapMergePage = computed(() => activeMasterKey.value === 'function:WIP:P_BUMP MAP MERGE')
 const isWipBumpMapFileManagePage = computed(() => activeMasterKey.value === 'function:WIP:WPP06')
+const isWipLotBasisCreateCpPage = computed(() => activeMasterKey.value === 'function:WIP:WPP01')
 const isWipFgdStockInE10IcdPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_E10ICD')
 const isWipFgdStockInT100Page = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_T100')
 const isWipFgdStockInTpPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_TP')
@@ -3023,6 +3028,7 @@ async function signOut(): Promise<void> {
         <WipSkipInspectionSetting v-else-if="isWipSkipInspectionSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipBumpMapMerge v-else-if="isWipBumpMapMergePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipBumpMapFileManage v-else-if="isWipBumpMapFileManagePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipLotBasisCreateCp v-else-if="isWipLotBasisCreateCpPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInE10Icd v-else-if="isWipFgdStockInE10IcdPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInT100 v-else-if="isWipFgdStockInT100Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInTp v-else-if="isWipFgdStockInTpPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

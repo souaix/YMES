@@ -1,12 +1,21 @@
 # 公司端待辦
 
+## 公司端最新交付：WPP01 P_CREATE LOT_CP／生產批開立_晶片測試（2026-11-22）
+
+- [x] 直接核對 CP 主／定義 Form（含 Designer）、`IC_CP_PKG.wsWIP`／共用查詢與 `MEStc_IC_CP_PKG.clsLot`；補充 `IC_FT_PKG` Delete／非強制挑片 FT 子窗分支、序號、元件、ECN、Property、Carrier 與自動下線條件。
+- [x] 完成獨立 Vue DEV 頁 `/YMES/WIP/LotBasisCreateCp`：MO／Lot 查詢、19 欄清單、Add／Edit／Copy／多選 Delete／Release、ECN／流程唯讀／元件／Property／Carrier 互動及部分失敗情境；新增 [WPP01 規格](docs/modules/WIP/生產批開立_晶片測試.md)並更新索引與家用端 handoff。
+- [x] DEV 僅 localStorage 假資料；不連 Oracle／YMES PostgreSQL、不呼叫 Service／API、不執行序號、扣料、StartLot、CloseLot、載具或自動報工；未執行 build、test 或 browser。
+- [ ] 未有本機受保護 Oracle profile，本次未查 WPP01 相關 metadata、未讀業務資料、未猜 CREATE-only。沿用 WP101／WP207／WP215／WP302／OE references；`TBLWIPLOTBASIS` 舊 WP101 DDL 與 8ff lookup 有已知 38／39 欄、DESCRIPTION 長度及 `XX_MARKING` 差異，家用端須先核目標 schema。
+- [ ] 家用端先唯讀比對 live schema／migration，再規劃 CP MO／Lot／ECN／Component／Carrier／Property 查詢與新增、編輯、逐批刪除／下線 API；鎖定 MO 未下線量與元件預約，明確逐筆交易及部分成功結果。
+- [ ] 下一項依清冊為 WPP03「P_EQP SETUP BASIS／設備設置單維護_晶片測試」。
+
 ## 公司端最新交付：WPP06 Bump MAP 檔案管理（2026-11-22）
 
 - [x] 核 THEIL 主 Form／內嵌 Designer、Update File 子 Form、`wsWIP`、`wsSYS`、`clsLot`、`clsSYSEng` 及 `clsMergeMAPHandler`；記錄目前／歷程查詢、MAPType=1 template、encoding／header／尺寸檢查、逐檔上傳備份、Scrap、下載與事件紀錄流程。
 - [x] 完成 DEV 假資料頁：Lot／UploadTime 查詢、State／History 多選、假 template／`.txt` file chooser、解析提示、逐檔 upload／Scrap、備份續號、下載目的地與部分失敗情境；新增 [WPP06 規格](docs/modules/WIP/Bump_MAP檔案管理.md)、索引及家用端 handoff。
 - [x] fallback `/YMES/WIP/BumpMapFileManage` 僅 Vue 記憶體 fixtures；不連 Oracle／YMES PostgreSQL／legacy Service／FTP(S)、不讀寫任何本機檔案。未執行 build、test 或 browser。
 - [ ] 直接表為 `TBL_PWIPBumpMAPFileState`／`TBL_PWIPBumpMAPFileLog`；template 依賴 `TBL_BSYSMAPTEMPLATEBASIS`／`TBL_BSYSMAPTEMPLATEDETAIL`。本機受保護 Oracle attachment/profile 不可用，未查 DDL／metadata，未猜 CREATE-only。家用端比對 live schema 並設計參數化 API、server-side file root、冪等與跨檔案／DB reconciliation。
-- [ ] 下一項依清冊為 WPP01「P_CREATE LOT_CP／生產批開立_晶片測試」；先核對 THEIL Form／Service／Core，再做 DEV 與 handoff。
+- [x] 後續清冊項目 WPP01「P_CREATE LOT_CP／生產批開立_晶片測試」已完成；現在接續 WPP03。
 
 ## 公司端最新交付：WIPUNINV 取消入庫作業（2026-11-22）
 
