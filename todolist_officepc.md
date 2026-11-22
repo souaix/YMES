@@ -1,11 +1,19 @@
 # 公司端待辦
 
+## 公司端最新交付：BARTENDER Bartender print（2026-11-22）
+
+- [x] 依 THEIL `frmWP_BartenderPrint_THEIL_BU1.vb`（主 Form／Designer 內嵌）、`frmWP_BartenderPrint_Form.vb`／Designer、`ApiClient`／`ApiExecResult` 核對 Lot、標籤選項、動態列印資料、預覽／送印、TAG_FILE_MAP 設定及工具頁流程。
+- [x] 完成 DEV 假資料標籤查詢、規則選擇、逐筆／全選、動態 Grid、對照設定編輯與驗證、假標籤分頁預覽、列印確認及本頁狀態紀錄；新增 [BARTENDER 規格](docs/modules/WIP/Bartender列印.md)、索引與家用端 handoff。
+- [x] DEV fallback `/YMES/WIP/BartenderPrint`。不呼叫 SqlExecApi／InLabel／LabelApi、資料庫、SFTP、BarTender、檔案系統或印表機；不下載、解壓、安裝或執行 vendor 二進位檔。未執行 build、test 或 browser。
+- [ ] 可讀 THEIL checkout 只有 API consumer；未找到 InLabel／LabelApi server handler 或 `GETLPC`／`GETXXQCLABEL` SQL／Core 實作。`TBLINLABEL_TAG_FILE_MAP` Oracle DDL／metadata 缺項，桌機沒有受保護 Oracle profile，未連 Oracle／YMES PostgreSQL，也未猜 CREATE-only。家用端先核 live schema／API 身分與權限，再決定正式列印 provider。
+- [ ] 下一項依清冊為無 FunctionKey 的 WIPUNINV「取消入庫作業」；核對 THEIL Form／Service／Core 後接續 DEV 復刻。
+
 ## 公司端最新交付：INV COUNT STATE 盤點關／開帳（WP606，2026-11-22）
 
 - [x] 依本機 `D:\iMES\CSiMES\STD\MESWin\WIP\WP_InvCountState\frmInvCountState.vb`（Designer 內嵌）、`wsWIP.LoadInvCountState`／`ExeInvCountClose`／`ExeInvCountOpen`／`ChkInvCountAdjust`、`clsINVCount`／`clsSYSParameter` 核對 State=0／1、六種 Close Option 快照與批次過站鎖。
 - [x] 完成 Vue DEV 假資料關帳／開帳、六類快照選擇、未 Confirm 調帳阻擋、失敗復原情境；新增 [WP606 規格](docs/modules/WIP/盤點關開帳.md)、索引與家用端 handoff。記錄 AllowExecuteLot 參數與 State 寫入先後造成的失敗恢復風險，以及伺服器未檢查至少一項 Close Option 的缺口。
 - [x] 路由 `/YMES/WIP/InvCountState` 僅 DEV fallback，不呼叫資料庫或 MES Service。沿用 WP608 四張盤點 state/detail 表，Oracle DDL／metadata 缺項且桌機無受保護 Oracle profile，未猜 CREATE-only。未執行 build、test 或 browser。
-- [ ] 下一個尚未復刻功能依清冊為無 FunctionKey 的 BARTENDER「Bartender print」；先核對 THEIL Form／Designer／Service，再以 DEV 假資料復刻列印請求與狀態。
+- [x] 下一個尚未復刻功能 BARTENDER「Bartender print」已完成；接續項目見本檔最上方及功能清冊。
 
 ## 公司端最新交付：INV COUNT PRINT 列印盤點清冊（WP607，2026-11-22）
 

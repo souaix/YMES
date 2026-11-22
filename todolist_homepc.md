@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：BARTENDER Bartender print（2026-11-22）
+
+公司端依 THEIL `frmWP_BartenderPrint_THEIL_BU1.vb`（Designer 內嵌）、預覽 Form／Designer 與 `ApiClient` 完成 [BARTENDER DEV 頁](docs/modules/WIP/Bartender列印.md)，fallback `/YMES/WIP/BartenderPrint`。DEV 使用虛構 LOT／標籤規則，模擬 `GETLPC`、`GETXXQCLABEL`／LabelApi rows、標籤選擇、列印資料選取、假標籤預覽、列印確認與 `TBLINLABEL_TAG_FILE_MAP` 編輯；不呼叫任何 endpoint、資料庫、SFTP、外部執行檔或印表機。
+
+- [ ] 家用端唯讀核對 YMES live schema／migration／既有 API，確認 `TBLINLABEL_TAG_FILE_MAP` 和 `GETLPC`、`GETXXQCLABEL`、`InLabel/GetAvailableTags`、`InLabel/SaveTagFileMap`、`InLabel/GetSamplePreviewInfo`、`LabelApi/Query` 的實際實作、欄位、where 條件與權限。公司端 checkout 只有 API consumer，未找到 server handler、SQL/Core body；Oracle source DDL 缺項，桌機無受保護 profile，未猜 CREATE-only。
+- [ ] 正式 Web 以登入者可見的 LOT／標籤規則為界，API server 驗證可用範本與 output；確認範本來源、列印授權、部署 BarTender provider、preview／print job、idempotency、timeout reconciliation 與 audit。Browser 不可任選 server path／printer，不可直接執行 BarTender 或其他 vendor binary。
+- [ ] 公司端無 FunctionKey 項目 WIPUNINV「取消入庫作業」接續復刻，待公司端交付來源／DEV handoff。
+
 ## 公司端交接：INV COUNT STATE 盤點關／開帳（WP606，2026-11-22）
 
 公司端依本機 `D:\iMES\CSiMES\STD\MESWin\WIP\WP_InvCountState\frmInvCountState.vb`（Designer 內嵌）、`wsWIP`、`clsINVCount`／`clsSYSParameter` 完成關帳／開帳 DEV 假資料頁及[WP606 規格](docs/modules/WIP/盤點關開帳.md)。Fallback 路由 `/YMES/WIP/InvCountState`。DEV 模擬 State=0 關帳、六類 detail snapshot、State=1 開帳、跨 detail AdjustState=1 守門、`AllowExecuteLot` 及兩處失敗情境，不呼叫正式 Service／資料庫。
