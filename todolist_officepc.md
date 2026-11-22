@@ -1,12 +1,21 @@
 # 公司端待辦
 
+## 公司端最新交付：ES203 設備狀態監控_區域（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 三份相同的主 Form 與 Designer；追 `wsSMD.LoadBaseArea`／`LoadAreaRelationDefine`、`wsEMS.LoadEquipmentStateBySMD` 及 `clsSMDBasis`／`clsEMSEquipment` Core。
+- [x] 完成 `/YMES/EMS/EquipmentStateByArea` DEV 頁：Area Color／Equipment State Color、Base Area 選擇、五種節點、縮放、Grid、Refresh、節點選取／右鍵／雙擊預覽。新增 [ES203 規格](docs/modules/EMS/設備狀態監控區域.md)、索引及家用端 handoff；AddFlow 碰撞群選、Grid 詳細設定、底圖 BLOB 與外部視窗明列為簡化。
+- [x] DEV 僅使用固定虛構節點、設備狀態與 IMESTECH 右鍵假企業別，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test 或 browser。
+- [x] 沿用 SMD Area、設備狀態與 equipment-group references，無新增 DDL。`TBLEQPGROUPDETAIL` repo 只有 CREATE-only，缺同版 Oracle source DDL；本機受保護 profile 不可用，已記錄缺項。
+- [ ] 家用端先唯讀比對 `TBLSMDAREABASIS`、`TBLSMDAREARELATION`、`TBLEMSEQUIPMENTSTATE`、`TBLEQPSTATEBASIS`、`TBLEQPGROUPDETAIL` live schema／migrations，再實作登入授權、參數化 BaseArea／設備範圍、群組展開、現況狀態色與刷新 API；直接 area layout 可共用 SMD SD108 handoff。
+- [ ] 清冊下一列 ES202「設備狀態監控_設備類別」；來源 Form 位於 `Customer\Production\MESWin\EMS\ES_EquipmentStateQueryByType_THEIL_BU1`。
+
 ## 公司端最新交付：ES403 設備歷史資料查詢_狀態（2026-11-23）
 
 - [x] 核對 THEIL `frmEquipmentStateLogByState`／資料表與趨勢圖子 Form、`wsEMS.LoadEquipmentStateLogByState`、`clsEMSEquipment.LoadEquipmentStateLogByState`；確認 EquipmentState 必選、可選設備／人員條件、Designer 可見的 StartTime 範圍，以及依 StartTime 日彙總。EndTime 控制項隱藏，雖有 Service/Core 分支但不可從表單操作。
 - [x] 完成 `/YMES/EMS/EquipmentStateLogByState` DEV 頁：假 lookup、狀態必選、可見 StartTime 含端點日期條件、每日結果表與數值標籤趨勢長條圖。新增 [ES403 規格](docs/modules/EMS/設備歷史資料查詢狀態.md)、索引及家用端 API/schema handoff；圖表單頁切換，舊隱藏圖表按鈕未呈現。
 - [x] 直接表 `TBLEMSEQUIPMENTSTATELOG` 與 state basis 沿用 WP305／equipment-state references，沒有新增 DDL／CREATE-only；本次未連 Oracle、YMES PostgreSQL，未讀業務資料；未執行 build、test 或 browser。
 - [ ] 家用端比對 `TBLEMSEQUIPMENTSTATELOG`／`TBLEQPSTATEBASIS` live schema／migrations，實作登入與設備範圍授權、參數化唯讀 API、日期／結果限制及一致的小時計算與捨入規則。
-- [ ] 清冊下一列 ES203「設備狀態監控_區域」；Form 候選來源位於 `Customer\Production\MESWin\EMS\ES_AreaShow_THEIL_BU1`，開始前核對 Form、Service、Core。
+- [x] ES203「設備狀態監控_區域」已完成公司端交付；清冊下一列為 ES202「設備狀態監控_設備類別」。
 
 ## 公司端最新交付：ES404 設備歷史資料查詢（2026-11-23）
 
@@ -15,7 +24,7 @@
 - [x] DEV 僅使用虛構狀態歷程、Equipment／User／State 資料及頁面內計算，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫資料；未執行 build、test 或 browser。圖表於單頁切換，簡化 WinForms 分開開窗。
 - [x] 直接表沿用 WP305 狀態歷程與 equipment-state basis references；無新增 DDL／CREATE-only。桌機受保護 Oracle profile 不可用，本次沒有連 MESTEST 或查業務資料。
 - [ ] 家用端比對兩張直接表 live schema／migrations，實作登入授權、參數化、設備可見範圍、日期跨度／全歷史掃描限制及單一小時計算／捨入契約；Oracle／非 Oracle Core 時數精度不同。
-- [x] ES403「設備歷史資料查詢_狀態」已完成公司端交付；目前下一項依清冊為 ES203「設備狀態監控_區域」。
+- [x] ES403「設備歷史資料查詢_狀態」與 ES203「設備狀態監控_區域」均已完成公司端交付；目前清冊下一列為 ES202。
 
 ## 公司端最新交付：ES302 配件下機（2026-11-23）
 
@@ -24,7 +33,7 @@
 - [x] DEV 僅變更虛構資料的頁面記憶體，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫入正式資料；未執行 build、test 或 browser。
 - [x] 沿用配件狀態／設備掛載及 WP201 references；`TBLWIPCONT_ACCESSORY`、`TBLEMSACCVIOLATESTATUSCHANGE` 找不到同版 Oracle source DDL／PG CREATE-only，受保護 Oracle profile 不可用，沒有推測建表或連 Oracle。
 - [ ] 家用端比對上述兩張缺少參考的 live schema／migration，並確認配件狀態、掛載、WIP 使用時間及狀態互斥的版本與主鍵；依規格實作授權、參數化及原子下機 API。
-- [x] ES302 後接續 ES404，再完成 ES403；目前清冊下一列 ES203「設備狀態監控_區域」。
+- [x] ES302 後接續 ES404、ES403、ES203；目前清冊下一列 ES202「設備狀態監控_設備類別」。
 
 ## 公司端最新交付：ES402 設備狀態記錄查詢（2026-11-23）
 
@@ -33,13 +42,13 @@
 - [x] DEV 僅用虛構資料與頁面記憶體，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫入；未執行 build、test 或 browser。
 - [x] Oracle 結構引用沿用 WP305／設備狀態 basis references；為既有 Oracle source `TBLWIPLOTLOG` 新增 PG CREATE-only 參考，未執行 migration。受保護 Oracle profile 不可用，本次未連 Oracle、未查業務資料或 YMES PostgreSQL。
 - [ ] 家用端先比對四張來源表 live schema／migrations，尤其 `TBLWIPCONT_EQUIPMENT` 無 PK；以登入者 ES402 權限做唯讀 API，參數化所有 filters、限制日期跨度與結果數、採完整 EquipmentNo＋StartTime＋EndTime 關聯並分頁。Oracle／非 Oracle legacy join 有 EndTime 條件差異；不要照搬 Core 字串 SQL。
-- [x] ES402 完成後接續 ES302、ES404、ES403；三項均已完成公司端 DEV／規格，現在依清冊接 ES203。
+- [x] ES402 完成後接續 ES302、ES404、ES403、ES203；四項均已完成公司端 DEV／規格，現在依清冊接 ES202。
 
 ## 清冊交接：WPI05 原始來源缺失，跳過後接續 EMS 清冊（2026-11-23）
 
 - [x] 查驗 `D:\iMES\CSiMES`、`D:\TP-iMes\iMES_THEIL_TP`、`D:\TP-iMes\DEV_SILVA`，未找到 WPI05 `frmEQPAccessoryBasis`／其專案或直接 Service/Core；EP203 配件主檔、ES 配件上機與 CP Setup 配件查詢不是同一功能。詳見[來源狀態](docs/modules/WIP/配件領用單維護作業.md)。
 - [ ] 取得缺少的 WPI05 Form／Designer、Service、Core 後，再按來源復刻；公司端 Oracle 僅在受保護 profile 可用時唯讀查 metadata，不猜欄位／DDL。
-- [x] 跳過無法由現有來源核實的 WPI05；ES402、ES302、ES404、ES403 均已完成公司端 DEV／規格，現在接續清冊下一列 ES203。
+- [x] 跳過無法由現有來源核實的 WPI05；ES402、ES302、ES404、ES403、ES203 均已完成公司端 DEV／規格，現在接續清冊下一列 ES202。
 
 ## 公司端最新交付：WPP08 P_LOT COMP GEN／生產批自主產生元件（2026-11-23）
 

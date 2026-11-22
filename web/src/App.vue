@@ -112,6 +112,7 @@ import WipBartenderPrint from './components/WipBartenderPrint.vue'
 import WipUnInventory from './components/WipUnInventory.vue'
 import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
+import EmsEquipmentStateByArea from './components/EmsEquipmentStateByArea.vue'
 import EmsEquipmentStateLog from './components/EmsEquipmentStateLog.vue'
 import EmsEquipmentStateLogQuery from './components/EmsEquipmentStateLogQuery.vue'
 import EmsEquipmentStateLogByState from './components/EmsEquipmentStateLogByState.vue'
@@ -661,6 +662,7 @@ const fallbackMenuTree: MenuNode[] = [
   {
     id: 'module:EMS', label: '設備管理', shortLabel: '設', moduleNo: 'EMS', children: [{
       id: 'menu:EMS:EQP EXECUTION', label: '設備_執行', shortLabel: '設', children: [
+        { id: 'function:EMS:SHOW EQP STATUS BY AREA', label: '設備狀態監控_區域', shortLabel: '區監', functionNo: 'SHOW EQP STATUS BY AREA', moduleNo: 'EMS' },
         { id: 'function:EMS:EQP STATE CHANGE', label: '改變設備狀態', shortLabel: '狀', functionNo: 'EQP STATE CHANGE', moduleNo: 'EMS' },
       ],
     }, {
@@ -685,6 +687,7 @@ const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
 const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
+  'function:EMS:SHOW EQP STATUS BY AREA': appBasePath + '/EMS/EquipmentStateByArea',
   'function:EMS:RETURN EQP ACCESSORY': appBasePath + '/EMS/ReturnEquipmentAccessory',
   'function:EMS:SHOW EQP LOG': appBasePath + '/EMS/EquipmentStateLogQuery',
   'function:EMS:SHOW EQP LOG BY STATE': appBasePath + '/EMS/EquipmentStateLogByState',
@@ -1181,6 +1184,7 @@ const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'functi
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
 const isEmsEquipmentStateChangePage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CHANGE')
+const isEmsEquipmentStateByAreaPage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP STATUS BY AREA')
 const isEmsReturnEquipmentAccessoryPage = computed(() => activeMasterKey.value === 'function:EMS:RETURN EQP ACCESSORY')
 const isEmsEquipmentStateLogPage = computed(() => activeMasterKey.value === 'function:EMS:EQUIPMENT STATE LOG')
 const isEmsEquipmentStateLogQueryPage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP LOG')
@@ -3112,6 +3116,7 @@ async function signOut(): Promise<void> {
         <WipLabelPrint v-else-if="isWp908Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotQuantityAdjust v-else-if="isWp907Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateChange v-else-if="isEmsEquipmentStateChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <EmsEquipmentStateByArea v-else-if="isEmsEquipmentStateByAreaPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsReturnEquipmentAccessory v-else-if="isEmsReturnEquipmentAccessoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsEquipmentStateLogQuery v-else-if="isEmsEquipmentStateLogQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateLogByState v-else-if="isEmsEquipmentStateLogByStatePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
