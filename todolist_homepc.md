@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES304 配件狀態監控（2026-11-23）
+
+公司端依 CSiMES／THEIL／DEV_SILVA 相同的 `frmAccessoryStateMonitor`／內嵌 Designer，及 THEIL `wsEQP`／`wsEMS` Service、`clsEMSEquipment`／`clsAccState` Core 完成 [ES304 DEV 頁](docs/modules/EMS/配件狀態監控.md)，fallback `/YMES/EMS/AccessoryStateMonitor`。DEV 模擬分類／類型查找、每頁 20 筆、卡片現況色、互斥停用、狀態更新、右鍵歷程／現況及雙擊設備配件現況；假資料與狀態變更僅存在頁面記憶體。
+
+- [ ] Repo 已有配件類型／基礎／狀態／現況／歷程 Oracle source DDL 與 CREATE-only；`TBLEMSACCVIOLATESTATUSCHANGE` 及可選 `TBLEMSACCESSORYREASONS` 缺同版 Oracle source DDL／CREATE-only。桌機受保護 Oracle profile 不可用；先核對家用端 live schema／migration，拿到核准 DDL 再補，禁止猜欄位。
+- [ ] 提供分類與類型 lookup、授權且穩定排序的配件狀態監控分頁 GET（每頁最多 20）；一般狀態轉換使用交易鎖定 CurVersion=1 現況，重查 expected state／版本、登入者分類狀態權限及互斥 pair，原子新增 `TBLEMSACCESSORYSTATELOG` 並更新 `TBLEMSACCESSORYSTATE`，以安全序號服務配置 ACCSerialNo。若接收理由，先核實原因表 DDL。
+- [ ] Apply／Return 分別呼叫 ES301／ES302 專用交易，不用一般狀態轉換 API 代替掛載／下機；其他控制表配置的外部介面需明確支援範圍。Core SQL 字串串接與任意 `AdditionalXml` 不得沿用。
+- [x] ES304 完成；清冊下一未完成項目為 ES305「配件狀態監控_設備」。
+
 ## 公司端交接：ES104 設備狀態互斥設定（2026-11-23）
 
 公司端依 CSiMES／THEIL／DEV_SILVA 三份相同的 `frmViolateStateChangeSetMatrix`／內嵌 Designer、`wsEQP.LoadEQPStateBasis`、`wsEMS.LoadViolateStateChange`／`UpdViolatStateChangeData` 與 `clsEQPBasis`／`clsEMSEquipment` 完成 [ES104 DEV 頁](docs/modules/EMS/設備狀態互斥設定.md)，fallback `/YMES/EMS/ViolateStateChangeSetMatrix`。DEV 模擬雙軸狀態矩陣、禁止 pair 雙擊編輯、Confirm 記憶體假儲存。WinForms Grid 內部格 Activation.Disabled／全域 AllowUpdate=False 與雙擊事件有衝突，DEV 依 handler 預期互動；家用端可在 WinForms runtime 確認。
