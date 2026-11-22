@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES404 設備歷史資料查詢（2026-11-23）
+
+公司端依 THEIL `frmEquipmentStateLogQuery`、Top Ten Grid／Pie／Bar／Label Bar 子 Form、`wsEMS.LoadEquipmentStateLogTopTen`、`clsEMSEquipment.LoadEquipmentStateLogTopTen` 完成 [ES404 DEV 頁](docs/modules/EMS/設備歷史資料查詢.md)，fallback `/YMES/EMS/EquipmentStateLogQuery`。DEV 使用固定假歷程，模擬類別／設備／人員／狀態查找、Start／End 時間模式與包含式範圍、狀態時數排序、前九名及 Others、表／圖顯示；圖表改在同頁切換。
+
+- [ ] 唯讀比對 `TBLEMSEQUIPMENTSTATELOG`、`TBLEQPSTATEBASIS` 的 live schema／現有 migrations；Oracle source／PG CREATE-only 已沿 WP305 與 equipment-state references，無新直接表。不要將 CREATE-only 當 migration。
+- [ ] 實作登入授權的唯讀狀態時數統計 API：參數化篩選、設備可見範圍、日期起訖與跨度上限、無條件查詢上限／分頁策略；選定唯一的小時計算及捨入規則。舊 Oracle 是日差×24，非 Oracle 是分鐘差後除 60，結果精度可能不同。
+- [ ] DEV Query／三種圖表都呼叫本頁同一組固定 fixtures；原 WinForms 每次開表／圖都獨立呼叫 Service，正式端可共用聚合 DTO。Chart UI 簡化為同頁切換，欄位條件與 Top 9+Others 保留。
+- [ ] 公司端接續 ES403「設備歷史資料查詢_狀態」。
+
 ## 公司端交接：ES302 配件下機（2026-11-23）
 
 公司端依 THEIL／DEV_SILVA／CSiMES 一致的 `frmReturnEQPAccessory`、`wsEMS.ReturnEQPACC`／兩個查找方法、`clsEMSEquipment.UpdEQPACCState_Return` 及 `clsAccState` helpers 完成 [ES302 DEV 頁](docs/modules/EMS/配件下機作業.md)，fallback `/YMES/EMS/ReturnEquipmentAccessory`。DEV 用虛構掛載列模擬類別與配件 lookup、在製 Lot 關聯、狀態互斥阻擋、壽命警示、下機結果與頁面內歷程；不呼叫 API／Service，不寫正式資料。
@@ -7,7 +16,7 @@
 - [ ] 唯讀比對 `TBLEMSACCESSORYSTATE`／log、`TBLEMSEQPACCSTATE`／log、`TBLEQPACCSTATECONTROL`、`TBLEQPACCESSORYBASIS`、`TBLWIPCONT_ACCESSORY`、`TBLWIPTEMP_EQUIPMENT`、`TBLEMSACCVIOLATESTATUSCHANGE` 的 live schema／現有 migrations；配件主檔／狀態／掛載 refs 與 WP201 `TBLWIPTEMP_EQUIPMENT` 已在 repo，`TBLWIPCONT_ACCESSORY`、`TBLEMSACCVIOLATESTATUSCHANGE` 缺同版 source DDL／CREATE-only，勿盲建。詳見規格及現有 `database/reference/`。
 - [ ] 實作登入者權限保護 `POST /api/ems/equipment-accessories/{accessoryNo}/return`；以伺服器目前掛載資料反查版本／設備／配件類別，不採信 client context；交易內重檢互斥、Return state control、ACC state privilege 與版本/現況併發，原子維護 WIP 使用 EndTime、掛載／掛載歷程、配件狀態／歷程，並安全取流水號。
 - [ ] Legacy 監控只傳 `AccessoryNo`，Form 仍用預設版本 `01` 並未設定設備類別／設備編號；需避免因此漏回壓 `TBLWIPCONT_ACCESSORY.EndTime` 或對錯版本下機。`ChkAccessoryLifeAlert` 在權限檢查前可能獨立寫入 `TimeCycleStart`；正式端需調整檢查順序及原子性。勿照搬 Core 字串 SQL。
-- [ ] 公司端接續 ES404「設備歷史資料查詢」。
+- [x] ES302 後接續 ES404；ES404 已完成公司端 DEV／規格，下一項依清冊為 ES403。
 
 ## 公司端交接：ES402 設備狀態記錄查詢（2026-11-23）
 
@@ -16,14 +25,14 @@
 - [ ] Pull 最新 `main` 後先唯讀比對 `TBLEMSEQUIPMENTSTATELOG`、`TBLEQPSTATEBASIS`、`TBLWIPCONT_EQUIPMENT`、`TBLWIPLOTLOG` 的 live schema／現有 migrations；來源 Oracle DDL 與 references 詳見規格及 `database/reference/mestest_wip_lot_log_create.sql`。CREATE-only 不是 migration，不可盲目套用；來源未宣告 `TBLWIPCONT_EQUIPMENT` 主鍵。
 - [ ] 實作登入與 ES402 權限保護、參數化及分頁的唯讀設備狀態歷程 API；驗證兩組起訖範圍及使用者可查設備，設日期跨度／筆數上限。設備使用關聯應同時比對 EquipmentNo／StartTime／EndTime；Oracle Core 以三欄關聯，非 Oracle 分支漏 EndTime，另需避免 Core SQL 字串串接。
 - [ ] `TBLWIPLOTLOG` Oracle source DDL 先前已有但無 PG CREATE-only；公司端依既有 source 補出 `database/reference/mestest_wip_lot_log_create.sql`，家用端確認 live schema 與 migration history 後才決定是否需要 migration。
-- [x] ES402 後接續 ES302；ES302 已完成公司端 DEV／規格。WPI05「配件領用單維護」在桌機、THEIL、DEV_SILVA 來源樹未找到 Form／Service／Core，詳 [來源狀態](docs/modules/WIP/配件領用單維護作業.md)；如家用端有核准原始來源再補做。
+- [x] ES402 後接續 ES302；ES302、ES404 已完成公司端 DEV／規格。WPI05「配件領用單維護」在桌機、THEIL、DEV_SILVA 來源樹未找到 Form／Service／Core，詳 [來源狀態](docs/modules/WIP/配件領用單維護作業.md)；如家用端有核准原始來源再補做。
 
 ## 公司端來源缺口：WPI05 配件領用單維護作業（2026-11-23）
 
 公司端檢查 `D:\iMES\CSiMES`、`D:\TP-iMes\iMES_THEIL_TP`、`D:\TP-iMes\DEV_SILVA`，未找到 WPI05 選單指定的 `frmEQPAccessoryBasis`／專案或其直接 Service/Core。相似的設備配件主檔 EP203、ES 配件上機與 CP Setup 配件查詢均不可代替。詳見[來源狀態](docs/modules/WIP/配件領用單維護作業.md)。
 
 - [ ] 如家用端或其他核准來源樹有 WPI05 Form／Service／Core，先補齊來源再定義 API/schema；不可只據 menu title 或通用 `TBLEQPACCESSORYBASIS` 推測領用流程。
-- [ ] 在來源缺口未解前，不新增 WPI05 正式 API／schema；ES402、ES302 已完成公司端 handoff，公司端接續 ES404。
+- [ ] 在來源缺口未解前，不新增 WPI05 正式 API／schema；ES402、ES302、ES404 已完成公司端 handoff，公司端接續 ES403。
 
 ## 公司端交接：WPP08 生產批自主產生元件（2026-11-23）
 
