@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：ES103 配件狀態控制設定（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 一致的 `frmEQPACCStateControlSet` Form／內嵌 Designer，THEIL `wsEQP.LoadEQPACCStateBasis`／`LoadACCStateControl`／`UpdACCStateControl`，以及 `clsAccBasis`、`clsEQPStateControl`、`clsAccState` Core。
+- [x] 完成 `/YMES/EMS/AccessoryStateControlSet` DEV 畫面：7 個配件控制狀態、模擬 `IC_FT_PKG` 時出現 `I_SetupClose`、狀態選擇視窗、Apply 假套用、Confirm 假儲存並關閉、Close 丟棄未套用變更；新增 [ES103 規格](docs/modules/EMS/配件狀態控制設定.md)、索引及家用端 handoff。
+- [x] 所有 DEV 狀態資料均為虛構且只存在頁面記憶體；不呼叫正式 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
+- [x] 沿用 `TBLEQPACCSTATECONTROL`／`TBLEQPACCSTATEBASIS` 既有 Oracle DDL 與 PostgreSQL CREATE-only references，無新增 DDL。受保護 Oracle profile 不可用，但本項直接表 DDL 已在 repo，無需補猜或另查。
+- [ ] 家用端比對 live schema／migration；批次設定交易需同步處理舊設定狀態的配件歷程、現況及新序號。Form 每次送全組，Legacy Core 對未變更控制值也會重寫舊狀態配件、寫 log 並換發序號；逐列再 Delete+Insert 控制設定，沒有涵蓋整批的交易，失敗可能部分生效。正式端只處理實際變更 ControlNo，參數化並回滾完整交易、核實 `IC_FT_PKG` 資格及回傳影響筆數。
+- [x] 清冊下一未完成項目為 ES406「配件歷史資料查詢」。
+
 ## 公司端最新交付：ES305 配件狀態監控_設備（2026-11-23）
 
 - [x] 核對 CSiMES／THEIL／DEV_SILVA 三份相同的 `frmAccessoryStateMonitorByEQP`／內嵌 Designer，及 `wsEQP` 設備 lookup、`wsEMS.LoadAccessoryStatebyEquipment`／`ChangeAccessoryState`、`clsAccState.LoadAccessoryNoByEquipment`／`ChangeACCState` 與 `clsEMSEquipment` 配件狀態 Core。
@@ -7,7 +16,7 @@
 - [x] 假設備／掛載／配件／狀態資料皆為虛構，變更只留本頁記憶體；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
 - [x] 沿用配件掛載／現況／狀態／控制與設備基礎 references。`TBLEQPEQUIPMENTTYPE` 缺同版 Oracle source DDL，`TBLEMSACCVIOLATESTATUSCHANGE` 缺 Oracle source／CREATE-only；桌機受保護 Oracle profile 不可用，已記錄未猜 schema。
 - [ ] 家用端比對缺 DDL 表與 live schema／migration；監控 GET 要要求設備類別或編號、授權並分頁。Core 查詢按 AccessoryNo join 多版本表，正式 API 必須使用目前掛載的 AccessoryNo+Version；狀態更新另需在交易內重驗分類權限、互斥與 expected state。
-- [ ] 清冊下一未完成項目為 ES103「配件狀態控制設定」。
+- [x] ES103 已完成；清冊下一未完成項目為 ES406「配件歷史資料查詢」。
 
 ## 公司端最新交付：ES304 配件狀態監控（2026-11-23）
 
@@ -16,7 +25,7 @@
 - [x] 配件、狀態、色碼及互斥 pair 均為虛構資料，沒有呼叫 API／Service、連 Oracle／YMES PostgreSQL 或寫入正式資料；未執行 build、test、browser 或 WinForms runtime。
 - [x] 重用現有配件類型／基礎／狀態／現況／歷程 source DDL 及 CREATE-only references；`TBLEMSACCVIOLATESTATUSCHANGE`、`TBLEMSACCESSORYREASONS` 缺同版 Oracle source DDL／CREATE-only，桌機受保護 Oracle profile 不可用，已記錄且未猜 schema。
 - [ ] 家用端先比對缺 DDL 表與 live schema／migration，再接授權、參數化、分頁監控 API；一般狀態轉換須原子寫狀態歷程／現況並重驗互斥、類別狀態權限、版本與序號。Apply／Return 應走 ES301／ES302 專用流程。
-- [x] ES304 完成後接續 ES305，現均完成；清冊下一未完成項目為 ES103「配件狀態控制設定」。
+- [x] ES304／ES305 均完成；其後 ES103 已完成，清冊下一未完成項目為 ES406「配件歷史資料查詢」。
 
 ## 公司端最新交付：ES104 設備狀態互斥設定（2026-11-23）
 
@@ -25,7 +34,7 @@
 - [x] DEV 只操作虛構狀態與記憶體 pair；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料。Form 有 `Activation.Disabled`／`AllowUpdate=False` 與雙擊 handler 衝突，DEV 依 handler 預期互動；未執行 build、test、browser 或 WinForms runtime。
 - [x] `TBLEMSVIOLATESTATUSCHANGE`、`TBLEMSVIOLATESTATUSLOG` 在 repo 缺 Oracle source DDL／PostgreSQL CREATE-only；桌機受保護 profile 不可用，已記錄缺項，沒有猜建表。
 - [ ] 家用端取得並唯讀核對上述兩張直接寫入表的 DDL、主鍵／索引和 log 欄位；再做登入授權、參數化互斥矩陣 API，以交易原子替換各來源狀態的完整 forbidden pair 並寫 history。
-- [x] ES304「配件狀態監控」與 ES305「配件狀態監控_設備」已完成；目前接續 ES103「配件狀態控制設定」。
+- [x] ES304、ES305、ES103 均已完成；目前接續 ES406「配件歷史資料查詢」。
 
 ## 公司端最新交付：ES202 設備狀態監控_設備類別（2026-11-23）
 
