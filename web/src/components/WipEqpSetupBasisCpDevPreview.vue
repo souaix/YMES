@@ -328,7 +328,6 @@ function saveSetup(): void {
   const now = new Date()
   const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16).replace('T', ' ')
   let setupNo = value.setupNo
-  let status: SetupStatus = 0
   if (mode.value === 'add') {
     const yy = String(now.getFullYear()).slice(-2)
     const monthHex = now.getMonth().toString(16).toUpperCase()

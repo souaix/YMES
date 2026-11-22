@@ -4,7 +4,10 @@
 
 公司端依 THEIL CP 主／ADD／EDIT／CLOSE Form、VIEW Form、`IC_CP_PKG.wsWIP` 與 `clsLot` 完成 [WPP03 DEV 頁](docs/modules/WIP/設備設置單維護_晶片測試.md)，fallback `/YMES/WIP/EqpSetupBasisCp`。DEV 以獨立 localStorage fixtures 模擬設備設置單查詢、SFN 單號、PROBER／TESTER、Accessory Release、配件數量與 Site 實物確認，以及 ADD／EDIT／VIEW／CLOSE 和設備使用中守門；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫設備關聯、serial 或 EMS 配件狀態。
 
-- [ ] 公司桌機缺受保護 Oracle profile；WPP03 專屬 `TBLWIPEQPSETUPBASIS`、`TBLWIPEQPSETUPDETAIL`、`TBLWIPEQPSETUPACCESSORY`、`TBLWIPEQPSETUPACCESSORYSTATE`、`TBLWIPEQPACCESSORYBASIS`／`DETAIL`、`TBLWIPEQUIPMENTLINKSTATE`／`LOG`，以及 `TBLPRDACCESSORYGROUP_SUB`／`TBLEMSACCVIOLATESTATUSCHANGE` 同版 source DDL／metadata 缺項，沒有猜 CREATE-only。`TBLWIPTEMP_EQUIPMENT`／`TBLSYSSERIALNO`／EMS accessory state/control 沿 WP201／WP109／accessory references。家用端先核 PostgreSQL live schema／migration，再依 [WPP03 規格](docs/modules/WIP/設備設置單維護_晶片測試.md)決定補同版 Oracle DDL 與 PostgreSQL CREATE-only handoff。
+- [x] 以 PPK SSH 隧道只讀核對 WPP03 物件：專屬 Setup／Accessory／Equipment Link 表、EMS accessory state/control、`TBLWIPTEMP_EQUIPMENT` 與 `TBLPRDACCESSORYGROUP_SUB`／`TBLEMSACCVIOLATESTATUSCHANGE` 均不存在；共用 `TBLEQPEQUIPMENTBASIS`、`TBLEQPACCESSORYBASIS`、`TBLEQPACCSTATEBASIS`、`TBLSYSSERIALNO` 存在。未查業務資料、未執行 DDL/DML。
+- [ ] 公司端取得可用受保護 Oracle profile 後，提供 WPP03 專屬表與缺少 lookup／EMS 表的同版 source DDL／columns／PK／index／default／constraint metadata；家用端收到精確來源後才做 migration/API，不從 WinForms INSERT 推測結構。
+- [x] 合併後前端建置發現 `WipEqpSetupBasisCpDevPreview.vue` 重複宣告 `status`；移除未使用宣告後，`vue-tsc` 與完整 Vite build 通過（813 modules）。
+- [ ] Chrome GUI 操作尚未驗收：視窗可列出，但本輪兩次擷取均 `window capture timed out`；未登入／操作或部署，工具恢復後補查。
 - [ ] 正式 ADD／EDIT/CLOSE API 需以登入者身分、參數化條件、狀態比較／鎖與冪等保護 Setup serial、主／附屬設備、Accessory Apply、現場 Site 確認；結單須將設備使用守門、舊／新設備 Link State／Log、Setup 狀態及 EMS 配件狀態納入一筆可恢復交易或 saga。
 - [x] 公司端下一項依 FunctionOrder 清冊為 WPP05「P_GOLDENMAP FILE MANAGEMENT／Golden MAP檔案管理」。
 

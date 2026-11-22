@@ -5,6 +5,7 @@
 - [x] 依 THEIL CP 主 Form（內嵌 Designer）、ADD／EDIT／CLOSE Def Form、VIEW Form、`IC_CP_PKG.wsWIP` 與 `clsLot` 核對狀態 0／1／2／99、`SFN` 序號、PROBER／TESTER、Accessory Release、配件實物確認、設備使用守門及 Link State／Log 更新。
 - [x] 完成 fallback `/YMES/WIP/EqpSetupBasisCp` DEV 頁：SetupNo／設備／RunCard／OP／日期／狀態查詢，九欄 Grid，ADD／EDIT／VIEW／CLOSE、配件數量與 Site 驗證、設備使用中阻擋及前一單歸檔模擬；新增 [WPP03 規格](docs/modules/WIP/設備設置單維護_晶片測試.md)、索引及家用端 handoff。
 - [x] DEV 僅本機 `localStorage` fixtures；不呼叫 MES Service／API，不連 Oracle／YMES PostgreSQL，不寫序號、Setup、設備關聯或 EMS 配件狀態。未執行 build、test 或 browser。
+- [x] 家用端修正合併後 build 揭露的重複 `status` 宣告，完整 Vite build 通過；Chrome 畫面擷取逾時，尚未完成操作驗收，未部署。
 - [ ] WPP03 專屬 Setup、Accessory、Equipment Link 表及 `TBLPRDACCESSORYGROUP_SUB`／`TBLEMSACCVIOLATESTATUSCHANGE` lookup source DDL／metadata 缺項；serial、WIPTemp equipment、EMS accessory state/control 沿用 WP109／WP201／accessory references。桌機受保護 Oracle profile 不存在，未猜 CREATE-only SQL。家用端先比對 live schema／migration 與同版 Oracle metadata，再設計正式 API／schema。
 - [ ] 家用端正式 CLOSE API 須原子處理設備 Lot 使用守門、原關聯結束／歸檔、新關聯歷程、Setup Status=2／CloseDate／CloseUser 與 EMS accessory state；ADD／EDIT 須同步保護 serial、Status=0 及外部配件發料競爭。
 - [ ] 下一項依 FunctionOrder 清冊為 WPP05「P_GOLDENMAP FILE MANAGEMENT／Golden MAP檔案管理」。
