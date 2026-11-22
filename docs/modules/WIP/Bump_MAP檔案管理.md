@@ -40,3 +40,8 @@
 - fallback `/YMES/WIP/BumpMapFileManage` 提供 Lot／UploadTime 查詢條件、state/history checkbox Grid、MAPType 1 假 template 選取、假 `.txt` file chooser、解析成功／錯誤、逐檔上傳結果、舊檔備份續號、Scrap、state/history 下載目的地及本頁操作紀錄。
 - 假 fixture 皆為 `DEV-` 資料。所有 Query、template lookup、Upload、Scrap、Download 僅改 Vue 頁面記憶體狀態；不呼叫 Oracle、legacy `wsWIP`／`wsSYS`、FTP/SFTP、磁碟檔案、MES Core、正式 API 或 PostgreSQL。逾時／檔案與 state 不一致場景只作 DEV 手動對帳示意。
 - 未執行 build、test 或 browser。
+
+## 家用端唯讀 schema／API 核對（2026-11-22）
+
+- 經 PPK SSH 隧道只查遠端 YMES catalog：`TBL_PWIPBumpMAPFileState`、`TBL_PWIPBumpMAPFileLog`、`TBL_BSYSMAPTEMPLATEBASIS`、`TBL_BSYSMAPTEMPLATEDETAIL` 均不存在；repo 中未找到這四表的 DDL 或正式 File Service API。未讀業務資料、未執行 DDL／DML。
+- 仍需公司端提供同版 Oracle DDL／metadata 並確認正式 File Service 介面後，才能設計 schema 與逐檔交易 API；不可由 DEV fixture 或 WinForms INSERT 欄位推測正式表結構。

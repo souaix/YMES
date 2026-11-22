@@ -29,3 +29,8 @@
 
 - 先在家用端唯讀核對 YMES live schema、migration／既有 endpoints 是否涵蓋 `TBLINLABEL_TAG_FILE_MAP`；確認 `GETLPC`、`GETXXQCLABEL`、InLabel 查標籤與存檔、`LabelApi/Query` 各自真正資料來源、條件及登入／ACL。沒有可確認的 DDL 時先取得原始 schema metadata，不可用這份 DEV fixture 產生正式 CREATE。
 - 正式 Web 由 server 解析可授權的 Lot／標籤範本，限制可用列印 provider、範本和印表機；不要讓 browser 任選 server path／printer 或直接執行外部 BarTender 檔。設計預覽／送印 job、idempotency、未知結果 reconciliation、操作 audit 及正式 BarTender runtime／授權部署策略。公司端只交付 DEV 假資料畫面及來源缺項，不實作 API／schema 或安裝 vendor runtime。
+
+## 家用端唯讀 repo／schema 核對（2026-11-22）
+
+- Home `src/` 未找到 `GETLPC`／`GETXXQCLABEL`、InLabel／LabelApi server handler；遠端 YMES catalog 未找到 `TBLINLABEL_TAG_FILE_MAP`。未讀業務資料、未執行 DDL／DML，也沒有猜測 CREATE-only。
+- 需取得實際 server handler／endpoint 契約、標籤來源 SQL／Core 及該 mapping table 的同版 Oracle DDL／metadata，再決定正式 provider、查詢範圍、權限和列印 audit；不可由 API consumer 或 DEV fixture 推測。

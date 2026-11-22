@@ -15,7 +15,7 @@
 
 公司端依 CP `frmLotBasis_CP`／`frmLotBasisDef_CP`／FT 子窗、`IC_CP_PKG.wsWIP`、共用 `wsWIP`、CP／共用 `clsLot` 完成 [WPP01 DEV 頁](docs/modules/WIP/生產批開立_晶片測試.md)，fallback `/YMES/WIP/LotBasisCreateCp`。DEV 以獨立 localStorage fixtures 模擬 CP MO 查詢、Lot Basis、ECN、MO 流程唯讀、元件／屬性／載具、Add／Edit／Copy／逐批 Delete／Release；不呼叫 API／Service，不連 Oracle／YMES PostgreSQL，不執行序號、扣料、StartLot、CloseLot、載具交易或自動報工。
 
-- [ ] 正式 API 前唯讀核對 YMES live schema／migration；沿用 WP101 Lot Basis／State／Process／Property、WP207 OP ECN、WP215 Component Basis、WP302 Carrier Detail、OE `TBLOEMOCOMPONENT`，不要重建共享表。
+- [x] 以 PPK SSH 隧道只讀核對 YMES live schema：WP101 的 Lot Basis／State／Process／Property／ComponentState、WP215 ComponentBasis、WP207 OP ECN、WP302 Carrier Detail 與 OE MO Basis／Component 共 12 張表都不存在；`TBLSYSSERIALNO` 存在。未讀業務資料、未執行 DDL/DML。
 - [ ] 注意 `TBLWIPLOTBASIS` 參考版本未一致：舊 WP101 source DDL 38 欄、DESCRIPTION 255，8ff lookup 為 39 欄、DESCRIPTION 400 並含 `XX_MARKING`。公司桌機未能使用受保護 Oracle profile，本次未補取同版 Oracle DDL；以 YMES 目標版本決定 schema。
 - [ ] 建立登入保護的 CP MO／Lot／ECN／Component／Carrier／Lot Property lookups 與 Add/Edit/Delete/Release API。新增同步 Lot Basis、LotState、Process、ComponentState／Basis、MO Component BookingFlag、Property receive/value、OP ECN 及可選 Carrier In；使用 server-side serial、metadata allowlist 與登入者 audit。
 - [ ] 每批次各自鎖定／重查 MO UnReleaseLotQty、LotState、元件預約與 ECN 後交易；Delete 保留 CloseLot event 200 語意；Release 包含物料扣帳、StartLot、MO 數量與 Component 狀態，提交後自動 BR／報工需可追蹤。舊 WinForms 多選逐筆處理，首筆錯誤停止但保留之前成功列，正式 API 必須回傳逐列結果。
@@ -25,7 +25,8 @@
 
 公司端核對 THEIL `frmBumpMAPFileManage`／Update File 子 Form、`wsWIP`／`wsSYS`、`clsLot`／`clsSYSEng` 及 `clsMergeMAPHandler`，完成 [WPP06 DEV 頁](docs/modules/WIP/Bump_MAP檔案管理.md)，fallback `/YMES/WIP/BumpMapFileManage`。DEV 僅操作記憶體中的假 state/history、template 和 `.txt` fixture；不碰本機檔案、不呼叫 FTP(S)、legacy Service、Oracle、正式 API 或 PostgreSQL。Core 涉及 `TBL_PWIPBumpMAPFileState`、`TBL_PWIPBumpMAPFileLog`、`TBL_BSYSMAPTEMPLATEBASIS`、`TBL_BSYSMAPTEMPLATEDETAIL`；桌機受保護 Oracle attachment/profile 不可用，未取得 source DDL／metadata，未產生猜測 SQL。
 
-- [ ] 家用端唯讀核 live schema／migration 與既有 template API，確認上述四表及可重用 File Service provider。未核 Oracle 型別、PK／index/default 前不照 WinForms INSERT 欄位自造 migration。
+- [x] 家用端只讀核對 YMES catalog：`TBL_PWIPBumpMAPFileState`、`TBL_PWIPBumpMAPFileLog`、`TBL_BSYSMAPTEMPLATEBASIS`、`TBL_BSYSMAPTEMPLATEDETAIL` 均不存在；repo 未找到此模組的資料表 DDL 或正式 File Service API。未讀業務資料、未執行 DDL/DML。
+- [ ] 等公司端提供四表同版 Oracle source DDL／metadata，並確認正式 File Service provider 後，才設計 migration 與登入保護 API；未核 Oracle 型別、PK／index/default 前不照 WinForms INSERT 欄位自造結構。
 - [ ] 建立登入保護的 State／History 查詢、template lookup、逐檔 upload／archive／Scrap／download API。File root 與 FTP credential 只由 server 受保護設定解析，不接受 browser 傳任意 server path 或 credential；Lot／日期條件參數化，空 Lot prefix 不可退化成無界查詢。
 - [ ] 保持 MAP encoding、template detail parser、header／X/Y row-size 驗證相容；明確規範多檔部分成功、State／Log 和 file provider 一致性、冪等／重送與逾時 reconciliation，並提供人工修復紀錄。
 - [x] 後續清冊 WPP01「P_CREATE LOT_CP／生產批開立_晶片測試」已由公司端交付；公司端現在接續 WPP03。
@@ -42,7 +43,8 @@
 
 公司端依 THEIL `frmWP_BartenderPrint_THEIL_BU1.vb`（Designer 內嵌）、預覽 Form／Designer 與 `ApiClient` 完成 [BARTENDER DEV 頁](docs/modules/WIP/Bartender列印.md)，fallback `/YMES/WIP/BartenderPrint`。DEV 使用虛構 LOT／標籤規則，模擬 `GETLPC`、`GETXXQCLABEL`／LabelApi rows、標籤選擇、列印資料選取、假標籤預覽、列印確認與 `TBLINLABEL_TAG_FILE_MAP` 編輯；不呼叫任何 endpoint、資料庫、SFTP、外部執行檔或印表機。
 
-- [ ] 家用端唯讀核對 YMES live schema／migration／既有 API，確認 `TBLINLABEL_TAG_FILE_MAP` 和 `GETLPC`、`GETXXQCLABEL`、`InLabel/GetAvailableTags`、`InLabel/SaveTagFileMap`、`InLabel/GetSamplePreviewInfo`、`LabelApi/Query` 的實際實作、欄位、where 條件與權限。公司端 checkout 只有 API consumer，未找到 server handler、SQL/Core body；Oracle source DDL 缺項，桌機無受保護 profile，未猜 CREATE-only。
+- [x] Home repo 靜態查核未找到 `GETLPC`／`GETXXQCLABEL`、InLabel／LabelApi server handler；遠端 YMES catalog 也未找到 `TBLINLABEL_TAG_FILE_MAP`。來源只查程式／目錄 metadata，未讀業務資料或執行 DDL/DML。
+- [ ] 等公司端提供實際 server handler／endpoint 契約、標籤來源 SQL/Core 和 `TBLINLABEL_TAG_FILE_MAP` 同版 Oracle DDL／metadata；再決定可重用正式列印 provider，不從 API consumer 猜資料來源或 schema。
 - [ ] 正式 Web 以登入者可見的 LOT／標籤規則為界，API server 驗證可用範本與 output；確認範本來源、列印授權、部署 BarTender provider、preview／print job、idempotency、timeout reconciliation 與 audit。Browser 不可任選 server path／printer，不可直接執行 BarTender 或其他 vendor binary。
 - [x] 後續清冊項目 WIPUNINV「取消入庫作業」已交付；下一項 WPP06 handoff 待公司端接續。
 
