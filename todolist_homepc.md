@@ -1,12 +1,21 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES202 設備狀態監控_設備類別（2026-11-23）
+
+公司端依 CSiMES／THEIL／DEV_SILVA 三份相同的 `frmEquipmentStateQueryByType_THEIL_BU1`、內嵌 Designer、共用 `frmEquipmentStateMonitor_THEIL_BU1`，及 THEIL `wsEQP.LoadEquipmentType/LoadEquipmentBasis/LoadEQPStateBasis`、`wsEMS.LoadEquipmentState/EditEquipmentState` 與 `clsEQPBasis`／`clsEMSEquipment` 完成 [ES202 DEV 頁](docs/modules/EMS/設備狀態監控設備類別.md)，fallback `/YMES/EMS/EquipmentStateByType`。DEV 模擬核准設備類別選擇、每頁 10 台的狀態卡片、狀態色、Refresh、Chamber、狀態變更及右鍵預覽；狀態變更只改本頁假資料，沒有模擬設備圖片、版本／權限／PM 工單／互斥／批號與腔體交易守門。
+
+- [ ] 先比對 `TBLEQPEQUIPMENTTYPE`、`TBLEQPEQUIPMENTBASIS`、`TBLEMSEQUIPMENTSTATE`、`TBLEQPSTATEBASIS`、`TBLEQPSTATECONTROL` live schema／migrations。`TBLEQPEQUIPMENTTYPE` 僅有 repo PostgreSQL CREATE-only，缺原始 Oracle source DDL；設備基礎、現況、狀態及互斥已有 references。不要把 CREATE-only 當 migration。
+- [ ] 實作登入授權的 `GET /api/eqp/equipment-types?issueState=2&sort=equipmentType` 與 `GET /api/ems/equipment-state-monitor?equipmentType=&page=1&pageSize=10&includeChambers=`；以服務端可見範圍限制設備，回傳核准類別、設備現況／狀態色及父子設備關聯，排序及分頁穩定。設備圖片請用授權資料 URL。
+- [ ] 狀態寫入沿用 ES204／`wsEMS.EditEquipmentState` 交易 handoff：伺服器重驗版本、操作者與設備授權、狀態互斥、PM 工單、理由、Lot／生產批及 Chamber 同步，原子更新設備現況與歷程；右鍵的 Equipment State Log／Production Data／Lot Info 導向正式模組。公司桌機受保護 Oracle profile 不可用，這次沒有用 ODP.NET 查 TBLEQPEQUIPMENTTYPE 原始 DDL／metadata。
+- [x] ES202 完成後，清冊下一未完成項目為 ES104「設備狀態互斥設定」。
+
 ## 公司端交接：ES203 設備狀態監控_區域（2026-11-23）
 
 公司端依 CSiMES／THEIL／DEV_SILVA 三份相同的 `frmAreaShowEMS_THEIL_BU1`、Customer Production `wsSMD.LoadBaseArea`／`LoadAreaRelationDefine`、`wsEMS.LoadEquipmentStateBySMD` 與 `clsSMDBasis`／`clsEMSEquipment` 完成 [ES203 DEV 頁](docs/modules/EMS/設備狀態監控區域.md)，fallback `/YMES/EMS/EquipmentStateByArea`。DEV 模擬 Base Area 關聯圖、Area Color／Equipment State Color、五種形狀、縮放／Grid／Refresh、設備／區域雙擊 drilldown、Enterprise 右鍵選單；SVG 取代 AddFlow，外部 Form 以虛構預覽對話框簡化。
 
 - [ ] 先唯讀比對 `TBLSMDAREABASIS`、`TBLSMDAREARELATION`、`TBLEMSEQUIPMENTSTATE`、`TBLEQPSTATEBASIS`、`TBLEQPGROUPDETAIL` live schema／migrations。前四表沿用既有 Oracle source／PG CREATE references；`TBLEQPGROUPDETAIL` 目前 repo 只有 CREATE-only、缺同版 Oracle source DDL。設備現況群組展開需驗證 group detail 連結；不得把 Service/Core 字串串接 SQL 搬進 API。
 - [ ] 實作登入授權的唯讀 Base Area layout、Equipment State Basis 與現況色 API；參數化條件、驗證使用者可見 BaseArea／Equipment，設備群組展開及狀態色使用同一 DTO。Area 配置 layout 可共用 SMD SD108 API；`BackgroundImage` 依 SD104 layout API 的安全資料 URL 提供。
-- [ ] `LoadAreaRelationDefine` 還會預載 Inventory／Equipment／EquipmentGroup lookup，但此監控 Form 只消費關聯與底圖；正式 API 可只回傳畫面使用的欄位。ES203 下一清冊項目為 ES202「設備狀態監控_設備類別」。
+- [ ] `LoadAreaRelationDefine` 還會預載 Inventory／Equipment／EquipmentGroup lookup，但此監控 Form 只消費關聯與底圖；正式 API 可只回傳畫面使用的欄位。ES203、ES202 已完成；清冊下一未完成項目為 ES104。
 
 ## 公司端交接：ES403 設備歷史資料查詢_狀態（2026-11-23）
 
@@ -15,7 +24,7 @@
 - [ ] 唯讀比對 `TBLEMSEQUIPMENTSTATELOG`／`TBLEQPSTATEBASIS` live schema 與現有 migrations；來源 references 沿用 WP305／equipment-state，不新增 CREATE-only。直接查詢表只有 `TBLEMSEQUIPMENTSTATELOG`。
 - [ ] 實作登入與可見設備範圍保護的唯讀 API，必填 EquipmentState、參數化設備／人員／時間條件、驗證起訖並限制日期跨度及結果數。Oracle 與非 Oracle legacy 小時計算精度不同，正式端需選定一致計算／捨入契約；勿照搬 Core 字串 SQL。
 - [ ] ES404 handoff 仍需家用端比對 live schema、實作授權／參數化／日期範圍與時數統計 API，詳上方 ES404 區段。
-- [x] 公司端已完成清冊下一列 ES203；目前下一列 ES202「設備狀態監控_設備類別」。
+- [x] 公司端已完成清冊下一列 ES203、ES202；目前下一未完成項目為 ES104「設備狀態互斥設定」。
 
 ## 公司端交接：ES404 設備歷史資料查詢（2026-11-23）
 
@@ -24,7 +33,7 @@
 - [ ] 唯讀比對 `TBLEMSEQUIPMENTSTATELOG`、`TBLEQPSTATEBASIS` 的 live schema／現有 migrations；Oracle source／PG CREATE-only 已沿 WP305 與 equipment-state references，無新直接表。不要將 CREATE-only 當 migration。
 - [ ] 實作登入授權的唯讀狀態時數統計 API：參數化篩選、設備可見範圍、日期起訖與跨度上限、無條件查詢上限／分頁策略；選定唯一的小時計算及捨入規則。舊 Oracle 是日差×24，非 Oracle 是分鐘差後除 60，結果精度可能不同。
 - [ ] DEV Query／三種圖表都呼叫本頁同一組固定 fixtures；原 WinForms 每次開表／圖都獨立呼叫 Service，正式端可共用聚合 DTO。Chart UI 簡化為同頁切換，欄位條件與 Top 9+Others 保留。
-- [x] ES403「設備歷史資料查詢_狀態」及 ES203「設備狀態監控_區域」均已完成公司端 DEV／規格交接；下一列 ES202。
+- [x] ES403「設備歷史資料查詢_狀態」、ES203「設備狀態監控_區域」及 ES202「設備狀態監控_設備類別」均已完成公司端 DEV／規格交接；下一未完成項目 ES104。
 
 ## 公司端交接：ES302 配件下機（2026-11-23）
 
@@ -33,7 +42,7 @@
 - [ ] 唯讀比對 `TBLEMSACCESSORYSTATE`／log、`TBLEMSEQPACCSTATE`／log、`TBLEQPACCSTATECONTROL`、`TBLEQPACCESSORYBASIS`、`TBLWIPCONT_ACCESSORY`、`TBLWIPTEMP_EQUIPMENT`、`TBLEMSACCVIOLATESTATUSCHANGE` 的 live schema／現有 migrations；配件主檔／狀態／掛載 refs 與 WP201 `TBLWIPTEMP_EQUIPMENT` 已在 repo，`TBLWIPCONT_ACCESSORY`、`TBLEMSACCVIOLATESTATUSCHANGE` 缺同版 source DDL／CREATE-only，勿盲建。詳見規格及現有 `database/reference/`。
 - [ ] 實作登入者權限保護 `POST /api/ems/equipment-accessories/{accessoryNo}/return`；以伺服器目前掛載資料反查版本／設備／配件類別，不採信 client context；交易內重檢互斥、Return state control、ACC state privilege 與版本/現況併發，原子維護 WIP 使用 EndTime、掛載／掛載歷程、配件狀態／歷程，並安全取流水號。
 - [ ] Legacy 監控只傳 `AccessoryNo`，Form 仍用預設版本 `01` 並未設定設備類別／設備編號；需避免因此漏回壓 `TBLWIPCONT_ACCESSORY.EndTime` 或對錯版本下機。`ChkAccessoryLifeAlert` 在權限檢查前可能獨立寫入 `TimeCycleStart`；正式端需調整檢查順序及原子性。勿照搬 Core 字串 SQL。
-- [x] ES302 後接續 ES404、ES403、ES203；目前清冊下一列 ES202「設備狀態監控_設備類別」。
+- [x] ES302 後接續 ES404、ES403、ES203、ES202 均已完成；目前清冊下一未完成項目 ES104。
 
 ## 公司端交接：ES402 設備狀態記錄查詢（2026-11-23）
 
@@ -49,7 +58,7 @@
 公司端檢查 `D:\iMES\CSiMES`、`D:\TP-iMes\iMES_THEIL_TP`、`D:\TP-iMes\DEV_SILVA`，未找到 WPI05 選單指定的 `frmEQPAccessoryBasis`／專案或其直接 Service/Core。相似的設備配件主檔 EP203、ES 配件上機與 CP Setup 配件查詢均不可代替。詳見[來源狀態](docs/modules/WIP/配件領用單維護作業.md)。
 
 - [ ] 如家用端或其他核准來源樹有 WPI05 Form／Service／Core，先補齊來源再定義 API/schema；不可只據 menu title 或通用 `TBLEQPACCESSORYBASIS` 推測領用流程。
-- [ ] 在來源缺口未解前，不新增 WPI05 正式 API／schema；ES402、ES302、ES404、ES403、ES203 已完成公司端 handoff，公司端接續清冊下一列 ES202。
+- [ ] 在來源缺口未解前，不新增 WPI05 正式 API／schema；ES402、ES302、ES404、ES403、ES203、ES202 已完成公司端 handoff，公司端接續清冊下一未完成項目 ES104。
 
 ## 公司端交接：WPP08 生產批自主產生元件（2026-11-23）
 
