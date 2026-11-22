@@ -73,6 +73,7 @@ import WipBumpMapMerge from './components/WipBumpMapMerge.vue'
 import WipBumpMapFileManage from './components/WipBumpMapFileManage.vue'
 import WipGoldenMapFileManage from './components/WipGoldenMapFileManage.vue'
 import WipWaferMapExport from './components/WipWaferMapExport.vue'
+import WipProbingLog from './components/WipProbingLog.vue'
 import WipLotBasisCreateCp from './components/WipLotBasisCreateCp.vue'
 import WipEqpSetupBasisCp from './components/WipEqpSetupBasisCp.vue'
 import WipFgdStockInE10Icd from './components/WipFgdStockInE10Icd.vue'
@@ -577,6 +578,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:WPP01', label: '生產批開立_晶片測試（DEV）', shortLabel: 'CP開批', functionNo: 'WPP01', moduleNo: 'WIP' },
       { id: 'function:WIP:WPP02', label: '晶圓針測資料匯出（DEV）', shortLabel: 'Wafer匯出', functionNo: 'WPP02', moduleNo: 'WIP' },
       { id: 'function:WIP:WPP03', label: '設備設置單維護_晶片測試（DEV）', shortLabel: '設備設置', functionNo: 'WPP03', moduleNo: 'WIP' },
+      { id: 'function:WIP:WPP04', label: '晶圓針測紀錄查詢（DEV）', shortLabel: '針測紀錄', functionNo: 'WPP04', moduleNo: 'WIP' },
       { id: 'function:WIP:WPP05', label: 'Golden MAP 檔案管理（DEV）', shortLabel: 'Golden MAP', functionNo: 'WPP05', moduleNo: 'WIP' },
       { id: 'function:WIP:P_BUMP MAP MERGE', label: 'Bump MAP疊圖作業', shortLabel: 'MAP疊圖', functionNo: 'P_BUMP MAP MERGE', moduleNo: 'WIP' },
       { id: 'function:WIP:WPP06', label: 'Bump MAP 檔案管理（DEV）', shortLabel: 'MAP檔案', functionNo: 'WPP06', moduleNo: 'WIP' },
@@ -685,6 +687,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:WPP01': appBasePath + '/WIP/LotBasisCreateCp',
   'function:WIP:WPP02': appBasePath + '/WIP/WaferMapExport',
   'function:WIP:WPP03': appBasePath + '/WIP/EqpSetupBasisCp',
+  'function:WIP:WPP04': appBasePath + '/WIP/ProbingLog',
   'function:WIP:WPP05': appBasePath + '/WIP/GoldenMapFileManage',
   'function:WIP:WPP06': appBasePath + '/WIP/BumpMapFileManage',
   'function:WIP:FGDSTOCKIN_E10ICD': appBasePath + '/WIP/FgdStockInE10Icd',
@@ -990,6 +993,7 @@ const functionRoutes: Record<string, string> = {
   WPP01: appBasePath + '/WIP/LotBasisCreateCp',
   WPP02: appBasePath + '/WIP/WaferMapExport',
   WPP03: appBasePath + '/WIP/EqpSetupBasisCp',
+  WPP04: appBasePath + '/WIP/ProbingLog',
   WPP05: appBasePath + '/WIP/GoldenMapFileManage',
   WPP06: appBasePath + '/WIP/BumpMapFileManage',
   'FGDSTOCKIN_E10ICD': appBasePath + '/WIP/FgdStockInE10Icd',
@@ -1211,6 +1215,7 @@ const isWipBumpMapMergePage = computed(() => activeMasterKey.value === 'function
 const isWipBumpMapFileManagePage = computed(() => activeMasterKey.value === 'function:WIP:WPP06')
 const isWipGoldenMapFileManagePage = computed(() => activeMasterKey.value === 'function:WIP:WPP05')
 const isWipWaferMapExportPage = computed(() => activeMasterKey.value === 'function:WIP:WPP02')
+const isWipProbingLogPage = computed(() => activeMasterKey.value === 'function:WIP:WPP04')
 const isWipLotBasisCreateCpPage = computed(() => activeMasterKey.value === 'function:WIP:WPP01')
 const isWipEqpSetupBasisCpPage = computed(() => activeMasterKey.value === 'function:WIP:WPP03')
 const isWipFgdStockInE10IcdPage = computed(() => activeMasterKey.value === 'function:WIP:FGDSTOCKIN_E10ICD')
@@ -3045,6 +3050,7 @@ async function signOut(): Promise<void> {
         <WipBumpMapFileManage v-else-if="isWipBumpMapFileManagePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipGoldenMapFileManage v-else-if="isWipGoldenMapFileManagePage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipWaferMapExport v-else-if="isWipWaferMapExportPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipProbingLog v-else-if="isWipProbingLogPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotBasisCreateCp v-else-if="isWipLotBasisCreateCpPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEqpSetupBasisCp v-else-if="isWipEqpSetupBasisCpPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipFgdStockInE10Icd v-else-if="isWipFgdStockInE10IcdPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

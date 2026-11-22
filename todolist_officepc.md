@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：WPP04 P_PROBING LOG／晶圓針測紀錄查詢（2026-11-23）
+
+- [x] 依 THEIL `frmProbingLog`（Designer 內嵌）、`IC_CP_PKG.wsWIP.LoadProbingLog_Ext`、`clsLot.LoadProbingLog_Ext` 核對 Customer／Lot／MO 至少一項、OP 多選、Component、EndTestTime、Final／History、動態 BIN 欄與 WIP 子視窗自動查詢。
+- [x] 完成 fallback `/YMES/WIP/ProbingLog` DEV 唯讀查詢頁：篩選勾選／Customer lookup／OP 多選、CurVersion 1 Final／all History、EndTestTime、動態 BIN 與 BIN101+、Core Component filter 缺陷註記；新增 [WPP04 規格](docs/modules/WIP/晶圓針測紀錄查詢.md)、索引及家用端 handoff。
+- [x] DEV 只呈現固定假資料與本機記憶體查詢紀錄，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫資料或匯出檔。未執行 build、test 或 browser。
+- [ ] `tbl_CPWIPWAFERBINSUMMARY`／`tbl_CPSYSBin`／`tbl_PWIPWaferBin_Ext` 同版 Oracle DDL／metadata 缺項；桌機受保護 Oracle profile 不存在，未查 MESTEST／未猜 CREATE-only。家用端先比對 YMES live schema／migration。
+- [ ] 正式 API 需限制登入者 Customer／Lot／MO 可見範圍、參數化條件、修正 ComponentNo 重複字串 bug；保留 Final=CurVersion 1、History 不限版、OP 多選、EndTestTime 日期上限、SYS parameter 決定 BIN extension。
+- [ ] WPP02、WPP04 已交付；WPP08 尚待完成。原始 FunctionOrder 未保存在可讀清冊，桌機受保護 profile 不存在；後續可用安全 profile 時再核實精確順序。
+
 ## 公司端最新交付：WPP02 P_WAFERMAP EXPORT／晶圓針測資料匯出（2026-11-23）
 
 - [x] 依 THEIL `frmWIPWaferExport`（Designer 內嵌）、`IC_CP_PKG.wsWIP`／`wsSYS`、`clsLot`／`clsSYSEng`、`clsWaferExportHanlder` 核對 Lot／MAP／Bin 查詢、Basis wildcard 選擇、FunctionFlag 0／1、Wafer 多選、Detail／Header、檔名 token、MAP／文字／Excel／ZIP 輸出與 FTP 路徑分支。
@@ -7,7 +16,7 @@
 - [x] DEV 只操作虛構 fixtures 與本機操作紀錄；不建立本機檔案／Excel／ZIP、不呼叫 legacy Service／API／FTP／File Service、不連 Oracle／YMES PostgreSQL。未執行 build、test 或 browser。
 - [ ] `tblSYSWaferExportBasis`／`tblSYSWaferExportDetail`／`tblSYSWaferExportHeader` 與 CP `TBL_CPWIPWAFERMAP`／Bin Summary／Bin Define 同版 Oracle DDL／metadata 缺項。桌機受保護 Oracle profile 不存在，未猜欄位或 CREATE-only；家用端先核 live schema／migration 再定 schema/API。
 - [ ] 家用端核實 Lot 權限、設定 wildcard precedence、FunctionFlag、Ship MAP／Combo MAP OP、Bin mapping／Header、輸出格式 allowlist 與 server-side 檔案生成；FTP credential、遠端目錄由受保護 server 設定管理，不接受 browser 任意路徑。
-- [ ] WPP02／WPP04／WPP08 原始 FunctionOrder 未保存在可讀清冊，桌機 Oracle profile 不可用；本次依未完成 FunctionKey 數值先交付 WPP02，後續有安全 profile 再核實實際排序。
+- [ ] WPP02 已交付；WPP08 尚待完成。原始 FunctionOrder 未保存在可讀清冊，桌機 Oracle profile 不可用；有安全 profile 時再核實實際排序。
 
 ## 公司端最新交付：WPP05 P_GOLDENMAP FILE MANAGEMENT／Golden MAP檔案管理（2026-11-23）
 
@@ -16,7 +25,7 @@
 - [x] 僅操作固定 DEV fixtures 與 localStorage；不讀／寫本機檔案、不呼叫 legacy Service、Oracle／YMES PostgreSQL、FTP 或正式 File Service。未執行 build、test 或 browser。
 - [ ] WPP05 專屬 TBL_PWIPGoldenMAPFileState／TBL_PWIPGoldenMAPFileLog 同版 Oracle DDL／metadata 缺項；桌機受保護 Oracle profile 不存在，未猜欄位或 CREATE-only。共享 TBLPRDPRODUCTBASIS 參考 DDL／metadata 沿既有 references。
 - [ ] 家用端先核對兩張 Golden MAP 表的 PostgreSQL live schema／migration，再設計登入保護、參數化的 State／History／Product lookup 與逐檔 upload／scrap／download API。File Service 路徑／憑證由 server 受保護設定管理，逐檔補冪等、部分成功回報及 file／DB 對帳。
-- [ ] CP 清冊 WPP02 已交付；WPP04、WPP08 待做，原始 FunctionOrder 尚待有安全 Oracle profile 後核實。
+- [ ] CP 清冊 WPP02、WPP04 已交付；WPP08 待做，原始 FunctionOrder 尚待有安全 Oracle profile 後核實。
 
 ## 公司端最新交付：WPP03 P_EQP SETUP BASIS／設備設置單維護_晶片測試（2026-11-22）
 
@@ -26,7 +35,7 @@
 - [x] 家用端修正合併後 build 揭露的重複 `status` 宣告，完整 Vite build 通過；Chrome 畫面擷取逾時，尚未完成操作驗收，未部署。
 - [ ] WPP03 專屬 Setup、Accessory、Equipment Link 表及 `TBLPRDACCESSORYGROUP_SUB`／`TBLEMSACCVIOLATESTATUSCHANGE` lookup source DDL／metadata 缺項；serial、WIPTemp equipment、EMS accessory state/control 沿用 WP109／WP201／accessory references。桌機受保護 Oracle profile 不存在，未猜 CREATE-only SQL。家用端先比對 live schema／migration 與同版 Oracle metadata，再設計正式 API／schema。
 - [ ] 家用端正式 CLOSE API 須原子處理設備 Lot 使用守門、原關聯結束／歸檔、新關聯歷程、Setup Status=2／CloseDate／CloseUser 與 EMS accessory state；ADD／EDIT 須同步保護 serial、Status=0 及外部配件發料競爭。
-- [x] WPP05、WPP02 已接續完成；CP 清冊 WPP04、WPP08 待做，原始 FunctionOrder 尚待安全 profile 核實。
+- [x] WPP05、WPP02、WPP04 已接續完成；CP 清冊 WPP08 待做，原始 FunctionOrder 尚待安全 profile 核實。
 
 ## 公司端交付：WPP01 P_CREATE LOT_CP／生產批開立_晶片測試（2026-11-22）
 
