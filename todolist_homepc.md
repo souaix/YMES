@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES305 配件狀態監控_設備（2026-11-23）
+
+公司端依 CSiMES／THEIL／DEV_SILVA 三份相同的 `frmAccessoryStateMonitorByEQP`／內嵌 Designer，THEIL `wsEQP`／`wsEMS` Service 及 `clsEQPBasis`／`clsAccState`／`clsEMSEquipment` Core 完成 [ES305 DEV 頁](docs/modules/EMS/配件狀態監控設備.md)，fallback `/YMES/EMS/AccessoryStateMonitorByEquipment`。DEV 模擬設備類別／編號查找、已掛載配件卡、每頁 20 筆、狀態色、分類互斥停用、右鍵歷程／現況、雙擊設備配件現況；狀態只更新本頁記憶體，不改掛載假資料。
+
+- [ ] `TBLEQPEQUIPMENTTYPE` 缺 Oracle source DDL；`TBLEMSACCVIOLATESTATUSCHANGE` 缺 Oracle source DDL／CREATE-only。桌機受保護 Oracle profile 不可用；先核對 live schema／migration，取得核准 DDL 後補，禁止猜欄位。
+- [ ] `clsAccState.LoadAccessoryNoByEquipment` 以 AccessoryNo 連 `TBLEMSACCESSORYSTATE`／`TBLEQPACCESSORYBASIS`，未限制 AccessoryVersion 或 CurVersion=1。正式監控 GET 需限制使用者設備範圍，要求 EquipmentType 或 EquipmentNo，並以掛載關聯的 AccessoryNo+Version 取唯一目前版、穩定分頁（最多 20 筆）。
+- [ ] 通用狀態更新須重新查 category、使用者狀態權限及互斥，檢查 expected state／version 後原子寫狀態 log/current 與安全 ACCSerialNo；Apply／Return 呼叫 ES301／ES302 專用交易。
+- [x] ES305 完成；清冊下一未完成項目為 ES103「配件狀態控制設定」。
+
 ## 公司端交接：ES304 配件狀態監控（2026-11-23）
 
 公司端依 CSiMES／THEIL／DEV_SILVA 相同的 `frmAccessoryStateMonitor`／內嵌 Designer，及 THEIL `wsEQP`／`wsEMS` Service、`clsEMSEquipment`／`clsAccState` Core 完成 [ES304 DEV 頁](docs/modules/EMS/配件狀態監控.md)，fallback `/YMES/EMS/AccessoryStateMonitor`。DEV 模擬分類／類型查找、每頁 20 筆、卡片現況色、互斥停用、狀態更新、右鍵歷程／現況及雙擊設備配件現況；假資料與狀態變更僅存在頁面記憶體。
@@ -7,7 +16,7 @@
 - [ ] Repo 已有配件類型／基礎／狀態／現況／歷程 Oracle source DDL 與 CREATE-only；`TBLEMSACCVIOLATESTATUSCHANGE` 及可選 `TBLEMSACCESSORYREASONS` 缺同版 Oracle source DDL／CREATE-only。桌機受保護 Oracle profile 不可用；先核對家用端 live schema／migration，拿到核准 DDL 再補，禁止猜欄位。
 - [ ] 提供分類與類型 lookup、授權且穩定排序的配件狀態監控分頁 GET（每頁最多 20）；一般狀態轉換使用交易鎖定 CurVersion=1 現況，重查 expected state／版本、登入者分類狀態權限及互斥 pair，原子新增 `TBLEMSACCESSORYSTATELOG` 並更新 `TBLEMSACCESSORYSTATE`，以安全序號服務配置 ACCSerialNo。若接收理由，先核實原因表 DDL。
 - [ ] Apply／Return 分別呼叫 ES301／ES302 專用交易，不用一般狀態轉換 API 代替掛載／下機；其他控制表配置的外部介面需明確支援範圍。Core SQL 字串串接與任意 `AdditionalXml` 不得沿用。
-- [x] ES304 完成；清冊下一未完成項目為 ES305「配件狀態監控_設備」。
+- [x] ES304 完成後接續 ES305，現均完成；清冊下一未完成項目為 ES103「配件狀態控制設定」。
 
 ## 公司端交接：ES104 設備狀態互斥設定（2026-11-23）
 
@@ -15,7 +24,7 @@
 
 - [ ] `TBLEMSVIOLATESTATUSCHANGE` 及 `TBLEMSVIOLATESTATUSLOG` 缺 repo Oracle source DDL 與 PG CREATE-only。公司桌機受保護 Oracle profile 不可用，未查 metadata；先取得來源 DDL 後比對 live schema／migrations，不猜建表。
 - [ ] 實作登入／EMS 設定權限保護的狀態基準與 forbidden pair API；參數化所有 state key。更新時以一筆 transaction 替換單一來源狀態的完整目標集合，並原子新增變更 history／稽核。Legacy Service 先 delete 再逐筆 Add、逐來源 state 呼叫且沒有完整矩陣交易，失敗可能部分生效；正式 API 不沿用此行為。
-- [x] ES104 完成後，清冊下一未完成項目為 ES304「配件狀態監控」。
+- [x] ES304／ES305 完成；清冊下一未完成項目為 ES103「配件狀態控制設定」。
 
 ## 公司端交接：ES202 設備狀態監控_設備類別（2026-11-23）
 
