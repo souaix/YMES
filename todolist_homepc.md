@@ -1,12 +1,21 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ACC MONITOR_BU1 配件狀態監控_管理（2026-11-23）
+
+公司端依 DEV_SILVA Customer 專用 `frmAccessoryStateMonitor`、THEIL `wsEQP`／`wsEMS.ChangeAccessoryState`、`clsAccState.ChangeACCState` 完成 [DEV 頁](docs/modules/EMS/配件狀態監控管理.md)，fallback `/YMES/EMS/AccessoryStateMonitorBu1`。此為獨立客戶版，標準 ES304 是另一個已完成功能。DEV 假類別／類型、現況、STATES／LOG、0–5 多選狀態更新及歷程只存在頁面記憶體。
+
+- [ ] 比對 `tblemsaccessorystate`、`tblemsaccessorystatelog`、`tbleqpaccessorybasis`、`tbleqpaccstatebasis` live schema／migration；repo 已有 Oracle source DDL 與 CREATE-only。取得客戶版 REST server/API 原始契約：`GETACC_STATE`、`GET_ACCLOG`、`GETACCSTATE_FIELD`、`AccessoryApi.ChangeAccessoryState`；公司端本機來源樹未找到 Controller，未猜 SQL／回傳欄位／授權。
+- [ ] 正式 API 不接受 client 自報 `GUserNo`／SAP `MANDT`／`WERKS` 作為授權；從登入身分與 server-side 權限推導管理範圍。查詢需目前版本、參數化、穩定排序／分頁；狀態變更需重驗 expected state、類別權限及目標狀態，再原子寫 log／current／新序號。
+- [ ] Legacy Form 對選取列逐筆 POST，可能部分成功；正式 API／UI 應按單筆回傳結果或明確定義整批交易與 rollback 語意。`wsEMS.ChangeAccessoryState` 呼叫 `clsAccState.ChangeACCState`；Core 檢查權限與 expected state，但客戶版 REST endpoint 到此 Service 的對接未能由缺少的 REST server source 核實。
+- [x] `ACC MONITOR_BU1` 完成；清冊下一項為 ES105「配件狀態互斥設定」。
+
 ## 公司端交接：ES405 配件狀態查詢（2026-11-23）
 
 公司端完成 [ES405 DEV 頁](docs/modules/EMS/配件狀態查詢.md)，fallback `/YMES/EMS/AccessoryStateQuery`。依三份一致的 `frmAccessoryState`、THEIL `wsEMS.LoadAccessoryState`／`LoadAccessoryReasons`、`wsEQP` 選擇器與 `clsEMSEquipment`／`clsAccState` 完成配件類型／編號查詢、12 欄現況 Grid、壽命剩餘量及 ACCSERIALNO 理由子列；DEV 假資料只存在頁面記憶體。
 
 - [ ] 比對 `tblemsaccessorystate`、`tbleqpaccstatebasis`、`tbleqpaccessorylife` live schema／migrations；repo 有 Oracle source DDL 與 CREATE-only。`tblemsaccessoryreasons` 缺 Oracle source DDL／metadata 及 CREATE-only；取得核准唯讀 metadata 後再補，禁止猜欄位。
 - [ ] 實作授權且參數化的配件現況分頁 GET 與單列 reasons GET，避免無條件全表查詢及一次載入全部 ACCSerialNo。Core 會列出各 AccessoryVersion 且 UI 隱藏版本，正式端需明確定義版本顯示規則；StateName 取目前狀態基礎，不是歷史快照。
-- [x] ES405 完成；清冊下一列 `ACC MONITOR_BU1` 為客戶版監控變體，待公司端核對後交接。
+- [x] ES405 與 `ACC MONITOR_BU1` 客戶版監控變體已交接；清冊下一項為 ES105「配件狀態互斥設定」。
 
 ## 公司端交接：ES406 配件歷史資料查詢（2026-11-23）
 
