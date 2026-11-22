@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES405 配件狀態查詢（2026-11-23）
+
+公司端完成 [ES405 DEV 頁](docs/modules/EMS/配件狀態查詢.md)，fallback `/YMES/EMS/AccessoryStateQuery`。依三份一致的 `frmAccessoryState`、THEIL `wsEMS.LoadAccessoryState`／`LoadAccessoryReasons`、`wsEQP` 選擇器與 `clsEMSEquipment`／`clsAccState` 完成配件類型／編號查詢、12 欄現況 Grid、壽命剩餘量及 ACCSERIALNO 理由子列；DEV 假資料只存在頁面記憶體。
+
+- [ ] 比對 `tblemsaccessorystate`、`tbleqpaccstatebasis`、`tbleqpaccessorylife` live schema／migrations；repo 有 Oracle source DDL 與 CREATE-only。`tblemsaccessoryreasons` 缺 Oracle source DDL／metadata 及 CREATE-only；取得核准唯讀 metadata 後再補，禁止猜欄位。
+- [ ] 實作授權且參數化的配件現況分頁 GET 與單列 reasons GET，避免無條件全表查詢及一次載入全部 ACCSerialNo。Core 會列出各 AccessoryVersion 且 UI 隱藏版本，正式端需明確定義版本顯示規則；StateName 取目前狀態基礎，不是歷史快照。
+- [x] ES405 完成；清冊下一列 `ACC MONITOR_BU1` 為客戶版監控變體，待公司端核對後交接。
+
 ## 公司端交接：ES406 配件歷史資料查詢（2026-11-23）
 
 公司端完成 [ES406 DEV 頁](docs/modules/EMS/配件歷史資料查詢.md)，fallback `/YMES/EMS/AccessoryStateLogQuery`。依三份一致的 `frmAccessoryStateLog`、THEIL `wsEMS.LoadAccessoryStateLog`／`LoadAccessoryReasons` 與 `clsAccState` 完成四條件查詢、10 欄配件狀態歷程及選取列的理由明細；DEV 全部為虛構資料。
@@ -7,7 +15,7 @@
 - [ ] 先比對 `tblemsaccessorystatelog`、`tbleqpaccstatebasis` live schema／migrations；repo 已有來源 DDL 與 CREATE-only。取得核准 Oracle 唯讀 metadata 補 `tblemsaccessoryreasons` 的 DDL／PK／index，再新增相符 CREATE-only；公司桌機 profile 不可用，沒有猜表結構。
 - [ ] 實作授權 GET `/api/ems/accessory-state-logs` 與 `/api/ems/accessory-state-logs/{logId}/reasons`，支援配件類型、配件編號、使用者、起始時間範圍、穩定排序與分頁；空條件應限制時間範圍／筆數。需核對 `StateName` 使用當前基礎名稱或歷史快照語意。
 - [ ] Core 歷程 SQL 直接串接輸入、沒有分頁；reason 查詢來自尚未核對 DDL 的 `tblemsaccessoryreasons`。Legacy Form 取得完整 `LoadUserSecurity` 後才於客戶端移除密碼欄，正式 user picker 必須改成最小欄位 API，禁止傳送 Password／ResetPassword。
-- [x] ES406 完成後清冊下一未完成項目為 ES405「配件狀態查詢」。
+- [x] ES405「配件狀態查詢」已完成；後續先核對清冊 `ACC MONITOR_BU1` 客戶版變體。
 
 ## 公司端交接：ES103 配件狀態控制設定（2026-11-23）
 
