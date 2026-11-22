@@ -1,12 +1,20 @@
 # 公司端待辦
 
+## 公司端最新交付：WPP06 Bump MAP 檔案管理（2026-11-22）
+
+- [x] 核 THEIL 主 Form／內嵌 Designer、Update File 子 Form、`wsWIP`、`wsSYS`、`clsLot`、`clsSYSEng` 及 `clsMergeMAPHandler`；記錄目前／歷程查詢、MAPType=1 template、encoding／header／尺寸檢查、逐檔上傳備份、Scrap、下載與事件紀錄流程。
+- [x] 完成 DEV 假資料頁：Lot／UploadTime 查詢、State／History 多選、假 template／`.txt` file chooser、解析提示、逐檔 upload／Scrap、備份續號、下載目的地與部分失敗情境；新增 [WPP06 規格](docs/modules/WIP/Bump_MAP檔案管理.md)、索引及家用端 handoff。
+- [x] fallback `/YMES/WIP/BumpMapFileManage` 僅 Vue 記憶體 fixtures；不連 Oracle／YMES PostgreSQL／legacy Service／FTP(S)、不讀寫任何本機檔案。未執行 build、test 或 browser。
+- [ ] 直接表為 `TBL_PWIPBumpMAPFileState`／`TBL_PWIPBumpMAPFileLog`；template 依賴 `TBL_BSYSMAPTEMPLATEBASIS`／`TBL_BSYSMAPTEMPLATEDETAIL`。本機受保護 Oracle attachment/profile 不可用，未查 DDL／metadata，未猜 CREATE-only。家用端比對 live schema 並設計參數化 API、server-side file root、冪等與跨檔案／DB reconciliation。
+- [ ] 下一項依清冊為 WPP01「P_CREATE LOT_CP／生產批開立_晶片測試」；先核對 THEIL Form／Service／Core，再做 DEV 與 handoff。
+
 ## 公司端最新交付：WIPUNINV 取消入庫作業（2026-11-22）
 
 - [x] 依 THEIL `frmWP_UNINV_THEIL_BU1.vb`／Designer、`WEBAPI.vb` 核對自動 Search、12 欄單選 Grid、欄位改名、Outbound request、`GRSNO` 預設 `0001` 與成功後重查。
 - [x] 完成純 DEV 假資料頁及 Search／Outbound 成功、失敗、逾時對帳互動；新增 [WIPUNINV 規格](docs/modules/WIP/WIPUNINV取消入庫.md)、索引及家用端 handoff。Outbound 依來源直接送出，未加 WinForms 沒有的確認視窗。
 - [x] fallback `/YMES/WIP/UnInventory` 僅本地 fixture；不呼叫 SAP／Web API／MES Service／資料庫／ERP。未連 Oracle／YMES PostgreSQL，未執行 build、test 或 browser。
 - [ ] 可讀 THEIL／DEV_SILVA checkout 只有 Form／API consumer，未找到 GetPendingList／Outbound controller、Service、Core、SAP 查詢與交易；API 未提供直接 Oracle 表名或 SQL，沒有可查的 Oracle DDL／metadata 對象。家用端確認部署 endpoint、授權、冪等與逾時結果對帳。
-- [ ] 下一項依清冊為 WPP06「P_BUMPMAP FILE MANAGEMENT／Bump MAP 檔案管理」；先核對 THEIL Form／Service／Core，再完成 DEV 與 handoff。
+- [x] 後續清冊項目 WPP06「P_BUMPMAP FILE MANAGEMENT／Bump MAP 檔案管理」已完成；最新接續項目見本檔最上方。
 
 ## 公司端最新交付：BARTENDER Bartender print（2026-11-22）
 

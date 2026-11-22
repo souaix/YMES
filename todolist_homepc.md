@@ -1,12 +1,21 @@
 # 家裡電腦接手清單
 
+## 公司端交接：WPP06 Bump MAP 檔案管理（2026-11-22）
+
+公司端核對 THEIL `frmBumpMAPFileManage`／Update File 子 Form、`wsWIP`／`wsSYS`、`clsLot`／`clsSYSEng` 及 `clsMergeMAPHandler`，完成 [WPP06 DEV 頁](docs/modules/WIP/Bump_MAP檔案管理.md)，fallback `/YMES/WIP/BumpMapFileManage`。DEV 僅操作記憶體中的假 state/history、template 和 `.txt` fixture；不碰本機檔案、不呼叫 FTP(S)、legacy Service、Oracle、正式 API 或 PostgreSQL。Core 涉及 `TBL_PWIPBumpMAPFileState`、`TBL_PWIPBumpMAPFileLog`、`TBL_BSYSMAPTEMPLATEBASIS`、`TBL_BSYSMAPTEMPLATEDETAIL`；桌機受保護 Oracle attachment/profile 不可用，未取得 source DDL／metadata，未產生猜測 SQL。
+
+- [ ] 家用端唯讀核 live schema／migration 與既有 template API，確認上述四表及可重用 File Service provider。未核 Oracle 型別、PK／index/default 前不照 WinForms INSERT 欄位自造 migration。
+- [ ] 建立登入保護的 State／History 查詢、template lookup、逐檔 upload／archive／Scrap／download API。File root 與 FTP credential 只由 server 受保護設定解析，不接受 browser 傳任意 server path 或 credential；Lot／日期條件參數化，空 Lot prefix 不可退化成無界查詢。
+- [ ] 保持 MAP encoding、template detail parser、header／X/Y row-size 驗證相容；明確規範多檔部分成功、State／Log 和 file provider 一致性、冪等／重送與逾時 reconciliation，並提供人工修復紀錄。
+- [ ] 清冊下一項 WPP01「P_CREATE LOT_CP／生產批開立_晶片測試」由公司端接續復刻。
+
 ## 公司端交接：WIPUNINV 取消入庫作業（2026-11-22）
 
 公司端依 THEIL `frmWP_UNINV_THEIL_BU1.vb`／Designer 與 `WEBAPI.vb` 完成 [WIPUNINV DEV 頁](docs/modules/WIP/WIPUNINV取消入庫.md)，fallback `/YMES/WIP/UnInventory`。DEV 僅用虛構 pending rows 模擬 Search、單列選取、Outbound request、空 `LOTNO`／`IDBSNO` 守門、空 `GRSNO` 預設 `0001`、Success／Error／Timeout 與 Search 對帳；不呼叫 SAP、API、資料庫或 ERP。來源只有 client，未找到 controller／Service／Core／SAP transaction，也沒有 Oracle source table 或 SQL 可供查 DDL／metadata。
 
 - [ ] 核對實際 `WipUnInventory/GetPendingList`、`Outbound` server endpoints、授權和 SAP runtime 參數解析；pending 查詢依登入者權限限制工廠／清單，不信任 browser 自帶 `WERKS`／`MANDT`／DB link。
 - [ ] Outbound 實作 idempotency／防重、SAP 結果與 MES 記錄一致性及 timeout reconciliation；以服務端重查確認 pending 狀態。DEV 的未知結果停送並要求 Search 對帳只是 UI safeguard，未驗證任何正式交易。
-- [ ] 清冊下一項 WPP06「P_BUMPMAP FILE MANAGEMENT／Bump MAP 檔案管理」由公司端接續復刻。
+- [x] 後續清冊項目 WPP06「P_BUMPMAP FILE MANAGEMENT／Bump MAP 檔案管理」已交付；下一項 WPP01 由公司端接續。
 
 ## 公司端交接：BARTENDER Bartender print（2026-11-22）
 
