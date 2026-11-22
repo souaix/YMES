@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 家用端同步與瀏覽器檢查（2026-11-23）
+
+- [x] `git fetch origin` 讀到公司端最新 `main`：`9ec8373`。已以一般 merge 整合 WPP04、WPP08 與多個 EMS DEV 頁；沒有覆蓋公司端提交。
+- [x] 檢查最新公司清單與整個 `origin/main`：WPP02 的 `tblSYSWaferExportBasis/Detail/Header`、`TBL_CPWIPWAFERMAP`、Bin Summary、Bin Define 同版 Oracle DDL／metadata 仍缺；WPP05 的 `TBL_PWIPGoldenMAPFileState/Log` 同版 DDL／metadata 與 File Service 契約也仍缺。未發現新增 Oracle DDL 或 PostgreSQL CREATE-only migration。WPP04 的 `TBL_CPWIPWAFERBINSUMMARY`、`tblCPSYSBin`、`tblPWIPWaferBin_Ext` 同版 DDL／metadata 亦列為缺項。
+- [x] 重開機後 app-browser 截圖通道已可用：開啟正式站、Demo 登入狀態、三層選單展開與 WPP02 導覽皆可操作並成功截圖。正式 WPP02 頁目前顯示「尚未遷移」，未以 DEV 假資料冒充正式功能；沒有寫入業務資料。
+- [x] 修正登入成功／首次改密碼後的 menu 載入競速：等待 menu tree 完成，載入中鎖住主框架並顯示簡短狀態；新增 `docs/modules/Shared/登入與主選單.md`。
+- [x] 最終修改後前端 `vue-tsc` 與 Vite production build 通過（858 modules）；僅既有約 4.85 MB 主 JS chunk 提示超過 Vite 500 KB 預設值。完成後正常推送 GitHub，並再讀兩台 TODO 確認是否有新接手項目。
+
 ## 公司端交接：ES406 配件歷史資料查詢（2026-11-23）
 
 公司端完成 [ES406 DEV 頁](docs/modules/EMS/配件歷史資料查詢.md)，fallback `/YMES/EMS/AccessoryStateLogQuery`。依三份一致的 `frmAccessoryStateLog`、THEIL `wsEMS.LoadAccessoryStateLog`／`LoadAccessoryReasons` 與 `clsAccState` 完成四條件查詢、10 欄配件狀態歷程及選取列的理由明細；DEV 全部為虛構資料。

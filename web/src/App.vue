@@ -1960,7 +1960,7 @@ async function submitLogin(): Promise<void> {
     } else {
       screen.value = 'signed-in'
       password.value = ''
-      void loadMenuTree()
+      await loadMenuTree()
     }
   } catch (error) {
     if (isCurrentAuth(context)) errorMessage.value = error instanceof Error ? error.message : selectedEnvironmentLabel.value + '登入服務目前無法連線。'
@@ -2003,7 +2003,7 @@ async function submitPasswordChange(): Promise<void> {
     if (currentUser.value) currentUser.value.mustChangePassword = false
     screen.value = 'signed-in'
     successMessage.value = '密碼已更新。'
-    void loadMenuTree()
+    await loadMenuTree()
   } catch (error) {
     if (isCurrentAuth(context)) errorMessage.value = error instanceof Error ? error.message : selectedEnvironmentLabel.value + '登入服務目前無法連線。'
   } finally {
@@ -2186,7 +2186,7 @@ async function signOut(): Promise<void> {
       </section>
     </main>
 
-    <main v-else-if="screen === 'signed-in'" class="framework-shell" :class="{ 'sidebar-collapsed': !sidebarOpen }" :aria-busy="busy || restoringSession" :inert="busy || restoringSession">
+    <main v-else-if="screen === 'signed-in'" class="framework-shell" :class="{ 'sidebar-collapsed': !sidebarOpen }" :aria-busy="busy || restoringSession || menuSource === 'loading'" :inert="busy || restoringSession || menuSource === 'loading'">
       <aside class="framework-sidebar" :class="{ collapsed: !sidebarOpen }">
         <div class="framework-brand">
           <img class="brand-logo" :src="brandLogoUrl" alt="KD 科定企業" />
@@ -2232,6 +2232,7 @@ async function signOut(): Promise<void> {
           </div>
         </header>
         <div v-if="errorMessage" class="framework-menu-note error" role="alert">{{ errorMessage }}</div>
+        <div v-if="menuSource === 'loading'" class="framework-menu-note" role="status">主選單載入中…</div>
         <div v-if="menuSource === 'fallback'" class="framework-menu-note" role="status">
           目前顯示簡化選單；尚未遷移的功能會標示待處理。
         </div>
