@@ -7,7 +7,7 @@
 - [x] 重開機後 app-browser 截圖通道已可用：開啟正式站、Demo 登入狀態、三層選單展開與 WPP02 導覽皆可操作並成功截圖。正式 WPP02 頁目前顯示「尚未遷移」，未以 DEV 假資料冒充正式功能；沒有寫入業務資料。
 - [x] 修正登入成功／首次改密碼後的 menu 載入競速：等待 menu tree 完成，載入中鎖住主框架並顯示簡短狀態；新增 `docs/modules/Shared/登入與主選單.md`。
 - [x] 最終合併後前端 `vue-tsc` 與 Vite production build 通過（864 modules）；僅既有約 4.86 MB 主 JS chunk 提示超過 Vite 500 KB 預設值。
-- [ ] 一般推送整合版至 GitHub `main` 後，讀回遠端確認雙方提交及最新兩台 TODO。
+- [x] 已將整合版以一般快轉推送至 GitHub `main`（`62ca630`）；推送後讀回 `origin/main` 確認一致，並檢查兩台 TODO。公司端新接續項目為 ES405／BU1 配件 API；相關表 live schema 尚待比對，`tblemsaccessoryreasons` DDL 仍缺。
 
 ## 公司端交接：ACC MONITOR_BU1 配件狀態監控_管理（2026-11-23）
 
