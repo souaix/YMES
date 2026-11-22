@@ -1,5 +1,127 @@
 # 公司端待辦
 
+## 公司端最新交付：ES406 配件歷史資料查詢（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 三份一致的 `frmAccessoryStateLog`，THEIL `wsEMS.LoadAccessoryStateLog`／`LoadAccessoryReasons`、`wsEQP`／`wsUSR` 查詢選擇器及 `clsAccState` Core。
+- [x] 完成 `/YMES/EMS/AccessoryStateLogQuery` DEV 頁：配件類型／編號／使用者／起始時間篩選、假選擇器、Query、配件歷程主 Grid、選取列載入原因明細；新增 [ES406 規格](docs/modules/EMS/配件歷史資料查詢.md)、索引及家用端 handoff。
+- [x] 歷程、使用者、配件與原因均為虛構，只存在本頁記憶體；不呼叫正式 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
+- [x] 重用 `TBLEMSACCESSORYSTATELOG`、`TBLEQPACCSTATEBASIS` 既有 Oracle DDL／PostgreSQL CREATE-only。`TBLEMSACCESSORYREASONS` 缺 Oracle source DDL／metadata 與 CREATE-only；桌機受保護 Oracle profile 不可用，本次記錄缺項且未猜 schema。
+- [ ] 家用端先比對兩張已知表 live schema／migration，唯讀取得 `TBLEMSACCESSORYREASONS` DDL／PK／index 後補 CREATE-only；正式查詢需登入授權、參數化、穩定分頁、避免無範圍全表掃描，User lookup 僅回傳安全的 UserNo／名稱。
+- [x] 清冊下一未完成項目為 ES405「配件狀態查詢」。
+
+## 公司端最新交付：ES103 配件狀態控制設定（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 一致的 `frmEQPACCStateControlSet` Form／內嵌 Designer，THEIL `wsEQP.LoadEQPACCStateBasis`／`LoadACCStateControl`／`UpdACCStateControl`，以及 `clsAccBasis`、`clsEQPStateControl`、`clsAccState` Core。
+- [x] 完成 `/YMES/EMS/AccessoryStateControlSet` DEV 畫面：7 個配件控制狀態、模擬 `IC_FT_PKG` 時出現 `I_SetupClose`、狀態選擇視窗、Apply 假套用、Confirm 假儲存並關閉、Close 丟棄未套用變更；新增 [ES103 規格](docs/modules/EMS/配件狀態控制設定.md)、索引及家用端 handoff。
+- [x] 所有 DEV 狀態資料均為虛構且只存在頁面記憶體；不呼叫正式 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
+- [x] 沿用 `TBLEQPACCSTATECONTROL`／`TBLEQPACCSTATEBASIS` 既有 Oracle DDL 與 PostgreSQL CREATE-only references，無新增 DDL。受保護 Oracle profile 不可用，但本項直接表 DDL 已在 repo，無需補猜或另查。
+- [ ] 家用端比對 live schema／migration；批次設定交易需同步處理舊設定狀態的配件歷程、現況及新序號。Form 每次送全組，Legacy Core 對未變更控制值也會重寫舊狀態配件、寫 log 並換發序號；逐列再 Delete+Insert 控制設定，沒有涵蓋整批的交易，失敗可能部分生效。正式端只處理實際變更 ControlNo，參數化並回滾完整交易、核實 `IC_FT_PKG` 資格及回傳影響筆數。
+- [x] 清冊下一未完成項目為 ES405「配件狀態查詢」。
+
+## 公司端最新交付：ES305 配件狀態監控_設備（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 三份相同的 `frmAccessoryStateMonitorByEQP`／內嵌 Designer，及 `wsEQP` 設備 lookup、`wsEMS.LoadAccessoryStatebyEquipment`／`ChangeAccessoryState`、`clsAccState.LoadAccessoryNoByEquipment`／`ChangeACCState` 與 `clsEMSEquipment` 配件狀態 Core。
+- [x] 完成 `/YMES/EMS/AccessoryStateMonitorByEquipment` DEV 頁：設備類別／編號篩選、每頁 20 筆掛載配件、狀態色卡片、分類互斥停用、記憶體狀態變更、右鍵／雙擊假視窗；新增 [ES305 規格](docs/modules/EMS/配件狀態監控設備.md)、索引及家用端 handoff。
+- [x] 假設備／掛載／配件／狀態資料皆為虛構，變更只留本頁記憶體；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
+- [x] 沿用配件掛載／現況／狀態／控制與設備基礎 references。`TBLEQPEQUIPMENTTYPE` 缺同版 Oracle source DDL，`TBLEMSACCVIOLATESTATUSCHANGE` 缺 Oracle source／CREATE-only；桌機受保護 Oracle profile 不可用，已記錄未猜 schema。
+- [ ] 家用端比對缺 DDL 表與 live schema／migration；監控 GET 要要求設備類別或編號、授權並分頁。Core 查詢按 AccessoryNo join 多版本表，正式 API 必須使用目前掛載的 AccessoryNo+Version；狀態更新另需在交易內重驗分類權限、互斥與 expected state。
+- [x] ES103 已完成；清冊下一未完成項目為 ES405「配件狀態查詢」。
+
+## 公司端最新交付：ES304 配件狀態監控（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 相同的 `frmAccessoryStateMonitor`／內嵌 Designer，並追 `wsEQP`／`wsEMS` lookup、`LoadAccessoryStatebyCategory`／`ChangeAccessoryState` 與 `clsEMSEquipment`／`clsAccState` Core。
+- [x] 完成 `/YMES/EMS/AccessoryStateMonitor` DEV 頁：分類／類型篩選、每頁 20 筆、狀態色配件卡、互斥停用、記憶體狀態變更、右鍵及雙擊假視窗；新增 [ES304 規格](docs/modules/EMS/配件狀態監控.md)、索引及家用端 handoff。
+- [x] 配件、狀態、色碼及互斥 pair 均為虛構資料，沒有呼叫 API／Service、連 Oracle／YMES PostgreSQL 或寫入正式資料；未執行 build、test、browser 或 WinForms runtime。
+- [x] 重用現有配件類型／基礎／狀態／現況／歷程 source DDL 及 CREATE-only references；`TBLEMSACCVIOLATESTATUSCHANGE`、`TBLEMSACCESSORYREASONS` 缺同版 Oracle source DDL／CREATE-only，桌機受保護 Oracle profile 不可用，已記錄且未猜 schema。
+- [ ] 家用端先比對缺 DDL 表與 live schema／migration，再接授權、參數化、分頁監控 API；一般狀態轉換須原子寫狀態歷程／現況並重驗互斥、類別狀態權限、版本與序號。Apply／Return 應走 ES301／ES302 專用流程。
+- [x] ES304／ES305 均完成；其後 ES103 已完成，清冊下一未完成項目為 ES405「配件狀態查詢」。
+
+## 公司端最新交付：ES104 設備狀態互斥設定（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 三份相同的 `frmViolateStateChangeSetMatrix`／內嵌 Designer、`wsEQP.LoadEQPStateBasis`、`wsEMS.LoadViolateStateChange`／`UpdViolatStateChangeData` 與 `clsEQPBasis`／`clsEMSEquipment` Core。
+- [x] 完成 `/YMES/EMS/ViolateStateChangeSetMatrix` DEV 頁：狀態色矩陣、雙擊切換 forbidden pair、dirty 格數、Confirm 假儲存及 Close；新增 [ES104 規格](docs/modules/EMS/設備狀態互斥設定.md)、索引及家用端 handoff。
+- [x] DEV 只操作虛構狀態與記憶體 pair；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料。Form 有 `Activation.Disabled`／`AllowUpdate=False` 與雙擊 handler 衝突，DEV 依 handler 預期互動；未執行 build、test、browser 或 WinForms runtime。
+- [x] `TBLEMSVIOLATESTATUSCHANGE`、`TBLEMSVIOLATESTATUSLOG` 在 repo 缺 Oracle source DDL／PostgreSQL CREATE-only；桌機受保護 profile 不可用，已記錄缺項，沒有猜建表。
+- [ ] 家用端取得並唯讀核對上述兩張直接寫入表的 DDL、主鍵／索引和 log 欄位；再做登入授權、參數化互斥矩陣 API，以交易原子替換各來源狀態的完整 forbidden pair 並寫 history。
+- [x] ES304、ES305、ES103 均已完成；目前接續 ES406「配件歷史資料查詢」。
+
+## 公司端最新交付：ES202 設備狀態監控_設備類別（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 三份相同選擇器 Form／內嵌 Designer，並追共用 `frmEquipmentStateMonitor_THEIL_BU1`、`wsEQP.LoadEquipmentType/LoadEquipmentBasis/LoadEQPStateBasis`、`wsEMS.LoadEquipmentState/EditEquipmentState` 與 `clsEQPBasis`／`clsEMSEquipment` Core。
+- [x] 完成 `/YMES/EMS/EquipmentStateByType` DEV 頁：核准類別選擇、Confirm 開啟共用監控預覽、每頁 10 台、狀態色／翻頁／Refresh、DEV Chamber、狀態按鈕和右鍵假視窗。新增 [ES202 規格](docs/modules/EMS/設備狀態監控設備類別.md)、索引及家用端 handoff；設備圖片、版本／權限／PM 工單／互斥／批號／腔體交易規則列為簡化。
+- [x] 狀態變更僅在本頁虛構資料記憶體生效；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料。未執行 build、test 或 browser。
+- [x] 沿用設備類別、設備基礎、狀態與互斥 references，沒有新增 CREATE SQL。`TBLEQPEQUIPMENTTYPE` repo 只有 PostgreSQL CREATE-only，缺原始 Oracle source DDL；桌機受保護 profile 不可用，已記錄未查 metadata。
+- [ ] 家用端比對 `TBLEQPEQUIPMENTTYPE`、`TBLEQPEQUIPMENTBASIS`、`TBLEMSEQUIPMENTSTATE`、`TBLEQPSTATEBASIS` live schema／migrations，設計授權類別及監控查詢；狀態寫入沿用 ES204 的版本／互斥／PM／Lot／Chamber 規則與交易。
+- [x] 清冊下一未完成項目 ES104「設備狀態互斥設定」已完成；目前接續 ES304。
+
+## 公司端最新交付：ES203 設備狀態監控_區域（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 三份相同的主 Form 與 Designer；追 `wsSMD.LoadBaseArea`／`LoadAreaRelationDefine`、`wsEMS.LoadEquipmentStateBySMD` 及 `clsSMDBasis`／`clsEMSEquipment` Core。
+- [x] 完成 `/YMES/EMS/EquipmentStateByArea` DEV 頁：Area Color／Equipment State Color、Base Area 選擇、五種節點、縮放、Grid、Refresh、節點選取／右鍵／雙擊預覽。新增 [ES203 規格](docs/modules/EMS/設備狀態監控區域.md)、索引及家用端 handoff；AddFlow 碰撞群選、Grid 詳細設定、底圖 BLOB 與外部視窗明列為簡化。
+- [x] DEV 僅使用固定虛構節點、設備狀態與 IMESTECH 右鍵假企業別，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test 或 browser。
+- [x] 沿用 SMD Area、設備狀態與 equipment-group references，無新增 DDL。`TBLEQPGROUPDETAIL` repo 只有 CREATE-only，缺同版 Oracle source DDL；本機受保護 profile 不可用，已記錄缺項。
+- [ ] 家用端先唯讀比對 `TBLSMDAREABASIS`、`TBLSMDAREARELATION`、`TBLEMSEQUIPMENTSTATE`、`TBLEQPSTATEBASIS`、`TBLEQPGROUPDETAIL` live schema／migrations，再實作登入授權、參數化 BaseArea／設備範圍、群組展開、現況狀態色與刷新 API；直接 area layout 可共用 SMD SD108 handoff。
+- [x] 清冊下一列 ES202「設備狀態監控_設備類別」與 ES104「設備狀態互斥設定」均已完成；未完成清冊下一項為 ES304。
+
+## 公司端最新交付：ES403 設備歷史資料查詢_狀態（2026-11-23）
+
+- [x] 核對 THEIL `frmEquipmentStateLogByState`／資料表與趨勢圖子 Form、`wsEMS.LoadEquipmentStateLogByState`、`clsEMSEquipment.LoadEquipmentStateLogByState`；確認 EquipmentState 必選、可選設備／人員條件、Designer 可見的 StartTime 範圍，以及依 StartTime 日彙總。EndTime 控制項隱藏，雖有 Service/Core 分支但不可從表單操作。
+- [x] 完成 `/YMES/EMS/EquipmentStateLogByState` DEV 頁：假 lookup、狀態必選、可見 StartTime 含端點日期條件、每日結果表與數值標籤趨勢長條圖。新增 [ES403 規格](docs/modules/EMS/設備歷史資料查詢狀態.md)、索引及家用端 API/schema handoff；圖表單頁切換，舊隱藏圖表按鈕未呈現。
+- [x] 直接表 `TBLEMSEQUIPMENTSTATELOG` 與 state basis 沿用 WP305／equipment-state references，沒有新增 DDL／CREATE-only；本次未連 Oracle、YMES PostgreSQL，未讀業務資料；未執行 build、test 或 browser。
+- [ ] 家用端比對 `TBLEMSEQUIPMENTSTATELOG`／`TBLEQPSTATEBASIS` live schema／migrations，實作登入與設備範圍授權、參數化唯讀 API、日期／結果限制及一致的小時計算與捨入規則。
+- [x] ES203「設備狀態監控_區域」、ES202「設備狀態監控_設備類別」及 ES104「設備狀態互斥設定」均已完成公司端交付；清冊下一未完成項目為 ES304。
+
+## 公司端最新交付：ES404 設備歷史資料查詢（2026-11-23）
+
+- [x] 依 THEIL `frmEquipmentStateLogQuery`／Top Ten Grid 與 Pie／Bar／Label Bar 子 Form、`wsEMS.LoadEquipmentStateLogTopTen`、`clsEMSEquipment.LoadEquipmentStateLogTopTen` 核對查詢欄位、兩種時間模式、狀態時數聚合與 Others。
+- [x] 完成 `/YMES/EMS/EquipmentStateLogQuery` DEV 頁：Equipment Type／No／User／State 篩選與假 lookup、Start／End 日期模式、獨立 From／To checkbox、Top Ten 表格、Pie、Bar、Bar(Label)；新增 [ES404 規格](docs/modules/EMS/設備歷史資料查詢.md)、索引與家用端 handoff。
+- [x] DEV 僅使用虛構狀態歷程、Equipment／User／State 資料及頁面內計算，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫資料；未執行 build、test 或 browser。圖表於單頁切換，簡化 WinForms 分開開窗。
+- [x] 直接表沿用 WP305 狀態歷程與 equipment-state basis references；無新增 DDL／CREATE-only。桌機受保護 Oracle profile 不可用，本次沒有連 MESTEST 或查業務資料。
+- [ ] 家用端比對兩張直接表 live schema／migrations，實作登入授權、參數化、設備可見範圍、日期跨度／全歷史掃描限制及單一小時計算／捨入契約；Oracle／非 Oracle Core 時數精度不同。
+- [x] ES403「設備歷史資料查詢_狀態」、ES203「設備狀態監控_區域」、ES202「設備狀態監控_設備類別」與 ES104「設備狀態互斥設定」均已完成公司端交付；目前清冊下一未完成項目為 ES304。
+
+## 公司端最新交付：ES302 配件下機（2026-11-23）
+
+- [x] 核對 THEIL、DEV_SILVA、CSiMES 三份 `frmReturnEQPAccessory.vb`（SHA-256 相同）、`wsEMS.LoadDistinctEQPACCStateACCType`／`LoadEQPACCState`／`ReturnEQPACC`、`clsEMSEquipment.UpdEQPACCState_Return`，以及 `clsAccState` 權限／壽命提示／流水號 helper。
+- [x] 完成 `/YMES/EMS/ReturnEquipmentAccessory` DEV 假資料頁：配件類別與已掛載配件 lookup、版本／設備／Lot 摘要、互斥阻擋、壽命警示、Confirm 後模擬移除掛載與頁面內下機紀錄；新增 [ES302 規格](docs/modules/EMS/配件下機作業.md)、索引及家用端 handoff。
+- [x] DEV 僅變更虛構資料的頁面記憶體，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫入正式資料；未執行 build、test 或 browser。
+- [x] 沿用配件狀態／設備掛載及 WP201 references；`TBLWIPCONT_ACCESSORY`、`TBLEMSACCVIOLATESTATUSCHANGE` 找不到同版 Oracle source DDL／PG CREATE-only，受保護 Oracle profile 不可用，沒有推測建表或連 Oracle。
+- [ ] 家用端比對上述兩張缺少參考的 live schema／migration，並確認配件狀態、掛載、WIP 使用時間及狀態互斥的版本與主鍵；依規格實作授權、參數化及原子下機 API。
+- [x] ES302 後接續 ES404、ES403、ES203、ES202、ES104 均已完成；目前清冊下一未完成項目 ES304。
+
+## 公司端最新交付：ES402 設備狀態記錄查詢（2026-11-23）
+
+- [x] 依 THEIL `frmEquipmentStateLog`（Designer 內嵌）／Gantt 子窗、`wsEMS.LoadEquipmentStateLog`、Core `clsEMSEquipment.LoadEquipmentStateLogJoinStateBasis` 核對日期與設備／狀態／使用者條件、Lot／OP 隱藏欄、狀態色及查詢排序。
+- [x] 完成 `/YMES/EMS/EquipmentStateLog` DEV 假資料頁：勾選式 lookup、四個可選日期邊界、查詢結果表、設備狀態 Gantt；支援 `strEquipmentNo` query string 深連結。新增 [ES402 規格](docs/modules/EMS/設備狀態記錄查詢.md)、索引與家用端 handoff。
+- [x] DEV 僅用虛構資料與頁面記憶體，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫入；未執行 build、test 或 browser。
+- [x] Oracle 結構引用沿用 WP305／設備狀態 basis references；為既有 Oracle source `TBLWIPLOTLOG` 新增 PG CREATE-only 參考，未執行 migration。受保護 Oracle profile 不可用，本次未連 Oracle、未查業務資料或 YMES PostgreSQL。
+- [ ] 家用端先比對四張來源表 live schema／migrations，尤其 `TBLWIPCONT_EQUIPMENT` 無 PK；以登入者 ES402 權限做唯讀 API，參數化所有 filters、限制日期跨度與結果數、採完整 EquipmentNo＋StartTime＋EndTime 關聯並分頁。Oracle／非 Oracle legacy join 有 EndTime 條件差異；不要照搬 Core 字串 SQL。
+- [x] ES402 完成後接續 ES302、ES404、ES403、ES203、ES202、ES104；目前均已完成公司端 DEV／規格，清冊下一未完成項目為 ES304。
+
+## 清冊交接：WPI05 原始來源缺失，跳過後接續 EMS 清冊（2026-11-23）
+
+- [x] 查驗 `D:\iMES\CSiMES`、`D:\TP-iMes\iMES_THEIL_TP`、`D:\TP-iMes\DEV_SILVA`，未找到 WPI05 `frmEQPAccessoryBasis`／其專案或直接 Service/Core；EP203 配件主檔、ES 配件上機與 CP Setup 配件查詢不是同一功能。詳見[來源狀態](docs/modules/WIP/配件領用單維護作業.md)。
+- [ ] 取得缺少的 WPI05 Form／Designer、Service、Core 後，再按來源復刻；公司端 Oracle 僅在受保護 profile 可用時唯讀查 metadata，不猜欄位／DDL。
+- [x] 跳過無法由現有來源核實的 WPI05；ES402、ES302、ES404、ES403、ES203、ES202、ES104 均已完成公司端 DEV／規格，現在接續清冊下一未完成項目 ES304。
+
+## 公司端最新交付：WPP08 P_LOT COMP GEN／生產批自主產生元件（2026-11-23）
+
+- [x] 依 THEIL `frmLotComponentGen`／`frmNewComponent` 與 Designer、CP `wsWIP.LoadComponentBasis`／`LoadComponentState`／`UpdComponent`、共用 `wsWIP`／`wsSYS`／`wsPRD` 及 Core `clsLot.UpdComponent` 核對查詢、重複阻擋、流程資格、序號、Unit transfer、Wafer ID、GoodQty 總量及三表新增契約。
+- [x] 完成 fallback `/YMES/WIP/LotComponentGen` DEV 頁：MOState 3／6、LotState=0、Lot 查詢／排序、Component State、ComponentBasis 重複阻擋、HaveComponent／Enterprise gate、兩種假序號模式、Unit conversion、Wafer ID range、逐列 GoodQty 與 SumQty 守恆；新增 [WPP08 規格](docs/modules/WIP/生產批自主產生元件.md)、索引及家用端 handoff。
+- [x] DEV 只操作固定虛構 fixtures 與頁面記憶體；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫檔或預約正式序號。未執行 build、test 或 browser。
+- [ ] 三張新增表已有先前 Oracle／CREATE-only references：`TBLOEMOCOMPONENT`（OE201）、`TBLWIPCOMPONENTBASIS`（WP215）、`TBLWIPCOMPONENTSTATE`（WP101）；本機受保護 Oracle profile 不可用，本次沒有查 MESTEST 新 metadata。家用端先比對 live schema／migration，不重建共用表。
+- [ ] 正式 API 需重新檢查 MO／Lot／流程、既有 Component State／Basis、單位換算、逐筆 Wafer ID／GoodQty、總量守恆、序號唯一性與登入者授權；三表新增需原子交易、冪等與併發守門。Source Core SQL 為字串串接，ComponentNo auto source 呼叫 `ReserveSerialNo=false`，需設計安全正式序號預約。
+- [ ] WPP02、WPP04、WPP08 均已完成公司端 DEV／規格／handoff。原始 FunctionOrder 未保存在可讀清冊；安全 Oracle profile 可用時再核實精確排序。
+
+## 公司端最新交付：WPP04 P_PROBING LOG／晶圓針測紀錄查詢（2026-11-23）
+
+- [x] 依 THEIL `frmProbingLog`（Designer 內嵌）、`IC_CP_PKG.wsWIP.LoadProbingLog_Ext`、`clsLot.LoadProbingLog_Ext` 核對 Customer／Lot／MO 至少一項、OP 多選、Component、EndTestTime、Final／History、動態 BIN 欄與 WIP 子視窗自動查詢。
+- [x] 完成 fallback `/YMES/WIP/ProbingLog` DEV 唯讀查詢頁：篩選勾選／Customer lookup／OP 多選、CurVersion 1 Final／all History、EndTestTime、動態 BIN 與 BIN101+、Core Component filter 缺陷註記；新增 [WPP04 規格](docs/modules/WIP/晶圓針測紀錄查詢.md)、索引及家用端 handoff。
+- [x] DEV 只呈現固定假資料與本機記憶體查詢紀錄，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫資料或匯出檔。未執行 build、test 或 browser。
+- [ ] `tbl_CPWIPWAFERBINSUMMARY`／`tbl_CPSYSBin`／`tbl_PWIPWaferBin_Ext` 同版 Oracle DDL／metadata 缺項；桌機受保護 Oracle profile 不存在，未查 MESTEST／未猜 CREATE-only。家用端先比對 YMES live schema／migration。
+- [ ] 正式 API 需限制登入者 Customer／Lot／MO 可見範圍、參數化條件、修正 ComponentNo 重複字串 bug；保留 Final=CurVersion 1、History 不限版、OP 多選、EndTestTime 日期上限、SYS parameter 決定 BIN extension。
+- [ ] WPP02、WPP04、WPP08 均已交付；原始 FunctionOrder 未保存在可讀清冊，桌機受保護 profile 不存在；後續可用安全 profile 時再核實精確順序。
+
 ## 公司端最新交付：WPP02 P_WAFERMAP EXPORT／晶圓針測資料匯出（2026-11-23）
 
 - [x] 依 THEIL `frmWIPWaferExport`（Designer 內嵌）、`IC_CP_PKG.wsWIP`／`wsSYS`、`clsLot`／`clsSYSEng`、`clsWaferExportHanlder` 核對 Lot／MAP／Bin 查詢、Basis wildcard 選擇、FunctionFlag 0／1、Wafer 多選、Detail／Header、檔名 token、MAP／文字／Excel／ZIP 輸出與 FTP 路徑分支。
@@ -7,7 +129,7 @@
 - [x] DEV 只操作虛構 fixtures 與本機操作紀錄；不建立本機檔案／Excel／ZIP、不呼叫 legacy Service／API／FTP／File Service、不連 Oracle／YMES PostgreSQL。未執行 build、test 或 browser。
 - [ ] `tblSYSWaferExportBasis`／`tblSYSWaferExportDetail`／`tblSYSWaferExportHeader` 與 CP `TBL_CPWIPWAFERMAP`／Bin Summary／Bin Define 同版 Oracle DDL／metadata 缺項。桌機受保護 Oracle profile 不存在，未猜欄位或 CREATE-only；家用端先核 live schema／migration 再定 schema/API。
 - [ ] 家用端核實 Lot 權限、設定 wildcard precedence、FunctionFlag、Ship MAP／Combo MAP OP、Bin mapping／Header、輸出格式 allowlist 與 server-side 檔案生成；FTP credential、遠端目錄由受保護 server 設定管理，不接受 browser 任意路徑。
-- [ ] WPP02／WPP04／WPP08 原始 FunctionOrder 未保存在可讀清冊，桌機 Oracle profile 不可用；本次依未完成 FunctionKey 數值先交付 WPP02，後續有安全 profile 再核實實際排序。
+- [ ] WPP02、WPP04、WPP08 均已交付。原始 FunctionOrder 未保存在可讀清冊，桌機 Oracle profile 不可用；有安全 profile 時再核實實際排序。
 
 ## 家用端補件：WPP05 Golden MAP 原生資料與 File Service 契約（2026-11-23）
 
@@ -25,7 +147,7 @@
 - [x] 僅操作固定 DEV fixtures 與 localStorage；不讀／寫本機檔案、不呼叫 legacy Service、Oracle／YMES PostgreSQL、FTP 或正式 File Service。未執行 build、test 或 browser。
 - [ ] WPP05 專屬 TBL_PWIPGoldenMAPFileState／TBL_PWIPGoldenMAPFileLog 同版 Oracle DDL／metadata 缺項；桌機受保護 Oracle profile 不存在，未猜欄位或 CREATE-only。共享 TBLPRDPRODUCTBASIS 參考 DDL／metadata 沿既有 references。
 - [ ] 家用端先核對兩張 Golden MAP 表的 PostgreSQL live schema／migration，再設計登入保護、參數化的 State／History／Product lookup 與逐檔 upload／scrap／download API。File Service 路徑／憑證由 server 受保護設定管理，逐檔補冪等、部分成功回報及 file／DB 對帳。
-- [ ] CP 清冊 WPP04、WPP08 尚待完成；原始 FunctionOrder 待有安全 Oracle profile 後核實。
+- [ ] CP 清冊 WPP02、WPP04、WPP08 已交付，原始 FunctionOrder 尚待有安全 Oracle profile 後核實。
 
 ## 公司端最新交付：WPP03 P_EQP SETUP BASIS／設備設置單維護_晶片測試（2026-11-22）
 
@@ -35,7 +157,7 @@
 - [x] 家用端修正合併後 build 揭露的重複 `status` 宣告，完整 Vite build 通過；Chrome 畫面擷取逾時，尚未完成操作驗收，未部署。
 - [ ] WPP03 專屬 Setup、Accessory、Equipment Link 表及 `TBLPRDACCESSORYGROUP_SUB`／`TBLEMSACCVIOLATESTATUSCHANGE` lookup source DDL／metadata 缺項；serial、WIPTemp equipment、EMS accessory state/control 沿用 WP109／WP201／accessory references。桌機受保護 Oracle profile 不存在，未猜 CREATE-only SQL。家用端先比對 live schema／migration 與同版 Oracle metadata，再設計正式 API／schema。
 - [ ] 家用端正式 CLOSE API 須原子處理設備 Lot 使用守門、原關聯結束／歸檔、新關聯歷程、Setup Status=2／CloseDate／CloseUser 與 EMS accessory state；ADD／EDIT 須同步保護 serial、Status=0 及外部配件發料競爭。
-- [x] WPP05、WPP02 已接續完成；CP 清冊 WPP04、WPP08 待做，原始 FunctionOrder 尚待安全 profile 核實。
+- [x] WPP05、WPP02、WPP04、WPP08 已接續完成，原始 FunctionOrder 尚待安全 profile 核實。
 
 ## 公司端交付：WPP01 P_CREATE LOT_CP／生產批開立_晶片測試（2026-11-22）
 
