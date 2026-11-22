@@ -113,6 +113,7 @@ import WipUnInventory from './components/WipUnInventory.vue'
 import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
 import EmsEquipmentStateLog from './components/EmsEquipmentStateLog.vue'
+import EmsReturnEquipmentAccessory from './components/EmsReturnEquipmentAccessory.vue'
 import EmsEquipmentStateControlSetting from './components/EmsEquipmentStateControlSetting.vue'
 import EmsEquipmentStateStatistics from './components/EmsEquipmentStateStatistics.vue'
 import EmsEquipmentReasonBasis from './components/EmsEquipmentReasonBasis.vue'
@@ -667,6 +668,7 @@ const fallbackMenuTree: MenuNode[] = [
       ],
     }, {
       id: 'menu:EMS:ACC EXECUTION', label: '配件_執行', shortLabel: '配', children: [
+        { id: 'function:EMS:RETURN EQP ACCESSORY', label: '配件下機', shortLabel: '下機', functionNo: 'RETURN EQP ACCESSORY', moduleNo: 'EMS' },
         { id: 'function:EMS:EQP STATE STATISTICS_EMS', label: '設備狀態期間統計查詢', shortLabel: '統計', functionNo: 'EQP STATE STATISTICS_EMS', moduleNo: 'EMS' },
         { id: 'function:EMS:EQUIPMENT STATE LOG', label: '設備狀態記錄查詢', shortLabel: '歷程', functionNo: 'EQUIPMENT STATE LOG', moduleNo: 'EMS' },
       ],
@@ -679,6 +681,7 @@ const menuSource = ref<'loading' | 'api' | 'fallback' | 'error'>('fallback')
 const menuError = ref('')
 
 const menuRoutes: Record<string, string> = {
+  'function:EMS:RETURN EQP ACCESSORY': appBasePath + '/EMS/ReturnEquipmentAccessory',
   'function:EMS:EQP STATE CHANGE': appBasePath + '/EMS/EquipmentStateChange',
   'function:EMS:EQUIPMENT STATE LOG': appBasePath + '/EMS/EquipmentStateLog',
   'function:EMS:EQP STATE CONTROL SETTING': appBasePath + '/EMS/EqpStateControlSet',
@@ -1172,6 +1175,7 @@ const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'functi
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
 const isEmsEquipmentStateChangePage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CHANGE')
+const isEmsReturnEquipmentAccessoryPage = computed(() => activeMasterKey.value === 'function:EMS:RETURN EQP ACCESSORY')
 const isEmsEquipmentStateLogPage = computed(() => activeMasterKey.value === 'function:EMS:EQUIPMENT STATE LOG')
 const isEmsEquipmentStateControlSettingPage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CONTROL SETTING')
 const isEmsEquipmentStateStatisticsPage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE STATISTICS_EMS')
@@ -3100,6 +3104,7 @@ async function signOut(): Promise<void> {
         <WipLabelPrint v-else-if="isWp908Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotQuantityAdjust v-else-if="isWp907Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateChange v-else-if="isEmsEquipmentStateChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <EmsReturnEquipmentAccessory v-else-if="isEmsReturnEquipmentAccessoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsEquipmentStateLog v-else-if="isEmsEquipmentStateLogPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateControlSetting v-else-if="isEmsEquipmentStateControlSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateStatistics v-else-if="isEmsEquipmentStateStatisticsPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

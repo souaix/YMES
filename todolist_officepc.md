@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：ES302 配件下機（2026-11-23）
+
+- [x] 核對 THEIL、DEV_SILVA、CSiMES 三份 `frmReturnEQPAccessory.vb`（SHA-256 相同）、`wsEMS.LoadDistinctEQPACCStateACCType`／`LoadEQPACCState`／`ReturnEQPACC`、`clsEMSEquipment.UpdEQPACCState_Return`，以及 `clsAccState` 權限／壽命提示／流水號 helper。
+- [x] 完成 `/YMES/EMS/ReturnEquipmentAccessory` DEV 假資料頁：配件類別與已掛載配件 lookup、版本／設備／Lot 摘要、互斥阻擋、壽命警示、Confirm 後模擬移除掛載與頁面內下機紀錄；新增 [ES302 規格](docs/modules/EMS/配件下機作業.md)、索引及家用端 handoff。
+- [x] DEV 僅變更虛構資料的頁面記憶體，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫入正式資料；未執行 build、test 或 browser。
+- [x] 沿用配件狀態／設備掛載及 WP201 references；`TBLWIPCONT_ACCESSORY`、`TBLEMSACCVIOLATESTATUSCHANGE` 找不到同版 Oracle source DDL／PG CREATE-only，受保護 Oracle profile 不可用，沒有推測建表或連 Oracle。
+- [ ] 家用端比對上述兩張缺少參考的 live schema／migration，並確認配件狀態、掛載、WIP 使用時間及狀態互斥的版本與主鍵；依規格實作授權、參數化及原子下機 API。
+- [ ] ES302 後續：依清冊接 ES404「設備歷史資料查詢」。
+
 ## 公司端最新交付：ES402 設備狀態記錄查詢（2026-11-23）
 
 - [x] 依 THEIL `frmEquipmentStateLog`（Designer 內嵌）／Gantt 子窗、`wsEMS.LoadEquipmentStateLog`、Core `clsEMSEquipment.LoadEquipmentStateLogJoinStateBasis` 核對日期與設備／狀態／使用者條件、Lot／OP 隱藏欄、狀態色及查詢排序。
@@ -7,13 +16,13 @@
 - [x] DEV 僅用虛構資料與頁面記憶體，不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫入；未執行 build、test 或 browser。
 - [x] Oracle 結構引用沿用 WP305／設備狀態 basis references；為既有 Oracle source `TBLWIPLOTLOG` 新增 PG CREATE-only 參考，未執行 migration。受保護 Oracle profile 不可用，本次未連 Oracle、未查業務資料或 YMES PostgreSQL。
 - [ ] 家用端先比對四張來源表 live schema／migrations，尤其 `TBLWIPCONT_EQUIPMENT` 無 PK；以登入者 ES402 權限做唯讀 API，參數化所有 filters、限制日期跨度與結果數、採完整 EquipmentNo＋StartTime＋EndTime 關聯並分頁。Oracle／非 Oracle legacy join 有 EndTime 條件差異；不要照搬 Core 字串 SQL。
-- [ ] 接續清冊下一項 ES302「配件下機」，先確認來源及是否已交付。
+- [x] ES402 完成後接續 ES302；ES302 已完成公司端 DEV／規格，下一項依清冊為 ES404。
 
 ## 清冊交接：WPI05 原始來源缺失，跳過後接續 EMS 清冊（2026-11-23）
 
 - [x] 查驗 `D:\iMES\CSiMES`、`D:\TP-iMes\iMES_THEIL_TP`、`D:\TP-iMes\DEV_SILVA`，未找到 WPI05 `frmEQPAccessoryBasis`／其專案或直接 Service/Core；EP203 配件主檔、ES 配件上機與 CP Setup 配件查詢不是同一功能。詳見[來源狀態](docs/modules/WIP/配件領用單維護作業.md)。
 - [ ] 取得缺少的 WPI05 Form／Designer、Service、Core 後，再按來源復刻；公司端 Oracle 僅在受保護 profile 可用時唯讀查 metadata，不猜欄位／DDL。
-- [x] 跳過無法由現有來源核實的 WPI05，接續 ES402；ES402 已完成公司端 DEV／規格，現在下一項 ES302「配件下機」。
+- [x] 跳過無法由現有來源核實的 WPI05；ES402、ES302 均已完成公司端 DEV／規格，現在接續 ES404。
 
 ## 公司端最新交付：WPP08 P_LOT COMP GEN／生產批自主產生元件（2026-11-23）
 
