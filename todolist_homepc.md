@@ -1,12 +1,21 @@
 # 家裡電腦接手清單
 
+## 公司端交接：WPP08 生產批自主產生元件（2026-11-23）
+
+公司端依 THEIL `frmLotComponentGen`／`frmNewComponent`、CP `wsWIP.UpdComponent`、`clsLot.UpdComponent` 和相關查詢 Service 完成 [WPP08 DEV 頁](docs/modules/WIP/生產批自主產生元件.md)，fallback `/YMES/WIP/LotComponentGen`。DEV 模擬 MOState 3／6、LotState=0、批次查詢、Component State/Basis 重複阻擋、HaveComponent／Enterprise gate、SerialConfig auto/manual、Wafer ID 範圍、Unit conversion、GoodQty 編輯及 SumQty 總量守恆；Confirm 只更新虛構 Component State 記憶體，不呼叫服務或預約正式序號。
+
+- [ ] 三張新增表已存在 repo 先前 Oracle／CREATE-only references：`TBLOEMOCOMPONENT`（OE201）、`TBLWIPCOMPONENTBASIS`（WP215）、`TBLWIPCOMPONENTSTATE`（WP101）。公司端受保護 Oracle profile 不可用，未查新的 MESTEST metadata；家用端先唯讀比對 live schema／migration，不重建共用表。
+- [ ] 建立授權保護的 MO／Lot／流程／Component Basis／State／Unit／conversion 查詢與 component-generation command。server 端重新檢查 MO／Lot State、流程 HaveComponent／Enterprise、既有 Component State/Basis、每筆 WaferID／GoodQty、Unit conversion、SumQty、ComponentNo 唯一性。
+- [ ] 將 `TBLOEMOCOMPONENT`、`TBLWIPCOMPONENTBASIS`、`TBLWIPCOMPONENTSTATE` 三表寫入納入一筆可恢復交易；使用安全序號預約、idempotency 與併發守門，記錄操作者及結果。Source Core SQL 字串串接，auto serial 呼叫 `ReserveSerialNo=false`，不可照搬為 browser 指定號碼。
+- [ ] WPP02／WPP04／WPP08 公司端 DEV／規格／handoff 均已完成。FunctionOrder 原始值未保存在可讀清冊，日後安全 Oracle profile 可用時再核實精確排序。
+
 ## 公司端交接：WPP04 晶圓針測紀錄查詢（2026-11-23）
 
 公司端依 THEIL `frmProbingLog`、`IC_CP_PKG.wsWIP.LoadProbingLog_Ext` 與 `clsLot.LoadProbingLog_Ext` 完成 [WPP04 DEV 頁](docs/modules/WIP/晶圓針測紀錄查詢.md)，fallback `/YMES/WIP/ProbingLog`。DEV 用固定虛構紀錄模擬 Customer／Lot／MO 至少一項、OP 多選、Component、EndTestTime、Final Result（CurVersion=1）／History（所有版次）、彙總欄及 BIN／BIN101+ 動態欄；只讀，不寫檔、不呼叫 API／Service。
 
 - [ ] `tbl_CPWIPWAFERBINSUMMARY`、`tbl_CPSYSBin`、條件式 `tbl_PWIPWaferBin_Ext` 同版 Oracle DDL／metadata 缺項；桌機 profile 不存在，未猜 CREATE-only。先對 YMES live schema／migration 做唯讀比對，沿用 Lot／Component／Customer／SYS 共用資料表。
 - [ ] 正式查詢須以登入者授權限制 Customer／Lot／MO 範圍，使用參數化查詢與結果上限。修正來源 Core ComponentNo filter 重複累加先前 `strCondition` 的缺陷；確認 From/To 邊界、OP 多值、Final／History CurVersion、extension BIN 展開與零值欄移除。
-- [ ] WPP02、WPP04 已交付；CP 清冊剩 WPP08 尚待完成。原始 FunctionOrder 未保存在可讀清冊；桌機安全 Oracle profile 可用時再核實精確排序。
+- [ ] WPP02、WPP04、WPP08 已交付；原始 FunctionOrder 未保存在可讀清冊；桌機安全 Oracle profile 可用時再核實精確排序。
 
 ## 公司端交接：WPP02 晶圓針測資料匯出（2026-11-23）
 
@@ -15,7 +24,7 @@
 - [ ] `tblSYSWaferExportBasis`／`tblSYSWaferExportDetail`／`tblSYSWaferExportHeader` 及 CP Wafer MAP／Bin Summary／Bin Define 同版 Oracle DDL／metadata 缺項；桌機受保護 profile 不存在，未猜 CREATE-only。先對 YMES live schema／migrations 做唯讀比對，再決定是否新增 forward migration；不重建 Lot／MO／Product／Inventory／WIP 共用表。
 - [ ] 正式 API 依登入身分限制 Lot，參數化載入配置、Current MAP、Combo MAP OP／ShipMap、Bin 定義／彙總、MO／Product 屬性、Equipment／Attribute；保留 exact／wildcard precedence 與 FunctionFlag 0／1 語意。
 - [ ] 匯出格式需 server allowlist 與內容相容策略，server-side 限制檔案目的地；FTP 設定不得來自 browser。明確處理 MAP／文字／Excel、Header mapping、Bin symbol、檔名 token、ZIP、同名檔與逐輸出錯誤，提供可下載結果清單及對帳紀錄。
-- [ ] WPP02 已交付；WPP08 尚待完成。原始 FunctionOrder 未保存在可讀清冊，桌機受保護 Oracle profile 不存在；有安全 profile 時再核實實際排序。
+- [ ] WPP02、WPP04、WPP08 均已交付。原始 FunctionOrder 未保存在可讀清冊，桌機受保護 Oracle profile 不存在；有安全 profile 時再核實實際排序。
 
 ## 公司端交接：WPP05 Golden MAP 檔案管理（2026-11-23）
 
@@ -23,7 +32,7 @@
 
 - [ ] WPP05 專屬 TBL_PWIPGoldenMAPFileState／TBL_PWIPGoldenMAPFileLog 同版 Oracle DDL／metadata 缺項，桌機受保護 profile 不存在，未猜 CREATE-only。共享 TBLPRDPRODUCTBASIS 參考沿既有 DDL／metadata。
 - [ ] 家用端比對 Golden MAP State／History live schema／migration，再設計登入保護與參數化查詢、產品 lookup、逐檔更新／作廢／下載 API；File Service 路徑由 server 設定解析，定義部分成功、冪等與檔案／資料列 reconciliation。
-- [ ] CP 清冊 WPP02、WPP04 已交付；WPP08 尚待完成，原始 FunctionOrder 待有安全 Oracle profile 後核實。
+- [ ] CP 清冊 WPP02、WPP04、WPP08 已交付，原始 FunctionOrder 待有安全 Oracle profile 後核實。
 
 ## 公司端交接：WPP03 設備設置單維護_晶片測試（2026-11-22）
 
@@ -34,7 +43,7 @@
 - [x] 合併後前端建置發現 `WipEqpSetupBasisCpDevPreview.vue` 重複宣告 `status`；移除未使用宣告後，`vue-tsc` 與完整 Vite build 通過（813 modules）。
 - [ ] Chrome GUI 操作尚未驗收：視窗可列出，但本輪兩次擷取均 `window capture timed out`；未登入／操作或部署，工具恢復後補查。
 - [ ] 正式 ADD／EDIT/CLOSE API 需以登入者身分、參數化條件、狀態比較／鎖與冪等保護 Setup serial、主／附屬設備、Accessory Apply、現場 Site 確認；結單須將設備使用守門、舊／新設備 Link State／Log、Setup 狀態及 EMS 配件狀態納入一筆可恢復交易或 saga。
-- [x] 公司端 WPP05、WPP02、WPP04 已接續完成；CP 清冊 WPP08 待做，原始 FunctionOrder 尚待安全 profile 核實。
+- [x] 公司端 WPP05、WPP02、WPP04、WPP08 已接續完成，原始 FunctionOrder 尚待安全 profile 核實。
 
 ## 公司端交接：WPP01 生產批開立_晶片測試（2026-11-22）
 
