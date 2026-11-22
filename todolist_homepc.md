@@ -1,12 +1,20 @@
 # 家裡電腦接手清單
 
+## 公司端交接：WIPUNINV 取消入庫作業（2026-11-22）
+
+公司端依 THEIL `frmWP_UNINV_THEIL_BU1.vb`／Designer 與 `WEBAPI.vb` 完成 [WIPUNINV DEV 頁](docs/modules/WIP/WIPUNINV取消入庫.md)，fallback `/YMES/WIP/UnInventory`。DEV 僅用虛構 pending rows 模擬 Search、單列選取、Outbound request、空 `LOTNO`／`IDBSNO` 守門、空 `GRSNO` 預設 `0001`、Success／Error／Timeout 與 Search 對帳；不呼叫 SAP、API、資料庫或 ERP。來源只有 client，未找到 controller／Service／Core／SAP transaction，也沒有 Oracle source table 或 SQL 可供查 DDL／metadata。
+
+- [ ] 核對實際 `WipUnInventory/GetPendingList`、`Outbound` server endpoints、授權和 SAP runtime 參數解析；pending 查詢依登入者權限限制工廠／清單，不信任 browser 自帶 `WERKS`／`MANDT`／DB link。
+- [ ] Outbound 實作 idempotency／防重、SAP 結果與 MES 記錄一致性及 timeout reconciliation；以服務端重查確認 pending 狀態。DEV 的未知結果停送並要求 Search 對帳只是 UI safeguard，未驗證任何正式交易。
+- [ ] 清冊下一項 WPP06「P_BUMPMAP FILE MANAGEMENT／Bump MAP 檔案管理」由公司端接續復刻。
+
 ## 公司端交接：BARTENDER Bartender print（2026-11-22）
 
 公司端依 THEIL `frmWP_BartenderPrint_THEIL_BU1.vb`（Designer 內嵌）、預覽 Form／Designer 與 `ApiClient` 完成 [BARTENDER DEV 頁](docs/modules/WIP/Bartender列印.md)，fallback `/YMES/WIP/BartenderPrint`。DEV 使用虛構 LOT／標籤規則，模擬 `GETLPC`、`GETXXQCLABEL`／LabelApi rows、標籤選擇、列印資料選取、假標籤預覽、列印確認與 `TBLINLABEL_TAG_FILE_MAP` 編輯；不呼叫任何 endpoint、資料庫、SFTP、外部執行檔或印表機。
 
 - [ ] 家用端唯讀核對 YMES live schema／migration／既有 API，確認 `TBLINLABEL_TAG_FILE_MAP` 和 `GETLPC`、`GETXXQCLABEL`、`InLabel/GetAvailableTags`、`InLabel/SaveTagFileMap`、`InLabel/GetSamplePreviewInfo`、`LabelApi/Query` 的實際實作、欄位、where 條件與權限。公司端 checkout 只有 API consumer，未找到 server handler、SQL/Core body；Oracle source DDL 缺項，桌機無受保護 profile，未猜 CREATE-only。
 - [ ] 正式 Web 以登入者可見的 LOT／標籤規則為界，API server 驗證可用範本與 output；確認範本來源、列印授權、部署 BarTender provider、preview／print job、idempotency、timeout reconciliation 與 audit。Browser 不可任選 server path／printer，不可直接執行 BarTender 或其他 vendor binary。
-- [ ] 公司端無 FunctionKey 項目 WIPUNINV「取消入庫作業」接續復刻，待公司端交付來源／DEV handoff。
+- [x] 後續清冊項目 WIPUNINV「取消入庫作業」已交付；下一項 WPP06 handoff 待公司端接續。
 
 ## 公司端交接：INV COUNT STATE 盤點關／開帳（WP606，2026-11-22）
 

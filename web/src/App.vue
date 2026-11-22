@@ -102,6 +102,7 @@ import WipLotMaterialAdjust from './components/WipLotMaterialAdjust.vue'
 import WipTransferFactory from './components/WipTransferFactory.vue'
 import WipLabelPrint from './components/WipLabelPrint.vue'
 import WipBartenderPrint from './components/WipBartenderPrint.vue'
+import WipUnInventory from './components/WipUnInventory.vue'
 import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
 import EmsEquipmentStateControlSetting from './components/EmsEquipmentStateControlSetting.vue'
@@ -600,6 +601,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:INV COUNT PRINT', label: '列印盤點清冊（DEV）', shortLabel: '盤點列印', functionNo: 'INV COUNT PRINT', moduleNo: 'WIP' },
       { id: 'function:WIP:INV COUNT STATE', label: '盤點關／開帳（DEV）', shortLabel: '盤點狀態', functionNo: 'INV COUNT STATE', moduleNo: 'WIP' },
       { id: 'function:WIP:BARTENDER', label: 'Bartender print（DEV）', shortLabel: '標籤列印', functionNo: 'BARTENDER', moduleNo: 'WIP' },
+      { id: 'function:WIP:WIPUNINV', label: '取消入庫作業（DEV）', shortLabel: '取消入庫', functionNo: 'WIPUNINV', moduleNo: 'WIP' },
       { id: 'function:WIP:PACKING_MOLINE', label: '包裝作業', tableName: 'tblwipmolinepackl1', shortLabel: '包裝', functionNo: 'PACKING_MOLINE', moduleNo: 'WIP' },
       { id: 'function:WIP:PACKING_MOLINE_INV', label: '在製品庫包裝作業', tableName: 'tblinvpackstate', shortLabel: '庫包', functionNo: 'PACKING_MOLINE_INV', moduleNo: 'WIP' },
       { id: 'function:WIP:WIP INV', label: '在製品庫帳務維護', tableName: 'tblinvwipinventory_semi', shortLabel: '在製品庫', functionNo: 'WIP INV', moduleNo: 'WIP' },
@@ -683,6 +685,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:INV COUNT PRINT': appBasePath + '/WIP/InvCountStatePrint',
   'function:WIP:INV COUNT STATE': appBasePath + '/WIP/InvCountState',
   'function:WIP:BARTENDER': appBasePath + '/WIP/BartenderPrint',
+  'function:WIP:WIPUNINV': appBasePath + '/WIP/UnInventory',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'function:WIP:EQP QCLIST ONLINE CHECK': appBasePath + '/WIP/EquipmentOnlineQC',
   'function:WIP:EQP QCLIST LOG': appBasePath + '/WIP/EquipmentQcListLog',
@@ -934,6 +937,7 @@ const functionRoutes: Record<string, string> = {
   'TRANSFER FACTORY': appBasePath + '/WIP/TransferFactory',
   'LABEL PRINT': appBasePath + '/WIP/LabelPrint',
   BARTENDER: appBasePath + '/WIP/BartenderPrint',
+  WIPUNINV: appBasePath + '/WIP/UnInventory',
   'LOT QTY ADJUST': appBasePath + '/WIP/LotQuantityAdjust',
   'LOT OPERATOR CLOCKIN': appBasePath + '/WIP/LotOperatorClockIn',
   'LOT OPERATOR CLOCKOUT': appBasePath + '/WIP/LotOperatorClockOut',
@@ -1197,6 +1201,7 @@ const isWipInvCountStateAdjustPage = computed(() => activeMasterKey.value === 'f
 const isWipInvCountStatePrintPage = computed(() => activeMasterKey.value === 'function:WIP:INV COUNT PRINT')
 const isWipInvCountStatePage = computed(() => activeMasterKey.value === 'function:WIP:INV COUNT STATE')
 const isWipBartenderPrintPage = computed(() => activeMasterKey.value === 'function:WIP:BARTENDER')
+const isWipUnInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:WIPUNINV')
 const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN')
 const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
@@ -3025,6 +3030,7 @@ async function signOut(): Promise<void> {
         <WipInvCountStatePrint v-else-if="isWipInvCountStatePrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipInvCountState v-else-if="isWipInvCountStatePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipBartenderPrint v-else-if="isWipBartenderPrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipUnInventory v-else-if="isWipUnInventoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

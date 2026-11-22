@@ -1,12 +1,20 @@
 # 公司端待辦
 
+## 公司端最新交付：WIPUNINV 取消入庫作業（2026-11-22）
+
+- [x] 依 THEIL `frmWP_UNINV_THEIL_BU1.vb`／Designer、`WEBAPI.vb` 核對自動 Search、12 欄單選 Grid、欄位改名、Outbound request、`GRSNO` 預設 `0001` 與成功後重查。
+- [x] 完成純 DEV 假資料頁及 Search／Outbound 成功、失敗、逾時對帳互動；新增 [WIPUNINV 規格](docs/modules/WIP/WIPUNINV取消入庫.md)、索引及家用端 handoff。Outbound 依來源直接送出，未加 WinForms 沒有的確認視窗。
+- [x] fallback `/YMES/WIP/UnInventory` 僅本地 fixture；不呼叫 SAP／Web API／MES Service／資料庫／ERP。未連 Oracle／YMES PostgreSQL，未執行 build、test 或 browser。
+- [ ] 可讀 THEIL／DEV_SILVA checkout 只有 Form／API consumer，未找到 GetPendingList／Outbound controller、Service、Core、SAP 查詢與交易；API 未提供直接 Oracle 表名或 SQL，沒有可查的 Oracle DDL／metadata 對象。家用端確認部署 endpoint、授權、冪等與逾時結果對帳。
+- [ ] 下一項依清冊為 WPP06「P_BUMPMAP FILE MANAGEMENT／Bump MAP 檔案管理」；先核對 THEIL Form／Service／Core，再完成 DEV 與 handoff。
+
 ## 公司端最新交付：BARTENDER Bartender print（2026-11-22）
 
 - [x] 依 THEIL `frmWP_BartenderPrint_THEIL_BU1.vb`（主 Form／Designer 內嵌）、`frmWP_BartenderPrint_Form.vb`／Designer、`ApiClient`／`ApiExecResult` 核對 Lot、標籤選項、動態列印資料、預覽／送印、TAG_FILE_MAP 設定及工具頁流程。
 - [x] 完成 DEV 假資料標籤查詢、規則選擇、逐筆／全選、動態 Grid、對照設定編輯與驗證、假標籤分頁預覽、列印確認及本頁狀態紀錄；新增 [BARTENDER 規格](docs/modules/WIP/Bartender列印.md)、索引與家用端 handoff。
 - [x] DEV fallback `/YMES/WIP/BartenderPrint`。不呼叫 SqlExecApi／InLabel／LabelApi、資料庫、SFTP、BarTender、檔案系統或印表機；不下載、解壓、安裝或執行 vendor 二進位檔。未執行 build、test 或 browser。
 - [ ] 可讀 THEIL checkout 只有 API consumer；未找到 InLabel／LabelApi server handler 或 `GETLPC`／`GETXXQCLABEL` SQL／Core 實作。`TBLINLABEL_TAG_FILE_MAP` Oracle DDL／metadata 缺項，桌機沒有受保護 Oracle profile，未連 Oracle／YMES PostgreSQL，也未猜 CREATE-only。家用端先核 live schema／API 身分與權限，再決定正式列印 provider。
-- [ ] 下一項依清冊為無 FunctionKey 的 WIPUNINV「取消入庫作業」；核對 THEIL Form／Service／Core 後接續 DEV 復刻。
+- [x] 後續清冊項目 WIPUNINV「取消入庫作業」已完成；最新接續項目見本檔最上方。
 
 ## 公司端最新交付：INV COUNT STATE 盤點關／開帳（WP606，2026-11-22）
 
