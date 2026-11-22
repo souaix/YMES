@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES406 配件歷史資料查詢（2026-11-23）
+
+公司端完成 [ES406 DEV 頁](docs/modules/EMS/配件歷史資料查詢.md)，fallback `/YMES/EMS/AccessoryStateLogQuery`。依三份一致的 `frmAccessoryStateLog`、THEIL `wsEMS.LoadAccessoryStateLog`／`LoadAccessoryReasons` 與 `clsAccState` 完成四條件查詢、10 欄配件狀態歷程及選取列的理由明細；DEV 全部為虛構資料。
+
+- [ ] 先比對 `tblemsaccessorystatelog`、`tbleqpaccstatebasis` live schema／migrations；repo 已有來源 DDL 與 CREATE-only。取得核准 Oracle 唯讀 metadata 補 `tblemsaccessoryreasons` 的 DDL／PK／index，再新增相符 CREATE-only；公司桌機 profile 不可用，沒有猜表結構。
+- [ ] 實作授權 GET `/api/ems/accessory-state-logs` 與 `/api/ems/accessory-state-logs/{logId}/reasons`，支援配件類型、配件編號、使用者、起始時間範圍、穩定排序與分頁；空條件應限制時間範圍／筆數。需核對 `StateName` 使用當前基礎名稱或歷史快照語意。
+- [ ] Core 歷程 SQL 直接串接輸入、沒有分頁；reason 查詢來自尚未核對 DDL 的 `tblemsaccessoryreasons`。Legacy Form 取得完整 `LoadUserSecurity` 後才於客戶端移除密碼欄，正式 user picker 必須改成最小欄位 API，禁止傳送 Password／ResetPassword。
+- [x] ES406 完成後清冊下一未完成項目為 ES405「配件狀態查詢」。
+
 ## 公司端交接：ES103 配件狀態控制設定（2026-11-23）
 
 公司端完成 [ES103 DEV 頁](docs/modules/EMS/配件狀態控制設定.md)，fallback `/YMES/EMS/AccessoryStateControlSet`。依 CSiMES／THEIL／DEV_SILVA Form、THEIL `wsEQP` 與 `clsAccBasis`／`clsEQPStateControl`／`clsAccState` 核對 7 個固定 EMS 控制項，以及 `IC_FT_PKG` 啟用時的 `I_SetupClose`；DEV 狀態選擇、Apply、Confirm 都是本頁假資料互動。
@@ -7,7 +16,7 @@
 - [ ] 先比對 `tbleqpaccstatecontrol`、`tbleqpaccstatebasis`、`tblemsaccessorystate`、`tblemsaccessorystatelog` live schema／migrations；repo 已有 Oracle source DDL 與 PostgreSQL CREATE-only，不要重複建表。
 - [ ] 設計登入及 EMS 設定權限保護的批次 GET／PUT，只允許 `ControlType=EMS` 與 `Initial`、`Apply`、`Return`、`GetFromINV`、`Repair`、`ReturnToINV`、`Scrap`、經伺服器核准 `IC_FT_PKG` 後的 `I_SetupClose`；狀態名稱要由 `tbleqpaccstatebasis` 查得，不能信任 client 傳入名稱。
 - [ ] Form 每次都送全組設定，Legacy `UpdACCStateControl` 對每列都先取得舊設定狀態，再將該狀態下所有配件寫入 `tblemsaccessorystatelog`、更新 `tblemsaccessorystate` 並產生新 `accserialno`，再 Delete+Insert 控制設定；即使新舊控制值相同，也會重寫配件現況、寫 log 並換序號。逐列執行沒有涵蓋整批與所有副作用的交易，失敗可能部分生效。正式 API 只處理實際變更 ControlNo，以參數化 SQL 在單一交易鎖定設定／現況、計算影響筆數、原子更新歷程／現況／序號與控制表，失敗完整回滾，並回傳變更摘要。
-- [x] ES103 完成後清冊下一未完成項目為 ES406「配件歷史資料查詢」。
+- [x] ES103 後 ES406 已完成；清冊下一未完成項目為 ES405「配件狀態查詢」。
 
 ## 公司端交接：ES305 配件狀態監控_設備（2026-11-23）
 
@@ -16,7 +25,7 @@
 - [ ] `TBLEQPEQUIPMENTTYPE` 缺 Oracle source DDL；`TBLEMSACCVIOLATESTATUSCHANGE` 缺 Oracle source DDL／CREATE-only。桌機受保護 Oracle profile 不可用；先核對 live schema／migration，取得核准 DDL 後補，禁止猜欄位。
 - [ ] `clsAccState.LoadAccessoryNoByEquipment` 以 AccessoryNo 連 `TBLEMSACCESSORYSTATE`／`TBLEQPACCESSORYBASIS`，未限制 AccessoryVersion 或 CurVersion=1。正式監控 GET 需限制使用者設備範圍，要求 EquipmentType 或 EquipmentNo，並以掛載關聯的 AccessoryNo+Version 取唯一目前版、穩定分頁（最多 20 筆）。
 - [ ] 通用狀態更新須重新查 category、使用者狀態權限及互斥，檢查 expected state／version 後原子寫狀態 log/current 與安全 ACCSerialNo；Apply／Return 呼叫 ES301／ES302 專用交易。
-- [x] ES305 完成；其後 ES103 已交接，清冊下一未完成項目為 ES406「配件歷史資料查詢」。
+- [x] ES305、ES103、ES406 均已交接；清冊下一未完成項目為 ES405「配件狀態查詢」。
 
 ## 公司端交接：ES304 配件狀態監控（2026-11-23）
 
@@ -25,7 +34,7 @@
 - [ ] Repo 已有配件類型／基礎／狀態／現況／歷程 Oracle source DDL 與 CREATE-only；`TBLEMSACCVIOLATESTATUSCHANGE` 及可選 `TBLEMSACCESSORYREASONS` 缺同版 Oracle source DDL／CREATE-only。桌機受保護 Oracle profile 不可用；先核對家用端 live schema／migration，拿到核准 DDL 再補，禁止猜欄位。
 - [ ] 提供分類與類型 lookup、授權且穩定排序的配件狀態監控分頁 GET（每頁最多 20）；一般狀態轉換使用交易鎖定 CurVersion=1 現況，重查 expected state／版本、登入者分類狀態權限及互斥 pair，原子新增 `TBLEMSACCESSORYSTATELOG` 並更新 `TBLEMSACCESSORYSTATE`，以安全序號服務配置 ACCSerialNo。若接收理由，先核實原因表 DDL。
 - [ ] Apply／Return 分別呼叫 ES301／ES302 專用交易，不用一般狀態轉換 API 代替掛載／下機；其他控制表配置的外部介面需明確支援範圍。Core SQL 字串串接與任意 `AdditionalXml` 不得沿用。
-- [x] ES304／ES305／ES103 均已完成；清冊下一未完成項目為 ES406「配件歷史資料查詢」。
+- [x] ES304／ES305／ES103／ES406 均已完成；清冊下一未完成項目為 ES405「配件狀態查詢」。
 
 ## 公司端交接：ES104 設備狀態互斥設定（2026-11-23）
 
@@ -33,7 +42,7 @@
 
 - [ ] `TBLEMSVIOLATESTATUSCHANGE` 及 `TBLEMSVIOLATESTATUSLOG` 缺 repo Oracle source DDL 與 PG CREATE-only。公司桌機受保護 Oracle profile 不可用，未查 metadata；先取得來源 DDL 後比對 live schema／migrations，不猜建表。
 - [ ] 實作登入／EMS 設定權限保護的狀態基準與 forbidden pair API；參數化所有 state key。更新時以一筆 transaction 替換單一來源狀態的完整目標集合，並原子新增變更 history／稽核。Legacy Service 先 delete 再逐筆 Add、逐來源 state 呼叫且沒有完整矩陣交易，失敗可能部分生效；正式 API 不沿用此行為。
-- [x] ES304／ES305／ES103 完成；清冊下一未完成項目為 ES406「配件歷史資料查詢」。
+- [x] ES304／ES305／ES103／ES406 完成；清冊下一未完成項目為 ES405「配件狀態查詢」。
 
 ## 公司端交接：ES202 設備狀態監控_設備類別（2026-11-23）
 
