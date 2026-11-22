@@ -1,19 +1,69 @@
 # 公司端待辦
 
+## 公司端最新交付：WPP03 P_EQP SETUP BASIS／設備設置單維護_晶片測試（2026-11-22）
+
+- [x] 依 THEIL CP 主 Form（內嵌 Designer）、ADD／EDIT／CLOSE Def Form、VIEW Form、`IC_CP_PKG.wsWIP` 與 `clsLot` 核對狀態 0／1／2／99、`SFN` 序號、PROBER／TESTER、Accessory Release、配件實物確認、設備使用守門及 Link State／Log 更新。
+- [x] 完成 fallback `/YMES/WIP/EqpSetupBasisCp` DEV 頁：SetupNo／設備／RunCard／OP／日期／狀態查詢，九欄 Grid，ADD／EDIT／VIEW／CLOSE、配件數量與 Site 驗證、設備使用中阻擋及前一單歸檔模擬；新增 [WPP03 規格](docs/modules/WIP/設備設置單維護_晶片測試.md)、索引及家用端 handoff。
+- [x] DEV 僅本機 `localStorage` fixtures；不呼叫 MES Service／API，不連 Oracle／YMES PostgreSQL，不寫序號、Setup、設備關聯或 EMS 配件狀態。未執行 build、test 或 browser。
+- [ ] WPP03 專屬 Setup、Accessory、Equipment Link 表及 `TBLPRDACCESSORYGROUP_SUB`／`TBLEMSACCVIOLATESTATUSCHANGE` lookup source DDL／metadata 缺項；serial、WIPTemp equipment、EMS accessory state/control 沿用 WP109／WP201／accessory references。桌機受保護 Oracle profile 不存在，未猜 CREATE-only SQL。家用端先比對 live schema／migration 與同版 Oracle metadata，再設計正式 API／schema。
+- [ ] 家用端正式 CLOSE API 須原子處理設備 Lot 使用守門、原關聯結束／歸檔、新關聯歷程、Setup Status=2／CloseDate／CloseUser 與 EMS accessory state；ADD／EDIT 須同步保護 serial、Status=0 及外部配件發料競爭。
+- [ ] 下一項依 FunctionOrder 清冊為 WPP05「P_GOLDENMAP FILE MANAGEMENT／Golden MAP檔案管理」。
+
+## 公司端交付：WPP01 P_CREATE LOT_CP／生產批開立_晶片測試（2026-11-22）
+
+- [x] 直接核對 CP 主／定義 Form（含 Designer）、`IC_CP_PKG.wsWIP`／共用查詢與 `MEStc_IC_CP_PKG.clsLot`；補充 `IC_FT_PKG` Delete／非強制挑片 FT 子窗分支、序號、元件、ECN、Property、Carrier 與自動下線條件。
+- [x] 完成獨立 Vue DEV 頁 `/YMES/WIP/LotBasisCreateCp`：MO／Lot 查詢、19 欄清單、Add／Edit／Copy／多選 Delete／Release、ECN／流程唯讀／元件／Property／Carrier 互動及部分失敗情境；新增 [WPP01 規格](docs/modules/WIP/生產批開立_晶片測試.md)並更新索引與家用端 handoff。
+- [x] DEV 僅 localStorage 假資料；不連 Oracle／YMES PostgreSQL、不呼叫 Service／API、不執行序號、扣料、StartLot、CloseLot、載具或自動報工；未執行 build、test 或 browser。
+- [ ] 未有本機受保護 Oracle profile，本次未查 WPP01 相關 metadata、未讀業務資料、未猜 CREATE-only。沿用 WP101／WP207／WP215／WP302／OE references；`TBLWIPLOTBASIS` 舊 WP101 DDL 與 8ff lookup 有已知 38／39 欄、DESCRIPTION 長度及 `XX_MARKING` 差異，家用端須先核目標 schema。
+- [ ] 家用端先唯讀比對 live schema／migration，再規劃 CP MO／Lot／ECN／Component／Carrier／Property 查詢與新增、編輯、逐批刪除／下線 API；鎖定 MO 未下線量與元件預約，明確逐筆交易及部分成功結果。
+- [x] 後續依清冊已完成 WPP03「P_EQP SETUP BASIS／設備設置單維護_晶片測試」；現在接續 WPP05。
+
+## 公司端最新交付：WPP06 Bump MAP 檔案管理（2026-11-22）
+
+- [x] 核 THEIL 主 Form／內嵌 Designer、Update File 子 Form、`wsWIP`、`wsSYS`、`clsLot`、`clsSYSEng` 及 `clsMergeMAPHandler`；記錄目前／歷程查詢、MAPType=1 template、encoding／header／尺寸檢查、逐檔上傳備份、Scrap、下載與事件紀錄流程。
+- [x] 完成 DEV 假資料頁：Lot／UploadTime 查詢、State／History 多選、假 template／`.txt` file chooser、解析提示、逐檔 upload／Scrap、備份續號、下載目的地與部分失敗情境；新增 [WPP06 規格](docs/modules/WIP/Bump_MAP檔案管理.md)、索引及家用端 handoff。
+- [x] fallback `/YMES/WIP/BumpMapFileManage` 僅 Vue 記憶體 fixtures；不連 Oracle／YMES PostgreSQL／legacy Service／FTP(S)、不讀寫任何本機檔案。未執行 build、test 或 browser。
+- [ ] 直接表為 `TBL_PWIPBumpMAPFileState`／`TBL_PWIPBumpMAPFileLog`；template 依賴 `TBL_BSYSMAPTEMPLATEBASIS`／`TBL_BSYSMAPTEMPLATEDETAIL`。本機受保護 Oracle attachment/profile 不可用，未查 DDL／metadata，未猜 CREATE-only。家用端比對 live schema 並設計參數化 API、server-side file root、冪等與跨檔案／DB reconciliation。
+- [x] 後續清冊項目 WPP01「P_CREATE LOT_CP／生產批開立_晶片測試」已完成；現在接續 WPP03。
+
+## 公司端最新交付：WIPUNINV 取消入庫作業（2026-11-22）
+
+- [x] 依 THEIL `frmWP_UNINV_THEIL_BU1.vb`／Designer、`WEBAPI.vb` 核對自動 Search、12 欄單選 Grid、欄位改名、Outbound request、`GRSNO` 預設 `0001` 與成功後重查。
+- [x] 完成純 DEV 假資料頁及 Search／Outbound 成功、失敗、逾時對帳互動；新增 [WIPUNINV 規格](docs/modules/WIP/WIPUNINV取消入庫.md)、索引及家用端 handoff。Outbound 依來源直接送出，未加 WinForms 沒有的確認視窗。
+- [x] fallback `/YMES/WIP/UnInventory` 僅本地 fixture；不呼叫 SAP／Web API／MES Service／資料庫／ERP。未連 Oracle／YMES PostgreSQL，未執行 build、test 或 browser。
+- [ ] 可讀 THEIL／DEV_SILVA checkout 只有 Form／API consumer，未找到 GetPendingList／Outbound controller、Service、Core、SAP 查詢與交易；API 未提供直接 Oracle 表名或 SQL，沒有可查的 Oracle DDL／metadata 對象。家用端確認部署 endpoint、授權、冪等與逾時結果對帳。
+- [x] 後續清冊項目 WPP06「P_BUMPMAP FILE MANAGEMENT／Bump MAP 檔案管理」已完成；最新接續項目見本檔最上方。
+
+## 公司端最新交付：BARTENDER Bartender print（2026-11-22）
+
+- [x] 依 THEIL `frmWP_BartenderPrint_THEIL_BU1.vb`（主 Form／Designer 內嵌）、`frmWP_BartenderPrint_Form.vb`／Designer、`ApiClient`／`ApiExecResult` 核對 Lot、標籤選項、動態列印資料、預覽／送印、TAG_FILE_MAP 設定及工具頁流程。
+- [x] 完成 DEV 假資料標籤查詢、規則選擇、逐筆／全選、動態 Grid、對照設定編輯與驗證、假標籤分頁預覽、列印確認及本頁狀態紀錄；新增 [BARTENDER 規格](docs/modules/WIP/Bartender列印.md)、索引與家用端 handoff。
+- [x] DEV fallback `/YMES/WIP/BartenderPrint`。不呼叫 SqlExecApi／InLabel／LabelApi、資料庫、SFTP、BarTender、檔案系統或印表機；不下載、解壓、安裝或執行 vendor 二進位檔。未執行 build、test 或 browser。
+- [ ] 可讀 THEIL checkout 只有 API consumer；未找到 InLabel／LabelApi server handler 或 `GETLPC`／`GETXXQCLABEL` SQL／Core 實作。`TBLINLABEL_TAG_FILE_MAP` Oracle DDL／metadata 缺項，桌機沒有受保護 Oracle profile，未連 Oracle／YMES PostgreSQL，也未猜 CREATE-only。家用端先核 live schema／API 身分與權限，再決定正式列印 provider。
+- [x] 後續清冊項目 WIPUNINV「取消入庫作業」已完成；最新接續項目見本檔最上方。
+
+## 公司端最新交付：INV COUNT STATE 盤點關／開帳（WP606，2026-11-22）
+
+- [x] 依本機 `D:\iMES\CSiMES\STD\MESWin\WIP\WP_InvCountState\frmInvCountState.vb`（Designer 內嵌）、`wsWIP.LoadInvCountState`／`ExeInvCountClose`／`ExeInvCountOpen`／`ChkInvCountAdjust`、`clsINVCount`／`clsSYSParameter` 核對 State=0／1、六種 Close Option 快照與批次過站鎖。
+- [x] 完成 Vue DEV 假資料關帳／開帳、六類快照選擇、未 Confirm 調帳阻擋、失敗復原情境；新增 [WP606 規格](docs/modules/WIP/盤點關開帳.md)、索引與家用端 handoff。記錄 AllowExecuteLot 參數與 State 寫入先後造成的失敗恢復風險，以及伺服器未檢查至少一項 Close Option 的缺口。
+- [x] 路由 `/YMES/WIP/InvCountState` 僅 DEV fallback，不呼叫資料庫或 MES Service。沿用 WP608 四張盤點 state/detail 表，Oracle DDL／metadata 缺項且桌機無受保護 Oracle profile，未猜 CREATE-only。未執行 build、test 或 browser。
+- [x] 下一個尚未復刻功能 BARTENDER「Bartender print」已完成；接續項目見本檔最上方及功能清冊。
+
 ## 公司端最新交付：INV COUNT PRINT 列印盤點清冊（WP607，2026-11-22）
 
 - [x] 依本機 `D:\iMES\CSiMES\STD\MESWin\WIP\WP_InvCountStatePrint\frmInvCountStatePrint.vb`（Designer 內嵌）、`wsWIP.LoadInvCountStateWithDetail`、`clsINVCount` 及 General／MTL／PRD ActiveReports，核對 State=0 六類查詢、欄位／排序、BarCode 預設值與六種報表選擇。
 - [x] 完成 Vue DEV 假資料查詢、WIP／SEMIWIP／FGD／SEMI／RAW／MTLWIP Grid、條碼／無條碼報表切換及列印預覽；新增 [WP607 規格](docs/modules/WIP/盤點清冊列印.md)、索引及家用端 handoff。
 - [x] 路由 `/YMES/WIP/InvCountStatePrint` 僅供 DEV fallback，不呼叫 ActiveReports、資料庫或印表機。未增加資料表；WP608 四張盤點 state/detail 的 Oracle DDL／metadata 仍缺、桌機無受保護 Oracle profile。沒有執行 build、test 或 browser。
-- [ ] 下一項依清冊為 INV COUNT STATE「盤點關/開帳」（WP606）；先核對 WinForms／Designer／Service／Core。
+- [x] 後續 WP606「盤點關／開帳」已完成；之後跳過已完成清冊項目，接續下一個未復刻功能。
 
 ## 公司端最新交付：INV COUNT ADJUST 盤點調帳（WP608，2026-11-22）
 
 - [x] 依 `frmInvCountStateAdjust`、三個數量調整 Dialog、`wsWIP.LoadInvCountStateWithDetail`／`ExeInvCountAdjust`／`ExeInvCountConfirm`、`clsINVCount` 完成六種 WIP／SEMIWIP／FGD／SEMI／RAW／MTLWIP 流程核對。
 - [x] 完成 Vue DEV 假資料查詢、New CurQty／AdjustQty 暫存、逐筆 Confirm、部分完成失敗模擬及 General／MTL／PRD 報表預覽；新增 [WP608 規格](docs/modules/WIP/盤點調帳.md)、索引與家用端 handoff。修正 MTL request 欄位名稱缺陷的 DEV 行為，記錄舊 Form 的兩處 MaterialLotNo typo。
 - [x] WIP 路由 `/YMES/WIP/InvCountStateAdjust` 僅在 DEV fallback 顯示，不呼叫 Service／Oracle／PostgreSQL／印表機。四張盤點 state/detail 表無 Oracle DDL／metadata reference；無受保護 Oracle profile，未猜 CREATE-only。沒有執行 build、test 或 browser。
-- [ ] 家用端已以只讀 catalog 核實 YMES PostgreSQL 缺少四張盤點 state/detail 表。可用受保護 Oracle profile 時，請唯讀取得四表 `DBMS_METADATA` table/index DDL 與 columns／constraints／indexes／triggers metadata，並補 `clsINVCount` 中 RAW／MTLWIP 目標表的精確 SQL 映射；不要查業務列或在 Oracle 執行 DDL/DML。
-- [x] 後續 WP607「列印盤點清冊」已完成，下一項依清冊為 WP606「盤點關/開帳」；進度見本檔最上方及功能清冊。
+- [x] WP606「盤點關／開帳」與 WP607「列印盤點清冊」均已完成；接續項目見本檔最新交付及功能清冊。
+- [x] 家用端已以只讀 catalog 核實 YMES PostgreSQL 缺少四張盤點 state/detail 表；未查業務資料列，也未執行 DDL/DML。
+- [ ] 待桌機取得受保護 Oracle profile 後唯讀取四表 `DBMS_METADATA` table/index DDL 與 columns／constraints／indexes／triggers metadata，並補 `clsINVCount` 中 RAW／MTLWIP 目標表的精確 SQL 映射；來源未確認前不可猜 CREATE-only。
 
 ## 公司端最新交付：FGDSTOCKIN_WF_CANCEL 取消入庫 WorkFlow ERP（WP619，2026-11-22）
 
