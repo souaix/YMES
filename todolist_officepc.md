@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：WPP05 P_GOLDENMAP FILE MANAGEMENT／Golden MAP檔案管理（2026-11-23）
+
+- [x] 依 THEIL 主／Update 子 Form、IC_CP_PKG.wsWIP、clsLot 核對 DeviceNo 參數被 ProductNo 覆蓋的來源缺陷、Product／UploadTime 現況與歷程查詢、Org File Update／Assign Product Info、逐檔上傳、backup／Scrap／下載及其檔案服務參數。
+- [x] 完成 DEV fallback /YMES/WIP/GoldenMapFileManage：假資料 State／History、多選、產品 fixture 選擇、DeviceNo／ProductNo checkbox 預期查詢、檔名／副檔名驗證、更新替換／歷程、Scrap、下載模擬；新增 Golden_MAP檔案管理.md 並更新索引。
+- [x] 僅操作固定 DEV fixtures 與 localStorage；不讀／寫本機檔案、不呼叫 legacy Service、Oracle／YMES PostgreSQL、FTP 或正式 File Service。未執行 build、test 或 browser。
+- [ ] WPP05 專屬 TBL_PWIPGoldenMAPFileState／TBL_PWIPGoldenMAPFileLog 同版 Oracle DDL／metadata 缺項；桌機受保護 Oracle profile 不存在，未猜欄位或 CREATE-only。共享 TBLPRDPRODUCTBASIS 參考 DDL／metadata 沿既有 references。
+- [ ] 家用端先核對兩張 Golden MAP 表的 PostgreSQL live schema／migration，再設計登入保護、參數化的 State／History／Product lookup 與逐檔 upload／scrap／download API。File Service 路徑／憑證由 server 受保護設定管理，逐檔補冪等、部分成功回報及 file／DB 對帳。
+- [ ] CP 清冊其餘 WPP02、WPP04、WPP08 尚無本索引中的交付項；下一項依原始 FunctionOrder 確認順序後接續。
+
 ## 公司端最新交付：WPP03 P_EQP SETUP BASIS／設備設置單維護_晶片測試（2026-11-22）
 
 - [x] 依 THEIL CP 主 Form（內嵌 Designer）、ADD／EDIT／CLOSE Def Form、VIEW Form、`IC_CP_PKG.wsWIP` 與 `clsLot` 核對狀態 0／1／2／99、`SFN` 序號、PROBER／TESTER、Accessory Release、配件實物確認、設備使用守門及 Link State／Log 更新。
@@ -8,7 +17,7 @@
 - [x] 家用端修正合併後 build 揭露的重複 `status` 宣告，完整 Vite build 通過；Chrome 畫面擷取逾時，尚未完成操作驗收，未部署。
 - [ ] WPP03 專屬 Setup、Accessory、Equipment Link 表及 `TBLPRDACCESSORYGROUP_SUB`／`TBLEMSACCVIOLATESTATUSCHANGE` lookup source DDL／metadata 缺項；serial、WIPTemp equipment、EMS accessory state/control 沿用 WP109／WP201／accessory references。桌機受保護 Oracle profile 不存在，未猜 CREATE-only SQL。家用端先比對 live schema／migration 與同版 Oracle metadata，再設計正式 API／schema。
 - [ ] 家用端正式 CLOSE API 須原子處理設備 Lot 使用守門、原關聯結束／歸檔、新關聯歷程、Setup Status=2／CloseDate／CloseUser 與 EMS accessory state；ADD／EDIT 須同步保護 serial、Status=0 及外部配件發料競爭。
-- [ ] 下一項依 FunctionOrder 清冊為 WPP05「P_GOLDENMAP FILE MANAGEMENT／Golden MAP檔案管理」。
+- [x] WPP05 已接續完成；CP 清冊其餘 WPP02、WPP04、WPP08 的 FunctionOrder 待核對後繼續。
 
 ## 公司端交付：WPP01 P_CREATE LOT_CP／生產批開立_晶片測試（2026-11-22）
 

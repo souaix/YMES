@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：WPP05 Golden MAP 檔案管理（2026-11-23）
+
+公司端依 THEIL 主／Update 子 Form、IC_CP_PKG.wsWIP、clsLot 完成 [WPP05 DEV 頁](docs/modules/WIP/Golden_MAP檔案管理.md)，fallback /YMES/WIP/GoldenMapFileManage。WinForms 請求組字串會以 ProductNo 覆蓋 DeviceNo；DEV 依勾選條件呈現預期 DeviceNo／ProductNo／UploadTime 查詢、State／History、多檔 Org File Update、指定產品單檔 Assign Product Info、檔名驗證、備份、Scrap 及下載；不讀寫本機檔案，不呼叫 API／Service／File Service，不連 Oracle／YMES PostgreSQL。
+
+- [ ] WPP05 專屬 TBL_PWIPGoldenMAPFileState／TBL_PWIPGoldenMAPFileLog 同版 Oracle DDL／metadata 缺項，桌機受保護 profile 不存在，未猜 CREATE-only。共享 TBLPRDPRODUCTBASIS 參考沿既有 DDL／metadata。
+- [ ] 家用端比對 Golden MAP State／History live schema／migration，再設計登入保護與參數化查詢、產品 lookup、逐檔更新／作廢／下載 API；File Service 路徑由 server 設定解析，定義部分成功、冪等與檔案／資料列 reconciliation。
+- [ ] CP 清冊其餘 WPP02、WPP04、WPP08 尚無本索引中的交付項；下一事項先依原始 FunctionOrder 確認順序。
+
 ## 公司端交接：WPP03 設備設置單維護_晶片測試（2026-11-22）
 
 公司端依 THEIL CP 主／ADD／EDIT／CLOSE Form、VIEW Form、`IC_CP_PKG.wsWIP` 與 `clsLot` 完成 [WPP03 DEV 頁](docs/modules/WIP/設備設置單維護_晶片測試.md)，fallback `/YMES/WIP/EqpSetupBasisCp`。DEV 以獨立 localStorage fixtures 模擬設備設置單查詢、SFN 單號、PROBER／TESTER、Accessory Release、配件數量與 Site 實物確認，以及 ADD／EDIT／VIEW／CLOSE 和設備使用中守門；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫設備關聯、serial 或 EMS 配件狀態。
@@ -9,7 +17,7 @@
 - [x] 合併後前端建置發現 `WipEqpSetupBasisCpDevPreview.vue` 重複宣告 `status`；移除未使用宣告後，`vue-tsc` 與完整 Vite build 通過（813 modules）。
 - [ ] Chrome GUI 操作尚未驗收：視窗可列出，但本輪兩次擷取均 `window capture timed out`；未登入／操作或部署，工具恢復後補查。
 - [ ] 正式 ADD／EDIT/CLOSE API 需以登入者身分、參數化條件、狀態比較／鎖與冪等保護 Setup serial、主／附屬設備、Accessory Apply、現場 Site 確認；結單須將設備使用守門、舊／新設備 Link State／Log、Setup 狀態及 EMS 配件狀態納入一筆可恢復交易或 saga。
-- [x] 公司端下一項依 FunctionOrder 清冊為 WPP05「P_GOLDENMAP FILE MANAGEMENT／Golden MAP檔案管理」。
+- [x] 公司端已接續完成 WPP05；CP 清冊其餘 WPP02、WPP04、WPP08 的 FunctionOrder 待核對。
 
 ## 公司端交接：WPP01 生產批開立_晶片測試（2026-11-22）
 
