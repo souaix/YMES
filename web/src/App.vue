@@ -114,6 +114,7 @@ import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
 import EmsEquipmentStateByArea from './components/EmsEquipmentStateByArea.vue'
 import EmsEquipmentStateByType from './components/EmsEquipmentStateByType.vue'
+import EmsEquipmentStateViolativeSetting from './components/EmsEquipmentStateViolativeSetting.vue'
 import EmsEquipmentStateLog from './components/EmsEquipmentStateLog.vue'
 import EmsEquipmentStateLogQuery from './components/EmsEquipmentStateLogQuery.vue'
 import EmsEquipmentStateLogByState from './components/EmsEquipmentStateLogByState.vue'
@@ -670,6 +671,7 @@ const fallbackMenuTree: MenuNode[] = [
     }, {
       id: 'menu:EMS:EMS CONFIG', label: 'EMS設定', shortLabel: '設', children: [
         { id: 'function:EMS:EQP STATE CONTROL SETTING', label: '設備狀態控制設定', shortLabel: '控', functionNo: 'EQP STATE CONTROL SETTING', moduleNo: 'EMS' },
+        { id: 'function:EMS:VIOLATIVE STATE SETTING', label: '設備狀態互斥設定', shortLabel: '互斥', functionNo: 'VIOLATIVE STATE SETTING', moduleNo: 'EMS' },
         { id: 'function:EMS:EQUIPMENT REASON BASIS', label: '設備狀態變更原因資料', shortLabel: '原因', functionNo: 'EQUIPMENT REASON BASIS', moduleNo: 'EMS' },
       ],
     }, {
@@ -691,6 +693,7 @@ const menuError = ref('')
 const menuRoutes: Record<string, string> = {
   'function:EMS:SHOW EQP STATUS BY AREA': appBasePath + '/EMS/EquipmentStateByArea',
   'function:EMS:SHOW EQP STATUS BY TYPE': appBasePath + '/EMS/EquipmentStateByType',
+  'function:EMS:VIOLATIVE STATE SETTING': appBasePath + '/EMS/ViolateStateChangeSetMatrix',
   'function:EMS:RETURN EQP ACCESSORY': appBasePath + '/EMS/ReturnEquipmentAccessory',
   'function:EMS:SHOW EQP LOG': appBasePath + '/EMS/EquipmentStateLogQuery',
   'function:EMS:SHOW EQP LOG BY STATE': appBasePath + '/EMS/EquipmentStateLogByState',
@@ -1189,6 +1192,7 @@ const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'func
 const isEmsEquipmentStateChangePage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CHANGE')
 const isEmsEquipmentStateByAreaPage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP STATUS BY AREA')
 const isEmsEquipmentStateByTypePage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP STATUS BY TYPE')
+const isEmsEquipmentStateViolativeSettingPage = computed(() => activeMasterKey.value === 'function:EMS:VIOLATIVE STATE SETTING')
 const isEmsReturnEquipmentAccessoryPage = computed(() => activeMasterKey.value === 'function:EMS:RETURN EQP ACCESSORY')
 const isEmsEquipmentStateLogPage = computed(() => activeMasterKey.value === 'function:EMS:EQUIPMENT STATE LOG')
 const isEmsEquipmentStateLogQueryPage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP LOG')
@@ -3122,6 +3126,7 @@ async function signOut(): Promise<void> {
         <EmsEquipmentStateChange v-else-if="isEmsEquipmentStateChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsEquipmentStateByArea v-else-if="isEmsEquipmentStateByAreaPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateByType v-else-if="isEmsEquipmentStateByTypePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsEquipmentStateViolativeSetting v-else-if="isEmsEquipmentStateViolativeSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsReturnEquipmentAccessory v-else-if="isEmsReturnEquipmentAccessoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsEquipmentStateLogQuery v-else-if="isEmsEquipmentStateLogQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateLogByState v-else-if="isEmsEquipmentStateLogByStatePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
