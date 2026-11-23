@@ -114,6 +114,7 @@ import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
 import EmsEquipmentControl from './components/EmsEquipmentControl.vue'
 import EmsEquipmentAccStateLogQuery from './components/EmsEquipmentAccStateLogQuery.vue'
+import EmsEquipmentAccStateQuery from './components/EmsEquipmentAccStateQuery.vue'
 import EmsEquipmentStateByArea from './components/EmsEquipmentStateByArea.vue'
 import EmsEquipmentStateByType from './components/EmsEquipmentStateByType.vue'
 import EmsAccessoryStateMonitor from './components/EmsAccessoryStateMonitor.vue'
@@ -693,6 +694,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:EMS:ACC MONITOR BY EQP', label: '配件狀態監控_設備', shortLabel: '設備配', functionNo: 'ACC MONITOR BY EQP', moduleNo: 'EMS' },
         { id: 'function:EMS:ACC STATE LOG QUERY', label: '配件歷史資料查詢', shortLabel: '配件歷程', functionNo: 'ACC STATE LOG QUERY', moduleNo: 'EMS' },
         { id: 'function:EMS:EQP ACC STATE LOG QUERY', label: '設備配件歷史資料查詢', shortLabel: '設備配件歷程', functionNo: 'EQP ACC STATE LOG QUERY', moduleNo: 'EMS' },
+        { id: 'function:EMS:EQP ACC STATE QUERY', label: '設備配件現況查詢', shortLabel: '配件現況', functionNo: 'EQP ACC STATE QUERY', moduleNo: 'EMS' },
         { id: 'function:EMS:ACC STATE QUERY', label: '配件狀態查詢', shortLabel: '配件狀態', functionNo: 'ACC STATE QUERY', moduleNo: 'EMS' },
         { id: 'function:EMS:ACC MONITOR_BU1', label: '配件狀態監控_管理', shortLabel: '管理配件', functionNo: 'ACC MONITOR_BU1', moduleNo: 'EMS' },
         { id: 'function:EMS:ACCESSORY REPAIR', label: '配件壽命維護', shortLabel: '壽命', functionNo: 'ACCESSORY REPAIR', moduleNo: 'EMS' },
@@ -728,6 +730,7 @@ const menuRoutes: Record<string, string> = {
   'function:EMS:EQP STATE CHANGE': appBasePath + '/EMS/EquipmentStateChange',
   'function:EMS:EMS CONTROL': appBasePath + '/EMS/EquipmentControl',
   'function:EMS:EQP ACC STATE LOG QUERY': appBasePath + '/EMS/EquipmentAccStateLogQuery',
+  'function:EMS:EQP ACC STATE QUERY': appBasePath + '/EMS/EquipmentAccStateQuery',
   'function:EMS:EQUIPMENT STATE LOG': appBasePath + '/EMS/EquipmentStateLog',
   'function:EMS:EQP STATE CONTROL SETTING': appBasePath + '/EMS/EqpStateControlSet',
   'function:EMS:EQP STATE STATISTICS_EMS': appBasePath + '/EMS/EquipmentStateStatistics',
@@ -1230,6 +1233,7 @@ const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'func
 const isEmsEquipmentStateChangePage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CHANGE')
 const isEmsEquipmentControlPage = computed(() => activeMasterKey.value === 'function:EMS:EMS CONTROL')
 const isEmsEquipmentAccStateLogQueryPage = computed(() => activeMasterKey.value === 'function:EMS:EQP ACC STATE LOG QUERY')
+const isEmsEquipmentAccStateQueryPage = computed(() => activeMasterKey.value === 'function:EMS:EQP ACC STATE QUERY')
 const isEmsEquipmentStateByAreaPage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP STATUS BY AREA')
 const isEmsEquipmentStateByTypePage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP STATUS BY TYPE')
 const isEmsAccessoryStateMonitorPage = computed(() => activeMasterKey.value === 'function:EMS:ACC MONITOR')
@@ -3175,6 +3179,7 @@ async function signOut(): Promise<void> {
         <EmsEquipmentStateChange v-else-if="isEmsEquipmentStateChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsEquipmentControl v-else-if="isEmsEquipmentControlPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentAccStateLogQuery v-else-if="isEmsEquipmentAccStateLogQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsEquipmentAccStateQuery v-else-if="isEmsEquipmentAccStateQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateByArea v-else-if="isEmsEquipmentStateByAreaPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateByType v-else-if="isEmsEquipmentStateByTypePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsAccessoryStateMonitor v-else-if="isEmsAccessoryStateMonitorPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

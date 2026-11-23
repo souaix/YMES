@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：ES407 設備配件現況查詢（2026-11-23）
+
+- [x] 核對標準 `frmEquipmentAccState`／內嵌 Designer、`wsEMS.LoadEquipmentAccState`、`clsAccState.LoadEquipmentAccState` 及配件監控帶入 AccessoryNo 的開窗流程。
+- [x] 完成 `/YMES/EMS/EquipmentAccStateQuery` DEV 查詢頁：設備／配件類別與編號、使用者、Start Time 起訖、假 lookup picker、AND 條件查詢及現況 Grid；新增 [ES407 規格](docs/modules/EMS/設備配件現況查詢.md)、索引與家用端 handoff。
+- [x] DEV 只用虛構掛載資料；未呼叫 API／Service、未連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。Legacy AccessoryType 會覆蓋先前 XML 條件，DEV 改用預期 AND 語意。
+- [x] 重用 `TBLEMSEQPACCSTATE` 既有 Oracle DDL／metadata 與 PostgreSQL CREATE-only references，無新增 DDL；Grid 保留來源可見 `AccApplySerialNo` 並隱藏 `AccessoryVersion`。
+- [ ] 家用端比對 live schema，實作 FunctionNo `EQP ACC STATE QUERY` 權限保護、參數化唯讀查詢、穩定分頁及最大筆數／期間守門；User lookup 不回 Password／ResetPassword。
+- [x] ES407 公司端完成；依清冊接續下一功能。
+
 ## 公司端最新交付：ES408 設備配件歷史資料查詢（2026-11-23）
 
 - [x] 核對標準 `frmEquipmentAccStateLog`／內嵌 Designer、`wsEMS.LoadEquipmentAccStateLog`、`clsAccState.LoadEquipmentAccStateLog` 與配件監控帶入 AccessoryNo 的開窗流程。

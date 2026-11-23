@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES407 設備配件現況查詢（2026-11-23）
+
+公司端依標準 `frmEquipmentAccState`／內嵌 Designer、`wsEMS.LoadEquipmentAccState`、`clsAccState.LoadEquipmentAccState` 完成 [ES407 DEV 頁](docs/modules/EMS/設備配件現況查詢.md)，fallback `/YMES/EMS/EquipmentAccStateQuery`。DEV 模擬設備／配件／使用者精確條件、StartTime 範圍、lookup、現況 Grid 與從監控頁帶入 AccessoryNo 的查詢情境。
+
+- [ ] Pull 後比對 `TBLEMSEQPACCSTATE` 及 lookup tables live schema／migrations；公司端沿用 repo Oracle DDL／metadata 與 CREATE-only，無新增表。
+- [ ] 實作登入與 FunctionNo `EQP ACC STATE QUERY` 授權的參數化唯讀 API；包含穩定排序／分頁、時間及最大筆數限制、空結果正常回傳與 User lookup 安全欄位。不要照搬 Legacy AccessoryType 條件覆蓋問題；Version 欄隱藏、DTO 可限於可見欄位。
+- [x] ES407 公司端 DEV／來源規格已交接；後續依清冊接續。
+
 ## 公司端交接：ES408 設備配件歷史資料查詢（2026-11-23）
 
 公司端依標準 `frmEquipmentAccStateLog`／內嵌 Designer、`wsEMS.LoadEquipmentAccStateLog`、`clsAccState.LoadEquipmentAccStateLog` 完成 [ES408 DEV 頁](docs/modules/EMS/設備配件歷史資料查詢.md)，fallback `/YMES/EMS/EquipmentAccStateLogQuery`。DEV 有設備／配件／使用者精確篩選、Start／End 時間界限、lookup 選擇器及 7 欄歷程查詢。
