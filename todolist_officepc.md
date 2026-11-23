@@ -1,5 +1,15 @@
 # 公司端待辦
 
+## 公司端最新交付：SC107 匯入計量檢測數據（2026-11-23）
+
+- [x] 核對 `frmImport_VarMeasureData`／inline Designer、`frmFileTypeSelect`／Designer、`wsSPC.AutoBRSPCContorl_Var`／`LoadSPCImportData`、`clsMDS.funAutoBRSPCContorl_Var` 與 `clsSPC.UpdVar_TestValue`／待檢清單／限值／違規路徑。
+- [x] 完成 `/YMES/SPC/VariableMeasurementImport` DEV：一般／元件欄位範本、XLSX／CSV 載入、開發範例、逐列勾選、Check／Save、失敗訊息及已儲存鎖定狀態。DEV 僅在頁面記憶體，不呼叫服務／資料庫。
+- [x] 新增 [SC107 規格](docs/modules/SPC/匯入計量檢測數據.md)、Module index、Function Inventory 進度及家用端 handoff；未連 PostgreSQL，未執行 build／test／browser。
+- [x] `LoadSPCImportData` Core 直接查 `TBLSPCImportData`，但 SC107 主 Form 搜尋未見呼叫；repo 缺該表 Oracle source DDL／metadata／PG CREATE-only。共用計量寫入表需依 SC101 handoff 與 QC205 references 對照，桌機受保護 Oracle profile 不存在，本次未查 Oracle、未猜 schema。
+- [ ] 家用端確認 `LoadSPCImportData` 的真實呼叫端，再決定 `TBLSPCImportData` 是否需正式 API/schema；若需要，先取得 MESTEST DDL／metadata 並比對 live schema。
+- [ ] 正式端逐表核實 `funAutoBRSPCContorl_Var` 的 SPC Online／Log／Statistic／Factor／Limit／Violation／SPC Lot QC List 寫入與交易 helper；檢查多列部分失敗、serial 併發、Check 結果不可被信任、SPC 待檢以及條件式 Lot／ERF／通知副作用與補償，提供參數化預覽／檢查／儲存和逐列結果。
+- [x] SC107 公司端 DEV／規格完成；清冊下一項 SC108「進料檢驗_元件」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端最新交付：SC106 出貨檢驗單（2026-11-23）
 
 - [x] 核對 `frmOQCForm`／inline Designer、`frmOQCFormDef`／inline Designer、QC Item Map Form、`wsSPC`、`clsSPC`、`clsBasis_UPD` 及產品／OP／WIP lookup。
@@ -9,7 +19,7 @@
 - [ ] 家用端比對 Header live schema／migration，取得可靠 MESTEST Header DDL／metadata 後才補 CREATE-only；核對 OQC Map 是否與共用 reference 同版。
 - [ ] 正式 API 驗證 OQC Form／ERP source ownership、參數化限量查詢、DataStamp CAS、Header＋Map 交易及 QC Map 全量取代；核對 `UpdOQCFormQCItemMapResult` 重複執行 collection 的實際副作用。
 - [ ] TIPTOP／T100 ERP callback 保存 idempotency、request／response、錯誤／重試／對帳，外部成功後才更新 OQC Status；確認 WFGP skip 行為與 ERP owner 契約，定義 callback timeout／本機 CAS 衝突補償。OP `SPCInspAbnormalHoldLot` 的 `WP_BRERFCreate` 保持獨立交易並處理部分成功。
-- [x] SC106 公司端 DEV／規格完成；清冊下一項 SC107「匯入計量檢測數據」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC106 公司端 DEV／規格完成；清冊下一項 SC107「匯入計量檢測數據」，已完成並交接。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC105 PQC 檢驗單（2026-11-23）
 
