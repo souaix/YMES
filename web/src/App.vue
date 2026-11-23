@@ -238,6 +238,7 @@ import QcFinalInspectionForm from './components/QcFinalInspectionForm.vue'
 import QcInProcessInspectionForm from './components/QcInProcessInspectionForm.vue'
 import QcOutgoingInspectionForm from './components/QcOutgoingInspectionForm.vue'
 import QcIncomingComponentInspectionForm from './components/QcIncomingComponentInspectionForm.vue'
+import QcSpcDataMaintenance from './components/QcSpcDataMaintenance.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
@@ -503,6 +504,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:FQC FORM', label: '終檢檢驗單', shortLabel: 'FQC', functionNo: 'FQC FORM', moduleNo: 'SPC' },
       { id: 'function:SPC:IPQC FORM', label: 'PQC 檢驗單', shortLabel: 'PQC', functionNo: 'IPQC FORM', moduleNo: 'SPC' },
       { id: 'function:SPC:OQC FORM', label: '出貨檢驗單', shortLabel: 'OQC', functionNo: 'OQC FORM', moduleNo: 'SPC' },
+      { id: 'function:SPC:SPC DATA', label: 'SPC 資料維護', shortLabel: 'SPC資料', functionNo: 'SPC DATA', moduleNo: 'SPC' },
       { id: 'function:SPC:IMPORT VAR MEASURE', label: '匯入計量檢測數據', shortLabel: '匯入', functionNo: 'IMPORT VAR MEASURE', moduleNo: 'SPC' },
     ] }],
   },
@@ -935,6 +937,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:FQC FORM': appBasePath + '/SPC/FinalQCForm',
   'function:SPC:IPQC FORM': appBasePath + '/SPC/InProcessQCForm',
   'function:SPC:OQC FORM': appBasePath + '/SPC/OutgoingQCForm',
+  'function:SPC:SPC DATA': appBasePath + '/SPC/DataMaintenance',
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
@@ -1486,6 +1489,7 @@ const isFinalQCFormPage = computed(() => activeMasterKey.value === 'function:SPC
 const isInProcessQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:IPQC FORM')
 const isOutgoingQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:OQC FORM')
 const isSpcVariableMeasurementImportPage = computed(() => activeMasterKey.value === 'function:SPC:IMPORT VAR MEASURE')
+const isSpcDataMaintenancePage = computed(() => activeMasterKey.value === 'function:SPC:SPC DATA')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -3051,6 +3055,13 @@ async function signOut(): Promise<void> {
         />
         <SpcVariableMeasurementImport
           v-else-if="isSpcVariableMeasurementImportPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcSpcDataMaintenance
+          v-else-if="isSpcDataMaintenancePage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"

@@ -1,5 +1,15 @@
 # 公司端待辦
 
+## 公司端最新交付：SC201 SPC 資料維護（2026-11-23）
+
+- [x] 依 `frmQueryData_THEIL_BU1`、`frmAnsAttRawData_THEIL_BU1`、`frmAnsVarRawData`、`wsSPC`、`clsSPC` 核對計數／計量／群組查詢、明細、授權、修改、刪除、歷程及補開 ERF。
+- [x] 完成 `/YMES/SPC/DataMaintenance` DEV：動態 QC Item／要因與 Lot／日期查詢、Basis／Raw Data／統計／歷程、編修／取消、計數量守門、計量統計重算、刪除警告及權限模擬、補開假 ERF；資料全在頁面記憶體。
+- [x] 新增 [SC201 規格](docs/modules/SPC/SPC資料維護.md)、Module index、Function Inventory 進度與家用端 handoff；未連 YMES PostgreSQL，未執行 build／test／browser。
+- [x] 計數與計量 SPC DDL 沿用 repo attribute／QC205／QC210 references。`TBLWIPCONT_QCITEM`、`TBLWIPCONT_SAMPLECOMPONENT`、`TBLWIPCONT_DEFECTCODE` 缺同版 Oracle source DDL／metadata／CREATE-only；桌機受保護 Oracle profile 不存在，未查 Oracle、未猜 schema。
+- [ ] 家用端比對 live schema／migration，核對 SPC／WIP／ERF／edit log 關聯完整性與刪除交易；正式 API 必須分別檢查 `SPCDATAEDITATT`、`SPCDATAEDIT`、計量刪除群組權限，並限制查詢、參數化更新及新增 concurrency guard。
+- [ ] 家用端重驗計數 GoodQty = SampleQty - ScrapQty、計量統計重算但不重判 Result、FactorSerial 最新批次警告、ERF/WIP 子資料連帶刪除順序；補開 ERF 透過 `WP_BRERFCreate` 正式契約。
+- [x] SC201 公司端 DEV／規格交接完成；下一個尚未完成 SPC FunctionKey 為 SC202「Lot 檢測資料」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端最新交付：SC108 進料檢驗_元件（2026-11-23）
 
 - [x] 依 `frmIncomingQCFormComponent`／Def／QC Item Map、`wsSPC`、`clsSPC`、`clsBasis_UPD` 核對七狀態、單據 CRUD／Copy、QC Item Map、元件明細、狀態轉換、ERP callback、複判及 `WP_BRERFCreate` 分支。
@@ -7,7 +17,7 @@
 - [x] 新增 [SC108 規格](docs/modules/SPC/進料檢驗_元件.md)、Module index、Function Inventory 進度及家用端 handoff；未連 PostgreSQL，未執行 build／test／browser。
 - [x] `TBLSPCIQCFORMCOMPONENT`、`TBLSPCIQCFORMCOMPQCITEMMAP`、`TBLSPCIQCCOMPONENT` 缺同版 Oracle source DDL／metadata／PG CREATE-only；桌機受保護 profile 不存在，未查 Oracle、未猜 schema。另記錄刪 Header 未見清理元件明細及 Core Map result collection 重複執行風險。
 - [ ] 家用端先核對 YMES live schema／migration 並取得可靠三表結構，再決定必要 CREATE／forward migration；實作 Header、Map、元件清單 replace、Confirm、SPC 結果及狀態 API，處理 DataStamp CAS、component orphan、重複 SQL、callback idempotency／部分成功補償與 `WP_BRERFCreate`。
-- [x] SC108 公司端交接完成；FunctionKey 清冊沒有 SC109，下一個尚未完成 SPC 功能為 SC201「SPC 資料維護」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC108 公司端交接完成；SC201 已依序完成，下一個尚未完成 SPC 功能為 SC202「Lot 檢測資料」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端交接：SC107 匯入計量檢測數據（2026-11-23）
 
