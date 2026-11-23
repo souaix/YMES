@@ -242,6 +242,10 @@ import QcSpcDataMaintenance from './components/QcSpcDataMaintenance.vue'
 import SpcLotDataByLotNo from './components/SpcLotDataByLotNo.vue'
 import SpcDataEditLog from './components/SpcDataEditLog.vue'
 import SpcChartLineEditLog from './components/SpcChartLineEditLog.vue'
+import SpcQcItemBindingHisLog from './components/SpcQcItemBindingHisLog.vue'
+import SpcChartAllCapability from './components/SpcChartAllCapability.vue'
+import SpcMonthRPTCodeBasis from './components/SpcMonthRPTCodeBasis.vue'
+import SpcMonthChartReport from './components/SpcMonthChartReport.vue'
 import SpcXlsSourceFileControl from './components/SpcXlsSourceFileControl.vue'
 import SpcChartSignboard from './components/SpcChartSignboard.vue'
 import SpcControlChartAnalysis from './components/SpcControlChartAnalysis.vue'
@@ -966,6 +970,10 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:SPC DATA BY LOTNO': appBasePath + '/SPC/DataByLotNo',
   'function:SPC:DATA EDIT LOG': appBasePath + '/SPC/DataEditLog',
   'function:SPC:CHART LINE EDIT LOG': appBasePath + '/SPC/ChartLineEditLog',
+  'function:SPC:QCITEM BINDING HIS LOG': appBasePath + '/SPC/QcItemBindingHisLog',
+  'function:SPC:CHART ALL CAPABILITY': appBasePath + '/SPC/ChartAllCapability',
+  'function:SPC:MONTHLY CHART REPORT CODE': appBasePath + '/SPC/MonthRPTCodeBasis',
+  'function:SPC:MONTHLY CHART REPORT': appBasePath + '/SPC/MonthChartReport',
   'function:SPC:XLS SOURCE FILE CONTROL': appBasePath + '/SPC/XlsSourceFileControl',
   'function:SPC:CHART SIGNBOARD': appBasePath + '/SPC/ChartSignboard',
   'function:SPC:CONTROL CHART ANALYSIS': appBasePath + '/SPC/ControlChartAnalysis',
@@ -1532,6 +1540,10 @@ const isSpcDataMaintenancePage = computed(() => activeMasterKey.value === 'funct
 const isSpcLotDataByLotNoPage = computed(() => activeMasterKey.value === 'function:SPC:SPC DATA BY LOTNO')
 const isSpcDataEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:DATA EDIT LOG')
 const isSpcChartLineEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:CHART LINE EDIT LOG')
+const isSpcQcItemBindingHisLogPage = computed(() => activeMasterKey.value === 'function:SPC:QCITEM BINDING HIS LOG')
+const isSpcChartAllCapabilityPage = computed(() => activeMasterKey.value === 'function:SPC:CHART ALL CAPABILITY')
+const isSpcMonthRPTCodeBasisPage = computed(() => activeMasterKey.value === 'function:SPC:MONTHLY CHART REPORT CODE')
+const isSpcMonthChartReportPage = computed(() => activeMasterKey.value === 'function:SPC:MONTHLY CHART REPORT')
 const isSpcXlsSourceFileControlPage = computed(() => activeMasterKey.value === 'function:SPC:XLS SOURCE FILE CONTROL')
 const isSpcChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:CHART SIGNBOARD')
 const isSpcControlChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:CONTROL CHART ANALYSIS')
@@ -3136,6 +3148,30 @@ async function signOut(): Promise<void> {
           v-else-if="isSpcChartLineEditLogPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcQcItemBindingHisLog
+          v-else-if="isSpcQcItemBindingHisLogPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcChartAllCapability
+          v-else-if="isSpcChartAllCapabilityPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcMonthRPTCodeBasis
+          v-else-if="isSpcMonthRPTCodeBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcMonthChartReport
+          v-else-if="isSpcMonthChartReportPage"
+          class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
