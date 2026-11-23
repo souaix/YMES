@@ -5,8 +5,9 @@
 - [x] 核對標準 `frmEquipmentControl`／內嵌 Designer、`wsEMS.LoadEquipmentStateDefine/UpdEquipmentState` 與 `clsEQPBasis`／`clsEQPStateControl`／`clsEMSEquipment` Core。
 - [x] 完成 `/YMES/EMS/EquipmentControl` DEV 頁：設備類別篩選、未管制／已管制設備多選、左右搬移、父設備自動帶 Chamber、Apply 假套用、Confirm 假套用並關閉、Close 丟棄未套用差異；新增 [ES101 規格](docs/modules/EMS/設備控管設定.md)、索引與家用端 handoff。
 - [x] DEV 設備、類別、狀態及 Chamber 皆為虛構，只有頁面記憶體變更；未呼叫 Service／API、未連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
-- [x] 重用 `TBLEQPEQUIPMENTTYPE`、`TBLEQPEQUIPMENTBASIS`、`TBLEQPSTATECONTROL`、`TBLEMSEQUIPMENTSTATE` 與 `TBLEMSEQUIPMENTSTATELOG` 既有 Oracle DDL／CREATE-only references，無新增 DDL；未開 Oracle profile 查業務資料。
+- [x] 沿用既有 refs，無新增 DDL；`TBLEQPEQUIPMENTBASIS`、`TBLEQPSTATECONTROL`、`TBLEMSEQUIPMENTSTATE`、`TBLEMSEQUIPMENTSTATELOG` 有 Oracle DDL／CREATE-only。`TBLEQPEQUIPMENTTYPE` 目前只有 PostgreSQL CREATE-only，缺 Oracle source DDL／metadata，詳下方待公司端補件項目。
 - [ ] 家用端核對既有表 live schema，實作登入與 `EMS CONTROL` 權限保護的原子批次 API；伺服器端重驗核准父設備並展開 Chamber、查 Idle state、expected-state 衝突檢查，整批更新 current/log 並回滾失敗。
+- [ ] 公司端補交 `TBLEQPEQUIPMENTTYPE` 的 Oracle source DDL、欄位／NULL／DEFAULT／PK／index／trigger 唯讀 metadata 及對應 PostgreSQL CREATE-only；目前 repository 只有 `database/reference/mestest_equipment_type_create.sql` CREATE-only，缺 Oracle source DDL，家用端 live audit 也確認該表不存在。只查 MESTEST metadata，不查業務資料、不連家用 PostgreSQL。
 - [x] ES101 公司端完成；依選單清冊接續下一個尚缺的 WinForms 功能。
 
 ## 公司端最新交付：ES303 配件壽命維護（2026-11-23）
@@ -17,6 +18,7 @@
 - [x] 沿用現有配件主檔／狀態／生命設定／狀態互斥 DDL references；`TBLEMSACCESSORYREPAIR` 缺 Oracle source DDL／metadata 及 PG CREATE-only。桌機受保護 Oracle profile 不可用，未連線或猜 schema；序號規則須家用端確認。
 - [ ] 家用端比對 repair table live schema／migration 與 Serial Rule；取得核准 metadata 後補 CREATE-only。正式 API 須以單一交易寫維修明細、更新數量並視情況更新報廢狀態／歷程，使用 expected 原值做衝突檢查。
 - [x] ES303 已完成；後續尚缺功能依選單清冊與本機來源持續接續。
+- [ ] 公司端以受保護 MESTEST Oracle profile 唯讀取得 `TBLEMSACCESSORYREPAIR` 的 DBMS_METADATA table/index DDL、欄位／NULL／DEFAULT／PK／index／trigger metadata，並提供對應 PostgreSQL CREATE-only；另核實 `GetAccessoryRepairNo` 使用的 Serial Rule／設定證據。不可查業務資料、不可連家用 PostgreSQL，也不自行猜欄位或取號規則。
 
 ## 公司端最新交付：ES105 配件狀態互斥設定（2026-11-23）
 

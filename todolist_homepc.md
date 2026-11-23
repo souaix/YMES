@@ -4,9 +4,15 @@
 
 公司端依標準 `frmEquipmentControl`／內嵌 Designer、`wsEMS.LoadEquipmentStateDefine/UpdEquipmentState` 及 `clsEQPBasis`／`clsEQPStateControl`／`clsEMSEquipment` 完成 [ES101 DEV 頁](docs/modules/EMS/設備控管設定.md)，fallback `/YMES/EMS/EquipmentControl`。DEV 模擬設備類別篩選、未管制／已管制設備多選搬移、父設備及 Chamber、Apply／Confirm 假套用。
 
-- [ ] Pull 後核對 `TBLEQPEQUIPMENTTYPE`、`TBLEQPEQUIPMENTBASIS`、`TBLEQPSTATECONTROL`、`TBLEMSEQUIPMENTSTATE`、`TBLEMSEQUIPMENTSTATELOG` live schema／migrations；公司端已沿用 repository Oracle DDL／CREATE-only references，沒有新增 DDL，也未查業務資料。
+- [x] 使用家用機 PPK SSH 唯讀核對 live schema：僅 `TBLEQPEQUIPMENTBASIS` 存在且 `ymes_app` 有 CRUD；`TBLEQPEQUIPMENTTYPE`、`TBLEQPSTATECONTROL`、`TBLEMSEQUIPMENTSTATE`、`TBLEMSEQUIPMENTSTATELOG` 不存在。沒有讀取業務資料或執行 DDL/DML。
 - [ ] 實作要求登入與 `EMS CONTROL` 權限的批次 API：只接受 IssueState=2 父設備，由伺服器展開 Chamber；從 `TBLEQPSTATECONTROL` 查唯一 Idle 狀態；刪除時保存原狀態歷程、新增時取新 EQPSerialNo，整批 current/log 變更用單一 transaction、expected-state 檢查及明確回滾／衝突回應。Legacy `UpdEquipmentState` 逐筆呼叫 Core，無整批 transaction；其查無 Idle 設定分支以 `DBNull` 判斷 DataRow，行為需明確修正。
 - [x] ES101 公司端 DEV／來源規格已交接；後續依清冊接續。
+
+### ES101 家用端 live schema 核對（2026-11-23）
+
+- [x] 使用家用機 PPK SSH 唯讀檢查 PostgreSQL catalog：設備基礎表存在且 `ymes_app` 有 CRUD；設備類別、狀態控制、設備現況與設備狀態歷程表不存在。未讀取業務資料，未執行 DDL/DML。
+- [ ] 公司端需補 `TBLEQPEQUIPMENTTYPE` Oracle source DDL／metadata／CREATE-only（詳 `todolist_officepc.md`）；收到後再將其與其他來源完整的缺表合併為單一 forward migration，繼續 API。
+- [x] 本機 app-browser Demo DEV 實際驗證 ES101 類別篩選、父設備自動帶 Chamber、Apply、Close 捨棄、重進重置及 Confirm 關閉；前端 build 873 modules 通過，僅既有主 bundle 4.86 MB 提示。所有互動均為頁面虛構資料，正式 route 未開放。
 
 ## 公司端交接：ES303 配件壽命維護（2026-11-23）
 
