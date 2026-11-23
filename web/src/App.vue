@@ -3147,6 +3147,7 @@ async function signOut(): Promise<void> {
         <SpcChartLineEditLog
           v-else-if="isSpcChartLineEditLogPage"
           class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />

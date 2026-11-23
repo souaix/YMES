@@ -164,7 +164,12 @@ const pieGradient = computed(() => {
   })
   return `conic-gradient(${slices.join(', ')})`
 })
-const modalTitle = computed(() => ({ detail: 'Reason Detail', more: 'Selected Reason Comparison', fishbone: 'Fishbone Analysis', rank: 'Reason Rank Detail', section: 'Section Detail', pie: 'Pie Chart', weeks: 'Last Four Weeks', export: 'Export All Error', save: 'Save Graph', print: 'Print Graph' }[activePanel.value] || ''))
+const modalTitles: Record<Exclude<DetailPanel, ''>, string> = {
+  detail: 'Reason Detail', more: 'Selected Reason Comparison', fishbone: 'Fishbone Analysis',
+  rank: 'Reason Rank Detail', section: 'Section Detail', pie: 'Pie Chart', weeks: 'Last Four Weeks',
+  export: 'Export All Error', save: 'Save Graph', print: 'Print Graph',
+}
+const modalTitle = computed(() => activePanel.value ? modalTitles[activePanel.value] : '')
 
 function selectItems(): void {
   factors.value = unionFactors.value.map((factor) => ({ ...factor, values: [], freeValue: '' }))

@@ -1,5 +1,15 @@
 # 部署設定檔
 
+## 家用端 SC215 正式發行（2026-11-23；空資料環境操作驗收）
+
+來源基底 `b36f99b`；API 映像 `sha256:04eb130a6ade95c31d519a8711a55fbb3e2db4a5a6d460b37c8d8b9b6f046af0`，Web 映像 `sha256:23e3fa00665cee0dde3697ec60447e2d42afa64514900a2b04fafe6938a16b42`。使用獨立 .NET 9 API/Web 預建映像部署；API、Web 分容器維持 `/YMES/API` 與 `/YMES/` 路由，沒有資料庫 migration／DDL。
+
+部署前回復標籤：`ymes-api:before-sc215-20261123-a1`（`sha256:80a35f68286527282c92efbd966542973bb06365b4902f189e415d6ecf5b7bc8`）、`ymes-web:before-sc215-20261123-a1`（`sha256:d262d8d1f97fd9cfe378ed35815d0757d55293fc9bff296dcfe255cd57aad76f`）。發行封裝 `/opt/ymes/releases/sc215-20261123-a1/sc215-release.tar.gz` SHA256 `37ADD6948CCFB9B308AAEEAACE79C85A75C8FD3B746FF1C19AAC39FAEAD8F917`；沒有打包 `.env` 或資料庫機密。
+
+正式站由原 Compose 專案 `ymes` 更新且只重建 `ymes-api`、`ymes-web`；兩者 healthy，API readiness `ready`、Web／公開 `/YMES/SPC/ChartLineEditLog` 回 200。`ymes-master-web` 未變更且持續運行。app-browser 以 Demo 登入，從「品質管理 → SPC分析 → 管制線修改紀錄」驗證查詢、無效日期、366 天上限、關閉與三層選單重開；console 無錯誤。正式 `TBLSPCQCCHARTBASIS` 為空表，故只驗證零結果與輸入錯誤，尚未驗證有資料結果、日期端點或分頁；沒有建立測試資料。
+
+如需回復，先核對以上 `before-sc215` 標籤，再於 `/opt/ymes/source/deploy` 使用 Compose 專案 `ymes` 只切回 `ymes-api`／`ymes-web`；不要回退或重建資料庫，也不要影響 `ymes-master-web` 或其他專案。回復程式版本不會回復資料庫。
+
 ## 家用端 API/Web 正式站部署（2026-11-21；GUI驗收待補）
 
 以 GitHub `main` 的公司端版本 `262613e13069843c9c44d05f870a46d2a234508c` 為基底，先修正 `deploy/Dockerfile.web.prebuilt` 對 root-only 封裝檔案的讀取權限，部署來源 commit 為 `09bd776a259bafeeb2fec28d393f8af5149392e8`。API `sha256:80a35f68286527282c92efbd966542973bb06365b4902f189e415d6ecf5b7bc8`、Web `sha256:d262d8d1f97fd9cfe378ed35815d0757d55293fc9bff296dcfe255cd57aad76f` 分開建置及切換；保留 `ymes-api:rollback-before-09bd776-a2` 與 `ymes-web:rollback-before-09bd776-a2`。
