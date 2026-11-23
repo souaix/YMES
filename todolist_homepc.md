@@ -1,5 +1,24 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES301 配件上機（2026-11-23）
+
+公司端依 `frmApplyEQPAccessory`、`wsEMS`／`wsEQP` 及 `clsEMSEquipment`／`clsAccState` 完成 [ES301 DEV 頁](docs/modules/EMS/配件上機作業.md)，fallback `/YMES/EMS/ApplyEquipmentAccessory`。DEV 模擬相容設備查找、Available Only、多選批次上機、既有掛載先下機提示、互斥阻擋與壽命提醒。
+
+- [ ] Pull 最新 main 後核對 `tblemsaccviolatestatuschange`、`tblwipcont_accessory` live schema／migration；repo 缺同版 Oracle source DDL／metadata 與 CREATE-only，桌機受保護 Oracle profile 不存在。不要依 Core SQL 猜欄位／PK／index；取得可靠 DDL 後再補必要 migration。
+- [ ] 正式 lookup／POST API 需登入授權，伺服器重驗設備類別與非 Chamber 設備、配件相容性／IssueState=2／Version、APPLY 控制、目前狀態／互斥、使用者狀態權限與既有掛載；所有 SQL 參數化並限量分頁。
+- [ ] 以單一交易或明確部分成功契約更新 `TBLEMSEQPACCSTATE`／掛載歷程與 `TBLEMSACCESSORYSTATE`／狀態歷程，ACCSerialNo 需併發安全。若要移轉其他設備的既有配件，需處理其在製使用記錄 EndTime、下機／上機兩階段一致性及可補償結果；修正 legacy 下機傳目標設備而非現況設備、失敗後仍繼續 Apply 的缺陷。
+- [x] ES301 公司端 DEV／規格已交接；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
+## 公司端交接：ES108 設備能力設定（2026-11-23）
+
+公司端依 `frmEQPCapMapping`／Def、`wsEMS` 與 `clsEMSEquipment` 完成 [ES108 DEV 頁](docs/modules/EMS/設備能力設定.md)，fallback `/YMES/EMS/EquipmentCapabilityMapping`。DEV 模擬查詢、能力條件編輯／複製的整組替換、逐條件開／關及多設備整組刪除。
+
+- [ ] Pull 最新 main 後核對 `tblesmseqpcapmapping` live schema／migration／權限與引用。repo 沒有 Oracle DDL／metadata 或 CREATE-only，桌機受保護 profile 檔不存在；不要依 Core SQL 猜實體欄位、型別或 PK。需要時取得可靠 metadata 後再補 DDL。
+- [ ] 正式查詢需登入及 `EQP CAP MAPPING` 授權、參數化 Equipment Type／Equipment No／CapItem filter、設備範圍驗證、穩定排序和限量分頁；CapItem 篩選左側設備集合後，右側需回傳選取設備完整 mapping。
+- [ ] Add／Edit／Copy 以單一 transaction 整組替換；加入 expected-set／版本並發保護、能力項目／設備重驗、合法 Operand 與數值驗證、複合條件重複檢查。確認實體 schema 後再定 byte／字元長度，Audit Creator／時間由 server 設定。
+- [ ] 開／關以完整條件鍵更新並校驗 expected status／row version。多列更新及多設備刪除要定義原子批次或逐列結果；刪除會清掉該設備全部能力條件，不能誤報部分成功。
+- [x] ES108 公司端 DEV／規格已交接；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端交接：ES107 設備能力項目設定（2026-11-23）
 
 公司端依 `frmEQPCapBasis`／Def、`wsEMS` 與 `clsEMSEquipment`／`clsBasis_UPD` 完成 [ES107 DEV 頁](docs/modules/EMS/設備能力項目設定.md)，fallback `/YMES/EMS/EquipmentCapabilityBasis`。DEV 以頁面記憶體假資料模擬四種 IssueState、CapItem 搜尋、CRUD／Copy／Apply、依狀態刪除與核准分支。
