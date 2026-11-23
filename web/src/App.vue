@@ -234,6 +234,7 @@ import QcVariableItemGroup from './components/QcVariableItemGroup.vue'
 import QcSpcOnlineControl from './components/QcSpcOnlineControl.vue'
 import QcSpcOnlineControlContinue from './components/QcSpcOnlineControlContinue.vue'
 import QcIncomingInspectionForm from './components/QcIncomingInspectionForm.vue'
+import QcFinalInspectionForm from './components/QcFinalInspectionForm.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -494,6 +495,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:SPC ONLIE CONTROL', label: 'SPC 量測數據收集', shortLabel: '收集', functionNo: 'SPC ONLIE CONTROL', moduleNo: 'SPC' },
       { id: 'function:SPC:SPC ONLIE CONTROL CONTINUE', label: 'SPC 量測數據收集_計量連續', shortLabel: '連續', functionNo: 'SPC ONLIE CONTROL CONTINUE', moduleNo: 'SPC' },
       { id: 'function:SPC:INCOMING QC FORM', label: '進料檢驗單', shortLabel: 'IQC', functionNo: 'INCOMING QC FORM', moduleNo: 'SPC' },
+      { id: 'function:SPC:FQC FORM', label: '終檢檢驗單', shortLabel: 'FQC', functionNo: 'FQC FORM', moduleNo: 'SPC' },
     ] }],
   },
   {
@@ -921,6 +923,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:SPC ONLIE CONTROL': appBasePath + '/SPC/OnlineControl',
   'function:SPC:SPC ONLIE CONTROL CONTINUE': appBasePath + '/SPC/OnlineControlContinue',
   'function:SPC:INCOMING QC FORM': appBasePath + '/SPC/IncomingQCForm',
+  'function:SPC:FQC FORM': appBasePath + '/SPC/FinalQCForm',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1466,6 +1469,7 @@ const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'functi
 const isSpcOnlineControlPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ONLIE CONTROL')
 const isSpcOnlineControlContinuePage = computed(() => activeMasterKey.value === 'function:SPC:SPC ONLIE CONTROL CONTINUE')
 const isIncomingQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:INCOMING QC FORM')
+const isFinalQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:FQC FORM')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -2996,6 +3000,13 @@ async function signOut(): Promise<void> {
         />
         <QcIncomingInspectionForm
           v-else-if="isIncomingQCFormPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcFinalInspectionForm
+          v-else-if="isFinalQCFormPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
