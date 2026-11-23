@@ -33,10 +33,13 @@ const item = (qcItemNo: string, status: 0 | 1 = 0, result = '', spcSerial = ''):
   return { qcItemNo: definition.qcItemNo, name: definition.name, type: definition.type, status, result, spcSerial }
 }
 const makeForm = (data: Partial<IncomingForm> & Pick<IncomingForm, 'qcFormNo' | 'materialNo' | 'materialName' | 'qty' | 'status' | 'items'>): IncomingForm => ({
-  id: data.qcFormNo, qcFormNo: data.qcFormNo, incomingNo: '', materialNo: data.materialNo, materialName: data.materialName, qty: data.qty,
-  vendorNo: '', vendorName: '', materialLotNo: '', oriVendor: '', oriVenLot: '', inspDocLink: '', status: data.status, callBackType: '',
-  creator: 'DEV-USER', createdAt: new Date().toISOString(), dataStamp: 1, passQty: 0, returnQty: 0,
-  finishTime: '', rejudgeAt: '', items: data.items, ...data,
+  ...data,
+  id: data.id ?? data.qcFormNo, qcFormNo: data.qcFormNo, incomingNo: data.incomingNo ?? '', materialNo: data.materialNo,
+  materialName: data.materialName, qty: data.qty, vendorNo: data.vendorNo ?? '', vendorName: data.vendorName ?? '',
+  materialLotNo: data.materialLotNo ?? '', oriVendor: data.oriVendor ?? '', oriVenLot: data.oriVenLot ?? '',
+  inspDocLink: data.inspDocLink ?? '', status: data.status, callBackType: data.callBackType ?? '', creator: data.creator ?? 'DEV-USER',
+  createdAt: data.createdAt ?? new Date().toISOString(), dataStamp: data.dataStamp ?? 1, passQty: data.passQty ?? 0,
+  returnQty: data.returnQty ?? 0, finishTime: data.finishTime ?? '', rejudgeAt: data.rejudgeAt ?? '', items: data.items,
 })
 const forms = ref<IncomingForm[]>([
   makeForm({ qcFormNo: 'DEV-IQC-261123-001', incomingNo: 'IN-PO-88421', materialNo: materials[0].materialNo, materialName: materials[0].materialName, qty: 120, vendorNo: vendors[0].vendorNo, vendorName: vendors[0].vendorName, materialLotNo: 'AL-2611-A', status: 0, items: [item('IQC-V-DIM-01'), item('IQC-A-VIS-02')] }),

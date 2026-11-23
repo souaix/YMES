@@ -30,3 +30,9 @@
 - 家用端先 Pull 最新 main，逐表比對現有 YMES live schema／migrations，取得可靠 Oracle DDL／dictionary metadata 後才補必要 schema。正式 API 必須 server-side 驗證登入與 FunctionNo 授權、OP/QCItem 狀態與關聯、有效 Lot／LotStamp、核准 Factor、抽樣計畫／參數、規格／管制界線；在交易中配置 Serial 並保存量測、Factor、Statistic、Limit snapshot 與編輯 audit。
 - 核清新增及修改實際原子範圍；WIP／QC Form／Lot 結果、ERF、ERP 或外部設備不能放入同一交易時，回傳階段結果並定義安全重試／補償。瀏覽器不可提供可直接採信的使用者、結果、Serial、LotStamp、SQL 欄位或公式。
 - 公司端只交付 DEV UI 和來源／API handoff，不連 PostgreSQL、不實作或驗收家用端正式 API/schema、不設定 `ConnectionStrings__YMes`。
+
+## 家用端 app-browser 驗收（2026-11-23）
+
+- 重開後使用開發區 Demo 登入，驗證連續量測頁可載入。已確認抽樣參數後切換到無 SPC 權限 OP，畫面顯示權限錯誤並停用輸入／Save；儲存時亦重查 OP 權限。切回授權 OP 可重新確認。
+- 修改 Lot 或抽樣計畫會讓已確認參數失效並停用 Save；重新確認後抽樣位置數量依計畫更新。貼上以分號／換行分隔的三個讀值成功載入；多貼一筆時拒絕且不改變既有值；超出規格讀值顯示提示。
+- 儲存後歷程顯示點數、讀值及超規結果；Edit／ConfirmEdit 可更新讀值但維持原批次結果；Reverse 會撤銷未確認修改並還原已儲存值。所有驗收資料僅存於本頁記憶體，不呼叫 SPC Service 或資料庫。

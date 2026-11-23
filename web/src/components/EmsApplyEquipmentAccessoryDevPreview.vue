@@ -106,6 +106,8 @@ function chooseEquipment(value: string): void {
   equipmentNo.value = option.equipmentNo
   accessories.value.forEach((row) => { row.checkFlag = false })
   showLookup.value = null
+  actionMessage.value = ''
+  messageKind.value = 'info'
   if (preselectedAccessoryNo) findAccessory()
 }
 

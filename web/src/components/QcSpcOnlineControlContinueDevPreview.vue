@@ -60,8 +60,20 @@ function changeItem(): void {
   setMessage('品管項目已切換；請重新確認抽樣參數。')
 }
 
+function invalidatePrepared(): void {
+  if (!prepared.value) return
+  prepared.value = false
+  setMessage('收集條件已變更；請重新確認抽樣參數。', 'warning')
+}
+
+function changeSamplePlan(): void {
+  sampleQty.value = String(selectedPlan.value?.sampleQty || sampleQty.value)
+  invalidatePrepared()
+}
+
 function prepareCollection(): void {
   if (editEntryId.value) return setMessage('請先 ConfirmEdit 或 Reverse，再開始新的連續收集。', 'warning')
+  prepared.value = false
   const op = selectedOperation.value
   const population = Number(populationQty.value)
   const size = Number(sampleQty.value)
@@ -104,6 +116,10 @@ function importPastedValues(): void {
 
 function saveCollection(): void {
   if (!prepared.value) return setMessage('請先確認抽樣參數。', 'warning')
+  if (!selectedOperation.value?.authorized) {
+    prepared.value = false
+    return setMessage('DEV 使用者沒有此作業站的 SPC 權限。', 'error')
+  }
   if (readings.value.length !== Number(sampleQty.value) || readings.value.some((row) => !row.value.trim() || !Number.isFinite(Number(row.value)))) return setMessage('每一個抽樣位置都必須輸入有效數值。', 'error')
   const item = selectedItem.value
   const outside = readings.value.filter((row) => statusFor(row.value) === '超出規格').length
@@ -164,17 +180,17 @@ function clearValues(): void {
     <section class="setup-card">
       <div class="section-heading"><div><h2>收集條件</h2><span>WinForms：OP／QCItem → Lot／要因 → 計量抽樣參數</span></div><span class="entry-context">{{ senderName ? '入口情境：' + senderName : '獨立收集' }}</span></div>
       <div class="setup-grid">
-        <label for="sc102-op">作業站 OP</label><select id="sc102-op" v-model="selectedOperationNo" :disabled="Boolean(editEntryId)"><option v-for="op in operations" :key="op.opNo" :value="op.opNo">{{ op.opNo }} · {{ op.name }}</option></select>
+        <label for="sc102-op">作業站 OP</label><select id="sc102-op" v-model="selectedOperationNo" :disabled="Boolean(editEntryId)" @change="invalidatePrepared"><option v-for="op in operations" :key="op.opNo" :value="op.opNo">{{ op.opNo }} · {{ op.name }}</option></select>
         <label for="sc102-item">品管項目</label><select id="sc102-item" v-model="selectedQcItemNo" :disabled="Boolean(editEntryId)" @change="changeItem"><option v-for="item in qcItems" :key="item.qcItemNo" :value="item.qcItemNo">{{ item.qcItemNo }} · {{ item.name }}</option></select>
-        <label for="sc102-lot">Lot No</label><input id="sc102-lot" v-model="lotNo" maxlength="50" :disabled="Boolean(editEntryId)" />
-        <label for="sc102-population">母體數量</label><input id="sc102-population" v-model="populationQty" inputmode="numeric" :disabled="Boolean(editEntryId)" />
+        <label for="sc102-lot">Lot No</label><input id="sc102-lot" v-model="lotNo" maxlength="50" :disabled="Boolean(editEntryId)" @change="invalidatePrepared" />
+        <label for="sc102-population">母體數量</label><input id="sc102-population" v-model="populationQty" inputmode="numeric" :disabled="Boolean(editEntryId)" @change="invalidatePrepared" />
       </div>
       <div class="factor-grid">
-        <label>班別 <input v-model="factorValues.shift" :disabled="Boolean(editEntryId)" /></label><label>檢測設備 <input v-model="factorValues.equipment" :disabled="Boolean(editEntryId)" /></label><label>操作人員 <input v-model="factorValues.operator" :disabled="Boolean(editEntryId)" /></label>
+        <label>班別 <input v-model="factorValues.shift" :disabled="Boolean(editEntryId)" @change="invalidatePrepared" /></label><label>檢測設備 <input v-model="factorValues.equipment" :disabled="Boolean(editEntryId)" @change="invalidatePrepared" /></label><label>操作人員 <input v-model="factorValues.operator" :disabled="Boolean(editEntryId)" @change="invalidatePrepared" /></label>
       </div>
       <div class="plan-grid">
-        <label>Sampling Plan <select v-model="samplePlanNo" :disabled="Boolean(editEntryId)" @change="sampleQty = String(selectedPlan?.sampleQty || sampleQty)"><option v-for="plan in plans" :key="plan.planNo" :value="plan.planNo">{{ plan.planNo }} · {{ plan.label }}</option></select></label>
-        <label>抽樣數 SampleQty <input v-model="sampleQty" inputmode="numeric" :disabled="Boolean(editEntryId)" /></label>
+        <label>Sampling Plan <select v-model="samplePlanNo" :disabled="Boolean(editEntryId)" @change="changeSamplePlan"><option v-for="plan in plans" :key="plan.planNo" :value="plan.planNo">{{ plan.planNo }} · {{ plan.label }}</option></select></label>
+        <label>抽樣數 SampleQty <input v-model="sampleQty" inputmode="numeric" :disabled="Boolean(editEntryId)" @change="invalidatePrepared" /></label>
         <div class="limit-chip"><span>DEV 規格界線</span><strong>{{ selectedItem.lower }} – {{ selectedItem.upper }} {{ selectedItem.unit }}</strong></div>
         <button type="button" class="primary-button" :disabled="Boolean(editEntryId)" @click="prepareCollection">確認參數</button>
       </div>

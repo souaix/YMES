@@ -7,6 +7,9 @@
 - [ ] `TBLSPCFQCFORM` 缺同版 Oracle source DDL／metadata 及 PG CREATE-only。QC Item Map `TBLSPCFQCFORMQCITEMMAP` 有 QC216 Oracle source DDL 與 PG CREATE reference；先核對 live schema／migration 再沿用，不重複建立。取得可靠主表 DDL 前不要依 Core SQL 推測主表欄位、PK、索引或 FK。
 - [ ] 正式實作 FQC 主單／Map／產品／工序／Lot 查詢與 CRUD／transition API：驗證登入及 FunctionNo 權限、Lot 與產品版本狀態、QC Item eligibility、序號配置、DataStamp CAS；SQL 參數化並限制查詢筆數，主單與初始 Map、刪除、Confirm／退回、逐項量測結果及最後項目完成需定義交易邊界。
 - [ ] 整合 Workflow／TIPTOP／WFGP／T100 `funQC_Update`，確認 ERP source／seq、FQC 類型、產品與允收／拒收全數 Qty payload；保存 callback idempotency key／request／response／狀態，驗證重試、逾時對帳及補償。外部 callback 成功後才轉 MES Status 3／4。公司端 DEV 不呼叫 callback，也不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] 家用端 app-browser 驗收 SC104：選單三層路由、五個狀態、查詢、Add 必填與單號、Lot 帶入產品／工序／版本／客戶／數量及 QC Item、Edit／Copy／Delete、Confirm、退回限制、SPC 各項結果、允收／拒收與修改稽核欄位。只用 DEV 記憶體假資料，未呼叫 API／設備／ERP／資料庫；細節見模組文件。
+- [x] 重開機後正式站可載入並截圖；本機開發區 Demo 登入與 SC103／SC104 頁面操作正常。`vue-tsc --noEmit` 通過；Vite 7.3.7 build 通過（905 modules），僅保留既有約 4.87 MB 主 bundle 大於 500 KB 的警告。
+- [x] 同步 `b99034c` 公司端 SC104 handoff，以一般 merge `a94fa5c` 整合；SC103 `TBLSPCINCOMINGQCFORM` 與 SC104 `TBLSPCFQCFORM` 主表 DDL／metadata 仍缺，已分別要求公司端補交於 `todolist_officepc.md`。未猜 schema 或建立錯誤 SQL。
 - [x] SC104 公司端 handoff 已完成；清冊下一項 SC105「PQC 檢驗單」。
 
 ## 公司端交接：SC103 進料檢驗單（2026-11-23）
@@ -16,6 +19,7 @@
 - [ ] `TBLSPCINCOMINGQCFORM` 缺同版 Oracle source DDL／metadata 及 PG CREATE-only。QC Item Map `TBLSPCINCOMINGQCFORMQCITEMMAP` 有 QC216 的 Oracle source DDL 與 PG CREATE reference，先核對既有 live schema／migration 再沿用，不重複建表。主表 DDL 到手前不要依 Core SQL 推測欄位、PK、索引或 FK。
 - [ ] 正式實作 SC103 主單／Map lookup 與 CRUD／transition API：登入 FunctionNo 授權、物料／供應商／ERP-owned 與 QCItem eligibility、序號配置、DataStamp CAS、Qty 與狀態重驗、參數化限量查詢；定義 Add/Edit/Delete/Confirm、Map 更新、SPC結果與收貨／驗退／特採的 transaction 邊界。
 - [ ] 整合 `CallBackType` 支援的 Workflow／TIPTOP／WFGP／T100／E10ICD／sQMS，設計 idempotency key、callback audit、逾時對帳與補償；核實 ERP／WIP／ERF 及 QC Form 結果回寫順序。公司端 DEV 未呼叫外部 callback，也不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] 家用端 app-browser 驗收 SC103：搜尋與日期篩選、Add 必填／單號、物料帶入 QC Item、供應商與 Map 加／移除、Add／Edit／Copy／Delete、Confirm、SPC 多項完成與退回守門、Receive 數量合計檢查、Reject／Concession／Revise。僅 DEV 記憶體假資料，沒有呼叫 API 或寫入資料庫；操作細節見模組文件。
 - [x] SC103 公司端 handoff 已完成；清冊下一項 SC104「終檢檢驗單」。
 
 ## 公司端交接：SC102 SPC 量測數據收集_計量連續（2026-11-23）
@@ -25,17 +29,28 @@
 - [ ] SC102 沿用 SC101 計量執行表：`TBLSPCVARDETAILONLINE/LOG`、`TBLSPCVARSTATISTICLOG`、`TBLSPCVARFACTORONLINE/LOG`、`TBLSPCVARLIMITCONTENT`、`TBLSPCUSERFACTORVALUE`；修改另有 edit log。缺同版 Oracle source DDL／metadata 與 PG CREATE-only，先取得可靠字典資料並核對 YMES live schema/migrations，再建必要 schema；不要照 Core SQL 猜欄位、鍵、索引或 FK。
 - [ ] 正式提交需分辨 `UpdVar_TestValue` 新增與 `UpdVar_LotData` 修改，server 重驗使用者／FunctionNo／OP／QCItem／LotStamp／Factor／抽樣與規格規則；交易處理 SPC Serial、量測／Factor／統計／Limit snapshot、修改 audit，核實 WIP／QC Form／Lot／ERF／ERP 外部階段的部分成功契約及安全重試。
 - [ ] RS232／設備驅動、本機 InspMachineSetup、公式、Chart Rule、客製 DLL、Component/Wafer 與實際 CSV/TXT/XLS 匯入格式未由公司端 DEV 模擬；依正式介面逐項整合驗收。SC102 DEV 不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] 家用端修正收集條件或 OP 權限改變後仍可用舊參數存檔的問題；app-browser 驗證權限錯誤停用 Save、Lot／抽樣計畫變更要求重新確認、貼上數值與超出規格提示、儲存歷程、ConfirmEdit 與 Reverse。所有資料僅存在本頁記憶體；細節見模組文件。
 - [x] SC102 公司端 handoff 已完成；清冊下一項 SC103「進料檢驗單」。
 
 ## 公司端交接：SC101 SPC 量測數據收集（2026-11-23）
 
 公司端已依 Customer THEIL_BU1 `frmSPCOnlineControl` 主 Form、計量／計數收集 DLL、`wsSPC`／`wsOP`／`wsQC` 及 `clsSPC` 完成 [SC101 DEV 頁](docs/modules/SPC/SPC量測數據收集.md)，fallback `/YMES/SPC/OnlineControl`。DEV 假模擬 OP／QCItem、計數／計量／群組收集；不呼叫 API、設備、ERP 或資料庫。
 
+- [x] 家用端 app-browser 開發區驗收計數、計量、計量群組、群組減項、品管項目查找與無 SPC 權限作業站阻擋；確認樣本輸入／超限提醒／群組逐項必填及頁面內歷程可用。僅為 DEV 記憶體假資料，不寫資料庫。
+
 - [ ] SC101 的 `TBLSPCVARDETAILONLINE/LOG`、`TBLSPCVARSTATISTICLOG`、`TBLSPCVARFACTORONLINE/LOG`、`TBLSPCVARLIMITCONTENT`、`TBLSPCATTDETAILLOG`、`TBLSPCATTBASISLOG`、`TBLSPCUSERFACTORVALUE` 缺同版 Oracle source DDL／metadata 及 PG CREATE-only。先取得可靠字典資料並核對 YMES live schema/migrations，再建必要 schema；不要照 Core SQL 猜欄位、PK、索引或 FK。
 - [ ] 實作登入及 FunctionNo `SPC ONLIE CONTROL` 授權的 context／lookup：OP 可見及 SPC 權限、有效 Lot／產品、核准 QCItem 與 OP 關聯、Factor、抽樣計畫與參數、群組成員、限制／管制界線、重檢批及 Component／Wafer 資料；LotStamp 與權限在 server 重查。
 - [ ] 計量、計數及群組提交分型處理；交易內配置 SPC Serial／Factor Serial，重驗抽樣／Factor／QCItem／Lot／規格，保存量測 Online+Log+Statistic 或計數 Basis+Detail+Factor。核實實際 WIP QC Item／Sample Component、Lot Result、ERF、QC Form／ERP 呼叫順序並明確定義原子邊界、部分結果與安全補償／重試。
 - [ ] RS232／設備驅動、量測公式、AQL／SPC rule、special customer DLL、Group Deduction、Wafer／Component、樣本轉換、Union ERF、進料 FTP／附件及 ERP 介面需取得正式契約後逐項整合；公司端 DEV 不是這些流程的正式驗收。
 - [x] SC101 公司端 DEV／規格 handoff 完成；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
+### 家用端同步與驗收紀錄（2026-11-23）
+
+- [x] 同步發現公司端新增 ES108、ES301 及 SC101 DEV 提交；先保留家用端 ES107 API commit，再以一般 merge 整合公司端 `6d56a41`、`fe884d7`、`bd5bb41`，未 force push 或覆蓋公司提交。
+- [x] app-browser 重開機後可開正式站、Demo 登入、操作並截圖；本機 DEV 頁重新登入後驗收 SC101 計數、計量、群組及減項收集；ES108 查詢／維護／複製／刪除流程；ES301 上機、互斥與既有掛載處理。詳細結果記在各模組 `.md`。
+- [x] ES301 選取設備後清除先前必填錯誤的問題已修正，並由 app-browser 確認。
+- [x] `.NET 9 Release build` 0 warning／0 error；Vue 型別檢查通過；Vite 7.3.7 build 896 modules 通過。保留既有 4.87 MB 主 bundle 超過 500 KB 的提示。
+- [ ] 提交並同步以上驗收／文件修訂至 GitHub 後，再讀一次最新 `main` 與兩端待辦；SC101 9 張執行表 DDL／metadata 已列入公司端待辦，收到前不猜 schema。
 
 ## 公司端交接：ES301 配件上機（2026-11-23）
 
@@ -60,10 +75,12 @@
 
 公司端依 `frmEQPCapBasis`／Def、`wsEMS` 與 `clsEMSEquipment`／`clsBasis_UPD` 完成 [ES107 DEV 頁](docs/modules/EMS/設備能力項目設定.md)，fallback `/YMES/EMS/EquipmentCapabilityBasis`。DEV 以頁面記憶體假資料模擬四種 IssueState、CapItem 搜尋、CRUD／Copy／Apply、依狀態刪除與核准分支。
 
-- [ ] Pull 最新 main 並核對 `tblemseqpcapbasis` live schema／migration；Oracle logical DDL 與 PostgreSQL CREATE-only 已沿用 PD102 reference，`GET_DDL` 原回 ORA-03135，未另猜 DDL，也不應重複建表。
-- [ ] 實作登入／FunctionNo `EQP CAP BASIS` 權限保護、參數化限量分頁查詢及 CRUD；新增 CapItem upper/max 50 字元（Oracle 50 BYTE）、Description max 255 字元（Oracle 255 BYTE）、IssueState 0；修改只准 0，固定鍵並依 DataStamp CAS。所有資料來源均需 server 驗證。先定義 search predicate，ES107 Form 只證明送出 CapItem/SearchFieldValue，無法從本機共用 parser 證據確認比較運算子。
-- [ ] 保留 Delete 狀態規則：0/-1 實體刪除、2 停用為 -1、1 拒絕；先確認產品設備能力 `tblprdopcapitem` 引用後再決定實體刪除政策。定義多選的原子或逐筆回報語意。
-- [ ] Approve 只接受狀態 0，由 server 查 `EMS_EQP_CAPBASIS` Job/Detail 決定直接核准或啟動 Issue process；以交易／冪等／版本檢查維持主檔 IssueState、DataStamp 及 issue data 一致。不可由 client 指定實際核准路徑。
+- [x] Pull 最新 main 並核對 `tblemseqpcapbasis`／`tblprdopcapitem` live schema；以 migration `0067_ems_equipment_capability_basis.sql` 依來源 DDL 建立缺表、授予最小必要權限並核對空表及欄位。沒有重複建表或讀取業務資料。
+- [x] 完成登入保護 API、參數化限量分頁查詢與 CRUD；CapItem upper／50 UTF-8 bytes、Description／255 UTF-8 bytes、IssueState 0；修改只准 0、固定鍵及 DataStamp CAS；Server 負責 actor／時間／狀態。FunctionNo 細項 ACL 待共用權限功能接入。
+- [x] Delete 狀態規則：0／-1 實體刪除、2 停用為 -1、1 拒絕；引用 `tblprdopcapitem` 時拒絕實體刪除；多選採 Serializable 原子交易。
+- [ ] Approve API 已有安全 409 guard，但尚未改資料；等待公司端提供 `EMS_EQP_CAPBASIS` Job／Detail／issue process 設定與資料表映射後，才接直接核准／送簽／通知流程。詳 `todolist_officepc.md`。
+- [x] app-browser 實際驗證搜尋、狀態計數、新增／修改／複製、重複鍵、UTF-8 上限、已核准轉停用及停用／未凍結實體刪除；測試列已清乾淨，四個狀態計數為 0。Approve guard 409 已驗證不改資料。
+- [ ] 全數驗證完成後，正常同步 GitHub、檢查公司端新提交與後續待辦；不可 force push，保留兩個未追蹤 Web 封存檔。
 - [x] ES107 公司端 DEV／來源規格已交接；清冊下一項 ES108「設備能力設定」。公司端不連 PostgreSQL或實作正式 API。
 
 ## 公司端交接：ES407 設備配件現況查詢（2026-11-23）
@@ -90,7 +107,8 @@
 - [x] 再次同步時拉到公司端 `fab9907`（ES407）與 `aef0079`（ES107）；以一般 merge 整合。`App.vue` 同時保留 ES408 API base URL 和 ES407／ES107 路由；沒有 force push。
 - [x] 合併版 `npm run build` 通過：Vue 型別檢查、Vite build 884 modules。保留既有約 4.87 MB 主 bundle 大於 500 KB 提示。
 - [x] app-browser Demo 開發區驗證 ES407 picker、精確查詢、多條件 AND 組合、無結果與含端點 StartTime 範圍；ES107 驗證狀態分頁、搜尋、新增必填／套用、修改、複製、刪除、直接核准／送簽及已核准轉停用。DEV 假資料離頁即重置；兩頁均未呼叫 API 或寫資料庫。
-- [ ] 按最新交接順序繼續核對 ES107 `TBLEMSEQPCAPBASIS` live schema 與 migration；再處理 ES407 `TBLEMSEQPACCSTATE` 登入保護的參數化唯讀 API，兩者依實際來源結構分別記錄。
+- [x] ES107 live schema／migration、登入保護 CRUD API、正式頁串接與 app-browser 實際驗收完成；流程核准依交接文件保留安全 guard。
+- [ ] 下一個家用端事項：對照 `TBLEMSEQPACCSTATE` live schema／migration，實作 ES407 登入保護的參數化唯讀 API、穩定分頁及列數限制，並更新 [ES407 規格](docs/modules/EMS/設備配件現況查詢.md)。
 
 ## 公司端交接：ES101 設備控管設定（2026-11-23）
 

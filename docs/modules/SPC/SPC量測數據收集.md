@@ -38,3 +38,9 @@
 - 計量與計數可用分型提交 command，但必須驗證抽樣參數、QCItem／Factor 白名單、Lot 與操作人、規格／rule／限值、必需 Component 或 defect reason；SPC Serial／Factor Serial 由交易內序號服務配置，不能信任瀏覽器送入。
 - 定義同一 transaction 的完整邊界與結果契約：計量 Online+Log+Statistic+Factor+Limit snapshot；計數 Basis+Detail+Factor；以及條件式 WIP QC Item／Sample Component、Lot 狀態、ERF、ERP／檢驗單更新。若外部 ERP、設備或 Issue 流程不能同交易，須回傳逐階段結果及安全重試／補償，避免重送造成重複量測。
 - 儀器讀值、特殊公式／客製 DLL、Wafer／Component、AQL、group deduction、sample-plan transition、Union ERF、進料 FTP／檔案及 ERP 需依可用的正式介面逐項交付。公司端僅完成 DEV 與來源規格，不連 YMES PostgreSQL、不實作或驗收正式 API/schema。
+
+## 家用端 app-browser 驗收（2026-11-23）
+
+- 本機開發區驗證授權作業站提示、四種 QC 類型、計數／計量／群組／減項視窗、兩個群組品管項目逐頁輸入、樣本數與讀值檢核、規格超限提示、缺點資料及記憶體歷程。計量與計數結果可提交到頁面內歷程；群組與減項分別記錄兩筆。
+- 量測輸入與假 SPC Serial 僅存在 DEV 頁記憶體，沒有連設備、Service、資料庫、Lot、ERP 或 ERF。
+- SC101 目前僅 DEV 頁完成；9 張執行表缺原生 Oracle DDL／metadata 及 PostgreSQL CREATE-only，依公司待辦取得後再開始正式 schema／API，不以 DEV 頁驗收取代正式流程驗收。
