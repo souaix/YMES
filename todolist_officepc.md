@@ -1,5 +1,16 @@
 # 公司端待辦
 
+## 公司端最新交付：SC106 出貨檢驗單（2026-11-23）
+
+- [x] 核對 `frmOQCForm`／inline Designer、`frmOQCFormDef`／inline Designer、QC Item Map Form、`wsSPC`、`clsSPC`、`clsBasis_UPD` 及產品／OP／WIP lookup。
+- [x] 完成 `/YMES/SPC/OutgoingQCForm` DEV：五狀態、單據 CRUD／Copy／Confirm、Map、SPC 假結果、ERP callback 成敗模擬、ERP 來源待檢退回未確認。
+- [x] 新增 [SC106 規格](docs/modules/SPC/出貨檢驗單.md)、Module index 及家用端 API／schema handoff；未連 PostgreSQL，未執行 build／test／browser。
+- [x] `TBLSPCOQCFORMQCITEMMAP` Oracle source DDL／PG CREATE reuse QC216 reference；`TBLSPCOQCFORM` Header DDL／metadata／PG CREATE-only 缺失。桌機受保護 Oracle attachment/profile 不存在，本次未查 Oracle、未猜 Header schema。
+- [ ] 家用端比對 Header live schema／migration，取得可靠 MESTEST Header DDL／metadata 後才補 CREATE-only；核對 OQC Map 是否與共用 reference 同版。
+- [ ] 正式 API 驗證 OQC Form／ERP source ownership、參數化限量查詢、DataStamp CAS、Header＋Map 交易及 QC Map 全量取代；核對 `UpdOQCFormQCItemMapResult` 重複執行 collection 的實際副作用。
+- [ ] TIPTOP／T100 ERP callback 保存 idempotency、request／response、錯誤／重試／對帳，外部成功後才更新 OQC Status；確認 WFGP skip 行為與 ERP owner 契約，定義 callback timeout／本機 CAS 衝突補償。OP `SPCInspAbnormalHoldLot` 的 `WP_BRERFCreate` 保持獨立交易並處理部分成功。
+- [x] SC106 公司端 DEV／規格完成；清冊下一項 SC107「匯入計量檢測數據」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端最新交付：SC105 PQC 檢驗單（2026-11-23）
 
 - [x] 核對 `frmIPQCForm`／inline Designer、`frmIPQCFormDef`／inline Designer、QC Item Map Form、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`、`clsSPC` 與 `clsBasis_UPD`。

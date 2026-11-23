@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：SC106 出貨檢驗單（2026-11-23）
+
+公司端依 `frmOQCForm`／`frmOQCFormDef`／QC Item Map、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`／`funQC_Update`、`clsSPC`／`clsBasis_UPD` 完成 [SC106 DEV 頁](docs/modules/SPC/出貨檢驗單.md)，fallback `/YMES/SPC/OutgoingQCForm`。DEV 模擬五狀態、Header CRUD／Copy／Confirm、QC Item Map、SPC 假結果、ERP callback 成功／失敗，以及 ERP 來源單待檢退回未確認；不呼叫 SPC／ERP／ERF API 或資料庫。
+
+- [ ] `TBLSPCOQCFORMQCITEMMAP` 沿用 repo QC216 Oracle DDL／PG CREATE reference；Header `TBLSPCOQCFORM` 缺同版 Oracle source DDL／metadata 與 PG CREATE-only。桌機受保護 profile 不存在，未猜 Header 欄位、PK 或索引；家用端須先比對 live schema／migration，並取得允許的可靠字典資料再建立 CREATE-only。
+- [ ] 正式 API 核對 OQC header 欄位、ERPSourceNo／Seq、CallBackType、InspDocLink 及 DataStamp；限制查詢、參數化 CRUD／Map、confirm／待檢刪除或 ERP 退回、SPC 結果／自動完成交易。特別查核來源 `UpdOQCFormQCItemMapResult` 對 Map collection 的重複執行。
+- [ ] TIPTOP／T100 ERP callback 狀態 mapping、idempotency／retry／對帳及外部成功後才寫本地 Status；確認 WinForms WFGP skip 分支。驗證 OP `SPCInspAbnormalHoldLot` 觸發 `WP_BRERFCreate` 的交易與部分成功補償。
+- [x] SC106 公司端 handoff 完成；清冊下一項 SC107「匯入計量檢測數據」。
+
 ## 公司端交接：SC105 PQC 檢驗單（2026-11-23）
 
 公司端依 `frmIPQCForm`／`frmIPQCFormDef`／QC Item Map、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`、`clsSPC`／`clsBasis_UPD` 完成 [SC105 DEV 頁](docs/modules/SPC/PQC檢驗單.md)，fallback `/YMES/SPC/InProcessQCForm`。DEV 模擬六個狀態、Product／Module／Lot 帶入、單據 CRUD／Copy／Confirm、QC Item Map、SPC 假結果、SFT 數量守恆、允收／拒收／特採及 WIP Hold／Wait 提示；不呼叫 MES／SFT／WIP API 或資料庫。

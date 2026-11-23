@@ -236,6 +236,7 @@ import QcSpcOnlineControlContinue from './components/QcSpcOnlineControlContinue.
 import QcIncomingInspectionForm from './components/QcIncomingInspectionForm.vue'
 import QcFinalInspectionForm from './components/QcFinalInspectionForm.vue'
 import QcInProcessInspectionForm from './components/QcInProcessInspectionForm.vue'
+import QcOutgoingInspectionForm from './components/QcOutgoingInspectionForm.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -498,6 +499,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:INCOMING QC FORM', label: '進料檢驗單', shortLabel: 'IQC', functionNo: 'INCOMING QC FORM', moduleNo: 'SPC' },
       { id: 'function:SPC:FQC FORM', label: '終檢檢驗單', shortLabel: 'FQC', functionNo: 'FQC FORM', moduleNo: 'SPC' },
       { id: 'function:SPC:IPQC FORM', label: 'PQC 檢驗單', shortLabel: 'PQC', functionNo: 'IPQC FORM', moduleNo: 'SPC' },
+      { id: 'function:SPC:OQC FORM', label: '出貨檢驗單', shortLabel: 'OQC', functionNo: 'OQC FORM', moduleNo: 'SPC' },
     ] }],
   },
   {
@@ -927,6 +929,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:INCOMING QC FORM': appBasePath + '/SPC/IncomingQCForm',
   'function:SPC:FQC FORM': appBasePath + '/SPC/FinalQCForm',
   'function:SPC:IPQC FORM': appBasePath + '/SPC/InProcessQCForm',
+  'function:SPC:OQC FORM': appBasePath + '/SPC/OutgoingQCForm',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1474,6 +1477,7 @@ const isSpcOnlineControlContinuePage = computed(() => activeMasterKey.value === 
 const isIncomingQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:INCOMING QC FORM')
 const isFinalQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:FQC FORM')
 const isInProcessQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:IPQC FORM')
+const isOutgoingQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:OQC FORM')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -3018,6 +3022,13 @@ async function signOut(): Promise<void> {
         />
         <QcInProcessInspectionForm
           v-else-if="isInProcessQCFormPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcOutgoingInspectionForm
+          v-else-if="isOutgoingQCFormPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
