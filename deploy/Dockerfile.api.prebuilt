@@ -1,0 +1,20 @@
+# Runtime image for a locally built, validated .NET publish directory.
+# Build context must contain publish/ with YMes.Api.dll and its dependencies.
+ARG API_RUNTIME_IMAGE=mcr.microsoft.com/dotnet/aspnet:9.0
+FROM ${API_RUNTIME_IMAGE}
+WORKDIR /app
+ENV ASPNETCORE_HTTP_PORTS=8080
+
+USER root
+COPY publish/ ./
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && find /app -type d -exec chmod 755 {} + \
+    && find /app -type f -exec chmod 644 {} + \
+    && mkdir -p /data/dpkeys /data/qc112 \
+    && chown "$APP_UID":"$APP_UID" /data/dpkeys /data/qc112
+
+USER $APP_UID
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "YMes.Api.dll"]

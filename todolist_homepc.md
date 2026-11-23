@@ -4,10 +4,13 @@
 
 公司端依 `frmChartLineEditLog`、`wsSPC.ShowControlChartLineData`、`kcSPC.ShowControlChartLineData` 與 `Load_Check_StartTime` 完成 [SC215 DEV 頁](docs/modules/SPC/管制線修改紀錄.md)，路由 `/YMES/SPC/ChartLineEditLog`。頁面以 DEV snapshot 模擬 Variable QC Item／Product／Customer／Material／Vendor 條件、可選日期，以及新增、規格修改、管制線修改結果。
 
-- [ ] Pull 後核對 `TBLSPCQCCHARTBASIS`／`TBLSPCQCCHARTDETAILLOG` live schema 與已部署 migrations；沿用 `database/reference/mestest_qc302_spc_qc_chart_source_ddl.sql` 和 `database/reference/mestest_qc302_spc_qc_chart_create.sql`，沒有新業務表。桌機沒有受保護 Oracle profile，本輪未直連 Oracle／YMES PostgreSQL。
-- [ ] 正式唯讀 API 必須先從完整 DetailLog timeline 重建變更，再套用 From／End Date；舊 WinForms 日期為嚴格 `RecordDate > FromDate`、`RecordDate < EndDate`，不是 inclusive，且日期沒有送進 Service/Core。若改成 inclusive 或 DB 端先篩選，需記錄行為差異。
-- [ ] 核對 Customer filter 對應欄位：Core 檢查 `CustomerNo`，QC302 source DDL 為 `CUSTOMER`，舊查詢可能不套 Customer。參數化 QCItem／Product／Customer／Material／Vendor／日期；Factor 欄名不得拼接 SQL，依授權 QC Item metadata allowlist 存取固定 Factor JSON 欄位。
-- [ ] 舊程式 `Old_ROW` 未按 SPCID 配對，且只依 StartTime 排序；決定正式 API 是否按 FactorSerial＋SPCID＋StartTime 正確比較並穩定 tie-break，記錄與舊畫面的差異。限制日期跨度、FactorSerial 與結果筆數；分頁需保留每條歷程的前一筆 snapshot，避免錯誤標成新增。
+- [x] 以 SSH 透過既有 `ymes-api` 連線做 read-only live schema／權限核對：Basis 有 `CUSTOMER`、`MTLVENDOR`、`FACTORVALUES`；DetailLog 欄位與 migration 0024 一致；Product 使用 `PRODUCTVERSION`；`ymes_app` 對圖表 Basis／DetailLog、Variable QC Item、QC Item Factor、Product、Customer、Material、Vendor 均有 SELECT。未讀業務列、未改資料庫或 schema。
+- [x] 唯讀 API `GET /api/spc/chart-line-edit-log` 先載入每條管制圖完整 DetailLog，再重建新增／規格／管制線變更；其後才套用嚴格 `RecordDate > FromDate`、`RecordDate < EndDate`，未把日期推到資料庫前置過濾。
+- [x] Customer 條件依 source DDL 使用 `TBLSPCQCCHARTBASIS.CUSTOMER`。QCItem／Product／Customer／Material／Vendor 皆參數化；Factor 欄名不進 SQL，回傳前由 `TBLQCITEMFACTOR.FACTORONLINE='Y'` 白名單篩選 `factorvalues` JSONB。
+- [x] 變更比較依 FactorSerial＋SPCID＋StartTime，穩定排序並記錄為較舊畫面跨 SPCID 比較問題的修正。完整 timeline 上限 30,000 筆、管制圖 250 組、日期區間 366 天、結果 20,000 筆、頁面最多 100 筆；超限回錯誤，不會截斷歷程或破壞前一筆比較。
+- [x] 2026-11-23 已部署 SC215 API／Web 至正式站，並以 app-browser Demo 登入後從「品質管理 → SPC分析 → 管制線修改紀錄」開啟：無條件與無效 QC Item 查詢皆正常顯示 0 筆；起日晚於迄日顯示明確錯誤；超過 366 天顯示限制訊息；關閉及由三層選單重開正常；瀏覽器 console 無錯誤。API 與頁面均正常回應。
+- [ ] YMES PostgreSQL 的 `TBLSPCQCCHARTBASIS` 目前 0 筆，因此無法用正式資料驗證有列結果、日期嚴格端點排除及分頁；有可用的正式／測試資料或公司端核准的 fixture 後補驗。此次未建立測試資料。
+- [x] 驗收後已更新部署與本模組紀錄；接續正常同步 GitHub，確認最新公司端交接，再處理下一項。
 - [x] 公司端只交付 DEV／來源規格，未新增 schema／migration 或實作正式 API；下一個未完成 SPC FunctionKey 為 SC216。
 
 ## 公司端交接：SC214 管制圖分析_以要因查詢（2026-11-23）
