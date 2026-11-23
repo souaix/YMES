@@ -2,10 +2,10 @@
 
 ## 公司端交接：SC104 終檢檢驗單（2026-11-23）
 
-公司端依 `frmFQCForm`／`frmFQCFormDef`／`frmFQCFormQCItemMap`、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`、`clsSPC`／`clsBasis_UPD` 完成 [SC104 DEV 頁](docs/modules/SPC/終檢檢驗單.md)，fallback `/YMES/SPC/FinalQCForm`。DEV 模擬五個主單狀態、單據 CRUD／Copy／Confirm、產品／工序／批號帶 QC Item、Map 維護、SPC 假結果、允收／拒收及狀態稽核；不呼叫 MES／ERP API 或資料庫。
+公司端依 `frmFQCForm`／`frmFQCFormDef`／`frmFQCFormQCItemMap`、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`、`clsSPC`／`clsBasis_UPD` 完成 [SC104 DEV 頁](docs/modules/SPC/終檢檢驗單.md)，fallback `/YMES/SPC/FinalQCForm`。DEV 模擬五個主單狀態、單據 CRUD／Copy／Confirm、待檢頁未開始單據刪除、產品／工序／批號帶 QC Item、Map 維護、SPC 假結果、允收／拒收及狀態稽核；不呼叫 MES／ERP API 或資料庫。
 
 - [ ] `TBLSPCFQCFORM` 缺同版 Oracle source DDL／metadata 及 PG CREATE-only。QC Item Map `TBLSPCFQCFORMQCITEMMAP` 有 QC216 Oracle source DDL 與 PG CREATE reference；先核對 live schema／migration 再沿用，不重複建立。取得可靠主表 DDL 前不要依 Core SQL 推測主表欄位、PK、索引或 FK。
-- [ ] 正式實作 FQC 主單／Map／產品／工序／Lot 查詢與 CRUD／transition API：驗證登入及 FunctionNo 權限、Lot 與產品版本狀態、QC Item eligibility、序號配置、DataStamp CAS；SQL 參數化並限制查詢筆數，主單與初始 Map、刪除、Confirm／退回、逐項量測結果及最後項目完成需定義交易邊界。
+- [ ] 正式實作 FQC 主單／Map／產品／工序／Lot 查詢與 CRUD／transition API：驗證登入及 FunctionNo 權限、Lot 與產品版本狀態、QC Item eligibility、序號配置、DataStamp CAS；SQL 參數化並限制查詢筆數，主單與初始 Map、刪除、Confirm／待檢未開始刪除、逐項量測結果及最後項目完成需定義交易邊界。
 - [ ] 整合 Workflow／TIPTOP／WFGP／T100 `funQC_Update`，確認 ERP source／seq、FQC 類型、產品與允收／拒收全數 Qty payload；保存 callback idempotency key／request／response／狀態，驗證重試、逾時對帳及補償。外部 callback 成功後才轉 MES Status 3／4。公司端 DEV 不呼叫 callback，也不連 PostgreSQL、不實作或驗收正式 API/schema。
 - [x] SC104 公司端 handoff 已完成；清冊下一項 SC105「PQC 檢驗單」。
 

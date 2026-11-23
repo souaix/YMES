@@ -78,7 +78,7 @@ const visibleForms = computed(() => forms.value.filter((row) => {
 const availableItems = computed(() => itemCatalog.filter((row) => !draft.value?.items.some((mapped) => mapped.qcItemNo === row.qcItemNo)))
 const availableSelectedItems = computed(() => itemCatalog.filter((row) => !selectedForm.value?.items.some((mapped) => mapped.qcItemNo === row.qcItemNo)))
 const pendingCount = computed(() => selectedForm.value?.items.filter((row) => row.status === 0).length || 0)
-const canReturnToUnconfirmed = computed(() => selectedForm.value?.items.every((row) => row.status === 0) ?? false)
+const canDeleteUnstarted = computed(() => selectedForm.value?.items.every((row) => row.status === 0) ?? false)
 
 function setMessage(text: string, kind: typeof messageKind.value = 'info'): void { message.value = text; messageKind.value = kind }
 function setStatus(status: FormStatus): void {
@@ -192,11 +192,13 @@ function saveResult(): void {
     setMessage('所有 QC Item 已完成，終檢單自動進入檢驗完成。', 'success')
   } else setMessage(`QC Item ${item.qcItemNo} 已記錄 DEV 結果，尚有 ${pendingCount.value} 項待檢。`, 'success')
 }
-function returnToUnconfirmed(): void {
+function deleteUnstartedWaitForm(): void {
   const form = selectedForm.value
-  if (!form || activeStatus.value !== 1 || !canReturnToUnconfirmed.value) return
-  form.status = 0; form.reviser = props.currentUserNo?.trim() || 'DEV-USER'; form.reviseDate = nowText(); form.dataStamp += 1; activeStatus.value = 0; selectedFormId.value = form.id
-  setMessage('此單尚無 QC Item 開始檢驗，已退回未確認。', 'success')
+  if (!form || activeStatus.value !== 1 || !canDeleteUnstarted.value) return
+  forms.value = forms.value.filter((row) => row.id !== form.id)
+  selectedFormId.value = visibleForms.value[0]?.id || ''
+  selectedItemNo.value = ''
+  setMessage('已刪除尚未開始 QC Item 檢驗的待檢單及 Map。', 'success')
 }
 function finalizeForm(status: 3 | 4): void {
   const form = selectedForm.value
@@ -227,7 +229,7 @@ function copySelected(): void { if (selectedForm.value) createDraft('copy', sele
       <div class="list-pane">
         <div class="pane-heading"><div><h2>{{ statusName(activeStatus) }}清單</h2><span>{{ visibleForms.length }} 筆</span></div>
           <div v-if="activeStatus === 0" class="actions"><button class="primary" @click="createDraft('add')">新增</button><button :disabled="!selectedForm" @click="createDraft('edit', selectedForm || undefined)">編輯</button><button :disabled="!selectedForm" @click="copySelected">複製</button><button class="danger" :disabled="!selectedForm" @click="deleteSelected">刪除</button><button class="primary" :disabled="!selectedForm" @click="confirmSelected">確認</button></div>
-          <div v-else-if="activeStatus === 1" class="actions"><button class="primary" :disabled="!selectedItem || selectedItem.status === 1" @click="beginResult">SPC 檢驗</button><button :disabled="!canReturnToUnconfirmed" @click="returnToUnconfirmed">退回未確認</button><button :disabled="!selectedForm" @click="copySelected">複製</button></div>
+          <div v-else-if="activeStatus === 1" class="actions"><button class="primary" :disabled="!selectedItem || selectedItem.status === 1" @click="beginResult">SPC 檢驗</button><button class="danger" :disabled="!canDeleteUnstarted" @click="deleteUnstartedWaitForm">刪除未開始單據</button><button :disabled="!selectedForm" @click="copySelected">複製</button></div>
           <div v-else-if="activeStatus === 2" class="actions"><button class="primary" :disabled="!selectedForm" @click="finalizeForm(3)">允收</button><button class="danger" :disabled="!selectedForm" @click="finalizeForm(4)">拒收</button><button :disabled="!selectedForm" @click="copySelected">複製</button></div>
           <div v-else class="actions"><button :disabled="!selectedForm" @click="copySelected">複製</button></div>
         </div>

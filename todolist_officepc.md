@@ -3,7 +3,7 @@
 ## 公司端最新交付：SC104 終檢檢驗單（2026-11-23）
 
 - [x] 核對 `frmFQCForm`／inline Designer、`frmFQCFormDef`／inline Designer、`frmFQCFormQCItemMap`、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`、`clsSPC` 與 `clsBasis_UPD`。
-- [x] 完成 `/YMES/SPC/FinalQCForm` DEV 頁：5 個狀態、單據 CRUD／Copy／Confirm、Lot／產品／工序 fixture、QC Item Map、SPC 假結果、允收／拒收及狀態稽核欄位。
+- [x] 完成 `/YMES/SPC/FinalQCForm` DEV 頁：5 個狀態、單據 CRUD／Copy／Confirm、待檢頁未開始單據刪除、Lot／產品／工序 fixture、QC Item Map、SPC 假結果、允收／拒收及狀態稽核欄位。
 - [x] 新增 [SC104 規格](docs/modules/SPC/終檢檢驗單.md)、Module index 與家用端 handoff；未連 PostgreSQL，未執行 build／test／browser。
 - [x] QC Item Map 沿用 QC216 source DDL／PG CREATE reference；`TBLSPCFQCFORM` 缺同版 Oracle DDL／metadata 與 PG CREATE-only。桌機受保護 attachment/profile 不存在，本次未連 Oracle、未猜主表 schema。
 - [ ] 家用端 Pull 後核對 FQC 主單／Map live schema、migrations、DataStamp compare-and-set 及 `FQCFORMNO` 序號規則；取得可靠主表 DDL 後再補必要 schema。正式 API 驗證產品／工序／版本／Lot／QC Item eligibility，處理主單／Map／量測結果交易與狀態。
