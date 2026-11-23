@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES108 設備能力設定（2026-11-23）
+
+公司端依 `frmEQPCapMapping`／Def、`wsEMS` 與 `clsEMSEquipment` 完成 [ES108 DEV 頁](docs/modules/EMS/設備能力設定.md)，fallback `/YMES/EMS/EquipmentCapabilityMapping`。DEV 模擬查詢、能力條件編輯／複製的整組替換、逐條件開／關及多設備整組刪除。
+
+- [ ] Pull 最新 main 後核對 `tblesmseqpcapmapping` live schema／migration／權限與引用。repo 沒有 Oracle DDL／metadata 或 CREATE-only，桌機受保護 profile 檔不存在；不要依 Core SQL 猜實體欄位、型別或 PK。需要時取得可靠 metadata 後再補 DDL。
+- [ ] 正式查詢需登入及 `EQP CAP MAPPING` 授權、參數化 Equipment Type／Equipment No／CapItem filter、設備範圍驗證、穩定排序和限量分頁；CapItem 篩選左側設備集合後，右側需回傳選取設備完整 mapping。
+- [ ] Add／Edit／Copy 以單一 transaction 整組替換；加入 expected-set／版本並發保護、能力項目／設備重驗、合法 Operand 與數值驗證、複合條件重複檢查。確認實體 schema 後再定 byte／字元長度，Audit Creator／時間由 server 設定。
+- [ ] 開／關以完整條件鍵更新並校驗 expected status／row version。多列更新及多設備刪除要定義原子批次或逐列結果；刪除會清掉該設備全部能力條件，不能誤報部分成功。
+- [x] ES108 公司端 DEV／規格已交接；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端交接：ES107 設備能力項目設定（2026-11-23）
 
 公司端依 `frmEQPCapBasis`／Def、`wsEMS` 與 `clsEMSEquipment`／`clsBasis_UPD` 完成 [ES107 DEV 頁](docs/modules/EMS/設備能力項目設定.md)，fallback `/YMES/EMS/EquipmentCapabilityBasis`。DEV 以頁面記憶體假資料模擬四種 IssueState、CapItem 搜尋、CRUD／Copy／Apply、依狀態刪除與核准分支。

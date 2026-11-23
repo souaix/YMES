@@ -116,6 +116,7 @@ import EmsEquipmentControl from './components/EmsEquipmentControl.vue'
 import EmsEquipmentAccStateLogQuery from './components/EmsEquipmentAccStateLogQuery.vue'
 import EmsEquipmentAccStateQuery from './components/EmsEquipmentAccStateQuery.vue'
 import EmsEquipmentCapabilityBasis from './components/EmsEquipmentCapabilityBasis.vue'
+import EmsEquipmentCapabilityMapping from './components/EmsEquipmentCapabilityMapping.vue'
 import EmsEquipmentStateByArea from './components/EmsEquipmentStateByArea.vue'
 import EmsEquipmentStateByType from './components/EmsEquipmentStateByType.vue'
 import EmsAccessoryStateMonitor from './components/EmsAccessoryStateMonitor.vue'
@@ -689,6 +690,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:EMS:VIOLATIVE STATE SETTING', label: '設備狀態互斥設定', shortLabel: '互斥', functionNo: 'VIOLATIVE STATE SETTING', moduleNo: 'EMS' },
         { id: 'function:EMS:EQUIPMENT REASON BASIS', label: '設備狀態變更原因資料', shortLabel: '原因', functionNo: 'EQUIPMENT REASON BASIS', moduleNo: 'EMS' },
         { id: 'function:EMS:EQP CAP BASIS', label: '設備能力項目設定', shortLabel: '能力項目', functionNo: 'EQP CAP BASIS', moduleNo: 'EMS' },
+        { id: 'function:EMS:EQP CAP MAPPING', label: '設備能力設定', shortLabel: '設備能力', functionNo: 'EQP CAP MAPPING', moduleNo: 'EMS' },
       ],
     }, {
       id: 'menu:EMS:ACC EXECUTION', label: '配件_執行', shortLabel: '配', children: [
@@ -734,6 +736,7 @@ const menuRoutes: Record<string, string> = {
   'function:EMS:EQP ACC STATE LOG QUERY': appBasePath + '/EMS/EquipmentAccStateLogQuery',
   'function:EMS:EQP ACC STATE QUERY': appBasePath + '/EMS/EquipmentAccStateQuery',
   'function:EMS:EQP CAP BASIS': appBasePath + '/EMS/EquipmentCapabilityBasis',
+  'function:EMS:EQP CAP MAPPING': appBasePath + '/EMS/EquipmentCapabilityMapping',
   'function:EMS:EQUIPMENT STATE LOG': appBasePath + '/EMS/EquipmentStateLog',
   'function:EMS:EQP STATE CONTROL SETTING': appBasePath + '/EMS/EqpStateControlSet',
   'function:EMS:EQP STATE STATISTICS_EMS': appBasePath + '/EMS/EquipmentStateStatistics',
@@ -1238,6 +1241,7 @@ const isEmsEquipmentControlPage = computed(() => activeMasterKey.value === 'func
 const isEmsEquipmentAccStateLogQueryPage = computed(() => activeMasterKey.value === 'function:EMS:EQP ACC STATE LOG QUERY')
 const isEmsEquipmentAccStateQueryPage = computed(() => activeMasterKey.value === 'function:EMS:EQP ACC STATE QUERY')
 const isEmsEquipmentCapabilityBasisPage = computed(() => activeMasterKey.value === 'function:EMS:EQP CAP BASIS')
+const isEmsEquipmentCapabilityMappingPage = computed(() => activeMasterKey.value === 'function:EMS:EQP CAP MAPPING')
 const isEmsEquipmentStateByAreaPage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP STATUS BY AREA')
 const isEmsEquipmentStateByTypePage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP STATUS BY TYPE')
 const isEmsAccessoryStateMonitorPage = computed(() => activeMasterKey.value === 'function:EMS:ACC MONITOR')
@@ -3185,6 +3189,7 @@ async function signOut(): Promise<void> {
         <EmsEquipmentAccStateLogQuery v-else-if="isEmsEquipmentAccStateLogQueryPage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentAccStateQuery v-else-if="isEmsEquipmentAccStateQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentCapabilityBasis v-else-if="isEmsEquipmentCapabilityBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsEquipmentCapabilityMapping v-else-if="isEmsEquipmentCapabilityMappingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateByArea v-else-if="isEmsEquipmentStateByAreaPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateByType v-else-if="isEmsEquipmentStateByTypePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsAccessoryStateMonitor v-else-if="isEmsAccessoryStateMonitorPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

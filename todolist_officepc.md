@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## 公司端最新交付：ES108 設備能力設定（2026-11-23）
+
+- [x] 核對 `frmEQPCapMapping`／Def 與內嵌 Designer、`wsEMS.LoadEMSEQPCapMapping/LoadEMSEQPCapMapping_EQP/UpdEMSEQPCapMapping/SetEMSEQPCapMapping_OpenStatus/DelEMSEQPCapMapping`、`clsEMSEquipment`；記錄查詢雙 Grid、整組替換、逐條件開／關及逐台整組刪除。
+- [x] 完成 `/YMES/EMS/EquipmentCapabilityMapping` DEV 假資料頁：Equipment Type／No／CapItem 查詢、Add／Edit／Copy、複合條件檢查、開／關、多設備刪除；新增 [ES108 規格](docs/modules/EMS/設備能力設定.md)、索引及家用端 handoff。
+- [x] `TBLEMSEQPCAPMAPPING` 的 Oracle source DDL／metadata 與 PostgreSQL CREATE-only 不在 repo；桌機受保護 Oracle profile 檔不存在，本次未查 Oracle，未猜欄位／鍵／DDL。沿用 ES107 已知能力項目主檔參照；未連 PostgreSQL，未執行 build／test／browser。
+- [ ] 家用端 Pull 後比對 mapping table live schema／migration。若缺表或無法核實欄位／鍵，先取得允許的 Oracle metadata，再補 CREATE-only；正式 API 以交易原子整組替換、expected-set／status 保護、參數化查詢，並定義多設備刪除與多列狀態更新的批次結果語意。
+- [x] ES108 公司端 DEV／來源規格完成；依清冊接續下一個尚缺功能。
+
 ## 公司端最新交付：ES107 設備能力項目設定（2026-11-23）
 
 - [x] 核對 `frmEQPCapBasis`／`frmEQPCapBasisDef` 與內嵌 Designer、`wsEMS.Load/Add/Edit/Del/ApproveEMSEQPCapBasis`、`clsEMSEquipment`、`clsBasis_UPD`；記錄四狀態、CapItem 搜尋、CRUD／Copy、逐筆刪除及 `EMS_EQP_CAPBASIS` 核准分支。
