@@ -4,8 +4,11 @@
 
 公司端依標準 `frmEquipmentAccStateLog`／內嵌 Designer、`wsEMS.LoadEquipmentAccStateLog`、`clsAccState.LoadEquipmentAccStateLog` 完成 [ES408 DEV 頁](docs/modules/EMS/設備配件歷史資料查詢.md)，fallback `/YMES/EMS/EquipmentAccStateLogQuery`。DEV 有設備／配件／使用者精確篩選、Start／End 時間界限、lookup 選擇器及 7 欄歷程查詢。
 
-- [ ] Pull 後比對 `TBLEMSEQPACCSTATELOG` 與 lookup tables live schema／migrations；公司端沿用 repository DDL references，無新增表或 CREATE SQL。
-- [ ] 實作登入與 FunctionNo `EQP ACC STATE LOG QUERY` 授權的唯讀 API，參數化所有篩選，提供穩定分頁、最大筆數及日期範圍守門；空結果回空陣列。不可直接照搬 Legacy AccessoryType 參數覆蓋缺陷；User lookup 不回傳 Password／ResetPassword。
+- [x] 使用家用機 PPK SSH 唯讀核對遠端 `YMES` schema；`TBLEMSEQPACCSTATELOG` 全庫不存在。依既有 Oracle source DDL／PG CREATE-only 新增並執行 migration `0066_ems_equipment_accessory_state_log.sql`，建立空表、Start／End 時間索引及 `ymes_app` SELECT，未查業務資料或灌入資料。
+- [x] 完成登入後唯讀 API `GET /api/ems/equipment-accessory-state-logs`：參數化五個文字與四個時間界限條件、穩定排序與 offset 分頁、每頁最多 100 筆、要求時間界限、完整區間最多 366 天；沒有暴露序號 filter 或 user 密碼欄位。依先前決策目前採登入保護，FunctionNo 細項 ACL 隨共用權限功能後續接入。
+- [x] 正式查詢頁串接 API；DEV 預覽仍使用固定假資料。正式頁保留七個 Legacy 顯示欄位、空結果狀態及分頁；文字條件改為直接輸入，避免用未建立的 lookup API。
+- [x] app-browser Demo session 實際操作 ES408：時間界限必填提示、含特殊字元的設備條件加一天範圍查詢成功回空結果；新歷程表目前無資料、console 無 error／warning。API 未登入回 401，網站／API readiness 200。
+- [ ] 全部版本驗證完成後，正常同步並推送 GitHub；禁止 force push，保留兩個未追蹤的 Web 封存檔。
 - [x] ES408 公司端 DEV／來源規格已交接；後續依清冊接續。
 
 ## 公司端交接：ES101 設備控管設定（2026-11-23）

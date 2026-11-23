@@ -3174,7 +3174,7 @@ async function signOut(): Promise<void> {
         <WipLotQuantityAdjust v-else-if="isWp907Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateChange v-else-if="isEmsEquipmentStateChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsEquipmentControl v-else-if="isEmsEquipmentControlPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <EmsEquipmentAccStateLogQuery v-else-if="isEmsEquipmentAccStateLogQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsEquipmentAccStateLogQuery v-else-if="isEmsEquipmentAccStateLogQueryPage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateByArea v-else-if="isEmsEquipmentStateByAreaPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateByType v-else-if="isEmsEquipmentStateByTypePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsAccessoryStateMonitor v-else-if="isEmsAccessoryStateMonitorPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
