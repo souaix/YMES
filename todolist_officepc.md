@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：ES408 設備配件歷史資料查詢（2026-11-23）
+
+- [x] 核對標準 `frmEquipmentAccStateLog`／內嵌 Designer、`wsEMS.LoadEquipmentAccStateLog`、`clsAccState.LoadEquipmentAccStateLog` 與配件監控帶入 AccessoryNo 的開窗流程。
+- [x] 完成 `/YMES/EMS/EquipmentAccStateLogQuery` DEV 查詢頁：設備類別／編號、配件類別／編號、使用者與 Start／End 四個獨立時間界限、假 lookup picker、精確篩選和 7 欄歷程 Grid；新增 [ES408 規格](docs/modules/EMS/設備配件歷史資料查詢.md)、索引與家用端 handoff。
+- [x] DEV 只用虛構歷程，未呼叫 API／Service、未連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。DEV 以 AND 組合篩選；Legacy Form 在 Accessory Type 條件會覆蓋之前的設備／使用者條件，此差異已記錄。
+- [x] `TBLEMSEQPACCSTATELOG` 及 lookup tables 沿用既有 Oracle DDL／metadata 與 CREATE-only references，無新增 DDL；空結果以正常空狀態處理，沒有實際 Oracle 連線。
+- [ ] 家用端核對 live schema 後，實作 FunctionNo `EQP ACC STATE LOG QUERY` 權限保護、參數化唯讀 API、時間範圍／列數限制、穩定分頁；User lookup 僅提供安全欄位，空結果回傳空陣列。
+- [x] ES408 公司端完成；依選單清冊接續下一項。
+
 ## 公司端最新交付：ES101 設備控管設定（2026-11-23）
 
 - [x] 核對標準 `frmEquipmentControl`／內嵌 Designer、`wsEMS.LoadEquipmentStateDefine/UpdEquipmentState` 與 `clsEQPBasis`／`clsEQPStateControl`／`clsEMSEquipment` Core。
