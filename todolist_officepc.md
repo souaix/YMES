@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：ES105 配件狀態互斥設定（2026-11-23）
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 相同的 `frmEQPACCStateControl` Form／Designer、`wsEQP.LoadAccessoryCategory/LoadEQPACCStateBasis`、`wsEMS.LoadViolateStateAndShowNowName/UpdACCViolatStateChangeData` 及 `clsAccBasis`／`clsEMSEquipment` Core。
+- [x] 完成 `/YMES/EMS/AccessoryStateViolativeSetting` DEV 頁：配件類別選擇、配件狀態色矩陣、雙擊切換禁止 pair、Confirm 假套用及 Close；新增 [ES105 規格](docs/modules/EMS/配件狀態互斥設定.md)、索引與家用端 handoff。
+- [x] DEV 狀態／類別／互斥組合全為虛構；Confirm 僅更新本頁記憶體，不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
+- [x] 重用作用中矩陣的 `TBLEQPACCSTATEBASIS` 已有 Oracle source DDL 與 CREATE-only，無新增 DDL。repo 雖有 `TBLEQPACCSTATECONTROL` DDL，但 Form 目前流程不使用該舊 helper。`TBLEMSACCVIOLATESTATUSCHANGE`／`TBLEMSACCVIOLATESTATUSLOG` 缺 Oracle source DDL／metadata 及 CREATE-only；桌機受保護 Oracle profile 不可用，未連線或猜 schema。
+- [ ] 家用端比對兩張互斥設定／歷程表 live schema／migration，取得核准 DDL 後補 CREATE-only；登入授權、參數化，於單一交易原子替換完整矩陣與歷程，並由 server 查狀態名稱。Legacy 逐狀態 Delete+Add 沒有涵蓋全矩陣的交易，失敗可能部分更新。
+- [x] ES105 完成；清冊下一項為 ES303「配件壽命維護」。
+
 ## 公司端最新交付：ACC MONITOR_BU1 配件狀態監控_管理（2026-11-23）
 
 - [x] 核對 DEV_SILVA Customer `frmAccessoryStateMonitor`、共用 `wsEQP`／`wsEMS.ChangeAccessoryState` Service 與 `clsAccState.ChangeACCState` Core；Customer／STD Service source hash 一致。標準 Form 是已完成的 ES304；此客戶版 Form 僅在 DEV_SILVA Customer 找到。
@@ -7,7 +16,7 @@
 - [x] 所有 DEV 配件、狀態、顏色、歷程皆為虛構並限本頁記憶體；未呼叫 API／Service、未連 Oracle／YMES PostgreSQL、未寫正式資料；未執行 build、test、browser 或 WinForms runtime。
 - [x] 重用配件現況／歷程／基礎／狀態既有 Oracle DDL 與 CREATE-only，無新增 DDL。客戶版直接呼叫的 `GETACC_STATE`、`GET_ACCLOG`、`GETACCSTATE_FIELD` 及 `AccessoryApi.ChangeAccessoryState` REST server source 未在本機來源樹找到；未猜 SQL、response 欄位或授權行為。
 - [ ] 家用端依規格核對相關表 live schema／migration，取得缺少 REST server 契約；新 API 需登入授權、伺服器端推導 user／SAP 範圍、限制目前版本、參數化及分頁，狀態更新重驗 expected state 並原子記錄 log／current／新序號。多選結果要明確支援部分成功。
-- [x] `ACC MONITOR_BU1` 已完成；清冊下一項為 ES105「配件狀態互斥設定」。
+- [x] `ACC MONITOR_BU1`、ES105 已完成；清冊下一項為 ES303「配件壽命維護」。
 
 ## 公司端最新交付：ES405 配件狀態查詢（2026-11-23）
 
@@ -16,7 +25,7 @@
 - [x] 配件、版本、使用者、數量、狀態及原因均為虛構，只存在本頁記憶體；不呼叫 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
 - [x] 重用 `TBLEMSACCESSORYSTATE`、`TBLEQPACCSTATEBASIS`、`TBLEQPACCESSORYLIFE` 既有 Oracle DDL／PostgreSQL CREATE-only。`TBLEMSACCESSORYREASONS` 缺 Oracle source DDL／metadata 與 CREATE-only；桌機受保護 Oracle profile 不可用，本次記錄缺項且未猜 schema。
 - [ ] 家用端比對三張已知表 live schema／migration；取得核准 Oracle 唯讀 metadata 後補 `TBLEMSACCESSORYREASONS` CREATE-only。正式 API 需授權、參數化及穩定分頁；逐列載入理由，並決定各 AccessoryVersion 的顯示語意／欄位及 StateName 是否為現況名稱。
-- [x] ES405、`ACC MONITOR_BU1` 客戶版監控變體已完成；清冊下一項為 ES105「配件狀態互斥設定」。
+- [x] ES405、`ACC MONITOR_BU1`、ES105 均已完成；清冊下一項為 ES303「配件壽命維護」。
 
 ## 公司端最新交付：ES406 配件歷史資料查詢（2026-11-23）
 
@@ -25,7 +34,7 @@
 - [x] 歷程、使用者、配件與原因均為虛構，只存在本頁記憶體；不呼叫正式 API／Service、不連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
 - [x] 重用 `TBLEMSACCESSORYSTATELOG`、`TBLEQPACCSTATEBASIS` 既有 Oracle DDL／PostgreSQL CREATE-only。`TBLEMSACCESSORYREASONS` 缺 Oracle source DDL／metadata 與 CREATE-only；桌機受保護 Oracle profile 不可用，本次記錄缺項且未猜 schema。
 - [ ] 家用端先比對兩張已知表 live schema／migration，唯讀取得 `TBLEMSACCESSORYREASONS` DDL／PK／index 後補 CREATE-only；正式查詢需登入授權、參數化、穩定分頁、避免無範圍全表掃描，User lookup 僅回傳安全的 UserNo／名稱。
-- [x] ES405「配件狀態查詢」已完成；接續核對清冊 `ACC MONITOR_BU1` 客戶版變體。
+- [x] ES405、`ACC MONITOR_BU1` 與 ES105 均已完成；清冊下一項為 ES303「配件壽命維護」。
 
 ## 公司端最新交付：ES103 配件狀態控制設定（2026-11-23）
 

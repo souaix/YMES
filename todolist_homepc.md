@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES105 配件狀態互斥設定（2026-11-23）
+
+公司端依三份相同的 `frmEQPACCStateControl`、THEIL `wsEQP.LoadEQPACCStateBasis`／`wsEMS.LoadViolateStateAndShowNowName`／`UpdACCViolatStateChangeData` 及 `clsAccBasis`／`clsEMSEquipment` 完成 [ES105 DEV 頁](docs/modules/EMS/配件狀態互斥設定.md)，fallback `/YMES/EMS/AccessoryStateViolativeSetting`。DEV 模擬配件類別狀態互斥矩陣、雙擊標記與 Confirm 假套用。
+
+- [ ] 比對 `TBLEMSACCVIOLATESTATUSCHANGE`／`TBLEMSACCVIOLATESTATUSLOG` live schema／migrations；repo 缺兩張表 Oracle source DDL／metadata 與 CREATE-only。公司桌機受保護 Oracle profile 不可用，未猜欄位／PK／index；取得核准 metadata 後補 CREATE-only。
+- [ ] Legacy Confirm 對各目前狀態分開呼叫 updater；Service 每次先 Delete 該類別／來源狀態，再逐筆 Add forbidden targets 並記錄 log，沒有包住整個矩陣或刪改序列的單一交易。正式 API 需以單一交易原子替換完整矩陣、原子寫歷程、server 解析狀態名稱並回傳版本／衝突。
+- [x] ES105 完成；清冊下一項為 ES303「配件壽命維護」。
+
 ## 家用端同步與瀏覽器檢查（2026-11-23）
 
 - [x] `git fetch origin` 讀到公司端最新 `main`：`faf5592`。已以一般 merge 整合 WPP04、WPP08、ES405、BU1 配件狀態監控與多個 EMS DEV 頁；沒有覆蓋公司端提交。
@@ -7,7 +15,7 @@
 - [x] 重開機後 app-browser 截圖通道已可用：開啟正式站、Demo 登入狀態、三層選單展開與 WPP02 導覽皆可操作並成功截圖。正式 WPP02 頁目前顯示「尚未遷移」，未以 DEV 假資料冒充正式功能；沒有寫入業務資料。
 - [x] 修正登入成功／首次改密碼後的 menu 載入競速：等待 menu tree 完成，載入中鎖住主框架並顯示簡短狀態；新增 `docs/modules/Shared/登入與主選單.md`。
 - [x] 最終合併後前端 `vue-tsc` 與 Vite production build 通過（864 modules）；僅既有約 4.86 MB 主 JS chunk 提示超過 Vite 500 KB 預設值。
-- [x] 已將整合版以一般快轉推送至 GitHub `main`（`62ca630`）；推送後讀回 `origin/main` 確認一致，並檢查兩台 TODO。公司端新接續項目為 ES405／BU1 配件 API；相關表 live schema 尚待比對，`tblemsaccessoryreasons` DDL 仍缺。
+- [x] 已將整合版以一般快轉推送至 GitHub `main`（`62ca630`）；該 checkpoint 後公司端繼續完成 ES405、ACC MONITOR_BU1 及 ES105，下一項為 ES303「配件壽命維護」。
 
 ## 2026-11-23 最新同步與 ES405 API
 
@@ -24,7 +32,7 @@
 - [ ] 比對 `tblemsaccessorystate`、`tblemsaccessorystatelog`、`tbleqpaccessorybasis`、`tbleqpaccstatebasis` live schema／migration；repo 已有 Oracle source DDL 與 CREATE-only。取得客戶版 REST server/API 原始契約：`GETACC_STATE`、`GET_ACCLOG`、`GETACCSTATE_FIELD`、`AccessoryApi.ChangeAccessoryState`；公司端本機來源樹未找到 Controller，未猜 SQL／回傳欄位／授權。
 - [ ] 正式 API 不接受 client 自報 `GUserNo`／SAP `MANDT`／`WERKS` 作為授權；從登入身分與 server-side 權限推導管理範圍。查詢需目前版本、參數化、穩定排序／分頁；狀態變更需重驗 expected state、類別權限及目標狀態，再原子寫 log／current／新序號。
 - [ ] Legacy Form 對選取列逐筆 POST，可能部分成功；正式 API／UI 應按單筆回傳結果或明確定義整批交易與 rollback 語意。`wsEMS.ChangeAccessoryState` 呼叫 `clsAccState.ChangeACCState`；Core 檢查權限與 expected state，但客戶版 REST endpoint 到此 Service 的對接未能由缺少的 REST server source 核實。
-- [x] `ACC MONITOR_BU1` 完成；清冊下一項為 ES105「配件狀態互斥設定」。
+- [x] `ACC MONITOR_BU1`、ES105 已完成；清冊下一項為 ES303「配件壽命維護」。
 
 ## 公司端交接：ES405 配件狀態查詢（2026-11-23）
 
@@ -32,7 +40,7 @@
 
 - [ ] 比對 `tblemsaccessorystate`、`tbleqpaccstatebasis`、`tbleqpaccessorylife` live schema／migrations；repo 有 Oracle source DDL 與 CREATE-only。`tblemsaccessoryreasons` 缺 Oracle source DDL／metadata 及 CREATE-only；取得核准唯讀 metadata 後再補，禁止猜欄位。
 - [ ] 實作授權且參數化的配件現況分頁 GET 與單列 reasons GET，避免無條件全表查詢及一次載入全部 ACCSerialNo。Core 會列出各 AccessoryVersion 且 UI 隱藏版本，正式端需明確定義版本顯示規則；StateName 取目前狀態基礎，不是歷史快照。
-- [x] ES405 與 `ACC MONITOR_BU1` 客戶版監控變體已交接；清冊下一項為 ES105「配件狀態互斥設定」。
+- [x] ES405、`ACC MONITOR_BU1`、ES105 均已交接；清冊下一項為 ES303「配件壽命維護」。
 
 ## 公司端交接：ES406 配件歷史資料查詢（2026-11-23）
 
@@ -41,7 +49,7 @@
 - [ ] 先比對 `tblemsaccessorystatelog`、`tbleqpaccstatebasis` live schema／migrations；repo 已有來源 DDL 與 CREATE-only。取得核准 Oracle 唯讀 metadata 補 `tblemsaccessoryreasons` 的 DDL／PK／index，再新增相符 CREATE-only；公司桌機 profile 不可用，沒有猜表結構。
 - [ ] 實作授權 GET `/api/ems/accessory-state-logs` 與 `/api/ems/accessory-state-logs/{logId}/reasons`，支援配件類型、配件編號、使用者、起始時間範圍、穩定排序與分頁；空條件應限制時間範圍／筆數。需核對 `StateName` 使用當前基礎名稱或歷史快照語意。
 - [ ] Core 歷程 SQL 直接串接輸入、沒有分頁；reason 查詢來自尚未核對 DDL 的 `tblemsaccessoryreasons`。Legacy Form 取得完整 `LoadUserSecurity` 後才於客戶端移除密碼欄，正式 user picker 必須改成最小欄位 API，禁止傳送 Password／ResetPassword。
-- [x] ES405「配件狀態查詢」已完成；後續先核對清冊 `ACC MONITOR_BU1` 客戶版變體。
+- [x] ES405、`ACC MONITOR_BU1` 與 ES105 均已交接；清冊下一項為 ES303「配件壽命維護」。
 
 ## 公司端交接：ES103 配件狀態控制設定（2026-11-23）
 
