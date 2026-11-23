@@ -1,6 +1,15 @@
 # 公司端待辦
 
-## 公司端最新交付：SC107 匯入計量檢測數據（2026-11-23）
+## 公司端最新交付：SC108 進料檢驗_元件（2026-11-23）
+
+- [x] 依 `frmIncomingQCFormComponent`／Def／QC Item Map、`wsSPC`、`clsSPC`、`clsBasis_UPD` 核對七狀態、單據 CRUD／Copy、QC Item Map、元件明細、狀態轉換、ERP callback、複判及 `WP_BRERFCreate` 分支。
+- [x] 完成 `/YMES/SPC/IncomingQCFormComponent` DEV：Header CRUD／Confirm、元件 CSV／XLSX／貼上與 Qty 守門、Map、SPC 假結果、Receive／Reject／Concession callback 成敗及 Revise；不呼叫資料庫、SPC、ERP／sQMS、ERF。
+- [x] 新增 [SC108 規格](docs/modules/SPC/進料檢驗_元件.md)、Module index、Function Inventory 進度及家用端 handoff；未連 PostgreSQL，未執行 build／test／browser。
+- [x] `TBLSPCIQCFORMCOMPONENT`、`TBLSPCIQCFORMCOMPQCITEMMAP`、`TBLSPCIQCCOMPONENT` 缺同版 Oracle source DDL／metadata／PG CREATE-only；桌機受保護 profile 不存在，未查 Oracle、未猜 schema。另記錄刪 Header 未見清理元件明細及 Core Map result collection 重複執行風險。
+- [ ] 家用端先核對 YMES live schema／migration 並取得可靠三表結構，再決定必要 CREATE／forward migration；實作 Header、Map、元件清單 replace、Confirm、SPC 結果及狀態 API，處理 DataStamp CAS、component orphan、重複 SQL、callback idempotency／部分成功補償與 `WP_BRERFCreate`。
+- [x] SC108 公司端交接完成；FunctionKey 清冊沒有 SC109，下一個尚未完成 SPC 功能為 SC201「SPC 資料維護」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
+## 公司端交接：SC107 匯入計量檢測數據（2026-11-23）
 
 - [x] 核對 `frmImport_VarMeasureData`／inline Designer、`frmFileTypeSelect`／Designer、`wsSPC.AutoBRSPCContorl_Var`／`LoadSPCImportData`、`clsMDS.funAutoBRSPCContorl_Var` 與 `clsSPC.UpdVar_TestValue`／待檢清單／限值／違規路徑。
 - [x] 完成 `/YMES/SPC/VariableMeasurementImport` DEV：一般／元件欄位範本、XLSX／CSV 載入、開發範例、逐列勾選、Check／Save、失敗訊息及已儲存鎖定狀態。DEV 僅在頁面記憶體，不呼叫服務／資料庫。
@@ -8,7 +17,7 @@
 - [x] `LoadSPCImportData` Core 直接查 `TBLSPCImportData`，但 SC107 主 Form 搜尋未見呼叫；repo 缺該表 Oracle source DDL／metadata／PG CREATE-only。共用計量寫入表需依 SC101 handoff 與 QC205 references 對照，桌機受保護 Oracle profile 不存在，本次未查 Oracle、未猜 schema。
 - [ ] 家用端確認 `LoadSPCImportData` 的真實呼叫端，再決定 `TBLSPCImportData` 是否需正式 API/schema；若需要，先取得 MESTEST DDL／metadata 並比對 live schema。
 - [ ] 正式端逐表核實 `funAutoBRSPCContorl_Var` 的 SPC Online／Log／Statistic／Factor／Limit／Violation／SPC Lot QC List 寫入與交易 helper；檢查多列部分失敗、serial 併發、Check 結果不可被信任、SPC 待檢以及條件式 Lot／ERF／通知副作用與補償，提供參數化預覽／檢查／儲存和逐列結果。
-- [x] SC107 公司端 DEV／規格完成；清冊下一項 SC108「進料檢驗_元件」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC107 公司端 DEV／規格完成；SC108「進料檢驗_元件」已接續交付。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC106 出貨檢驗單（2026-11-23）
 

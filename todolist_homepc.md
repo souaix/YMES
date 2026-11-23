@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 公司端交接：SC108 進料檢驗_元件（2026-11-23）
+
+公司端依 `frmIncomingQCFormComponent`／Def／QC Item Map、`wsSPC`、`clsSPC`、`clsBasis_UPD` 完成 [SC108 DEV 頁](docs/modules/SPC/進料檢驗_元件.md)，fallback `/YMES/SPC/IncomingQCFormComponent`。DEV 含七種狀態、Header CRUD／Confirm、元件序號清單匯入／貼上、Map、SPC 假結果、Receive／Reject／Concession callback 模擬及 Revise；不呼叫 MES／SPC／ERP／ERF 服務或資料庫。
+
+- [ ] 先核對 YMES PostgreSQL live schema／migrations。`TBLSPCIQCFORMCOMPONENT`、`TBLSPCIQCFORMCOMPQCITEMMAP`、`TBLSPCIQCCOMPONENT` 缺同版 Oracle source DDL／metadata／PG CREATE-only；公司桌機無受保護 Oracle profile，未猜欄位／鍵／索引。取得可靠結構後才決定必要 CREATE／migration。
+- [ ] 實作受登入與 SC108 Function 授權的限量 Header 查詢與 CRUD／Copy／serial reservation；核物料、供應商、ERP source ownership。Map／元件清單以參數化 SQL 操作；元件明細以單一交易整組取代，檢查重複 ComponentNo 與 count = Header Qty。Confirm 使用 DataStamp CAS，並同時核查 Header、Map、元件明細交易邊界。
+- [ ] 修正／處理來源 Core 刪 Header 時未見刪 `TBLSPCIQCCOMPONENT` 明細的 orphan 風險。核查 `UpdIQCFormComponentQCItemMapResult` 重複執行 Map SQL collection 的實際 helper 效果；SPC 結果更新、最後項目完成與 Header Status 2／FinishTime 應原子化。
+- [ ] 逐一核實 ERP incoming／OS 及 TIPTOP、WFGP、T100、TIPTOPICD、E10ICD callback；保存 idempotency、request／response、重試／對帳與外部成功後本機 CAS 失敗補償。定義 Receive／Reject／Concession／Revise 與 `SPCInspAbnormalHoldLot` → `WP_BRERFCreate` 的交易／部分成功處理。
+- [x] 公司端僅交付 DEV／規格，未連 YMES PostgreSQL、未實作正式 API/schema、未執行 build／test／browser。SC109 不在清冊；下一個尚未完成 SPC FunctionKey 為 SC201。
+
 ## 公司端交接：SC107 匯入計量檢測數據（2026-11-23）
 
 公司端依 `frmImport_VarMeasureData`／inline Designer、`frmFileTypeSelect`、`wsSPC.AutoBRSPCContorl_Var`／`LoadSPCImportData`、`clsMDS.funAutoBRSPCContorl_Var`、`clsSPC.UpdVar_TestValue`／SPC Lot QC List 完成 [SC107 DEV 頁](docs/modules/SPC/匯入計量檢測數據.md)，fallback `/YMES/SPC/VariableMeasurementImport`。DEV 模擬一般／元件欄位模式、XLSX／CSV、逐列選取、Check／Save、Core 常見檢查結果及成功鎖定；不呼叫 SPC Core、ERP、ERF、mail 或資料庫。
@@ -7,7 +17,7 @@
 - [ ] Service `LoadSPCImportData`／Core `SELECT * FROM TBLSPCImportData WHERE LotNo IS NOT NULL` 在 SC107 主 Form 未見呼叫。確認其他 WinForms／整合呼叫端；只有確認正式功能需求後才決定新增 API/schema。此表 repo 缺 Oracle source DDL／metadata 與 PG CREATE-only，先取得可靠 DDL，再比對 live schema／migration。
 - [ ] SC107 Save 經 `clsMDS.funAutoBRSPCContorl_Var`，再經 `clsSPC.UpdVar_TestValue`、`UpdSpcLotQCList`、`AddSPCVarLimitContent`、`AddSPCViolationContent`，也可能建立 ERF／寄信。將實際版次需寫入的 Online／Log／Statistic／Factor／Limit／Violation／待檢表與 SC101 handoff、現有 QC205 references、live schema逐一對照，不把 references 當完整交易清單；公司桌機無受保護 Oracle profile，本次未查詢或新增猜測 SQL。
 - [ ] 提供登入／FunctionNo 授權的 XLS／XLSX 預覽、逐列 Check、Save API。server 重新驗證 Lot／QC Item／Factor／Chart、列選取與量測格式；以交易保存結果並回傳逐列狀態，核實 serial 配置與重試冪等、同批部分失敗、WIP／ERF／通知部分成功補償。瀏覽器的 Check 結果不能當儲存授權。
-- [x] SC107 公司端 handoff 完成；依功能清冊下一項接續 SC108「進料檢驗_元件」。
+- [x] SC107 公司端 handoff 完成；SC108「進料檢驗_元件」已接續交付。
 
 ## 公司端交接：SC106 出貨檢驗單（2026-11-23）
 

@@ -237,6 +237,7 @@ import QcIncomingInspectionForm from './components/QcIncomingInspectionForm.vue'
 import QcFinalInspectionForm from './components/QcFinalInspectionForm.vue'
 import QcInProcessInspectionForm from './components/QcInProcessInspectionForm.vue'
 import QcOutgoingInspectionForm from './components/QcOutgoingInspectionForm.vue'
+import QcIncomingComponentInspectionForm from './components/QcIncomingComponentInspectionForm.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
@@ -498,6 +499,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:SPC ONLIE CONTROL', label: 'SPC 量測數據收集', shortLabel: '收集', functionNo: 'SPC ONLIE CONTROL', moduleNo: 'SPC' },
       { id: 'function:SPC:SPC ONLIE CONTROL CONTINUE', label: 'SPC 量測數據收集_計量連續', shortLabel: '連續', functionNo: 'SPC ONLIE CONTROL CONTINUE', moduleNo: 'SPC' },
       { id: 'function:SPC:INCOMING QC FORM', label: '進料檢驗單', shortLabel: 'IQC', functionNo: 'INCOMING QC FORM', moduleNo: 'SPC' },
+      { id: 'function:SPC:IQC FORM FOR COMPONENT', label: '進料檢驗_元件', shortLabel: '元件IQC', functionNo: 'IQC FORM FOR COMPONENT', moduleNo: 'SPC' },
       { id: 'function:SPC:FQC FORM', label: '終檢檢驗單', shortLabel: 'FQC', functionNo: 'FQC FORM', moduleNo: 'SPC' },
       { id: 'function:SPC:IPQC FORM', label: 'PQC 檢驗單', shortLabel: 'PQC', functionNo: 'IPQC FORM', moduleNo: 'SPC' },
       { id: 'function:SPC:OQC FORM', label: '出貨檢驗單', shortLabel: 'OQC', functionNo: 'OQC FORM', moduleNo: 'SPC' },
@@ -929,6 +931,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:SPC ONLIE CONTROL': appBasePath + '/SPC/OnlineControl',
   'function:SPC:SPC ONLIE CONTROL CONTINUE': appBasePath + '/SPC/OnlineControlContinue',
   'function:SPC:INCOMING QC FORM': appBasePath + '/SPC/IncomingQCForm',
+  'function:SPC:IQC FORM FOR COMPONENT': appBasePath + '/SPC/IncomingQCFormComponent',
   'function:SPC:FQC FORM': appBasePath + '/SPC/FinalQCForm',
   'function:SPC:IPQC FORM': appBasePath + '/SPC/InProcessQCForm',
   'function:SPC:OQC FORM': appBasePath + '/SPC/OutgoingQCForm',
@@ -1478,6 +1481,7 @@ const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'functi
 const isSpcOnlineControlPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ONLIE CONTROL')
 const isSpcOnlineControlContinuePage = computed(() => activeMasterKey.value === 'function:SPC:SPC ONLIE CONTROL CONTINUE')
 const isIncomingQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:INCOMING QC FORM')
+const isIncomingQCFormComponentPage = computed(() => activeMasterKey.value === 'function:SPC:IQC FORM FOR COMPONENT')
 const isFinalQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:FQC FORM')
 const isInProcessQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:IPQC FORM')
 const isOutgoingQCFormPage = computed(() => activeMasterKey.value === 'function:SPC:OQC FORM')
@@ -3012,6 +3016,13 @@ async function signOut(): Promise<void> {
         />
         <QcIncomingInspectionForm
           v-else-if="isIncomingQCFormPage"
+          class="framework-content"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcIncomingComponentInspectionForm
+          v-else-if="isIncomingQCFormComponentPage"
           class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"

@@ -425,7 +425,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 | SPC ONLIE CONTROL CONTINUE | SPC 量測數據收集_計量連續 | SPC管制 | frmSPCOnlineControl_test | SC_OnlineControl_Test.dll | SC102 | 0 |
 | XLS SOURCE FILE CONTROL | Excel匯出樣板 | SPC分析 | frmXlsSourceFileControl | SC_XlsSourceFileControl.dll | SC204 | 0 |
 
-公司端復刻進度（2026-11-23）：SC101「SPC 量測數據收集」、SC102「SPC 量測數據收集_計量連續」、SC103「進料檢驗單」、SC104「終檢檢驗單」、SC105「PQC 檢驗單」、SC106「出貨檢驗單」及 SC107「匯入計量檢測數據」已完成 DEV、WinForms／Service／Core 規格與家用端 handoff。SC101／SC102 共用計量執行表、SC103 `TBLSPCINCOMINGQCFORM`、SC104 `TBLSPCFQCFORM` 缺同版 Oracle DDL／metadata；SC105 主表沿用 repo WP201 reference、Map DDL／metadata 缺失；SC106 OQC Map 沿用 QC216 Oracle／PG CREATE reference，但 Header `TBLSPCOQCFORM` DDL／metadata／CREATE-only 缺失；SC107 的 `TBLSPCImportData` 只見於 Form 未呼叫的 `LoadSPCImportData`，缺 source DDL／metadata／CREATE-only，共用計量寫入依賴仍由家用端按 SC101 handoff 核對。桌機受保護 attachment/profile 不存在，缺表未猜建。後續依 FunctionKey 順序接 SC108「進料檢驗_元件」。
+公司端復刻進度（2026-11-23）：SC101「SPC 量測數據收集」、SC102「SPC 量測數據收集_計量連續」、SC103「進料檢驗單」、SC104「終檢檢驗單」、SC105「PQC 檢驗單」、SC106「出貨檢驗單」及 SC107「匯入計量檢測數據」已完成 DEV、WinForms／Service／Core 規格與家用端 handoff。SC101／SC102 共用計量執行表、SC103 `TBLSPCINCOMINGQCFORM`、SC104 `TBLSPCFQCFORM` 缺同版 Oracle DDL／metadata；SC105 主表沿用 repo WP201 reference、Map DDL／metadata 缺失；SC106 OQC Map 沿用 QC216 Oracle／PG CREATE reference，但 Header `TBLSPCOQCFORM` DDL／metadata／CREATE-only 缺失；SC107 的 `TBLSPCImportData` 只見於 Form 未呼叫的 `LoadSPCImportData`，缺 source DDL／metadata／CREATE-only，共用計量寫入依賴仍由家用端按 SC101 handoff 核對。桌機受保護 attachment/profile 不存在，缺表未猜建。SC108「進料檢驗_元件」已完成 DEV、WinForms／Service／Core 規格與家用端 handoff；FunctionKey 清冊沒有 SC109，下一個尚未完成 SPC 功能為 SC201「SPC 資料維護」。
 
 ### INV — 庫存管理（順序 13）
 
