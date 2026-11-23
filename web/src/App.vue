@@ -243,6 +243,7 @@ import SpcLotDataByLotNo from './components/SpcLotDataByLotNo.vue'
 import SpcDataEditLog from './components/SpcDataEditLog.vue'
 import SpcXlsSourceFileControl from './components/SpcXlsSourceFileControl.vue'
 import SpcChartSignboard from './components/SpcChartSignboard.vue'
+import SpcControlChartAnalysis from './components/SpcControlChartAnalysis.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
@@ -513,6 +514,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:DATA EDIT LOG', label: '資料修改記錄', shortLabel: '修改記錄', functionNo: 'DATA EDIT LOG', moduleNo: 'SPC' },
       { id: 'function:SPC:XLS SOURCE FILE CONTROL', label: 'Excel 匯出樣板', shortLabel: 'Excel樣板', functionNo: 'XLS SOURCE FILE CONTROL', moduleNo: 'SPC' },
       { id: 'function:SPC:CHART SIGNBOARD', label: '管制圖看板', shortLabel: '管制圖看板', functionNo: 'CHART SIGNBOARD', moduleNo: 'SPC' },
+      { id: 'function:SPC:CONTROL CHART ANALYSIS', label: '管制圖分析', shortLabel: '管制圖分析', functionNo: 'CONTROL CHART ANALYSIS', moduleNo: 'SPC' },
       { id: 'function:SPC:IMPORT VAR MEASURE', label: '匯入計量檢測數據', shortLabel: '匯入', functionNo: 'IMPORT VAR MEASURE', moduleNo: 'SPC' },
     ] }],
   },
@@ -950,6 +952,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:DATA EDIT LOG': appBasePath + '/SPC/DataEditLog',
   'function:SPC:XLS SOURCE FILE CONTROL': appBasePath + '/SPC/XlsSourceFileControl',
   'function:SPC:CHART SIGNBOARD': appBasePath + '/SPC/ChartSignboard',
+  'function:SPC:CONTROL CHART ANALYSIS': appBasePath + '/SPC/ControlChartAnalysis',
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
@@ -1506,6 +1509,7 @@ const isSpcLotDataByLotNoPage = computed(() => activeMasterKey.value === 'functi
 const isSpcDataEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:DATA EDIT LOG')
 const isSpcXlsSourceFileControlPage = computed(() => activeMasterKey.value === 'function:SPC:XLS SOURCE FILE CONTROL')
 const isSpcChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:CHART SIGNBOARD')
+const isSpcControlChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:CONTROL CHART ANALYSIS')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -3103,6 +3107,12 @@ async function signOut(): Promise<void> {
         />
         <SpcChartSignboard
           v-else-if="isSpcChartSignboardPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcControlChartAnalysis
+          v-else-if="isSpcControlChartAnalysisPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
