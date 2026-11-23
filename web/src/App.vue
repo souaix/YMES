@@ -244,6 +244,7 @@ import SpcDataEditLog from './components/SpcDataEditLog.vue'
 import SpcXlsSourceFileControl from './components/SpcXlsSourceFileControl.vue'
 import SpcChartSignboard from './components/SpcChartSignboard.vue'
 import SpcControlChartAnalysis from './components/SpcControlChartAnalysis.vue'
+import SpcControlChartByFactor from './components/SpcControlChartByFactor.vue'
 import SpcLineChartAnalysis from './components/SpcLineChartAnalysis.vue'
 import SpcScatterChartAnalysis from './components/SpcScatterChartAnalysis.vue'
 import SpcPChartSignboard from './components/SpcPChartSignboard.vue'
@@ -523,6 +524,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:SPC COA', label: '出貨報告', shortLabel: 'COA', functionNo: 'SPC COA', moduleNo: 'SPC' },
       { id: 'function:SPC:CHART SIGNBOARD', label: '管制圖看板', shortLabel: '管制圖看板', functionNo: 'CHART SIGNBOARD', moduleNo: 'SPC' },
       { id: 'function:SPC:CONTROL CHART ANALYSIS', label: '管制圖分析', shortLabel: '管制圖分析', functionNo: 'CONTROL CHART ANALYSIS', moduleNo: 'SPC' },
+      { id: 'function:SPC:CONTROL CHART ANALYSIS BY FACTOR', label: '管制圖分析_以要因查詢', shortLabel: '要因管制圖', functionNo: 'CONTROL CHART ANALYSIS BY FACTOR', moduleNo: 'SPC' },
       { id: 'function:SPC:LINE CHART ANALYSIS', label: '彙整分析圖', shortLabel: '彙整分析圖', functionNo: 'LINE CHART ANALYSIS', moduleNo: 'SPC' },
       { id: 'function:SPC:SCATTER DIAGRAM', label: '散佈圖分析', shortLabel: '散佈圖分析', functionNo: 'SCATTER DIAGRAM', moduleNo: 'SPC' },
       { id: 'function:SPC:PCHART SIGNBOARD', label: '不良率管制圖看板', shortLabel: '不良率看板', functionNo: 'PCHART SIGNBOARD', moduleNo: 'SPC' },
@@ -965,6 +967,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:XLS SOURCE FILE CONTROL': appBasePath + '/SPC/XlsSourceFileControl',
   'function:SPC:CHART SIGNBOARD': appBasePath + '/SPC/ChartSignboard',
   'function:SPC:CONTROL CHART ANALYSIS': appBasePath + '/SPC/ControlChartAnalysis',
+  'function:SPC:CONTROL CHART ANALYSIS BY FACTOR': appBasePath + '/SPC/ControlChartAnalysisByFactor',
   'function:SPC:LINE CHART ANALYSIS': appBasePath + '/SPC/LineChartAnalysis',
   'function:SPC:SCATTER DIAGRAM': appBasePath + '/SPC/ScatterDiagram',
   'function:SPC:PCHART SIGNBOARD': appBasePath + '/SPC/PChartSignboard',
@@ -1529,6 +1532,7 @@ const isSpcDataEditLogPage = computed(() => activeMasterKey.value === 'function:
 const isSpcXlsSourceFileControlPage = computed(() => activeMasterKey.value === 'function:SPC:XLS SOURCE FILE CONTROL')
 const isSpcChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:CHART SIGNBOARD')
 const isSpcControlChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:CONTROL CHART ANALYSIS')
+const isSpcControlChartByFactorPage = computed(() => activeMasterKey.value === 'function:SPC:CONTROL CHART ANALYSIS BY FACTOR')
 const isSpcLineChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:LINE CHART ANALYSIS')
 const isSpcScatterChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:SCATTER DIAGRAM')
 const isSpcPChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:PCHART SIGNBOARD')
@@ -3139,6 +3143,12 @@ async function signOut(): Promise<void> {
         />
         <SpcControlChartAnalysis
           v-else-if="isSpcControlChartAnalysisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcControlChartByFactor
+          v-else-if="isSpcControlChartByFactorPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
