@@ -72,6 +72,7 @@ function toggleForbidden(current: number, target: number): void {
 function confirmChanges(): void {
   if (!canConfirm.value || !categoryCode.value) return
   savedPairs.value = new Set(draftPairs.value)
+  canConfirm.value = false
   lastSavedAt.value = `${new Date().toLocaleString('zh-TW', { hour12: false })} · DEV_USER`
   statusMessage.value = `DEV 假資料已確認；目前有 ${savedPairs.value.size} 組禁止轉換設定。`
 }

@@ -23,7 +23,7 @@
 - [x] 重開機後 app-browser 已恢復：正式站可開啟、Demo 登入 session 正常、三層選單可展開、WPP02 尚未遷移提示可見；瀏覽器操作與截圖皆可用。
 - [x] ES405 live schema 唯讀核對完成；依 CREATE-only migration 建立缺少的兩張空白表，修補 `ymes_app` 對現有狀態基礎表的 SELECT，未修改業務資料。新增登入保護、參數化分頁 API 及正式查詢頁串接；本機 app-browser 能載入並重查，空表回傳正常空結果，console 無 error/warn。
 - [ ] `TBLEMSACCESSORYREASONS` Oracle source DDL／metadata 仍缺，原因明細 API／資料表待公司端交付後續接；ES405 目前完成現況查詢，未部署正式站。
-- [ ] 整合 ES105 後需用 app-browser 驗證類別選取、互斥格切換、Confirm 僅改 DEV fixture 及關閉返回；完成後才提交並推送，之後重新檢查公司 TODO。
+- [x] 整合 ES105 並以 app-browser 驗證 Demo 登入、三層選單路由、類別選取、互斥格切換、Confirm fixture 更新及頁面操作。瀏覽器無 console error/warn；測試發現 Confirm 儲存後仍可重複送出，已改為只有再次修改矩陣才啟用。
 
 ## 公司端交接：ACC MONITOR_BU1 配件狀態監控_管理（2026-11-23）
 
