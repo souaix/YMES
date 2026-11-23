@@ -7,6 +7,7 @@
 - [ ] `TBLSPCINCOMINGQCFORM` 缺同版 Oracle source DDL／metadata 及 PG CREATE-only。QC Item Map `TBLSPCINCOMINGQCFORMQCITEMMAP` 有 QC216 的 Oracle source DDL 與 PG CREATE reference，先核對既有 live schema／migration 再沿用，不重複建表。主表 DDL 到手前不要依 Core SQL 推測欄位、PK、索引或 FK。
 - [ ] 正式實作 SC103 主單／Map lookup 與 CRUD／transition API：登入 FunctionNo 授權、物料／供應商／ERP-owned 與 QCItem eligibility、序號配置、DataStamp CAS、Qty 與狀態重驗、參數化限量查詢；定義 Add/Edit/Delete/Confirm、Map 更新、SPC結果與收貨／驗退／特採的 transaction 邊界。
 - [ ] 整合 `CallBackType` 支援的 Workflow／TIPTOP／WFGP／T100／E10ICD／sQMS，設計 idempotency key、callback audit、逾時對帳與補償；核實 ERP／WIP／ERF 及 QC Form 結果回寫順序。公司端 DEV 未呼叫外部 callback，也不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] 家用端 app-browser 驗收 SC103：搜尋與日期篩選、Add 必填／單號、物料帶入 QC Item、供應商與 Map 加／移除、Add／Edit／Copy／Delete、Confirm、SPC 多項完成與退回守門、Receive 數量合計檢查、Reject／Concession／Revise。僅 DEV 記憶體假資料，沒有呼叫 API 或寫入資料庫；操作細節見模組文件。
 - [x] SC103 公司端 handoff 已完成；清冊下一項 SC104「終檢檢驗單」。
 
 ## 公司端交接：SC102 SPC 量測數據收集_計量連續（2026-11-23）
@@ -16,6 +17,7 @@
 - [ ] SC102 沿用 SC101 計量執行表：`TBLSPCVARDETAILONLINE/LOG`、`TBLSPCVARSTATISTICLOG`、`TBLSPCVARFACTORONLINE/LOG`、`TBLSPCVARLIMITCONTENT`、`TBLSPCUSERFACTORVALUE`；修改另有 edit log。缺同版 Oracle source DDL／metadata 與 PG CREATE-only，先取得可靠字典資料並核對 YMES live schema/migrations，再建必要 schema；不要照 Core SQL 猜欄位、鍵、索引或 FK。
 - [ ] 正式提交需分辨 `UpdVar_TestValue` 新增與 `UpdVar_LotData` 修改，server 重驗使用者／FunctionNo／OP／QCItem／LotStamp／Factor／抽樣與規格規則；交易處理 SPC Serial、量測／Factor／統計／Limit snapshot、修改 audit，核實 WIP／QC Form／Lot／ERF／ERP 外部階段的部分成功契約及安全重試。
 - [ ] RS232／設備驅動、本機 InspMachineSetup、公式、Chart Rule、客製 DLL、Component/Wafer 與實際 CSV/TXT/XLS 匯入格式未由公司端 DEV 模擬；依正式介面逐項整合驗收。SC102 DEV 不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] 家用端修正收集條件或 OP 權限改變後仍可用舊參數存檔的問題；app-browser 驗證權限錯誤停用 Save、Lot／抽樣計畫變更要求重新確認、貼上數值與超出規格提示、儲存歷程、ConfirmEdit 與 Reverse。所有資料僅存在本頁記憶體；細節見模組文件。
 - [x] SC102 公司端 handoff 已完成；清冊下一項 SC103「進料檢驗單」。
 
 ## 公司端交接：SC101 SPC 量測數據收集（2026-11-23）
