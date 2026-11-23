@@ -247,6 +247,7 @@ import SpcControlChartAnalysis from './components/SpcControlChartAnalysis.vue'
 import SpcLineChartAnalysis from './components/SpcLineChartAnalysis.vue'
 import SpcScatterChartAnalysis from './components/SpcScatterChartAnalysis.vue'
 import SpcPChartSignboard from './components/SpcPChartSignboard.vue'
+import SpcParetoAnalysis from './components/SpcParetoAnalysis.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
@@ -521,6 +522,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:LINE CHART ANALYSIS', label: '彙整分析圖', shortLabel: '彙整分析圖', functionNo: 'LINE CHART ANALYSIS', moduleNo: 'SPC' },
       { id: 'function:SPC:SCATTER DIAGRAM', label: '散佈圖分析', shortLabel: '散佈圖分析', functionNo: 'SCATTER DIAGRAM', moduleNo: 'SPC' },
       { id: 'function:SPC:PCHART SIGNBOARD', label: '不良率管制圖看板', shortLabel: '不良率看板', functionNo: 'PCHART SIGNBOARD', moduleNo: 'SPC' },
+      { id: 'function:SPC:PARETO DIAGRAM', label: '柏拉圖分析', shortLabel: '柏拉圖', functionNo: 'PARETO DIAGRAM', moduleNo: 'SPC' },
       { id: 'function:SPC:IMPORT VAR MEASURE', label: '匯入計量檢測數據', shortLabel: '匯入', functionNo: 'IMPORT VAR MEASURE', moduleNo: 'SPC' },
     ] }],
   },
@@ -962,6 +964,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:LINE CHART ANALYSIS': appBasePath + '/SPC/LineChartAnalysis',
   'function:SPC:SCATTER DIAGRAM': appBasePath + '/SPC/ScatterDiagram',
   'function:SPC:PCHART SIGNBOARD': appBasePath + '/SPC/PChartSignboard',
+  'function:SPC:PARETO DIAGRAM': appBasePath + '/SPC/ParetoDiagram',
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
@@ -1522,6 +1525,7 @@ const isSpcControlChartAnalysisPage = computed(() => activeMasterKey.value === '
 const isSpcLineChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:LINE CHART ANALYSIS')
 const isSpcScatterChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:SCATTER DIAGRAM')
 const isSpcPChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:PCHART SIGNBOARD')
+const isSpcParetoAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:PARETO DIAGRAM')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -3143,6 +3147,12 @@ async function signOut(): Promise<void> {
         />
         <SpcPChartSignboard
           v-else-if="isSpcPChartSignboardPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcParetoAnalysis
+          v-else-if="isSpcParetoAnalysisPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
