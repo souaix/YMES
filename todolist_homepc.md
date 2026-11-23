@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 公司端交接：SC101 SPC 量測數據收集（2026-11-23）
+
+公司端已依 Customer THEIL_BU1 `frmSPCOnlineControl` 主 Form、計量／計數收集 DLL、`wsSPC`／`wsOP`／`wsQC` 及 `clsSPC` 完成 [SC101 DEV 頁](docs/modules/SPC/SPC量測數據收集.md)，fallback `/YMES/SPC/OnlineControl`。DEV 假模擬 OP／QCItem、計數／計量／群組收集；不呼叫 API、設備、ERP 或資料庫。
+
+- [ ] SC101 的 `TBLSPCVARDETAILONLINE/LOG`、`TBLSPCVARSTATISTICLOG`、`TBLSPCVARFACTORONLINE/LOG`、`TBLSPCVARLIMITCONTENT`、`TBLSPCATTDETAILLOG`、`TBLSPCATTBASISLOG`、`TBLSPCUSERFACTORVALUE` 缺同版 Oracle source DDL／metadata 及 PG CREATE-only。先取得可靠字典資料並核對 YMES live schema/migrations，再建必要 schema；不要照 Core SQL 猜欄位、PK、索引或 FK。
+- [ ] 實作登入及 FunctionNo `SPC ONLIE CONTROL` 授權的 context／lookup：OP 可見及 SPC 權限、有效 Lot／產品、核准 QCItem 與 OP 關聯、Factor、抽樣計畫與參數、群組成員、限制／管制界線、重檢批及 Component／Wafer 資料；LotStamp 與權限在 server 重查。
+- [ ] 計量、計數及群組提交分型處理；交易內配置 SPC Serial／Factor Serial，重驗抽樣／Factor／QCItem／Lot／規格，保存量測 Online+Log+Statistic 或計數 Basis+Detail+Factor。核實實際 WIP QC Item／Sample Component、Lot Result、ERF、QC Form／ERP 呼叫順序並明確定義原子邊界、部分結果與安全補償／重試。
+- [ ] RS232／設備驅動、量測公式、AQL／SPC rule、special customer DLL、Group Deduction、Wafer／Component、樣本轉換、Union ERF、進料 FTP／附件及 ERP 介面需取得正式契約後逐項整合；公司端 DEV 不是這些流程的正式驗收。
+- [x] SC101 公司端 DEV／規格 handoff 完成；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端交接：ES301 配件上機（2026-11-23）
 
 公司端依 `frmApplyEQPAccessory`、`wsEMS`／`wsEQP` 及 `clsEMSEquipment`／`clsAccState` 完成 [ES301 DEV 頁](docs/modules/EMS/配件上機作業.md)，fallback `/YMES/EMS/ApplyEquipmentAccessory`。DEV 模擬相容設備查找、Available Only、多選批次上機、既有掛載先下機提示、互斥阻擋與壽命提醒。

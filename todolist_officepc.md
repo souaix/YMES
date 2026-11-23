@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：SC101 SPC 量測數據收集（2026-11-23）
+
+- [x] 核對 Customer `SC_OnlineControl_THEIL_BU1` 主 Form／Designer、計量／計數／Wafer Group 收集 DLL、`wsSPC`／`wsOP`／`wsQC`／`wsWIP`／`wsPRD`／`wsSYS` 與 `clsSPC`。
+- [x] 完成 `/YMES/SPC/OnlineControl` DEV 頁：OP／QCItem 查找、4 種 QC 類型、Lot／母體／複檢批、Factor、抽樣計畫與參數、計數缺點／計量讀值、假匯入與記憶體歷程；正式環境維持未開放提示。
+- [x] 新增 [SC101 規格](docs/modules/SPC/SPC量測數據收集.md)、Module index 與家用端 handoff。完成前靜態檢閱；未連 PostgreSQL、未執行 build／test／browser。
+- [x] 計量 Online/Log/Statistic/Factor 及計數 Basis/Detail 執行表缺同版 Oracle source DDL／metadata 與 PostgreSQL CREATE-only；桌機受保護 Oracle profile 不存在。本次未查 Oracle、不猜 CREATE SQL。
+- [ ] 家用端逐一核對 SC101 量測寫入分支所用表及 YMES live schema/migrations；可靠 DDL 到手前不建 SC101 執行表。登入授權後由 server 重驗 OP/QCItem/Factor/LotStamp、抽樣／管制規則與 Component，交易配置 SPC Serial 並保存計數／計量主從紀錄、統計／Factor snapshot；釐清 WIP／ERF／ERP 各階段及群組部分成功契約。
+- [x] SC101 公司端 DEV／規格完成，依選單清冊接續尚未交付功能；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端最新交付：ES301 配件上機（2026-11-23）
 
 - [x] 核對 `frmApplyEQPAccessory`／內嵌 Designer、`wsEMS.LoadAvailAccStatebyEquipmentType/LoadEQPACCState/UpdEQPACC/ReturnEQPACC`、`wsEQP` 設備 lookup 與 `clsEMSEquipment`／`clsAccState`。

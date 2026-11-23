@@ -231,6 +231,7 @@ import QcSamplingPlanMaster from './components/QcSamplingPlanMaster.vue'
 import QcSamplingPlanWaferMaster from './components/QcSamplingPlanWaferMaster.vue'
 import QcSecondInspectionSampling from './components/QcSecondInspectionSampling.vue'
 import QcVariableItemGroup from './components/QcVariableItemGroup.vue'
+import QcSpcOnlineControl from './components/QcSpcOnlineControl.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -487,6 +488,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:QC:OCAP DISPOSITION ADJUST', label: 'OCAP異常單處置調整', shortLabel: '處', functionNo: 'OCAP DISPOSITION ADJUST', moduleNo: 'QC', tableName: 'tblwiperfocapdisposition' },
       { id: 'function:QC:FIRST GROUP', label: '第一處理群組', shortLabel: '一', functionNo: 'FIRST GROUP', moduleNo: 'QC', tableName: 'tblqcfirstgroup' },
       { id: 'function:QC:FINAL GROUP', label: '最後處理群組', shortLabel: '末', functionNo: 'FINAL GROUP', moduleNo: 'QC', tableName: 'tblqcfinalgroup' },
+    ] }, { id: 'spc-collection', label: 'SPC 管制', shortLabel: 'SPC', children: [
+      { id: 'function:SPC:SPC ONLIE CONTROL', label: 'SPC 量測數據收集', shortLabel: '收集', functionNo: 'SPC ONLIE CONTROL', moduleNo: 'SPC' },
     ] }],
   },
   {
@@ -911,6 +914,7 @@ const menuRoutes: Record<string, string> = {
   'function:QC:QCITEM PRD REASON MAP': appBasePath + '/QC/ItemProductReasonMap',
   'function:QC:FIRST GROUP': appBasePath + '/QC/FirstGroup',
   'function:QC:FINAL GROUP': appBasePath + '/QC/FinalGroup',
+  'function:SPC:SPC ONLIE CONTROL': appBasePath + '/SPC/OnlineControl',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1453,6 +1457,7 @@ const isQcItemProductReasonMapPage = computed(() => activeMasterKey.value === 'f
 const isQcFirstGroupPage = computed(() => activeMasterKey.value === 'function:QC:FIRST GROUP')
 const isQcFinalGroupPage = computed(() => activeMasterKey.value === 'function:QC:FINAL GROUP')
 const isQcHoldDescriptionPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DESCRIPTION')
+const isSpcOnlineControlPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ONLIE CONTROL')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -2963,6 +2968,13 @@ async function signOut(): Promise<void> {
           v-else-if="isQcHoldDescriptionPage"
           class="framework-content"
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
+          :current-user-no="currentUser?.userNo || ''"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <QcSpcOnlineControl
+          v-else-if="isSpcOnlineControlPage"
+          class="framework-content"
           :current-user-no="currentUser?.userNo || ''"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
