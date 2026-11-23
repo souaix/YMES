@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES107 設備能力項目設定（2026-11-23）
+
+公司端依 `frmEQPCapBasis`／Def、`wsEMS` 與 `clsEMSEquipment`／`clsBasis_UPD` 完成 [ES107 DEV 頁](docs/modules/EMS/設備能力項目設定.md)，fallback `/YMES/EMS/EquipmentCapabilityBasis`。DEV 以頁面記憶體假資料模擬四種 IssueState、CapItem 搜尋、CRUD／Copy／Apply、依狀態刪除與核准分支。
+
+- [ ] Pull 最新 main 並核對 `tblemseqpcapbasis` live schema／migration；Oracle logical DDL 與 PostgreSQL CREATE-only 已沿用 PD102 reference，`GET_DDL` 原回 ORA-03135，未另猜 DDL，也不應重複建表。
+- [ ] 實作登入／FunctionNo `EQP CAP BASIS` 權限保護、參數化限量分頁查詢及 CRUD；新增 CapItem upper/max 50 字元（Oracle 50 BYTE）、Description max 255 字元（Oracle 255 BYTE）、IssueState 0；修改只准 0，固定鍵並依 DataStamp CAS。所有資料來源均需 server 驗證。先定義 search predicate，ES107 Form 只證明送出 CapItem/SearchFieldValue，無法從本機共用 parser 證據確認比較運算子。
+- [ ] 保留 Delete 狀態規則：0/-1 實體刪除、2 停用為 -1、1 拒絕；先確認產品設備能力 `tblprdopcapitem` 引用後再決定實體刪除政策。定義多選的原子或逐筆回報語意。
+- [ ] Approve 只接受狀態 0，由 server 查 `EMS_EQP_CAPBASIS` Job/Detail 決定直接核准或啟動 Issue process；以交易／冪等／版本檢查維持主檔 IssueState、DataStamp 及 issue data 一致。不可由 client 指定實際核准路徑。
+- [x] ES107 公司端 DEV／來源規格已交接；清冊下一項 ES108「設備能力設定」。公司端不連 PostgreSQL或實作正式 API。
+
 ## 公司端交接：ES407 設備配件現況查詢（2026-11-23）
 
 公司端依標準 `frmEquipmentAccState`／內嵌 Designer、`wsEMS.LoadEquipmentAccState`、`clsAccState.LoadEquipmentAccState` 完成 [ES407 DEV 頁](docs/modules/EMS/設備配件現況查詢.md)，fallback `/YMES/EMS/EquipmentAccStateQuery`。DEV 模擬設備／配件／使用者精確條件、StartTime 範圍、lookup、現況 Grid 與從監控頁帶入 AccessoryNo 的查詢情境。
