@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：ES101 設備控管設定（2026-11-23）
+
+- [x] 核對標準 `frmEquipmentControl`／內嵌 Designer、`wsEMS.LoadEquipmentStateDefine/UpdEquipmentState` 與 `clsEQPBasis`／`clsEQPStateControl`／`clsEMSEquipment` Core。
+- [x] 完成 `/YMES/EMS/EquipmentControl` DEV 頁：設備類別篩選、未管制／已管制設備多選、左右搬移、父設備自動帶 Chamber、Apply 假套用、Confirm 假套用並關閉、Close 丟棄未套用差異；新增 [ES101 規格](docs/modules/EMS/設備控管設定.md)、索引與家用端 handoff。
+- [x] DEV 設備、類別、狀態及 Chamber 皆為虛構，只有頁面記憶體變更；未呼叫 Service／API、未連 Oracle／YMES PostgreSQL、不寫正式資料；未執行 build、test、browser 或 WinForms runtime。
+- [x] 重用 `TBLEQPEQUIPMENTTYPE`、`TBLEQPEQUIPMENTBASIS`、`TBLEQPSTATECONTROL`、`TBLEMSEQUIPMENTSTATE` 與 `TBLEMSEQUIPMENTSTATELOG` 既有 Oracle DDL／CREATE-only references，無新增 DDL；未開 Oracle profile 查業務資料。
+- [ ] 家用端核對既有表 live schema，實作登入與 `EMS CONTROL` 權限保護的原子批次 API；伺服器端重驗核准父設備並展開 Chamber、查 Idle state、expected-state 衝突檢查，整批更新 current/log 並回滾失敗。
+- [x] ES101 公司端完成；依選單清冊接續下一個尚缺的 WinForms 功能。
+
 ## 公司端最新交付：ES303 配件壽命維護（2026-11-23）
 
 - [x] 核對本機 STD `frmAccessoryRepair`／Designer、`wsEMS.LoadAccessoryStateJoinLife/UpdEMSAccesssoryRepair`、`wsEQP.LoadAccessoryBasis/LoadACCStateControlJoinStateBasis`、`wsSYS.GetAccessoryRepairNo` 與 `clsAccState`／`clsSYSEng`。

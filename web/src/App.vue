@@ -112,6 +112,7 @@ import WipBartenderPrint from './components/WipBartenderPrint.vue'
 import WipUnInventory from './components/WipUnInventory.vue'
 import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
+import EmsEquipmentControl from './components/EmsEquipmentControl.vue'
 import EmsEquipmentStateByArea from './components/EmsEquipmentStateByArea.vue'
 import EmsEquipmentStateByType from './components/EmsEquipmentStateByType.vue'
 import EmsAccessoryStateMonitor from './components/EmsAccessoryStateMonitor.vue'
@@ -678,6 +679,7 @@ const fallbackMenuTree: MenuNode[] = [
       ],
     }, {
       id: 'menu:EMS:EMS CONFIG', label: 'EMS設定', shortLabel: '設', children: [
+        { id: 'function:EMS:EMS CONTROL', label: '設備控管設定', shortLabel: '設控', functionNo: 'EMS CONTROL', moduleNo: 'EMS' },
         { id: 'function:EMS:EQP STATE CONTROL SETTING', label: '設備狀態控制設定', shortLabel: '控', functionNo: 'EQP STATE CONTROL SETTING', moduleNo: 'EMS' },
         { id: 'function:EMS:ACC STATE CONTROL SETTING', label: '配件狀態控制設定', shortLabel: '配控', functionNo: 'ACC STATE CONTROL SETTING', moduleNo: 'EMS' },
         { id: 'function:EMS:ACC VIOLATIVE STATE SETTING', label: '配件狀態互斥設定', shortLabel: '配件互斥', functionNo: 'ACC VIOLATIVE STATE SETTING', moduleNo: 'EMS' },
@@ -722,6 +724,7 @@ const menuRoutes: Record<string, string> = {
   'function:EMS:SHOW EQP LOG': appBasePath + '/EMS/EquipmentStateLogQuery',
   'function:EMS:SHOW EQP LOG BY STATE': appBasePath + '/EMS/EquipmentStateLogByState',
   'function:EMS:EQP STATE CHANGE': appBasePath + '/EMS/EquipmentStateChange',
+  'function:EMS:EMS CONTROL': appBasePath + '/EMS/EquipmentControl',
   'function:EMS:EQUIPMENT STATE LOG': appBasePath + '/EMS/EquipmentStateLog',
   'function:EMS:EQP STATE CONTROL SETTING': appBasePath + '/EMS/EqpStateControlSet',
   'function:EMS:EQP STATE STATISTICS_EMS': appBasePath + '/EMS/EquipmentStateStatistics',
@@ -1222,6 +1225,7 @@ const isProductRunCardMapPage = computed(() => activeMasterKey.value === 'functi
 const isReceivingOrderPage = computed(() => activeMasterKey.value === 'function:OE:RO BASIS')
 const isReceivingOrderClosePage = computed(() => activeMasterKey.value === 'function:OE:RO CLOSE')
 const isEmsEquipmentStateChangePage = computed(() => activeMasterKey.value === 'function:EMS:EQP STATE CHANGE')
+const isEmsEquipmentControlPage = computed(() => activeMasterKey.value === 'function:EMS:EMS CONTROL')
 const isEmsEquipmentStateByAreaPage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP STATUS BY AREA')
 const isEmsEquipmentStateByTypePage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP STATUS BY TYPE')
 const isEmsAccessoryStateMonitorPage = computed(() => activeMasterKey.value === 'function:EMS:ACC MONITOR')
@@ -3165,6 +3169,7 @@ async function signOut(): Promise<void> {
         <WipLabelPrint v-else-if="isWp908Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotQuantityAdjust v-else-if="isWp907Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateChange v-else-if="isEmsEquipmentStateChangePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
+        <EmsEquipmentControl v-else-if="isEmsEquipmentControlPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateByArea v-else-if="isEmsEquipmentStateByAreaPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateByType v-else-if="isEmsEquipmentStateByTypePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsAccessoryStateMonitor v-else-if="isEmsAccessoryStateMonitorPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
