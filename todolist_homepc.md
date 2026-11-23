@@ -1,5 +1,23 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES107 設備能力項目設定（2026-11-23）
+
+公司端依 `frmEQPCapBasis`／Def、`wsEMS` 與 `clsEMSEquipment`／`clsBasis_UPD` 完成 [ES107 DEV 頁](docs/modules/EMS/設備能力項目設定.md)，fallback `/YMES/EMS/EquipmentCapabilityBasis`。DEV 以頁面記憶體假資料模擬四種 IssueState、CapItem 搜尋、CRUD／Copy／Apply、依狀態刪除與核准分支。
+
+- [ ] Pull 最新 main 並核對 `tblemseqpcapbasis` live schema／migration；Oracle logical DDL 與 PostgreSQL CREATE-only 已沿用 PD102 reference，`GET_DDL` 原回 ORA-03135，未另猜 DDL，也不應重複建表。
+- [ ] 實作登入／FunctionNo `EQP CAP BASIS` 權限保護、參數化限量分頁查詢及 CRUD；新增 CapItem upper/max 50 字元（Oracle 50 BYTE）、Description max 255 字元（Oracle 255 BYTE）、IssueState 0；修改只准 0，固定鍵並依 DataStamp CAS。所有資料來源均需 server 驗證。先定義 search predicate，ES107 Form 只證明送出 CapItem/SearchFieldValue，無法從本機共用 parser 證據確認比較運算子。
+- [ ] 保留 Delete 狀態規則：0/-1 實體刪除、2 停用為 -1、1 拒絕；先確認產品設備能力 `tblprdopcapitem` 引用後再決定實體刪除政策。定義多選的原子或逐筆回報語意。
+- [ ] Approve 只接受狀態 0，由 server 查 `EMS_EQP_CAPBASIS` Job/Detail 決定直接核准或啟動 Issue process；以交易／冪等／版本檢查維持主檔 IssueState、DataStamp 及 issue data 一致。不可由 client 指定實際核准路徑。
+- [x] ES107 公司端 DEV／來源規格已交接；清冊下一項 ES108「設備能力設定」。公司端不連 PostgreSQL或實作正式 API。
+
+## 公司端交接：ES407 設備配件現況查詢（2026-11-23）
+
+公司端依標準 `frmEquipmentAccState`／內嵌 Designer、`wsEMS.LoadEquipmentAccState`、`clsAccState.LoadEquipmentAccState` 完成 [ES407 DEV 頁](docs/modules/EMS/設備配件現況查詢.md)，fallback `/YMES/EMS/EquipmentAccStateQuery`。DEV 模擬設備／配件／使用者精確條件、StartTime 範圍、lookup、現況 Grid 與從監控頁帶入 AccessoryNo 的查詢情境。
+
+- [ ] Pull 後比對 `TBLEMSEQPACCSTATE` 及 lookup tables live schema／migrations；公司端沿用 repo Oracle DDL／metadata 與 CREATE-only，無新增表。
+- [ ] 實作登入與 FunctionNo `EQP ACC STATE QUERY` 授權的參數化唯讀 API；包含穩定排序／分頁、時間及最大筆數限制、空結果正常回傳與 User lookup 安全欄位。不要照搬 Legacy AccessoryType 條件覆蓋問題；Version 欄隱藏、DTO 可限於可見欄位。
+- [x] ES407 公司端 DEV／來源規格已交接；後續依清冊接續。
+
 ## 公司端交接：ES408 設備配件歷史資料查詢（2026-11-23）
 
 公司端依標準 `frmEquipmentAccStateLog`／內嵌 Designer、`wsEMS.LoadEquipmentAccStateLog`、`clsAccState.LoadEquipmentAccStateLog` 完成 [ES408 DEV 頁](docs/modules/EMS/設備配件歷史資料查詢.md)，fallback `/YMES/EMS/EquipmentAccStateLogQuery`。DEV 有設備／配件／使用者精確篩選、Start／End 時間界限、lookup 選擇器及 7 欄歷程查詢。
@@ -10,6 +28,13 @@
 - [x] app-browser Demo session 實際操作 ES408：時間界限必填提示、含特殊字元的設備條件加一天範圍查詢成功回空結果；新歷程表目前無資料、console 無 error／warning。API 未登入回 401，網站／API readiness 200。
 - [ ] 全部版本驗證完成後，正常同步並推送 GitHub；禁止 force push，保留兩個未追蹤的 Web 封存檔。
 - [x] ES408 公司端 DEV／來源規格已交接；後續依清冊接續。
+
+## 公司端新交付：ES107 設備能力項目設定與 ES407 設備配件現況查詢（2026-11-23）
+
+- [x] 再次同步時拉到公司端 `fab9907`（ES407）與 `aef0079`（ES107）；以一般 merge 整合。`App.vue` 同時保留 ES408 API base URL 和 ES407／ES107 路由；沒有 force push。
+- [x] 合併版 `npm run build` 通過：Vue 型別檢查、Vite build 884 modules。保留既有約 4.87 MB 主 bundle 大於 500 KB 提示。
+- [x] app-browser Demo 開發區驗證 ES407 picker、精確查詢、多條件 AND 組合、無結果與含端點 StartTime 範圍；ES107 驗證狀態分頁、搜尋、新增必填／套用、修改、複製、刪除、直接核准／送簽及已核准轉停用。DEV 假資料離頁即重置；兩頁均未呼叫 API 或寫資料庫。
+- [ ] 按最新交接順序繼續核對 ES107 `TBLEMSEQPCAPBASIS` live schema 與 migration；再處理 ES407 `TBLEMSEQPACCSTATE` 登入保護的參數化唯讀 API，兩者依實際來源結構分別記錄。
 
 ## 公司端交接：ES101 設備控管設定（2026-11-23）
 
