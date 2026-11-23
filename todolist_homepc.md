@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## 公司端交接：SC311 製程能力報表_以要因查詢（2026-11-24）
+
+公司端依 `frmQueryChartAllCapabilityByFactor`、ALL／YMW result forms、`wsSPC.LoadChartCapabilityDataByFactor`／`LoadChartYMWCapabilityData`、`kcSPC` 同名 Core 與 QC／MES Parameter lookup 完成 [SC311 DEV 頁](docs/modules/SPC/製程能力報表以要因查詢.md)，路由 `/YMES/SPC/ChartAllCapabilityByFactor`。此功能不選 QC Item，從所有 Variable QC Item 的 Factor 中帶條件，支援 ALL／週／月／年、Lot State／Result、CalRule、能力指標、週期結果及選列圖表。
+
+- [ ] Pull 後比對 YMES live schema／migrations 與 QC302／QC205／QC210 references；SC311 無新增表，避免重複建表。
+- [ ] 建立登入及 SC311 權限保護的 Factor options／能力報表查詢 API；服務端自行找有效 Variable QC Item Factor，核實 `blnByFactor` 舊 caller 疑點，不信任 client QCItemNo／FactorNo。
+- [ ] FactorNo 必須經核准 metadata allowlist 映射至固定欄位／JSON key，FactorValue 以參數化 array 條件處理；限制日期跨度、Factor 數、週期數、樣本列數、計算時間及輸出列數。
+- [ ] 統一摘要 LotCount 與能力統計 RawData 的日期／Factor／LotState／LotResult；ALL 摘要依狀態／結果但 ALL RawData 未套狀態／結果，YMW RawData 固定 `Excluded=0` 後再套選取條件（全選時實際仍只取 0）。需決定正式指標語意並記錄相對舊程式差異。
+- [ ] 核實舊 YMW 結果 Form 的 `blnByFactor=False` 預設及 Factor row 缺 QCItemNo 對查詢／Factor 顯示的影響；重作固定 SampleSize／SpecLineType 能力計算並驗證 CalRule ≥25 門檻。
+- [x] 公司端只交付 DEV／來源規格，未連 Oracle／YMES PostgreSQL、未建立 schema／migration、未實作正式 API；下一個未完成 SPC FunctionKey 為 SC312。
+
 ## 公司端交接：SC303 管制圖月報表（2026-11-23）
 
 公司端依 `frmQueryMnthVarChartRPT`／`frmRPTChartMnth`、`wsSPC.LoadSPCChartMonthReport/ChkSampleSizeforMonthReport`、`clsSPC` 與 QC／SYS lookup 完成 [SC303 DEV 頁](docs/modules/SPC/管制圖月報表.md)，路由 `/YMES/SPC/MonthChartReport`。支援 SC302 Report Code 帶入、Variable QC Item 多選、Combine／Main、期間、Key Node、Factor、多期結果 Grid。

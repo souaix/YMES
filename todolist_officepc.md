@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：SC311 製程能力報表_以要因查詢（2026-11-24）
+
+- [x] 核對 `frmQueryChartAllCapabilityByFactor`／inline Designer、ALL／YMW result forms、`wsSPC.LoadChartCapabilityDataByFactor`／`LoadChartYMWCapabilityData` 與 `kcSPC` 同名 Core。
+- [x] 完成 `/YMES/SPC/ChartAllCapabilityByFactor` DEV：隱藏 QC Item picker 的全部 Variable 要因清單、MES Parameter／自由輸入、ALL／週／月／年、日期、Lot State／Result、CalRule、八項能力指標、Clear／Query、動態結果 Grid 與選列 Chart。
+- [x] 記錄至少一個 FactorValue 才可查詢；舊 YMW caller 未傳 `blnByFactor`，Factor rows 也未填 QCItemNo，可能影響服務查詢及結果 Factor 顯示。
+- [x] 沿用 QC302／QC205／QC210 references，無新增業務表；ALL／YMW RawData 均以 `Excluded=0` 起始，Factor identifier/value 字串拼接且無上限，Service timeout 6,000,000ms。桌機 Oracle profile 不存在，本輪未連 Oracle／YMES PostgreSQL。
+- [ ] 家用端核對 live schema／migrations；設計不需 QCItemNo 的 SC311 查詢 API、伺服器端 Factor allowlist、參數化條件、日期／Factor／列數／計算時間限制，並統一摘要與 RawData 的 LotState／Result 篩選。
+- [x] 新增 [SC311 規格](docs/modules/SPC/製程能力報表以要因查詢.md)，更新 Module Index、Inventory 及家用端 handoff；下一個未完成 SPC FunctionKey 為 SC312。
+
 ## 公司端最新交付：SC303 管制圖月報表（2026-11-23）
 
 - [x] 核對 `frmQueryMnthVarChartRPT`／`frmRPTChartMnth` inline Designer、`wsSPC.LoadSPCChartMonthReport/ChkSampleSizeforMonthReport`、`clsSPC` 同名 Core 及 QC／SYS／SC302 lookup。

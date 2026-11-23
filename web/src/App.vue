@@ -244,6 +244,7 @@ import SpcDataEditLog from './components/SpcDataEditLog.vue'
 import SpcChartLineEditLog from './components/SpcChartLineEditLog.vue'
 import SpcQcItemBindingHisLog from './components/SpcQcItemBindingHisLog.vue'
 import SpcChartAllCapability from './components/SpcChartAllCapability.vue'
+import SpcChartAllCapabilityByFactor from './components/SpcChartAllCapabilityByFactor.vue'
 import SpcMonthRPTCodeBasis from './components/SpcMonthRPTCodeBasis.vue'
 import SpcMonthChartReport from './components/SpcMonthChartReport.vue'
 import SpcXlsSourceFileControl from './components/SpcXlsSourceFileControl.vue'
@@ -972,6 +973,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:CHART LINE EDIT LOG': appBasePath + '/SPC/ChartLineEditLog',
   'function:SPC:QCITEM BINDING HIS LOG': appBasePath + '/SPC/QcItemBindingHisLog',
   'function:SPC:CHART ALL CAPABILITY': appBasePath + '/SPC/ChartAllCapability',
+  'function:SPC:CHART ALL CAPABILITY BY FACTOR': appBasePath + '/SPC/ChartAllCapabilityByFactor',
   'function:SPC:MONTHLY CHART REPORT CODE': appBasePath + '/SPC/MonthRPTCodeBasis',
   'function:SPC:MONTHLY CHART REPORT': appBasePath + '/SPC/MonthChartReport',
   'function:SPC:XLS SOURCE FILE CONTROL': appBasePath + '/SPC/XlsSourceFileControl',
@@ -1542,6 +1544,7 @@ const isSpcDataEditLogPage = computed(() => activeMasterKey.value === 'function:
 const isSpcChartLineEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:CHART LINE EDIT LOG')
 const isSpcQcItemBindingHisLogPage = computed(() => activeMasterKey.value === 'function:SPC:QCITEM BINDING HIS LOG')
 const isSpcChartAllCapabilityPage = computed(() => activeMasterKey.value === 'function:SPC:CHART ALL CAPABILITY')
+const isSpcChartAllCapabilityByFactorPage = computed(() => activeMasterKey.value === 'function:SPC:CHART ALL CAPABILITY BY FACTOR')
 const isSpcMonthRPTCodeBasisPage = computed(() => activeMasterKey.value === 'function:SPC:MONTHLY CHART REPORT CODE')
 const isSpcMonthChartReportPage = computed(() => activeMasterKey.value === 'function:SPC:MONTHLY CHART REPORT')
 const isSpcXlsSourceFileControlPage = computed(() => activeMasterKey.value === 'function:SPC:XLS SOURCE FILE CONTROL')
@@ -3159,6 +3162,12 @@ async function signOut(): Promise<void> {
         />
         <SpcChartAllCapability
           v-else-if="isSpcChartAllCapabilityPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcChartAllCapabilityByFactor
+          v-else-if="isSpcChartAllCapabilityByFactorPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
