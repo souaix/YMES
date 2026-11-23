@@ -249,6 +249,7 @@ import SpcScatterChartAnalysis from './components/SpcScatterChartAnalysis.vue'
 import SpcPChartSignboard from './components/SpcPChartSignboard.vue'
 import SpcParetoAnalysis from './components/SpcParetoAnalysis.vue'
 import SpcLrrPpmChart from './components/SpcLrrPpmChart.vue'
+import SpcAttributeControlChart from './components/SpcAttributeControlChart.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
@@ -967,6 +968,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:PCHART SIGNBOARD': appBasePath + '/SPC/PChartSignboard',
   'function:SPC:PARETO DIAGRAM': appBasePath + '/SPC/ParetoDiagram',
   'function:SPC:LRR / PPM CHART': appBasePath + '/SPC/LrrPpmChart',
+  'function:SPC:ATT-CHART': appBasePath + '/SPC/AttributeChart',
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
@@ -1529,6 +1531,7 @@ const isSpcScatterChartAnalysisPage = computed(() => activeMasterKey.value === '
 const isSpcPChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:PCHART SIGNBOARD')
 const isSpcParetoAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:PARETO DIAGRAM')
 const isSpcLrrPpmChartPage = computed(() => activeMasterKey.value === 'function:SPC:LRR / PPM CHART')
+const isSpcAttributeControlChartPage = computed(() => activeMasterKey.value === 'function:SPC:ATT-CHART')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -3162,6 +3165,12 @@ async function signOut(): Promise<void> {
         />
         <SpcLrrPpmChart
           v-else-if="isSpcLrrPpmChartPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcAttributeControlChart
+          v-else-if="isSpcAttributeControlChartPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
