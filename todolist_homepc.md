@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：SC105 PQC 檢驗單（2026-11-23）
+
+公司端依 `frmIPQCForm`／`frmIPQCFormDef`／QC Item Map、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`、`clsSPC`／`clsBasis_UPD` 完成 [SC105 DEV 頁](docs/modules/SPC/PQC檢驗單.md)，fallback `/YMES/SPC/InProcessQCForm`。DEV 模擬六個狀態、Product／Module／Lot 帶入、單據 CRUD／Copy／Confirm、QC Item Map、SPC 假結果、SFT 數量守恆、允收／拒收／特採及 WIP Hold／Wait 提示；不呼叫 MES／SFT／WIP API 或資料庫。
+
+- [ ] `TBLSPCIPQCFORM` Oracle source DDL 與 PG CREATE-only 已有 repo WP201 reference，先比對功能欄位用途與 YMES live schema／migration，不重複建表。`TBLSPCIPQCFORMQCITEMMAP` 缺同版 Oracle DDL／metadata 與 PG CREATE-only；profile 不存在前不要猜 Map 欄位／鍵／索引或建立 SQL。
+- [ ] 正式 API 重驗 ModuleType/Product／Module／Lot 狀態／OP／ProductVersion／QC Item eligibility、`IPQCFORMNO` 序號及 DataStamp CAS；以參數化限量查詢實作主單／Map CRUD、Confirm／待檢未開始刪除、逐項 SPC 結果及最後一項完成交易。
+- [ ] SFT callback 檢查 `Good + Defect + Return + Rework + Unknown - Surplus = Qty`，保存 idempotency key／request／response／狀態與重試對帳。拒收 + `S_OffLineHold=1` 時核實 QCItemType／Result、Lot Status／OPStatus 對 WIP／ERF Hold／Wait 的副作用、順序、部分成功與補償；callback／WIP 成功前不得提前更新本地 Status。
+- [x] SC105 公司端 handoff 已完成；清冊下一項 SC106「出貨檢驗單」。
+
 ## 公司端交接：SC104 終檢檢驗單（2026-11-23）
 
 公司端依 `frmFQCForm`／`frmFQCFormDef`／`frmFQCFormQCItemMap`、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`、`clsSPC`／`clsBasis_UPD` 完成 [SC104 DEV 頁](docs/modules/SPC/終檢檢驗單.md)，fallback `/YMES/SPC/FinalQCForm`。DEV 模擬五個主單狀態、單據 CRUD／Copy／Confirm、待檢頁未開始單據刪除、產品／工序／批號帶 QC Item、Map 維護、SPC 假結果、允收／拒收及狀態稽核；不呼叫 MES／ERP API 或資料庫。

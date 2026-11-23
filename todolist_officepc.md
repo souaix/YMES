@@ -1,5 +1,15 @@
 # 公司端待辦
 
+## 公司端最新交付：SC105 PQC 檢驗單（2026-11-23）
+
+- [x] 核對 `frmIPQCForm`／inline Designer、`frmIPQCFormDef`／inline Designer、QC Item Map Form、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`、`clsSPC` 與 `clsBasis_UPD`。
+- [x] 完成 `/YMES/SPC/InProcessQCForm` DEV 頁：6 狀態、Product／Module／Lot fixture、CRUD／Copy／Confirm、QC Item Map、SPC 假結果、SFT 六類 Qty 守恆、允收／拒收／特採及 WIP Hold／Wait 提示。
+- [x] 新增 [SC105 規格](docs/modules/SPC/PQC檢驗單.md)、Module index 與家用端 handoff；未連 PostgreSQL，未執行 build／test／browser。
+- [x] `TBLSPCIPQCFORM` Oracle DDL／PG CREATE 沿用 repo WP201 reference；`TBLSPCIPQCFORMQCITEMMAP` 缺同版 Oracle DDL／metadata／PG CREATE-only。桌機受保護 attachment/profile 不存在，本次未查 Oracle、未猜 Map schema。
+- [ ] 家用端 Pull 後比對 WP201 reference 的主表與 live schema／migration；取得 Map table 可靠 Oracle metadata 後才補 CREATE-only。正式 API 重驗 Product／Module／Lot／OP／QC Item／ModuleType、DataStamp 與 `IPQCFORMNO` 序號。
+- [ ] 正式 API 設計 SFT Qty 守恆及 callback idempotency／重試／對帳；驗證拒收 + `S_OffLineHold` 時 WIP／ERF 的 Hold／Wait 寫入順序、部分成功與補償。公司端 DEV 不呼叫外部服務。
+- [x] SC105 公司端 DEV／規格完成；清冊下一項 SC106「出貨檢驗單」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端最新交付：SC104 終檢檢驗單（2026-11-23）
 
 - [x] 核對 `frmFQCForm`／inline Designer、`frmFQCFormDef`／inline Designer、`frmFQCFormQCItemMap`、`wsSPC`／`wsPRD`／`wsWIP`／`wsSYS`、`clsSPC` 與 `clsBasis_UPD`。
