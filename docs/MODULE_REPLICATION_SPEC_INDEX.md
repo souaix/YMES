@@ -92,6 +92,8 @@
 
 - QC102「抽樣計劃設定_1916」：[功能規格](modules/QC/抽樣計劃設定_1916.md)。公司端已對照 WinForms Form/Def、wsQC、`clsQCBasis`/`clsBasis_UPD`，完成 `/YMES/QC/Sampling1916` DEV 頁與 QC 基本資料選單。Oracle source DDL/PostgreSQL 空表 CREATE 參考已建立；唯一索引為 SamplingType/MinNum/MaxNum/SLevel，沒有宣告 PK constraint、FK 或簽核。家用端需核對 YMES schema 並實作 QC102 CRUD、DataStamp CAS 及抽樣解析規則。 家用端2026-11-19：API/schema及上述模組文件所列正式頁面操作已驗證；具體未完成項以模組最新驗收紀錄為準。
 
+- SC101「SPC 量測數據收集」：[功能規格](modules/SPC/SPC量測數據收集.md)。核對 Customer THEIL_BU1 主 Form、計量／計數收集 DLL、`wsSPC`／`wsOP`／`wsQC` 與 `clsSPC`；完成 DEV OP／Lot／QCItem／Factor／抽樣計畫及計數／計量收集流程。SC101 Online/Log/Statistic/Factor 執行表缺同版 Oracle source DDL／metadata 與 PostgreSQL CREATE-only；桌機受保護 Oracle profile 不存在，未猜 schema。儀器、公式、AQL／管制規則、Group Deduction、WIP／ERP／ERF 寫入及批次交易交家用端依 handoff 分項核實。
+
 
 - QC101「抽樣表格」：modules/QC/抽樣表格.md。公司端已完成 Vue DEV 頁 /YMES/QC/SamplingTable、三欄查詢、區間 CRUD、單列/整表複製及 QC 基本資料選單；PowerShell 5.1 + Oracle.ManagedDataAccess 直接唯讀取得 TBLQCSAMPLINGTABLE DDL/index/constraints，建立來源 DDL 與 PostgreSQL 空表 CREATE 參考。家用端需先比對 YMES schema/migrations，再實作 QC101 CRUD、DataStamp CAS 與 CopyTable 部分成功 API；沒有簽核或 lookup。 家用端2026-11-19：API/schema及上述模組文件所列正式頁面操作已驗證；具體未完成項以模組最新驗收紀錄為準。
 
