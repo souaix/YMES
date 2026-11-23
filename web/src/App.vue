@@ -250,6 +250,7 @@ import SpcPChartSignboard from './components/SpcPChartSignboard.vue'
 import SpcParetoAnalysis from './components/SpcParetoAnalysis.vue'
 import SpcLrrPpmChart from './components/SpcLrrPpmChart.vue'
 import SpcAttributeControlChart from './components/SpcAttributeControlChart.vue'
+import SpcCoaReport from './components/SpcCoaReport.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
@@ -519,6 +520,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:SPC DATA BY LOTNO', label: 'Lot 檢測資料', shortLabel: 'Lot檢測', functionNo: 'SPC DATA BY LOTNO', moduleNo: 'SPC' },
       { id: 'function:SPC:DATA EDIT LOG', label: '資料修改記錄', shortLabel: '修改記錄', functionNo: 'DATA EDIT LOG', moduleNo: 'SPC' },
       { id: 'function:SPC:XLS SOURCE FILE CONTROL', label: 'Excel 匯出樣板', shortLabel: 'Excel樣板', functionNo: 'XLS SOURCE FILE CONTROL', moduleNo: 'SPC' },
+      { id: 'function:SPC:SPC COA', label: '出貨報告', shortLabel: 'COA', functionNo: 'SPC COA', moduleNo: 'SPC' },
       { id: 'function:SPC:CHART SIGNBOARD', label: '管制圖看板', shortLabel: '管制圖看板', functionNo: 'CHART SIGNBOARD', moduleNo: 'SPC' },
       { id: 'function:SPC:CONTROL CHART ANALYSIS', label: '管制圖分析', shortLabel: '管制圖分析', functionNo: 'CONTROL CHART ANALYSIS', moduleNo: 'SPC' },
       { id: 'function:SPC:LINE CHART ANALYSIS', label: '彙整分析圖', shortLabel: '彙整分析圖', functionNo: 'LINE CHART ANALYSIS', moduleNo: 'SPC' },
@@ -969,6 +971,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:PARETO DIAGRAM': appBasePath + '/SPC/ParetoDiagram',
   'function:SPC:LRR / PPM CHART': appBasePath + '/SPC/LrrPpmChart',
   'function:SPC:ATT-CHART': appBasePath + '/SPC/AttributeChart',
+  'function:SPC:SPC COA': appBasePath + '/SPC/CoaReport',
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
@@ -1532,6 +1535,7 @@ const isSpcPChartSignboardPage = computed(() => activeMasterKey.value === 'funct
 const isSpcParetoAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:PARETO DIAGRAM')
 const isSpcLrrPpmChartPage = computed(() => activeMasterKey.value === 'function:SPC:LRR / PPM CHART')
 const isSpcAttributeControlChartPage = computed(() => activeMasterKey.value === 'function:SPC:ATT-CHART')
+const isSpcCoaReportPage = computed(() => activeMasterKey.value === 'function:SPC:SPC COA')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -3171,6 +3175,12 @@ async function signOut(): Promise<void> {
         />
         <SpcAttributeControlChart
           v-else-if="isSpcAttributeControlChartPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcCoaReport
+          v-else-if="isSpcCoaReportPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
