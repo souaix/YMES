@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES301 配件上機（2026-11-23）
+
+公司端依 `frmApplyEQPAccessory`、`wsEMS`／`wsEQP` 及 `clsEMSEquipment`／`clsAccState` 完成 [ES301 DEV 頁](docs/modules/EMS/配件上機作業.md)，fallback `/YMES/EMS/ApplyEquipmentAccessory`。DEV 模擬相容設備查找、Available Only、多選批次上機、既有掛載先下機提示、互斥阻擋與壽命提醒。
+
+- [ ] Pull 最新 main 後核對 `tblemsaccviolatestatuschange`、`tblwipcont_accessory` live schema／migration；repo 缺同版 Oracle source DDL／metadata 與 CREATE-only，桌機受保護 Oracle profile 不存在。不要依 Core SQL 猜欄位／PK／index；取得可靠 DDL 後再補必要 migration。
+- [ ] 正式 lookup／POST API 需登入授權，伺服器重驗設備類別與非 Chamber 設備、配件相容性／IssueState=2／Version、APPLY 控制、目前狀態／互斥、使用者狀態權限與既有掛載；所有 SQL 參數化並限量分頁。
+- [ ] 以單一交易或明確部分成功契約更新 `TBLEMSEQPACCSTATE`／掛載歷程與 `TBLEMSACCESSORYSTATE`／狀態歷程，ACCSerialNo 需併發安全。若要移轉其他設備的既有配件，需處理其在製使用記錄 EndTime、下機／上機兩階段一致性及可補償結果；修正 legacy 下機傳目標設備而非現況設備、失敗後仍繼續 Apply 的缺陷。
+- [x] ES301 公司端 DEV／規格已交接；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端交接：ES108 設備能力設定（2026-11-23）
 
 公司端依 `frmEQPCapMapping`／Def、`wsEMS` 與 `clsEMSEquipment` 完成 [ES108 DEV 頁](docs/modules/EMS/設備能力設定.md)，fallback `/YMES/EMS/EquipmentCapabilityMapping`。DEV 模擬查詢、能力條件編輯／複製的整組替換、逐條件開／關及多設備整組刪除。

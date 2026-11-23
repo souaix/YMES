@@ -132,6 +132,7 @@ import EmsEquipmentStateLog from './components/EmsEquipmentStateLog.vue'
 import EmsEquipmentStateLogQuery from './components/EmsEquipmentStateLogQuery.vue'
 import EmsEquipmentStateLogByState from './components/EmsEquipmentStateLogByState.vue'
 import EmsReturnEquipmentAccessory from './components/EmsReturnEquipmentAccessory.vue'
+import EmsApplyEquipmentAccessory from './components/EmsApplyEquipmentAccessory.vue'
 import EmsEquipmentStateControlSetting from './components/EmsEquipmentStateControlSetting.vue'
 import EmsEquipmentStateStatistics from './components/EmsEquipmentStateStatistics.vue'
 import EmsEquipmentReasonBasis from './components/EmsEquipmentReasonBasis.vue'
@@ -702,6 +703,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:EMS:ACC STATE QUERY', label: '配件狀態查詢', shortLabel: '配件狀態', functionNo: 'ACC STATE QUERY', moduleNo: 'EMS' },
         { id: 'function:EMS:ACC MONITOR_BU1', label: '配件狀態監控_管理', shortLabel: '管理配件', functionNo: 'ACC MONITOR_BU1', moduleNo: 'EMS' },
         { id: 'function:EMS:ACCESSORY REPAIR', label: '配件壽命維護', shortLabel: '壽命', functionNo: 'ACCESSORY REPAIR', moduleNo: 'EMS' },
+        { id: 'function:EMS:APPLY EQP ACCESSORY', label: '配件上機', shortLabel: '上機', functionNo: 'APPLY EQP ACCESSORY', moduleNo: 'EMS' },
         { id: 'function:EMS:RETURN EQP ACCESSORY', label: '配件下機', shortLabel: '下機', functionNo: 'RETURN EQP ACCESSORY', moduleNo: 'EMS' },
         { id: 'function:EMS:SHOW EQP LOG', label: '設備歷史資料查詢', shortLabel: '統計', functionNo: 'SHOW EQP LOG', moduleNo: 'EMS' },
         { id: 'function:EMS:SHOW EQP LOG BY STATE', label: '設備歷史資料查詢_狀態', shortLabel: '日統計', functionNo: 'SHOW EQP LOG BY STATE', moduleNo: 'EMS' },
@@ -726,6 +728,7 @@ const menuRoutes: Record<string, string> = {
   'function:EMS:ACC STATE QUERY': appBasePath + '/EMS/AccessoryStateQuery',
   'function:EMS:ACC MONITOR_BU1': appBasePath + '/EMS/AccessoryStateMonitorBu1',
   'function:EMS:ACCESSORY REPAIR': appBasePath + '/EMS/AccessoryRepair',
+  'function:EMS:APPLY EQP ACCESSORY': appBasePath + '/EMS/ApplyEquipmentAccessory',
   'function:EMS:ACC VIOLATIVE STATE SETTING': appBasePath + '/EMS/AccessoryStateViolativeSetting',
   'function:EMS:VIOLATIVE STATE SETTING': appBasePath + '/EMS/ViolateStateChangeSetMatrix',
   'function:EMS:RETURN EQP ACCESSORY': appBasePath + '/EMS/ReturnEquipmentAccessory',
@@ -1254,6 +1257,7 @@ const isEmsAccessoryRepairPage = computed(() => activeMasterKey.value === 'funct
 const isEmsAccessoryStateViolativeSettingPage = computed(() => activeMasterKey.value === 'function:EMS:ACC VIOLATIVE STATE SETTING')
 const isEmsEquipmentStateViolativeSettingPage = computed(() => activeMasterKey.value === 'function:EMS:VIOLATIVE STATE SETTING')
 const isEmsReturnEquipmentAccessoryPage = computed(() => activeMasterKey.value === 'function:EMS:RETURN EQP ACCESSORY')
+const isEmsApplyEquipmentAccessoryPage = computed(() => activeMasterKey.value === 'function:EMS:APPLY EQP ACCESSORY')
 const isEmsEquipmentStateLogPage = computed(() => activeMasterKey.value === 'function:EMS:EQUIPMENT STATE LOG')
 const isEmsEquipmentStateLogQueryPage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP LOG')
 const isEmsEquipmentStateLogByStatePage = computed(() => activeMasterKey.value === 'function:EMS:SHOW EQP LOG BY STATE')
@@ -3199,6 +3203,7 @@ async function signOut(): Promise<void> {
         <EmsAccessoryStateQuery v-else-if="isEmsAccessoryStateQueryPage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsAccessoryStateMonitorBu1 v-else-if="isEmsAccessoryStateMonitorBu1Page" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsAccessoryRepair v-else-if="isEmsAccessoryRepairPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsApplyEquipmentAccessory v-else-if="isEmsApplyEquipmentAccessoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <EmsAccessoryStateViolativeSetting v-else-if="isEmsAccessoryStateViolativeSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateViolativeSetting v-else-if="isEmsEquipmentStateViolativeSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsReturnEquipmentAccessory v-else-if="isEmsReturnEquipmentAccessoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />

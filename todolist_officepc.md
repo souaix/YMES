@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## 公司端最新交付：ES301 配件上機（2026-11-23）
+
+- [x] 核對 `frmApplyEQPAccessory`／內嵌 Designer、`wsEMS.LoadAvailAccStatebyEquipmentType/LoadEQPACCState/UpdEQPACC/ReturnEQPACC`、`wsEQP` 設備 lookup 與 `clsEMSEquipment`／`clsAccState`。
+- [x] 完成 `/YMES/EMS/ApplyEquipmentAccessory` DEV 頁：設備／類別 lookup、掃描配件 Find、預設 Available Only、多選批次 Confirm、既有設備關聯的逐件先下機／略過、互斥阻擋、壽命提醒及本頁操作記錄；新增 [ES301 規格](docs/modules/EMS/配件上機作業.md)、索引與家用端 handoff。
+- [x] 掛載與配件狀態／歷程表重用 repo Oracle DDL／PostgreSQL CREATE-only；`TBLEMSACCVIOLATESTATUSCHANGE`、`TBLWIPCONT_ACCESSORY` 缺同版 DDL／metadata 與 CREATE-only，桌機受保護 Oracle profile 不存在，本次未查 Oracle、未猜欄位或建 SQL。未連 PostgreSQL、未執行 build／test／browser。
+- [ ] 家用端 Pull 後核對既有 references 與 live schema；補查缺少的 Oracle source DDL／metadata，可靠來源到手後再建立必要 CREATE-only。正式 API 需重驗使用者／設備／配件相容性、IssueState、APPLY 控制值、互斥及 expected state，參數化交易寫掛載／狀態／歷程，並明確定義先下機再上機的部分成功／補償。
+- [x] ES301 公司端 DEV／來源規格完成；依清冊接續下一個尚缺功能。
+
 ## 公司端最新交付：ES108 設備能力設定（2026-11-23）
 
 - [x] 核對 `frmEQPCapMapping`／Def 與內嵌 Designer、`wsEMS.LoadEMSEQPCapMapping/LoadEMSEQPCapMapping_EQP/UpdEMSEQPCapMapping/SetEMSEQPCapMapping_OpenStatus/DelEMSEQPCapMapping`、`clsEMSEquipment`；記錄查詢雙 Grid、整組替換、逐條件開／關及逐台整組刪除。
