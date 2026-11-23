@@ -4,10 +4,12 @@
 
 公司端依 `frmEQPCapBasis`／Def、`wsEMS` 與 `clsEMSEquipment`／`clsBasis_UPD` 完成 [ES107 DEV 頁](docs/modules/EMS/設備能力項目設定.md)，fallback `/YMES/EMS/EquipmentCapabilityBasis`。DEV 以頁面記憶體假資料模擬四種 IssueState、CapItem 搜尋、CRUD／Copy／Apply、依狀態刪除與核准分支。
 
-- [ ] Pull 最新 main 並核對 `tblemseqpcapbasis` live schema／migration；Oracle logical DDL 與 PostgreSQL CREATE-only 已沿用 PD102 reference，`GET_DDL` 原回 ORA-03135，未另猜 DDL，也不應重複建表。
-- [ ] 實作登入／FunctionNo `EQP CAP BASIS` 權限保護、參數化限量分頁查詢及 CRUD；新增 CapItem upper/max 50 字元（Oracle 50 BYTE）、Description max 255 字元（Oracle 255 BYTE）、IssueState 0；修改只准 0，固定鍵並依 DataStamp CAS。所有資料來源均需 server 驗證。先定義 search predicate，ES107 Form 只證明送出 CapItem/SearchFieldValue，無法從本機共用 parser 證據確認比較運算子。
-- [ ] 保留 Delete 狀態規則：0/-1 實體刪除、2 停用為 -1、1 拒絕；先確認產品設備能力 `tblprdopcapitem` 引用後再決定實體刪除政策。定義多選的原子或逐筆回報語意。
-- [ ] Approve 只接受狀態 0，由 server 查 `EMS_EQP_CAPBASIS` Job/Detail 決定直接核准或啟動 Issue process；以交易／冪等／版本檢查維持主檔 IssueState、DataStamp 及 issue data 一致。不可由 client 指定實際核准路徑。
+- [x] Pull 最新 main 並核對 `tblemseqpcapbasis`／`tblprdopcapitem` live schema；以 migration `0067_ems_equipment_capability_basis.sql` 依來源 DDL 建立缺表、授予最小必要權限並核對空表及欄位。沒有重複建表或讀取業務資料。
+- [x] 完成登入保護 API、參數化限量分頁查詢與 CRUD；CapItem upper／50 UTF-8 bytes、Description／255 UTF-8 bytes、IssueState 0；修改只准 0、固定鍵及 DataStamp CAS；Server 負責 actor／時間／狀態。FunctionNo 細項 ACL 待共用權限功能接入。
+- [x] Delete 狀態規則：0／-1 實體刪除、2 停用為 -1、1 拒絕；引用 `tblprdopcapitem` 時拒絕實體刪除；多選採 Serializable 原子交易。
+- [ ] Approve API 已有安全 409 guard，但尚未改資料；等待公司端提供 `EMS_EQP_CAPBASIS` Job／Detail／issue process 設定與資料表映射後，才接直接核准／送簽／通知流程。詳 `todolist_officepc.md`。
+- [x] app-browser 實際驗證搜尋、狀態計數、新增／修改／複製、重複鍵、UTF-8 上限、已核准轉停用及停用／未凍結實體刪除；測試列已清乾淨，四個狀態計數為 0。Approve guard 409 已驗證不改資料。
+- [ ] 全數驗證完成後，正常同步 GitHub、檢查公司端新提交與後續待辦；不可 force push，保留兩個未追蹤 Web 封存檔。
 - [x] ES107 公司端 DEV／來源規格已交接；清冊下一項 ES108「設備能力設定」。公司端不連 PostgreSQL或實作正式 API。
 
 ## 公司端交接：ES407 設備配件現況查詢（2026-11-23）
@@ -34,7 +36,8 @@
 - [x] 再次同步時拉到公司端 `fab9907`（ES407）與 `aef0079`（ES107）；以一般 merge 整合。`App.vue` 同時保留 ES408 API base URL 和 ES407／ES107 路由；沒有 force push。
 - [x] 合併版 `npm run build` 通過：Vue 型別檢查、Vite build 884 modules。保留既有約 4.87 MB 主 bundle 大於 500 KB 提示。
 - [x] app-browser Demo 開發區驗證 ES407 picker、精確查詢、多條件 AND 組合、無結果與含端點 StartTime 範圍；ES107 驗證狀態分頁、搜尋、新增必填／套用、修改、複製、刪除、直接核准／送簽及已核准轉停用。DEV 假資料離頁即重置；兩頁均未呼叫 API 或寫資料庫。
-- [ ] 按最新交接順序繼續核對 ES107 `TBLEMSEQPCAPBASIS` live schema 與 migration；再處理 ES407 `TBLEMSEQPACCSTATE` 登入保護的參數化唯讀 API，兩者依實際來源結構分別記錄。
+- [x] ES107 live schema／migration、登入保護 CRUD API、正式頁串接與 app-browser 實際驗收完成；流程核准依交接文件保留安全 guard。
+- [ ] 下一個家用端事項：對照 `TBLEMSEQPACCSTATE` live schema／migration，實作 ES407 登入保護的參數化唯讀 API、穩定分頁及列數限制，並更新 [ES407 規格](docs/modules/EMS/設備配件現況查詢.md)。
 
 ## 公司端交接：ES101 設備控管設定（2026-11-23）
 

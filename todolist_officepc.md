@@ -8,6 +8,14 @@
 - [ ] 家用端比對 live schema／migration，實作授權、參數化及限量分頁 CRUD、DataStamp 衝突處理、引用檢查與依 server `EMS_EQP_CAPBASIS` 設定執行核准流程。
 - [x] ES107 公司端 DEV／來源規格完成；清冊下一項 ES108「設備能力設定」。
 
+### ES107 簽核流程交接補件（供家用端接 API）
+
+- [ ] 請提供 `ApproveEMSEQPCapBasis` 對應 `EMS_EQP_CAPBASIS` 的完整來源判斷：實際讀取的設定／Job／Detail／issue process／通知資料表或 view 名稱、join/key 條件、無 Job、無 Detail、有簽核群組三種分支，以及每個分支更新 `IssueState`／`DataStamp` 的順序。
+- [ ] 若 YMES PostgreSQL 尚無上述簽核資料表，請交付每張必要表的 Oracle 原生 `CREATE TABLE`／constraint／index DDL 與對應 PostgreSQL CREATE-only DDL；並列出本功能要讀寫的欄位。請勿提供正式簽核紀錄、員工資料、通知收件人或其他業務資料列。
+- [ ] 說明第一簽核群組通知如何由 server 呼叫、其失敗時來源系統如何處理；附呼叫介面／程式路徑即可，不需真實通知內容或收件名單。
+- [ ] 如果來源系統的共用簽核 API 已集中處理以上邏輯，請交付可用的 API／service 名稱、必要參數及成功／失敗結果語意，不要只交 UI mock。
+- [ ] 家用端目前 `POST /api/ems/equipment-capability-bases/approve` 在資料不完整時固定回 409，不會改主檔；收到並核對以上交接後再實作與驗收。
+
 ## 公司端最新交付：ES407 設備配件現況查詢（2026-11-23）
 
 - [x] 核對標準 `frmEquipmentAccState`／內嵌 Designer、`wsEMS.LoadEquipmentAccState`、`clsAccState.LoadEquipmentAccState` 及配件監控帶入 AccessoryNo 的開窗流程。
