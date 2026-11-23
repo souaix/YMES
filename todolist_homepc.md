@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：SC203 資料修改記錄（2026-11-23）
+
+公司端依 `frmQueryDataEditLog`／`wsSPC.LoadSPCDataHistory`／`kcSPC.LoadSPCDataHistory` 完成 [SC203 DEV 頁](docs/modules/SPC/資料修改記錄.md)，fallback `/YMES/SPC/DataEditLog`。DEV 模擬計量／計數歷程、QC Item／Editor／日期篩選與唯讀修改明細，不呼叫 Service、Oracle、YMES API 或資料庫。
+
+- [ ] Pull 後比對 YMES PostgreSQL live schema／migrations。Variable `TBLSPCVAREDITLOG` 沿用 QC205／QC210 references；Attribute `TBLSPCATTEDITLOG` 來源 DDL 在 `mestest_qc_item_attributes_source_ddl.sql`，新增 CREATE-only handoff `mestest_qc_attribute_data_edit_log_create.sql`，不重建已存在資料表。
+- [ ] 正式 API 使用登入及 SC203 Function 授權、QC Type allowlist、參數化 QC Item／Editor／日期條件、穩定排序、分頁／筆數上限。Editor lookup 應按 Attribute／Variable 對應表取 distinct UserID。
+- [ ] 驗證兩種 edit-log 表的 nullable 欄位及 SC201 的 LogGroupSerial／刪除舊新值寫入約定；一般 API 保持唯讀。VISERA 的 IQC／IPQC／OQC 特例另查 `tblWIPCont_DefectcodeOld`／`TBLSPCATTBASISLOG` 的 live schema、metadata 與 Function 權限，不得假設等同 edit-log。
+- [x] 公司端僅交付 DEV／規格／CREATE-only reference，未連 YMES PostgreSQL、未套用 migration／schema、未實作或驗收正式 API。SC203 後下一項為 SC204「Excel匯出樣板」。
+
 ## 公司端交接：SC202 Lot 檢測資料（2026-11-23）
 
 公司端依 THEIL_BU1 Form／`THEIL.wsSPC.LoadLotSPCMeasureData`／`MEStc_THEIL.clsSPC.LoadLotMeasureData` 完成 [SC202 DEV 頁](docs/modules/SPC/Lot檢測資料.md)，fallback `/YMES/SPC/DataByLotNo`。DEV 模擬 Lot／QC Item 查詢、計量與計數資料、Factor 條件、Lot 彙整與唯讀明細；不呼叫 Service、Oracle、YMES API 或資料庫。
@@ -8,7 +17,7 @@
 - [ ] `TBLSPCAttDetailLogComponent` 缺同版 Oracle source DDL／metadata／CREATE-only。取得可靠來源前不得依 Core 查詢欄位推測建立此表；確認 live schema 是否已有可重用的元件缺陷資料。
 - [ ] 正式 API 使用登入及 SC202 Function 授權、有限條件／分頁或結果上限。Lot／日期／計量／計數／QC Item／Collect Factor 條件應分開驗證與參數化；動態 Factor 欄名須從已核准 QC Item Factor metadata 白名單取得。
 - [ ] 保留唯讀語意；核對計量明細／統計、計數 Basis／Detail／Component ReasonType 關聯、ShowName 與較大量 Lot 查詢效能。無 SC202 寫入 API。
-- [x] 公司端僅交付 DEV／規格，未連 YMES PostgreSQL、未建 migration／schema、未實作或驗收正式 API。SC202 後下一項為 SC203「資料修改記錄」。
+- [x] 公司端僅交付 DEV／規格，未連 YMES PostgreSQL、未建 migration／schema、未實作或驗收正式 API。SC203 已完成，下一個尚未完成 SPC FunctionKey 為 SC204「Excel匯出樣板」。
 
 ## 公司端交接：SC201 SPC 資料維護（2026-11-23）
 
@@ -19,7 +28,7 @@
 - [ ] 正式 API 需有限筆查詢、QC Item kind／IssueState、Lot／日期／Collect Factor 篩選與 Data Log；編修依登入者分別授權 `SPCDATAEDITATT`／`SPCDATAEDIT`，計量刪除另核 `THEIL.wsSPC.LoadUserDeleteGroup` 對應群組權限。採參數化查詢與伺服器端 concurrency token。
 - [ ] 計數與計量更新／刪除需定義交易：SPC Basis／Detail／Factor／Statistic／Limit／Violation、WIP sample／QC item／defect 及 edit log；刪除若含 ERF，核對 ERF 子表刪除順序、WIP 回復行為與最後管制圖批次 `FactorSerial` 守門。計數 GoodQty = SampleQty - ScrapQty；計量更新重算統計但不重判 Result。
 - [ ] Hold 無 ERF 時正式補開路徑需依 `WP_BRERFCreate` 契約（`ERFSource=1`、SPCSerial、RepairERF），不得由 SC201 API 直接建立 ERF；定義跨服務部分成功與重試／對帳。
-- [x] 公司端僅交付 DEV／規格，未連 YMES PostgreSQL、未實作正式 API/schema。SC202 已完成，下一個尚未完成 SPC FunctionKey 為 SC203「資料修改記錄」。
+- [x] 公司端僅交付 DEV／規格，未連 YMES PostgreSQL、未實作正式 API/schema。SC202、SC203 已完成，下一個尚未完成 SPC FunctionKey 為 SC204「Excel匯出樣板」。
 
 ## 公司端交接：SC108 進料檢驗_元件（2026-11-23）
 
@@ -29,7 +38,7 @@
 - [ ] 實作受登入與 SC108 Function 授權的限量 Header 查詢與 CRUD／Copy／serial reservation；核物料、供應商、ERP source ownership。Map／元件清單以參數化 SQL 操作；元件明細以單一交易整組取代，檢查重複 ComponentNo 與 count = Header Qty。Confirm 使用 DataStamp CAS，並同時核查 Header、Map、元件明細交易邊界。
 - [ ] 修正／處理來源 Core 刪 Header 時未見刪 `TBLSPCIQCCOMPONENT` 明細的 orphan 風險。核查 `UpdIQCFormComponentQCItemMapResult` 重複執行 Map SQL collection 的實際 helper 效果；SPC 結果更新、最後項目完成與 Header Status 2／FinishTime 應原子化。
 - [ ] 逐一核實 ERP incoming／OS 及 TIPTOP、WFGP、T100、TIPTOPICD、E10ICD callback；保存 idempotency、request／response、重試／對帳與外部成功後本機 CAS 失敗補償。定義 Receive／Reject／Concession／Revise 與 `SPCInspAbnormalHoldLot` → `WP_BRERFCreate` 的交易／部分成功處理。
-- [x] 公司端僅交付 DEV／規格，未連 YMES PostgreSQL、未實作正式 API/schema、未執行 build／test／browser。SC109 不在清冊；SC201、SC202 已完成，下一個尚未完成 SPC FunctionKey 為 SC203。
+- [x] 公司端僅交付 DEV／規格，未連 YMES PostgreSQL、未實作正式 API/schema、未執行 build／test／browser。SC109 不在清冊；SC201–SC203 已完成，下一個尚未完成 SPC FunctionKey 為 SC204。
 
 ## 公司端交接：SC107 匯入計量檢測數據（2026-11-23）
 
