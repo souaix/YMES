@@ -9,6 +9,14 @@
 - [x] 最終合併後前端 `vue-tsc` 與 Vite production build 通過（864 modules）；僅既有約 4.86 MB 主 JS chunk 提示超過 Vite 500 KB 預設值。
 - [x] 已將整合版以一般快轉推送至 GitHub `main`（`62ca630`）；推送後讀回 `origin/main` 確認一致，並檢查兩台 TODO。公司端新接續項目為 ES405／BU1 配件 API；相關表 live schema 尚待比對，`tblemsaccessoryreasons` DDL 仍缺。
 
+## 2026-11-23 最新同步與 ES405 API
+
+- [x] 讀到公司端新提交 `26995bc`（ES105「配件狀態互斥設定」DEV 頁）。此提交依一般 Git 同步整合；保留公司端既有歷程與兩份 Web 封存檔，不覆蓋工作樹中的未提交檔案。
+- [x] 重開機後 app-browser 已恢復：正式站可開啟、Demo 登入 session 正常、三層選單可展開、WPP02 尚未遷移提示可見；瀏覽器操作與截圖皆可用。
+- [x] ES405 live schema 唯讀核對完成；依 CREATE-only migration 建立缺少的兩張空白表，修補 `ymes_app` 對現有狀態基礎表的 SELECT，未修改業務資料。新增登入保護、參數化分頁 API 及正式查詢頁串接；本機 app-browser 能載入並重查，空表回傳正常空結果，console 無 error/warn。
+- [ ] `TBLEMSACCESSORYREASONS` Oracle source DDL／metadata 仍缺，原因明細 API／資料表待公司端交付後續接；ES405 目前完成現況查詢，未部署正式站。
+- [ ] 整合 ES105 後需用 app-browser 驗證類別選取、互斥格切換、Confirm 僅改 DEV fixture 及關閉返回；完成後才提交並推送，之後重新檢查公司 TODO。
+
 ## 公司端交接：ACC MONITOR_BU1 配件狀態監控_管理（2026-11-23）
 
 公司端依 DEV_SILVA Customer 專用 `frmAccessoryStateMonitor`、THEIL `wsEQP`／`wsEMS.ChangeAccessoryState`、`clsAccState.ChangeACCState` 完成 [DEV 頁](docs/modules/EMS/配件狀態監控管理.md)，fallback `/YMES/EMS/AccessoryStateMonitorBu1`。此為獨立客戶版，標準 ES304 是另一個已完成功能。DEV 假類別／類型、現況、STATES／LOG、0–5 多選狀態更新及歷程只存在頁面記憶體。
