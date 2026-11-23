@@ -1,5 +1,15 @@
 # 公司端待辦
 
+## 公司端最新交付：SC103 進料檢驗單（2026-11-23）
+
+- [x] 核對主 Form／inline Designer、`frmIncomingQCFormDef`／inline Designer、QC Item Map Form、`wsSPC`／`wsMTL`／`wsSYS`／`wsOP`、`clsSPC` 及 `clsBasis_UPD`。
+- [x] 完成 `/YMES/SPC/IncomingQCForm` DEV 頁：7 狀態頁籤、搜尋與日期、單據 Add/Edit/Copy/Delete/Confirm、物料／供應商 fixture、QC Item map 維護、逐項 SPC 假收集、Receive/Reject/Concession 數量檢核與 Revise。
+- [x] 新增 [SC103 規格](docs/modules/SPC/進料檢驗單.md)、Module index 與家用端 handoff；未連 PostgreSQL、未執行 build／test／browser。
+- [x] `TBLSPCINCOMINGQCFORMQCITEMMAP` 沿用 QC216 Oracle source DDL／PG CREATE reference；`TBLSPCINCOMINGQCFORM` 缺同版 Oracle DDL／metadata 與 PG CREATE-only。桌機受保護 attachment/profile 不存在，本次未連 Oracle、未猜主表 schema。
+- [ ] 家用端 Pull 後核對主單／Map live schema、migrations、DataStamp compare-and-set 及序號規則；取得可靠主表 DDL 後再補必要 schema。正式 API 需參數化、限量查詢，重驗使用者、物料／供應商、ERP-owned、表單狀態、QCItem eligibility 與 Qty，定義主單／Map／量測結果的交易邊界。
+- [ ] ERP／sQMS callback、ERP QC Form／WIP／ERF、超時重試／冪等鍵與部分成功補償由家用端整合驗收；公司端 DEV 不呼叫外部服務。
+- [x] SC103 公司端 DEV／規格完成；清冊下一項 SC104「終檢檢驗單」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端最新交付：SC102 SPC 量測數據收集_計量連續（2026-11-23）
 
 - [x] 核對標準 `frmSPCOnlineControl_test`／內嵌 Designer、動態連續計量 `frmVar_MeasureContinuous`／Designer、`wsSPC.UpdVar_TestValue/UpdVar_LotData`、`LoadVarQCItemChartData`／`ExecuteQCChartRuleCheck` 與 `clsSPC`。

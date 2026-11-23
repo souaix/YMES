@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：SC103 進料檢驗單（2026-11-23）
+
+公司端依 `frmIncomingQCForm`／`frmIncomingQCFormDef`／QC Item Map、`wsSPC`／`wsMTL`／`wsSYS`／`wsOP`、`clsSPC`／`clsBasis_UPD` 完成 [SC103 DEV 頁](docs/modules/SPC/進料檢驗單.md)，fallback `/YMES/SPC/IncomingQCForm`。DEV 模擬 7 個主單狀態、CRUD、物料帶 QC Item、Map 維護、SPC 假完成、收貨／驗退／特採及複判；不呼叫 MES／ERP API 或資料庫。
+
+- [ ] `TBLSPCINCOMINGQCFORM` 缺同版 Oracle source DDL／metadata 及 PG CREATE-only。QC Item Map `TBLSPCINCOMINGQCFORMQCITEMMAP` 有 QC216 的 Oracle source DDL 與 PG CREATE reference，先核對既有 live schema／migration 再沿用，不重複建表。主表 DDL 到手前不要依 Core SQL 推測欄位、PK、索引或 FK。
+- [ ] 正式實作 SC103 主單／Map lookup 與 CRUD／transition API：登入 FunctionNo 授權、物料／供應商／ERP-owned 與 QCItem eligibility、序號配置、DataStamp CAS、Qty 與狀態重驗、參數化限量查詢；定義 Add/Edit/Delete/Confirm、Map 更新、SPC結果與收貨／驗退／特採的 transaction 邊界。
+- [ ] 整合 `CallBackType` 支援的 Workflow／TIPTOP／WFGP／T100／E10ICD／sQMS，設計 idempotency key、callback audit、逾時對帳與補償；核實 ERP／WIP／ERF 及 QC Form 結果回寫順序。公司端 DEV 未呼叫外部 callback，也不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC103 公司端 handoff 已完成；清冊下一項 SC104「終檢檢驗單」。
+
 ## 公司端交接：SC102 SPC 量測數據收集_計量連續（2026-11-23）
 
 公司端依 `frmSPCOnlineControl_test`、動態載入 `frmVar_MeasureContinuous`、`wsSPC.UpdVar_TestValue/UpdVar_LotData` 與 `clsSPC` 完成 [SC102 DEV 頁](docs/modules/SPC/SPC量測數據收集_計量連續.md)，fallback `/YMES/SPC/OnlineControlContinue`。DEV 模擬連續逐點輸入、假設備填值、貼上數值匯入、規格提示、Save、Edit／ConfirmEdit／Reverse 與歷程；不呼叫 API、設備、ERP 或資料庫。

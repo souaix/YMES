@@ -425,7 +425,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 | SPC ONLIE CONTROL CONTINUE | SPC 量測數據收集_計量連續 | SPC管制 | frmSPCOnlineControl_test | SC_OnlineControl_Test.dll | SC102 | 0 |
 | XLS SOURCE FILE CONTROL | Excel匯出樣板 | SPC分析 | frmXlsSourceFileControl | SC_XlsSourceFileControl.dll | SC204 | 0 |
 
-公司端復刻進度（2026-11-23）：SC101「SPC 量測數據收集」及 SC102「SPC 量測數據收集_計量連續」已完成 DEV、WinForms／Service／Core 規格與家用端 handoff。共用計量 Online/Log/Statistic/Factor/Limit 執行表缺同版 Oracle DDL／metadata，桌機受保護 attachment 不存在，未猜建表。後續依 FunctionKey 順序接 SC103「進料檢驗單」。
+公司端復刻進度（2026-11-23）：SC101「SPC 量測數據收集」、SC102「SPC 量測數據收集_計量連續」及 SC103「進料檢驗單」已完成 DEV、WinForms／Service／Core 規格與家用端 handoff。SC101／SC102 共用計量執行表及 SC103 `TBLSPCINCOMINGQCFORM` 缺同版 Oracle DDL／metadata，桌機受保護 attachment 不存在，未猜建表；QC Item Map 沿用 QC216 source DDL／PG CREATE reference。後續依 FunctionKey 順序接 SC104「終檢檢驗單」。
 
 ### INV — 庫存管理（順序 13）
 
