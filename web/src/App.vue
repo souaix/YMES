@@ -241,6 +241,7 @@ import QcIncomingComponentInspectionForm from './components/QcIncomingComponentI
 import QcSpcDataMaintenance from './components/QcSpcDataMaintenance.vue'
 import SpcLotDataByLotNo from './components/SpcLotDataByLotNo.vue'
 import SpcDataEditLog from './components/SpcDataEditLog.vue'
+import SpcXlsSourceFileControl from './components/SpcXlsSourceFileControl.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
@@ -509,6 +510,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:SPC DATA', label: 'SPC 資料維護', shortLabel: 'SPC資料', functionNo: 'SPC DATA', moduleNo: 'SPC' },
       { id: 'function:SPC:SPC DATA BY LOTNO', label: 'Lot 檢測資料', shortLabel: 'Lot檢測', functionNo: 'SPC DATA BY LOTNO', moduleNo: 'SPC' },
       { id: 'function:SPC:DATA EDIT LOG', label: '資料修改記錄', shortLabel: '修改記錄', functionNo: 'DATA EDIT LOG', moduleNo: 'SPC' },
+      { id: 'function:SPC:XLS SOURCE FILE CONTROL', label: 'Excel 匯出樣板', shortLabel: 'Excel樣板', functionNo: 'XLS SOURCE FILE CONTROL', moduleNo: 'SPC' },
       { id: 'function:SPC:IMPORT VAR MEASURE', label: '匯入計量檢測數據', shortLabel: '匯入', functionNo: 'IMPORT VAR MEASURE', moduleNo: 'SPC' },
     ] }],
   },
@@ -944,6 +946,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:SPC DATA': appBasePath + '/SPC/DataMaintenance',
   'function:SPC:SPC DATA BY LOTNO': appBasePath + '/SPC/DataByLotNo',
   'function:SPC:DATA EDIT LOG': appBasePath + '/SPC/DataEditLog',
+  'function:SPC:XLS SOURCE FILE CONTROL': appBasePath + '/SPC/XlsSourceFileControl',
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
@@ -1498,6 +1501,7 @@ const isSpcVariableMeasurementImportPage = computed(() => activeMasterKey.value 
 const isSpcDataMaintenancePage = computed(() => activeMasterKey.value === 'function:SPC:SPC DATA')
 const isSpcLotDataByLotNoPage = computed(() => activeMasterKey.value === 'function:SPC:SPC DATA BY LOTNO')
 const isSpcDataEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:DATA EDIT LOG')
+const isSpcXlsSourceFileControlPage = computed(() => activeMasterKey.value === 'function:SPC:XLS SOURCE FILE CONTROL')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -3083,6 +3087,12 @@ async function signOut(): Promise<void> {
         />
         <SpcDataEditLog
           v-else-if="isSpcDataEditLogPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcXlsSourceFileControl
+          v-else-if="isSpcXlsSourceFileControlPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
