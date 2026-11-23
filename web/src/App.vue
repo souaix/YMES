@@ -244,6 +244,7 @@ import SpcDataEditLog from './components/SpcDataEditLog.vue'
 import SpcChartLineEditLog from './components/SpcChartLineEditLog.vue'
 import SpcQcItemBindingHisLog from './components/SpcQcItemBindingHisLog.vue'
 import SpcChartAllCapability from './components/SpcChartAllCapability.vue'
+import SpcMonthRPTCodeBasis from './components/SpcMonthRPTCodeBasis.vue'
 import SpcXlsSourceFileControl from './components/SpcXlsSourceFileControl.vue'
 import SpcChartSignboard from './components/SpcChartSignboard.vue'
 import SpcControlChartAnalysis from './components/SpcControlChartAnalysis.vue'
@@ -970,6 +971,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:CHART LINE EDIT LOG': appBasePath + '/SPC/ChartLineEditLog',
   'function:SPC:QCITEM BINDING HIS LOG': appBasePath + '/SPC/QcItemBindingHisLog',
   'function:SPC:CHART ALL CAPABILITY': appBasePath + '/SPC/ChartAllCapability',
+  'function:SPC:MONTHLY CHART REPORT CODE': appBasePath + '/SPC/MonthRPTCodeBasis',
   'function:SPC:XLS SOURCE FILE CONTROL': appBasePath + '/SPC/XlsSourceFileControl',
   'function:SPC:CHART SIGNBOARD': appBasePath + '/SPC/ChartSignboard',
   'function:SPC:CONTROL CHART ANALYSIS': appBasePath + '/SPC/ControlChartAnalysis',
@@ -1538,6 +1540,7 @@ const isSpcDataEditLogPage = computed(() => activeMasterKey.value === 'function:
 const isSpcChartLineEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:CHART LINE EDIT LOG')
 const isSpcQcItemBindingHisLogPage = computed(() => activeMasterKey.value === 'function:SPC:QCITEM BINDING HIS LOG')
 const isSpcChartAllCapabilityPage = computed(() => activeMasterKey.value === 'function:SPC:CHART ALL CAPABILITY')
+const isSpcMonthRPTCodeBasisPage = computed(() => activeMasterKey.value === 'function:SPC:MONTHLY CHART REPORT CODE')
 const isSpcXlsSourceFileControlPage = computed(() => activeMasterKey.value === 'function:SPC:XLS SOURCE FILE CONTROL')
 const isSpcChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:CHART SIGNBOARD')
 const isSpcControlChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:CONTROL CHART ANALYSIS')
@@ -3152,6 +3155,12 @@ async function signOut(): Promise<void> {
         />
         <SpcChartAllCapability
           v-else-if="isSpcChartAllCapabilityPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcMonthRPTCodeBasis
+          v-else-if="isSpcMonthRPTCodeBasisPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
