@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：SC215 管制線修改紀錄（2026-11-23）
+
+- [x] 核對 `frmChartLineEditLog`、inline Designer、`wsSPC.ShowControlChartLineData`、`kcSPC.ShowControlChartLineData` 與 `Load_Check_StartTime`。確認 WinForms 實際只開放 Variable；Attribute radio 隱藏。
+- [x] 完成 `/YMES/SPC/ChartLineEditLog` DEV：QC Item／Product／Customer／Material／Vendor 假 lookup、未勾選的預設日期、Query、由 snapshot 重建新增／規格修改／管制線修改唯讀 Grid。新增 [SC215 規格](docs/modules/SPC/管制線修改紀錄.md)，更新 Index、Inventory 與兩端 TODO。
+- [x] 記錄來源差異：Form 不傳日期給 Service；日期在歷程重建後用嚴格 `>`／`<` 過濾。Core 查詢無上限且串接 SQL；`CustomerNo` 欄位檢查與 QC302 `CUSTOMER` DDL 不符。舊 `Old_ROW` 未按 SPCID 比較，並可能在多圖別歷程誤比。
+- [x] Basis／DetailLog Oracle source DDL 與 PostgreSQL CREATE-only 已有 QC302 references，無新增表。桌機受保護 Oracle profile 不存在，未直連 Oracle／YMES PostgreSQL、未猜 DDL。
+- [ ] 家用端核對 YMES live schema／migrations；參數化所有條件、限日期跨度／FactorSerial／結果數並穩定排序分頁。先重建完整 timeline 再套日期，否則區間首筆可能被誤標新增。核對 Customer 欄位是否應對應 `CUSTOMER`。
+- [ ] 家用端決定是否修正 SPCID 比較與排序，若按 FactorSerial＋SPCID＋StartTime 配對，記錄相對舊 `Old_ROW` 的行為差異；Factor 值採授權 metadata allowlist 和固定 JSON 欄位，不以動態識別字組 SQL。下一個未完成 SPC FunctionKey 為 SC216。
+
 ## 公司端最新交付：SC214 管制圖分析_以要因查詢（2026-11-23）
 
 - [x] 直接核對 `frmQueryBarControlChartByFactor`、`wsSPC.LoadControlChartDataByFactor`、`kcSPC.LoadControlChartDataByFactor` 與共用 `SC_AnsLineBarChart`：Factor 多選、KeyNode、FactorSerial summary、資料／圖表／Histogram drilldown。
@@ -7,7 +16,7 @@
 - [x] 查詢行為差異已記錄：Service 未傳 QCItemNo，Core summary 不套用日期；Short-run tab 在 Form Designer 隱藏。Factor 欄位識別字和值被舊 Core 拼入 SQL，不沿用。
 - [x] 群組／量測所需 Chart Basis、Variable FactorLog DDL 與 CREATE-only 已有 QC302／QC205 references；無新增資料表。桌機受保護 Oracle profile 不存在，本輪未連 Oracle／YMES PostgreSQL，未猜 DDL。
 - [ ] 家用端先核對 live schema／migrations；API 決定是否限定 QCItemNo、是否修正日期 summary 的無效條件，並記錄行為差異。Factor identifier 只接受授權 metadata allowlist；Factor 值全部參數化，設日期／條件數／回傳筆數上限與穩定分頁。
-- [ ] Drilldown 重用 SC206 chart analysis contract，限制 SC214 ACL、所選 FactorSerial／QCItemNo、日期或 LatestLots，回傳受限量測、limit／rule 與點選明細。下一個未完成 SPC FunctionKey 為 SC215。
+- [ ] Drilldown 重用 SC206 chart analysis contract，限制 SC214 ACL、所選 FactorSerial／QCItemNo、日期或 LatestLots，回傳受限量測、limit／rule 與點選明細。下一個未完成 SPC FunctionKey 為 SC216。
 
 ## 公司端最新交付：SC213 出貨報告（SPC COA）（2026-11-23）
 
@@ -16,7 +25,7 @@
 - [x] 計量／計數 SPC 表沿用 repo references；`TBLSPCATTDETAILLOGCOMPONENT` 與 `TBLSPCXLSFILE` 缺可信 DDL／metadata／PG CREATE-only。公司端 Oracle profile 不存在，未連 Oracle／PostgreSQL、未猜 schema。
 - [ ] 家用端核對 SPC 主／明細表、`TBLSPCATTDETAILLOGCOMPONENT`、`TBLSPCXLSFILE` 與 live schema／migrations。沒有可信 metadata 前不要推測建表；使用 COA 模板 bytes 時需完整串流、檔案大小／型別限制與權限控制。
 - [ ] 家用端決定 OPNo 是否在正式 API 實際篩選；舊 Service/Core 雖接收畫面 XML，未解析或傳遞 OPNo。維持相容時須明示無效果，若修正需記為行為差異。查詢先取跨全期每組 QCItemNo＋LotNo 最新資料再套日期；API 加日期跨度、QC Item／Lot 數及結果列上限，Factor 識別字使用 metadata allowlist，值一律參數化。
-- [ ] COA API 限縮 Attribute error/component/tape 明細至已查詢 SPCSerial；模板／匯出避免伺服器端 Excel COM。公司端未實作正式 API/schema；下一個未完成 SPC FunctionKey 為 SC215。
+- [ ] COA API 限縮 Attribute error/component/tape 明細至已查詢 SPCSerial；模板／匯出避免伺服器端 Excel COM。公司端未實作正式 API/schema；下一個未完成 SPC FunctionKey 為 SC216。
 
 ## 公司端最新交付：SC212 計數型管制圖（2026-11-23）
 
@@ -25,7 +34,7 @@
 - [x] `TBLSPCATTBASISLOG`／`TBLSPCATTDETAILLOG`、`TBLQCREASONBASIS`、`TBLSPCATTLIMIT` 沿用 repo references。`TBLSPCATTCHARTLIMIT` 缺 Oracle DDL／metadata／PG CREATE-only；舊 Core 會在查詢中動態 `ALTER TABLE`，不可移植。公司桌機受保護 Oracle profile 不存在，未連 Oracle、未猜 DDL，也未連 YMES PostgreSQL。
 - [ ] 家用端核對 Attribute／Reason／Limit live schema 與 `TBLSPCATTCHARTLIMIT` 是否存在；沒有可信 metadata 前不要建猜測 schema，也不要複製動態 Factor 欄位 DDL。以固定 schema 保存 Factor 條件與管制界線。
 - [ ] 家用端提供登入及 SC212 Function ACL 保護的 Attribute QC Item／Factor lookup、限量圖表資料與選取 SPCSerial 的原因明細 API。FactorNo 使用 metadata allowlist，所有 Factor values 參數化；限制日期、批次、因素及明細數。
-- [x] SC212 公司端 DEV／來源規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC212 公司端 DEV／來源規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC211 拒收率／百萬不良數管制圖（2026-11-23）
 
@@ -33,7 +42,7 @@
 - [x] 完成 `/YMES/SPC/LrrPpmChart` DEV：QC Item／Factor 假資料選取、日期與期間條件、LRR／PPM、彙總圖表／明細、手動目標線與超標提示、Save／Export／Print 無副作用提示。新增 [SC211 規格](docs/modules/SPC/拒收率百萬不良數管制圖.md)，更新 Index、Function Inventory 與家用端 handoff。
 - [x] `TBLSPCATTBASISLOG` 沿用 Attribute Oracle source DDL／PostgreSQL CREATE-only；VISERA 專用 `TBLSYSCALENDAR` 的 DDL／metadata／CREATE-only 在 repo 找不到。公司桌機受保護 Oracle profile 不存在，本輪未連 Oracle、未猜建 calendar，也未連 YMES PostgreSQL。
 - [ ] 家用端核對 live `TBLSPCATTBASISLOG`／既有 migrations 與 `TBLSYSCALENDAR`。只有取得可信 metadata 才建立日曆 CREATE-only；正式 API 限制日期跨度／回傳期間，FactorNo 由授權 QC Item metadata allowlist 控制，所有值參數化。
-- [x] SC211 公司端 DEV／來源規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC211 公司端 DEV／來源規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC210 柏拉圖分析（2026-11-23）
 
@@ -41,7 +50,7 @@
 - [x] 完成 `/YMES/SPC/ParetoDiagram` DEV：多 QC Item、Factor 聯集、多值條件、日期、狀態／重測／Scrap／Defect、五種排序指標、Top N 柏拉圖與 Reason detail／Fishbone／Rank／Section／Pie／Last 4 Weeks 模擬；Export／Save／Print 僅提示。新增 [SC210 規格](docs/modules/SPC/柏拉圖分析.md)，更新 Index、Function Inventory 與家用端 handoff。
 - [x] `TBLSPCATTBASISLOG`／`TBLSPCATTDETAILLOG`、`TBLQCREASONBASIS` 沿用既有 references。Section Detail 使用的 `TBLSPCATTDETAILLOGSECTION` 缺 Oracle DDL／metadata／PG CREATE-only；受保護 Oracle profile 不存在，本輪未連 Oracle、未猜 CREATE，也未連 YMES PostgreSQL。
 - [ ] 家用端 pull 後核對 `TBLSPCATTDETAILLOGSECTION` live schema／既有 migration；無可信 DDL 前不猜建表。正式 query 限制日期跨度、批次與 detail 筆數；FactorNo metadata allowlist、值參數化；核對 Product PCS 的 `wsPRD.LoadProductProperty` lookup。
-- [x] SC210 公司端 DEV／來源規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC210 公司端 DEV／來源規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC209 不良率管制圖看板（2026-11-23）
 
@@ -49,7 +58,7 @@
 - [x] 完成 `/YMES/SPC/PChartSignboard` Vue DEV 頁；點選圖表批次同步明細，Refresh／Save Graph 以本機假資料模擬；更新 [SC209 規格](docs/modules/SPC/不良率管制圖看板.md)、Index、Function Inventory 與家用端 handoff。
 - [x] Attribute basis/detail、reason basis、`TBLSPCATTLIMIT` 沿用現有 references。`TBLSPCATTVIOLATIONCONTENT` 缺 Oracle DDL／metadata／PG CREATE-only；公司桌機受保護 Oracle profile 不存在，本輪未連 Oracle、未猜 DDL，未連 YMES PostgreSQL。
 - [ ] 家用端 pull 後核對 `TBLSPCATTVIOLATIONCONTENT` live schema／migration；無可信 DDL 前不要猜建表。正式 query 限制批次、Error detail／Violation 筆數，FactorNo 用 QC metadata allowlist，所有值參數化。
-- [x] SC209 公司端 DEV／來源規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC209 公司端 DEV／來源規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC208 散佈圖分析（2026-11-23）
 
@@ -58,7 +67,7 @@
 - [x] 新增 [SC208 規格](docs/modules/SPC/散佈圖分析.md)，更新 Module index、Function Inventory 與家用端 handoff。Factor lookup 及相關統計為假資料／近似算法，已記錄未實作的 Product Factor 相依篩選與檔案輸出。
 - [x] 計量／Factor log 沿用 QC205 source DDL 與 QC210 CREATE-only reference，沒有新增表。桌機受保護 Oracle profile 不存在，本次未連 Oracle；未連 YMES PostgreSQL、未執行 build／test／browser。
 - [ ] 家用端比對 `TBLSPCVARFACTORLOG`／`TBLSPCVARDETAILLOG` live schema／migrations；確認 LotNo + SerialNo 重複配對規則、LotState／Result 及 ScatterChartLayer 舊統計公式。正式查詢限制日期／筆數；Factor 欄位採 metadata allowlist、值參數化。
-- [x] SC208 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC208 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC207 彙整分析圖（2026-11-23）
 
@@ -67,7 +76,7 @@
 - [x] 新增 [SC207 規格](docs/modules/SPC/彙整分析圖.md)，更新 Module index、Function Inventory 與家用端 API/schema handoff；圖表與統計僅為簡化假資料。
 - [x] 沿用 QC302／QC205／QC210 references，未新增業務表。`TBLSPCLIMIT` fallback 缺同版 Oracle DDL／metadata／CREATE-only；桌機受保護 Oracle profile 不存在，沒有連 Oracle 或猜 SQL；未連 YMES PostgreSQL，未執行 build／test／browser。
 - [ ] 家用端比對 PostgreSQL live schema／migration，核實 `TBLSPCLIMIT` fallback；正式 API 限制日期跨度及資料量，參數化值、動態 Factor 欄位採 metadata allowlist，重用 Core limit／Rule／Violation／Statistic 規則。
-- [x] SC207 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC207 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC206 管制圖分析（2026-11-23）
 
@@ -76,7 +85,7 @@
 - [x] 新增 [SC206 規格](docs/modules/SPC/管制圖分析.md)，更新 Module index、Function Inventory 及家用端 API/schema handoff；圖表、統計與限值皆為展示用簡化假資料，不是 Core 正式結果。
 - [x] 沿用 QC302 Chart Basis／Detail／Rule 與 QC205／QC210 variable references；`TBLSPCLIMIT` fallback 缺同版 DDL／metadata／CREATE-only。桌機受保護 Oracle profile 不存在，沒有連線或猜 SQL；未新增業務資料表，未連 YMES PostgreSQL，未執行 build／test／browser。
 - [ ] 家用端比對 live schema／migrations，核實 SC206 分析呼叫所需資料與 `TBLSPCLIMIT` fallback；正式 API 限制資料筆數／日期範圍，參數化值並以 QC Item Factor metadata allowlist 控制動態欄位。Save Graph 另核授權與檔案上限。
-- [x] SC206 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC206 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC205 管制圖看板（2026-11-23）
 
@@ -85,7 +94,7 @@
 - [x] 新增 [SC205 規格](docs/modules/SPC/管制圖看板.md)，更新 Module index、Function Inventory 及家用端 handoff；使用 repo 既有 QC302／QC205 DDL references，沒有新增表或猜測 DDL。未連 Oracle／PostgreSQL，未執行 build／test／browser。
 - [x] DEV 僅使用本機假資料；圖表界線、Cp／Cpk 和違規標示是簡化示意。定時刷新不重新查詢資料，Save Graph 不產生／傳送檔案。
 - [ ] 家用端比對 QC／SYS lookup、Chart Basis／Detail Log、Variable Factor／Detail Online／Violation 等 live schema／migrations；正式算法需採來源 Core 規則。新增限量、參數化、Function 權限 API；Save Graph 限制格式／bytes／檔名或依需求不開放。
-- [x] SC205 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC205 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC204 Excel 匯出樣板（2026-11-23）
 
@@ -95,7 +104,7 @@
 - [x] 已確認 Control Chart／COA／AutoRPT 樣板 binary 檔名和本機來源檔存在；只引用 DEV fixtures，沒有複製到 YMES repo。
 - [ ] `TBLSPCXLSFILE` 缺同版 Oracle source DDL／metadata／PG CREATE-only；桌機受保護 Oracle profile 不存在，未查 Oracle或猜 BLOB／欄位／key／index。取得唯讀 metadata 後補 source reference 與 CREATE-only handoff。
 - [ ] 家用端先比對 YMES live schema／migration；正式 API 需 FunctionNo 授權、檔案大小／副檔名／內容驗證、參數化 metadata、BLOB 上下傳、版本衝突處理與明確 batch delete 語意。修正 legacy 長度少一 byte、空 body 假成功；確認 Core Oracle／MSSQL-only 需換 PostgreSQL data access。
-- [x] SC204 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC204 公司端 DEV／規格交接完成；下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC203 資料修改記錄（2026-11-23）
 
@@ -104,7 +113,7 @@
 - [x] 新增 [SC203 規格](docs/modules/SPC/資料修改記錄.md)、更新 Module index、Function Inventory 與家用端 handoff；未連 YMES PostgreSQL，未執行 build／test／browser。
 - [x] Variable `TBLSPCVAREDITLOG` 沿用 QC205 Oracle reference 與 QC210 CREATE-only；Attribute `TBLSPCATTEDITLOG` 沿用既有 Oracle DDL，新增 `database/reference/mestest_qc_attribute_data_edit_log_create.sql` CREATE-only handoff，未套用。
 - [ ] 家用端比對 YMES live schema／migrations；正式查詢需 FunctionNo 授權、QC Type allowlist、參數化日期／Editor／QC Item、分頁與筆數上限。VISERA IQC／IPQC／OQC 舊缺陷碼特殊分支需另核企業設定及 WIP Cont metadata。
-- [x] SC203 公司端 DEV／規格交接完成；SC204 已依序交接，下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC203 公司端 DEV／規格交接完成；SC204 已依序交接，下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC202 Lot 檢測資料（2026-11-23）
 
@@ -113,7 +122,7 @@
 - [x] 新增 [SC202 規格](docs/modules/SPC/Lot檢測資料.md)、更新 Module index、Function Inventory 與家用端 handoff；未連 YMES PostgreSQL，未執行 build／test／browser。
 - [x] 計量／計數 SPC 表沿用 repo QC205／QC210／attribute references。`TBLSPCAttDetailLogComponent` 缺同版 Oracle source DDL／metadata／PG CREATE-only；桌機受保護 Oracle profile 不存在，未查 Oracle、未猜 schema。
 - [ ] 家用端比對 YMES live schema／migrations，核實元件缺陷明細來源；正式查詢需登入／FunctionNo 授權、限量／分頁、參數化條件與動態 Factor 欄名 allowlist。
-- [x] SC202 公司端 DEV／規格交接完成；SC203、SC204 已依序交接，下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC202 公司端 DEV／規格交接完成；SC203、SC204 已依序交接，下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC201 SPC 資料維護（2026-11-23）
 
@@ -123,7 +132,7 @@
 - [x] 計數與計量 SPC DDL 沿用 repo attribute／QC205／QC210 references。`TBLWIPCONT_QCITEM`、`TBLWIPCONT_SAMPLECOMPONENT`、`TBLWIPCONT_DEFECTCODE` 缺同版 Oracle source DDL／metadata／CREATE-only；桌機受保護 Oracle profile 不存在，未查 Oracle、未猜 schema。
 - [ ] 家用端比對 live schema／migration，核對 SPC／WIP／ERF／edit log 關聯完整性與刪除交易；正式 API 必須分別檢查 `SPCDATAEDITATT`、`SPCDATAEDIT`、計量刪除群組權限，並限制查詢、參數化更新及新增 concurrency guard。
 - [ ] 家用端重驗計數 GoodQty = SampleQty - ScrapQty、計量統計重算但不重判 Result、FactorSerial 最新批次警告、ERF/WIP 子資料連帶刪除順序；補開 ERF 透過 `WP_BRERFCreate` 正式契約。
-- [x] SC201 公司端 DEV／規格交接完成；SC202–SC214 已依序交接，下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC201 公司端 DEV／規格交接完成；SC202–SC214 已依序交接，下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端最新交付：SC108 進料檢驗_元件（2026-11-23）
 
@@ -132,7 +141,7 @@
 - [x] 新增 [SC108 規格](docs/modules/SPC/進料檢驗_元件.md)、Module index、Function Inventory 進度及家用端 handoff；未連 PostgreSQL，未執行 build／test／browser。
 - [x] `TBLSPCIQCFORMCOMPONENT`、`TBLSPCIQCFORMCOMPQCITEMMAP`、`TBLSPCIQCCOMPONENT` 缺同版 Oracle source DDL／metadata／PG CREATE-only；桌機受保護 profile 不存在，未查 Oracle、未猜 schema。另記錄刪 Header 未見清理元件明細及 Core Map result collection 重複執行風險。
 - [ ] 家用端先核對 YMES live schema／migration 並取得可靠三表結構，再決定必要 CREATE／forward migration；實作 Header、Map、元件清單 replace、Confirm、SPC 結果及狀態 API，處理 DataStamp CAS、component orphan、重複 SQL、callback idempotency／部分成功補償與 `WP_BRERFCreate`。
-- [x] SC108 公司端交接完成；SC201–SC214 已依序完成，下一個尚未復刻 SPC FunctionKey 為 SC215。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC108 公司端交接完成；SC201–SC214 已依序完成，下一個尚未復刻 SPC FunctionKey 為 SC216。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
 ## 公司端交接：SC107 匯入計量檢測數據（2026-11-23）
 

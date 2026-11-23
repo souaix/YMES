@@ -241,6 +241,7 @@ import QcIncomingComponentInspectionForm from './components/QcIncomingComponentI
 import QcSpcDataMaintenance from './components/QcSpcDataMaintenance.vue'
 import SpcLotDataByLotNo from './components/SpcLotDataByLotNo.vue'
 import SpcDataEditLog from './components/SpcDataEditLog.vue'
+import SpcChartLineEditLog from './components/SpcChartLineEditLog.vue'
 import SpcXlsSourceFileControl from './components/SpcXlsSourceFileControl.vue'
 import SpcChartSignboard from './components/SpcChartSignboard.vue'
 import SpcControlChartAnalysis from './components/SpcControlChartAnalysis.vue'
@@ -964,6 +965,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:SPC DATA': appBasePath + '/SPC/DataMaintenance',
   'function:SPC:SPC DATA BY LOTNO': appBasePath + '/SPC/DataByLotNo',
   'function:SPC:DATA EDIT LOG': appBasePath + '/SPC/DataEditLog',
+  'function:SPC:CHART LINE EDIT LOG': appBasePath + '/SPC/ChartLineEditLog',
   'function:SPC:XLS SOURCE FILE CONTROL': appBasePath + '/SPC/XlsSourceFileControl',
   'function:SPC:CHART SIGNBOARD': appBasePath + '/SPC/ChartSignboard',
   'function:SPC:CONTROL CHART ANALYSIS': appBasePath + '/SPC/ControlChartAnalysis',
@@ -1529,6 +1531,7 @@ const isSpcVariableMeasurementImportPage = computed(() => activeMasterKey.value 
 const isSpcDataMaintenancePage = computed(() => activeMasterKey.value === 'function:SPC:SPC DATA')
 const isSpcLotDataByLotNoPage = computed(() => activeMasterKey.value === 'function:SPC:SPC DATA BY LOTNO')
 const isSpcDataEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:DATA EDIT LOG')
+const isSpcChartLineEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:CHART LINE EDIT LOG')
 const isSpcXlsSourceFileControlPage = computed(() => activeMasterKey.value === 'function:SPC:XLS SOURCE FILE CONTROL')
 const isSpcChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:CHART SIGNBOARD')
 const isSpcControlChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:CONTROL CHART ANALYSIS')
@@ -3125,6 +3128,12 @@ async function signOut(): Promise<void> {
         />
         <SpcDataEditLog
           v-else-if="isSpcDataEditLogPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcChartLineEditLog
+          v-else-if="isSpcChartLineEditLogPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
