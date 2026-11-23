@@ -245,6 +245,7 @@ import SpcXlsSourceFileControl from './components/SpcXlsSourceFileControl.vue'
 import SpcChartSignboard from './components/SpcChartSignboard.vue'
 import SpcControlChartAnalysis from './components/SpcControlChartAnalysis.vue'
 import SpcLineChartAnalysis from './components/SpcLineChartAnalysis.vue'
+import SpcScatterChartAnalysis from './components/SpcScatterChartAnalysis.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
@@ -517,6 +518,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:CHART SIGNBOARD', label: '管制圖看板', shortLabel: '管制圖看板', functionNo: 'CHART SIGNBOARD', moduleNo: 'SPC' },
       { id: 'function:SPC:CONTROL CHART ANALYSIS', label: '管制圖分析', shortLabel: '管制圖分析', functionNo: 'CONTROL CHART ANALYSIS', moduleNo: 'SPC' },
       { id: 'function:SPC:LINE CHART ANALYSIS', label: '彙整分析圖', shortLabel: '彙整分析圖', functionNo: 'LINE CHART ANALYSIS', moduleNo: 'SPC' },
+      { id: 'function:SPC:SCATTER DIAGRAM', label: '散佈圖分析', shortLabel: '散佈圖分析', functionNo: 'SCATTER DIAGRAM', moduleNo: 'SPC' },
       { id: 'function:SPC:IMPORT VAR MEASURE', label: '匯入計量檢測數據', shortLabel: '匯入', functionNo: 'IMPORT VAR MEASURE', moduleNo: 'SPC' },
     ] }],
   },
@@ -956,6 +958,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:CHART SIGNBOARD': appBasePath + '/SPC/ChartSignboard',
   'function:SPC:CONTROL CHART ANALYSIS': appBasePath + '/SPC/ControlChartAnalysis',
   'function:SPC:LINE CHART ANALYSIS': appBasePath + '/SPC/LineChartAnalysis',
+  'function:SPC:SCATTER DIAGRAM': appBasePath + '/SPC/ScatterDiagram',
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
@@ -1514,6 +1517,7 @@ const isSpcXlsSourceFileControlPage = computed(() => activeMasterKey.value === '
 const isSpcChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:CHART SIGNBOARD')
 const isSpcControlChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:CONTROL CHART ANALYSIS')
 const isSpcLineChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:LINE CHART ANALYSIS')
+const isSpcScatterChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:SCATTER DIAGRAM')
 const isQcHoldDispGroupPage = computed(() => activeMasterKey.value === 'function:QC:HOLD DISP GROUP')
 const isQcMClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:MCLASS BASIS')
 const isQcSClassBasisPage = computed(() => activeMasterKey.value === 'function:QC:SCLASS BASIS')
@@ -3123,6 +3127,12 @@ async function signOut(): Promise<void> {
         />
         <SpcLineChartAnalysis
           v-else-if="isSpcLineChartAnalysisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcScatterChartAnalysis
+          v-else-if="isSpcScatterChartAnalysisPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
