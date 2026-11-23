@@ -243,6 +243,7 @@ import SpcLotDataByLotNo from './components/SpcLotDataByLotNo.vue'
 import SpcDataEditLog from './components/SpcDataEditLog.vue'
 import SpcChartLineEditLog from './components/SpcChartLineEditLog.vue'
 import SpcQcItemBindingHisLog from './components/SpcQcItemBindingHisLog.vue'
+import SpcChartAllCapability from './components/SpcChartAllCapability.vue'
 import SpcXlsSourceFileControl from './components/SpcXlsSourceFileControl.vue'
 import SpcChartSignboard from './components/SpcChartSignboard.vue'
 import SpcControlChartAnalysis from './components/SpcControlChartAnalysis.vue'
@@ -968,6 +969,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:DATA EDIT LOG': appBasePath + '/SPC/DataEditLog',
   'function:SPC:CHART LINE EDIT LOG': appBasePath + '/SPC/ChartLineEditLog',
   'function:SPC:QCITEM BINDING HIS LOG': appBasePath + '/SPC/QcItemBindingHisLog',
+  'function:SPC:CHART ALL CAPABILITY': appBasePath + '/SPC/ChartAllCapability',
   'function:SPC:XLS SOURCE FILE CONTROL': appBasePath + '/SPC/XlsSourceFileControl',
   'function:SPC:CHART SIGNBOARD': appBasePath + '/SPC/ChartSignboard',
   'function:SPC:CONTROL CHART ANALYSIS': appBasePath + '/SPC/ControlChartAnalysis',
@@ -1535,6 +1537,7 @@ const isSpcLotDataByLotNoPage = computed(() => activeMasterKey.value === 'functi
 const isSpcDataEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:DATA EDIT LOG')
 const isSpcChartLineEditLogPage = computed(() => activeMasterKey.value === 'function:SPC:CHART LINE EDIT LOG')
 const isSpcQcItemBindingHisLogPage = computed(() => activeMasterKey.value === 'function:SPC:QCITEM BINDING HIS LOG')
+const isSpcChartAllCapabilityPage = computed(() => activeMasterKey.value === 'function:SPC:CHART ALL CAPABILITY')
 const isSpcXlsSourceFileControlPage = computed(() => activeMasterKey.value === 'function:SPC:XLS SOURCE FILE CONTROL')
 const isSpcChartSignboardPage = computed(() => activeMasterKey.value === 'function:SPC:CHART SIGNBOARD')
 const isSpcControlChartAnalysisPage = computed(() => activeMasterKey.value === 'function:SPC:CONTROL CHART ANALYSIS')
@@ -3143,6 +3146,12 @@ async function signOut(): Promise<void> {
         />
         <SpcQcItemBindingHisLog
           v-else-if="isSpcQcItemBindingHisLogPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcChartAllCapability
+          v-else-if="isSpcChartAllCapabilityPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
