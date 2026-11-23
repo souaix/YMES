@@ -4,11 +4,21 @@
 
 公司端已依 Customer THEIL_BU1 `frmSPCOnlineControl` 主 Form、計量／計數收集 DLL、`wsSPC`／`wsOP`／`wsQC` 及 `clsSPC` 完成 [SC101 DEV 頁](docs/modules/SPC/SPC量測數據收集.md)，fallback `/YMES/SPC/OnlineControl`。DEV 假模擬 OP／QCItem、計數／計量／群組收集；不呼叫 API、設備、ERP 或資料庫。
 
+- [x] 家用端 app-browser 開發區驗收計數、計量、計量群組、群組減項、品管項目查找與無 SPC 權限作業站阻擋；確認樣本輸入／超限提醒／群組逐項必填及頁面內歷程可用。僅為 DEV 記憶體假資料，不寫資料庫。
+
 - [ ] SC101 的 `TBLSPCVARDETAILONLINE/LOG`、`TBLSPCVARSTATISTICLOG`、`TBLSPCVARFACTORONLINE/LOG`、`TBLSPCVARLIMITCONTENT`、`TBLSPCATTDETAILLOG`、`TBLSPCATTBASISLOG`、`TBLSPCUSERFACTORVALUE` 缺同版 Oracle source DDL／metadata 及 PG CREATE-only。先取得可靠字典資料並核對 YMES live schema/migrations，再建必要 schema；不要照 Core SQL 猜欄位、PK、索引或 FK。
 - [ ] 實作登入及 FunctionNo `SPC ONLIE CONTROL` 授權的 context／lookup：OP 可見及 SPC 權限、有效 Lot／產品、核准 QCItem 與 OP 關聯、Factor、抽樣計畫與參數、群組成員、限制／管制界線、重檢批及 Component／Wafer 資料；LotStamp 與權限在 server 重查。
 - [ ] 計量、計數及群組提交分型處理；交易內配置 SPC Serial／Factor Serial，重驗抽樣／Factor／QCItem／Lot／規格，保存量測 Online+Log+Statistic 或計數 Basis+Detail+Factor。核實實際 WIP QC Item／Sample Component、Lot Result、ERF、QC Form／ERP 呼叫順序並明確定義原子邊界、部分結果與安全補償／重試。
 - [ ] RS232／設備驅動、量測公式、AQL／SPC rule、special customer DLL、Group Deduction、Wafer／Component、樣本轉換、Union ERF、進料 FTP／附件及 ERP 介面需取得正式契約後逐項整合；公司端 DEV 不是這些流程的正式驗收。
 - [x] SC101 公司端 DEV／規格 handoff 完成；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
+### 家用端同步與驗收紀錄（2026-11-23）
+
+- [x] 同步發現公司端新增 ES108、ES301 及 SC101 DEV 提交；先保留家用端 ES107 API commit，再以一般 merge 整合公司端 `6d56a41`、`fe884d7`、`bd5bb41`，未 force push 或覆蓋公司提交。
+- [x] app-browser 重開機後可開正式站、Demo 登入、操作並截圖；本機 DEV 頁重新登入後驗收 SC101 計數、計量、群組及減項收集；ES108 查詢／維護／複製／刪除流程；ES301 上機、互斥與既有掛載處理。詳細結果記在各模組 `.md`。
+- [x] ES301 選取設備後清除先前必填錯誤的問題已修正，並由 app-browser 確認。
+- [x] `.NET 9 Release build` 0 warning／0 error；Vue 型別檢查通過；Vite 7.3.7 build 896 modules 通過。保留既有 4.87 MB 主 bundle 超過 500 KB 的提示。
+- [ ] 提交並同步以上驗收／文件修訂至 GitHub 後，再讀一次最新 `main` 與兩端待辦；SC101 9 張執行表 DDL／metadata 已列入公司端待辦，收到前不猜 schema。
 
 ## 公司端交接：ES301 配件上機（2026-11-23）
 

@@ -6,6 +6,7 @@
 - [x] 完成 `/YMES/SPC/OnlineControl` DEV 頁：OP／QCItem 查找、4 種 QC 類型、Lot／母體／複檢批、Factor、抽樣計畫與參數、計數缺點／計量讀值、假匯入與記憶體歷程；正式環境維持未開放提示。
 - [x] 新增 [SC101 規格](docs/modules/SPC/SPC量測數據收集.md)、Module index 與家用端 handoff。完成前靜態檢閱；未連 PostgreSQL、未執行 build／test／browser。
 - [x] 計量 Online/Log/Statistic/Factor 及計數 Basis/Detail 執行表缺同版 Oracle source DDL／metadata 與 PostgreSQL CREATE-only；桌機受保護 Oracle profile 不存在。本次未查 Oracle、不猜 CREATE SQL。
+- [ ] 公司端請從公司 MES 的唯讀 Oracle 字典補交以下 9 張執行表的原生 Oracle `CREATE TABLE`／constraint／index DDL 與欄位 metadata（型別、長度、NULL、DEFAULT、PK／unique、index、FK、trigger）：`TBLSPCVARDETAILONLINE`、`TBLSPCVARDETAILLOG`、`TBLSPCVARSTATISTICLOG`、`TBLSPCVARFACTORONLINE`、`TBLSPCVARFACTORLOG`、`TBLSPCVARLIMITCONTENT`、`TBLSPCUSERFACTORVALUE`、`TBLSPCATTDETAILLOG`、`TBLSPCATTBASISLOG`。另提供依原生欄位整理的 PostgreSQL CREATE-only 參考檔。僅查 MESTEST 字典結構，不提供或匯出量測、Lot、員工等業務資料列；未取得可靠來源前，家用端不建立這些表。
 - [ ] 家用端逐一核對 SC101 量測寫入分支所用表及 YMES live schema/migrations；可靠 DDL 到手前不建 SC101 執行表。登入授權後由 server 重驗 OP/QCItem/Factor/LotStamp、抽樣／管制規則與 Component，交易配置 SPC Serial 並保存計數／計量主從紀錄、統計／Factor snapshot；釐清 WIP／ERF／ERP 各階段及群組部分成功契約。
 - [x] SC101 公司端 DEV／規格完成，依選單清冊接續尚未交付功能；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
