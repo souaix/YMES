@@ -7,6 +7,9 @@
 - [ ] `TBLSPCFQCFORM` 缺同版 Oracle source DDL／metadata 及 PG CREATE-only。QC Item Map `TBLSPCFQCFORMQCITEMMAP` 有 QC216 Oracle source DDL 與 PG CREATE reference；先核對 live schema／migration 再沿用，不重複建立。取得可靠主表 DDL 前不要依 Core SQL 推測主表欄位、PK、索引或 FK。
 - [ ] 正式實作 FQC 主單／Map／產品／工序／Lot 查詢與 CRUD／transition API：驗證登入及 FunctionNo 權限、Lot 與產品版本狀態、QC Item eligibility、序號配置、DataStamp CAS；SQL 參數化並限制查詢筆數，主單與初始 Map、刪除、Confirm／退回、逐項量測結果及最後項目完成需定義交易邊界。
 - [ ] 整合 Workflow／TIPTOP／WFGP／T100 `funQC_Update`，確認 ERP source／seq、FQC 類型、產品與允收／拒收全數 Qty payload；保存 callback idempotency key／request／response／狀態，驗證重試、逾時對帳及補償。外部 callback 成功後才轉 MES Status 3／4。公司端 DEV 不呼叫 callback，也不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] 家用端 app-browser 驗收 SC104：選單三層路由、五個狀態、查詢、Add 必填與單號、Lot 帶入產品／工序／版本／客戶／數量及 QC Item、Edit／Copy／Delete、Confirm、退回限制、SPC 各項結果、允收／拒收與修改稽核欄位。只用 DEV 記憶體假資料，未呼叫 API／設備／ERP／資料庫；細節見模組文件。
+- [x] 重開機後正式站可載入並截圖；本機開發區 Demo 登入與 SC103／SC104 頁面操作正常。`vue-tsc --noEmit` 通過；Vite 7.3.7 build 通過（905 modules），僅保留既有約 4.87 MB 主 bundle 大於 500 KB 的警告。
+- [x] 同步 `b99034c` 公司端 SC104 handoff，以一般 merge `a94fa5c` 整合；SC103 `TBLSPCINCOMINGQCFORM` 與 SC104 `TBLSPCFQCFORM` 主表 DDL／metadata 仍缺，已分別要求公司端補交於 `todolist_officepc.md`。未猜 schema 或建立錯誤 SQL。
 - [x] SC104 公司端 handoff 已完成；清冊下一項 SC105「PQC 檢驗單」。
 
 ## 公司端交接：SC103 進料檢驗單（2026-11-23）

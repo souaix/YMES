@@ -6,6 +6,7 @@
 - [x] 完成 `/YMES/SPC/FinalQCForm` DEV 頁：5 個狀態、單據 CRUD／Copy／Confirm、Lot／產品／工序 fixture、QC Item Map、SPC 假結果、允收／拒收及狀態稽核欄位。
 - [x] 新增 [SC104 規格](docs/modules/SPC/終檢檢驗單.md)、Module index 與家用端 handoff；未連 PostgreSQL，未執行 build／test／browser。
 - [x] QC Item Map 沿用 QC216 source DDL／PG CREATE reference；`TBLSPCFQCFORM` 缺同版 Oracle DDL／metadata 與 PG CREATE-only。桌機受保護 attachment/profile 不存在，本次未連 Oracle、未猜主表 schema。
+- [ ] 公司端請從 MES 唯讀 Oracle 字典補交 `TBLSPCFQCFORM` 原生 `CREATE TABLE`、欄位 metadata（型別／長度／NULL／DEFAULT）、PK／unique、index、FK、trigger DDL，以及依相同欄位產生的 PostgreSQL CREATE-only SQL。QC Item Map 請沿用 QC216 reference，不需重交；只交結構，不提供終檢單、Lot、產品、客戶或員工等業務資料列。
 - [ ] 家用端 Pull 後核對 FQC 主單／Map live schema、migrations、DataStamp compare-and-set 及 `FQCFORMNO` 序號規則；取得可靠主表 DDL 後再補必要 schema。正式 API 驗證產品／工序／版本／Lot／QC Item eligibility，處理主單／Map／量測結果交易與狀態。
 - [ ] 家用端整合 Workflow／TIPTOP／WFGP／T100 `funQC_Update` callback，驗證 ERP source／seq／產品與允收或拒收全數 Qty，設計 idempotency、逾時對帳及補償；公司端 DEV 不呼叫外部服務。
 - [x] SC104 公司端 DEV／規格完成；清冊下一項 SC105「PQC 檢驗單」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
