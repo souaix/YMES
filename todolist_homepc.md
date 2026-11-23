@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 公司端交接：ES408 設備配件歷史資料查詢（2026-11-23）
+
+公司端依標準 `frmEquipmentAccStateLog`／內嵌 Designer、`wsEMS.LoadEquipmentAccStateLog`、`clsAccState.LoadEquipmentAccStateLog` 完成 [ES408 DEV 頁](docs/modules/EMS/設備配件歷史資料查詢.md)，fallback `/YMES/EMS/EquipmentAccStateLogQuery`。DEV 有設備／配件／使用者精確篩選、Start／End 時間界限、lookup 選擇器及 7 欄歷程查詢。
+
+- [ ] Pull 後比對 `TBLEMSEQPACCSTATELOG` 與 lookup tables live schema／migrations；公司端沿用 repository DDL references，無新增表或 CREATE SQL。
+- [ ] 實作登入與 FunctionNo `EQP ACC STATE LOG QUERY` 授權的唯讀 API，參數化所有篩選，提供穩定分頁、最大筆數及日期範圍守門；空結果回空陣列。不可直接照搬 Legacy AccessoryType 參數覆蓋缺陷；User lookup 不回傳 Password／ResetPassword。
+- [x] ES408 公司端 DEV／來源規格已交接；後續依清冊接續。
+
 ## 公司端交接：ES101 設備控管設定（2026-11-23）
 
 公司端依標準 `frmEquipmentControl`／內嵌 Designer、`wsEMS.LoadEquipmentStateDefine/UpdEquipmentState` 及 `clsEQPBasis`／`clsEQPStateControl`／`clsEMSEquipment` 完成 [ES101 DEV 頁](docs/modules/EMS/設備控管設定.md)，fallback `/YMES/EMS/EquipmentControl`。DEV 模擬設備類別篩選、未管制／已管制設備多選搬移、父設備及 Chamber、Apply／Confirm 假套用。
