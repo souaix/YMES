@@ -1,5 +1,15 @@
 # 公司端待辦
 
+## 公司端最新交付：SC102 SPC 量測數據收集_計量連續（2026-11-23）
+
+- [x] 核對標準 `frmSPCOnlineControl_test`／內嵌 Designer、動態連續計量 `frmVar_MeasureContinuous`／Designer、`wsSPC.UpdVar_TestValue/UpdVar_LotData`、`LoadVarQCItemChartData`／`ExecuteQCChartRuleCheck` 與 `clsSPC`。
+- [x] 完成 `/YMES/SPC/OnlineControlContinue` DEV 頁：OP／QCItem／Lot／要因／抽樣參數、逐點量測、假設備填值、貼上值匯入、規格提示、Save、Edit／ConfirmEdit／Reverse 與記憶體歷程；正式環境維持未開放提示。
+- [x] 新增 [SC102 規格](docs/modules/SPC/SPC量測數據收集_計量連續.md)、Module index 與家用端 handoff；SC102 計量表重用 SC101 Core 執行路徑。
+- [x] SC101／SC102 共用計量 Online/Log/Statistic/Factor/Limit 執行表缺同版 Oracle source DDL／metadata 與 PG CREATE-only；受保護 attachment 檔不存在，本次只檢查存在性，未讀取設定、未連 Oracle、未猜 CREATE SQL。
+- [ ] 家用端 Pull 後逐表核對 SC102 新增與 `UpdVar_LotData` 修改所用 live schema／migration，取得可靠 DDL 後再補必要 schema；正式 API 重驗登入／SPC 權限、OP/QCItem/Lot/LotStamp、Factor、計畫／參數、限值／規則，交易保存量測及修改 audit，釐清 WIP／QC Form／Lot／ERF／ERP 外部階段與補償。
+- [ ] RS232／儀器 driver、量測公式、管制圖／rule、客製 DLL、Component/Wafer 及實際檔案格式需家用端依正式服務契約整合與驗收；公司端只交付 DEV handoff。
+- [x] SC102 公司端 DEV／規格完成；清冊下一項 SC103「進料檢驗單」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
+
 ## 公司端最新交付：SC101 SPC 量測數據收集（2026-11-23）
 
 - [x] 核對 Customer `SC_OnlineControl_THEIL_BU1` 主 Form／Designer、計量／計數／Wafer Group 收集 DLL、`wsSPC`／`wsOP`／`wsQC`／`wsWIP`／`wsPRD`／`wsSYS` 與 `clsSPC`。

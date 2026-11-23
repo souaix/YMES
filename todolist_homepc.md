@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 公司端交接：SC102 SPC 量測數據收集_計量連續（2026-11-23）
+
+公司端依 `frmSPCOnlineControl_test`、動態載入 `frmVar_MeasureContinuous`、`wsSPC.UpdVar_TestValue/UpdVar_LotData` 與 `clsSPC` 完成 [SC102 DEV 頁](docs/modules/SPC/SPC量測數據收集_計量連續.md)，fallback `/YMES/SPC/OnlineControlContinue`。DEV 模擬連續逐點輸入、假設備填值、貼上數值匯入、規格提示、Save、Edit／ConfirmEdit／Reverse 與歷程；不呼叫 API、設備、ERP 或資料庫。
+
+- [ ] SC102 沿用 SC101 計量執行表：`TBLSPCVARDETAILONLINE/LOG`、`TBLSPCVARSTATISTICLOG`、`TBLSPCVARFACTORONLINE/LOG`、`TBLSPCVARLIMITCONTENT`、`TBLSPCUSERFACTORVALUE`；修改另有 edit log。缺同版 Oracle source DDL／metadata 與 PG CREATE-only，先取得可靠字典資料並核對 YMES live schema/migrations，再建必要 schema；不要照 Core SQL 猜欄位、鍵、索引或 FK。
+- [ ] 正式提交需分辨 `UpdVar_TestValue` 新增與 `UpdVar_LotData` 修改，server 重驗使用者／FunctionNo／OP／QCItem／LotStamp／Factor／抽樣與規格規則；交易處理 SPC Serial、量測／Factor／統計／Limit snapshot、修改 audit，核實 WIP／QC Form／Lot／ERF／ERP 外部階段的部分成功契約及安全重試。
+- [ ] RS232／設備驅動、本機 InspMachineSetup、公式、Chart Rule、客製 DLL、Component/Wafer 與實際 CSV/TXT/XLS 匯入格式未由公司端 DEV 模擬；依正式介面逐項整合驗收。SC102 DEV 不連 PostgreSQL、不實作或驗收正式 API/schema。
+- [x] SC102 公司端 handoff 已完成；清冊下一項 SC103「進料檢驗單」。
+
 ## 公司端交接：SC101 SPC 量測數據收集（2026-11-23）
 
 公司端已依 Customer THEIL_BU1 `frmSPCOnlineControl` 主 Form、計量／計數收集 DLL、`wsSPC`／`wsOP`／`wsQC` 及 `clsSPC` 完成 [SC101 DEV 頁](docs/modules/SPC/SPC量測數據收集.md)，fallback `/YMES/SPC/OnlineControl`。DEV 假模擬 OP／QCItem、計數／計量／群組收集；不呼叫 API、設備、ERP 或資料庫。
