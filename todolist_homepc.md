@@ -8,6 +8,13 @@
 - [ ] 正式 API 需以單一交易寫維修明細、更新 AccRepairQty／AccumulateQty／AccTotalUsedQty／AccSpareQty／TimeCycleStart，必要時依 ES103 Scrap 與 ES105 互斥更新狀態／歷程；用 expected 原始數值檢查衝突。Legacy `CollectionSQL` helper 的交易／回滾實作無法從本機來源確認。
 - [x] ES303 完成；後續尚缺功能依選單清冊與可用來源繼續。
 
+### ES303 家用端同步／驗證紀錄（2026-11-23）
+
+- [x] 正常快轉同步公司端提交 `9708e5b`；本機與 GitHub `main` 同版後檢查 DEV 頁、規格及兩端待辦，未發現其提交包含資料庫 DDL。
+- [x] .NET 9 Release build 通過（0 warning／0 error）；Vue 型別檢查與 Vite build 通過（870 modules）。Vite 僅提示既有主 bundle 約 4.86 MB 超過 500 KB 建議值。
+- [x] 重開機後 app-browser 正常：正式站可載入並截圖；本機 18749／18750／18751 Web 與 5080 API health 均回 200。Demo 開發區實際驗證 ES303 的 DEV 單號預留、雙版本載入、調帳確認及 Return Zero；所有資料皆為頁面假資料，未寫入 DB。正式頁仍顯示尚未遷移。
+- [ ] ES303 正式 API／migration 待公司端提供 `TBLEMSACCESSORYREPAIR` Oracle source DDL、欄位／PK／index metadata／CREATE-only 與 Serial Rule 證據；拿到前不猜結構、不寫正式資料。後續以單一交易寫維修紀錄、現況及必要狀態歷程並做 expected-value 衝突檢查。
+
 ## 公司端交接：ES105 配件狀態互斥設定（2026-11-23）
 
 公司端依三份相同的 `frmEQPACCStateControl`、THEIL `wsEQP.LoadEQPACCStateBasis`／`wsEMS.LoadViolateStateAndShowNowName`／`UpdACCViolatStateChangeData` 及 `clsAccBasis`／`clsEMSEquipment` 完成 [ES105 DEV 頁](docs/modules/EMS/配件狀態互斥設定.md)，fallback `/YMES/EMS/AccessoryStateViolativeSetting`。DEV 模擬配件類別狀態互斥矩陣、雙擊標記與 Confirm 假套用。
