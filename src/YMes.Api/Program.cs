@@ -74,6 +74,7 @@ if (!localDemoAuth)
     builder.Services.AddSingleton<YMes.Api.Enterprise.Et202Repository>();
     builder.Services.AddSingleton<YMes.Api.Ems.AccessoryStateRepository>();
     builder.Services.AddSingleton<YMes.Api.Ems.EquipmentAccessoryStateLogRepository>();
+    builder.Services.AddSingleton<YMes.Api.Ems.EquipmentCapabilityBasisRepository>();
 }
 builder.Services.AddControllers();
 

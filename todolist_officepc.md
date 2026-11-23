@@ -16,6 +16,7 @@
 - [x] 完成 `/YMES/SPC/FinalQCForm` DEV 頁：5 個狀態、單據 CRUD／Copy／Confirm、待檢頁未開始單據刪除、Lot／產品／工序 fixture、QC Item Map、SPC 假結果、允收／拒收及狀態稽核欄位。
 - [x] 新增 [SC104 規格](docs/modules/SPC/終檢檢驗單.md)、Module index 與家用端 handoff；未連 PostgreSQL，未執行 build／test／browser。
 - [x] QC Item Map 沿用 QC216 source DDL／PG CREATE reference；`TBLSPCFQCFORM` 缺同版 Oracle DDL／metadata 與 PG CREATE-only。桌機受保護 attachment/profile 不存在，本次未連 Oracle、未猜主表 schema。
+- [ ] 公司端請從 MES 唯讀 Oracle 字典補交 `TBLSPCFQCFORM` 原生 `CREATE TABLE`、欄位 metadata（型別／長度／NULL／DEFAULT）、PK／unique、index、FK、trigger DDL，以及依相同欄位產生的 PostgreSQL CREATE-only SQL。QC Item Map 請沿用 QC216 reference，不需重交；只交結構，不提供終檢單、Lot、產品、客戶或員工等業務資料列。
 - [ ] 家用端 Pull 後核對 FQC 主單／Map live schema、migrations、DataStamp compare-and-set 及 `FQCFORMNO` 序號規則；取得可靠主表 DDL 後再補必要 schema。正式 API 驗證產品／工序／版本／Lot／QC Item eligibility，處理主單／Map／量測結果交易與狀態。
 - [ ] 家用端整合 Workflow／TIPTOP／WFGP／T100 `funQC_Update` callback，驗證 ERP source／seq／產品與允收或拒收全數 Qty，設計 idempotency、逾時對帳及補償；公司端 DEV 不呼叫外部服務。
 - [x] SC104 公司端 DEV／規格完成；清冊下一項 SC105「PQC 檢驗單」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
@@ -26,6 +27,7 @@
 - [x] 完成 `/YMES/SPC/IncomingQCForm` DEV 頁：7 狀態頁籤、搜尋與日期、單據 Add/Edit/Copy/Delete/Confirm、物料／供應商 fixture、QC Item map 維護、逐項 SPC 假收集、Receive/Reject/Concession 數量檢核與 Revise。
 - [x] 新增 [SC103 規格](docs/modules/SPC/進料檢驗單.md)、Module index 與家用端 handoff；未連 PostgreSQL、未執行 build／test／browser。
 - [x] `TBLSPCINCOMINGQCFORMQCITEMMAP` 沿用 QC216 Oracle source DDL／PG CREATE reference；`TBLSPCINCOMINGQCFORM` 缺同版 Oracle DDL／metadata 與 PG CREATE-only。桌機受保護 attachment/profile 不存在，本次未連 Oracle、未猜主表 schema。
+- [ ] 公司端請從 MES 唯讀 Oracle 字典補交 `TBLSPCINCOMINGQCFORM` 原生 `CREATE TABLE`、欄位 metadata（型別／長度／NULL／DEFAULT）、PK／unique、index、FK、trigger DDL，以及依相同欄位產生的 PostgreSQL CREATE-only SQL。Map 表請沿用 QC216 已有 reference，不必重交；只交結構，不提供檢驗單、物料、供應商或員工等業務資料列。
 - [ ] 家用端 Pull 後核對主單／Map live schema、migrations、DataStamp compare-and-set 及序號規則；取得可靠主表 DDL 後再補必要 schema。正式 API 需參數化、限量查詢，重驗使用者、物料／供應商、ERP-owned、表單狀態、QCItem eligibility 與 Qty，定義主單／Map／量測結果的交易邊界。
 - [ ] ERP／sQMS callback、ERP QC Form／WIP／ERF、超時重試／冪等鍵與部分成功補償由家用端整合驗收；公司端 DEV 不呼叫外部服務。
 - [x] SC103 公司端 DEV／規格完成；清冊下一項 SC104「終檢檢驗單」。公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
@@ -46,6 +48,7 @@
 - [x] 完成 `/YMES/SPC/OnlineControl` DEV 頁：OP／QCItem 查找、4 種 QC 類型、Lot／母體／複檢批、Factor、抽樣計畫與參數、計數缺點／計量讀值、假匯入與記憶體歷程；正式環境維持未開放提示。
 - [x] 新增 [SC101 規格](docs/modules/SPC/SPC量測數據收集.md)、Module index 與家用端 handoff。完成前靜態檢閱；未連 PostgreSQL、未執行 build／test／browser。
 - [x] 計量 Online/Log/Statistic/Factor 及計數 Basis/Detail 執行表缺同版 Oracle source DDL／metadata 與 PostgreSQL CREATE-only；桌機受保護 Oracle profile 不存在。本次未查 Oracle、不猜 CREATE SQL。
+- [ ] 公司端請從公司 MES 的唯讀 Oracle 字典補交以下 9 張執行表的原生 Oracle `CREATE TABLE`／constraint／index DDL 與欄位 metadata（型別、長度、NULL、DEFAULT、PK／unique、index、FK、trigger）：`TBLSPCVARDETAILONLINE`、`TBLSPCVARDETAILLOG`、`TBLSPCVARSTATISTICLOG`、`TBLSPCVARFACTORONLINE`、`TBLSPCVARFACTORLOG`、`TBLSPCVARLIMITCONTENT`、`TBLSPCUSERFACTORVALUE`、`TBLSPCATTDETAILLOG`、`TBLSPCATTBASISLOG`。另提供依原生欄位整理的 PostgreSQL CREATE-only 參考檔。僅查 MESTEST 字典結構，不提供或匯出量測、Lot、員工等業務資料列；未取得可靠來源前，家用端不建立這些表。
 - [ ] 家用端逐一核對 SC101 量測寫入分支所用表及 YMES live schema/migrations；可靠 DDL 到手前不建 SC101 執行表。登入授權後由 server 重驗 OP/QCItem/Factor/LotStamp、抽樣／管制規則與 Component，交易配置 SPC Serial 並保存計數／計量主從紀錄、統計／Factor snapshot；釐清 WIP／ERF／ERP 各階段及群組部分成功契約。
 - [x] SC101 公司端 DEV／規格完成，依選單清冊接續尚未交付功能；公司端不連 PostgreSQL、不實作或驗收正式 API/schema。
 
@@ -72,6 +75,14 @@
 - [x] 重用 PD102 已保存的 `TBLEMSEQPCAPBASIS` Oracle dictionary DDL 與 PostgreSQL CREATE-only reference；前次 GET_DDL 回 ORA-03135，未猜 schema，未重新連 Oracle或查業務資料。本次未連 PostgreSQL、未跑 build/test/browser。
 - [ ] 家用端比對 live schema／migration，實作授權、參數化及限量分頁 CRUD、DataStamp 衝突處理、引用檢查與依 server `EMS_EQP_CAPBASIS` 設定執行核准流程。
 - [x] ES107 公司端 DEV／來源規格完成；清冊下一項 ES108「設備能力設定」。
+
+### ES107 簽核流程交接補件（供家用端接 API）
+
+- [ ] 請提供 `ApproveEMSEQPCapBasis` 對應 `EMS_EQP_CAPBASIS` 的完整來源判斷：實際讀取的設定／Job／Detail／issue process／通知資料表或 view 名稱、join/key 條件、無 Job、無 Detail、有簽核群組三種分支，以及每個分支更新 `IssueState`／`DataStamp` 的順序。
+- [ ] 若 YMES PostgreSQL 尚無上述簽核資料表，請交付每張必要表的 Oracle 原生 `CREATE TABLE`／constraint／index DDL 與對應 PostgreSQL CREATE-only DDL；並列出本功能要讀寫的欄位。請勿提供正式簽核紀錄、員工資料、通知收件人或其他業務資料列。
+- [ ] 說明第一簽核群組通知如何由 server 呼叫、其失敗時來源系統如何處理；附呼叫介面／程式路徑即可，不需真實通知內容或收件名單。
+- [ ] 如果來源系統的共用簽核 API 已集中處理以上邏輯，請交付可用的 API／service 名稱、必要參數及成功／失敗結果語意，不要只交 UI mock。
+- [ ] 家用端目前 `POST /api/ems/equipment-capability-bases/approve` 在資料不完整時固定回 409，不會改主檔；收到並核對以上交接後再實作與驗收。
 
 ## 公司端最新交付：ES407 設備配件現況查詢（2026-11-23）
 
