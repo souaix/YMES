@@ -13,7 +13,17 @@
 - [ ] SC401 ERF 處置、Lot Release、Back 與附件刪除；WP508 附件刪除及 SC402／WP508／WP801／WP802 8D API 尚未完成。
 - [ ] IV201：live audit 已確認 RAW／Locator 與共用 Transaction State／Log 缺表；等待公司端補 Raw Inventory 原生 DDL 與六種 Confirm Core 的依賴表清單，再做 schema/API。不能由 DEV 假資料推建。
 
-## 公司端最新交接：IV203 開立領料單（2026-11-24）
+## 公司端最新交接：IV208 領料單記錄（2026-11-24）
+
+公司端已依 `frmINVMaterialOutLog.vb` inline Form／Designer、`wsINV` 與 `clsInventory` 完成 [IV208 DEV 頁與規格](docs/modules/INV/領料單記錄.md)，功能鍵 `IV208`／`MATERIAL OUT LOG`，路由 `/YMES/INV/MaterialOutLog`。頁面用固定假資料模擬唯讀主檔查詢、建立日／Source=1 出庫交易日篩選、選取主檔載入明細和元件子列；不呼叫正式 API。
+
+- [ ] Pull 最新 `main` 並核對 MaterialOut Basis／Detail／Component 的 live schema／migrations。公司桌機受保護 Oracle profile 不存在，尚無可信同版 Oracle DDL／metadata；缺少結構前不猜 CREATE-only。
+- [ ] 實作登入與 IV208 Function ACL 保護的唯讀 Basis 查詢；參數化 MaterialOutNo／InventoryNo／PreOrderNo／State 條件、CreateDate 與 `TBLINVTRANSACTIONLOG.Source=1` TicketNo／CreateDate 出庫日期、穩定排序、分頁和最大筆數。出庫日期不可用 Basis ConfirmDate 代替。
+- [ ] Detail API 路由必須帶有效 MaterialOutNo；無單號不准回傳全表，無主檔／明細回空陣列。Component 查詢限同一 MaterialOutNo 並按 MaterialNo／MaterialLotNo 關聯；遵守 WinForms 欄位投影。
+- [x] 共用 `TBLINVTRANSACTIONLOG` source DDL／CREATE-only 沿用 WP605 reference；家用端先核 live schema，不從 Core `SELECT *` 推 MaterialOut 表結構。
+- [x] 公司端未連 PostgreSQL、未建立 schema/migration、未實作正式 API 或部署；公司端下一項依清冊列序為 IV205「開立預訂單」。
+
+## 前項交接：IV203 開立領料單（2026-11-24）
 
 公司端已依 `frmINVMaterialOut`／BasisDef／DetailDef、`wsINV` 與 `clsInventory` 完成 [IV203 DEV 頁與規格](docs/modules/INV/開立領料單.md)，功能鍵 `IV203`／`MATERIAL OUT`，路由 `/YMES/INV/MaterialOut`。頁面以 localStorage 假資料模擬 State=0 單頭／明細維護、核准預訂、五種 PutInPlace、MO 物料對應、元件預約和報表預覽；沒有正式 API，也沒有庫存扣帳。
 
@@ -23,7 +33,7 @@
 - [ ] 詳細 lookup／mutation 重驗 Raw Inventory Lot／Locator／Vendor／Unit、EQP／OP／WIP／MO target、MO Material List／Substitute。明細 Qty>0；Raw component lot 需把 Component、BookingFlag 與 Detail 同一交易寫入，防止重複預約。Core 字串 SQL／AdditionalXml 不可移植。
 - [ ] IV201 Source=1 確認才重驗原料可用量、AllocateQty／預訂單、單位換算與元件，交易更新 State、Transaction State／Log、RAW 庫存／Locator及 WIP／MO side effect，支援冪等與恢復；不可把 IV203 建單回應當成已出庫。
 - [ ] 家用端負責 schema／migration、正式 API、build／測試、部署及驗收；公司端未連 PostgreSQL、未設 `ConnectionStrings__YMes`、未實作正式 API。
-- [x] 公司端下一項依選單清冊列序為 IV208「領料單記錄」。
+- [x] 公司端已完成 IV208「領料單記錄」，下一項依清冊為 IV205「開立預訂單」。
 
 ## 前項交接：IV207 進料單記錄（2026-11-24）
 
@@ -34,7 +44,7 @@
 - [ ] 提供登入及 IV207 Function ACL 保護的只讀主檔查詢，支援精確單號、庫房、Vendor、State、CreateDate、Source=0 transaction date 條件；使用參數化查詢、明確排序、分頁和最大筆數。
 - [ ] 明細 API 必須要求有效 `MaterialInNo`，無主檔時回傳空陣列。舊 Form 查無主檔／群組列呼叫空單號，舊 Core 會略過單號條件而回傳全表明細；不得複製此風險。
 - [ ] 重用已確認的 InventoryType=0 庫房與 Vendor lookup。主檔及明細為唯讀；不需要寫入 API 或新 schema，除非 live schema audit 證實缺表／缺欄位。
-- [x] 公司端未連 YMES PostgreSQL、未新增 schema/migration、未實作正式 API 或部署；IV203 已於上方交接，目前下一項為 IV208。
+- [x] 公司端未連 YMES PostgreSQL、未新增 schema/migration、未實作正式 API 或部署；IV208 已交接，目前下一項為 IV205。
 
 ## 前項交接：IV202 開立進料單（2026-11-24）
 
@@ -46,11 +56,11 @@
 - [ ] 單頭／明細寫入與 Incoming QC Header／Item Map 維護須同一 transaction，重讀並守住單頭 State、QC Status、關聯明細與版本。核對 Core `DelINVMaterialInBasis` QC 子查詢與刪除 SQL 排序，正式 API 應在交易開始先存 QCFormNo，再依賴順序刪 QC Map/Header、Detail、Basis；避免孤兒 QC 或部分成功。
 - [ ] IV202 僅建立未確認進料資料；不得在此直接更新 `TBLINVRAWINVENTORY`。庫存入帳由 IV201 Source=0 確認 command 處理，需在家用端實作並驗證 transaction state/log、單位換算、冪等與併發。
 - [ ] 正式報表需接授權的 `arMaterialIn` 相容輸出；DEV 預覽不代表正式列印。家用端負責 schema/migration、API、部署及驗收。
-- [x] 公司端未連 YMES PostgreSQL、未新增 schema/migration、未實作正式 API／報表、未部署；IV207、IV203 已於上方完成公司端 handoff，下一項為 IV208。
+- [x] 公司端未連 YMES PostgreSQL、未新增 schema/migration、未實作正式 API／報表、未部署；IV207、IV203、IV208 已完成公司端 handoff，下一項為 IV205。
 
 ## 公司端交接：IV201 原物料倉庫房資料（2026-11-24）
 
-公司端已依 `frmINVRawInventory`／六個單據 Confirm Form、`wsINV`、`clsInventory` 完成 [IV201 DEV 頁與規格](docs/modules/INV/原物料倉庫房資料.md)，路由 `/YMES/INV/RawInventory`。頁面查原料庫房庫存、選列載入 Locator/Lot，並以 localStorage 假資料模擬六種 Confirm；正式單據與庫存 API 未實作。其後公司端已交付 IV202、IV207、IV203，下一項為 IV208。
+公司端已依 `frmINVRawInventory`／六個單據 Confirm Form、`wsINV`、`clsInventory` 完成 [IV201 DEV 頁與規格](docs/modules/INV/原物料倉庫房資料.md)，路由 `/YMES/INV/RawInventory`。頁面查原料庫房庫存、選列載入 Locator/Lot，並以 localStorage 假資料模擬六種 Confirm；正式單據與庫存 API 未實作。其後公司端已交付 IV202、IV207、IV203、IV208，下一項為 IV205。
 
 - [x] 2026-11-24 以 PPK SSH 唯讀查 YMES `ymes`／quoted `YMES` schema：RAW 主表、Locator 表及共用 Transaction State／Log 均缺；MTL Material Basis (110 欄)、Inventory Basis (14 欄)、Locator Basis (12 欄) 存在。`YMES` 目前只有四張 `tblinv*` 表；未找到通用 migration ledger，repo migrations 沒有建立上述缺表的 migration。
 - [ ] 公司端提供 `TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC` Oracle `DBMS_METADATA.GET_DDL` 及欄位／PK／index／FK／trigger/default metadata；同時逐一列出六種 Confirm 的直接 Core 依賴表，對照已存在 source DDL，僅補充 repo 缺少的原生結構與 PostgreSQL CREATE-only。未收到可信 DDL 前不猜 schema。
@@ -59,7 +69,7 @@
 - [ ] 六種 Confirm 使用伺服器端交易命令，固定 Source 0/1/3/4/2/10，重新讀取 State=0 單據、重驗庫房／單位／數量／Locator／Lot／預訂；以交易、鎖定／版本和冪等鍵同步單據狀態、transaction state/log、庫存主檔／儲位及投入點／WIP 副作用，錯誤時回滾或回報可恢復失敗。
 - [ ] 區分交易方向：Material In／WIP Return 增加庫存；Material Out／Material Return 扣減庫存；Material Adjust 依 AdjustType 調整數量或儲位；PreOrder 只增加 AllocateQty，Material Out 依來源規則消耗預訂。
 - [ ] 完整追各交易 Core 分支：多明細、單位換算、領料元件與 OE/WIP 投入、預訂消耗、AdjustType 儲位限制、WIP Return Place 與產業包表；DEV 單筆假資料只是示例。
-- [x] 公司端未連 YMES PostgreSQL、未建立 schema/migration、未實作正式 API；IV207、IV203 已交付，目前下一項依選單清冊列序為 IV208「領料單記錄」。
+- [x] 公司端未連 YMES PostgreSQL、未建立 schema/migration、未實作正式 API；IV207、IV203、IV208 已交付，目前下一項依選單清冊列序為 IV205「開立預訂單」。
 ## 公司端交接：SC501 品管項目檢測儀器對應（2026-11-24）
 
 公司端已核對 `frmInspMachineParameterSetup`／`frmInspMachineParameterTest`、Service／Core，完成 [SC501 DEV 頁](docs/modules/SPC/品管項目檢測儀器對應.md) 與 `/YMES/SPC/InspMachineParameterSetup` 路由。此功能在 `%LocalAppData%\iMESTech\InspMachineSetup.xml` 維護操作站的 QC Item／檢測儀器／RS232 對應；MES 只提供 QC Item、儀器主檔及群組明細 lookup，沒有對應表寫入 Service。DEV 用假資料、瀏覽器 localStorage 與 XML 匯入／匯出模擬，不連真實 COM Port。
@@ -3696,14 +3706,14 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## 公司端交接：IV101 庫房工程群組（2026-11-24）
 
-- 公司端已完成 IV101、IV102、IV103、IV201、IV202、IV207、IV203 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff；IV202 見 `docs/modules/INV/開立進料單.md`，IV207 見 `docs/modules/INV/進料單記錄.md`，IV203 見 `docs/modules/INV/開立領料單.md`。目前公司端下一項依選單清冊列序是 IV208「領料單記錄」。
+- 公司端已完成 IV101、IV102、IV103、IV201、IV202、IV207、IV203、IV208 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff；IV202 見 `docs/modules/INV/開立進料單.md`，IV207 見 `docs/modules/INV/進料單記錄.md`，IV203 見 `docs/modules/INV/開立領料單.md`，IV208 見 `docs/modules/INV/領料單記錄.md`。目前公司端下一項依選單清冊列序是 IV205「開立預訂單」。
 - 家用端工作：先比對 live `tblinvengineergroupbasis`。公司桌機未取得 `TBLINVENGINEERGROUPBASIS` Oracle DDL/metadata；`database/reference/mestest_first_phase_create_tables.sql` 的同名 CREATE 欄位未核實，請勿視為正式 schema。若無可信 Oracle source DDL，記錄差異與所需欄位後再決定 schema，不要猜。
 - `TBLUSRUSERGROUP` 已有可重用的 Oracle source DDL 與 PostgreSQL reference。正式 API 依模組規格提供主檔查詢/Add/Edit/Copy/Delete、active user lookup、GroupType=3 成員查詢及完整集合替換；成員替換須 DataStamp CAS、同步 AgentOf direct/agent rows 並交易回滾。舊 Copy 多次呼叫非原子，正式端需同交易。
 - 公司端未連 YMES PostgreSQL、未做正式 API/schema、未執行 build/test/browser。
 
 ## 公司端交接：IV102 庫房基本資料（2026-11-24）
 
-- 公司端已完成 IV102 主畫面／Property／Locator DEV 假資料及來源規格，見 `docs/modules/INV/庫房基本資料.md`。其後 IV201、IV202、IV207、IV203 亦已交付，目前下一個公司端項目為 IV208。
+- 公司端已完成 IV102 主畫面／Property／Locator DEV 假資料及來源規格，見 `docs/modules/INV/庫房基本資料.md`。其後 IV201、IV202、IV207、IV203、IV208 亦已交付，目前下一個公司端項目為 IV205。
 - 家用端先比對 live `tblinvinventorybasis`、`tblinvinventoryproperty`。公司桌機受保護 Oracle profile 不存在；repo first-phase Inventory Basis CREATE 不是可核實來源 DDL，Property table 也缺已驗證 CREATE。請按 live schema／正式 metadata 核實欄位、鍵、預設值與 FK，不要推測建表。
 - `TBLINVLOCATORBASIS` 已有 Oracle source DDL、metadata、PostgreSQL CREATE-only，直接沿用。主檔狀態 0／-1 依舊 Core 實體刪除主檔、Property、Locator；狀態 2 只軟刪主檔至 -1；狀態 1 拒絕。Property/Locator 也採 0／-1 實體刪除、2 軟刪、1 拒絕。主檔與 Property Approve 分別依 `INV BASIS`、`INV PROPERTY` IssueManagement mapping 決定直接 Active 或 Pending 工作。
 - 正式 API 需參數化、授權、DataStamp CAS、批次回應逐筆狀態，並交易保護 cascade／property／locator；部署和整合依家用端待辦既有程序處理。公司端未連 YMES PostgreSQL、未實作正式 API/schema、未執行 build/test/browser。
