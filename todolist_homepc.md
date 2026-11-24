@@ -3629,3 +3629,10 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] HOME：71份版本驗證檔整包上傳在程序建立前遭自動核准審查拒絕；原因是缺這批內部程式／部署／驗證資料與指定私有目的地的明確外傳授權。未連線、未上傳、未改checkpoint；已另送精確授權問題，不等待使用者而繼續其他開發。
 - [ ] 原CP33及Ready=false計畫保持，9224／f2c1工具均未遠端執行。若後續網站或API版本已前進，禁止直接執行綁舊497／4f runtime的73e結案器；須以新live版本與既有ET202歷史實證重新審查整合結案，不倒退服務或改寫舊證據。
 
+
+## 公司端交接：IV101 庫房工程群組（2026-11-24）
+
+- 公司端已完成 IV101 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff，見 `docs/modules/INV/庫房工程群組.md`。下次 pull main 後可接公司端下一項 IV102。
+- 家用端工作：先比對 live `tblinvengineergroupbasis`。公司桌機未取得 `TBLINVENGINEERGROUPBASIS` Oracle DDL/metadata；`database/reference/mestest_first_phase_create_tables.sql` 的同名 CREATE 欄位未核實，請勿視為正式 schema。若無可信 Oracle source DDL，記錄差異與所需欄位後再決定 schema，不要猜。
+- `TBLUSRUSERGROUP` 已有可重用的 Oracle source DDL 與 PostgreSQL reference。正式 API 依模組規格提供主檔查詢/Add/Edit/Copy/Delete、active user lookup、GroupType=3 成員查詢及完整集合替換；成員替換須 DataStamp CAS、同步 AgentOf direct/agent rows 並交易回滾。舊 Copy 多次呼叫非原子，正式端需同交易。
+- 公司端未連 YMES PostgreSQL、未做正式 API/schema、未執行 build/test/browser。

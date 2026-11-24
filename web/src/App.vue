@@ -261,6 +261,7 @@ import SpcAttributeControlChart from './components/SpcAttributeControlChart.vue'
 import SpcCoaReport from './components/SpcCoaReport.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import SpcInspMachineParameterSetup from './components/SpcInspMachineParameterSetup.vue'
+import InvEngineerGroupBasis from './components/InvEngineerGroupBasis.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -731,6 +732,13 @@ const fallbackMenuTree: MenuNode[] = [
     ],
   }] },
   {
+    id: 'module:INV', label: '庫存管理', shortLabel: '庫', moduleNo: 'INV', children: [{
+      id: 'menu:INV:CONFIG', label: '庫房設定', shortLabel: '設定', children: [
+        { id: 'function:INV:INV ENGINEER GROUP', label: '庫房工程群組', shortLabel: '工程群組', functionNo: 'INV ENGINEER GROUP', moduleNo: 'INV' },
+      ],
+    }],
+  },
+  {
     id: 'module:EMS', label: '設備管理', shortLabel: '設', moduleNo: 'EMS', children: [{
       id: 'menu:EMS:EQP EXECUTION', label: '設備_執行', shortLabel: '設', children: [
         { id: 'function:EMS:SHOW EQP STATUS BY AREA', label: '設備狀態監控_區域', shortLabel: '區監', functionNo: 'SHOW EQP STATUS BY AREA', moduleNo: 'EMS' },
@@ -998,6 +1006,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:SPC COA': appBasePath + '/SPC/CoaReport',
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
   'function:SPC:INSP MACHINE PARAMETER SETUP': appBasePath + '/SPC/InspMachineParameterSetup',
+  'function:INV:INV ENGINEER GROUP': appBasePath + '/INV/EngineerGroups',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1379,6 +1388,7 @@ const isWipFutureWaitReleasePage = computed(() => activeMasterKey.value === 'fun
 const isWipErfBasisPage = computed(() => activeMasterKey.value === 'function:WIP:ERF BASIS')
 const isSpcErfBasisPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF QUERY')
 const isSpcInspMachineParameterSetupPage = computed(() => activeMasterKey.value === 'function:SPC:INSP MACHINE PARAMETER SETUP')
+const isInvEngineerGroupPage = computed(() => activeMasterKey.value === 'function:INV:INV ENGINEER GROUP')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
@@ -3208,6 +3218,12 @@ async function signOut(): Promise<void> {
         />
         <SpcInspMachineParameterSetup
           v-else-if="isSpcInspMachineParameterSetupPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvEngineerGroupBasis
+          v-else-if="isInvEngineerGroupPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
