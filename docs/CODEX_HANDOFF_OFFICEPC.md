@@ -1,13 +1,13 @@
 # Codex handoff：公司筆電 → 桌電
 
-更新：2026-11-20。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
+更新：2026-11-24。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-> **最新桌機再接手（2026-11-20）**：先讀 [本次桌機交接點](CODEX_HANDOFF_DESKTOP_20261120.md)。筆電接回後的 WP509、WP106、WP109、WP112 已推 GitHub；下一個未有 Vue 路由的 WIP 功能是 WP401 `OS CREATE`。本檔早期「下一功能」文字保留歷史，不再當目前進度。
+> **最新公司端接手（2026-11-24）**：公司端已依清冊完成 IV302「開立退料單(WIP)」DEV 與規格交接；請先讀本檔的 IV302 checkpoint、[公司端待辦](../todolist_officepc.md)、[家用端待辦](../todolist_homepc.md) 及 [模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)，下一項依 INV 清冊為 IV303「退料單記錄(WIP)」。WP401 段落是較早的歷史接手點。
 
 ## 接手方式
 
 1. 在桌電開啟同一個 GitHub repository `souaix/YMES`，執行 `git pull origin main`。
-2. 先讀 [本次桌機交接點](CODEX_HANDOFF_DESKTOP_20261120.md)、本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md`，再讀當前要做的 WP401 原始碼。
+2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 與 [MES 選單清冊](MES_MENU_FUNCTION_INVENTORY.md)，再直接核對下一項 IV303 的 WinForms／Service／Core 原始碼。
 3. 本機 Codex 使用 YMES repo；MES WinForms 原始碼在公司筆電 `D:\iMES\CSiMES`，桌電可能是另一個路徑。若桌電有既有 MES checkout，先核對路徑；不可用 UI 截圖代替 Form/Designer/Service/Core 原始碼。原始碼缺少時記錄具體缺檔，先做不依賴它的工作。
 4. 若在桌電打開同一個 Codex 對話，thread 對話與 Goal 脈絡仍在；若另開新對話，把本檔及 TODO 當成接手上下文，不要假設新 thread 自動有舊 Goal 狀態。
 
@@ -29,7 +29,8 @@
 
 ## 目前檢查點與下一步
 
-- **2026-11-24 INV IV211 接續點**：`MATERIAL RETURN LOG` 已依 inline `frmINVMaterialReturnLog`、`wsINV.LoadINVMaterialReturnBasis/Detail`、`clsInventory` 完成 `/YMES/INV/MaterialReturnLog` DEV 與[規格](modules/INV/退料單記錄.md)。含 8 組勾選條件、State 0–3、Basis ReturnDate／CreateDate 日期、選列載入 Detail／Component 子列。ReturnDate 是 Basis.ReturnDate，Form 顯示為 ConfirmDate，不用 TransactionLog 替代。桌機受保護 Oracle profile 不存在，Return Basis／Detail／Component DDL／metadata 未取得，不猜 CREATE。舊 Core 空單號 Detail 回全表、Component relation 少 LocatorNo、Basis 無排序／分頁已交家用端。家用端下一項依 INV 清冊為 IV302「開立退料單(WIP)」。未連 YMES PostgreSQL、未 build/test/browser。
+- **2026-11-24 INV IV302 接續點**：`WIP MATERIAL RETURN` 已依 `frmINVMaterialWIPReturn`／BasisDef／DetailDef、`wsINV`、`clsInventory`／`clsBasis_UPD` 完成 `/YMES/INV/MaterialWipReturn` DEV 與[規格](modules/INV/開立退料單_WIP.md)。含 State=0 單頭／明細維護、五種 FromPlaceType、WIP／MO 假來源、來源／退入 Locator、元件選取與 BookingFlag 假預約。單頭 Copy 不複製明細；Basis Edit 僅 Description。IV302 草稿不執行實際退料，確認在 IV304 Source=10。桌機受保護 Oracle profile 不存在，`TBLINVMATERIALWIPRETURNBASIS`／`TBLINVMATERIALWIPRETURNDETAIL`／`TBLINVMTLWIPRETURNCOMP` 與元件來源 DDL／metadata 未取得，不猜 CREATE。舊 Core 空 MaterialReturnNo Detail 查詢可回全表；Service 分別更新 Detail、Component 及 BookingFlag，正式 API 必須父單號限定並原子交易更新。家用端下一項依清冊為 IV303「退料單記錄(WIP)」。未連 YMES PostgreSQL、未 build/test/browser。
+- **2026-11-24 INV IV211 接續點**：`MATERIAL RETURN LOG` 已依 inline `frmINVMaterialReturnLog`、`wsINV.LoadINVMaterialReturnBasis/Detail`、`clsInventory` 完成 `/YMES/INV/MaterialReturnLog` DEV 與[規格](modules/INV/退料單記錄.md)。含 8 組勾選條件、State 0–3、Basis ReturnDate／CreateDate 日期、選列載入 Detail／Component 子列。ReturnDate 是 Basis.ReturnDate，Form 顯示為 ConfirmDate，不用 TransactionLog 替代。桌機受保護 Oracle profile 不存在，Return Basis／Detail／Component DDL／metadata 未取得，不猜 CREATE。舊 Core 空單號 Detail 回全表、Component relation 少 LocatorNo、Basis 無排序／分頁已交家用端。未連 YMES PostgreSQL、未 build/test/browser。
 - **2026-11-24 INV IV206 接續點**：`MATERIAL RETURN` 已依 `frmINVMaterialReturn`／BasisDef／DetailDef、`wsINV`、`clsInventory`／`clsBasis_UPD` 完成 `/YMES/INV/MaterialReturn` DEV 與 [規格](modules/INV/開立退料單.md)。主／明細 State=0 CRUD、假 Vendor／Raw Lot lookup、元件 booking 本機模擬均已交接。桌機指定 Oracle profile 不存在，因此 Return Basis／Detail／Component、Raw Component／Locator 原生 DDL／metadata 未取得，不猜 CREATE。舊 Service 元件寫入分步、Core Edit 可能刪除整單元件、元件候選缺 InventoryNo 的來源差異已交家用端；正式 API 必須完整鍵、庫房範圍及原子交易。IV206 草稿不扣庫存，確認由 IV201 Source=3。公司端下一項依清冊為 IV211「退料單記錄」。未連 YMES PostgreSQL、未 build/test/browser。
 - 公司端已接續 OE101、OE102、OE201 至 OE209、OEB01、OEP01 的 DEV 訂單與工單操作。各功能及 Oracle DDL／API 交接見模組索引。WP101、WP102、WP201、WP202、WP204、WP301、WP302、WP601、WP603、WP604、WP605、WP629 已完成公司端 DEV 與家用端 handoff；後續工作依 `todolist_officepc.md` 及 MES menu inventory 接續。
 - **2026-11-20 WIP 接續檢查點：WP305–WP307 及 WP203／WP103／WP113／WP104／WP105／WP205–WP207 的公司端 DEV/spec/handoff 已同步至 `D:\YMes` 工作樹。** 同步前逐檔比對、於 `D:\iMES\CSiMES\ymestage\wp207_sync_backup_20261120` 備份七個有差異的既有檔案並核實 SHA256；新增檔與既有 WP305 未提交檔均已保留。WP307 的 State/History ShiftNo／UserNo lookup 與正式 API contract 已列於規格與 `todolist_homepc.md`。
