@@ -2,7 +2,7 @@
 
 ## 家用端同步與 IV502 驗證（2026-11-25）
 
-- [x] Fetch 並正常快轉整合 GitHub `origin/main` 至 `7de147c`；包含公司端 IV206／IV210／IV211／IV302–304／IV310／IV501／IV502 交接。家用端完成結構／瀏覽器修正及 IV502 唯讀 API 後，以一般 fast-forward 推到 `main`：`03805fd`；push 後 fetch 確認 `origin/main` 相同，沒有覆蓋兩端提交或 force push。
+- [x] Fetch 並正常快轉整合 GitHub `origin/main` 至 `7de147c`；包含公司端 IV206／IV210／IV211／IV302–304／IV310／IV501／IV502 交接。家用端完成結構／瀏覽器修正（`03805fd`）及 IV502 唯讀 API（`eb1e491`）後，以一般 fast-forward 推到 `main`；push 後 fetch 確認 `origin/main` 相同，沒有覆蓋兩端提交或 force push。
 - [x] 本機 `npm run build` 成功；DEV app-browser 使用 Demo 登入，確認庫存管理三層選單、IV502 FGD／SEMI 切換、草稿查詢、新增／編輯／作廢、列印預覽及 FGD 完整包裝守門。曾發現 Add 在改 BookingFlag 後才重算選取清單，造成單據無明細；修正為先快照選取 Lot，再更新預約。半成品新增重驗為 1 Lot，編輯、作廢、查詢與列印均通過，FGD 未選齊包裝會拒絕、選完整包裝後建立 2 Lot；已 Reset DEV 回初始假資料。這些只驗證瀏覽器本機 DEV，不是正式 API／帳務驗收。
 - [x] 以 PPK SSH 唯讀查 YMES PostgreSQL `YMES` schema catalog；未查業務列、未變更資料。已存在 `tblinvinventorybasis`、`tblinvlocatorbasis`、`tblinvtransactionlog`、`tblinvtransactionstate`、`tblwiplotbasis`、`tblwiplotstate`。IV501／IV502 相關 live 缺表包括 `tblinvfgdinbasis`、`tblinvfgdindetail`、`tblinvfgdincomponent`、`tblinvsemiinbasis`、`tblinvsemiindetail`、`tblinvsemiincomponent`、`tblinvwipinventory_semi`、`tblinvwipinventory_component`、`tblprdpackingrulebasis`、`tblsysbin`、`tblinvfgdinventory`、`tblinvfgdinventorycomponent`、`tblwipgoodbinstate`、`tblwipmolinepackrelation`、`tblwipreversehistory`。`tblinvfgdinventorybin` 在 live 與 Oracle MESTEST 均未找到，不得臆造或建立。
 - [x] 已將 live 確認缺少且有可信來源的 15 張 IV501／IV502 共用表整理為 forward migration `0074_inv_product_in_draft_schema.sql`／空表安全 rollback；依 WP604／605、WP201／603、WP601／PRD112、WP215 與 QC409 source refs 保留原生欄位、鍵、預設值與索引。另補 `TBLWIPGOODBINSTATE` PostgreSQL CREATE-only；不建立 Oracle MESTEST 未找到的 `TBLINVFGDINVENTORYBIN`。
