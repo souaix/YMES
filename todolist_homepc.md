@@ -1,13 +1,15 @@
 # 家裡電腦接手清單
 ## 家用端同步狀態（2026-11-24）
 
-- [x] 已再次 fetch GitHub `main`；仍為 `5cb1b6d`，沒有比目前家用基線更新的提交。保留其他 worktree 的未提交工作，這次只同步 SC401／WP508 文件與程式，不 force push。
+- [x] 本輪讀取 GitHub 最新提交為 `4f5c916c4e3b6e8d3f77e25e2e0d215af0011832`；家用工作分支以此為基線。這次只同步 WP508 相關程式與文件，使用一般 fast-forward push，不覆蓋其他 worktree 工作。
 - [x] YMES PostgreSQL migration `0071` 已建立 QC501 群組明細 lookup 表並只授予 `ymes_app` SELECT；備份與結構核對紀錄在 SC501 模組文件。
 - [x] SC501 正式 lookup API／頁面已建置並部署為 `sc501-setup-20261124-a2`；API readiness、未登入 401、頁面 200 與正式資料空結果已核對。app-browser 曾完成主要表單互動，但原生確認視窗後輸入控制失效；正式頁可讀、後續 Add／選單點擊均無動作，console 無錯誤，需待控制恢復再補驗刪除確認。
 - [x] SC402 查詢 API 已由 `sc402-query-20261124-b3` 提供；SC402 正式 ERF Info 五頁及附件唯讀下載接上 WP508 共用 API，版本 `wip-erf-info-20261124-a1` 已部署。正式唯讀查詢 0 筆；因來源沒有業務列，ERF Info 明細與實際附件下載尚無法做正向驗證。Function ACL 仍依安排暫緩，端點要求登入。
-- [x] SC401 正式頁已接入共用 ERF Info 五頁與附件唯讀下載；Web-only release `sc401-info-20261124-a3` 已部署。API 保持 `wip-erf-info-20261124-a1`；readiness 200、正式頁 200、未登入 API 401，`ymes-master-web` 容器未更動。正式表無業務列；app-browser 可讀取頁面但互動無回應，見下方待辦。
-- [ ] 待補 app-browser 互動驗證：全新 IAB 頁的 query checkbox／選單按鈕點擊均無動作，console 無 error/warning；待查明瀏覽器互動恢復後驗證 SC401 Query、選列、Info 與附件下載。
-- [ ] SC401 ERF 處置、Lot Release、Back、附件刪除，WP508 正式主查詢／本頁 provider，以及 SC402／WP508／WP801／WP802 8D API 尚未完成。
+- [x] SC401 正式頁已接入共用 ERF Info 五頁與附件唯讀下載；Web-only release `sc401-info-20261124-a3` 已部署。API 保持 `wip-erf-info-20261124-a1`；readiness 200、正式頁 200、未登入 API 401，`ymes-master-web` 容器未更動。正式表無業務列；IAB 控制仍無回應。
+- [ ] IAB checkbox／選單按鈕仍無動作、console 無 error/warning；以 Chrome 原生視窗已能操作 WP508 查詢。正式表無業務列，SC401 選列、Info 與附件下載仍缺可做正向驗證的資料。
+- [x] WP508 正式主查詢 API 與本頁 provider 已完成並部署為 Web-only release `wp508-query-20261124-a5`；Chrome 正式頁以不存在的 ERF No 執行查詢，回覆 0 筆，重載後篩選清空且登入保留。build 及正式站結果記錄於 [WP508 規格](docs/modules/WIP/異常單資料.md)。
+- [ ] WP508 篩選區在 1237px 瀏覽器寬度且選單展開時產生水平溢位，Query 按鈕只露出一部分；調整響應式欄位配置後再以 app-browser 驗收。
+- [ ] SC401 ERF 處置、Lot Release、Back 與附件刪除；WP508 附件刪除及 SC402／WP508／WP801／WP802 8D API 尚未完成。
 - [ ] IV201：live audit 已確認 RAW／Locator 與共用 Transaction State／Log 缺表；等待公司端補 Raw Inventory 原生 DDL 與六種 Confirm Core 的依賴表清單，再做 schema/API。不能由 DEV 假資料推建。
 
 ## 公司端交接：IV201 原物料倉庫房資料（2026-11-24）
@@ -3569,13 +3571,15 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] 提供登入/`WP507` Function ACL 的 LotNo、OPNo、WaitTime 可選查詢和 OP lookup，顯示六欄；原 Form 可無條件查全表，正式 API 要分頁／結果上限、可見範圍和參數化 SQL。
 - [ ] Release POST 必須完整提供 LotNo/OPNo/WaitTime，WaitTime 僅 0/1；server 鎖定並重查該 PK、版本與權限，以參數化 SQL 交易刪單筆並記 actor/事件，提供不存在／衝突／冪等回應。舊 Core 允許缺鍵造成廣域刪除，絕不可照搬。Release 只刪未來設定，不解除已生效 WaitBasis/Lot Wait；須與 WP505 Set、`ChkFutureWait`、WP502 真等待交易分清生命週期。API 完成後接正式 Vue/部署驗收；公司端未連 PG、未執行 build/test/browser。
 
-## WIP WP508 異常單資料家用端 handoff（2026-11-20）
+## WIP WP508 異常單資料家用端 handoff（更新 2026-11-24）
 
-- [x] 已同步 GitHub main 至 `5cb1b6d` 並閱讀 [WP508 規格](docs/modules/WIP/異常單資料.md)。公司 `/YMES/WIP/ErfBasis` 的 ERF／Info／8D DEV 假資料不可當正式結果。
+- [x] 已核對 GitHub main `4f5c916` 並閱讀 [WP508 規格](docs/modules/WIP/異常單資料.md)。公司 `/YMES/WIP/ErfBasis` 的 ERF／Info／8D DEV 假資料不可當正式結果。
 - [x] PPK SSH 唯讀核對 YMES PostgreSQL schema／權限；migration `0072` 依 live 缺項建立七張空的 ERF Info／附件表，`ymes_app` 僅 SELECT。備份與權限回讀記錄在 [WP508 規格](docs/modules/WIP/異常單資料.md)。沒有讀取或匯入業務列。
-- [ ] 提供登入/`WP508` Function ACL 的 ERF 查詢：六個可選文字欄、Create/Release 日期區，至少一有效條件，固定 `ERFSource=0`，分頁/上限，返回 25 欄及 batch member Lot/OP/Customer 比對語義。LotNo 是包含查詢；batch ERF 應能因任一成員命中而返回一張主 ERF。StatusShow、ERFRecordQty=ScrapQty、CalHoldTime 等派生欄由 server 計算；不得直接移植 Core 拼字串 SQL。
+- [x] 已完成並部署 `GET /api/wip/erfs/query`：登入保護，固定 `ERFSource=0`，六個文字欄及兩組日期，至少一個有效條件，參數化 SQL、唯讀一致性 snapshot、分頁上限 100、25 欄結果及 batch member Lot／OP／Customer 比對。
 - [x] 已建置 `GET /api/wip/erfs/{erfNo}/info?source=0|1|2`：登入保護、Repeatable Read／READ ONLY、HoldReason／HoldReasonDisp／ERF／OCAP Disposition／Lot Disposition 五頁及附件 metadata；NodeID 左聯 NodeBasis、`RECORDQTY=Qty`、OCAP 欄位分支正確。單組明細／附件列表上限 500；缺少的 `tblqcholditembasis` 不猜 HoldItemName。
-- [x] 已建置附件分流唯讀下載 API：精確檢查 ERF／Lot／來源與 OCAP 四鍵，清理檔名，最大 20 MiB。正式 SC402、SC401 UI 已接線；WP508 正式主查詢／本頁 provider 仍待完成。
+- [x] 已建置附件分流唯讀下載 API：精確檢查 ERF／Lot／來源與 OCAP 四鍵，清理檔名，最大 20 MiB。正式 SC402、SC401 與 WP508 共用此 API；WP508 附件在正式模式唯讀。
+- [x] Web-only release `wp508-query-20261124-a5` 已上線，API image 與主站容器均未更動。Chrome 正式頁以不存在的 ERF No 查詢，實際回覆「查得 0 筆 WIP 異常單」，頁面結果與停用按鈕正確；重新載入後清空測試條件，登入仍有效。正式表無業務列，故無法正向驗證選列、Info 明細及附件下載。
+- [ ] 1237px 瀏覽器寬度且側選單展開時，篩選區水平溢位並裁切 Query 按鈕；修正響應式排版後重新驗收。
 - [ ] 附件 Delete API 尚未開放。未來若實作，必須確認、核獨立刪除權限、從 server 重查 ERFNo/LotNo/來源/OCAPNO 與完整 PK，禁止刪除檔名不分大小寫包含 `CreateERFNo + "."` 的產生檔，記 actor/稽核並處理競態。**舊 `wsWIP.DelERFOCAP_AttachFile`／Core 沒傳 OCAPNO，會刪同名多個 OCAP 列；新 API 必須用四鍵精確刪除。**
 - [ ] `8D` 有 QRSNo 時查 8D Basis，無結果或 IssueState=-1 不開維護；沒有 QRSNo 時走 WP801 建立並回寫 ERFBasis.QRSNo。WP801 主單 source/API 契約在 [WP801 規格](docs/modules/WIP/廠內8D矯正單.md)，已有 QRSNo 的 WP802 詳見 [WP802 規格](docs/modules/WIP/8D矯正單維護作業.md)；直接入口不受 WP802 主窗 Active 查詢篩選限制。不要從 browser 接受任意 QRSNo、IssueState；正式 API 後接 Vue/部署驗收。
 
