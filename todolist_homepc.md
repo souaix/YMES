@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 公司端交接：SC501 品管項目檢測儀器對應（2026-11-24）
+
+公司端已核對 `frmInspMachineParameterSetup`／`frmInspMachineParameterTest`、Service／Core，完成 [SC501 DEV 頁](docs/modules/SPC/品管項目檢測儀器對應.md) 與 `/YMES/SPC/InspMachineParameterSetup` 路由。此功能在 `%LocalAppData%\iMESTech\InspMachineSetup.xml` 維護操作站的 QC Item／檢測儀器／RS232 對應；MES 只提供 QC Item、儀器主檔及群組明細 lookup，沒有對應表寫入 Service。DEV 用假資料、瀏覽器 localStorage 與 XML 匯入／匯出模擬，不連真實 COM Port。
+
+- [ ] Pull 後比對 QC205 Variable QC Item、QC502 檢測儀器主檔及 QC Item Group Detail 的 YMES live schema／migration；沿用 repo references，SC501 不新增業務表或 CREATE SQL。
+- [ ] 為 SC501 頁重用受登入／Function ACL 保護的唯讀 lookup，保留 Variable `CollectType=1`／`IssueState=2`、儀器 `IssueState=2`、群組明細 ShowOrder 排序；不要增加無必要的 CRUD API。
+- [ ] 決定正式 Web 如何處理操作站設定檔。舊程式寫 client LocalAppData；瀏覽器不能直接覆寫該路徑。若要跨人員共享，先定義工作站範圍、版本及 local agent，再新增 schema/API；不要把對應資料寫入 QC502 的儀器主檔。
+- [ ] 若需要真實設備測試，設計受控本機 Serial Port agent／服務及權限、併發、超時、斷線與量測解析契約；現有 DEV simulation 只是假接收值。
+- [x] 公司端未連 YMES PostgreSQL、未實作正式 API/schema、未操作 Oracle；SPC 清冊目前所有 FunctionKey 均已交付，下一模組依總清冊順序為 INV，先盤點未復刻項目。
+
 ## 公司端交接：SC402 SPC 異常單查詢（2026-11-24）
 
 公司端已依標準 `SC_ERFBasis` Form／inline Designer、WIP Service/Core、SPC lookup 與 WP801／WP802 8D 路徑完成 [SC402 DEV 頁](docs/modules/SPC/SPC異常單查詢.md)，路由 `/YMES/SPC/ErfBasis`。SC402 固定查 `ERFSource=1|2`，不限制 Status，要求 Lot／Customer／OP／MClass／Cur Group／ERF No 六項至少一個有效條件；Lot No 可命中批次成員。SC401 是另一張未解除清單，兩者不可共用狀態範圍。

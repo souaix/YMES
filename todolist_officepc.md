@@ -1,5 +1,19 @@
 # 公司端待辦
 
+## 公司端最新交付：SC501 品管項目檢測儀器對應（2026-11-24）
+
+- [x] 核對 `frmInspMachineParameterSetup`／`frmInspMachineParameterTest`、inline Designer、`wsQC.LoadQCItemForVariables`／`LoadInspMachineParameter`／`LoadQCItemGroupDetail` 與 `clsQCBasis`／`clsInspMachine`。
+- [x] 完成 `/YMES/SPC/InspMachineParameterSetup` DEV、SPC 檢測設備選單：本機設定 Grid 分組、QC Item／Group／儀器 picker、多列新增、Edit／Copy／多選刪除、RS232 參數帶入、Channel 守門、Enable 排他、UnitConversion、XML Import／Export、Load／Confirm／Close 與模擬測試。
+- [x] 確認 SC501 的 Confirm 寫 `%LocalAppData%\iMESTech\InspMachineSetup.xml`，沒有儀器對應表或 Add/Edit/Delete Service；不可將本機設定誤當 QC502 儀器主檔 CRUD。瀏覽器 DEV 用 localStorage／XML 模擬，無真實 COM Port。
+- [x] Lookup 來源是計量 QC Item (`CollectType=1`, 預設 `IssueState=2`)、儀器主檔 (預設 `IssueState=2`) 與 ShowOrder 排序的 QC Item Group Detail；沿用 repo QC205／QC501 references，未新增表／CREATE SQL，也未連 Oracle 或 YMES PostgreSQL。
+- [x] 新增 [SC501 規格](docs/modules/SPC/品管項目檢測儀器對應.md)，更新 Module Index、Inventory 與家用端 handoff。SC 清冊目前無其他未完成 FunctionKey；依全清冊下一模組移至 INV 盤點。
+
+### 家用端 handoff
+
+- [ ] Pull 後閱讀 SC501 規格；正式頁沿用受登入／Function ACL 保護的 QC205 Variable QC Item、QC502 儀器主檔與 QC Item Group Detail 唯讀 lookup，保留其狀態／排序語意。
+- [ ] 決定 Web 頁是否維持瀏覽器下載／匯入的操作站設定檔。舊功能只寫本機 XML；如需跨使用者同步，先另定設備／工作站範圍、版本及本機設備代理方案，再設計 server schema/API；不可直接寫入 QC502 儀器主檔。
+- [ ] 真實 Serial Port I/O 不在一般瀏覽器 DEV 範圍；若產品需 Web 實際讀值，另設受控本機 agent／設備服務及錯誤／重送契約。
+
 ## 公司端最新交付：SC402 SPC 異常單查詢（2026-11-24）
 
 - [x] 核對標準 `frmSPC_ERFBasis` inline Designer、`wsWIP.LoadERFBasisJoinLotBasis`／`kcWIP.clsLot.LoadERFBasisJoinLotBasis`、SPC lookup 與 8D `Load8DBasisFactory` 呼叫。

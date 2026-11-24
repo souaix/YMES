@@ -260,6 +260,7 @@ import SpcLrrPpmChart from './components/SpcLrrPpmChart.vue'
 import SpcAttributeControlChart from './components/SpcAttributeControlChart.vue'
 import SpcCoaReport from './components/SpcCoaReport.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
+import SpcInspMachineParameterSetup from './components/SpcInspMachineParameterSetup.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -539,6 +540,8 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:PCHART SIGNBOARD', label: '不良率管制圖看板', shortLabel: '不良率看板', functionNo: 'PCHART SIGNBOARD', moduleNo: 'SPC' },
       { id: 'function:SPC:PARETO DIAGRAM', label: '柏拉圖分析', shortLabel: '柏拉圖', functionNo: 'PARETO DIAGRAM', moduleNo: 'SPC' },
       { id: 'function:SPC:IMPORT VAR MEASURE', label: '匯入計量檢測數據', shortLabel: '匯入', functionNo: 'IMPORT VAR MEASURE', moduleNo: 'SPC' },
+    ] }, { id: 'spc-inspection-machine', label: 'SPC 檢測設備', shortLabel: '設備', children: [
+      { id: 'function:SPC:INSP MACHINE PARAMETER SETUP', label: '品管項目檢測儀器對應', shortLabel: '儀器對應', functionNo: 'INSP MACHINE PARAMETER SETUP', moduleNo: 'SPC' },
     ] }],
   },
   {
@@ -994,6 +997,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:ATT-CHART': appBasePath + '/SPC/AttributeChart',
   'function:SPC:SPC COA': appBasePath + '/SPC/CoaReport',
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
+  'function:SPC:INSP MACHINE PARAMETER SETUP': appBasePath + '/SPC/InspMachineParameterSetup',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1374,6 +1378,7 @@ const isWipFutureHoldReleasePage = computed(() => activeMasterKey.value === 'fun
 const isWipFutureWaitReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE WAIT RELEASE')
 const isWipErfBasisPage = computed(() => activeMasterKey.value === 'function:WIP:ERF BASIS')
 const isSpcErfBasisPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF QUERY')
+const isSpcInspMachineParameterSetupPage = computed(() => activeMasterKey.value === 'function:SPC:INSP MACHINE PARAMETER SETUP')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
@@ -3197,6 +3202,12 @@ async function signOut(): Promise<void> {
         />
         <SpcMonthChartReportByFactor
           v-else-if="isSpcMonthChartReportByFactorPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <SpcInspMachineParameterSetup
+          v-else-if="isSpcInspMachineParameterSetupPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

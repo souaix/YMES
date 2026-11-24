@@ -2,6 +2,8 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
+- SC501「品管項目檢測儀器對應」：[功能規格](modules/SPC/品管項目檢測儀器對應.md)。核對 `frmInspMachineParameterSetup`／`frmInspMachineParameterTest`、`wsQC.LoadQCItemForVariables`／`LoadInspMachineParameter`／`LoadQCItemGroupDetail` 與 `clsQCBasis`／`clsInspMachine`；完成 `/YMES/SPC/InspMachineParameterSetup` DEV 的 XML 匯入／匯出、本機設定、QC Item／群組／儀器 lookup、多列 Complete、Enable 排他、RS232 模擬。設定只寫 `%LocalAppData%\iMESTech\InspMachineSetup.xml`，無 MES 寫入表或 CRUD Service；沿用既有 QC205／QC501 lookup DDL references，沒有新 CREATE SQL、未直連 Oracle／YMES PostgreSQL。SPC 清冊中目前所有 FunctionKey 均已交付；下一模組依總清冊順序為 INV，先盤點尚未復刻項目。
+
 2026-11-19 家用端 checkpoint：forward migrations 0034–0041 已實際套用，三份備份已驗證，詳見 [資料庫部署紀錄](DATABASE_CONNECTION.md)。QC103／QC107／QC108 以各模組的實測範圍為準，未交付的分類／Core／metadata／函式不因 schema 建立而完成；0038–0040 僅為 PRD schema groundwork，Program／RecipeGroup 指派 API 尚未部署。三個 QC 模組的專屬 fixtures 已逐筆從 UI／API 刪除，最終精確本輪識別鍵 SQL 殘留各0；詳見模組驗收紀錄。
 
 - QC501「檢測儀器類別」：[功能規格](modules/QC/檢測儀器類別.md)。共用六表 migration 0027、登入保護 API 已部署；app-browser 已驗證新增/套用/修改、複製/Driver lookup、取消/確定核准、引用刪除防護、狀態 1 唯讀、-1/2 刪除、四狀態/Close、錯誤文字與 Demo 登入。本輪測試資料已清空；共用簽核/Issue Control 限制見規格。公司端 QC503 UI 已於 `b572f3b` 提交，下一步為家用端 API handoff。
