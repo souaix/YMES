@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
 type FilterKey = 'lotNo' | 'opNo' | 'curGroupNo' | 'customerNo' | 'mClassNo' | 'erfNo' | 'materialNo' | 'vendorNo' | 'productNo'
 type LookupKey = FilterKey | 'nextGroup' | 'finalGroup' | 'targetOp' | 'targetProcess' | 'returnOp' | 'targetModule' | 'inventory' | 'mergeLot'
@@ -18,6 +18,16 @@ type ErfRow = {
 type Action = { erfNo: string; kind: 'erfDisposition' | 'lotDisposition' | 'abort' | 'qtyAdjust' | 'back' | 'split' | 'merge'; status: number; description: string; actor: string; at: string; releaseType?: number; curQty?: number; target?: string; reasons?: Reason[]; attachments?: string[]; dispositionType?: string }
 type Saved = { actions: Action[]; recreated: ErfRow[]; nextSerial: number }
 type Reason = { holdItemNo: string; goodQty: number; scrapQty: number; description: string; holdDisposition: string }
+type InfoRecord = Record<string, string | number | null>
+type InfoAttachment = { source: 'ERF' | 'OCAP'; lotNo: string; name: string; attachType: string; creator: string | null; createdAt: string | null; ocapNo: string | null; ocapVersion: string | null; ocapNodeNo: string | null }
+type ErfInfoPayload = {
+  erfSource: number
+  createHoldCodes: { componentNo: string; areaNo: string; holdItemNo: string; holdItemName: string | null; recordQty: number; description: string | null; ocapNo: string | null }[]
+  holdCodeDispositions: { componentNo: string; areaNo: string; holdItemNo: string; holdItemName: string | null; recordQty: number; description: string | null; holdDisposition: string | null }[]
+  erfDispositions: { dispOrder: number; groupNo: string | null; dispDescription: string | null; contactorName: string | null; nextDispType: string | null; nextGroupNo: string | null; creator: string | null; createDate: string | null; ocapNo: string | null; holdItemNo: string | null; ocapNodeNo: string | null; dispUserNo: string | null; dispDate: string | null }[]
+  lotDispositions: { lotDispOrder: number; lotDispType: number; description: string | null; creator: string | null; createDate: string | null; opNo: string | null; processNo: string | null; processVersion: string | null }[]
+  attachments: InfoAttachment[]
+}
 
 const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; functionVariant?: 'wip' | 'spc'; apiBaseUrl?: string }>()
 const emit = defineEmits<{ close: [] }>()
@@ -84,6 +94,12 @@ const queried = ref(false)
 const dialog = ref<Dialog>(null)
 const tab = ref<'erf' | 'lot'>('erf')
 const infoTab = ref('Create Hold Code')
+const infoLoading = ref(false)
+const infoMessage = ref('')
+const formalInfo = ref<ErfInfoPayload | null>(null)
+const attachmentLoadingKey = ref('')
+let infoController: AbortController | null = null
+let attachmentController: AbortController | null = null
 const lookup = ref<LookupKey | null>(null)
 const ocapPicker = ref(false)
 const ocapNode = ref('')
@@ -116,6 +132,24 @@ const active = computed(() => rows.value.find(row => row.erfNo === activeNo.valu
 const activeActions = computed(() => saved.value.actions.filter(item => item.erfNo === activeNo.value))
 const latestReasons = computed(() => [...activeActions.value].reverse().find(item => item.reasons?.length)?.reasons || [])
 const latestAttachments = computed(() => [...activeActions.value].reverse().find(item => item.attachments?.length)?.attachments || [])
+const infoTabs = ['Create Hold Code', 'Hold Code Disposition', 'ERF Disposition', 'Lot Disposition', 'ERF Attach']
+const infoColumns: Record<string, string[]> = {
+  'Create Hold Code': ['ComponentNo', 'AreaNo', 'HoldItemNo', 'HoldItemName', 'RECORDQTY', 'Description', 'OCAPNO'],
+  'Hold Code Disposition': ['ComponentNo', 'AreaNo', 'HoldItemNo', 'HoldItemName', 'RECORDQTY', 'Description', 'HoldDisposition'],
+  'ERF Disposition': ['DispOrder', 'GroupNo', 'DispDescription', 'ContactorName', 'NextDispType', 'NextGroupNo', 'Creator', 'CreateDate', 'OCAPNO', 'HoldItemNo', 'OCAPNodeNo', 'DispUserNo', 'DispDate'],
+  'Lot Disposition': ['LotDispOrder', 'LotDispType', 'Description', 'Creator', 'CreateDate', 'OPNo', 'ProcessNo', 'ProcessVersion'],
+}
+const formalInfoRows = computed<InfoRecord[]>(() => {
+  const info = formalInfo.value
+  if (!info) return []
+  if (infoTab.value === 'Create Hold Code') return info.createHoldCodes.map(row => ({ ComponentNo: row.componentNo, AreaNo: row.areaNo, HoldItemNo: row.holdItemNo, HoldItemName: row.holdItemName, RECORDQTY: row.recordQty, Description: row.description, OCAPNO: row.ocapNo }))
+  if (infoTab.value === 'Hold Code Disposition') return info.holdCodeDispositions.map(row => ({ ComponentNo: row.componentNo, AreaNo: row.areaNo, HoldItemNo: row.holdItemNo, HoldItemName: row.holdItemName, RECORDQTY: row.recordQty, Description: row.description, HoldDisposition: row.holdDisposition }))
+  if (infoTab.value === 'ERF Disposition') return info.erfDispositions.map(row => ({ DispOrder: row.dispOrder, GroupNo: row.groupNo, DispDescription: row.dispDescription, ContactorName: row.contactorName, NextDispType: row.nextDispType, NextGroupNo: row.nextGroupNo, Creator: row.creator, CreateDate: row.createDate, OCAPNO: row.ocapNo, HoldItemNo: row.holdItemNo, OCAPNodeNo: row.ocapNodeNo, DispUserNo: row.dispUserNo, DispDate: row.dispDate }))
+  if (infoTab.value === 'Lot Disposition') return info.lotDispositions.map(row => ({ LotDispOrder: row.lotDispOrder, LotDispType: row.lotDispType, Description: row.description, Creator: row.creator, CreateDate: row.createDate, OPNo: row.opNo, ProcessNo: row.processNo, ProcessVersion: row.processVersion }))
+  return []
+})
+const formalAttachments = computed(() => formalInfo.value?.attachments || [])
+const selectedInfoColumns = computed(() => infoColumns[infoTab.value] || [])
 const canErfDisposition = computed(() => dev.value && !!active.value && [0, 1, 2, 3].includes(active.value.status))
 const canLotDisposition = computed(() => dev.value && active.value?.status === 11)
 const allowedGroups = ['QA-01', 'ENG-01'] // DEV fixture only; server must use real group membership.
@@ -158,6 +192,8 @@ const lookupOptions = computed(() => {
 const childVariant = computed(() => active.value?.hasGoodBin ? 'Bin' : active.value?.hasComponent ? active.value.carrierNo ? 'Carrier' : 'Component' : 'Standard')
 
 function clearFormal(): void {
+  infoController?.abort(); attachmentController?.abort(); infoController = null; attachmentController = null
+  infoLoading.value = false; attachmentLoadingKey.value = ''; formalInfo.value = null; infoMessage.value = ''
   queryVersion += 1; loading.value = false
   saved.value = { actions: [], recreated: [], nextSerial: 0 }; rows.value = []; activeNo.value = ''; queried.value = false
   totalCount.value = 0; pageCount.value = 0; page.value = 1
@@ -449,15 +485,85 @@ function confirmRecreate(): void {
   dialog.value = null; flags.erfNo = true; filters.erfNo = newNo; query(); message.value = `DEV 已模擬以 ERFType=5 重開 ${newNo}。`
 }
 function openInfo(): void {
-  if (!dev.value) { clearFormal(); return }
- if (!active.value) { error.value = '請先選擇異常單。'; return }; infoTab.value = 'Create Hold Code'; dialog.value = 'info' }
+  if (!dev.value && !spcMode) { clearFormal(); return }
+  const row = active.value
+  if (!row) { error.value = '請先選擇異常單。'; return }
+  infoTab.value = 'Create Hold Code'; infoMessage.value = ''; formalInfo.value = null; dialog.value = 'info'
+  if (!dev.value && spcMode) void loadFormalInfo(row.erfNo, row.erfSource)
+}
+async function loadFormalInfo(erfNo: string, erfSource: number): Promise<void> {
+  infoController?.abort()
+  const controller = new AbortController(); infoController = controller
+  infoLoading.value = true; infoMessage.value = ''
+  try {
+    const base = props.apiBaseUrl?.trim() || ''
+    if (!base) throw new Error('目前環境尚未設定 API 位址。')
+    const url = new URL(base, window.location.origin)
+    if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') throw new Error('API 連線必須使用 HTTPS。')
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/wip/erfs/${encodeURIComponent(erfNo)}/info`; url.search = ''
+    url.searchParams.set('source', String(erfSource))
+    const response = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' }, signal: controller.signal })
+    const payload = await response.json().catch(() => ({})) as ErfInfoPayload & { detail?: string; title?: string }
+    if (!response.ok) throw new Error(payload.detail || payload.title || `API 回應 ${response.status}`)
+    if (controller.signal.aborted) return
+    formalInfo.value = payload
+  } catch (cause) {
+    if (controller.signal.aborted) return
+    infoMessage.value = cause instanceof Error ? cause.message : 'ERF 詳細資料載入失敗。'
+  } finally { if (!controller.signal.aborted) infoLoading.value = false }
+}
+function closeInfo(): void {
+  infoController?.abort(); attachmentController?.abort(); infoLoading.value = false; attachmentLoadingKey.value = ''; dialog.value = null
+}
+function selectInfoTab(name: string): void { infoTab.value = name; infoMessage.value = '' }
+function formatInfoCell(row: InfoRecord, column: string): string | number {
+  const value = row[column]
+  if (value == null) return ''
+  if ((column === 'CreateDate' || column === 'DispDate') && typeof value === 'string') return value.slice(0, 19).replace('T', ' ')
+  if (column === 'LotDispType') return ({ 0: 'Go', 7: 'Go Scrap Inventory', 11: 'Back' } as Record<number, string>)[Number(value)] || value
+  if (column === 'NextDispType') return ({ 0: 'Next Group', 1: 'Notice Customer', 2: 'Final', 3: 'Waive' } as Record<number, string>)[Number(value)] || value
+  return value
+}
+function attachmentKey(row: InfoAttachment): string { return `${row.source}|${row.lotNo}|${row.ocapNo || ''}|${row.name}` }
+async function downloadFormalAttachment(row: InfoAttachment): Promise<void> {
+  const selected = active.value
+  if (dev.value || !spcMode || !selected || !row.lotNo) { infoMessage.value = '目前無法下載這個附件。'; return }
+  if (row.source === 'OCAP' && !row.ocapNo) { infoMessage.value = 'OCAP 附件缺少 OCAP No。'; return }
+  attachmentController?.abort()
+  const controller = new AbortController(); attachmentController = controller
+  const key = attachmentKey(row); attachmentLoadingKey.value = key; infoMessage.value = ''
+  try {
+    const base = props.apiBaseUrl?.trim() || ''
+    if (!base) throw new Error('目前環境尚未設定 API 位址。')
+    const url = new URL(base, window.location.origin)
+    if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') throw new Error('附件連線必須使用 HTTPS。')
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/wip/erfs/${encodeURIComponent(selected.erfNo)}/attachments/content`
+    url.search = ''
+    url.searchParams.set('erfSource', String(selected.erfSource)); url.searchParams.set('lotNo', row.lotNo)
+    url.searchParams.set('source', row.source); url.searchParams.set('name', row.name)
+    if (row.source === 'OCAP') url.searchParams.set('ocapNo', row.ocapNo || '')
+    const response = await fetch(url, { credentials: 'include', headers: { Accept: 'application/octet-stream' }, signal: controller.signal })
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({})) as { detail?: string; title?: string }
+      throw new Error(payload.detail || payload.title || `API 回應 ${response.status}`)
+    }
+    const objectUrl = URL.createObjectURL(await response.blob())
+    const anchor = document.createElement('a'); anchor.href = objectUrl; anchor.download = row.name; anchor.style.display = 'none'
+    document.body.append(anchor); anchor.click(); anchor.remove(); window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000)
+    infoMessage.value = `已開始下載 ${row.name}。`
+  } catch (cause) {
+    if (controller.signal.aborted) return
+    infoMessage.value = cause instanceof Error ? cause.message : '附件下載失敗。'
+  } finally { if (!controller.signal.aborted) attachmentLoadingKey.value = '' }
+}
 function openAttachment(row: ErfRow): void {
-  if (!dev.value) { clearFormal(); return }
   activeNo.value = row.erfNo
-  dialog.value = 'attachment'
+  if (dev.value) dialog.value = 'attachment'
+  else if (spcMode) { infoTab.value = 'ERF Attach'; formalInfo.value = null; infoMessage.value = ''; dialog.value = 'info'; void loadFormalInfo(row.erfNo, row.erfSource) }
 }
 for (const field of queryFields) watch(() => flags[field.key], enabled => { if (!enabled) filters[field.key] = '' })
 function loadPreview(): void { loadSaved() }
+onBeforeUnmount(() => { infoController?.abort(); attachmentController?.abort() })
 onMounted(() => { if (dev.value) loadPreview(); else clearFormal() })
 watch(dev, enabled => { if (enabled) { message.value = previewMessage; loadPreview() } else clearFormal() })
 </script>
@@ -473,9 +579,9 @@ watch(dev, enabled => { if (enabled) { message.value = previewMessage; loadPrevi
       <button type="button" class="button query-button" :disabled="loading || (!dev && !spcMode)" @click="query(1)">{{ loading ? '查詢中…' : 'Query' }}</button>
     </div></fieldset>
     <fieldset class="result"><legend>Result</legend><div v-if="spcMode && !dev && pageCount > 0" class="pagination"><button type="button" class="button" :disabled="loading || page <= 1" @click="query(page - 1)">上一頁</button><span>第 {{ page }} / {{ pageCount }} 頁</span><button type="button" class="button" :disabled="loading || page >= pageCount" @click="query(page + 1)">下一頁</button></div><div class="result-layout"><div class="scroll"><table><thead><tr><th v-for="column in columns" :key="column.key + column.label">{{ column.label }}</th></tr></thead><tbody>
-      <tr v-for="row in rows" :key="row.erfNo" :class="{ active: activeNo === row.erfNo }" @click="activeNo = row.erfNo" @dblclick="dev && openInfo()"><td v-for="column in columns" :key="column.key + column.label"><button v-if="spcMode && column.key === 'attachmentName'" type="button" class="button attachment-button" :disabled="!dev" @click.stop="openAttachment(row)">View</button><template v-else>{{ cell(row, column.key, column.label) }}</template></td></tr>
+      <tr v-for="row in rows" :key="row.erfNo" :class="{ active: activeNo === row.erfNo }" @click="activeNo = row.erfNo" @dblclick="(dev || spcMode) && openInfo()"><td v-for="column in columns" :key="column.key + column.label"><button v-if="spcMode && column.key === 'attachmentName'" type="button" class="button attachment-button" :disabled="!dev && !spcMode" @click.stop="openAttachment(row)">{{ dev ? 'View' : '附件' }}</button><template v-else>{{ cell(row, column.key, column.label) }}</template></td></tr>
       <tr v-if="!rows.length"><td :colspan="columns.length" class="empty">{{ queried ? '沒有符合條件的未解除異常單。' : '請先 Query。' }}</td></tr>
-    </tbody></table></div><div class="actions"><button type="button" class="button" :disabled="!active || !dev" @click="dev && (openDisposition())">ERF Disp</button><button v-if="!spcMode" type="button" class="button" :disabled="!active || !dev" @click="dev && (openAbort())">ERF Abort</button><button v-if="!spcMode" type="button" class="button" :disabled="!active || !dev" @click="dev && (openRecreate())">ERF Create</button><button type="button" class="button" :disabled="!dev || (!active)" @click="dev && (openInfo())">ERF Info</button><button type="button" class="button close-button" @click="emit('close')">Close (X)</button></div></div><div class="status"><span>{{ message }}</span><span>UserNo {{ currentUserNo || (dev ? 'DEV' : '') }} · {{ totalCount.toLocaleString() }} 筆</span></div></fieldset>
+    </tbody></table></div><div class="actions"><button type="button" class="button" :disabled="!active || !dev" @click="dev && (openDisposition())">ERF Disp</button><button v-if="!spcMode" type="button" class="button" :disabled="!active || !dev" @click="dev && (openAbort())">ERF Abort</button><button v-if="!spcMode" type="button" class="button" :disabled="!active || !dev" @click="dev && (openRecreate())">ERF Create</button><button type="button" class="button" :disabled="!active || (!dev && !spcMode)" @click="openInfo()">ERF Info</button><button type="button" class="button close-button" @click="emit('close')">Close (X)</button></div></div><div class="status"><span>{{ message }}</span><span>UserNo {{ currentUserNo || (dev ? 'DEV' : '') }} · {{ totalCount.toLocaleString() }} 筆</span></div></fieldset>
     <div v-if="dev && (ocapPicker)" class="overlay"><div class="dialog small" role="dialog" aria-modal="true"><h2>OCAP Process Show</h2><p>選擇未完成的 OCAP 節點；DEV 示意。</p><label><input v-model="ocapNode" type="radio" :value="active?.ocapNo + '-NODE-01'" :disabled="!dev"> {{ active?.ocapNo }} · NODE-01 · 待處置</label><div class="dialog-actions"><button type="button" class="button primary" @click="dev && (chooseOcap())" :disabled="!dev">Confirm</button><button type="button" class="button" @click="dev && (ocapPicker = false)" :disabled="!dev">Close</button></div></div></div>
     <div v-if="dev && (dialog === 'disposition' && active)" class="overlay"><div class="dialog disposition-dialog" role="dialog" aria-modal="true"><h2>ERF Disposition · {{ active.erfNo }}</h2><fieldset class="basis"><legend>ERFBasis</legend><span>Lot No: {{ active.lotNo }}</span><span>ERF Type: {{ active.erfType }}</span><span>Status: {{ statusLabels[active.status] }}</span><span>CurGroup: {{ active.curGroupNo }}</span><span>Hold Description: {{ active.holdDescription }}</span></fieldset><div class="tabs"><button type="button" class="button" :class="{ selected: tab === 'erf' }" :disabled="!dev || (!canErfDisposition)" @click="dev && (tab = 'erf')">ERF Disposition</button><button type="button" class="button" :class="{ selected: tab === 'lot' }" :disabled="!dev || (!canLotDisposition)" @click="dev && (tab = 'lot')">Lot Disposition</button></div>
       <template v-if="tab === 'erf'"><fieldset><legend>Disposition Select</legend><div class="radios"><label><input v-model="erfDispType" type="radio" value="next" :disabled="!dev"> Select next disp group</label><label><input v-model="erfDispType" type="radio" value="notice" :disabled="!dev"> Notice Customer</label><label><input v-model="erfDispType" type="radio" value="final" :disabled="!dev"> Final Disposition</label></div><label>Disp Description <textarea v-model="dispDescription" class="yellow" :disabled="!dev"></textarea></label><label v-if="erfDispType === 'next'">Next Group <input v-model="nextGroup" readonly class="yellow" :disabled="!dev"><button type="button" @click="dev && (lookup = 'nextGroup')" :disabled="!dev">...</button></label><label v-if="erfDispType === 'notice'">Contactor Name <input v-model="contactorName" class="yellow" :disabled="!dev"></label><label v-if="erfDispType === 'final'">Final Group <input v-model="finalGroup" readonly class="yellow" :disabled="!dev"><button type="button" @click="dev && (lookup = 'finalGroup')" :disabled="!dev">...</button></label><label v-if="active.ocapNo">OCAP Result <input v-model="ocapResult" class="yellow" :disabled="!dev"></label></fieldset>
@@ -486,12 +592,20 @@ watch(dev, enabled => { if (enabled) { message.value = previewMessage; loadPrevi
       <div class="dialog-actions"><button type="button" class="button primary" @click="dev && (tab === 'erf' ? confirmErfDisposition() : confirmLot())" :disabled="!dev">Confirm (C)</button><button type="button" class="button" @click="dev && (dialog = null)" :disabled="!dev">Close (X)</button></div></div></div>
     <div v-if="dev && (dialog === 'abort' && active)" class="overlay"><div class="dialog small" role="dialog" aria-modal="true"><h2>ERF Abort · {{ active.erfNo }}</h2><p>{{ active.erfType === 6 ? 'Batch' : 'Single' }} 異常單作廢；DEV 假資料。</p><div class="dialog-actions"><button type="button" class="button primary" @click="dev && (confirmAbort())" :disabled="!dev">Confirm</button><button type="button" class="button" @click="dev && (dialog = null)" :disabled="!dev">Cancel</button></div></div></div>
     <div v-if="dev && (dialog === 'recreate' && active)" class="overlay"><div class="dialog small" role="dialog" aria-modal="true"><h2>ERF Create · {{ active.erfNo }}</h2><p>以 Lot {{ active.lotNo }} 開立 ERFType=5；DEV 模擬。</p><div class="dialog-actions"><button type="button" class="button primary" @click="dev && (confirmRecreate())" :disabled="!dev">Confirm</button><button type="button" class="button" @click="dev && (dialog = null)" :disabled="!dev">Cancel</button></div></div></div>
-    <div v-if="dev && (dialog === 'info' && active)" class="overlay"><div class="dialog info-dialog" role="dialog" aria-modal="true"><h2>ERF Information · {{ active.erfNo }}</h2><fieldset class="basis"><legend>ERFBasis</legend><span>Lot No: {{ active.lotNo }}</span><span>Product No: {{ active.productNo }}</span><span>OP No: {{ active.opNo }}</span><span>Status: {{ statusLabels[active.status] }}</span><span>CurGroup: {{ active.curGroupNo }}</span><span>Hold: {{ active.holdDescription }}</span></fieldset><div class="tabs"><button v-for="name in ['Create Hold Code','Hold Code Disposition','ERF Disposition','Lot Disposition','ERF Attach']" :key="name" type="button" class="button" :class="{ selected: infoTab === name }" @click="dev && (infoTab = name)" :disabled="!dev">{{ name }}</button></div><div class="info-body">
-  <template v-if="infoTab === 'Create Hold Code'">{{ active.holdDescription }}</template>
-  <template v-else-if="infoTab === 'Hold Code Disposition'"><div v-for="(item,index) in latestReasons" :key="index">{{ item.holdItemNo }} · Good {{ item.goodQty }} · Scrap {{ item.scrapQty }} · {{ item.holdDisposition }}</div><p v-if="!latestReasons.length">沒有 DEV Hold Reason Disp。</p></template>
-  <template v-else-if="infoTab === 'ERF Attach'"><div v-for="name in latestAttachments" :key="name">{{ name }}</div><p v-if="!latestAttachments.length">沒有 DEV 附件檔名；正式附件需 WP508 Info API。</p></template>
-  <template v-else><div v-for="(item,index) in activeActions.filter(action => infoTab === 'ERF Disposition' ? action.kind === 'erfDisposition' : action.kind !== 'erfDisposition')" :key="index">{{ item.at }} · {{ item.kind }} · {{ item.description }}</div><p v-if="!activeActions.length">無 DEV 處置紀錄。</p></template>
-</div><div class="dialog-actions"><button type="button" class="button" @click="dev && (dialog = null)" :disabled="!dev">Close</button></div></div></div>
+    <div v-if="(dev || spcMode) && dialog === 'info' && active" class="overlay" @click.self="closeInfo()"><div class="dialog info-dialog" role="dialog" aria-modal="true" aria-label="ERF Information" :aria-busy="infoLoading"><div class="info-heading"><h2>ERF Information · {{ active.erfNo }}</h2><button type="button" class="button" @click="closeInfo()">Close</button></div><fieldset class="basis"><legend>ERFBasis</legend><span>Lot No: {{ active.lotNo }}</span><span>Product No: {{ active.productNo }}</span><span>OP No: {{ active.opNo }}</span><span>Status: {{ statusLabels[active.status] }}</span><span>CurGroup: {{ active.curGroupNo }}</span><span>Hold: {{ active.holdDescription }}</span></fieldset><div class="tabs"><button v-for="name in infoTabs" :key="name" type="button" class="button" :class="{ selected: infoTab === name }" @click="selectInfoTab(name)">{{ name }}</button></div>
+      <div v-if="dev" class="info-body">
+        <template v-if="infoTab === 'Create Hold Code'">{{ active.holdDescription }}</template>
+        <template v-else-if="infoTab === 'Hold Code Disposition'"><div v-for="(item,index) in latestReasons" :key="index">{{ item.holdItemNo }} · Good {{ item.goodQty }} · Scrap {{ item.scrapQty }} · {{ item.holdDisposition }}</div><p v-if="!latestReasons.length">沒有 DEV Hold Reason Disp。</p></template>
+        <template v-else-if="infoTab === 'ERF Attach'"><div v-for="name in latestAttachments" :key="name">{{ name }}</div><p v-if="!latestAttachments.length">沒有 DEV 附件檔名。</p></template>
+        <template v-else><div v-for="(item,index) in activeActions.filter(action => infoTab === 'ERF Disposition' ? action.kind === 'erfDisposition' : action.kind !== 'erfDisposition')" :key="index">{{ item.at }} · {{ item.kind }} · {{ item.description }}</div><p v-if="!activeActions.length">無 DEV 處置紀錄。</p></template>
+      </div>
+      <div v-else class="info-body formal-info-body">
+        <p v-if="infoLoading" class="info-message" role="status">正在載入 ERF 詳細資料…</p>
+        <p v-else-if="!formalInfo && infoMessage" class="info-message error" role="alert">{{ infoMessage }}</p>
+        <template v-else-if="formalInfo && infoTab !== 'ERF Attach'"><div class="info-table-wrap"><table class="info-table"><thead><tr><th v-for="column in selectedInfoColumns" :key="column">{{ column }}</th></tr></thead><tbody><tr v-for="(row,index) in formalInfoRows" :key="index"><td v-for="column in selectedInfoColumns" :key="column">{{ formatInfoCell(row, column) }}</td></tr><tr v-if="!formalInfoRows.length"><td :colspan="selectedInfoColumns.length || 1" class="empty">無資料</td></tr></tbody></table></div><p v-if="infoMessage" class="info-message" role="status">{{ infoMessage }}</p></template>
+        <template v-else-if="formalInfo"><section v-for="source in ['ERF','OCAP']" :key="source" class="attachment-group"><strong>{{ source }} Attach</strong><div class="info-table-wrap"><table class="info-table"><thead><tr><th>AttachName</th><th>附件</th><th>Creator</th><th>CreateDate</th><th v-if="source === 'OCAP'">OCAPNo</th></tr></thead><tbody><tr v-for="row in formalAttachments.filter(item => item.source === source)" :key="attachmentKey(row)"><td>{{ row.name }}</td><td><button type="button" class="button" :disabled="attachmentLoadingKey === attachmentKey(row)" @click="downloadFormalAttachment(row)">{{ attachmentLoadingKey === attachmentKey(row) ? '下載中…' : '下載' }}</button></td><td>{{ row.creator || '' }}</td><td>{{ (row.createdAt || '').slice(0,19).replace('T',' ') }}</td><td v-if="source === 'OCAP'">{{ row.ocapNo || '' }}</td></tr><tr v-if="!formalAttachments.some(item => item.source === source)"><td :colspan="source === 'OCAP' ? 5 : 4" class="empty">無附件</td></tr></tbody></table></div></section><p v-if="infoMessage" class="info-message" role="status">{{ infoMessage }}</p></template>
+      </div>
+    </div></div>
     <div v-if="dev && (dialog === 'attachment' && active)" class="overlay"><div class="dialog small" role="dialog" aria-modal="true"><h2>ERF Attach · {{ active.erfNo }}</h2><p>WinForms 以 ERFNo.pdf 呼叫 wsWIP.GetERF_AttachFile，並只取 Status=1 的有效附件。</p><p>DEV 假資料沒有 PDF 二進位檔；此處只模擬附件入口。</p><div class="dialog-actions"><button type="button" class="button" @click="dev && (dialog = null)" :disabled="!dev">Close</button></div></div></div>
     <div v-if="dev && (dialog === 'child' && active)" class="overlay"><div class="dialog small" role="dialog" aria-modal="true"><h2>{{ lotOption }} · {{ childVariant }}</h2><p>DEV 簡化示意；正式版依原 WinForms 子窗與 Service/Core 處理。</p><label v-if="lotOption !== 'qtyAdjust'">{{ lotOption === 'split' ? 'New Lot No' : 'Merge Lot No' }} <input v-model="childLotNo" class="yellow" :disabled="!dev"><button v-if="lotOption === 'merge'" type="button" @click="dev && (lookup = 'mergeLot')" :disabled="!dev">...</button></label><label>{{ lotOption === 'split' ? 'Split Qty' : lotOption === 'qtyAdjust' ? 'New Qty' : 'Merge Qty' }} <input v-model="childQty" type="number" class="yellow" :disabled="!dev"></label><div class="dialog-actions"><button type="button" class="button primary" @click="dev && (confirmChild())" :disabled="!dev">Confirm</button><button type="button" class="button" @click="dev && (dialog = 'disposition')" :disabled="!dev">Close</button></div></div></div>
     <div v-if="dev && (lookup)" class="overlay lookup-overlay"><div class="dialog small" role="dialog" aria-modal="true"><h2>Lookup · {{ lookup }}</h2><div class="lookup-list"><button v-for="value in lookupOptions" :key="value" type="button" class="button" @click="dev && (pick(value))" :disabled="!dev">{{ value }}</button><span v-if="!lookupOptions.length">沒有可選的 DEV 資料。</span></div><button type="button" class="button" @click="dev && (lookup = null)" :disabled="!dev">Close</button></div></div>
@@ -504,4 +618,5 @@ watch(dev, enabled => { if (enabled) { message.value = previewMessage; loadPrevi
 /* The framework owns the page title for this opt-in mount. */
 .erf-page.office-wip-module > h1 { display: none; }
 .pagination{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 0 7px}.pagination span{color:#666}
+.info-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.info-heading h2{margin:0}.formal-info-body{display:flex;flex-direction:column;gap:10px;min-height:100px}.info-message{margin:0;padding:8px;color:#666}.info-message.error{border:1px solid #d6aaa6;background:#fff0ef;color:#a22}.info-table-wrap{max-width:100%;max-height:38vh;overflow:auto;border:1px solid #d6d2c7;background:#fff}.info-table{min-width:100%;border-collapse:collapse;white-space:nowrap}.info-table th,.info-table td{padding:6px 8px;border:1px solid #ddd8cb;text-align:left}.info-table th{position:sticky;top:0;background:#eeeadd;color:#4b473c}.info-table .empty{text-align:center;color:#777}.attachment-group{display:flex;flex-direction:column;gap:5px}.attachment-group>strong{color:#514d40}
 </style>

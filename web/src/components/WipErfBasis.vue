@@ -10,7 +10,14 @@ type FilterKey = 'lotNo' | 'opNo' | 'customerNo' | 'mClassNo' | 'curGroupNo' | '
 type LookupKey = 'opNo' | 'customerNo' | 'mClassNo' | 'curGroupNo'
 type DateKey = 'createdAt' | 'releaseAt'
 type DetailRecord = Record<string, string | number>
-type MockAttachment = { source: 'ERF' | 'OCAP'; name: string; attachType: number; creator: string; createdAt: string; ocapNo: string }
+type MockAttachment = { source: 'ERF' | 'OCAP'; name: string; attachType: string | number; creator: string; createdAt: string; ocapNo: string; lotNo?: string; ocapVersion?: string; ocapNodeNo?: string }
+type ErfInfoPayload = {
+  createHoldCodes: { componentNo: string; areaNo: string; holdItemNo: string; holdItemName: string | null; recordQty: number; description: string | null; ocapNo: string | null }[]
+  holdCodeDispositions: { componentNo: string; areaNo: string; holdItemNo: string; holdItemName: string | null; recordQty: number; description: string | null; holdDisposition: string | null }[]
+  erfDispositions: { dispOrder: number; groupNo: string | null; dispDescription: string | null; contactorName: string | null; nextDispType: string | null; nextGroupNo: string | null; creator: string | null; createDate: string | null; ocapNo: string | null; holdItemNo: string | null; ocapNodeNo: string | null; dispUserNo: string | null; dispDate: string | null }[]
+  lotDispositions: { lotDispOrder: number; lotDispType: number; description: string | null; creator: string | null; createDate: string | null; opNo: string | null; processNo: string | null; processVersion: string | null }[]
+  attachments: { source: 'ERF' | 'OCAP'; lotNo: string; name: string; attachType: string; creator: string | null; createdAt: string | null; ocapNo: string | null; ocapVersion: string | null; ocapNodeNo: string | null }[]
+}
 
 const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; initialErfNo?: string; functionVariant?: 'wip' | 'spc'; apiBaseUrl?: string }>()
 const emit = defineEmits<{ close: []; create8d: [erf: { erfNo: string; lotNo: string; productNo: string; opNo: string; customerNo: string; lotQty: number; errorQty: number; holdDescription: string }]; open8dMaintain: [qrsNo: string] }>()
@@ -30,6 +37,8 @@ let queryController: AbortController | null = null
 const active = computed(() => rows.value.find(row => row.erfNo === activeNo.value) || null)
 const dialog = ref<'info' | '8d' | null>(null); const infoTab = ref('Create Hold Code')
 const infoMessage = ref(''); const pendingDeleteAttachment = ref<MockAttachment | null>(null)
+const formalInfo = ref<ErfInfoPayload | null>(null); const infoLoading = ref(false)
+let infoController: AbortController | null = null
 const initialMessage = '請至少選一個查詢條件，再按 Query (Q)。'
 const errorText = ref(''); const message = ref(dev.value ? initialMessage : spcMode ? '正式唯讀查詢，請輸入條件後按 Query。' : unavailableText)
 function unavailable(): boolean { if (dev.value) return false; errorText.value = ''; message.value = unavailableText; return true }
@@ -57,6 +66,7 @@ const detailColumns: Record<string, string[]> = {
   'ERF Disposition': ['DispOrder', 'GroupNo', 'DispDescription', 'ContactorName', 'NextDispType', 'NextGroupNo', 'Creator', 'CreateDate'],
   'Lot Disposition': ['LotDispOrder', 'LotDispType', 'Description', 'Creator', 'CreateDate', 'OPNo', 'ProcessNo', 'ProcessVersion'],
 }
+const erfDispositionOcapColumns = ['OCAPNO', 'HoldItemNo', 'OCAPNodeNo', 'DispUserNo', 'DispDate']
 const detailFixtures: Record<string, Record<string, DetailRecord[]>> = {
   'DEV-ERF-001': {
     'Create Hold Code': [{ ComponentNo: 'N/A', AreaNo: 'N/A', HoldItemNo: 'H-001', HoldItemName: '外觀異常', RECORDQTY: 8, Description: '表面刮傷', OCAPNO: '' }],
@@ -103,14 +113,52 @@ const attachmentFixtures: Record<string, MockAttachment[]> = {
 }
 function seedAttachments(): Record<string, MockAttachment[]> { return Object.fromEntries(Object.entries(attachmentFixtures).map(([key, rows]) => [key, rows.map(row => ({ ...row }))])) }
 const attachmentStore = ref<Record<string, MockAttachment[]>>(dev.value ? seedAttachments() : {})
-const detailRows = computed<DetailRecord[]>(() => dev.value ? detailFixtures[activeNo.value]?.[infoTab.value] || [] : [])
-const hasOcap = computed(() => dev.value && (detailFixtures[activeNo.value]?.['Create Hold Code'] || []).some(row => !!row.OCAPNO))
-const currentDetailColumns = computed<string[]>(() => infoTab.value === 'Create Hold Code' && !hasOcap.value ? (detailColumns[infoTab.value] || []).filter(column => column !== 'OCAPNO') : detailColumns[infoTab.value] || [])
-const attachmentRows = computed<MockAttachment[]>(() => dev.value ? attachmentStore.value[activeNo.value] || [] : [])
-function formatDetailCell(row: DetailRecord, column: string): string | number { const value = row[column]; if (column === 'NextDispType') return nextDispTypeLabels[Number(value)] || value || ''; if (column === 'LotDispType') return lotDispTypeLabels[Number(value)] || value || ''; return value ?? '' }
+const detailRows = computed<DetailRecord[]>(() => {
+  if (dev.value) return detailFixtures[activeNo.value]?.[infoTab.value] || []
+  const info = formalInfo.value
+  if (!info) return []
+  if (infoTab.value === 'Create Hold Code') return info.createHoldCodes.map(row => ({ ComponentNo: row.componentNo, AreaNo: row.areaNo, HoldItemNo: row.holdItemNo, HoldItemName: row.holdItemName || '', RECORDQTY: row.recordQty, Description: row.description || '', OCAPNO: row.ocapNo || '' }))
+  if (infoTab.value === 'Hold Code Disposition') return info.holdCodeDispositions.map(row => ({ ComponentNo: row.componentNo, AreaNo: row.areaNo, HoldItemNo: row.holdItemNo, HoldItemName: row.holdItemName || '', RECORDQTY: row.recordQty, Description: row.description || '', HoldDisposition: row.holdDisposition || '' }))
+  if (infoTab.value === 'ERF Disposition') return info.erfDispositions.map(row => ({ DispOrder: row.dispOrder, GroupNo: row.groupNo || '', DispDescription: row.dispDescription || '', ContactorName: row.contactorName || '', NextDispType: row.nextDispType || '', NextGroupNo: row.nextGroupNo || '', Creator: row.creator || '', CreateDate: row.createDate || '', OCAPNO: row.ocapNo || '', HoldItemNo: row.holdItemNo || '', OCAPNodeNo: row.ocapNodeNo || '', DispUserNo: row.dispUserNo || '', DispDate: row.dispDate || '' }))
+  if (infoTab.value === 'Lot Disposition') return info.lotDispositions.map(row => ({ LotDispOrder: row.lotDispOrder, LotDispType: row.lotDispType, Description: row.description || '', Creator: row.creator || '', CreateDate: row.createDate || '', OPNo: row.opNo || '', ProcessNo: row.processNo || '', ProcessVersion: row.processVersion || '' }))
+  return []
+})
+const hasOcap = computed(() => dev.value
+  ? (detailFixtures[activeNo.value]?.['Create Hold Code'] || []).some(row => !!row.OCAPNO)
+  : !!formalInfo.value && (formalInfo.value.erfDispositions.some(row => !!row.ocapNo) || formalInfo.value.attachments.some(row => row.source === 'OCAP')))
+const currentDetailColumns = computed<string[]>(() => {
+  if (infoTab.value === 'ERF Disposition' && hasOcap.value) return [...(detailColumns[infoTab.value] || []), ...erfDispositionOcapColumns]
+  if (infoTab.value === 'Create Hold Code' && !hasOcap.value) return (detailColumns[infoTab.value] || []).filter(column => column !== 'OCAPNO')
+  return detailColumns[infoTab.value] || []
+})
+const attachmentRows = computed<MockAttachment[]>(() => dev.value ? attachmentStore.value[activeNo.value] || [] : (spcMode ? (formalInfo.value?.attachments || []).map(row => ({ ...row, creator: row.creator || '', createdAt: row.createdAt || '', ocapNo: row.ocapNo || '', ocapVersion: row.ocapVersion || undefined, ocapNodeNo: row.ocapNodeNo || undefined })) : []))
+function formatDetailCell(row: DetailRecord, column: string): string | number { const value = row[column]; if (column === 'NextDispType') return nextDispTypeLabels[Number(value)] || value || ''; if (column === 'LotDispType') return lotDispTypeLabels[Number(value)] || value || ''; if ((column === 'CreateDate' || column === 'DispDate') && typeof value === 'string') return value.slice(0,19).replace('T',' '); return value ?? '' }
 function isGeneratedErfFile(name: string): boolean { return !!active.value && name.toLocaleUpperCase().includes(`${active.value.erfNo}.`.toLocaleUpperCase()) }
-function viewAttachment(row: MockAttachment): void { if (unavailable()) return; infoMessage.value = `DEV 假附件 ${row.name}：沒有真實位元組；正式端需經授權 API 下載。` }
-function requestDeleteAttachment(row: MockAttachment): void { if (unavailable()) return;
+async function viewAttachment(row: MockAttachment): Promise<void> {
+  if (dev.value) { infoMessage.value = `DEV 假附件 ${row.name}：沒有真實位元組；未呼叫 API。`; return }
+  if (!spcMode || !active.value || !row.lotNo) { infoMessage.value = '目前環境尚未開放附件下載。'; return }
+  infoMessage.value = ''
+  try {
+    const base = props.apiBaseUrl?.trim() || ''
+    if (!base) throw new Error('目前環境尚未設定 API 位址。')
+    const url = new URL(base, window.location.origin)
+    if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') throw new Error('附件連線必須使用 HTTPS。')
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/wip/erfs/${encodeURIComponent(active.value.erfNo)}/attachments/content`
+    url.searchParams.set('erfSource', String(active.value.erfSource)); url.searchParams.set('lotNo', row.lotNo); url.searchParams.set('source', row.source); url.searchParams.set('name', row.name)
+    if (row.source === 'OCAP') url.searchParams.set('ocapNo', row.ocapNo)
+    const response = await fetch(url, { credentials: 'include', headers: { Accept: 'application/octet-stream' } })
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({})) as { detail?: string; title?: string }
+      throw new Error(payload.detail || payload.title || `API 回應 ${response.status}`)
+    }
+    const objectUrl = URL.createObjectURL(await response.blob())
+    const anchor = document.createElement('a'); anchor.href = objectUrl; anchor.download = row.name; anchor.style.display = 'none'
+    document.body.append(anchor); anchor.click(); anchor.remove(); window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000)
+    infoMessage.value = `已開始下載 ${row.name}。`
+  } catch (cause) { infoMessage.value = cause instanceof Error ? cause.message : '附件下載失敗。' }
+}
+function requestDeleteAttachment(row: MockAttachment): void {
+  if (!dev.value) { infoMessage.value = '正式環境目前僅開放附件下載。'; return }
   infoMessage.value = ''
   if (!dev.value || isGeneratedErfFile(row.name)) { infoMessage.value = '異常單產生檔不可刪除。'; return }
   pendingDeleteAttachment.value = row
@@ -253,10 +301,35 @@ function formatCell(row: ErfRow, key: string): string | number {
   if (key === 'createdAt' || key === 'releaseAt') return String(row[key] || '').slice(0,19).replace('T',' ')
   return String(row[key] ?? '')
 }
-onBeforeUnmount(() => queryController?.abort())
-function openInfo(): void { if (unavailable()) return; if (!active.value) return; infoTab.value = detailTabs[0]; infoMessage.value = ''; pendingDeleteAttachment.value = null; dialog.value = 'info' }
-function closeDialog(): void { pendingDeleteAttachment.value = null; dialog.value = null }
-function selectInfoTab(tab: string): void { if (unavailable()) return; infoTab.value = tab; pendingDeleteAttachment.value = null; infoMessage.value = '' }
+onBeforeUnmount(() => { queryController?.abort(); infoController?.abort() })
+function openInfo(): void {
+  if (!dev.value && !spcMode) { unavailable(); return }
+  if (!active.value) return
+  infoTab.value = detailTabs[0]; infoMessage.value = ''; pendingDeleteAttachment.value = null; formalInfo.value = null; dialog.value = 'info'
+  if (!dev.value && spcMode) void loadFormalInfo(active.value.erfNo, active.value.erfSource)
+}
+async function loadFormalInfo(erfNo: string, erfSource: number): Promise<void> {
+  infoController?.abort(); const controller = new AbortController(); infoController = controller
+  infoLoading.value = true; infoMessage.value = ''
+  try {
+    const base = props.apiBaseUrl?.trim() || ''
+    if (!base) throw new Error('目前環境尚未設定 API 位址。')
+    const url = new URL(base, window.location.origin)
+    if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') throw new Error('API 連線必須使用 HTTPS。')
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/wip/erfs/${encodeURIComponent(erfNo)}/info`; url.search = ''
+    url.searchParams.set('source', String(erfSource))
+    const response = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' }, signal: controller.signal })
+    const payload = await response.json().catch(() => ({})) as ErfInfoPayload & { detail?: string; title?: string }
+    if (!response.ok) throw new Error(payload.detail || payload.title || `API 回應 ${response.status}`)
+    if (controller.signal.aborted) return
+    formalInfo.value = payload
+  } catch (cause) {
+    if (controller.signal.aborted) return
+    infoMessage.value = cause instanceof Error ? cause.message : 'ERF 詳細資料載入失敗。'
+  } finally { if (!controller.signal.aborted) infoLoading.value = false }
+}
+function closeDialog(): void { infoController?.abort(); infoLoading.value = false; pendingDeleteAttachment.value = null; dialog.value = null }
+function selectInfoTab(tab: string): void { if (!dev.value && !spcMode) { unavailable(); return }; infoTab.value = tab; pendingDeleteAttachment.value = null; infoMessage.value = '' }
 function open8d(): void {
   if (unavailable()) return
   const row = active.value
@@ -297,7 +370,7 @@ onMounted(() => {
     </fieldset>
     <fieldset class="result-frame"><legend>Result</legend><div class="result-main">
       <div class="grid-wrap"><table><thead><tr><th v-for="column in resultColumns" :key="column[0]">{{ column[1] }}</th></tr></thead><tbody>
-        <tr v-for="row in rows" :key="row.erfNo" :class="{active: activeNo === row.erfNo}" tabindex="0" @click="dev && (activeNo = row.erfNo)" @keydown.enter="dev && (activeNo = row.erfNo)"><td v-for="column in resultColumns" :key="column[0]">{{ formatCell(row,column[0]) }}</td></tr>
+        <tr v-for="row in rows" :key="row.erfNo" :class="{active: activeNo === row.erfNo}" tabindex="0" @click="(dev || spcMode) && (activeNo = row.erfNo)" @keydown.enter="(dev || spcMode) && (activeNo = row.erfNo)"><td v-for="column in resultColumns" :key="column[0]">{{ formatCell(row,column[0]) }}</td></tr>
         <tr v-if="!rows.length"><td :colspan="resultColumns.length" class="empty">{{ !dev && !spcMode ? unavailableText : searched ? '沒有符合條件的異常單。' : '請輸入條件後按 Query。' }}</td></tr>
       </tbody></table></div>
       <nav v-if="!dev && spcMode && searched" class="query-pager" aria-label="查詢分頁">
@@ -305,11 +378,11 @@ onMounted(() => {
         <span v-if="pageCount">第 {{ page }} / {{ pageCount }} 頁（共 {{ totalCount.toLocaleString() }} 筆）</span><span v-else>沒有查詢結果</span>
         <button type="button" class="mes-button" :disabled="loading || page >= pageCount || pageCount === 0" @click="query(page + 1)">下一頁</button>
       </nav>
-      <div class="actions"><div><button type="button" class="mes-button" :disabled="!dev || !active" @click="openInfo">ERF Info</button><button type="button" class="mes-button" :disabled="!dev || !active" @click="open8d">8D</button></div><button type="button" class="mes-button" @click="emit('close')">Close (X)</button></div>
+      <div class="actions"><div><button type="button" class="mes-button" :disabled="(!dev && !spcMode) || !active" @click="openInfo">ERF Info</button><button type="button" class="mes-button" :disabled="!dev || !active" @click="open8d">8D</button></div><button type="button" class="mes-button" @click="emit('close')">Close (X)</button></div>
     </div><div class="status-bar"><span>UserNo: {{ props.currentUserNo || (dev ? 'DEV' : '—') }}</span><span>資料總筆數 {{ !dev && spcMode ? totalCount : rows.length }}</span><span>{{ new Date().toLocaleString('zh-TW') }}</span></div></fieldset>
-    <div v-if="dev && dialog && active" class="dialog-backdrop" @click.self="closeDialog"><div class="dialog" role="dialog" aria-modal="true" :aria-label="dialog === 'info' ? 'ERF Information' : '8D'">
+    <div v-if="(dev || spcMode) && dialog && active" class="dialog-backdrop" @click.self="closeDialog"><div class="dialog" role="dialog" aria-modal="true" :aria-label="dialog === 'info' ? 'ERF Information' : '8D'">
       <header><strong>{{ dialog === 'info' ? 'ERF Information' : '8D' }} · {{ active.erfNo }}</strong><button type="button" class="mes-button" @click="closeDialog">Close</button></header>
-      <template v-if="dialog === 'info'"><fieldset><legend>ERFBasis</legend><div class="detail-grid"><span>ERF No: {{ active.erfNo }}</span><span>Lot No: {{ active.lotNo }}</span><span>Product No: {{ active.productNo }}</span><span>OP No: {{ active.opNo }}</span><span>Customer No: {{ active.customerNo }}</span><span>MClass No: {{ active.mClassNo }}</span><span>Cur GroupNo: {{ active.curGroupNo }}</span><span>ERF Type: {{ active.erfType ?? (dev ? 'DEV' : '—') }}</span><span>Rule No: {{ active.ruleNo || '—' }}</span><span>Creator: {{ active.creator || (dev ? 'DEV' : '—') }}</span><span>Create Date: {{ formatCell(active,'createdAt') }}</span><span>ERF Record Qty: {{ formatCell(active,'erfRecordQty') }}</span><span class="wide">Hold Description: {{ active.holdDescription }}</span></div></fieldset><fieldset><legend>ERF Detail</legend><div class="tabs"><button v-for="tab in detailTabs" :key="tab" type="button" class="mes-button" :class="{selected: infoTab === tab}" @click="selectInfoTab(tab)">{{ tab }}</button></div><div class="tab-body"><div v-if="infoTab !== 'ERF Attach'" class="detail-table-wrap"><table class="detail-table"><thead><tr><th v-for="column in currentDetailColumns" :key="column">{{ column }}</th></tr></thead><tbody><tr v-for="(row, index) in detailRows" :key="index"><td v-for="column in currentDetailColumns" :key="column">{{ formatDetailCell(row, column) }}</td></tr><tr v-if="!detailRows.length"><td :colspan="currentDetailColumns.length || 1">無資料</td></tr></tbody></table></div><template v-else><div v-for="source in attachmentSources" :key="source" class="attachment-group"><strong>{{ source }} Attach</strong><div class="detail-table-wrap"><table class="detail-table"><thead><tr><th>AttachName</th><th>Attach File</th><th>DelAttachFile</th><th>Creator</th><th>CreateDate</th><th v-if="source === 'OCAP'">OCAPNO</th></tr></thead><tbody><tr v-for="row in attachmentRows.filter(item => item.source === source)" :key="row.name + row.ocapNo"><td>{{ row.name }}</td><td><button type="button" class="mes-button" :disabled="!dev" @click="viewAttachment(row)">View</button></td><td><button type="button" class="mes-button" :disabled="!dev || isGeneratedErfFile(row.name)" @click="requestDeleteAttachment(row)">Delete</button></td><td>{{ row.creator }}</td><td>{{ row.createdAt }}</td><td v-if="source === 'OCAP'">{{ row.ocapNo }}</td></tr><tr v-if="!attachmentRows.some(item => item.source === source)"><td :colspan="source === 'OCAP' ? 6 : 5">無附件</td></tr></tbody></table></div></div><p v-if="infoMessage" class="info-message" role="status">{{ infoMessage }}</p><div v-if="dev && pendingDeleteAttachment" class="delete-confirm" role="alertdialog" aria-label="確認刪除假附件"><span>確定從 DEV 假資料移除 {{ pendingDeleteAttachment.name }}？</span><button type="button" class="mes-button" :disabled="!dev" @click="confirmDeleteAttachment">確定</button><button type="button" class="mes-button" @click="pendingDeleteAttachment = null">取消</button></div></template></div></fieldset></template>
+      <template v-if="dialog === 'info'"><fieldset><legend>ERFBasis</legend><div class="detail-grid"><span>ERF No: {{ active.erfNo }}</span><span>Lot No: {{ active.lotNo }}</span><span>Product No: {{ active.productNo }}</span><span>OP No: {{ active.opNo }}</span><span>Customer No: {{ active.customerNo }}</span><span>MClass No: {{ active.mClassNo }}</span><span>Cur GroupNo: {{ active.curGroupNo }}</span><span>ERF Type: {{ active.erfType ?? (dev ? 'DEV' : '—') }}</span><span>Rule No: {{ active.ruleNo || '—' }}</span><span>Creator: {{ active.creator || (dev ? 'DEV' : '—') }}</span><span>Create Date: {{ formatCell(active,'createdAt') }}</span><span>ERF Record Qty: {{ formatCell(active,'erfRecordQty') }}</span><span class="wide">Hold Description: {{ active.holdDescription }}</span></div></fieldset><fieldset><legend>ERF Detail</legend><div class="tabs"><button v-for="tab in detailTabs" :key="tab" type="button" class="mes-button" :class="{selected: infoTab === tab}" @click="selectInfoTab(tab)">{{ tab }}</button></div><div class="tab-body"><p v-if="infoLoading" class="info-message" role="status">正在載入 ERF 詳細資料…</p><p v-else-if="infoMessage && !dev && !formalInfo" class="info-message" role="alert">{{ infoMessage }}</p><div v-else-if="infoTab !== 'ERF Attach'" class="detail-table-wrap"><table class="detail-table"><thead><tr><th v-for="column in currentDetailColumns" :key="column">{{ column }}</th></tr></thead><tbody><tr v-for="(row, index) in detailRows" :key="index"><td v-for="column in currentDetailColumns" :key="column">{{ formatDetailCell(row, column) }}</td></tr><tr v-if="!detailRows.length"><td :colspan="currentDetailColumns.length || 1">無資料</td></tr></tbody></table></div><template v-else><div v-for="source in attachmentSources" :key="source" class="attachment-group"><strong>{{ source }} Attach</strong><div class="detail-table-wrap"><table class="detail-table"><thead><tr><th>AttachName</th><th>Attach File</th><th>DelAttachFile</th><th>Creator</th><th>CreateDate</th><th v-if="source === 'OCAP'">OCAPNO</th></tr></thead><tbody><tr v-for="row in attachmentRows.filter(item => item.source === source)" :key="row.name + row.ocapNo"><td>{{ row.name }}</td><td><button type="button" class="mes-button" :disabled="!dev && !spcMode" @click="viewAttachment(row)">{{ dev ? 'View' : '下載' }}</button></td><td><button type="button" class="mes-button" :disabled="!dev || isGeneratedErfFile(row.name)" @click="requestDeleteAttachment(row)">Delete</button></td><td>{{ row.creator }}</td><td>{{ row.createdAt }}</td><td v-if="source === 'OCAP'">{{ row.ocapNo }}</td></tr><tr v-if="!attachmentRows.some(item => item.source === source)"><td :colspan="source === 'OCAP' ? 6 : 5">無附件</td></tr></tbody></table></div></div><p v-if="infoMessage" class="info-message" role="status">{{ infoMessage }}</p><div v-if="dev && pendingDeleteAttachment" class="delete-confirm" role="alertdialog" aria-label="確認刪除假附件"><span>確定從 DEV 假資料移除 {{ pendingDeleteAttachment.name }}？</span><button type="button" class="mes-button" :disabled="!dev" @click="confirmDeleteAttachment">確定</button><button type="button" class="mes-button" @click="pendingDeleteAttachment = null">取消</button></div></template></div></fieldset></template>
       <template v-else><p>已關聯 8D：{{ active.qrsNo }}。原畫面會依 IssueState 開啟 WP_8DMaintainDef。</p><p>此處顯示 DEV 關聯資訊；按 8D 可開 WP802 的假資料十頁明細。</p></template>
     </div></div>
   </section>

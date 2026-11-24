@@ -46,7 +46,13 @@ SC402 沒有新增業務表。`TBLWIPERFBASIS`、`TBLWIPERFBATCHLOT` 的 Oracle 
 - PPK SSH 唯讀核對 YMES PostgreSQL 的 `YMES.tblwiperfbasis`、`tblwiperfbatchlot`、`tblwiplotbasis` 欄位；migration 0070 已提供所需欄位，沒有新增 migration、表或授權，也沒有查閱業務資料。
 - 正式查詢端點為 `GET /api/spc/erfs/query`（正式站 API base `/YMES/API`），使用登入 Cookie 保護、參數化查詢及 Repeatable Read／Read Only transaction。固定 `ERFSource IN (1,2)`，不加 Status 條件；六條件至少一項有效，五個代碼欄位 exact match，Lot No case-insensitive contains 並包含任一 BatchLot 成員。依 ERFNo 使用 `C` collation 升冪排序。
 - 條件文字欄位長度依 Lot／Customer 50、OP 20、MClass 30、Cur Group 100、ERF 20 限制並拒絕控制字元；頁碼 1–100,000、每頁 1–100（預設 100）。`CalHoldTimeMinutes` 對 Status 12／21 且有 ReleaseDate 時使用 CreateDate 至 ReleaseDate，其他狀態使用 CreateDate 至查詢時間，結果不低於 0。
-- Web 保留來源六條件與 22 欄 Grid；正式頁 ERF Info／8D 停用。頁面排版使用自適應查詢欄位與表格內水平捲動。正式查詢只回傳 Grid 欄位與後續畫面所需的 ERF Type／Source／Creator／CreateDate，沒有查詢隱藏的 ProductName。
+- Web 保留來源六條件與 22 欄 Grid；`sc402-query-20261124-b4` 當時正式頁 ERF Info／8D 停用。後續 `wip-erf-info-20261124-a1` 已啟用選列後 ERF Info；8D 仍停用。頁面排版使用自適應查詢欄位與表格內水平捲動。正式查詢只回傳 Grid 欄位與後續畫面所需的 ERF Type／Source／Creator／CreateDate，沒有查詢隱藏的 ProductName。
 - 正式站版本 API `sc402-query-20261124-b3`、Web `sc402-query-20261124-b4`。Web b4 只替換 `ymes-web`；API b3 保持運作，`ymes-master-web` 未重啟。API readiness 200、未登入端點 401、Web 根目錄與新 JS 資產 200。
 - app-browser Demo 登入後驗證 SC402 正式路由、空條件防護、單條件與六條件查詢；目前來源表無業務列，兩次有效查詢均回 0 筆，分頁停用。Close 返回主選單，`/ymes` 是 404；SC401、SC216 查詢回 0 並可切換四個歷程頁籤。新版 SC402 console 無 error／warning。沒有寫入測試業務資料。
-- 目前整體 API 框架只有登入保護，未實作 Function ACL；正式 Function ACL、ERF Info／附件與 WP801／WP802 8D API 仍為待辦。因正式表目前無業務列，無法驗證正向 Grid、跨頁結果、選列或分頁資料。
+- 目前整體 API 框架只有登入保護，Function ACL 依安排暫緩；ERF Info 五頁與附件唯讀下載已部署，WP801／WP802 8D API 仍為待辦。因正式表目前無業務列，無法驗證正向 Grid、跨頁結果、選列、ERF Info 明細或附件下載。
+
+## 家用端共用 ERF Info／附件唯讀整合（2026-11-24）
+
+- SC402 正式 query 沿用 `GET /api/spc/erfs/query`；WP508 shared Info 使用 `GET /api/wip/erfs/{erfNo}/info?source=1|2`，附件下載使用 `GET /api/wip/erfs/{erfNo}/attachments/content`。兩端點都要求登入。欄位、table、輸出上限與 20 MiB 附件限制見 [WP508 異常單資料](../WIP/異常單資料.md)。
+- 選取 SC402 結果列後，ERF Info 開啟五頁詳細資料；ERF／OCAP 附件可下載，刪除沒有開放。8D 按鈕仍停用，待 WP801／WP802 API 與 QRS 關聯交易完成。
+- Release `wip-erf-info-20261124-a1` 已部署。readiness 200、未登入 Info API 401、SC402 路由 200。正式頁用不存在的 ERF No 完成查詢並回 0 筆；目前沒有業務列，因此本輪不能驗證選列後 modal／附件下載。app-browser 輸入控制未回應，使用 Chrome fallback 完成唯讀查詢；沒有新增業務資料。
