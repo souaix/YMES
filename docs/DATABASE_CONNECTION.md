@@ -6,7 +6,7 @@
 - 套用前完整 custom-format 備份：`/opt/ymes/backups/ymes_before_0074_inv_product_in_20261125_a1.dump`，708182 bytes、SHA-256 `ce333235ee6fb0d814e23560af463e1f7367614e1144ea196bed9b1eac7b13e9`；檔案 mode 600，`pg_restore --list` 成功。資料庫大小 16 MB；備份留在同一遠端伺服器，未下載。
 - 原子套用 [0074 migration](../database/migrations/0074_inv_product_in_draft_schema.sql)，migration SHA-256 `277449bbfdd576831cab0c2240deed19ef668452ed8b39b5d9114814637c9f1d`。依 WP604／605、WP201／603、WP601、PRD112、WP215、QC409 MESTEST source，建立 FGD／SEMI 入庫 Basis／Detail／Component、WIP Semi 庫與元件、FGD Inventory／Component、Packing Relation／Rule、SYS Bin、ReverseHistory、GoodBinState；沒有匯入或建立業務資料列。
 - SSH／PostgreSQL 獨立讀回 15/15 張表與來源欄位數、PK；`TBLWIPMOLINEPACKRELATION` 保留原生無 PK 並只有兩個非唯一 index，ReverseHistory 的 LotSerial index 也核對完成。`ymes_app` 對 15 張表有 SELECT；僅入庫 Basis／Detail／Component、來源 WIP Inventory BookingFlag 及 ReverseHistory 授予文件所需寫入權限。沒有授予 FGD 庫存表寫入權限。
-- `TBLINVFGDINVENTORYBIN` 在 PostgreSQL live 與 MESTEST Oracle 均不存在，沒有建立。正式 IV501 過帳與 IV502 寫入 API 尚未實作／部署；IV502 本機已有登入保護的 GET 列表／父單號明細端點，尚未部署，不能把目前 UI DEV 當正式帳務。
+- `TBLINVFGDINVENTORYBIN` 在 PostgreSQL live 與 MESTEST Oracle 均不存在，沒有建立。正式 IV501 過帳與 IV502 寫入 API 尚未實作／部署；IV502 本機已有登入保護的 GET 列表／父單號明細／來源 Lot Component lookup，尚未部署，不能把目前 UI DEV 當正式帳務。
 
 ## 最新：0073 建立共用 INV Transaction State／Log（2026-11-24）
 

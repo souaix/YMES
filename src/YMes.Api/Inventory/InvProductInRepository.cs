@@ -94,6 +94,101 @@ public sealed class InvProductInRepository(NpgsqlDataSource dataSource)
         return new(basis, details, components);
     }
 
+    public InvProductInSourceLotLookup SourceLots(int productInType, string? inventoryNo, string? editingProductInNo)
+    {
+        if (productInType is not (0 or 1)) throw Rule(400, "ProductInType 僅接受 0（FGD）或 1（SEMI）。");
+        var sourceInventory = Required(inventoryNo, "InventoryNo", 20);
+        var editingNo = Search(editingProductInNo, "EditingProductInNo", 20);
+        using var connection = dataSource.OpenConnection();
+        using var transaction = connection.BeginTransaction(IsolationLevel.RepeatableRead);
+        using (var inventory = new NpgsqlCommand("SELECT inventorytype::int,issuestate::int FROM \"YMES\".tblinvinventorybasis WHERE inventoryno=@inventory;", connection, transaction))
+        {
+            AddText(inventory, "inventory", sourceInventory, 20);
+            using var reader = inventory.ExecuteReader();
+            if (!reader.Read()) throw Rule(404, "找不到來源庫房。");
+            if (reader.GetInt32(0) != 6 || reader.GetInt32(1) != 2)
+                throw Rule(409, "來源庫房必須是已核准的 WIP 半成品庫（InventoryType=6、IssueState=2）。");
+        }
+
+        var editOwnsLot = productInType == 0
+            ? "EXISTS (SELECT 1 FROM \"YMES\".tblinvfgdinbasis b JOIN \"YMES\".tblinvfgdindetail d ON d.fgdinno=b.fgdinno WHERE b.fgdinno=@edit_no AND b.state=0 AND b.source=1 AND b.frominventoryno=s.inventoryno AND d.lotno=s.lotno AND d.locatorno=s.locatorno)"
+            : "EXISTS (SELECT 1 FROM \"YMES\".tblinvsemiinbasis b JOIN \"YMES\".tblinvsemiindetail d ON d.semiinno=b.semiinno WHERE b.semiinno=@edit_no AND b.state=0 AND b.source=1 AND b.frominventoryno=s.inventoryno AND d.lotno=s.lotno AND d.locatorno=s.locatorno)";
+        using var lotCommand = new NpgsqlCommand($"""
+            SELECT s.inventoryno,s.lotno,s.locatorno,s.productno,COALESCE(s.productversion,lb.productversion),s.qty,s.unitno,s.inputdate,COALESCE(s.baselotno,lb.baselotno),
+                   s.bookingflag::int,lb.packinglevel::int,ls.status::int,ls.lotserial,ls.lotstamp
+            FROM "YMES".tblinvwipinventory_semi s
+            LEFT JOIN "YMES".tblwiplotbasis lb ON lb.baselotno=s.baselotno
+            LEFT JOIN LATERAL (
+                SELECT status,lotserial,lotstamp
+                FROM "YMES".tblwiplotstate current_state
+                WHERE current_state.lotno=s.lotno
+                ORDER BY lotstamp DESC,eventtime DESC NULLS LAST,opno COLLATE "C"
+                LIMIT 1
+            ) ls ON true
+            WHERE s.inventoryno=@inventory AND s.qty>0
+              AND (s.bookingflag=0 OR (@edit_no IS NOT NULL AND {editOwnsLot}))
+            ORDER BY s.lotno COLLATE "C",s.locatorno COLLATE "C"
+            LIMIT 1001;
+            """, connection, transaction);
+        AddText(lotCommand, "inventory", sourceInventory, 20);
+        AddText(lotCommand, "edit_no", editingNo, 20);
+        var lots = new List<SourceLotWorking>();
+        using (var reader = lotCommand.ExecuteReader())
+        {
+            while (reader.Read())
+                lots.Add(new(
+                    reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3), NullableText(reader, 4),
+                    reader.GetDecimal(5), reader.GetString(6), NullableDate(reader, 7), NullableText(reader, 8),
+                    reader.GetInt32(9), NullableInt(reader, 10), NullableInt(reader, 11), NullableText(reader, 12), NullableNumeric(reader, 13)));
+        }
+        if (lots.Count > 1000) throw Rule(413, "來源庫房可用批號超過 1000 筆，請縮小來源範圍。");
+
+        var componentsByLot = new Dictionary<string, List<InvProductInSourceComponent>>(StringComparer.Ordinal);
+        if (lots.Count > 0)
+        {
+            var componentTable = productInType == 0 ? "tblinvfgdincomponent" : "tblinvsemiincomponent";
+            var basisTable = productInType == 0 ? "tblinvfgdinbasis" : "tblinvsemiinbasis";
+            var detailKey = productInType == 0 ? "fgdinno" : "semiinno";
+            var detailTable = productInType == 0 ? "tblinvfgdindetail" : "tblinvsemiindetail";
+            var ownComponent = $"EXISTS (SELECT 1 FROM \"YMES\".{basisTable} b JOIN \"YMES\".{detailTable} own_detail ON own_detail.{detailKey}=b.{detailKey} JOIN \"YMES\".{componentTable} own_component ON own_component.{detailKey}=b.{detailKey} AND own_component.lotno=own_detail.lotno WHERE b.{detailKey}=@edit_no AND b.state=0 AND b.source=1 AND b.frominventoryno=c.inventoryno AND own_detail.lotno=c.lotno AND own_component.componentno=c.componentno)";
+            using var componentCommand = new NpgsqlCommand($"""
+                SELECT c.lotno,c.componentno,c.componentlotno,c.vendorno,c.goodqty,c.scrapqty,c.unitno,c.locatorno,c.slotno,COALESCE(c.bookingflag,0)::int,
+                       (COALESCE(c.bookingflag,0)=0 OR (@edit_no IS NOT NULL AND {ownComponent})) AS isselectable
+                FROM "YMES".tblinvwipinventory_component c
+                WHERE c.inventoryno=@inventory AND c.lotno=ANY(@lots)
+                ORDER BY c.lotno COLLATE "C",c.componentno COLLATE "C",c.locatorno COLLATE "C"
+                LIMIT 5001;
+                """, connection, transaction);
+            AddText(componentCommand, "inventory", sourceInventory, 20);
+            AddText(componentCommand, "edit_no", editingNo, 20);
+            componentCommand.Parameters.Add("lots", NpgsqlDbType.Array | NpgsqlDbType.Varchar).Value = lots.Select(x => x.LotNo).Distinct(StringComparer.Ordinal).ToArray();
+            using (var reader = componentCommand.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    var lotNo = reader.GetString(0);
+                    if (!componentsByLot.TryGetValue(lotNo, out var components))
+                        componentsByLot.Add(lotNo, components = []);
+                    components.Add(new(reader.GetString(1), NullableText(reader, 2), NullableText(reader, 3),
+                        NullableNumeric(reader, 4), NullableNumeric(reader, 5), NullableText(reader, 6),
+                        reader.GetString(7), NullableText(reader, 8), reader.GetInt32(9), reader.GetBoolean(10)));
+                }
+            }
+            if (componentsByLot.Values.Sum(x => x.Count) > 5000) throw Rule(413, "來源元件超過 5000 筆，請縮小來源範圍。");
+            foreach (var lot in componentsByLot)
+                if (lot.Value.GroupBy(x => x.ComponentNo, StringComparer.Ordinal).Any(group => group.Count() > 1))
+                    throw Rule(409, "同一來源 Lot 的 Component 編號跨 Locator 重複，無法對應原入庫單明細；該 Lot 暫不可選。");
+        }
+
+        var items = lots.Select(lot => new InvProductInSourceLot(
+            lot.InventoryNo, lot.LotNo, lot.LocatorNo, lot.ProductNo, lot.ProductVersion, lot.Qty, lot.UnitNo,
+            lot.InputDate, lot.BaseLotNo, lot.BookingFlag, lot.PackingLevel, lot.LotStatus, lot.LotSerial,
+            lot.LotStamp, componentsByLot.GetValueOrDefault(lot.LotNo) ?? []
+        )).ToArray();
+        transaction.Commit();
+        return new(sourceInventory, productInType, editingNo, items);
+    }
+
     private static InvProductInListItem ReadBasis(NpgsqlConnection connection, NpgsqlTransaction transaction, int type, string number)
     {
         var table = type == 0 ? "tblinvfgdinbasis" : "tblinvsemiinbasis";
@@ -117,6 +212,10 @@ public sealed class InvProductInRepository(NpgsqlDataSource dataSource)
 
     private static InvProductInComponentRow ReadComponent(NpgsqlDataReader reader) => new(
         reader.GetString(0), reader.GetString(1), NullableNumeric(reader, 2), NullableNumeric(reader, 3), NullableText(reader, 4));
+
+    private sealed record SourceLotWorking(string InventoryNo, string LotNo, string LocatorNo, string ProductNo,
+        string? ProductVersion, decimal Qty, string UnitNo, DateTime? InputDate, string? BaseLotNo, int BookingFlag,
+        int? PackingLevel, int? LotStatus, string? LotSerial, decimal? LotStamp);
 
     private static void BindFilters(NpgsqlCommand command, int type, int state, int source,
         string? inventory, string? fromInventory, string? productIn)

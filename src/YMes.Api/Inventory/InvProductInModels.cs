@@ -47,3 +47,38 @@ public sealed record InvProductInDetails(
     InvProductInListItem Basis,
     IReadOnlyList<InvProductInDetailRow> Details,
     IReadOnlyList<InvProductInComponentRow> Components);
+
+public sealed record InvProductInSourceComponent(
+    string ComponentNo,
+    string? ComponentLotNo,
+    string? VendorNo,
+    decimal? GoodQty,
+    decimal? ScrapQty,
+    string? UnitNo,
+    string LocatorNo,
+    string? SlotNo,
+    int BookingFlag,
+    bool IsSelectable);
+
+public sealed record InvProductInSourceLot(
+    string InventoryNo,
+    string LotNo,
+    string LocatorNo,
+    string ProductNo,
+    string? ProductVersion,
+    decimal Qty,
+    string UnitNo,
+    DateTime? InputDate,
+    string? BaseLotNo,
+    int BookingFlag,
+    int? PackingLevel,
+    int? LotStatus,
+    string? LotSerial,
+    decimal? LotStamp,
+    IReadOnlyList<InvProductInSourceComponent> Components);
+
+public sealed record InvProductInSourceLotLookup(
+    string InventoryNo,
+    int ProductInType,
+    string? EditingProductInNo,
+    IReadOnlyList<InvProductInSourceLot> Items);

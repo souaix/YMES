@@ -8,7 +8,8 @@
 - [x] 已將 live 確認缺少且有可信來源的 15 張 IV501／IV502 共用表整理為 forward migration `0074_inv_product_in_draft_schema.sql`／空表安全 rollback；依 WP604／605、WP201／603、WP601／PRD112、WP215 與 QC409 source refs 保留原生欄位、鍵、預設值與索引。另補 `TBLWIPGOODBINSTATE` PostgreSQL CREATE-only；不建立 Oracle MESTEST 未找到的 `TBLINVFGDINVENTORYBIN`。
 - [x] 重新核對 15 張目標表與 3 個 index 名稱均缺少／無衝突後完成同機完整備份與 `pg_restore --list`；已套用 0074 並經 PostgreSQL 獨立讀回核對欄位數、PK、索引及 `ymes_app` 權限。資料庫業務列沒有讀取或匯入，migration 建立的表均為空；備份與 checksum 詳 [DATABASE_CONNECTION.md](docs/DATABASE_CONNECTION.md)。
 - [x] 新增登入保護的 IV502 分頁列表與父單號明細唯讀 API：預設 FGD／State=0／Source=1，每頁上限 200；Detail 必填父單號並限制 2,000 筆、Component 限制 5,000 筆。本機 .NET 9 build 成功，尚未部署或接正式 UI。
-- [ ] 實作 IV502 來源 Lot／Component lookup 與草稿 Create／Edit／Void API；單一交易重驗 Qty、BookingFlag、Lot／Component 狀態、完整包裝、DataStamp，維護來源預約與 ReverseHistory。先補齊公司端待辦列出的 serial rule／包裝關聯／歷程來源證據，再完成 API 前端接線與遠端驗收。
+- [x] 新增登入保護的 IV502 來源 Lot／Component lookup：核對來源庫房 InventoryType=6／IssueState=2、Lot Qty>0 與 BookingFlag，回傳 LotStamp、LotState、PackingLevel 及 Component 可選狀態；編輯只放行本單既有預約。最多 1,000 Lot／5,000 Component，跨 Locator Component 歧義時拒絕。本機 .NET 9 build 成功，尚未部署或接正式 UI。
+- [ ] 實作 IV502 草稿 Create／Edit／Void API；單一交易重驗 Qty、BookingFlag、Lot／Component 狀態、完整包裝、DataStamp，維護來源預約與 ReverseHistory。先補齊公司端待辦列出的 serial rule／包裝關聯／歷程來源證據，再完成 API 前端接線與遠端驗收。
 - [ ] IV501 Source=30 正式過帳 API、IV502 草稿 API 與 IV304 退料確認仍未完成；公司端缺少的 IV302–304 原生 DDL 已列入 `todolist_officepc.md` 明確補件清單。正式部署／DB 寫入驗收未完成。
 
 ## 最新公司端交接：IV502 開立成品／半成品入庫單（2026-11-24）

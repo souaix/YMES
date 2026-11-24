@@ -25,6 +25,13 @@ public sealed class InvProductInController(InvProductInRepository repository, IL
     public IActionResult Details(int productInType, string productInNo) =>
         Execute(() => Ok(repository.Details(productInType, productInNo)));
 
+    [HttpGet("lookups/source-lots")]
+    public IActionResult SourceLots(
+        [FromQuery] int productInType,
+        [FromQuery] string inventoryNo,
+        [FromQuery] string? editingProductInNo = null) =>
+        Execute(() => Ok(repository.SourceLots(productInType, inventoryNo, editingProductInNo)));
+
     private IActionResult Execute(Func<IActionResult> action)
     {
         try { return action(); }
