@@ -2,12 +2,12 @@
 
 更新：2026-11-24。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-> **最新公司端接手（2026-11-24）**：公司端已依清冊完成 IV304「退料單確認(WIP)」DEV 與規格交接；請先讀本檔的 IV304 checkpoint、[公司端待辦](../todolist_officepc.md)、[家用端待辦](../todolist_homepc.md) 及 [模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)，下一項依 INV 清冊為 IV310「包裝拆並箱作業」。WP401 段落是較早的歷史接手點。
+> **最新公司端接手（2026-11-24）**：公司端已依清冊完成 IV502「開立成品／半成品入庫單」DEV 與規格交接；請先讀本檔的 IV502 checkpoint、[公司端待辦](../todolist_officepc.md)、[家用端待辦](../todolist_homepc.md) 及 [模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)，下一項依 INV 清冊為 IV503「成品入庫單記錄」。WP401 段落是較早的歷史接手點。
 
 ## 接手方式
 
 1. 在桌電開啟同一個 GitHub repository `souaix/YMES`，執行 `git pull origin main`。
-2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 與 [MES 選單清冊](MES_MENU_FUNCTION_INVENTORY.md)，再直接核對下一項 IV310 的 WinForms／Service／Core 原始碼。
+2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 與 [MES 選單清冊](MES_MENU_FUNCTION_INVENTORY.md)，再直接核對下一項 IV503 的 WinForms／Service／Core 原始碼。
 3. 本機 Codex 使用 YMES repo；MES WinForms 原始碼在公司筆電 `D:\iMES\CSiMES`，桌電可能是另一個路徑。若桌電有既有 MES checkout，先核對路徑；不可用 UI 截圖代替 Form/Designer/Service/Core 原始碼。原始碼缺少時記錄具體缺檔，先做不依賴它的工作。
 4. 若在桌電打開同一個 Codex 對話，thread 對話與 Goal 脈絡仍在；若另開新對話，把本檔及 TODO 當成接手上下文，不要假設新 thread 自動有舊 Goal 狀態。
 
@@ -28,6 +28,9 @@
 - 公司端允許使用的是 MES 原生 Oracle MESTEST 受保護唯讀連線，僅用於查 DDL/資料字典；不在 Oracle 寫入資料。
 
 ## 目前檢查點與下一步
+
+- **2026-11-24 INV IV502 接續點**：共用 `frmINVProductIn`／`frmINVProductInDef` 已完成 `/YMES/INV/ProductIn` DEV 與 [規格](modules/INV/開立成品半成品入庫單_IV502.md)。直接核對 FGD／SEMI Add／Edit／Delete／combined Load Service、`clsInventory`、`clsBasis_UPD`。DEV 支援 FGD 預設與 SEMI 切換、State=0／Source=1 草稿查詢、來源 WIP 半成品 Lot／Component 選取及假預約、完整最高層包裝子 Lot 檢核、DataStamp 編輯、作廢保留明細／解除預約和列印預覽。建立草稿不執行庫存過帳；IV501 Source=30 確認才過帳。
+- FGD In 表沿用 WP605、SEMI In 表沿用 WP604；WIP Semi／Component、Lot、ReverseHistory、Package、Locator 使用 WP201／603／101／215／601／PRD112 refs，無需新增 Oracle DDL／CREATE-only。本輪未連 Oracle 或 PostgreSQL。家用端應核 live PostgreSQL schema／migrations，並以單一交易重驗來源 Qty、BookingFlag、Component、包裝完整性、DataStamp；作廢是 State=-1 並釋放預約、保留明細。未執行 build/test/browser。下一項依清冊為 IV503「成品入庫單記錄」。
 
 - **2026-11-24 INV IV304 接續點**：`WIP RETURN CONFIRM` 已依 inline `frmINVWIPReturnConfirm`／Designer、`wsINV.AddINVTransactionState/ExeINVTransactionState`、`clsInventory.ExeMaterialWIPReturn_ForMaterialWIPMOReturn` 完成 `/YMES/INV/WipReturnConfirm` DEV 與[規格](modules/INV/退料單確認_WIP.md)。DEV 模擬 State=0 查詢、Detail／Component 展開與單筆 Source=10 確認。Core 依 FromPlaceType 2／3／5／6／7 扣 WIP／MO source、回補 Raw／Semi 與元件庫存；Form 使用的 Add Service 會吞掉內部 Exe 失敗，Core 忽略 ToLocatorNo，Type 7 多目標分流需逐鍵核實。桌機受保護 Oracle profile 不存在；退料單及 Raw Inventory／Locator／Component DDL／metadata 未取得，不猜 CREATE。沿用 repo WP201／603／604／605 與 OE references。未連 YMES PostgreSQL、未 build/test/browser；下一項依清冊為 IV310「包裝拆並箱作業」。
 - **2026-11-24 INV IV303 歷史接續點**：`WIP MATERIAL RETURN LOG` 已依 inline `frmINVMaterialWIPReturnLog`／Designer、`wsINV.LoadINVMaterialWIPReturnBasis/Detail/Comp`、`clsInventory` 完成 `/YMES/INV/MaterialWipReturnLog` DEV 與[規格](modules/INV/退料單記錄_WIP.md)。含 MaterialReturnNo、InventoryNo、FromPlaceType、State、來源 WIP／MO、CreateDate／ReturnDate 篩選及選列明細／Component 子列；ReturnDate 由 Basis.ReturnDate 映射成畫面的 ConfirmDate。表 DDL／metadata 因桌機沒有受保護 Oracle profile 而未取得，不猜 CREATE。Core Detail 空單號可能回全表；Component 查詢以最後一筆明細 LocatorNo 過濾且關聯缺 MaterialReturnNo／LocatorNo，正式 API 必須父單號限定、完整關聯、穩定排序及分頁。當時下一項依清冊為 IV304「退料單確認(WIP)」。未連 YMES PostgreSQL、未 build/test/browser。
@@ -132,3 +135,16 @@
 - **2026-11-20 WP106 接續**：已核 `frmOperatorOnline`/Designer、`wsWIP_OperatorState`/`clsOperatorState`；Vue DEV `/YMES/WIP/OperatorOnline` 共用 WP104/105 假 State/Log，支援 OP/Area/Equipment 多選並集、七欄 Grid、逐列 SignOut/確認及外部唯讀入口。規格 `docs/modules/WIP/使用者登入資訊.md`、家用端 API 待辦已補；Oracle State/Log DDL/PG CREATE-only 沿 WP104，LotLoginState 沿 WP305，無新增表。公司端未連 YMES PostgreSQL、未 build/test/browser；下一項 WP109 SWR BASIS。
 - **2026-11-20 WP109 接續**：已核 `frmWIPSWRBasis`／Def、`wsWIP`／`clsWIP`，Vue DEV `/YMES/WIP/SwrBasis` 覆蓋七勾選查詢、四狀態、14 欄 JOIN Grid、右側操作鍵、ADD/EDIT/Copy/Approve/Void/附件檔名示意。公司 PowerShell 5.1 + 受保護 MESTEST profile 唯讀取得 `TBLWIPSWRBASIS` 15 欄、`TBLWIPSWRDETAIL` 2 欄、共用 `TBLSYSSERIALNO` 2 欄 source DDL/index/metadata；PG CREATE-only 在 `database/reference/mestest_wip_wp109_create.sql`。無 FK/trigger；正式 API 要修正原 PENDING 作廢假成功、JOIN 重複核准、附件末 byte、SQL 拼接。家用端核 live PG、實作交易/附件/稽核並驗收；公司端未查業務列、未寫 Oracle、未連 PG、未 build/test/browser。詳 `docs/modules/WIP/特殊生產需求維護.md`。下一項依 WIP 清冊找未完成功能。
 - **2026-11-20 WP112 接續**：已核 THEIL 撤派工 Form/Service/Core/SAP 拋轉來源；Vue DEV `/YMES/WIP/UndoDispatch` 兩模式、MO 查找、13 欄勾選 Grid、全選與逐批假 Confirm。公司端用受保護 MESTEST profile + PowerShell 5.1 **唯讀**取得六表 `TBLWIPCONT_MATERIALLOT`、`TBLSYSSERIALCREATEMAX`、`XX_TBLOEMO_OS_BU1`、`ZPPT0025A/B/C1` 原始 DDL/index/metadata 與 PG CREATE-only `database/reference/mestest_wip_wp112_create.sql`；外部 `THSAP.*@SAP_DBLINK` 真契約未核。家用端必須接 SAP/Log/Inventory provider，未具備時正式 POST 不可假成功；規格在 `docs/modules/WIP/工單撤派工.md`。公司端未查業務列、未寫 Oracle、未連 PG、未 build/test/browser；後續依 WIP 清冊選下一項。
+
+## IV501 checkpoint
+
+- 規格：[IV501 成品庫庫房資料](modules/INV/成品庫庫房資料_IV501.md)。DEV route `/YMES/INV/FgdInventory`；庫房查詢顯示 `LocQty>0`，選列先查 Component，無 Component 才依 `TBLSYSBIN.BinOrder` 顯示 Lot Bin；FGD In 使用 Source=30。
+- 已直接核對 `frmINVFGDInventory`／`frmINVFGDInConfirm`、相關 Service 與 `clsInventory.ExeFGDIn`。重要風險：`AddINVTransactionState` 會吞內層 `ExeINVTransactionState` 例外，外層仍可能回 success，雖然 Basis 已標 State=3；正式 API 不可沿用。
+- DDL／metadata 沿用 WP201／WP605、QC409 WIP Bin、PRD Bin refs；沒有新表或 CREATE SQL。桌機未重連 Oracle、未連 PostgreSQL、未 build/test/browser。
+- IV502 已完成；下一項 IV503「成品入庫單記錄」。
+
+## IV310 checkpoint
+
+- 規格：[IV310 包裝拆並箱作業](modules/INV/包裝拆並箱作業.md)。DEV route 為 /YMES/INV/PackingCombineDismantle，拆箱 mode 0／1／2 與並箱掃描／容量檢核／假歷程已交付。
+- WinForms Form／Designer、wsWIP／wsINV Service、clsLot／clsInventory Core 均有直接核對；Combine 寫入前 Core stale-state 驗證已註解，Service 先拆目標再併入為兩段 Core 寫入，Lot transfer 是非同步呼叫且吞錯。正式 API 需要重新核對交易與 CloseFlag，不可依賴 browser payload。
+- 包裝 DDL／metadata 與 PG CREATE-only 沿用 WP601 的 19 張共用表 references，沒有 IV310 專屬新表；家用端核對 live schema 後實作原子拆並箱 API、冪等 operation ID 與授權 label job。公司端未連 PG、未 build/test/browser。

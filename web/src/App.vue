@@ -276,6 +276,9 @@ import InvMaterialReturnLog from './components/InvMaterialReturnLog.vue'
 import InvMaterialWipReturn from './components/InvMaterialWipReturn.vue'
 import InvMaterialWipReturnLog from './components/InvMaterialWipReturnLog.vue'
 import InvWipReturnConfirm from './components/InvWipReturnConfirm.vue'
+import InvPackingCombineDismantle from './components/InvPackingCombineDismantle.vue'
+import InvFgdInventory from './components/InvFgdInventory.vue'
+import InvProductIn from './components/InvProductIn.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -764,6 +767,15 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:INV:MATERIAL RETURN', label: '開立退料單', shortLabel: '退料單', functionNo: 'MATERIAL RETURN', moduleNo: 'INV' },
         { id: 'function:INV:MATERIAL RETURN LOG', label: '退料單記錄', shortLabel: '退料記錄', functionNo: 'MATERIAL RETURN LOG', moduleNo: 'INV' },
       ],
+    }, {
+      id: 'menu:INV:WIP INV', label: '在製品庫', shortLabel: '在製品', children: [
+        { id: 'function:INV:WIPINV MO PACKING COMBINE DISMANTLE', label: '包裝拆並箱作業', shortLabel: '拆並箱', functionNo: 'WIPINV MO PACKING COMBINE DISMANTLE', moduleNo: 'INV' },
+      ],
+    }, {
+      id: 'menu:INV:FGD INV', label: '成品庫', shortLabel: '成品庫', children: [
+        { id: 'function:INV:FGD INVENTORY', label: '成品庫庫房資料', shortLabel: '成品庫存', functionNo: 'FGD INVENTORY', moduleNo: 'INV' },
+        { id: 'function:INV:FGD PRODUCT IN', label: '開立成品/半成品入庫單', shortLabel: '成品入庫', functionNo: 'FGD PRODUCT IN', moduleNo: 'INV' },
+      ],
     }],
   },
   {
@@ -1049,6 +1061,9 @@ const menuRoutes: Record<string, string> = {
   'function:INV:WIP MATERIAL RETURN': appBasePath + '/INV/MaterialWipReturn',
   'function:INV:WIP MATERIAL RETURN LOG': appBasePath + '/INV/MaterialWipReturnLog',
   'function:INV:WIP RETURN CONFIRM': appBasePath + '/INV/WipReturnConfirm',
+  'function:INV:WIPINV MO PACKING COMBINE DISMANTLE': appBasePath + '/INV/PackingCombineDismantle',
+  'function:INV:FGD INVENTORY': appBasePath + '/INV/FgdInventory',
+  'function:INV:FGD PRODUCT IN': appBasePath + '/INV/ProductIn',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1445,6 +1460,9 @@ const isInvMaterialReturnLogPage = computed(() => activeMasterKey.value === 'fun
 const isInvMaterialWipReturnPage = computed(() => activeMasterKey.value === 'function:INV:WIP MATERIAL RETURN')
 const isInvMaterialWipReturnLogPage = computed(() => activeMasterKey.value === 'function:INV:WIP MATERIAL RETURN LOG')
 const isInvWipReturnConfirmPage = computed(() => activeMasterKey.value === 'function:INV:WIP RETURN CONFIRM')
+const isInvPackingCombineDismantlePage = computed(() => activeMasterKey.value === 'function:INV:WIPINV MO PACKING COMBINE DISMANTLE')
+const isInvFgdInventoryPage = computed(() => activeMasterKey.value === 'function:INV:FGD INVENTORY')
+const isInvProductInPage = computed(() => activeMasterKey.value === 'function:INV:FGD PRODUCT IN')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
@@ -3369,6 +3387,24 @@ async function signOut(): Promise<void> {
         />
         <InvWipReturnConfirm
           v-else-if="isInvWipReturnConfirmPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvPackingCombineDismantle
+          v-else-if="isInvPackingCombineDismantlePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvFgdInventory
+          v-else-if="isInvFgdInventoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvProductIn
+          v-else-if="isInvProductInPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

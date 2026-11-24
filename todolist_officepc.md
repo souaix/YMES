@@ -1,6 +1,32 @@
 # 公司端待辦
 
-## 公司端最新交付：IV304 退料單確認(WIP)（2026-11-24）
+## 公司端最新交付：IV502 開立成品／半成品入庫單（2026-11-24）
+
+- [x] 直接核對 `frmINVProductIn`／`frmINVProductInDef` inline Form／Designer、`wsINV` FGD／SEMI Add／Edit／Delete／combined Load、`clsInventory` 與 `clsBasis_UPD`。
+- [x] 完成 `/YMES/INV/ProductIn` DEV 草稿 CRUD：預設 FGD、切換 SEMI、Source=1／State=0 查詢、來源 WIP Semi Lot／Component、BookingFlag 假預約、FGD 完整包裝與 SEMI 禁選包裝規則、DataStamp 假衝突、作廢保留明細、列印預覽。
+- [x] 新增 [IV502 規格與家用端 API／schema handoff](docs/modules/INV/開立成品半成品入庫單_IV502.md)，接入 Vue 選單及路由，更新 Module Index、MES menu inventory、handoff 與兩端待辦。
+- [x] FGD In Basis／Detail／Component 沿用 WP605，SEMI In 對應表沿用 WP604；來源 WIP Semi／Component、Lot、ReverseHistory、Package、Locator 沿用 WP201／603／101／215／601／PRD112 refs；本輪沒有新 DDL 或 Oracle 查詢。
+- [ ] 家用端 pull 後核 live PostgreSQL schema／migration，實作具 Function ACL 的限量列表、強制父單號 Detail／Component、草稿新增／編輯／作廢 API；以交易重驗來源 Qty、BookingFlag、Component、包裝完整性及 DataStamp，作廢時解除預約但保留明細。
+- [ ] IV502 建立草稿不扣來源數量、不增加目的庫存；真正確認仍由 IV501 Source=30 原子過帳處理。需依規格處理反向歷程／BookingFlag 與作廢資料保留。
+- [x] 公司端未連 YMES PostgreSQL、未設定 `ConnectionStrings__YMes`、未實作正式 API/schema、未部署、未執行 build/test/browser。下一項依清冊為 IV503「成品入庫單記錄」。
+
+## 公司端前項交付：IV501 成品庫庫房資料（2026-11-24）
+
+- [x] 直接核對 `frmINVFGDInventory`／`frmINVFGDInConfirm` inline Form／Designer、`wsSMD.LoadInventoryBasis`、`wsINV` 查詢／確認 Service、`wsWIP.LoadGoodBinState`／`wsSYS.LoadBin`、`clsInventory` FGD In Core。
+- [x] 完成 `/YMES/INV/FgdInventory` DEV：InventoryType=1 庫房 lookup、`LocQty>0` 主表、Component 優先及 Bin 動態欄 fallback、FGD In Source=30 待確認／明細／假過帳／歷程。
+- [x] 新增 [IV501 規格與家用端 handoff](docs/modules/INV/成品庫庫房資料_IV501.md)，接入 Vue 路由及 DEV 預覽，更新索引、選單清冊與兩端待辦。
+- [x] 沿用 WP201／WP605、QC409 WIP Bin、PRD Bin references；本輪沒有新的 Oracle 查詢需求或新 DDL。已記錄 `AddINVTransactionState` 內層 Exe 失敗被空 catch 吞掉、外層可能仍回 success 的風險。
+- [x] 公司端未連 YMES PostgreSQL、未設定 `ConnectionStrings__YMes`、未實作正式 API/schema、未部署、未執行 build/test/browser。後續已完成 IV502，目前接續 IV503「成品入庫單記錄」。
+
+## 公司端前項交付：IV310 包裝拆並箱作業（2026-11-24）
+
+- [x] 直接核對 inline Form／Designer frmINVMOPackingCombineDismantle、wsINV.LoadMOPackingData、wsWIP.LoadMOLinePackRelation/ExePackingDismantle/ExePackingCombine、clsInventory.LoadMOPackingData、clsLot.ExePackingDismantle/ExePackingCombine。
+- [x] 完成 /YMES/INV/PackingCombineDismantle DEV 拆箱／並箱雙分頁：單層拆、零散勾選、拆至 Lot；目標／來源掃描、MO／層級／位置／容量驗證、localStorage 假包裝池與歷程、確認對話框、Reset DEV、標籤工作預覽。
+- [x] 新增 [IV310 規格與家用端 API/schema handoff](docs/modules/INV/包裝拆並箱作業.md)，接入 App 路由與 DEV 預覽；更新規格索引、選單清冊及兩端待辦。包裝表沿用已驗證 WP601 Oracle DDL／metadata／PG CREATE-only references，沒有新表或新 SQL。
+- [x] 記錄 Combine Core 的 stale-state 驗證已註解、Service 先拆目標後再併入為兩段寫入、Form Lot transfer 非同步且吞錯、Pack Close 按鈕與 Core CloseFlag 更新責任有差異；正式 API 需重查版本並以可恢復交易處理。
+- [x] 公司端未連 YMES PostgreSQL、未設定 ConnectionStrings__YMes、未實作正式 API/schema、未部署、未執行 build/test/browser。後續已完成 IV502，目前接續 IV503「成品入庫單記錄」。
+
+## 公司端前項交付：IV304 退料單確認(WIP)（2026-11-24）
 
 - [x] 直接核對 inline `frmINVWIPReturnConfirm`／Designer、`wsINV.AddINVTransactionState/ExeINVTransactionState`、`LoadINVMaterialWIPReturnBasis/Detail/Comp`、`clsInventory.ExeMaterialWIPReturn_ForMaterialWIPMOReturn` 及舊直接入口差異。
 - [x] 完成 `/YMES/INV/WipReturnConfirm` DEV：State=0 查詢、條件篩選、單選 Basis、Detail／Component 子列、確認對話框、localStorage 假過帳列（來源／目標庫房、Locator、數量／元件）、Reset DEV。

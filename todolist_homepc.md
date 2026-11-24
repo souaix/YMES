@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 最新公司端交接：IV502 開立成品／半成品入庫單（2026-11-24）
+
+- [x] 公司端已完成 IV502 `/YMES/INV/ProductIn` DEV 草稿 CRUD、WinForms／Service／Core 規格與 handoff；詳見 [IV502 規格](docs/modules/INV/開立成品半成品入庫單_IV502.md) 及 [公司端交接檔](docs/CODEX_HANDOFF_OFFICEPC.md)。
+- [x] 已核對 FGD／SEMI Basis、Detail、Component 與來源 WIP Semi／Component 的新增、編輯、作廢及 BookingFlag；FGD 包裝須完整選取最高層所有子 Lot，SEMI 不接受有 PackingNo 的 Lot。
+- [x] FGD／SEMI 入庫表沿用 WP605／WP604，來源／Lot／Package／ReverseHistory／Locator 使用 WP201／603／101／215／601／PRD112 refs；本輪無新 DDL，桌機沒有連 Oracle 或 PostgreSQL。
+- [ ] 家用端 pull 後核對既有 references 與 PostgreSQL live schema／migrations。實作登入與 Function ACL 保護的限量列表、父單號限定 Detail／Component、草稿新增／編輯／作廢 API。
+- [ ] 建單／編輯交易內重讀來源 Lot 與 Component、檢查 Qty>0／BookingFlag=0／庫房類型／完整包裝、以 DataStamp 原子更新 Basis／明細／預約／reverse history；作廢只設 State=-1 並解除預約，保留 Basis／Detail／Component。
+- [ ] IV502 只建立草稿，不扣來源數量或增加目的庫存；實際確認由 IV501 Source=30 執行。詳細交易與表清單見 IV502 模組規格。
+- [x] 公司端未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署、未執行 build/test/browser。公司端下一項依清冊為 IV503「成品入庫單記錄」。
+
 ## 家用端同步狀態（2026-11-24）
 
 - [x] 正常 merge GitHub 公司端交付 `12bb440`（IV203）、`c48f855`（IV208）、`0160bfb`（IV205），並將家用整合版 `9884fab` 快轉推至 `main`、讀回一致；保留本機 WP508 排版修正與 migration `0073`，未覆蓋任何一端工作、未 force push。
@@ -12,7 +22,16 @@
 - [ ] SC401 ERF 處置、Lot Release、Back 與附件刪除；WP508 附件刪除及 SC402／WP508／WP801／WP802 8D API 尚未完成。
 - [ ] IV201：共用 Transaction State／Log 已由 WP605 已核實 DDL 以 migration `0073` 建立，`ymes_app` 目前只有 SELECT；RAW／Locator 仍等待公司端補可信原生 DDL 與六種 Confirm Core 的依賴表清單，再做 schema/API。不能由 DEV 假資料推建。
 
-## 公司端最新交接：IV304 退料單確認(WIP)（2026-11-24）
+## 前一項公司端交接：IV501 成品庫庫房資料（2026-11-24）
+
+- [x] 公司端已完成 IV501 `/YMES/INV/FgdInventory` DEV、WinForms／Service／Core 規格與 handoff；詳見 [IV501 規格](docs/modules/INV/成品庫庫房資料_IV501.md) 及 [公司端交接檔](docs/CODEX_HANDOFF_OFFICEPC.md)。
+- [x] IV501 查詢沿用 WP201／WP605 庫存與 FGD In DDL、QC409 WIP Bin、PRD Bin references；無新 schema/Create SQL。公司端沒有新 Oracle 查詢或 YMES PostgreSQL 連線。
+- [ ] 家用端核對 FGD Inventory／FGD In／Transaction State／Log／WIP Good Bin／SYS Bin live PostgreSQL schema 與 migration history；沿用共用資料表，不重複建表。
+- [ ] 實作登入及 IV501 ACL 保護的庫房、庫存、Component／Bin、FGD In Basis／Detail 查詢；父單號必填、LocQty>0、State=0、ToERP<>1，Bin columns 依授權 system-bin lookup 排序。
+- [ ] 實作 Source=30 FGD In 原子、冪等 confirm API：伺服器重驗 Basis／來源／目的／Locator／Capacity／Lot／Component，交易內更新庫存、Source=1 來源 WIP／SEMI、BookingFlag、Lot／Component history、Basis State 與 Transaction State→Log；回傳真實過帳結果，修正舊 Add Service 內層 Exe 失敗被吞但外層回 success 的風險。
+- [x] 公司端沒有連 PostgreSQL、未做 API/schema/migration、未部署、未執行 build/test/browser。後續已完成 IV502，目前接續 IV503「成品入庫單記錄」。
+
+## 公司端前項交接：IV304 退料單確認(WIP)（2026-11-24）
 
 公司端已依 inline `frmINVWIPReturnConfirm`／Designer、`wsINV.AddINVTransactionState/ExeINVTransactionState`、`clsInventory.ExeMaterialWIPReturn_ForMaterialWIPMOReturn` 完成 [IV304 DEV 頁與規格](docs/modules/INV/退料單確認_WIP.md)，功能鍵 `IV304`／`WIP RETURN CONFIRM`，路由 `/YMES/INV/WipReturnConfirm`。DEV 有 State=0 查詢、來源／日期條件、Basis 選列載入 Detail／Component、確認對話框與 localStorage 假過帳；Source=10 完成後單據離開待確認清單。舊 Core 忽略 `ToLocatorNo`、Type 7 多目標分流疑點及 Add Service 吞錯已記錄；DEV 沒有修改正式庫存或呼叫正式 API。
 
@@ -3779,7 +3798,7 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## 公司端交接：IV101 庫房工程群組（2026-11-24）
 
-- 公司端已完成 IV101、IV102、IV103、IV201、IV202、IV207、IV203、IV208、IV205、IV210、IV206、IV211、IV302、IV303、IV304 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff；IV202 見 `docs/modules/INV/開立進料單.md`，IV207 見 `docs/modules/INV/進料單記錄.md`，IV203 見 `docs/modules/INV/開立領料單.md`，IV208 見 `docs/modules/INV/領料單記錄.md`，IV205 見 `docs/modules/INV/開立預訂單.md`，IV210 見 `docs/modules/INV/預訂單記錄.md`，IV211 見 `docs/modules/INV/退料單記錄.md`，IV302 見 `docs/modules/INV/開立退料單_WIP.md`，IV303 見 `docs/modules/INV/退料單記錄_WIP.md`，IV304 見 `docs/modules/INV/退料單確認_WIP.md`。目前公司端下一項依選單清冊列序是 IV310「包裝拆並箱作業」。
+- 公司端已完成 IV101、IV102、IV103、IV201、IV202、IV207、IV203、IV208、IV205、IV210、IV206、IV211、IV302、IV303、IV304 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff；IV202 見 `docs/modules/INV/開立進料單.md`，IV207 見 `docs/modules/INV/進料單記錄.md`，IV203 見 `docs/modules/INV/開立領料單.md`，IV208 見 `docs/modules/INV/領料單記錄.md`，IV205 見 `docs/modules/INV/開立預訂單.md`，IV210 見 `docs/modules/INV/預訂單記錄.md`，IV211 見 `docs/modules/INV/退料單記錄.md`，IV302 見 `docs/modules/INV/開立退料單_WIP.md`，IV303 見 `docs/modules/INV/退料單記錄_WIP.md`，IV304 見 `docs/modules/INV/退料單確認_WIP.md`。IV310「包裝拆並箱作業」、IV501「成品庫庫房資料」及 IV502「開立成品/半成品入庫單」已完成 DEV／規格交接；目前下一項為 IV503「成品入庫單記錄」。
 - 家用端工作：先比對 live `tblinvengineergroupbasis`。公司桌機未取得 `TBLINVENGINEERGROUPBASIS` Oracle DDL/metadata；`database/reference/mestest_first_phase_create_tables.sql` 的同名 CREATE 欄位未核實，請勿視為正式 schema。若無可信 Oracle source DDL，記錄差異與所需欄位後再決定 schema，不要猜。
 - `TBLUSRUSERGROUP` 已有可重用的 Oracle source DDL 與 PostgreSQL reference。正式 API 依模組規格提供主檔查詢/Add/Edit/Copy/Delete、active user lookup、GroupType=3 成員查詢及完整集合替換；成員替換須 DataStamp CAS、同步 AgentOf direct/agent rows 並交易回滾。舊 Copy 多次呼叫非原子，正式端需同交易。
 - 公司端未連 YMES PostgreSQL、未做正式 API/schema、未執行 build/test/browser。
@@ -3797,3 +3816,13 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - 家用端先比對 live `tblinvstockerbasis`、`tblinvstockerdetail`。桌機受保護 Oracle profile 不存在；first-phase Master CREATE 是推測，Detail 缺可信 Oracle DDL／metadata，不能據此建正式 schema。
 - 舊 Service 將主檔和 Locator 明細分別新增；Edit 更新主檔後刪除並逐格重建 Detail，沒有共同交易。正式 API／migration 要先核 live schema，以參數化 SQL、DataStamp CAS 和單一交易保護整組替換、刪除；狀態 0／-1 實體刪除，2 軟刪成 -1 並留明細，1 拒絕。
 - 舊 Approve Service 目前直接由 IssueState 0 設為 2；IssueManagement 分支為註解。正式端需確認現行 workflow，不要假設舊註解仍在使用。公司桌機未連 PostgreSQL、未做正式 API/schema、未部署或執行 build/test/browser。
+
+## 公司端前項交接：IV310 包裝拆並箱作業（2026-11-24）
+
+- [x] 公司端已完成 IV310 DEV、Form／Service／Core 規格與手動 static review；規格見 docs/modules/INV/包裝拆並箱作業.md，handoff checkpoint 見 docs/CODEX_HANDOFF_OFFICEPC.md。
+- [x] IV310 沿用 WP601 的 19 張共用包裝表 source DDL／metadata／PG CREATE-only references；沒有新增專屬表或新 CREATE。家用端不得複製第二套包裝 schema。
+- [ ] 比對 live PostgreSQL schema／migrations 與 WP601 references；確認 L1–L6、Detail、Relation、PackState、PackLog、MergeLog、Config 表與鍵／索引一致，逐一記錄差異。
+- [ ] 實作授權的 hierarchy／Pack Rule lookup、Dismantle(mode 0／1／2) 與 Combine command。伺服器重查 FGD／Close／容量／MO／層級／位置／Lot status／現況版本；以單一 transaction 維護 Lx／Detail／Relation／PackState／Log／MergeLog，使用 operation ID／冪等，絕不信任 browser 傳來的階層與 Lot 清單。
+- [ ] 單獨裁決 Combine Service 先拆目標再併入造成的跨寫入部分提交，以及舊 Core 未重查 stale state、Form Lot transfer 非同步吞錯、Pack Close 與 CloseFlag 責任落差；正式 API 需可恢復且錯誤可追蹤。
+- [ ] Lot BR／Transfer 與 CodeSoft／BarTender 列印透過 outbox／授權 job；不從 browser 任選 server path/printer，不把 DB 成功當作 Lot transfer 或列印成功。
+- [x] 公司桌機沒有連 PostgreSQL、未實作正式 API/schema、未 SSH／部署。後續已完成 IV502，目前下一項依選單清冊為 IV503「成品入庫單記錄」。
