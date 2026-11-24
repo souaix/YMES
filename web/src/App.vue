@@ -524,6 +524,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:SPC:FQC FORM', label: '終檢檢驗單', shortLabel: 'FQC', functionNo: 'FQC FORM', moduleNo: 'SPC' },
       { id: 'function:SPC:IPQC FORM', label: 'PQC 檢驗單', shortLabel: 'PQC', functionNo: 'IPQC FORM', moduleNo: 'SPC' },
       { id: 'function:SPC:OQC FORM', label: '出貨檢驗單', shortLabel: 'OQC', functionNo: 'OQC FORM', moduleNo: 'SPC' },
+      { id: 'function:SPC:SPC ERF UNRELEASED', label: '未解除異常單（SPC）', tableName: 'tblwiperfbasis', shortLabel: 'SPC異常', functionNo: 'SPC ERF UNRELEASED', moduleNo: 'SPC' },
       { id: 'function:SPC:SPC DATA', label: 'SPC 資料維護', shortLabel: 'SPC資料', functionNo: 'SPC DATA', moduleNo: 'SPC' },
       { id: 'function:SPC:SPC DATA BY LOTNO', label: 'Lot 檢測資料', shortLabel: 'Lot檢測', functionNo: 'SPC DATA BY LOTNO', moduleNo: 'SPC' },
       { id: 'function:SPC:DATA EDIT LOG', label: '資料修改記錄', shortLabel: '修改記錄', functionNo: 'DATA EDIT LOG', moduleNo: 'SPC' },
@@ -978,6 +979,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:MONTHLY CHART REPORT CODE': appBasePath + '/SPC/MonthRPTCodeBasis',
   'function:SPC:MONTHLY CHART REPORT': appBasePath + '/SPC/MonthChartReport',
   'function:SPC:MONTHLY CHART REPORT BY FACTOR': appBasePath + '/SPC/MonthChartReportByFactor',
+  'function:SPC:SPC ERF UNRELEASED': appBasePath + '/SPC/ErfUnreleased',
   'function:SPC:XLS SOURCE FILE CONTROL': appBasePath + '/SPC/XlsSourceFileControl',
   'function:SPC:CHART SIGNBOARD': appBasePath + '/SPC/ChartSignboard',
   'function:SPC:CONTROL CHART ANALYSIS': appBasePath + '/SPC/ControlChartAnalysis',
@@ -1131,6 +1133,7 @@ const functionRoutes: Record<string, string> = {
   'FUTURE WAIT RELEASE': appBasePath + '/WIP/FutureWaitRelease',
   'ERF BASIS': appBasePath + '/WIP/ErfBasis',
   'WIP ERF UNRELEASED': appBasePath + '/WIP/ErfUnreleased',
+  'SPC ERF UNRELEASED': appBasePath + '/SPC/ErfUnreleased',
   'WAIT BASIS': appBasePath + '/WIP/WaitBasis',
   'WIP WAIT DISPOSITION': appBasePath + '/WIP/WaitDisposition',
   '8D BASIS_FACTORY': appBasePath + '/WIP/8DBasisFactory',
@@ -1368,6 +1371,7 @@ const isWipFutureHoldReleasePage = computed(() => activeMasterKey.value === 'fun
 const isWipFutureWaitReleasePage = computed(() => activeMasterKey.value === 'function:WIP:FUTURE WAIT RELEASE')
 const isWipErfBasisPage = computed(() => activeMasterKey.value === 'function:WIP:ERF BASIS')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
+const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
 const isWipWaitDispositionPage = computed(() => activeMasterKey.value === 'function:WIP:WIP WAIT DISPOSITION')
 const isWip8DBasisFactoryPage = computed(() => activeMasterKey.value === 'function:WIP:8D BASIS_FACTORY')
@@ -3191,6 +3195,14 @@ async function signOut(): Promise<void> {
           v-else-if="isSpcMonthChartReportByFactorPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <WipErfUnreleased
+          v-else-if="isSpcErfUnreleasedPage"
+          class="framework-content office-wip-module"
+          function-variant="spc"
+          :development-preview="isDevelopmentPreview"
+          :current-user-no="currentUser?.userNo || ''"
           @close="navigateHome"
         />
         <SpcXlsSourceFileControl
