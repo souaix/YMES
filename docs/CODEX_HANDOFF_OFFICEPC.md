@@ -29,6 +29,7 @@
 
 ## 目前檢查點與下一步
 
+- **2026-11-24 INV IV206 接續點**：`MATERIAL RETURN` 已依 `frmINVMaterialReturn`／BasisDef／DetailDef、`wsINV`、`clsInventory`／`clsBasis_UPD` 完成 `/YMES/INV/MaterialReturn` DEV 與 [規格](modules/INV/開立退料單.md)。主／明細 State=0 CRUD、假 Vendor／Raw Lot lookup、元件 booking 本機模擬均已交接。桌機指定 Oracle profile 不存在，因此 Return Basis／Detail／Component、Raw Component／Locator 原生 DDL／metadata 未取得，不猜 CREATE。舊 Service 元件寫入分步、Core Edit 可能刪除整單元件、元件候選缺 InventoryNo 的來源差異已交家用端；正式 API 必須完整鍵、庫房範圍及原子交易。IV206 草稿不扣庫存，確認由 IV201 Source=3。公司端下一項依清冊為 IV211「退料單記錄」。未連 YMES PostgreSQL、未 build/test/browser。
 - 公司端已接續 OE101、OE102、OE201 至 OE209、OEB01、OEP01 的 DEV 訂單與工單操作。各功能及 Oracle DDL／API 交接見模組索引。WP101、WP102、WP201、WP202、WP204、WP301、WP302、WP601、WP603、WP604、WP605、WP629 已完成公司端 DEV 與家用端 handoff；後續工作依 `todolist_officepc.md` 及 MES menu inventory 接續。
 - **2026-11-20 WIP 接續檢查點：WP305–WP307 及 WP203／WP103／WP113／WP104／WP105／WP205–WP207 的公司端 DEV/spec/handoff 已同步至 `D:\YMes` 工作樹。** 同步前逐檔比對、於 `D:\iMES\CSiMES\ymestage\wp207_sync_backup_20261120` 備份七個有差異的既有檔案並核實 SHA256；新增檔與既有 WP305 未提交檔均已保留。WP307 的 State/History ShiftNo／UserNo lookup 與正式 API contract 已列於規格與 `todolist_homepc.md`。
 - Oracle 僅以受保護 MESTEST profile 讀取 WP307、WP206–WP209、WP213、WP215 等結構字典，未查業務資料、未執行 DDL/DML。source DDL、metadata、CREATE-only 與兩端 TODO 均在工作樹。公司端仍未連 YMES PostgreSQL、未實作 Production API/migration，也未執行 build/test/browser；WP208–WP215 公司端 DEV／規格已完成，後續依 menu inventory 選下一項。
