@@ -12,7 +12,17 @@
 - [ ] SC401 ERF 處置、Lot Release、Back 與附件刪除；WP508 附件刪除及 SC402／WP508／WP801／WP802 8D API 尚未完成。
 - [ ] IV201：共用 Transaction State／Log 已由 WP605 已核實 DDL 以 migration `0073` 建立，`ymes_app` 目前只有 SELECT；RAW／Locator 仍等待公司端補可信原生 DDL 與六種 Confirm Core 的依賴表清單，再做 schema/API。不能由 DEV 假資料推建。
 
-## 公司端最新交接：IV302 開立退料單(WIP)（2026-11-24）
+## 公司端最新交接：IV303 退料單記錄(WIP)（2026-11-24）
+
+公司端已依 `frmINVMaterialWIPReturnLog` inline Form／Designer、`wsINV.LoadINVMaterialWIPReturnBasis/Detail/Comp` 與 `clsInventory` 完成 [IV303 DEV 頁與規格](docs/modules/INV/退料單記錄_WIP.md)，功能鍵 `IV303`／`WIP MATERIAL RETURN LOG`，路由 `/YMES/INV/MaterialWipReturnLog`。DEV 有 MaterialReturnNo、InventoryNo、FromPlaceType、State、來源 WIP Inventory／MO、CreateDate／ReturnDate 篩選；選列載入單頭明細與 Component 子列。ReturnDate 來自 Basis.ReturnDate，Form 改名為 ConfirmDate 顯示。頁面唯讀、不呼叫正式 API。
+
+- [ ] Pull 最新 `main` 後核對 `TBLINVMATERIALWIPRETURNBASIS`／`TBLINVMATERIALWIPRETURNDETAIL`／`TBLINVMTLWIPRETURNCOMP` live PostgreSQL schema／migrations。公司桌機受保護 Oracle profile 不存在，沒有可信同版 DDL／metadata；不得由 Core `SELECT *` 推測欄位、PK、FK 或 index。
+- [ ] 提供登入及 `WIP MATERIAL RETURN LOG` Function ACL 保護的有上限分頁 Basis 查詢 API；參數化 MaterialReturnNo contains、InventoryNo、FromPlaceType、State、WIP source Inventory／MO、CreateDate／ReturnDate 範圍。使用穩定排序、日期跨度上限及 max rows；date-only End 包含當日末端。
+- [ ] Detail API 必須要求有效 MaterialReturnNo，避免舊 Core 空單號回全表。元件回應需用單號＋MaterialNo＋MaterialLotNo＋LocatorNo 核實完整鍵；不要複製 Core 將 LocatorNo 覆寫成最後 Detail Locator、只用 MaterialNo＋LotNo 建 Relation2 的問題。
+- [ ] 核對 FromPlaceType=7（MO Material + Semi）在正式 ValueList 的代碼／標籤；舊 Form 有一份硬編碼清單僅列 2／3／5／6，但執行時 Grid／Combo 使用 ValueListProvider。
+- [x] 公司端未連 YMES PostgreSQL、未建 migration／schema、未實作正式 API／部署，亦未執行 build/test/browser。公司端下一項依清冊為 IV304「退料單確認(WIP)」。
+
+## 公司端前項交接：IV302 開立退料單(WIP)（2026-11-24）
 
 公司端已依 `frmINVMaterialWIPReturn`／BasisDef／DetailDef、`wsINV`、`clsInventory`／`clsBasis_UPD` 完成 [IV302 DEV 頁與規格](docs/modules/INV/開立退料單_WIP.md)，功能鍵 `IV302`／`WIP MATERIAL RETURN`，路由 `/YMES/INV/MaterialWipReturn`。DEV 模擬 State=0 單頭／明細 CRUD、FromPlaceType 2／3／5／6／7、WIP／MO 假來源、批號／Locator、元件數量守門與 BookingFlag 假預約。Copy 單頭不複製明細、Edit 單頭僅修改 Description；草稿不扣庫存，確認流程屬 IV304 Source=10。
 
@@ -3759,7 +3769,7 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## 公司端交接：IV101 庫房工程群組（2026-11-24）
 
-- 公司端已完成 IV101、IV102、IV103、IV201、IV202、IV207、IV203、IV208、IV205、IV210、IV206、IV211、IV302 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff；IV202 見 `docs/modules/INV/開立進料單.md`，IV207 見 `docs/modules/INV/進料單記錄.md`，IV203 見 `docs/modules/INV/開立領料單.md`，IV208 見 `docs/modules/INV/領料單記錄.md`，IV205 見 `docs/modules/INV/開立預訂單.md`，IV210 見 `docs/modules/INV/預訂單記錄.md`，IV211 見 `docs/modules/INV/退料單記錄.md`，IV302 見 `docs/modules/INV/開立退料單_WIP.md`。目前公司端下一項依選單清冊列序是 IV303「退料單記錄(WIP)」。
+- 公司端已完成 IV101、IV102、IV103、IV201、IV202、IV207、IV203、IV208、IV205、IV210、IV206、IV211、IV302、IV303 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff；IV202 見 `docs/modules/INV/開立進料單.md`，IV207 見 `docs/modules/INV/進料單記錄.md`，IV203 見 `docs/modules/INV/開立領料單.md`，IV208 見 `docs/modules/INV/領料單記錄.md`，IV205 見 `docs/modules/INV/開立預訂單.md`，IV210 見 `docs/modules/INV/預訂單記錄.md`，IV211 見 `docs/modules/INV/退料單記錄.md`，IV302 見 `docs/modules/INV/開立退料單_WIP.md`，IV303 見 `docs/modules/INV/退料單記錄_WIP.md`。目前公司端下一項依選單清冊列序是 IV304「退料單確認(WIP)」。
 - 家用端工作：先比對 live `tblinvengineergroupbasis`。公司桌機未取得 `TBLINVENGINEERGROUPBASIS` Oracle DDL/metadata；`database/reference/mestest_first_phase_create_tables.sql` 的同名 CREATE 欄位未核實，請勿視為正式 schema。若無可信 Oracle source DDL，記錄差異與所需欄位後再決定 schema，不要猜。
 - `TBLUSRUSERGROUP` 已有可重用的 Oracle source DDL 與 PostgreSQL reference。正式 API 依模組規格提供主檔查詢/Add/Edit/Copy/Delete、active user lookup、GroupType=3 成員查詢及完整集合替換；成員替換須 DataStamp CAS、同步 AgentOf direct/agent rows 並交易回滾。舊 Copy 多次呼叫非原子，正式端需同交易。
 - 公司端未連 YMES PostgreSQL、未做正式 API/schema、未執行 build/test/browser。

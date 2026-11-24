@@ -274,6 +274,7 @@ import InvPreOrderLog from './components/InvPreOrderLog.vue'
 import InvMaterialReturn from './components/InvMaterialReturn.vue'
 import InvMaterialReturnLog from './components/InvMaterialReturnLog.vue'
 import InvMaterialWipReturn from './components/InvMaterialWipReturn.vue'
+import InvMaterialWipReturnLog from './components/InvMaterialWipReturnLog.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -1045,6 +1046,7 @@ const menuRoutes: Record<string, string> = {
   'function:INV:MATERIAL RETURN': appBasePath + '/INV/MaterialReturn',
   'function:INV:MATERIAL RETURN LOG': appBasePath + '/INV/MaterialReturnLog',
   'function:INV:WIP MATERIAL RETURN': appBasePath + '/INV/MaterialWipReturn',
+  'function:INV:WIP MATERIAL RETURN LOG': appBasePath + '/INV/MaterialWipReturnLog',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1439,6 +1441,7 @@ const isInvPreOrderLogPage = computed(() => activeMasterKey.value === 'function:
 const isInvMaterialReturnPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL RETURN')
 const isInvMaterialReturnLogPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL RETURN LOG')
 const isInvMaterialWipReturnPage = computed(() => activeMasterKey.value === 'function:INV:WIP MATERIAL RETURN')
+const isInvMaterialWipReturnLogPage = computed(() => activeMasterKey.value === 'function:INV:WIP MATERIAL RETURN LOG')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
@@ -3351,6 +3354,12 @@ async function signOut(): Promise<void> {
         />
         <InvMaterialWipReturn
           v-else-if="isInvMaterialWipReturnPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvMaterialWipReturnLog
+          v-else-if="isInvMaterialWipReturnLogPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

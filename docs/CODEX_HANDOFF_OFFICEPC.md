@@ -2,12 +2,12 @@
 
 更新：2026-11-24。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-> **最新公司端接手（2026-11-24）**：公司端已依清冊完成 IV302「開立退料單(WIP)」DEV 與規格交接；請先讀本檔的 IV302 checkpoint、[公司端待辦](../todolist_officepc.md)、[家用端待辦](../todolist_homepc.md) 及 [模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)，下一項依 INV 清冊為 IV303「退料單記錄(WIP)」。WP401 段落是較早的歷史接手點。
+> **最新公司端接手（2026-11-24）**：公司端已依清冊完成 IV303「退料單記錄(WIP)」DEV 與規格交接；請先讀本檔的 IV303 checkpoint、[公司端待辦](../todolist_officepc.md)、[家用端待辦](../todolist_homepc.md) 及 [模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)，下一項依 INV 清冊為 IV304「退料單確認(WIP)」。WP401 段落是較早的歷史接手點。
 
 ## 接手方式
 
 1. 在桌電開啟同一個 GitHub repository `souaix/YMES`，執行 `git pull origin main`。
-2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 與 [MES 選單清冊](MES_MENU_FUNCTION_INVENTORY.md)，再直接核對下一項 IV303 的 WinForms／Service／Core 原始碼。
+2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 與 [MES 選單清冊](MES_MENU_FUNCTION_INVENTORY.md)，再直接核對下一項 IV304 的 WinForms／Service／Core 原始碼。
 3. 本機 Codex 使用 YMES repo；MES WinForms 原始碼在公司筆電 `D:\iMES\CSiMES`，桌電可能是另一個路徑。若桌電有既有 MES checkout，先核對路徑；不可用 UI 截圖代替 Form/Designer/Service/Core 原始碼。原始碼缺少時記錄具體缺檔，先做不依賴它的工作。
 4. 若在桌電打開同一個 Codex 對話，thread 對話與 Goal 脈絡仍在；若另開新對話，把本檔及 TODO 當成接手上下文，不要假設新 thread 自動有舊 Goal 狀態。
 
@@ -29,7 +29,8 @@
 
 ## 目前檢查點與下一步
 
-- **2026-11-24 INV IV302 接續點**：`WIP MATERIAL RETURN` 已依 `frmINVMaterialWIPReturn`／BasisDef／DetailDef、`wsINV`、`clsInventory`／`clsBasis_UPD` 完成 `/YMES/INV/MaterialWipReturn` DEV 與[規格](modules/INV/開立退料單_WIP.md)。含 State=0 單頭／明細維護、五種 FromPlaceType、WIP／MO 假來源、來源／退入 Locator、元件選取與 BookingFlag 假預約。單頭 Copy 不複製明細；Basis Edit 僅 Description。IV302 草稿不執行實際退料，確認在 IV304 Source=10。桌機受保護 Oracle profile 不存在，`TBLINVMATERIALWIPRETURNBASIS`／`TBLINVMATERIALWIPRETURNDETAIL`／`TBLINVMTLWIPRETURNCOMP` 與元件來源 DDL／metadata 未取得，不猜 CREATE。舊 Core 空 MaterialReturnNo Detail 查詢可回全表；Service 分別更新 Detail、Component 及 BookingFlag，正式 API 必須父單號限定並原子交易更新。家用端下一項依清冊為 IV303「退料單記錄(WIP)」。未連 YMES PostgreSQL、未 build/test/browser。
+- **2026-11-24 INV IV303 接續點**：`WIP MATERIAL RETURN LOG` 已依 inline `frmINVMaterialWIPReturnLog`／Designer、`wsINV.LoadINVMaterialWIPReturnBasis/Detail/Comp`、`clsInventory` 完成 `/YMES/INV/MaterialWipReturnLog` DEV 與[規格](modules/INV/退料單記錄_WIP.md)。含 MaterialReturnNo、InventoryNo、FromPlaceType、State、來源 WIP／MO、CreateDate／ReturnDate 篩選及選列明細／Component 子列；ReturnDate 由 Basis.ReturnDate 映射成畫面的 ConfirmDate。表 DDL／metadata 因桌機沒有受保護 Oracle profile 而未取得，不猜 CREATE。Core Detail 空單號可能回全表；Component 查詢以最後一筆明細 LocatorNo 過濾且關聯缺 MaterialReturnNo／LocatorNo，正式 API 必須父單號限定、完整關聯、穩定排序及分頁。下一項依清冊為 IV304「退料單確認(WIP)」。未連 YMES PostgreSQL、未 build/test/browser。
+- **2026-11-24 INV IV302 歷史交接**：`WIP MATERIAL RETURN` 已依 `frmINVMaterialWIPReturn`／BasisDef／DetailDef、`wsINV`、`clsInventory`／`clsBasis_UPD` 完成 `/YMES/INV/MaterialWipReturn` DEV 與[規格](modules/INV/開立退料單_WIP.md)。含 State=0 單頭／明細維護、五種 FromPlaceType、WIP／MO 假來源、來源／退入 Locator、元件選取與 BookingFlag 假預約。單頭 Copy 不複製明細；Basis Edit 僅 Description。IV302 草稿不執行實際退料，確認在 IV304 Source=10。桌機受保護 Oracle profile 不存在，`TBLINVMATERIALWIPRETURNBASIS`／`TBLINVMATERIALWIPRETURNDETAIL`／`TBLINVMTLWIPRETURNCOMP` 與元件來源 DDL／metadata 未取得，不猜 CREATE。舊 Core 空 MaterialReturnNo Detail 查詢可回全表；Service 分別更新 Detail、Component 及 BookingFlag，正式 API 必須父單號限定並原子交易更新。未連 YMES PostgreSQL、未 build/test/browser。
 - **2026-11-24 INV IV211 接續點**：`MATERIAL RETURN LOG` 已依 inline `frmINVMaterialReturnLog`、`wsINV.LoadINVMaterialReturnBasis/Detail`、`clsInventory` 完成 `/YMES/INV/MaterialReturnLog` DEV 與[規格](modules/INV/退料單記錄.md)。含 8 組勾選條件、State 0–3、Basis ReturnDate／CreateDate 日期、選列載入 Detail／Component 子列。ReturnDate 是 Basis.ReturnDate，Form 顯示為 ConfirmDate，不用 TransactionLog 替代。桌機受保護 Oracle profile 不存在，Return Basis／Detail／Component DDL／metadata 未取得，不猜 CREATE。舊 Core 空單號 Detail 回全表、Component relation 少 LocatorNo、Basis 無排序／分頁已交家用端。未連 YMES PostgreSQL、未 build/test/browser。
 - **2026-11-24 INV IV206 接續點**：`MATERIAL RETURN` 已依 `frmINVMaterialReturn`／BasisDef／DetailDef、`wsINV`、`clsInventory`／`clsBasis_UPD` 完成 `/YMES/INV/MaterialReturn` DEV 與 [規格](modules/INV/開立退料單.md)。主／明細 State=0 CRUD、假 Vendor／Raw Lot lookup、元件 booking 本機模擬均已交接。桌機指定 Oracle profile 不存在，因此 Return Basis／Detail／Component、Raw Component／Locator 原生 DDL／metadata 未取得，不猜 CREATE。舊 Service 元件寫入分步、Core Edit 可能刪除整單元件、元件候選缺 InventoryNo 的來源差異已交家用端；正式 API 必須完整鍵、庫房範圍及原子交易。IV206 草稿不扣庫存，確認由 IV201 Source=3。公司端下一項依清冊為 IV211「退料單記錄」。未連 YMES PostgreSQL、未 build/test/browser。
 - 公司端已接續 OE101、OE102、OE201 至 OE209、OEB01、OEP01 的 DEV 訂單與工單操作。各功能及 Oracle DDL／API 交接見模組索引。WP101、WP102、WP201、WP202、WP204、WP301、WP302、WP601、WP603、WP604、WP605、WP629 已完成公司端 DEV 與家用端 handoff；後續工作依 `todolist_officepc.md` 及 MES menu inventory 接續。
