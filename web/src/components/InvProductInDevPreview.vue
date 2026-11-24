@@ -161,9 +161,12 @@ function saveDraft(): void {
   const serial = draft.value.productInType === 0 ? state.value.fgdSerial : state.value.semiSerial
   const productInNo = mode.value === 'add' ? `${draft.value.productInType === 0 ? 'FI' : 'SI'}-DEV-${String(serial).padStart(6, '0')}` : draft.value.productInNo
   if (mode.value === 'add' && state.value.tickets.some((row) => row.productInNo === productInNo)) { formError.value = '單號重複，請重新產生。'; return }
+  // Snapshot before changing BookingFlag; that change removes the selected rows
+  // from draftSourceLots and would otherwise make selectedSourceLots empty.
+  const selectedLots = selectedSourceLots.value
   if (current) for (const old of current.details) setLotBooking(old.lotNo, false)
-  for (const lot of selectedSourceLots.value) setLotBooking(lot.lotNo, true)
-  const details: ProductInDetail[] = selectedSourceLots.value.map((row) => ({
+  for (const lot of selectedLots) setLotBooking(lot.lotNo, true)
+  const details: ProductInDetail[] = selectedLots.map((row) => ({
     lotNo: row.lotNo, productNo: row.productNo, productName: row.productName, productVersion: row.productVersion,
     qty: row.qty, unitNo: row.unitNo, locatorNo: draft.value.inventoryNo === 'FGD-DEV-01' ? 'FGD-A-01' : draft.value.inventoryNo === 'FGD-DEV-02' ? 'FGD-B-01' : 'S-DEST-01',
     packageNo: row.packageNo, packageName: row.packageName, components: row.components.map((component) => ({ ...component, bookingFlag: true }))

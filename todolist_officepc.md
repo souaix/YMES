@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 公司端補交：IV302／IV303／IV304 原生 Oracle DDL 與 metadata
+
+- [ ] 在公司端受保護的 MESTEST Oracle profile 可用時，只讀匯出 `TBLINVMATERIALWIPRETURNBASIS`、`TBLINVMATERIALWIPRETURNDETAIL`、`TBLINVMTLWIPRETURNCOMP` 的 Oracle `CREATE TABLE`、欄位 metadata、PK／FK／unique constraint、index、default 與 trigger；三個功能共用這組退料單表。不得查業務資料列或執行 Oracle DDL／DML。
+- [ ] IV304 額外核對並補 repo 尚缺的 `TBLINVRAWINVENTORYCOMPONENT`、`TBLINVTEMP_COMPONENT` 原生結構；`TBLINVRAWINVENTORY`／`TBLINVRAWINVENTORYLOC` 已列於下方 IV201 補件項目，請同一輪回覆結果，避免重複查詢。Core 其餘來源元件表先逐名核對既有 references，只有確實沒有可信 source DDL／metadata 的表才補交。
+- [ ] 將來源 SQL、metadata 與 MESTEST owner／查詢日期寫入 `database/reference/` 及相關 INV 模組文件；CREATE-only PostgreSQL 參照須依 Oracle 真實鍵、型別、nullable/default 與 index 產生。若 profile 仍不可用，逐表註明未取得，不得依舊 Core SQL 猜結構。
+
 ## 公司端最新交付：IV502 開立成品／半成品入庫單（2026-11-24）
 
 - [x] 直接核對 `frmINVProductIn`／`frmINVProductInDef` inline Form／Designer、`wsINV` FGD／SEMI Add／Edit／Delete／combined Load、`clsInventory` 與 `clsBasis_UPD`。

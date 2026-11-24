@@ -1,11 +1,21 @@
 # 家裡電腦接手清單
 
+## 家用端同步與 IV502 驗證（2026-11-25）
+
+- [x] Fetch 並正常快轉整合 GitHub `origin/main` 至 `7de147c`；包含公司端 IV206／IV210／IV211／IV302–304／IV310／IV501／IV502 交接，沒有覆蓋兩端提交，也沒有 force push。
+- [x] 本機 `npm run build` 成功；DEV app-browser 使用 Demo 登入，確認庫存管理三層選單、IV502 FGD／SEMI 切換、草稿查詢、新增／編輯／作廢、列印預覽及 FGD 完整包裝守門。曾發現 Add 在改 BookingFlag 後才重算選取清單，造成單據無明細；修正為先快照選取 Lot，再更新預約。半成品新增重驗為 1 Lot，編輯、作廢、查詢與列印均通過，FGD 未選齊包裝會拒絕、選完整包裝後建立 2 Lot；已 Reset DEV 回初始假資料。這些只驗證瀏覽器本機 DEV，不是正式 API／帳務驗收。
+- [x] 以 PPK SSH 唯讀查 YMES PostgreSQL `YMES` schema catalog；未查業務列、未變更資料。已存在 `tblinvinventorybasis`、`tblinvlocatorbasis`、`tblinvtransactionlog`、`tblinvtransactionstate`、`tblwiplotbasis`、`tblwiplotstate`。IV501／IV502 相關 live 缺表包括 `tblinvfgdinbasis`、`tblinvfgdindetail`、`tblinvfgdincomponent`、`tblinvsemiinbasis`、`tblinvsemiindetail`、`tblinvsemiincomponent`、`tblinvwipinventory_semi`、`tblinvwipinventory_component`、`tblprdpackingrulebasis`、`tblsysbin`、`tblinvfgdinventory`、`tblinvfgdinventorycomponent`、`tblwipgoodbinstate`、`tblwipmolinepackrelation`、`tblwipreversehistory`。`tblinvfgdinventorybin` 在 live 與 Oracle MESTEST 均未找到，不得臆造或建立。
+- [x] 已將 live 確認缺少且有可信來源的 15 張 IV501／IV502 共用表整理為 forward migration `0074_inv_product_in_draft_schema.sql`／空表安全 rollback；依 WP604／605、WP201／603、WP601／PRD112、WP215 與 QC409 source refs 保留原生欄位、鍵、預設值與索引。另補 `TBLWIPGOODBINSTATE` PostgreSQL CREATE-only；不建立 Oracle MESTEST 未找到的 `TBLINVFGDINVENTORYBIN`。
+- [x] 重新核對 15 張目標表與 3 個 index 名稱均缺少／無衝突後完成同機完整備份與 `pg_restore --list`；已套用 0074 並經 PostgreSQL 獨立讀回核對欄位數、PK、索引及 `ymes_app` 權限。資料庫業務列沒有讀取或匯入，migration 建立的表均為空；備份與 checksum 詳 [DATABASE_CONNECTION.md](docs/DATABASE_CONNECTION.md)。
+- [ ] 之後實作 IV502 限量查詢、父單號明細及草稿 CRUD API，依單一交易重驗與維護來源 BookingFlag、ReverseHistory、DataStamp；API 前端接線及正式遠端驗收另行完成。
+- [ ] IV501 Source=30 正式過帳 API、IV502 草稿 API 與 IV304 退料確認仍未完成；公司端缺少的 IV302–304 原生 DDL 已列入 `todolist_officepc.md` 明確補件清單。正式部署／DB 寫入驗收未完成。
+
 ## 最新公司端交接：IV502 開立成品／半成品入庫單（2026-11-24）
 
 - [x] 公司端已完成 IV502 `/YMES/INV/ProductIn` DEV 草稿 CRUD、WinForms／Service／Core 規格與 handoff；詳見 [IV502 規格](docs/modules/INV/開立成品半成品入庫單_IV502.md) 及 [公司端交接檔](docs/CODEX_HANDOFF_OFFICEPC.md)。
 - [x] 已核對 FGD／SEMI Basis、Detail、Component 與來源 WIP Semi／Component 的新增、編輯、作廢及 BookingFlag；FGD 包裝須完整選取最高層所有子 Lot，SEMI 不接受有 PackingNo 的 Lot。
-- [x] FGD／SEMI 入庫表沿用 WP605／WP604，來源／Lot／Package／ReverseHistory／Locator 使用 WP201／603／101／215／601／PRD112 refs；本輪無新 DDL，桌機沒有連 Oracle 或 PostgreSQL。
-- [ ] 家用端 pull 後核對既有 references 與 PostgreSQL live schema／migrations。實作登入與 Function ACL 保護的限量列表、父單號限定 Detail／Component、草稿新增／編輯／作廢 API。
+- [x] FGD／SEMI 入庫表沿用 WP605／WP604，來源／Lot／Package／ReverseHistory／Locator 使用 WP201／603／101／215／601／PRD112 refs；家用端已核 live PostgreSQL 並以 0074 建立 15 張缺少的空表，備份與結構／權限回讀記錄見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。`TBLINVFGDINVENTORYBIN` 不存在於 MESTEST，未建立。
+- [ ] 實作登入保護的限量列表、父單號限定 Detail／Component、草稿新增／編輯／作廢 API，依 FunctionKey／權限策略檢查登入功能授權；目前資料表雖就緒，正式 API 尚未接線。
 - [ ] 建單／編輯交易內重讀來源 Lot 與 Component、檢查 Qty>0／BookingFlag=0／庫房類型／完整包裝、以 DataStamp 原子更新 Basis／明細／預約／reverse history；作廢只設 State=-1 並解除預約，保留 Basis／Detail／Component。
 - [ ] IV502 只建立草稿，不扣來源數量或增加目的庫存；實際確認由 IV501 Source=30 執行。詳細交易與表清單見 IV502 模組規格。
 - [x] 公司端未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署、未執行 build/test/browser。公司端下一項依清冊為 IV503「成品入庫單記錄」。
