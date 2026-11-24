@@ -16,6 +16,12 @@
 - [ ] IV502 建立草稿不扣來源數量、不增加目的庫存；真正確認仍由 IV501 Source=30 原子過帳處理。需依規格處理反向歷程／BookingFlag 與作廢資料保留。
 - [x] 公司端未連 YMES PostgreSQL、未設定 `ConnectionStrings__YMes`、未實作正式 API/schema、未部署、未執行 build/test/browser。下一項依清冊為 IV503「成品入庫單記錄」。
 
+### IV502 家用 API 寫入所需補充來源證據
+
+- [ ] 只讀回覆 FGD／SEMI 入庫號碼各自使用的 `SerialType`、`SerialTypeNo`／`FunctionName`、自動／手動取號規則，以及 Core 呼叫的 serial helper。Repo 有 serial-rule／serial-create references，但 YMES live 缺少 serial rule detail／serial create max 表，家用端先不要猜規則或產生正式單號。
+- [ ] 從 IV502 Form／Service／Core 說明 LotNo 對應 `TBLWIPMOLINEPACKRELATION` PackingNo 的 join 鍵與完整包裝驗證方式，並列出 Add 草稿時 ReverseHistory、Lot location／release history 的精確 helper、表名、欄位與時序。已有可信 source DDL 的表不重複匯出；若有 repo 缺少的新表，附 Oracle CREATE 與字典 metadata。
+- [ ] 若 iMESWIPReleaseLogHandler 或 user-defined hook 會在 IV502 Add 改變正式資料，請列出必要輸入與失敗回應，並確認是否可與 Basis／Detail／Component／BookingFlag 放在同一資料庫交易；不得只因 DLL 呼叫存在就宣稱已完成副作用。
+
 ## 公司端前項交付：IV501 成品庫庫房資料（2026-11-24）
 
 - [x] 直接核對 `frmINVFGDInventory`／`frmINVFGDInConfirm` inline Form／Designer、`wsSMD.LoadInventoryBasis`、`wsINV` 查詢／確認 Service、`wsWIP.LoadGoodBinState`／`wsSYS.LoadBin`、`clsInventory` FGD In Core。

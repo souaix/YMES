@@ -2,12 +2,13 @@
 
 ## 家用端同步與 IV502 驗證（2026-11-25）
 
-- [x] Fetch 並正常快轉整合 GitHub `origin/main` 至 `7de147c`；包含公司端 IV206／IV210／IV211／IV302–304／IV310／IV501／IV502 交接，沒有覆蓋兩端提交，也沒有 force push。
+- [x] Fetch 並正常快轉整合 GitHub `origin/main` 至 `7de147c`；包含公司端 IV206／IV210／IV211／IV302–304／IV310／IV501／IV502 交接。家用端完成結構／瀏覽器修正及 IV502 唯讀 API 後，以一般 fast-forward 推到 `main`：`03805fd`；push 後 fetch 確認 `origin/main` 相同，沒有覆蓋兩端提交或 force push。
 - [x] 本機 `npm run build` 成功；DEV app-browser 使用 Demo 登入，確認庫存管理三層選單、IV502 FGD／SEMI 切換、草稿查詢、新增／編輯／作廢、列印預覽及 FGD 完整包裝守門。曾發現 Add 在改 BookingFlag 後才重算選取清單，造成單據無明細；修正為先快照選取 Lot，再更新預約。半成品新增重驗為 1 Lot，編輯、作廢、查詢與列印均通過，FGD 未選齊包裝會拒絕、選完整包裝後建立 2 Lot；已 Reset DEV 回初始假資料。這些只驗證瀏覽器本機 DEV，不是正式 API／帳務驗收。
 - [x] 以 PPK SSH 唯讀查 YMES PostgreSQL `YMES` schema catalog；未查業務列、未變更資料。已存在 `tblinvinventorybasis`、`tblinvlocatorbasis`、`tblinvtransactionlog`、`tblinvtransactionstate`、`tblwiplotbasis`、`tblwiplotstate`。IV501／IV502 相關 live 缺表包括 `tblinvfgdinbasis`、`tblinvfgdindetail`、`tblinvfgdincomponent`、`tblinvsemiinbasis`、`tblinvsemiindetail`、`tblinvsemiincomponent`、`tblinvwipinventory_semi`、`tblinvwipinventory_component`、`tblprdpackingrulebasis`、`tblsysbin`、`tblinvfgdinventory`、`tblinvfgdinventorycomponent`、`tblwipgoodbinstate`、`tblwipmolinepackrelation`、`tblwipreversehistory`。`tblinvfgdinventorybin` 在 live 與 Oracle MESTEST 均未找到，不得臆造或建立。
 - [x] 已將 live 確認缺少且有可信來源的 15 張 IV501／IV502 共用表整理為 forward migration `0074_inv_product_in_draft_schema.sql`／空表安全 rollback；依 WP604／605、WP201／603、WP601／PRD112、WP215 與 QC409 source refs 保留原生欄位、鍵、預設值與索引。另補 `TBLWIPGOODBINSTATE` PostgreSQL CREATE-only；不建立 Oracle MESTEST 未找到的 `TBLINVFGDINVENTORYBIN`。
 - [x] 重新核對 15 張目標表與 3 個 index 名稱均缺少／無衝突後完成同機完整備份與 `pg_restore --list`；已套用 0074 並經 PostgreSQL 獨立讀回核對欄位數、PK、索引及 `ymes_app` 權限。資料庫業務列沒有讀取或匯入，migration 建立的表均為空；備份與 checksum 詳 [DATABASE_CONNECTION.md](docs/DATABASE_CONNECTION.md)。
-- [ ] 之後實作 IV502 限量查詢、父單號明細及草稿 CRUD API，依單一交易重驗與維護來源 BookingFlag、ReverseHistory、DataStamp；API 前端接線及正式遠端驗收另行完成。
+- [x] 新增登入保護的 IV502 分頁列表與父單號明細唯讀 API：預設 FGD／State=0／Source=1，每頁上限 200；Detail 必填父單號並限制 2,000 筆、Component 限制 5,000 筆。本機 .NET 9 build 成功，尚未部署或接正式 UI。
+- [ ] 實作 IV502 來源 Lot／Component lookup 與草稿 Create／Edit／Void API；單一交易重驗 Qty、BookingFlag、Lot／Component 狀態、完整包裝、DataStamp，維護來源預約與 ReverseHistory。先補齊公司端待辦列出的 serial rule／包裝關聯／歷程來源證據，再完成 API 前端接線與遠端驗收。
 - [ ] IV501 Source=30 正式過帳 API、IV502 草稿 API 與 IV304 退料確認仍未完成；公司端缺少的 IV302–304 原生 DDL 已列入 `todolist_officepc.md` 明確補件清單。正式部署／DB 寫入驗收未完成。
 
 ## 最新公司端交接：IV502 開立成品／半成品入庫單（2026-11-24）
