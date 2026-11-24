@@ -40,3 +40,13 @@ SC402 沒有新增業務表。`TBLWIPERFBASIS`、`TBLWIPERFBATCHLOT` 的 Oracle 
 - ERF Info 重用 WP508 shared read API；8D 的 Basis factory／Maintain 使用 WP801／WP802 已定義的 Function ACL 與 API，新增 8D 時以單一交易或冪等關聯保護 `ERFBasis.QRSNo` 和 QRS Basis，避免孤立或重複建立。
 
 本輪只讀 WinForms／Service／Core 與 repo 既有 DDL references；沒有 Oracle 新查詢需求、沒有建 SQL、沒有正式 API／schema 工作，未執行 build/test/browser。
+
+## 家用端正式唯讀查詢與上線紀錄（2026-11-24）
+
+- PPK SSH 唯讀核對 YMES PostgreSQL 的 `YMES.tblwiperfbasis`、`tblwiperfbatchlot`、`tblwiplotbasis` 欄位；migration 0070 已提供所需欄位，沒有新增 migration、表或授權，也沒有查閱業務資料。
+- 正式查詢端點為 `GET /api/spc/erfs/query`（正式站 API base `/YMES/API`），使用登入 Cookie 保護、參數化查詢及 Repeatable Read／Read Only transaction。固定 `ERFSource IN (1,2)`，不加 Status 條件；六條件至少一項有效，五個代碼欄位 exact match，Lot No case-insensitive contains 並包含任一 BatchLot 成員。依 ERFNo 使用 `C` collation 升冪排序。
+- 條件文字欄位長度依 Lot／Customer 50、OP 20、MClass 30、Cur Group 100、ERF 20 限制並拒絕控制字元；頁碼 1–100,000、每頁 1–100（預設 100）。`CalHoldTimeMinutes` 對 Status 12／21 且有 ReleaseDate 時使用 CreateDate 至 ReleaseDate，其他狀態使用 CreateDate 至查詢時間，結果不低於 0。
+- Web 保留來源六條件與 22 欄 Grid；正式頁 ERF Info／8D 停用。頁面排版使用自適應查詢欄位與表格內水平捲動。正式查詢只回傳 Grid 欄位與後續畫面所需的 ERF Type／Source／Creator／CreateDate，沒有查詢隱藏的 ProductName。
+- 正式站版本 API `sc402-query-20261124-b3`、Web `sc402-query-20261124-b4`。Web b4 只替換 `ymes-web`；API b3 保持運作，`ymes-master-web` 未重啟。API readiness 200、未登入端點 401、Web 根目錄與新 JS 資產 200。
+- app-browser Demo 登入後驗證 SC402 正式路由、空條件防護、單條件與六條件查詢；目前來源表無業務列，兩次有效查詢均回 0 筆，分頁停用。Close 返回主選單，`/ymes` 是 404；SC401、SC216 查詢回 0 並可切換四個歷程頁籤。新版 SC402 console 無 error／warning。沒有寫入測試業務資料。
+- 目前整體 API 框架只有登入保護，未實作 Function ACL；正式 Function ACL、ERF Info／附件與 WP801／WP802 8D API 仍為待辦。因正式表目前無業務列，無法驗證正向 Grid、跨頁結果、選列或分頁資料。

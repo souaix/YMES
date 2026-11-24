@@ -1,25 +1,32 @@
 # 家裡電腦接手清單
+## 家用端同步狀態（2026-11-24）
+
+- [x] 已 fetch GitHub `main` 至 `01f65e1`，並以一般 merge 納入 IV201 公司端交接；本家用分支保留公司端提交，後續以一般快轉推送，不 force push。
+- [x] YMES PostgreSQL migration `0071` 已建立 QC501 群組明細 lookup 表並只授予 `ymes_app` SELECT；備份與結構核對紀錄在 SC501 模組文件。
+- [x] SC501 正式 lookup API／頁面已建置並部署為 `sc501-setup-20261124-a2`；API readiness、未登入 401、頁面 200 與正式資料空結果已核對。app-browser 曾完成主要表單互動，但原生確認視窗後輸入控制失效；正式頁可讀、後續 Add／選單點擊均無動作，console 無錯誤，需待控制恢復再補驗刪除確認。
+- [ ] SC402 的 ERF Info／附件與 8D 共用 API，以及 SC401 處置／Lot Release／附件尚未完成；使用者已要求先不處理角色權限，端點維持登入保護並記錄權限延後。
+- [ ] IV201：live audit 已確認 RAW／Locator 與共用 Transaction State／Log 缺表；等待公司端補 Raw Inventory 原生 DDL 與六種 Confirm Core 的依賴表清單，再做 schema/API。不能由 DEV 假資料推建。
 
 ## 公司端交接：IV201 原物料倉庫房資料（2026-11-24）
 
 公司端已依 `frmINVRawInventory`／六個單據 Confirm Form、`wsINV`、`clsInventory` 完成 [IV201 DEV 頁與規格](docs/modules/INV/原物料倉庫房資料.md)，路由 `/YMES/INV/RawInventory`。頁面查原料庫房庫存、選列載入 Locator/Lot，並以 localStorage 假資料模擬六種 Confirm；正式單據與庫存 API 未實作。
 
-- [ ] Pull 最新 `main` 後核對 YMES PostgreSQL live schema／migration history：`TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC`、`TBLMTLMATERIALBASIS` 及各單據來源主檔／明細、transaction state/log 與領料投入點／WIP 副作用表。桌機受保護 Oracle profile 不存在；兩張 raw inventory 表沒有本版本可信 DDL／metadata，不能由 DEV fixture 推建 schema。
-- [ ] 先比 live schema 再決定是否新增 migration；若必須查 Oracle source，請公司端安全設定本機受保護 profile，以 PowerShell 5.1 + `Oracle.ManagedDataAccess` 只讀取 DDL／字典 metadata。
-- [ ] 提供登入與 `RAW INVENTORY` Function ACL 保護的有效 RAW 庫房 lookup、有限筆數庫存查詢、依 InventoryNo+MaterialNo 查 Locator/Lot 明細；固定舊畫面的 `InventoryType=0`、`IssueState=2`、`CurQty>0` 語意，使用參數化 SQL／明確排序，不接受任意 AdditionalXml。
-- [ ] 六種 Confirm 使用伺服器端授權 command，固定 Source 0/1/3/4/2/10，重新讀取 State=0 單據、重驗庫房／單位／數量／Locator／Lot／預訂與權限；以交易、鎖定／版本和冪等鍵同步單據狀態、交易 state/log、庫存主檔／儲位及投入點／WIP 副作用，錯誤時回滾或回報可恢復失敗，不可回報成功後留下部分寫入。舊 `AddINVTransactionState` 先回 success 再同步執行，且吞掉內層例外；正式 API 必須回傳最終執行狀態，不能複製假成功行為。
-- [ ] 區分交易方向：Material In／WIP Return 增加原料庫存；Material Out／Material Return 扣減庫存（Material Return 還會清相關元件庫存列）；Material Adjust 依 AdjustType 調整數量或儲位；PreOrder 只增加 AllocateQty，Material Out 依來源規則消耗預訂。
-- [ ] 繼續追各交易 Core 分支：完整多明細、單位換算、領料元件與 OE/WIP 投入、預訂消耗、AdjustType 儲位限制、WIP return Place 與產業包表；DEV 僅為單筆假資料示例。家用端負責 schema／migration、正式 API、部署及驗收。
+- [x] 2026-11-24 以 PPK SSH 唯讀查 YMES `ymes`／quoted `YMES` schema：RAW 主表、Locator 表及共用 Transaction State／Log 均缺；MTL Material Basis (110 欄)、Inventory Basis (14 欄)、Locator Basis (12 欄) 存在。`YMES` 目前只有四張 `tblinv*` 表；未找到通用 migration ledger，repo migrations 沒有建立上述缺表的 migration。
+- [ ] 公司端提供 `TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC` Oracle `DBMS_METADATA.GET_DDL` 及欄位／PK／index／FK／trigger/default metadata；同時逐一列出六種 Confirm 的直接 Core 依賴表，對照已存在 source DDL，僅補充 repo 缺少的原生結構與 PostgreSQL CREATE-only。未收到可信 DDL 前不猜 schema。
+- [ ] 使用 WP605 已查證 `TBLINVTRANSACTIONSTATE/LOG` DDL 核對共用交易表缺項與 YMES migration／`ymes_app` 權限後，做獨立 forward migration；先確認 source TicketNo 長度與六種 IV201 單據編號相容，再接交易 API。
+- [ ] 提供登入保護的有效 RAW 庫房 lookup、有限筆數庫存查詢、依 InventoryNo+MaterialNo 查 Locator/Lot 明細；固定舊畫面的 `InventoryType=0`、`IssueState=2`、`CurQty>0` 語意，使用參數化 SQL／明確排序，不接受任意 AdditionalXml。Function ACL 依使用者目前指示暫緩。
+- [ ] 六種 Confirm 使用伺服器端交易命令，固定 Source 0/1/3/4/2/10，重新讀取 State=0 單據、重驗庫房／單位／數量／Locator／Lot／預訂；以交易、鎖定／版本和冪等鍵同步單據狀態、transaction state/log、庫存主檔／儲位及投入點／WIP 副作用，錯誤時回滾或回報可恢復失敗。
+- [ ] 區分交易方向：Material In／WIP Return 增加庫存；Material Out／Material Return 扣減庫存；Material Adjust 依 AdjustType 調整數量或儲位；PreOrder 只增加 AllocateQty，Material Out 依來源規則消耗預訂。
+- [ ] 完整追各交易 Core 分支：多明細、單位換算、領料元件與 OE/WIP 投入、預訂消耗、AdjustType 儲位限制、WIP Return Place 與產業包表；DEV 單筆假資料只是示例。
 - [x] 公司端未連 YMES PostgreSQL、未建立 schema/migration、未實作正式 API；下一項公司端 DEV 為 IV202「開立進料單」。
-
 ## 公司端交接：SC501 品管項目檢測儀器對應（2026-11-24）
 
 公司端已核對 `frmInspMachineParameterSetup`／`frmInspMachineParameterTest`、Service／Core，完成 [SC501 DEV 頁](docs/modules/SPC/品管項目檢測儀器對應.md) 與 `/YMES/SPC/InspMachineParameterSetup` 路由。此功能在 `%LocalAppData%\iMESTech\InspMachineSetup.xml` 維護操作站的 QC Item／檢測儀器／RS232 對應；MES 只提供 QC Item、儀器主檔及群組明細 lookup，沒有對應表寫入 Service。DEV 用假資料、瀏覽器 localStorage 與 XML 匯入／匯出模擬，不連真實 COM Port。
 
-- [ ] Pull 後比對 QC205 Variable QC Item、QC502 檢測儀器主檔及 QC Item Group Detail 的 YMES live schema／migration；沿用 repo references，SC501 不新增業務表或 CREATE SQL。
-- [ ] 為 SC501 頁重用受登入／Function ACL 保護的唯讀 lookup，保留 Variable `CollectType=1`／`IssueState=2`、儀器 `IssueState=2`、群組明細 ShowOrder 排序；不要增加無必要的 CRUD API。
-- [ ] 決定正式 Web 如何處理操作站設定檔。舊程式寫 client LocalAppData；瀏覽器不能直接覆寫該路徑。若要跨人員共享，先定義工作站範圍、版本及 local agent，再新增 schema/API；不要把對應資料寫入 QC502 的儀器主檔。
-- [ ] 若需要真實設備測試，設計受控本機 Serial Port agent／服務及權限、併發、超時、斷線與量測解析契約；現有 DEV simulation 只是假接收值。
+- [x] 比對 QC205 Variable QC Item、QC502 檢測儀器主檔及 QC Item Group Detail 的 YMES live schema／migration；只對確認缺少的群組明細建立 `0071`，沿用 repo references。
+- [x] 正式頁重用登入保護的唯讀 lookup，保留 Variable `CollectType=1`／`IssueState=2`、儀器 `IssueState=2`、群組明細 ShowOrder 排序；角色／Function ACL 依目前產品安排暫緩，不增加 CRUD API。
+- [x] 正式 Web 設定保存範圍採每個瀏覽器 localStorage；與舊 client LocalAppData 的差異及跨人員共享限制已記錄在 SC501 規格，不把 mapping 存入 QC502 儀器主檔。
+- [ ] 真實設備 I/O 尚未實作；若後續要從瀏覽器連實體 Serial Port，再另定義本機設備代理與權限、併發、超時、斷線及量測解析契約。現有頁面僅模擬接收值。
 - [x] 公司端未連 YMES PostgreSQL、未實作正式 API/schema、未操作 Oracle；SPC 清冊目前所有 FunctionKey 均已交付，下一模組依總清冊順序為 INV，先盤點未復刻項目。
 
 ## 公司端交接：SC402 SPC 異常單查詢（2026-11-24）

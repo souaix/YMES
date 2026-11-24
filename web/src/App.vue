@@ -3230,6 +3230,7 @@ async function signOut(): Promise<void> {
         <SpcInspMachineParameterSetup
           v-else-if="isSpcInspMachineParameterSetupPage"
           class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />

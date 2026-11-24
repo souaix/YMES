@@ -6,7 +6,7 @@
 - [x] 完成 `/YMES/INV/RawInventory` DEV：有效原料庫房選擇、庫存主 Grid、選列連動 Locator/Lot Grid、數量摘要、Refresh／Close、Material In/Out/Adjust、PreOrder、Material Return、WIP Return 單據確認入口與 localStorage 假交易。
 - [x] 記錄六個 Source code 0/1/3/4/2/10、`CurQty > 0` 主查詢、Locator 顯示欄及 `PreOrder` 只增加 `AllocateQty`；Material Return 扣庫存，WIP Return 回補原料庫；多明細、單位換算、投入點／WIP 副作用及產業包分支明確列為 DEV 簡化。
 - [x] 新增 [IV201 規格](docs/modules/INV/原物料倉庫房資料.md)，更新 Module Index、MES menu inventory 和家用端 handoff。
-- [ ] 家用端先比對 `TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC` 及單據交易所需表的 live schema／migration；桌機受保護 Oracle profile 不存在，本輪無可信 Oracle DDL／metadata，未新增猜測 SQL。
+- [ ] 家用端回報：YMES PostgreSQL `YMES` schema 缺 `tblinvrawinventory`、`tblinvrawinventoryloc`、`tblinvtransactionstate`、`tblinvtransactionlog`；已存在 `tblmtlmaterialbasis`（110 欄）、`tblinvinventorybasis`（14 欄）、`tblinvlocatorbasis`（12 欄）。請用公司端受保護 MESTEST profile 唯讀匯出 `TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC` 的 Oracle DDL 與欄位／PK／index／FK／trigger/default metadata，並逐一整理六種 IV201 Confirm Core 的直接相依表；對 repo 缺少可信來源的表補 source DDL、metadata 與 PostgreSQL CREATE-only。禁止查業務列、執行 Oracle DDL/DML 或猜測欄位。共用 Transaction State／Log 已有 WP605 refs，不需重複查 Oracle。
 - [x] 公司端未連 YMES PostgreSQL、未實作／驗收正式 API/schema、未設定 `ConnectionStrings__YMes`、未部署、未執行 build/test/browser。下一個 INV FunctionKey 為 IV202「開立進料單」。
 
 ## 公司端最新交付：SC501 品管項目檢測儀器對應（2026-11-24）

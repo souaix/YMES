@@ -316,7 +316,210 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.wp508-page.spc-mode .query-grid{grid-template-areas:'lot mclass . .' 'op group . .' 'customer erf . query'}
-.wp508-page.spc-mode .query-pager{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:10px 0}
-@media(max-width:950px){.wp508-page.spc-mode .query-grid{grid-template-areas:'lot mclass' 'op group' 'customer erf' 'query query'}}
+.wp508-page.spc-mode {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 10px;
+  background: #f7f5ee;
+  color: #303030;
+  font: 13px Arial, "Microsoft JhengHei", sans-serif;
+}
+.wp508-page.spc-mode h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+.wp508-page.spc-mode h1 small {
+  color: #777366;
+  font-size: 12px;
+  font-weight: 400;
+}
+.wp508-page.spc-mode > .notice {
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid #dfd5ad;
+  background: #fff9dc;
+  color: #5f5740;
+}
+.wp508-page.spc-mode > .notice.error {
+  border-color: #d6aaa6;
+  background: #fff0ef;
+  color: #99251e;
+}
+.wp508-page.spc-mode fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #d4d1c7;
+  background: #fff;
+}
+.wp508-page.spc-mode legend {
+  padding: 0 5px;
+  color: #5f5b50;
+}
+.wp508-page.spc-mode .query-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas: "lot op customer" "mclass group erf" ". . query";
+  align-items: center;
+  gap: 8px 10px;
+  min-width: 0;
+}
+.wp508-page.spc-mode .query-grid > label {
+  display: grid;
+  grid-template-columns: auto max-content minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.wp508-page.spc-mode .field-lotNo {
+  grid-area: lot;
+  grid-template-columns: auto max-content max-content minmax(0, 1fr) !important;
+}
+.wp508-page.spc-mode .field-opNo { grid-area: op; }
+.wp508-page.spc-mode .field-customerNo { grid-area: customer; }
+.wp508-page.spc-mode .field-mClassNo { grid-area: mclass; }
+.wp508-page.spc-mode .field-curGroupNo { grid-area: group; }
+.wp508-page.spc-mode .field-erfNo {
+  grid-area: erf;
+  grid-template-columns: auto max-content minmax(0, 1fr) !important;
+}
+.wp508-page.spc-mode .query-grid input:not([type="checkbox"]) {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  box-sizing: border-box;
+  border: 1px solid #c8c5bb;
+  border-radius: 3px;
+  padding: 4px 7px;
+  color: #292821;
+  font: inherit;
+}
+.wp508-page.spc-mode .query-grid input.yellow { background: #fff2bd; }
+.wp508-page.spc-mode .query-grid input:disabled { background: #eee; color: #777; }
+.wp508-page.spc-mode .query-grid input[type="checkbox"] { margin: 0; accent-color: #b79a19; }
+.wp508-page.spc-mode .lookup-button,
+.wp508-page.spc-mode .mes-button {
+  min-height: 30px;
+  border: 1px solid #c8c5bb;
+  border-radius: 3px;
+  background: #faf9f6;
+  color: #39372e;
+  font: inherit;
+  cursor: pointer;
+}
+.wp508-page.spc-mode .lookup-button {
+  width: 30px;
+  min-width: 30px;
+  padding: 2px;
+}
+.wp508-page.spc-mode .lookup-button:disabled,
+.wp508-page.spc-mode .mes-button:disabled {
+  color: #999;
+  cursor: default;
+}
+.wp508-page.spc-mode .query-button {
+  grid-area: query;
+  justify-self: end;
+  min-width: 88px;
+  padding: 4px 12px;
+  border-color: #bba228;
+  background: #3d3a31;
+  color: #fff;
+}
+.wp508-page.spc-mode .result-frame {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 150px;
+  flex-direction: column;
+  overflow: hidden;
+}
+.wp508-page.spc-mode .result-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+.wp508-page.spc-mode .grid-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 90px;
+  overflow: auto;
+  border: 1px solid #e3e0d6;
+}
+.wp508-page.spc-mode .grid-wrap table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.wp508-page.spc-mode .grid-wrap th,
+.wp508-page.spc-mode .grid-wrap td {
+  padding: 6px 8px;
+  border: 1px solid #e4e1d8;
+  text-align: left;
+}
+.wp508-page.spc-mode .grid-wrap th {
+  position: sticky;
+  top: 0;
+  background: #f3f1ea;
+  color: #5e5b50;
+  font-weight: 600;
+}
+.wp508-page.spc-mode .grid-wrap .empty {
+  background: #fff;
+  color: #888;
+  text-align: center;
+}
+.wp508-page.spc-mode .query-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 8px 0;
+}
+.wp508-page.spc-mode .actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 8px;
+}
+.wp508-page.spc-mode .actions > div { display: flex; gap: 6px; }
+.wp508-page.spc-mode .status-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 5px;
+  border-top: 1px solid #e4e1d8;
+  color: #777366;
+  font-size: 11px;
+}
+@media (max-width: 950px) {
+  .wp508-page.spc-mode .query-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas: "lot op" "customer mclass" "group erf" "query query";
+  }
+}
+@media (max-width: 600px) {
+  .wp508-page.spc-mode { padding: 8px; }
+  .wp508-page.spc-mode .query-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "lot" "op" "customer" "mclass" "group" "erf" "query";
+  }
+  .wp508-page.spc-mode .query-button { justify-self: stretch; }
+}
 </style>

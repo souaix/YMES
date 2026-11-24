@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 interface QcItem { no: string; name: string }
 interface GroupItem extends QcItem { groupNo: string; groupName: string }
 interface Machine {
-  no: string; name: string; inspType: 0; baudRate: string; parityBit: string; dataBit: string; stopBit: string
+  no: string; name: string; inspType: number; baudRate: string; parityBit: string; dataBit: string; stopBit: string
   endCode: string; format1: string; format2: string; chNo: string
+}
+interface ApiMachine extends Record<string, unknown> {
+  inspMachineNo: string; inspMachineName?: string | null; inspType: number; baudRate?: number | null
+  parityBit?: string | null; dataBit?: number | null; stopBit?: number | null; endCode?: string | null
+  format1?: string | null; format2?: string | null; chNo?: string | null
+}
+interface ApiLookups {
+  variableItems: Array<{ qcItemNo: string; qcItemName: string }>
+  groupItems: Array<{ groupNo: string; groupName?: string | null; qcItemNo: string; qcItemName?: string | null }>
+  inspectionMachines: ApiMachine[]
 }
 interface SetupRow {
   id: string; comPort: string; inspMachineNo: string; channel: string; groupNo: string
@@ -19,20 +29,22 @@ interface SetupForm {
 }
 type LookupKind = 'qcitem' | 'group' | 'machine' | ''
 
-defineProps<{ developmentPreview: boolean }>()
+const props = withDefaults(defineProps<{ developmentPreview?: boolean; apiBaseUrl?: string }>(), {
+  developmentPreview: false, apiBaseUrl: '',
+})
 const emit = defineEmits<{ close: [] }>()
-const storageKey = 'ymes.dev.spc.insp-machine-setup.v1'
-const qcItems: QcItem[] = [
+const storageKey = props.developmentPreview ? 'ymes.dev.spc.insp-machine-setup.v1' : 'ymes.spc.insp-machine-setup.v1'
+const demoQcItems: QcItem[] = [
   { no: 'QC-V-001', name: '軸心外徑' }, { no: 'QC-V-002', name: '軸心圓度' },
   { no: 'QC-V-018', name: '壓合高度' }, { no: 'QC-V-025', name: '端面寬度' },
 ]
-const groupItems: GroupItem[] = [
+const demoGroupItems: GroupItem[] = [
   { groupNo: 'GRP-DIM', groupName: '尺寸檢驗', no: 'QC-V-001', name: '軸心外徑' },
   { groupNo: 'GRP-DIM', groupName: '尺寸檢驗', no: 'QC-V-002', name: '軸心圓度' },
   { groupNo: 'GRP-FIT', groupName: '組裝檢驗', no: 'QC-V-018', name: '壓合高度' },
   { groupNo: 'GRP-FIT', groupName: '組裝檢驗', no: 'QC-V-025', name: '端面寬度' },
 ]
-const machines: Machine[] = [
+const demoMachines: Machine[] = [
   { no: 'IM-DEV-01', name: 'Mitutoyo LSM-6200', inspType: 0, baudRate: '9600', parityBit: 'None', dataBit: '8', stopBit: '1', endCode: '13', format1: 'VALUE,1', format2: 'F2', chNo: '1' },
   { no: 'IM-DEV-02', name: 'Keyence IM-8000', inspType: 0, baudRate: '19200', parityBit: 'Even', dataBit: '8', stopBit: '1', endCode: '13', format1: 'D1,1,D2,1', format2: 'F3', chNo: '2' },
   { no: 'IM-DEV-03', name: '高度計 HG-300', inspType: 0, baudRate: '9600', parityBit: 'Odd', dataBit: '7', stopBit: '1', endCode: '10', format1: 'VALUE,1', format2: '', chNo: '1' },
@@ -44,14 +56,21 @@ const seedRows: SetupRow[] = [
   { id: 'seed-4', comPort: '3', inspMachineNo: 'IM-DEV-03', channel: '', groupNo: 'GRP-FIT', qcItemNo: 'QC-V-018', qcItemName: '壓合高度', inspType: 0, comSetup: '9600,O,7,1', endCode: '10', format1: 'VALUE,1', format2: '', chNo: '1', enable: true, unitConversion: 'mm' },
 ]
 
-const rows = ref<SetupRow[]>(loadPreviewRows())
+const qcItems = ref<QcItem[]>(props.developmentPreview ? demoQcItems.map((item) => ({ ...item })) : [])
+const groupItems = ref<GroupItem[]>(props.developmentPreview ? demoGroupItems.map((item) => ({ ...item })) : [])
+const machines = ref<Machine[]>(props.developmentPreview ? demoMachines.map((item) => ({ ...item })) : [])
+const lookupLoading = ref(!props.developmentPreview)
+const lookupReady = ref(props.developmentPreview)
+const rows = ref<SetupRow[]>(loadLocalRows())
 const selectedIds = ref<string[]>([])
 const dirty = ref(false)
 const editing = ref(false)
 const mode = ref<'add' | 'edit' | 'copy'>('add')
 const editId = ref('')
 const form = ref<SetupForm>(emptyForm())
-const notice = ref('設定資料來自 DEV 假資料；瀏覽器以 localStorage 模擬操作站 InspMachineSetup.xml。')
+const notice = ref(props.developmentPreview
+  ? 'DEV 假資料；設定只保存在此瀏覽器，XML 可匯入或匯出。'
+  : '正在載入核准的 QC Item、群組及檢測儀器。')
 const noticeKind = ref<'info' | 'success' | 'error'>('info')
 const lookupKind = ref<LookupKind>('')
 const lookupSearch = ref('')
@@ -62,12 +81,52 @@ const importInput = ref<HTMLInputElement | null>(null)
 function emptyForm(): SetupForm {
   return { comPort: '', inspMachineNo: '', qcItems: [], enable: true, channel: '', baudRate: '', parityBit: 'None', dataBit: '8', stopBit: '1', endCode: '', format1: '', format2: '', chNo: '' }
 }
-function loadPreviewRows(): SetupRow[] {
+async function apiGet<T>(path: string): Promise<T> {
+  const base = props.apiBaseUrl.trim().replace(/\/+$/, '')
+  if (!base) throw new Error('目前作業環境尚未設定 API 位址。')
+  const response = await fetch(`${base}${path}`, { credentials: 'include', headers: { Accept: 'application/json' } })
+  const body = await response.json().catch(() => null) as ({ detail?: string; title?: string } & T) | null
+  if (!response.ok) throw new Error(body?.detail || body?.title || `HTTP ${response.status}`)
+  if (!body) throw new Error('API 回應格式無效。')
+  return body
+}
+function mapParity(value: string | null | undefined): string {
+  const key = (value || 'N').trim().toUpperCase()
+  const options: Record<string, string> = { N: 'None', NONE: 'None', O: 'Odd', OD: 'Odd', ODD: 'Odd', E: 'Even', EVEN: 'Even', M: 'Mark', MARK: 'Mark' }
+  return options[key] || value || 'None'
+}
+async function loadLookups(): Promise<void> {
+  if (props.developmentPreview) return
+  lookupLoading.value = true
+  lookupReady.value = false
+  try {
+    const data = await apiGet<ApiLookups>('/api/spc/insp-machine-setup/lookups')
+    if (!Array.isArray(data.variableItems) || !Array.isArray(data.groupItems) || !Array.isArray(data.inspectionMachines))
+      throw new Error('SC501 選項資料不完整。')
+    qcItems.value = data.variableItems.map((item) => ({ no: item.qcItemNo, name: item.qcItemName }))
+    groupItems.value = data.groupItems.map((item) => ({
+      groupNo: item.groupNo, groupName: item.groupName || item.groupNo, no: item.qcItemNo, name: item.qcItemName || item.qcItemNo,
+    }))
+    machines.value = data.inspectionMachines.filter((item) => Number(item.inspType) === 0).map((item) => ({
+      no: item.inspMachineNo, name: item.inspMachineName || item.inspMachineNo, inspType: 0,
+      baudRate: String(item.baudRate ?? ''), parityBit: mapParity(item.parityBit), dataBit: String(item.dataBit ?? ''),
+      stopBit: String(item.stopBit ?? ''), endCode: item.endCode || '', format1: item.format1 || '', format2: item.format2 || '', chNo: item.chNo || '',
+    }))
+    lookupReady.value = true
+    notice.value = `已載入 ${qcItems.value.length} 項計量 QC Item、${groupItems.value.length} 筆群組明細與 ${machines.value.length} 台 RS232 儀器。設定保存在目前瀏覽器，可用 XML 匯入／匯出。`
+    noticeKind.value = 'info'
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '選項載入失敗。'
+    notice.value = `正式選項載入失敗：${message}`
+    noticeKind.value = 'error'
+  } finally { lookupLoading.value = false }
+}
+function loadLocalRows(): SetupRow[] {
   try {
     const stored = localStorage.getItem(storageKey)
     if (stored) return (JSON.parse(stored) as SetupRow[]).map(normalizeRow)
-  } catch { /* Invalid local preview data falls back to fixtures. */ }
-  return seedRows.map((row) => ({ ...row }))
+  } catch { /* Invalid local settings start empty and can be restored from XML. */ }
+  return props.developmentPreview ? seedRows.map((row) => ({ ...row })) : []
 }
 function normalizeRow(value: Partial<SetupRow>): SetupRow {
   return {
@@ -102,9 +161,9 @@ const channelOptions = computed(() => {
 const channelRequired = computed(() => form.value.format1.split(',').length > 2)
 const lookupRows = computed(() => {
   const term = lookupSearch.value.trim().toLowerCase()
-  const source = lookupKind.value === 'machine' ? machines.map((item) => ({ key: item.no, no: item.no, name: item.name, group: '' }))
-    : lookupKind.value === 'group' ? groupItems.map((item) => ({ key: `${item.groupNo}|${item.no}`, no: item.no, name: item.name, group: `${item.groupNo} — ${item.groupName}` }))
-      : qcItems.map((item) => ({ key: `|${item.no}`, no: item.no, name: item.name, group: '未指定群組' }))
+  const source = lookupKind.value === 'machine' ? machines.value.map((item) => ({ key: item.no, no: item.no, name: item.name, group: '' }))
+    : lookupKind.value === 'group' ? groupItems.value.map((item) => ({ key: `${item.groupNo}|${item.no}`, no: item.no, name: item.name, group: `${item.groupNo} — ${item.groupName}` }))
+      : qcItems.value.map((item) => ({ key: `|${item.no}`, no: item.no, name: item.name, group: '未指定群組' }))
   return source.filter((item) => !term || `${item.no} ${item.name} ${item.group}`.toLowerCase().includes(term))
 })
 
@@ -116,7 +175,7 @@ function startEdit(copy = false): void {
   if (!row || selectedRows.value.length !== 1) return
   mode.value = copy ? 'copy' : 'edit'
   editId.value = copy ? '' : row.id
-  const item = groupItems.find((candidate) => candidate.no === row.qcItemNo && candidate.groupNo === row.groupNo) || { no: row.qcItemNo, name: row.qcItemName, groupNo: row.groupNo, groupName: row.groupNo }
+  const item = groupItems.value.find((candidate) => candidate.no === row.qcItemNo && candidate.groupNo === row.groupNo) || { no: row.qcItemNo, name: row.qcItemName, groupNo: row.groupNo, groupName: row.groupNo }
   const [baudRate = '', parity = 'N', dataBit = '', stopBit = ''] = row.comSetup.split(',')
   form.value = {
     comPort: row.comPort, inspMachineNo: row.inspMachineNo, qcItems: [{ ...item }], enable: row.enable, channel: row.channel,
@@ -133,7 +192,7 @@ function toggleLookup(key: string): void {
 }
 function applyLookup(): void {
   if (lookupKind.value === 'machine') {
-    const machine = machines.find((item) => item.no === lookupSelection.value[0])
+    const machine = machines.value.find((item) => item.no === lookupSelection.value[0])
     if (machine) {
       form.value.inspMachineNo = machine.no
       form.value.baudRate = machine.baudRate; form.value.parityBit = machine.parityBit
@@ -142,9 +201,9 @@ function applyLookup(): void {
       form.value.format2 = machine.format2; form.value.chNo = machine.chNo
     }
   } else if (lookupKind.value === 'group') {
-    form.value.qcItems = lookupSelection.value.map((key) => groupItems.find((item) => `${item.groupNo}|${item.no}` === key)).filter((item): item is GroupItem => !!item)
+    form.value.qcItems = lookupSelection.value.map((key) => groupItems.value.find((item) => `${item.groupNo}|${item.no}` === key)).filter((item): item is GroupItem => !!item)
   } else {
-    form.value.qcItems = lookupSelection.value.map((key) => qcItems.find((item) => `|${item.no}` === key)).filter((item): item is QcItem => !!item).map((item) => ({ ...item, groupNo: '', groupName: '' }))
+    form.value.qcItems = lookupSelection.value.map((key) => qcItems.value.find((item) => `|${item.no}` === key)).filter((item): item is QcItem => !!item).map((item) => ({ ...item, groupNo: '', groupName: '' }))
   }
   lookupKind.value = ''
 }
@@ -197,7 +256,7 @@ function removeSelected(): void {
   if (!selectedIds.value.length) return
   if (!window.confirm(`確定刪除選取的 ${selectedIds.value.length} 筆設定？`)) return
   rows.value = rows.value.filter((row) => !selectedIds.value.includes(row.id)); selectedIds.value = []
-  markChanged('已刪除選取設定；按 Confirm 保存到本機預覽檔。')
+  markChanged('已刪除選取設定；按 Confirm 保存。')
 }
 function setEnabled(row: SetupRow, checked: boolean): void {
   rows.value = rows.value.map((candidate) => ({
@@ -216,8 +275,8 @@ function setUnitConversion(row: SetupRow, value: string): void {
 }
 function loadFile(): void {
   if (dirty.value && !window.confirm('重新載入會捨棄尚未 Confirm 的變更，是否繼續？')) return
-  rows.value = loadPreviewRows(); selectedIds.value = []; dirty.value = false
-  notice.value = '已載入預覽中的 InspMachineSetup.xml。'; noticeKind.value = 'success'
+  rows.value = loadLocalRows(); selectedIds.value = []; dirty.value = false
+  notice.value = props.developmentPreview ? '已載入預覽中的設定。' : '已載入目前瀏覽器保存的設定。'; noticeKind.value = 'success'
 }
 function toXml(): string {
   const esc = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
@@ -260,37 +319,38 @@ function importFile(event: Event): void {
 }
 function confirmSave(): void {
   if (!dirty.value) return
-  if (localStorage.getItem(storageKey) && !window.confirm('本機預覽檔已存在，確定取代？')) return
+  if (localStorage.getItem(storageKey) && !window.confirm('目前已有瀏覽器設定，確定取代？')) return
   try {
     localStorage.setItem(storageKey, JSON.stringify(rows.value)); dirty.value = false
-    notice.value = '已保存本機設定並離開畫面。'; noticeKind.value = 'success'; emit('close')
-  } catch { notice.value = '瀏覽器無法保存本機預覽資料。'; noticeKind.value = 'error' }
+    notice.value = '已保存目前瀏覽器設定。'; noticeKind.value = 'success'; emit('close')
+  } catch { notice.value = '瀏覽器無法保存設定。'; noticeKind.value = 'error' }
 }
 function closePage(): void {
   if (dirty.value && !window.confirm('確定不保存變更並離開？')) return
   emit('close')
 }
 function simulate(): void { simulationRow.value = selectedRows.value[0] || null }
+onMounted(() => { void loadLookups() })
 const simulatedData = computed(() => {
   const row = simulationRow.value
   if (!row) return null
-  const machine = machines.find((candidate) => candidate.no === row.inspMachineNo)
+  const machine = machines.value.find((candidate) => candidate.no === row.inspMachineNo)
   const raw = row.channel === '2' ? '08.642' : '12.345'
   return { row, raw: `${raw}${row.endCode === '13' ? '\\r' : '\\n'}`, value: `${raw}${row.unitConversion ? ` ${row.unitConversion}` : ''}`, machine, com: `COM${row.comPort}` }
 })
 </script>
 
 <template>
-  <section class="setup-page" aria-label="品管項目檢測儀器對應 DEV 預覽">
+  <section class="setup-page" aria-label="品管項目檢測儀器對應">
     <header class="page-head">
       <div><div class="eyebrow">SPC / INSPECTION MACHINE</div><h1>品管項目檢測儀器對應 <small>SC501</small></h1><p>設定 QC Item 與 RS232 儀器的本機對應資料</p></div>
-      <div class="device-chip"><span class="device-dot"></span> DEV 假資料</div>
+      <div class="device-chip" :class="{ unavailable: !props.developmentPreview && !lookupReady }"><span class="device-dot"></span>{{ props.developmentPreview ? 'DEV 假資料' : lookupLoading ? '載入選項' : lookupReady ? '正式查詢' : '選項未載入' }}</div>
     </header>
 
     <div class="toolbar">
       <button type="button" @click="loadFile">Load</button><button type="button" @click="downloadXml">Export</button>
       <button type="button" @click="importInput?.click()">Import</button><input ref="importInput" class="hidden-input" type="file" accept=".xml,text/xml,application/xml" @change="importFile">
-      <span class="toolbar-separator"></span><button type="button" @click="startAdd">Add</button>
+      <span class="toolbar-separator"></span><button type="button" :disabled="lookupLoading || (!props.developmentPreview && !lookupReady)" @click="startAdd">Add</button>
       <button type="button" :disabled="selectedRows.length !== 1" @click="startEdit(false)">Edit</button>
       <button type="button" :disabled="selectedRows.length !== 1" @click="startEdit(true)">Copy</button>
       <button type="button" :disabled="selectedRows.length === 0" @click="removeSelected">Delete</button>
@@ -298,7 +358,7 @@ const simulatedData = computed(() => {
       <div class="toolbar-spacer"></div><button type="button" class="primary" :disabled="!dirty" @click="confirmSave">Confirm</button><button type="button" @click="closePage">Close</button>
     </div>
 
-    <div class="notice" :class="noticeKind" role="status"><span>{{ notice }}</span><span class="record-count">{{ rows.length }} 筆設定</span></div>
+    <div class="notice" :class="noticeKind" role="status"><span>{{ notice }}</span><button v-if="!props.developmentPreview && !lookupReady && !lookupLoading" type="button" @click="loadLookups">重試</button><span class="record-count">{{ rows.length }} 筆設定</span></div>
 
     <div class="grid-card">
       <div class="grid-title"><div><b>Inspection Machine Setup</b><span>依 COMPort → InspMachineNo → Channel 分組；Enable 與 UnitConversion 可直接修改</span></div><span class="selected-count">已選 {{ selectedIds.length }} 筆（Ctrl / ⌘ 多選）</span></div>
@@ -326,9 +386,9 @@ const simulatedData = computed(() => {
       <div class="editor-head"><div><b>{{ mode === 'add' ? '新增對應' : mode === 'copy' ? '複製對應' : '編輯對應' }}</b><span>Complete 先更新暫存 Grid，Confirm 才保存本機設定</span></div><button type="button" class="plain-close" @click="editing = false">×</button></div>
       <div class="editor-grid">
         <label>COM Port <select v-model="form.comPort"><option value="">請選擇</option><option v-for="n in 20" :key="n" :value="String(n)">COM{{ n }}</option></select></label>
-        <label>InspMachineNo <div class="picker"><input v-model="form.inspMachineNo" :readonly="mode !== 'copy'" @input="form.inspMachineNo = form.inspMachineNo.toUpperCase()"><button type="button" :disabled="mode !== 'add'" @click="openLookup('machine')">...</button></div></label>
+        <label>InspMachineNo <div class="picker"><input v-model="form.inspMachineNo" :readonly="mode !== 'copy'" @input="form.inspMachineNo = form.inspMachineNo.toUpperCase()"><button type="button" :disabled="mode !== 'add' || (!props.developmentPreview && !lookupReady)" @click="openLookup('machine')">...</button></div></label>
         <label>Channel <select v-model="form.channel"><option value="">{{ channelRequired ? '請選擇' : '空白' }}</option><option v-for="channel in channelOptions" :key="channel" :value="channel">{{ channel }}</option></select><small v-if="channelRequired">多組 Format1 必須指定 Channel</small></label>
-        <label class="qc-field">QC Item <div class="picker"><input :value="form.qcItems.map((item) => item.no).join(' | ')" readonly><button type="button" :disabled="mode === 'edit'" @click="openLookup('qcitem')">...</button><button type="button" class="group-pick" :disabled="mode === 'edit'" @click="openLookup('group')">Group</button></div><small>{{ form.qcItems.map((item) => item.groupNo || '無群組').join('、') || '可選單一或多個 QC Item，也可按 Group 選取群組項目' }}</small></label>
+        <label class="qc-field">QC Item <div class="picker"><input :value="form.qcItems.map((item) => item.no).join(' | ')" readonly><button type="button" :disabled="mode === 'edit' || (!props.developmentPreview && !lookupReady)" @click="openLookup('qcitem')">...</button><button type="button" class="group-pick" :disabled="mode === 'edit' || (!props.developmentPreview && !lookupReady)" @click="openLookup('group')">Group</button></div><small>{{ form.qcItems.map((item) => item.groupNo || '無群組').join('、') || '可選單一或多個 QC Item，也可按 Group 選取群組項目' }}</small></label>
         <label class="check-field"><input v-model="form.enable" type="checkbox"> Enable</label>
         <label>InspType <input value="0.RS232" readonly></label>
       </div>
@@ -345,7 +405,7 @@ const simulatedData = computed(() => {
 
     <div v-if="lookupKind" class="modal-backdrop" @click.self="lookupKind = ''">
       <section class="lookup-modal" role="dialog" aria-modal="true" :aria-label="lookupKind === 'machine' ? '選擇檢測儀器' : '選擇 QC Item'">
-        <header><div><b>{{ lookupKind === 'machine' ? '選擇檢測儀器' : lookupKind === 'group' ? '選擇品管群組項目' : '選擇計量 QC Item' }}</b><span>來源：DEV lookup 假資料；核准狀態由來源 Service 預設篩選</span></div><button type="button" class="plain-close" @click="lookupKind = ''">×</button></header>
+        <header><div><b>{{ lookupKind === 'machine' ? '選擇檢測儀器' : lookupKind === 'group' ? '選擇品管群組項目' : '選擇計量 QC Item' }}</b><span>{{ props.developmentPreview ? '來源：DEV 假資料' : '來源：YMES 核准主檔唯讀查詢' }}</span></div><button type="button" class="plain-close" @click="lookupKind = ''">×</button></header>
         <input v-model="lookupSearch" class="lookup-search" placeholder="輸入編號、名稱或群組搜尋">
         <div class="lookup-list"><label v-for="item in lookupRows" :key="item.key" class="lookup-row" :class="{ checked: lookupSelection.includes(item.key) }">
           <input v-if="lookupKind === 'machine'" type="radio" name="machine-lookup" :checked="lookupSelection[0] === item.key" @change="lookupSelection = [item.key]">
@@ -358,7 +418,7 @@ const simulatedData = computed(() => {
 
     <div v-if="simulationRow" class="modal-backdrop" @click.self="simulationRow = null">
       <section class="simulation-modal" role="dialog" aria-modal="true" aria-label="儀器通訊模擬">
-        <header><div><b>Simulation — RS232</b><span>此 DEV 預覽不連接真實序列埠</span></div><button type="button" class="plain-close" @click="simulationRow = null">×</button></header>
+        <header><div><b>Simulation — RS232</b><span>此模擬不連接真實序列埠</span></div><button type="button" class="plain-close" @click="simulationRow = null">×</button></header>
         <div v-if="simulatedData" class="sim-summary"><span><small>QC Item</small><b>{{ simulatedData.row.qcItemNo }} · {{ simulatedData.row.qcItemName }}</b></span><span><small>儀器 / Port / Channel</small><b>{{ simulatedData.row.inspMachineNo }} / {{ simulatedData.com }} / {{ simulatedData.row.channel || '—' }}</b></span><span><small>COMSetup</small><b>{{ simulatedData.row.comSetup }}</b></span></div>
         <div v-if="simulatedData" class="sim-data"><label>接收資料 <code>{{ simulatedData.raw }}</code></label><label>解析結果 <strong>{{ simulatedData.value }}</strong></label><label>Format1 <code>{{ simulatedData.row.format1 }}</code></label></div>
         <footer><span>設備連線、COM port 讀寫與真實量測值皆未執行。</span><button type="button" class="primary" @click="simulationRow = null">Close</button></footer>
@@ -422,4 +482,39 @@ input[readonly] { background: #f6f8fa; color: #536d86; }
 .sim-data { display: grid; gap: 12px; padding: 18px 16px; }.sim-data label { flex-direction: row; align-items: center; justify-content: space-between; padding-bottom: 9px; border-bottom: 1px solid #edf1f5; }.sim-data code { color: #345f87; font-size: 12px; }.sim-data strong { color: #2f816c; font-size: 14px; }
 @media (max-width: 900px) { .setup-page { padding: 13px; }.toolbar { flex-wrap: wrap; }.toolbar-spacer { flex-basis: 100%; }.editor-grid { grid-template-columns: 1fr 1fr; }.serial-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .page-head { align-items: flex-start; flex-direction: column; }.editor-grid, .serial-grid { grid-template-columns: 1fr; }.qc-field { grid-column: auto; }.sim-summary { grid-template-columns: 1fr; } }
+.setup-page { background: #f7f5ee; color: #292820; font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; }
+.eyebrow { color: #80752a; }
+h1 { color: #292820; }
+h1 small { background: #f4f0d8; color: #8f811d; }
+.page-head p { color: #777366; }
+.device-chip { border-color: #e5dfc4; background: #f7f4e4; color: #82740e; }
+.device-dot { background: #a38f19; box-shadow: 0 0 0 3px #ebe6c7; }
+.device-chip.unavailable { border-color: #e7d6cf; background: #fbf0ed; color: #9d5548; }
+.device-chip.unavailable .device-dot { background: #b75c4d; box-shadow: 0 0 0 3px #f2dfd9; }
+.toolbar, .grid-card, .editor-card { border-color: #e2dfd4; border-radius: 5px; box-shadow: 0 1px 4px #332f2010; }
+button { border-color: #d8d5c9; border-radius: 4px; color: #3c3a32; }
+button:hover:not(:disabled) { border-color: #b6a536; background: #fbf8e9; }
+button.primary { border-color: #39372f; background: #39372f; color: #fff; }
+button.primary:hover:not(:disabled) { border-color: #27261f; background: #27261f; }
+.notice { border-color: #e2dfd4; background: #f5f3ec; color: #716d60; }
+.notice.success { background: #eef2e8; color: #526847; }.notice.error { background: #fbefec; color: #9b4d41; }
+.record-count { color: #777366; }
+.grid-title, .editor-head { border-color: #e8e5da; }
+.grid-title b, .editor-head b { color: #39372f; }.grid-title span, .editor-head span { color: #777366; }
+th { border-color: #e4e1d8; background: #f2f0e8; color: #716d60; }
+td { border-color: #ece9df; color: #4b4940; }
+.group-row td { background: #f2f0e8; color: #625d43; }.group-row span { color: #817c6e; }
+.data-row:hover td { background: #fbf9ef; }.data-row.selected td { background: #f6f1d7; }.data-row.disabled td { color: #898678; }
+.machine-cell, .code-cell { color: #74651a; }.type-pill { border-color: #e5dfc4; background: #f7f4e4; color: #82740e; }
+.enable-check { accent-color: #9b8714; }.inline-input:hover, .inline-input:focus { border-color: #ddd4a5; }
+.editor-card { border-color: #d8d0a9; }.editor-head { background: #f7f4e7; }
+input, select { border-color: #d8d5c9; border-radius: 4px; color: #39372f; }
+input:focus, select:focus { border-color: #b6a536; outline-color: #f0ebcb; }
+input[readonly] { background: #f4f2eb; color: #686456; }
+.serial-panel { border-color: #e2dfd4; border-radius: 4px; background: #f8f7f2; }
+.serial-title b { color: #625d43; }.serial-title span, .editor-grid small { color: #858173; }
+.modal-backdrop { background: #26241f70; }
+.lookup-modal, .simulation-modal { border-color: #e2dfd4; border-radius: 5px; }
+.modal-backdrop header { border-color: #e7e3d8; }.modal-backdrop header b { color: #39372f; }.modal-backdrop header span { color: #777366; }
+.lookup-row.checked { background: #f6f1d7; }.lookup-row b { color: #74651a; }.lookup-row small { color: #716d60; }
 </style>
