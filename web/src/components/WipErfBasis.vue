@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
 type ErfRow = Record<string, string | number | null | string[]> & {
   erfNo: string; lotNo: string; opNo: string; customerNo: string; mClassNo: string; curGroupNo: string;
@@ -12,7 +12,7 @@ type DateKey = 'createdAt' | 'releaseAt'
 type DetailRecord = Record<string, string | number>
 type MockAttachment = { source: 'ERF' | 'OCAP'; name: string; attachType: number; creator: string; createdAt: string; ocapNo: string }
 
-const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; initialErfNo?: string; functionVariant?: 'wip' | 'spc' }>()
+const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; initialErfNo?: string; functionVariant?: 'wip' | 'spc'; apiBaseUrl?: string }>()
 const emit = defineEmits<{ close: []; create8d: [erf: { erfNo: string; lotNo: string; productNo: string; opNo: string; customerNo: string; lotQty: number; errorQty: number; holdDescription: string }]; open8dMaintain: [qrsNo: string] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
 const spcMode = props.functionVariant === 'spc'
@@ -24,11 +24,14 @@ const dates = reactive<Record<DateKey, { from: string; to: string }>>({ createdA
 const lookupField = ref<LookupKey | null>(null)
 const lookupOptions = computed(() => dev.value && lookupField.value ? [...new Set(fixtures.filter(row => spcMode ? [1, 2].includes(row.erfSource) : row.erfSource === 0).map(row => String(row[lookupField.value!] || '')).filter(Boolean))].sort() : [])
 const rows = ref<ErfRow[]>([]); const activeNo = ref(''); const searched = ref(false)
+const loading = ref(false); const page = ref(1); const pageSize = 100; const totalCount = ref(0); const pageCount = ref(0)
+let queryVersion = 0
+let queryController: AbortController | null = null
 const active = computed(() => rows.value.find(row => row.erfNo === activeNo.value) || null)
 const dialog = ref<'info' | '8d' | null>(null); const infoTab = ref('Create Hold Code')
 const infoMessage = ref(''); const pendingDeleteAttachment = ref<MockAttachment | null>(null)
 const initialMessage = '請至少選一個查詢條件，再按 Query (Q)。'
-const errorText = ref(''); const message = ref(dev.value ? initialMessage : unavailableText)
+const errorText = ref(''); const message = ref(dev.value ? initialMessage : spcMode ? '正式唯讀查詢，請輸入條件後按 Query。' : unavailableText)
 function unavailable(): boolean { if (dev.value) return false; errorText.value = ''; message.value = unavailableText; return true }
 const statusLabels: Record<number, string> = { 0: 'ERF Undisposition', 1: 'ERF Wait Disposition', 2: 'Notice Customer and Wait Disposition', 3: 'Waive', 11: 'Wait Lot Disposition', 12: 'Abort', 21: 'Release', 31: 'Hold Bank' }
 const spcStatusLabels: Record<number, string> = { 0: 'ERF Undisposition', 1: 'ERF Wait Disposition', 2: 'Notice Customer and Wait Disposition', 11: 'Wait Lot Disposition', 12: 'Abort', 21: 'Release' }
@@ -134,7 +137,7 @@ const fixtures: ErfRow[] = [
   { erfNo:'DEV-SPC-ERF-403', lotNo:'DEV-SPC-LOT-404', opNo:'OP-IQC', customerNo:'CUS-A', mClassNo:'M-DIMENSION', curGroupNo:'QA-01', createdAt:'2026-11-23T10:45:00', releaseAt:'2026-11-23T12:00:00', status:12, erfSource:2, batchLotNos:[], qrsNo:'QRS-DEV-SPC-403', qrsIssueState:-1, holdItems:['H-SPC-03 尺寸異常'], productNo:'PRD-QA-A', productName:'示範 SPC 產品 A', customerLotNo:'CUSLOT-404', customerName:'示範客戶 A', vendorNo:'SUP-A', materialNo:'MTL-RESIN-A', holdDescription:'供應商來料尺寸異常', dispDescription:'已作廢', ruleNo:'RULE-SPC-03', createQty:8, scrapQty:1, curQty:7, releaseQty:0, releaser:'QA-01', priority:1, batchLot:'', calHoldTime:75 },
 ]
 
-function setFilterEnabled(key: FilterKey): void { if (unavailable()) return; if (!checked[key]) filters[key] = '' }
+function setFilterEnabled(key: FilterKey): void { if (!dev.value && !spcMode) { unavailable(); return }; if (!checked[key]) filters[key] = '' }
 function setDateEnabled(key: DateKey): void { if (unavailable()) return; if (!dateChecked[key]) { dates[key].from = ''; dates[key].to = '' } }
 function chooseLookup(value: string): void { if (unavailable()) return; if (lookupField.value) { filters[lookupField.value] = value; checked[lookupField.value] = true }; lookupField.value = null }
 function toggleLookup(key: FilterKey): void { if (unavailable()) return; if (key === 'lotNo' || key === 'erfNo') return; lookupField.value = lookupField.value === key ? null : key }
@@ -145,7 +148,84 @@ function dateMatches(value: string | null, range: { from: string; to: string }):
 }
 function load8dLinks(): Record<string, string> { if (!dev.value) return {}; try { const data = JSON.parse(window.localStorage.getItem(linkKey) || '{}') as unknown; return data && typeof data === 'object' && !Array.isArray(data) ? data as Record<string, string> : {} } catch { return {} } }
 function load8dIssueStates(): Record<string, number> { if (!dev.value) return {}; try { const rows = JSON.parse(window.localStorage.getItem('ymes-dev-mock:wip-8d-basis-factory:state:v1') || '[]') as unknown; return Array.isArray(rows) ? Object.fromEntries(rows.filter(row => row && typeof row.qrsNo === 'string' && typeof row.issueState === 'number').map(row => [row.qrsNo, row.issueState])) : {} } catch { return {} } }
-function query(): void { if (unavailable()) return;
+async function queryFormal(requestedPage: number): Promise<void> {
+  queryVersion += 1
+  const version = queryVersion
+  queryController?.abort()
+  queryController = null
+  errorText.value = ''
+  const selected: Partial<Record<FilterKey, string>> = {}
+  for (const field of filterFields) {
+    const value = checked[field.key] ? filters[field.key].trim().toUpperCase() : ''
+    filters[field.key] = value
+    if (value) selected[field.key] = value
+  }
+  if (!Object.keys(selected).length) {
+    rows.value = []; activeNo.value = ''; totalCount.value = 0; pageCount.value = 0; page.value = 1
+    searched.value = false; loading.value = false
+    errorText.value = '至少輸入一個有效查詢條件。'
+    message.value = '請選擇並輸入至少一個查詢條件。'
+    return
+  }
+
+  const controller = new AbortController()
+  queryController = controller
+  loading.value = true
+  page.value = requestedPage
+  message.value = '正在查詢 YMES 異常單…'
+  try {
+    const base = props.apiBaseUrl?.trim() || ''
+    if (!base) throw new Error('目前環境尚未設定 API 位址。')
+    const url = new URL(base, window.location.origin)
+    if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1')
+      throw new Error('API 連線必須使用 HTTPS。')
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/spc/erfs/query`
+    url.search = ''
+    for (const [key, value] of Object.entries(selected)) if (value) url.searchParams.set(key, value)
+    url.searchParams.set('page', String(requestedPage))
+    url.searchParams.set('pageSize', String(pageSize))
+
+    const response = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' }, signal: controller.signal })
+    const payload = await response.json().catch(() => ({})) as {
+      detail?: string; title?: string; totalCount?: number; page?: number; pageCount?: number; items?: Record<string, unknown>[]
+    }
+    if (!response.ok) throw new Error(payload.detail || payload.title || `API 回應 ${response.status}`)
+    if (version !== queryVersion) return
+    rows.value = (payload.items || []).map(item => ({
+      erfNo: String(item.erfNo || ''), lotNo: String(item.lotNo || ''),
+      productNo: String(item.productNo || ''), productName: '', customerLotNo: String(item.customerLotNo || ''),
+      status: Number(item.status) || 0, opNo: String(item.opNo || ''), opName: '',
+      customerNo: String(item.customerNo || ''), customerName: '', vendorNo: String(item.vendorNo || ''),
+      materialNo: String(item.materialNo || ''), mClassNo: String(item.mClassNo || ''),
+      holdDescription: String(item.holdDescription || ''), curGroupNo: String(item.curGroupNo || ''),
+      dispDescription: String(item.dispDescription || ''), ruleNo: String(item.ruleNo || ''),
+      createQty: Number(item.createQty) || 0, scrapQty: Number(item.scrapQty) || 0,
+      releaseQty: Number(item.releaseQty) || 0, releaser: String(item.releaser || ''),
+      createdAt: String(item.createDate || ''), releaseAt: item.releaseDate ? String(item.releaseDate) : null,
+      creator: String(item.creator || ''), erfRecordQty: Number(item.scrapQty) || 0,
+      calHoldTimeMinutes: Number(item.calHoldTimeMinutes) || 0, priority: Number(item.priority) || 0,
+      qrsNo: String(item.qrsNo || ''), qrsIssueState: 0, batchLotNos: [], batchLot: '', holdItems: [],
+      erfSource: Number(item.erfSource) || 1, erfType: Number(item.erfType) || 0,
+    }))
+    totalCount.value = Number(payload.totalCount) || 0
+    page.value = Number(payload.page) || requestedPage
+    pageCount.value = Number(payload.pageCount) || 0
+    activeNo.value = rows.value[0]?.erfNo || ''
+    searched.value = true
+    message.value = `查得 ${totalCount.value.toLocaleString()} 筆 SPC／收料異常單。`
+  } catch (cause) {
+    if (version !== queryVersion || (cause instanceof DOMException && cause.name === 'AbortError')) return
+    errorText.value = cause instanceof Error ? cause.message : 'SC402 查詢失敗。'
+    rows.value = []; totalCount.value = 0; pageCount.value = 0; activeNo.value = ''; searched.value = true
+    message.value = 'SC402 查詢失敗。'
+  } finally {
+    if (version === queryVersion) loading.value = false
+  }
+}
+
+async function query(requestedPage = 1): Promise<void> {
+  if (!dev.value && spcMode) { await queryFormal(requestedPage); return }
+  if (unavailable()) return;
   errorText.value = ''; lookupField.value = null
   for (const key of Object.keys(filters) as FilterKey[]) filters[key] = filters[key].trim().toUpperCase()
   if (!(Object.keys(filters) as FilterKey[]).some(key => checked[key] && filters[key]) && !(Object.keys(dateChecked) as DateKey[]).some(key => dateChecked[key])) { errorText.value = '請至少選一個查詢條件。'; return }
@@ -163,15 +243,17 @@ function query(): void { if (unavailable()) return;
     (!dateChecked.releaseAt || dateMatches(row.releaseAt, dates.releaseAt)))
     .map(row => { const candidate = links[row.erfNo] || row.qrsNo; const qrsNo = spcMode && row.qrsNo ? candidate : hasSaved8dState && candidate && !Object.prototype.hasOwnProperty.call(issueStates, candidate) ? '' : candidate; return { ...row, qrsNo, qrsIssueState: qrsNo ? issueStates[qrsNo] ?? row.qrsIssueState : 0 } })
     .sort((a,b) => a.erfNo.localeCompare(b.erfNo))
-  activeNo.value = ''; searched.value = true; message.value = `查得 ${rows.value.length} 筆${spcMode ? ' SPC／收料' : ' WIP'}異常單。`
+  activeNo.value = ''; searched.value = true; totalCount.value = rows.value.length; page.value = 1; pageCount.value = rows.value.length ? 1 : 0
+  message.value = `查得 ${rows.value.length} 筆${spcMode ? ' SPC／收料' : ' WIP'}異常單。`
 }
 function formatCell(row: ErfRow, key: string): string | number {
   if (key === 'status') return (spcMode ? spcStatusLabels : statusLabels)[row.status] || ''
   if (key === 'erfRecordQty') return Number(row.scrapQty || 0)
-  if (key === 'calHoldTime') return spcMode && typeof row.calHoldTime === 'number' ? `${row.calHoldTime} Minutes` : `${Math.max(0,Math.round((Date.parse(row.releaseAt && [12,21].includes(row.status) ? row.releaseAt : new Date().toISOString()) - Date.parse(row.createdAt))/60000))} Minutes`
+  if (key === 'calHoldTime') return typeof row.calHoldTimeMinutes === 'number' ? `${row.calHoldTimeMinutes} Minutes` : `${Math.max(0,Math.round((Date.parse(row.releaseAt && [12,21].includes(row.status) ? row.releaseAt : new Date().toISOString()) - Date.parse(row.createdAt))/60000))} Minutes`
   if (key === 'createdAt' || key === 'releaseAt') return String(row[key] || '').slice(0,19).replace('T',' ')
   return String(row[key] ?? '')
 }
+onBeforeUnmount(() => queryController?.abort())
 function openInfo(): void { if (unavailable()) return; if (!active.value) return; infoTab.value = detailTabs[0]; infoMessage.value = ''; pendingDeleteAttachment.value = null; dialog.value = 'info' }
 function closeDialog(): void { pendingDeleteAttachment.value = null; dialog.value = null }
 function selectInfoTab(tab: string): void { if (unavailable()) return; infoTab.value = tab; pendingDeleteAttachment.value = null; infoMessage.value = '' }
@@ -186,7 +268,7 @@ function open8d(): void {
   if (row.qrsIssueState === -1) { errorText.value = '此 8D 單已作廢，來源畫面不開啟。'; return }
   emit('open8dMaintain', row.qrsNo)
 }
-watch(dev, enabled => { if (enabled) { attachmentStore.value = seedAttachments(); errorText.value = ''; message.value = initialMessage } else { rows.value = []; activeNo.value = ''; closeDialog(); attachmentStore.value = {}; searched.value = false; lookupField.value = null; for (const key of Object.keys(filters) as FilterKey[]) { filters[key] = ''; checked[key] = false }; for (const key of Object.keys(dates) as DateKey[]) { dates[key].from = ''; dates[key].to = ''; dateChecked[key] = false }; infoMessage.value = ''; errorText.value = ''; message.value = unavailableText } })
+watch(dev, enabled => { if (enabled) { attachmentStore.value = seedAttachments(); errorText.value = ''; message.value = initialMessage } else { rows.value = []; activeNo.value = ''; closeDialog(); attachmentStore.value = {}; searched.value = false; lookupField.value = null; for (const key of Object.keys(filters) as FilterKey[]) { filters[key] = ''; checked[key] = false }; for (const key of Object.keys(dates) as DateKey[]) { dates[key].from = ''; dates[key].to = ''; dateChecked[key] = false }; infoMessage.value = ''; errorText.value = ''; message.value = spcMode ? '正式唯讀查詢，請輸入條件後按 Query。' : unavailableText } })
 onMounted(() => {
   if (!dev.value || !props.initialErfNo) return
   checked.erfNo = true; filters.erfNo = props.initialErfNo; query()
@@ -201,14 +283,30 @@ onMounted(() => {
     <p v-if="errorText" class="notice error" role="alert">{{ errorText }}</p><p v-else class="notice" role="status">{{ message }}</p>
     <fieldset class="query-frame"><legend>Query</legend>
       <div class="query-grid">
-        <label v-for="field in filterFields" :key="field.key" :class="'field-'+field.key"><input v-model="checked[field.key]" type="checkbox" :disabled="!dev" @change="setFilterEnabled(field.key)">{{ field.label }}<span v-if="field.key === 'lotNo'" class="percent">%</span><input v-model="filters[field.key]" class="mes-input yellow" :disabled="!dev" @keydown.enter.prevent="query"><button v-if="field.key !== 'lotNo' && field.key !== 'erfNo'" type="button" class="lookup-button" :disabled="!dev" @click="toggleLookup(field.key)">...</button></label>
+        <label v-for="field in filterFields" :key="field.key" :class="'field-'+field.key">
+          <input v-model="checked[field.key]" type="checkbox" :disabled="!dev && !spcMode" @change="setFilterEnabled(field.key)">
+          {{ field.label }}<span v-if="field.key === 'lotNo'" class="percent">%</span>
+          <input v-model="filters[field.key]" class="mes-input yellow" :disabled="!dev && !spcMode" @keydown.enter.prevent="query(1)">
+          <button v-if="field.key !== 'lotNo' && field.key !== 'erfNo'" type="button" class="lookup-button" :disabled="!dev" @click="toggleLookup(field.key)">...</button>
+        </label>
         <label v-if="!spcMode" class="date-field create-date"><input v-model="dateChecked.createdAt" type="checkbox" :disabled="!dev" @change="setDateEnabled('createdAt')">Create Date<input v-model="dates.createdAt.from" type="datetime-local" step="1" class="mes-input yellow" :disabled="!dev"><span>To</span><input v-model="dates.createdAt.to" type="datetime-local" step="1" class="mes-input yellow" :disabled="!dev"></label>
         <label v-if="!spcMode" class="date-field release-date"><input v-model="dateChecked.releaseAt" type="checkbox" :disabled="!dev" @change="setDateEnabled('releaseAt')">Release Date<input v-model="dates.releaseAt.from" type="datetime-local" step="1" class="mes-input yellow" :disabled="!dev"><span>To</span><input v-model="dates.releaseAt.to" type="datetime-local" step="1" class="mes-input yellow" :disabled="!dev"></label>
-        <button type="button" class="mes-button query-button" :disabled="!dev" @click="query">Query (Q)</button>
+        <button type="button" class="mes-button query-button" :disabled="(!dev && !spcMode) || loading" @click="query(1)">{{ loading ? '查詢中…' : 'Query (Q)' }}</button>
       </div>
       <div v-if="dev && lookupField" class="lookup-options"><button v-for="option in lookupOptions" :key="option" type="button" @click="chooseLookup(option)">{{ option }}</button></div>
     </fieldset>
-    <fieldset class="result-frame"><legend>Result</legend><div class="result-main"><div class="grid-wrap"><table><thead><tr><th v-for="column in resultColumns" :key="column[0]">{{ column[1] }}</th></tr></thead><tbody><tr v-for="row in rows" :key="row.erfNo" :class="{active: activeNo === row.erfNo}" tabindex="0" @click="dev && (activeNo = row.erfNo)" @keydown.enter="dev && (activeNo = row.erfNo)"><td v-for="column in resultColumns" :key="column[0]">{{ formatCell(row,column[0]) }}</td></tr><tr v-if="!rows.length"><td :colspan="resultColumns.length" class="empty">{{ !dev ? unavailableText : searched ? '沒有符合條件的異常單。' : '請輸入條件後按 Query。' }}</td></tr></tbody></table></div><div class="actions"><div><button type="button" class="mes-button" :disabled="!dev || !active" @click="openInfo">ERF Info</button><button type="button" class="mes-button" :disabled="!dev || !active" @click="open8d">8D</button></div><button type="button" class="mes-button" @click="emit('close')">Close (X)</button></div></div><div class="status-bar"><span>UserNo: {{ props.currentUserNo || (dev ? 'DEV' : '—') }}</span><span>資料總筆數 {{ rows.length }}</span><span>{{ new Date().toLocaleString('zh-TW') }}</span></div></fieldset>
+    <fieldset class="result-frame"><legend>Result</legend><div class="result-main">
+      <div class="grid-wrap"><table><thead><tr><th v-for="column in resultColumns" :key="column[0]">{{ column[1] }}</th></tr></thead><tbody>
+        <tr v-for="row in rows" :key="row.erfNo" :class="{active: activeNo === row.erfNo}" tabindex="0" @click="dev && (activeNo = row.erfNo)" @keydown.enter="dev && (activeNo = row.erfNo)"><td v-for="column in resultColumns" :key="column[0]">{{ formatCell(row,column[0]) }}</td></tr>
+        <tr v-if="!rows.length"><td :colspan="resultColumns.length" class="empty">{{ !dev && !spcMode ? unavailableText : searched ? '沒有符合條件的異常單。' : '請輸入條件後按 Query。' }}</td></tr>
+      </tbody></table></div>
+      <nav v-if="!dev && spcMode && searched" class="query-pager" aria-label="查詢分頁">
+        <button type="button" class="mes-button" :disabled="loading || page <= 1 || pageCount === 0" @click="query(page - 1)">上一頁</button>
+        <span v-if="pageCount">第 {{ page }} / {{ pageCount }} 頁（共 {{ totalCount.toLocaleString() }} 筆）</span><span v-else>沒有查詢結果</span>
+        <button type="button" class="mes-button" :disabled="loading || page >= pageCount || pageCount === 0" @click="query(page + 1)">下一頁</button>
+      </nav>
+      <div class="actions"><div><button type="button" class="mes-button" :disabled="!dev || !active" @click="openInfo">ERF Info</button><button type="button" class="mes-button" :disabled="!dev || !active" @click="open8d">8D</button></div><button type="button" class="mes-button" @click="emit('close')">Close (X)</button></div>
+    </div><div class="status-bar"><span>UserNo: {{ props.currentUserNo || (dev ? 'DEV' : '—') }}</span><span>資料總筆數 {{ !dev && spcMode ? totalCount : rows.length }}</span><span>{{ new Date().toLocaleString('zh-TW') }}</span></div></fieldset>
     <div v-if="dev && dialog && active" class="dialog-backdrop" @click.self="closeDialog"><div class="dialog" role="dialog" aria-modal="true" :aria-label="dialog === 'info' ? 'ERF Information' : '8D'">
       <header><strong>{{ dialog === 'info' ? 'ERF Information' : '8D' }} · {{ active.erfNo }}</strong><button type="button" class="mes-button" @click="closeDialog">Close</button></header>
       <template v-if="dialog === 'info'"><fieldset><legend>ERFBasis</legend><div class="detail-grid"><span>ERF No: {{ active.erfNo }}</span><span>Lot No: {{ active.lotNo }}</span><span>Product No: {{ active.productNo }}</span><span>OP No: {{ active.opNo }}</span><span>Customer No: {{ active.customerNo }}</span><span>MClass No: {{ active.mClassNo }}</span><span>Cur GroupNo: {{ active.curGroupNo }}</span><span>ERF Type: {{ active.erfType ?? (dev ? 'DEV' : '—') }}</span><span>Rule No: {{ active.ruleNo || '—' }}</span><span>Creator: {{ active.creator || (dev ? 'DEV' : '—') }}</span><span>Create Date: {{ formatCell(active,'createdAt') }}</span><span>ERF Record Qty: {{ formatCell(active,'erfRecordQty') }}</span><span class="wide">Hold Description: {{ active.holdDescription }}</span></div></fieldset><fieldset><legend>ERF Detail</legend><div class="tabs"><button v-for="tab in detailTabs" :key="tab" type="button" class="mes-button" :class="{selected: infoTab === tab}" @click="selectInfoTab(tab)">{{ tab }}</button></div><div class="tab-body"><div v-if="infoTab !== 'ERF Attach'" class="detail-table-wrap"><table class="detail-table"><thead><tr><th v-for="column in currentDetailColumns" :key="column">{{ column }}</th></tr></thead><tbody><tr v-for="(row, index) in detailRows" :key="index"><td v-for="column in currentDetailColumns" :key="column">{{ formatDetailCell(row, column) }}</td></tr><tr v-if="!detailRows.length"><td :colspan="currentDetailColumns.length || 1">無資料</td></tr></tbody></table></div><template v-else><div v-for="source in attachmentSources" :key="source" class="attachment-group"><strong>{{ source }} Attach</strong><div class="detail-table-wrap"><table class="detail-table"><thead><tr><th>AttachName</th><th>Attach File</th><th>DelAttachFile</th><th>Creator</th><th>CreateDate</th><th v-if="source === 'OCAP'">OCAPNO</th></tr></thead><tbody><tr v-for="row in attachmentRows.filter(item => item.source === source)" :key="row.name + row.ocapNo"><td>{{ row.name }}</td><td><button type="button" class="mes-button" :disabled="!dev" @click="viewAttachment(row)">View</button></td><td><button type="button" class="mes-button" :disabled="!dev || isGeneratedErfFile(row.name)" @click="requestDeleteAttachment(row)">Delete</button></td><td>{{ row.creator }}</td><td>{{ row.createdAt }}</td><td v-if="source === 'OCAP'">{{ row.ocapNo }}</td></tr><tr v-if="!attachmentRows.some(item => item.source === source)"><td :colspan="source === 'OCAP' ? 6 : 5">無附件</td></tr></tbody></table></div></div><p v-if="infoMessage" class="info-message" role="status">{{ infoMessage }}</p><div v-if="dev && pendingDeleteAttachment" class="delete-confirm" role="alertdialog" aria-label="確認刪除假附件"><span>確定從 DEV 假資料移除 {{ pendingDeleteAttachment.name }}？</span><button type="button" class="mes-button" :disabled="!dev" @click="confirmDeleteAttachment">確定</button><button type="button" class="mes-button" @click="pendingDeleteAttachment = null">取消</button></div></template></div></fieldset></template>
@@ -219,5 +317,6 @@ onMounted(() => {
 
 <style scoped>
 .wp508-page.spc-mode .query-grid{grid-template-areas:'lot mclass . .' 'op group . .' 'customer erf . query'}
+.wp508-page.spc-mode .query-pager{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:10px 0}
 @media(max-width:950px){.wp508-page.spc-mode .query-grid{grid-template-areas:'lot mclass' 'op group' 'customer erf' 'query query'}}
 </style>

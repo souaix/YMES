@@ -3217,6 +3217,7 @@ async function signOut(): Promise<void> {
           v-else-if="isSpcErfBasisPage"
           class="framework-content office-wip-module"
           function-variant="spc"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :development-preview="isDevelopmentPreview"
           :current-user-no="currentUser?.userNo || ''"
           @create8d="open8dFromErf"
