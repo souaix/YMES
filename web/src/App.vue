@@ -266,6 +266,7 @@ import InvInventoryBasis from './components/InvInventoryBasis.vue'
 import InvStockerBasis from './components/InvStockerBasis.vue'
 import InvRawInventory from './components/InvRawInventory.vue'
 import InvMaterialIn from './components/InvMaterialIn.vue'
+import InvMaterialInLog from './components/InvMaterialInLog.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -1401,6 +1402,7 @@ const isInvInventoryBasisPage = computed(() => activeMasterKey.value === 'functi
 const isInvStockerBasisPage = computed(() => activeMasterKey.value === 'function:INV:STOCKER BASIS')
 const isInvRawInventoryPage = computed(() => activeMasterKey.value === 'function:INV:RAW INVENTORY')
 const isInvMaterialInPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL IN')
+const isInvMaterialInLogPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL IN LOG')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
@@ -3267,6 +3269,12 @@ async function signOut(): Promise<void> {
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           :current-user-no="currentUser?.userNo || ''"
+          @close="navigateHome"
+        />
+        <InvMaterialInLog
+          v-else-if="isInvMaterialInLogPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
         <WipErfBasis
