@@ -1,5 +1,16 @@
 # 公司端待辦
 
+## 公司端最新交付：IV211 退料單記錄（2026-11-24）
+
+- [x] 直接核對 `frmINVMaterialReturnLog` inline Form／Designer、`wsINV.LoadINVMaterialReturnBasis/Detail` 與 `clsInventory` 對應 Core。
+- [x] 完成 `/YMES/INV/MaterialReturnLog` DEV 唯讀頁：8 組勾選條件、庫房／Vendor 假 lookup、State 0–3、CreateDate／ReturnDate 起迄、Query、結果選列載入單號明細及 Component 展開。
+- [x] 記錄 Form 開啟不自動查詢、日期值預設近 14 天但核取條件未勾、主 Grid 顯示欄、Core 沒有排序／分頁／上限及 ReturnDate→ConfirmDate 映射。退料日來自 Basis.ReturnDate，不是 TransactionLog CreateDate。
+- [x] 發現 Detail Core 的空 MaterialReturnNo 會回傳全表、Component relation 僅以 MaterialNo＋MaterialLotNo 關聯，且只有 `ActiveModule='BASE'` 才載入元件；規格要求正式 API 強制有效單號並限量回應。
+- [x] 新增 [IV211 規格](docs/modules/INV/退料單記錄.md)，接入 Vue DEV 選單／路由，更新 Module Index、MES menu inventory、兩端待辦與公司端交接檔。桌機受保護 Oracle profile 不存在；Basis／Detail／Component DDL／metadata 缺失，未猜 CREATE SQL。
+- [ ] 家用端 pull 後核 live PostgreSQL schema／migration；提供登入及 IV211 ACL 保護的有上限分頁唯讀 API，參數化 Basis filters，日期迄日含當日末端時間。ReturnDate 直接取 Basis.ReturnDate，不用 TransactionLog 代替。
+- [ ] Detail API 必須要求有效 MaterialReturnNo，空單號不得回全表；回傳 Form 可見欄並確認產品是否要提供 BASE Component 子列。核實真實 component key 後再定關聯，勿照搬舊 relation 只用 MaterialNo＋LotNo。
+- [x] 公司端未連 YMES PostgreSQL、未設定 `ConnectionStrings__YMes`、未建 schema/migration、未實作正式 API、未部署、未執行 build/test/browser。下一項依清冊列序為 IV302「開立退料單(WIP)」。
+
 ## 公司端最新交付：IV206 開立退料單（2026-11-24）
 
 - [x] 直接核對 `frmINVMaterialReturn`／BasisDef／DetailDef inline Form／Designer、`wsINV` Basis／Detail／Component Service、`clsInventory`／`clsBasis_UPD` 對應 Core。
@@ -2672,7 +2683,7 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 更新 `docs/modules/INV/庫房工程群組.md`、模組索引、選單清冊及家用端 handoff。共用 `TBLUSRUSERGROUP` 沿用已查證 DDL；`TBLINVENGINEERGROUPBASIS` 缺 Oracle source DDL/metadata，現有 first-phase CREATE 是未核實推測，未複製為正式 CREATE-only。
 - [x] 本桌機受保護 Oracle profile 不存在；未連 YMES PostgreSQL、未執行 Oracle DDL/DML、未修改正式 API/schema，未執行 build/test/browser。
 - [ ] 家用端先查 live schema／取得可信來源 DDL，再依模組規格完成主檔、Copy、Delete、成員替換與代理人同步 API，確保交易及 DataStamp CAS；勿直接沿用未驗證 CREATE。
-- [x] IV102、IV103、IV201、IV202、IV207、IV203、IV208、IV205、IV210、IV206 均已完成公司端交接；目前下一個清冊項目為 IV211「退料單記錄」。
+- [x] IV102、IV103、IV201、IV202、IV207、IV203、IV208、IV205、IV210、IV206、IV211 均已完成公司端交接；目前下一個清冊項目為 IV302「開立退料單(WIP)」。
 
 ## IV102 庫房基本資料已完成公司端 DEV／規格交接（2026-11-24）
 
@@ -2688,4 +2699,4 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 更新 `docs/modules/INV/在製貨架基本資料.md`、規格索引、選單清冊與家用端 handoff。確認 `TBLINVSTOCKERBASIS` first-phase CREATE 為推測；`TBLINVSTOCKERDETAIL` 沒有已核實 Oracle DDL／metadata；未新增 CREATE-only。
 - [x] 本桌機受保護 Oracle profile 不存在；未連 YMES PostgreSQL、未執行 Oracle DDL/DML、未實作正式 API/schema、未執行 build/test/browser。
 - [ ] 家用端先核 live `tblinvstockerbasis`／`tblinvstockerdetail` schema；正式 API 需 DataStamp CAS，並交易保護主檔及明細整組替換／刪除。簽核須確認舊 Service 目前直接 Active 的規則是否仍適用。
-- [x] IV201「原物料倉庫房資料」與後續 IV202「開立進料單」、IV207「進料單記錄」、IV203「開立領料單」、IV208「領料單記錄」、IV205「開立預訂單」、IV210「預訂單記錄」、IV206「開立退料單」均已交付；目前下一個清冊項目為 IV211「退料單記錄」。
+- [x] IV201「原物料倉庫房資料」與後續 IV202「開立進料單」、IV207「進料單記錄」、IV203「開立領料單」、IV208「領料單記錄」、IV205「開立預訂單」、IV210「預訂單記錄」、IV206「開立退料單」、IV211「退料單記錄」均已交付；目前下一個清冊項目為 IV302「開立退料單(WIP)」。

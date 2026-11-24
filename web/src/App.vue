@@ -272,6 +272,7 @@ import InvMaterialOutLog from './components/InvMaterialOutLog.vue'
 import InvPreOrder from './components/InvPreOrder.vue'
 import InvPreOrderLog from './components/InvPreOrderLog.vue'
 import InvMaterialReturn from './components/InvMaterialReturn.vue'
+import InvMaterialReturnLog from './components/InvMaterialReturnLog.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -758,6 +759,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:INV:MATERIAL PREORDER', label: '開立預訂單', shortLabel: '預訂單', functionNo: 'MATERIAL PREORDER', moduleNo: 'INV' },
         { id: 'function:INV:MATERIAL PREORDER LOG', label: '預訂單記錄', shortLabel: '預訂記錄', functionNo: 'MATERIAL PREORDER LOG', moduleNo: 'INV' },
         { id: 'function:INV:MATERIAL RETURN', label: '開立退料單', shortLabel: '退料單', functionNo: 'MATERIAL RETURN', moduleNo: 'INV' },
+        { id: 'function:INV:MATERIAL RETURN LOG', label: '退料單記錄', shortLabel: '退料記錄', functionNo: 'MATERIAL RETURN LOG', moduleNo: 'INV' },
       ],
     }],
   },
@@ -1040,6 +1042,7 @@ const menuRoutes: Record<string, string> = {
   'function:INV:MATERIAL PREORDER': appBasePath + '/INV/PreOrder',
   'function:INV:MATERIAL PREORDER LOG': appBasePath + '/INV/PreOrderLog',
   'function:INV:MATERIAL RETURN': appBasePath + '/INV/MaterialReturn',
+  'function:INV:MATERIAL RETURN LOG': appBasePath + '/INV/MaterialReturnLog',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1432,6 +1435,7 @@ const isInvMaterialOutLogPage = computed(() => activeMasterKey.value === 'functi
 const isInvPreOrderPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL PREORDER')
 const isInvPreOrderLogPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL PREORDER LOG')
 const isInvMaterialReturnPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL RETURN')
+const isInvMaterialReturnLogPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL RETURN LOG')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
@@ -3332,6 +3336,12 @@ async function signOut(): Promise<void> {
         />
         <InvMaterialReturn
           v-else-if="isInvMaterialReturnPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvMaterialReturnLog
+          v-else-if="isInvMaterialReturnLogPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
