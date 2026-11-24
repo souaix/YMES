@@ -1,5 +1,9 @@
 # 2026-11-20 公司桌機 Codex 接手點
 
+## 後續最新進度（2026-11-24）
+
+本檔下方的 WP401 起始指示是 2026-11-20 當時的歷史接手點。公司端後續已完成 SPC SC501 及 INV IV101、IV102、IV103、IV201；最新狀態和家用端具體工作請看 [公司端待辦](../todolist_officepc.md) 與 [家用端待辦](../todolist_homepc.md)。目前公司端下一項是 IV202「開立進料單」。本輪 `main` 已快轉同步；IV201 不包含 PostgreSQL/API/schema 實作。
+
 ## 立即接手
 
 這是公司筆電接回桌機任務後，完成 WP509、WP106、WP109、WP112 的最新狀態。使用者要**完整復刻 MES 全部第一層選單及其功能**：公司端以 WinForms／Service／Core 原碼為準，用 Vue 3 DEV 假資料完成畫面與可模擬的互動，缺表時唯讀查 Oracle MESTEST DDL/metadata，提供 PostgreSQL CREATE-only 與正式 API 規格給家用端。可先簡化真外部交易，但要在模組規格中明確記錄。每個段落正常 commit/push 到 `souaix/YMES` 的 `main`，不要 force push。先前誤發的 vendor DLL 問題已由使用者取消，**不要接該任務**。

@@ -1,5 +1,17 @@
 # 家裡電腦接手清單
 
+## 公司端交接：IV201 原物料倉庫房資料（2026-11-24）
+
+公司端已依 `frmINVRawInventory`／六個單據 Confirm Form、`wsINV`、`clsInventory` 完成 [IV201 DEV 頁與規格](docs/modules/INV/原物料倉庫房資料.md)，路由 `/YMES/INV/RawInventory`。頁面查原料庫房庫存、選列載入 Locator/Lot，並以 localStorage 假資料模擬六種 Confirm；正式單據與庫存 API 未實作。
+
+- [ ] Pull 最新 `main` 後核對 YMES PostgreSQL live schema／migration history：`TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC`、`TBLMTLMATERIALBASIS` 及各單據來源主檔／明細、transaction state/log 與領料投入點／WIP 副作用表。桌機受保護 Oracle profile 不存在；兩張 raw inventory 表沒有本版本可信 DDL／metadata，不能由 DEV fixture 推建 schema。
+- [ ] 先比 live schema 再決定是否新增 migration；若必須查 Oracle source，請公司端安全設定本機受保護 profile，以 PowerShell 5.1 + `Oracle.ManagedDataAccess` 只讀取 DDL／字典 metadata。
+- [ ] 提供登入與 `RAW INVENTORY` Function ACL 保護的有效 RAW 庫房 lookup、有限筆數庫存查詢、依 InventoryNo+MaterialNo 查 Locator/Lot 明細；固定舊畫面的 `InventoryType=0`、`IssueState=2`、`CurQty>0` 語意，使用參數化 SQL／明確排序，不接受任意 AdditionalXml。
+- [ ] 六種 Confirm 使用伺服器端授權 command，固定 Source 0/1/3/4/2/10，重新讀取 State=0 單據、重驗庫房／單位／數量／Locator／Lot／預訂與權限；以交易、鎖定／版本和冪等鍵同步單據狀態、交易 state/log、庫存主檔／儲位及投入點／WIP 副作用，錯誤時回滾或回報可恢復失敗，不可回報成功後留下部分寫入。舊 `AddINVTransactionState` 先回 success 再同步執行，且吞掉內層例外；正式 API 必須回傳最終執行狀態，不能複製假成功行為。
+- [ ] 區分交易方向：Material In／WIP Return 增加原料庫存；Material Out／Material Return 扣減庫存（Material Return 還會清相關元件庫存列）；Material Adjust 依 AdjustType 調整數量或儲位；PreOrder 只增加 AllocateQty，Material Out 依來源規則消耗預訂。
+- [ ] 繼續追各交易 Core 分支：完整多明細、單位換算、領料元件與 OE/WIP 投入、預訂消耗、AdjustType 儲位限制、WIP return Place 與產業包表；DEV 僅為單筆假資料示例。家用端負責 schema／migration、正式 API、部署及驗收。
+- [x] 公司端未連 YMES PostgreSQL、未建立 schema/migration、未實作正式 API；下一項公司端 DEV 為 IV202「開立進料單」。
+
 ## 公司端交接：SC501 品管項目檢測儀器對應（2026-11-24）
 
 公司端已核對 `frmInspMachineParameterSetup`／`frmInspMachineParameterTest`、Service／Core，完成 [SC501 DEV 頁](docs/modules/SPC/品管項目檢測儀器對應.md) 與 `/YMES/SPC/InspMachineParameterSetup` 路由。此功能在 `%LocalAppData%\iMESTech\InspMachineSetup.xml` 維護操作站的 QC Item／檢測儀器／RS232 對應；MES 只提供 QC Item、儀器主檔及群組明細 lookup，沒有對應表寫入 Service。DEV 用假資料、瀏覽器 localStorage 與 XML 匯入／匯出模擬，不連真實 COM Port。
@@ -3632,14 +3644,14 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## 公司端交接：IV101 庫房工程群組（2026-11-24）
 
-- 公司端已完成 IV101、IV102、IV103 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff，分別見 `docs/modules/INV/庫房工程群組.md`、`docs/modules/INV/庫房基本資料.md`、`docs/modules/INV/在製貨架基本資料.md`。下次 pull main 後可接公司端下一個尚無規格項目 IV201。
+- 公司端已完成 IV101、IV102、IV103、IV201 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff；IV201 見 `docs/modules/INV/原物料倉庫房資料.md`。目前公司端下一項是 IV202「開立進料單」。
 - 家用端工作：先比對 live `tblinvengineergroupbasis`。公司桌機未取得 `TBLINVENGINEERGROUPBASIS` Oracle DDL/metadata；`database/reference/mestest_first_phase_create_tables.sql` 的同名 CREATE 欄位未核實，請勿視為正式 schema。若無可信 Oracle source DDL，記錄差異與所需欄位後再決定 schema，不要猜。
 - `TBLUSRUSERGROUP` 已有可重用的 Oracle source DDL 與 PostgreSQL reference。正式 API 依模組規格提供主檔查詢/Add/Edit/Copy/Delete、active user lookup、GroupType=3 成員查詢及完整集合替換；成員替換須 DataStamp CAS、同步 AgentOf direct/agent rows 並交易回滾。舊 Copy 多次呼叫非原子，正式端需同交易。
 - 公司端未連 YMES PostgreSQL、未做正式 API/schema、未執行 build/test/browser。
 
 ## 公司端交接：IV102 庫房基本資料（2026-11-24）
 
-- 公司端已完成 IV102 主畫面／Property／Locator DEV 假資料及來源規格，見 `docs/modules/INV/庫房基本資料.md`。公司端下一個尚無規格項目為 IV201。
+- 公司端已完成 IV102 主畫面／Property／Locator DEV 假資料及來源規格，見 `docs/modules/INV/庫房基本資料.md`。其後 IV201 亦已交付，目前下一個公司端項目為 IV202。
 - 家用端先比對 live `tblinvinventorybasis`、`tblinvinventoryproperty`。公司桌機受保護 Oracle profile 不存在；repo first-phase Inventory Basis CREATE 不是可核實來源 DDL，Property table 也缺已驗證 CREATE。請按 live schema／正式 metadata 核實欄位、鍵、預設值與 FK，不要推測建表。
 - `TBLINVLOCATORBASIS` 已有 Oracle source DDL、metadata、PostgreSQL CREATE-only，直接沿用。主檔狀態 0／-1 依舊 Core 實體刪除主檔、Property、Locator；狀態 2 只軟刪主檔至 -1；狀態 1 拒絕。Property/Locator 也採 0／-1 實體刪除、2 軟刪、1 拒絕。主檔與 Property Approve 分別依 `INV BASIS`、`INV PROPERTY` IssueManagement mapping 決定直接 Active 或 Pending 工作。
 - 正式 API 需參數化、授權、DataStamp CAS、批次回應逐筆狀態，並交易保護 cascade／property／locator；部署和整合依家用端待辦既有程序處理。公司端未連 YMES PostgreSQL、未實作正式 API/schema、未執行 build/test/browser。
