@@ -3641,14 +3641,21 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## 公司端交接：IV101 庫房工程群組（2026-11-24）
 
-- 公司端已完成 IV101 與 IV102 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff，分別見 `docs/modules/INV/庫房工程群組.md`、`docs/modules/INV/庫房基本資料.md`。下次 pull main 後可接公司端下一項 IV103。
+- 公司端已完成 IV101、IV102、IV103 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff，分別見 `docs/modules/INV/庫房工程群組.md`、`docs/modules/INV/庫房基本資料.md`、`docs/modules/INV/在製貨架基本資料.md`。下次 pull main 後可接公司端下一個尚無規格項目 IV201。
 - 家用端工作：先比對 live `tblinvengineergroupbasis`。公司桌機未取得 `TBLINVENGINEERGROUPBASIS` Oracle DDL/metadata；`database/reference/mestest_first_phase_create_tables.sql` 的同名 CREATE 欄位未核實，請勿視為正式 schema。若無可信 Oracle source DDL，記錄差異與所需欄位後再決定 schema，不要猜。
 - `TBLUSRUSERGROUP` 已有可重用的 Oracle source DDL 與 PostgreSQL reference。正式 API 依模組規格提供主檔查詢/Add/Edit/Copy/Delete、active user lookup、GroupType=3 成員查詢及完整集合替換；成員替換須 DataStamp CAS、同步 AgentOf direct/agent rows 並交易回滾。舊 Copy 多次呼叫非原子，正式端需同交易。
 - 公司端未連 YMES PostgreSQL、未做正式 API/schema、未執行 build/test/browser。
 
 ## 公司端交接：IV102 庫房基本資料（2026-11-24）
 
-- 公司端已完成 IV102 主畫面／Property／Locator DEV 假資料及來源規格，見 `docs/modules/INV/庫房基本資料.md`。桌面下次 pull main 後可接公司端下一項 IV103。
+- 公司端已完成 IV102 主畫面／Property／Locator DEV 假資料及來源規格，見 `docs/modules/INV/庫房基本資料.md`。公司端下一個尚無規格項目為 IV201。
 - 家用端先比對 live `tblinvinventorybasis`、`tblinvinventoryproperty`。公司桌機受保護 Oracle profile 不存在；repo first-phase Inventory Basis CREATE 不是可核實來源 DDL，Property table 也缺已驗證 CREATE。請按 live schema／正式 metadata 核實欄位、鍵、預設值與 FK，不要推測建表。
 - `TBLINVLOCATORBASIS` 已有 Oracle source DDL、metadata、PostgreSQL CREATE-only，直接沿用。主檔狀態 0／-1 依舊 Core 實體刪除主檔、Property、Locator；狀態 2 只軟刪主檔至 -1；狀態 1 拒絕。Property/Locator 也採 0／-1 實體刪除、2 軟刪、1 拒絕。主檔與 Property Approve 分別依 `INV BASIS`、`INV PROPERTY` IssueManagement mapping 決定直接 Active 或 Pending 工作。
 - 正式 API 需參數化、授權、DataStamp CAS、批次回應逐筆狀態，並交易保護 cascade／property／locator；部署和整合依家用端待辦既有程序處理。公司端未連 YMES PostgreSQL、未實作正式 API/schema、未執行 build/test/browser。
+
+## 公司端交接：IV103 在製貨架基本資料（2026-11-24）
+
+- 公司端已完成貨架主檔、狀態操作、尺寸配置與 Locator 明細 DEV，來源規格見 `docs/modules/INV/在製貨架基本資料.md`。
+- 家用端先比對 live `tblinvstockerbasis`、`tblinvstockerdetail`。桌機受保護 Oracle profile 不存在；first-phase Master CREATE 是推測，Detail 缺可信 Oracle DDL／metadata，不能據此建正式 schema。
+- 舊 Service 將主檔和 Locator 明細分別新增；Edit 更新主檔後刪除並逐格重建 Detail，沒有共同交易。正式 API／migration 要先核 live schema，以參數化 SQL、DataStamp CAS 和單一交易保護整組替換、刪除；狀態 0／-1 實體刪除，2 軟刪成 -1 並留明細，1 拒絕。
+- 舊 Approve Service 目前直接由 IssueState 0 設為 2；IssueManagement 分支為註解。正式端需確認現行 workflow，不要假設舊註解仍在使用。公司桌機未連 PostgreSQL、未做正式 API/schema、未部署或執行 build/test/browser。

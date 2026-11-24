@@ -430,7 +430,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 最新補記（2026-11-24）：SC501「品管項目檢測儀器對應」已完成公司端 DEV／來源規格交接。SC501 僅將操作站對應寫入 `%LocalAppData%\iMESTech\InspMachineSetup.xml`；Web DEV 使用 localStorage／XML 預覽，沒有 MES 對應表或 CRUD Service。SPC 清冊目前所有 FunctionKey 均已交付；依總清冊順序接續 INV。
 
-公司端復刻進度（2026-11-24）：INV 的 IV101「庫房工程群組」與 IV102「庫房基本資料」已完成公司端 DEV、來源規格及家用端 handoff。IV102 涵蓋 Inventory CRUD／簽核、Property 子畫面及重用 SMD Locator DEV；`TBLINVLOCATORBASIS` 沿用已驗證 DDL。`TBLINVENGINEERGROUPBASIS`、`TBLINVInventoryBasis`、`TBLINVInventoryProperty` 桌機受保護 Oracle profile 不存在且 repo CREATE 為推測／缺漏，未新增 Oracle／PostgreSQL DDL。家用端先核 live schema，再完成參數化 API、IssueManagement 及級聯刪除 handoff；下一個 FunctionKey 為 IV103。
+公司端復刻進度（2026-11-24）：INV 的 IV101「庫房工程群組」、IV102「庫房基本資料」與 IV103「在製貨架基本資料」已完成公司端 DEV、來源規格及家用端 handoff。IV102 重用已驗證 SMD Locator；IV103 涵蓋貨架主檔、四狀態、動態 Locator 配置與下方明細。`TBLINVENGINEERGROUPBASIS`、`TBLINVInventoryBasis`、`TBLINVInventoryProperty`、`TBLINVSTOCKERBASIS` 的 repo CREATE 為推測或缺漏，`TBLINVSTOCKERDETAIL` 無已核實 DDL；公司端受保護 Oracle profile 不存在，未新增 Oracle／PostgreSQL DDL。家用端先核 live schema，再完成參數化 API 與交易保護 handoff；下一個尚無規格的 INV FunctionKey 為 IV201「原物料倉庫房資料」。
 
 ### INV — 庫存管理（順序 13）
 
