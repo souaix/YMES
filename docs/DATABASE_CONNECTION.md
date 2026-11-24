@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：0073 建立共用 INV Transaction State／Log（2026-11-24）
+
+- 遠端 `ymes`／quoted schema `YMES` 初始不存在 `tblinvtransactionstate`、`tblinvtransactionlog`。依 repo 已核對的 WP605 Oracle source DDL 與 PostgreSQL CREATE-only，套用 [0073 migration](../database/migrations/0073_inv_transaction_state_log.sql)，只新增空表與原生單欄主鍵，沒有匯入業務列。
+- 套用前完整 custom-format 備份：`/opt/ymes/backups/ymes_before_0073_inv_transaction_state_log_homepc_20261124.dump`，704987 bytes、SHA-256 `3c5e40aea93792160290bccfa1fd88e1ad68900e5adb7ee399b49f4cd77db2a9`；目錄 700、檔案 600，`pg_restore --list` 1979 條目。
+- migration 原子完成，SQL SHA-256 `8cec1cd4132275e0a6417768780b128a75e6f0f4fa636e24f3c233fc50335b63`；另一條 SSH／PostgreSQL READ ONLY 連線核對兩表各五欄、欄位順序／型別／長度／nullable、單欄 PK 均與 CREATE-only 相符。`ymes_app` 兩表只有 SELECT，INSERT／UPDATE／DELETE 均未授予；IV201 寫入交易 API 前須依交易契約另行設權。
+- IV207 的 Source=0／TicketNo／CreateDate 可依此交易 Log 篩選；MaterialIn Basis／Detail、Incoming QC Header／Item Map 仍缺 live 結構或同版來源 DDL，未猜建。Rollback 僅允許兩表均為空時刪除，正式交易開始使用後不可盲目回退。
+
 本輪讀取版已完成metadata結案及獨立下載核對。新current-checkpoint SHA `7d0bc62f032e2e24f243fe5b016fa629ec781ed603202d5a082770db4492a4b3`，獨立回條SHA `5da236c29ef699108996d31a5946155b67345d47e07e9f762cbfc114098d607e`；完整保留原496 raw備份、50項既有保護資料與歷史前綴。發行對應code X `50cf3a6dfb3cd6b310c35c4e98310b59c30eab0d`、status Y `f0d26dfb1d414786b483faabae545de1d075ce0f` 均通過436來源綁定、正常feature推送與直接ref讀回。此後純文件補記不改本次X／Y發行對應。main仍含Office新8ff工作，`mainSyncPending=true`；下一輪正常整合與新頁驗收，不以force覆寫。下方496／未封存／收尾待辦等段落保留為前一時點；本段是目前狀態。SWR writer與global MES QA未因此完成。
 
 已驗證程式提交 X `50cf3a6dfb3cd6b310c35c4e98310b59c30eab0d` 完成436份來源綁定（SQL6／API172／Web258，回條SHA `2c04f82d3ba5de2e6c2f1f57c14921643160efdbbd8b100e6e59ccd315ed0759`），已正常推送 `codex/homepc-wp109-read-20261120` 並直接讀回GitHub ref一致，未force。驗收後fetch發現Office main已到 `8ff405290a7f55bfd1e2261f8d85dec97f363409`，新增9提交／8個WIP DEV入口與WP109來源；這些尚未混入本輪正式c828。接著正常合併並驗新入口，保留兩端成果；本輪status／metadata收尾與main整合分開記錄。

@@ -2,23 +2,22 @@
 
 ## 家用端同步狀態（2026-11-24）
 
-- [x] 開工前讀取 GitHub `main` 為 `4f5c916c4e3b6e8d3f77e25e2e0d215af0011832`；WP508 完成後以一般 fast-forward 推送 `f085817466b89fb4901330d7e45abd1fcdba8448`，回讀 `main` 確認一致。沒有覆蓋其他 worktree 工作。
+- [x] 同步前讀取 GitHub `main` 為 `4ea56cdb7b9c95b84c10371ad82643a2c3895cf4`，接到公司端 IV202／IV207 交付；以 merge commit `ef489597a3ab9955ab27b84655ab774e242056ff` 合併，保留本機 WP508 排版修正 `85f6d20`，沒有覆蓋其他 worktree 工作。
 - [x] YMES PostgreSQL migration `0071` 已建立 QC501 群組明細 lookup 表並只授予 `ymes_app` SELECT；備份與結構核對紀錄在 SC501 模組文件。
 - [x] SC501 正式 lookup API／頁面已建置並部署為 `sc501-setup-20261124-a2`；API readiness、未登入 401、頁面 200 與正式資料空結果已核對。app-browser 曾完成主要表單互動，但原生確認視窗後輸入控制失效；正式頁可讀、後續 Add／選單點擊均無動作，console 無錯誤，需待控制恢復再補驗刪除確認。
 - [x] SC402 查詢 API 已由 `sc402-query-20261124-b3` 提供；SC402 正式 ERF Info 五頁及附件唯讀下載接上 WP508 共用 API，版本 `wip-erf-info-20261124-a1` 已部署。正式唯讀查詢 0 筆；因來源沒有業務列，ERF Info 明細與實際附件下載尚無法做正向驗證。Function ACL 仍依安排暫緩，端點要求登入。
 - [x] SC401 正式頁已接入共用 ERF Info 五頁與附件唯讀下載；Web-only release `sc401-info-20261124-a3` 已部署。API 保持 `wip-erf-info-20261124-a1`；readiness 200、正式頁 200、未登入 API 401，`ymes-master-web` 容器未更動。正式表無業務列；IAB 控制仍無回應。
 - [ ] IAB checkbox／選單按鈕仍無動作、console 無 error/warning；以 Chrome 原生視窗已能操作 WP508 查詢。正式表無業務列，SC401 選列、Info 與附件下載仍缺可做正向驗證的資料。
-- [x] WP508 正式主查詢 API 與本頁 provider 已完成並部署為 Web-only release `wp508-query-20261124-a5`；Chrome 正式頁以不存在的 ERF No 執行查詢，回覆 0 筆，重載後篩選清空且登入保留。build 及正式站結果記錄於 [WP508 規格](docs/modules/WIP/異常單資料.md)。
-- [ ] WP508 篩選區在 1237px 瀏覽器寬度且選單展開時產生水平溢位，Query 按鈕只露出一部分；調整響應式欄位配置後再以 app-browser 驗收。
+- [x] WP508 正式主查詢 API／provider 的 `a5` 接線版及 Web-only `a6` 響應式修正版已部署；app-browser 在 1237px 且側選單展開時確認兩欄完整、Query 按鈕可見且 document 無水平溢位，Chrome 原生頁面以不存在單號完成查詢並得到 0 筆。細節見 [WP508 規格](docs/modules/WIP/異常單資料.md)。
 - [ ] SC401 ERF 處置、Lot Release、Back 與附件刪除；WP508 附件刪除及 SC402／WP508／WP801／WP802 8D API 尚未完成。
-- [ ] IV201：live audit 已確認 RAW／Locator 與共用 Transaction State／Log 缺表；等待公司端補 Raw Inventory 原生 DDL 與六種 Confirm Core 的依賴表清單，再做 schema/API。不能由 DEV 假資料推建。
+- [ ] IV201：共用 Transaction State／Log 已由 WP605 已核實 DDL 以 migration `0073` 建立，`ymes_app` 目前只有 SELECT；RAW／Locator 仍等待公司端補可信原生 DDL 與六種 Confirm Core 的依賴表清單，再做 schema/API。不能由 DEV 假資料推建。
 
 ## 公司端最新交接：IV207 進料單記錄（2026-11-24）
 
 公司端已依 `frmINVMaterialInLog.vb` inline Form／Designer、`wsINV` 及 `clsInventory` 完成 [IV207 DEV 頁與規格](docs/modules/INV/進料單記錄.md)，功能鍵 `IV207`／`MATERIAL IN LOG`，路由 `/YMES/INV/MaterialInLog`。頁面以固定 DEV fixtures 模擬主檔唯讀查詢、篩選條件、lookup 與選單據載入明細；沒有正式 API。
 
-- [ ] Pull 最新 `main` 並比對 live schema／migrations。`TBLINVMATERIALINBASIS`／`TBLINVMATERIALINDETAIL` 尚無可信同版 Oracle DDL／metadata；本桌機受保護 Oracle profile 不存在，未產生推測 CREATE-only。
-- [ ] `TBLINVTRANSACTIONLOG` 沿用 `database/reference/mestest_wip_wp605_source_ddl.sql` 及 `database/reference/mestest_wip_wp605_create.sql`；核對 live 表／欄位與 WP605 migration。IV Date 條件依 `Source=0`、`TicketNo=MaterialInNo`、`CreateDate`，不可誤用 Basis `ConfirmDate`。
+- [x] 已同步 `main` 並以 PPK SSH 核對遠端 `ymes` 的 `YMES` schema：進料 Basis／Detail、Incoming QC Header／QC Item Map 不存在；`tblinvlocatorbasis`、`tblmtlmaterialbasis` 存在。兩張進料單主／明細表仍缺可信同版 Oracle DDL／metadata，不能猜 CREATE 或開始依賴其欄位的正式 API。
+- [x] WP605 reference 有 `TBLINVTRANSACTIONSTATE/LOG` Oracle source DDL 與 PostgreSQL CREATE-only；已用 migration `0073_inv_transaction_state_log.sql` 建立空表，獨立唯讀回讀五欄、型別、PK 均正確，`ymes_app` 只有 SELECT。Source=0／TicketNo／CreateDate 可供 IV207 查詢；INV Date 不能誤用 Basis `ConfirmDate`。
 - [ ] 提供登入及 IV207 Function ACL 保護的只讀主檔查詢，支援精確單號、庫房、Vendor、State、CreateDate、Source=0 transaction date 條件；使用參數化查詢、明確排序、分頁和最大筆數。
 - [ ] 明細 API 必須要求有效 `MaterialInNo`，無主檔時回傳空陣列。舊 Form 查無主檔／群組列呼叫空單號，舊 Core 會略過單號條件而回傳全表明細；不得複製此風險。
 - [ ] 重用已確認的 InventoryType=0 庫房與 Vendor lookup。主檔及明細為唯讀；不需要寫入 API 或新 schema，除非 live schema audit 證實缺表／缺欄位。
@@ -28,8 +27,8 @@
 
 公司端已依 `frmINVMaterialIn`／BasisDef／DetailDef、`wsINV`、`clsInventory` 完成 [IV202 DEV 頁與規格](docs/modules/INV/開立進料單.md)，功能鍵 `IV202`／`MATERIAL IN`，路由 `/YMES/INV/MaterialIn`。頁面以 localStorage 假資料模擬 State=0 單頭／明細維護、Incoming QC 連動和列印預覽；沒有正式進料／入庫 API。
 
-- [ ] Pull 最新 `main` 後比對 PostgreSQL live schema／migrations：`TBLINVMATERIALINBASIS`、`TBLINVMATERIALINDETAIL`、`TBLSPCINCOMINGQCFORM`；此桌機 Oracle profile 不存在，未取得同版 Oracle DDL／metadata，不能由 Core INSERT 欄位推定完整型別、NULL/default、PK/FK/index。
-- [ ] 沿用／核對 `TBLSPCINCOMINGQCFORMQCITEMMAP` 的 `database/reference/mestest_qc216_incoming_qc_item_map_source_ddl.sql` 與既有 PostgreSQL CREATE-only；確認 live QC Header、QC Item／MTL、Locator schema 及 API，再決定是否新增 forward migration。
+- [x] 已同步 `main` 並比對 PostgreSQL live schema／migrations：`TBLINVMATERIALINBASIS`、`TBLINVMATERIALINDETAIL`、`TBLSPCINCOMINGQCFORM` 與 Incoming QC Item Map 均不存在；`tblmtlmaterialbasis`、`tblinvlocatorbasis` 存在。此桌機 Oracle profile 不存在，沒有同版進料主／明細／QC Header DDL／metadata，不能由 Core INSERT 欄位推定完整型別、NULL/default、PK/FK/index。
+- [x] 核對 Incoming QC Item Map 的 QC216 Oracle source DDL 與 PostgreSQL CREATE-only reference；live Map 不存在。QC Header DDL／metadata及 API 仍缺，待取得同版來源資料後決定 schema/API 順序。
 - [ ] 實作登入／`MATERIAL IN` Function ACL 保護的 State=0 單頭、明細及庫房／Vendor／物料／Locator lookup；伺服器端套用 `MATERIALINNO` serial rule、DataStamp CAS、CheckLotNo、ExpireDateFlag、Qty、日期順序與 Locator Capacity。
 - [ ] 單頭／明細寫入與 Incoming QC Header／Item Map 維護須同一 transaction，重讀並守住單頭 State、QC Status、關聯明細與版本。核對 Core `DelINVMaterialInBasis` QC 子查詢與刪除 SQL 排序，正式 API 應在交易開始先存 QCFormNo，再依賴順序刪 QC Map/Header、Detail、Basis；避免孤兒 QC 或部分成功。
 - [ ] IV202 僅建立未確認進料資料；不得在此直接更新 `TBLINVRAWINVENTORY`。庫存入帳由 IV201 Source=0 確認 command 處理，需在家用端實作並驗證 transaction state/log、單位換算、冪等與併發。
@@ -40,9 +39,9 @@
 
 公司端已依 `frmINVRawInventory`／六個單據 Confirm Form、`wsINV`、`clsInventory` 完成 [IV201 DEV 頁與規格](docs/modules/INV/原物料倉庫房資料.md)，路由 `/YMES/INV/RawInventory`。頁面查原料庫房庫存、選列載入 Locator/Lot，並以 localStorage 假資料模擬六種 Confirm；正式單據與庫存 API 未實作。其後公司端已交付 IV202、IV207，下一項為 IV203。
 
-- [x] 2026-11-24 以 PPK SSH 唯讀查 YMES `ymes`／quoted `YMES` schema：RAW 主表、Locator 表及共用 Transaction State／Log 均缺；MTL Material Basis (110 欄)、Inventory Basis (14 欄)、Locator Basis (12 欄) 存在。`YMES` 目前只有四張 `tblinv*` 表；未找到通用 migration ledger，repo migrations 沒有建立上述缺表的 migration。
+- [x] 2026-11-24 PPK SSH 唯讀查 YMES `ymes`／quoted `YMES` schema：RAW／Locator 主表缺；MTL Material Basis (110 欄)、Inventory Basis (14 欄)、Locator Basis (12 欄) 存在。WP605 來源表已由 migration `0073` 建立 Transaction State／Log，`ymes_app` 僅 SELECT。沒有通用 migration ledger；RAW／Locator 尚無 migration。
 - [ ] 公司端提供 `TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC` Oracle `DBMS_METADATA.GET_DDL` 及欄位／PK／index／FK／trigger/default metadata；同時逐一列出六種 Confirm 的直接 Core 依賴表，對照已存在 source DDL，僅補充 repo 缺少的原生結構與 PostgreSQL CREATE-only。未收到可信 DDL 前不猜 schema。
-- [ ] 使用 WP605 已查證 `TBLINVTRANSACTIONSTATE/LOG` DDL 核對共用交易表缺項與 YMES migration／`ymes_app` 權限後，做獨立 forward migration；先確認 source TicketNo 長度與六種 IV201 單據編號相容，再接交易 API。
+- [x] 使用 WP605 已查證 `TBLINVTRANSACTIONSTATE/LOG` DDL 建立獨立 migration `0073`；欄位／PK 與 app SELECT 權限已讀回。`TicketNo varchar(20)` 與六種 IV201 單據編號相容性仍待來源流程逐項核對，再接交易 API。
 - [ ] 提供登入保護的有效 RAW 庫房 lookup、有限筆數庫存查詢、依 InventoryNo+MaterialNo 查 Locator/Lot 明細；固定舊畫面的 `InventoryType=0`、`IssueState=2`、`CurQty>0` 語意，使用參數化 SQL／明確排序，不接受任意 AdditionalXml。Function ACL 依使用者目前指示暫緩。
 - [ ] 六種 Confirm 使用伺服器端交易命令，固定 Source 0/1/3/4/2/10，重新讀取 State=0 單據、重驗庫房／單位／數量／Locator／Lot／預訂；以交易、鎖定／版本和冪等鍵同步單據狀態、transaction state/log、庫存主檔／儲位及投入點／WIP 副作用，錯誤時回滾或回報可恢復失敗。
 - [ ] 區分交易方向：Material In／WIP Return 增加庫存；Material Out／Material Return 扣減庫存；Material Adjust 依 AdjustType 調整數量或儲位；PreOrder 只增加 AllocateQty，Material Out 依來源規則消耗預訂。
@@ -1469,10 +1468,10 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 ## 新交接公司端 WP605 成品庫帳務維護（2026-11-19）
 
 - [ ] Pull 最新 `main`，閱讀 `docs/modules/WIP/成品庫帳務維護.md`、`database/reference/mestest_wip_wp605_source_ddl.sql`、`mestest_wip_wp605_create.sql` 及公司端 Oracle 查證紀錄。
-- [ ] 先比對 YMES PostgreSQL live schema／migrations，再決定 forward migration。Oracle MESTEST 本次確認存在且需要評估的六張表：`tblinvfgdinventorycomponent`、`tblinvfgdinbasis`、`tblinvfgdindetail`、`tblinvfgdincomponent`、`tblinvtransactionstate`、`tblinvtransactionlog`。逐表檢查，不可直接執行 CREATE-only 覆蓋既有表。
+- [x] 已核對共用 `tblinvtransactionstate`／`tblinvtransactionlog` 原本缺表，依 WP605 Oracle DDL 以 migration `0073` 建立空表；`ymes_app` 僅 SELECT。FGD 專用四表仍需逐表比對 YMES live schema／migration；不得直接執行 CREATE-only 覆蓋既有表。
 - [ ] 共用表沿用 WP201／WP101、SMD、PRD、OE references；重用 `tblinvfgdinventory`、`tblinvlocatorbasis`、WIP Lot／Component、`tblwipgoodbinstate`、`tblsysbin`、`tblinvwipinventory_component`、`tblinvwipinventory_semi` 與 `tbloemobasis`，禁止重複建表。Oracle 未找到 `TBLINVFGDINVENTORYBIN`，UI Bin 來源是 `TBLWIPGOODBINSTATE` 的動態 Bin 欄位。
 - [ ] 實作登入保護 WIP FGD Inventory API：庫別／儲位 lookup、庫存查詢、component/bin 明細、Add upsert、逐筆 Del、容量／並發檢查及 FGD→FGD／SEMI／WIP 轉庫。服務端重查 IssueState、Lot 狀態、容量和庫存；依 spec 保留各 Core 路徑的庫存／Lot／Component／release log side effects，釐清外部 `iMESWIPReleaseLogHandler.dll` 契約。
-- [ ] FGD In Source=30 必須一次涵蓋 TransactionID 產生、TransactionState、Basis 0→1→2/3、ExeFGDIn 過帳、State→Log 搬移及防重送；Source=1 還需扣來源 SEMI/WIP inventory。不可僅新增 queue row 或只改 Basis 狀態。`TBLINVTRANSACTIONLOG` 是成功交易必要表，Oracle 查證只有 PK unique index、無 FK／trigger／額外 index。
+- [ ] FGD In Source=30 必須一次涵蓋 TransactionID 產生、TransactionState、Basis 0→1→2/3、ExeFGDIn 過帳、State→Log 搬移及防重送；Source=1 還需扣來源 SEMI/WIP inventory。不可僅新增 queue row 或只改 Basis 狀態。共用 Log 原生只有 PK unique index、無 FK／trigger／額外 index；`ymes_app` 寫入權限未授，待交易 API 契約核定後處理。
 - [ ] DEV localStorage 並不實際過帳庫存；Production API／schema 完成後依模組規格更新索引、handoff、測試／部署紀錄，公司端再 pull 核對 WinForms 契約。公司端不連 PostgreSQL。
 
 ## 前置家用端交接（歷史待辦）
@@ -3602,8 +3601,7 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [x] 已完成並部署 `GET /api/wip/erfs/query`：登入保護，固定 `ERFSource=0`，六個文字欄及兩組日期，至少一個有效條件，參數化 SQL、唯讀一致性 snapshot、分頁上限 100、25 欄結果及 batch member Lot／OP／Customer 比對。
 - [x] 已建置 `GET /api/wip/erfs/{erfNo}/info?source=0|1|2`：登入保護、Repeatable Read／READ ONLY、HoldReason／HoldReasonDisp／ERF／OCAP Disposition／Lot Disposition 五頁及附件 metadata；NodeID 左聯 NodeBasis、`RECORDQTY=Qty`、OCAP 欄位分支正確。單組明細／附件列表上限 500；缺少的 `tblqcholditembasis` 不猜 HoldItemName。
 - [x] 已建置附件分流唯讀下載 API：精確檢查 ERF／Lot／來源與 OCAP 四鍵，清理檔名，最大 20 MiB。正式 SC402、SC401 與 WP508 共用此 API；WP508 附件在正式模式唯讀。
-- [x] Web-only release `wp508-query-20261124-a5` 已上線，API image 與主站容器均未更動。Chrome 正式頁以不存在的 ERF No 查詢，實際回覆「查得 0 筆 WIP 異常單」，頁面結果與停用按鈕正確；重新載入後清空測試條件，登入仍有效。正式表無業務列，故無法正向驗證選列、Info 明細及附件下載。
-- [ ] 1237px 瀏覽器寬度且側選單展開時，篩選區水平溢位並裁切 Query 按鈕；修正響應式排版後重新驗收。
+- [x] Web-only release `wp508-query-20261124-a5` 完成正式查詢接線；後續 `wp508-query-20261124-a6` 修正響應式排版，API image 與主站容器均未更動。app-browser 1237px／展開選單驗證沒有水平溢位，Chrome 原生頁面以不存在 ERF No 查詢得到 0 筆，空狀態與停用按鈕正確；正式表無業務列，故仍無法正向驗證選列、Info 明細及附件下載。
 - [ ] 附件 Delete API 尚未開放。未來若實作，必須確認、核獨立刪除權限、從 server 重查 ERFNo/LotNo/來源/OCAPNO 與完整 PK，禁止刪除檔名不分大小寫包含 `CreateERFNo + "."` 的產生檔，記 actor/稽核並處理競態。**舊 `wsWIP.DelERFOCAP_AttachFile`／Core 沒傳 OCAPNO，會刪同名多個 OCAP 列；新 API 必須用四鍵精確刪除。**
 - [ ] `8D` 有 QRSNo 時查 8D Basis，無結果或 IssueState=-1 不開維護；沒有 QRSNo 時走 WP801 建立並回寫 ERFBasis.QRSNo。WP801 主單 source/API 契約在 [WP801 規格](docs/modules/WIP/廠內8D矯正單.md)，已有 QRSNo 的 WP802 詳見 [WP802 規格](docs/modules/WIP/8D矯正單維護作業.md)；直接入口不受 WP802 主窗 Active 查詢篩選限制。不要從 browser 接受任意 QRSNo、IssueState；正式 API 後接 Vue/部署驗收。
 
