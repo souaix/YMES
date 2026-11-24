@@ -1,11 +1,16 @@
 # 家裡電腦接手清單
 
-## 家用端最新同步與正式站狀態（2026-11-24）
+## 公司端交接：IV201 原物料倉庫房資料（2026-11-24）
 
-- [x] 從 GitHub `main` 同步到 `97f8bb5`，以一般 merge 納入公司端 SC402／SC501，無 force push；家用工作仍在隔離分支 `codex/homepc-sc401-20261124`。
-- [x] PPK SSH 可用 `runuser -u postgres` 經本機 peer 維護 YMES PostgreSQL 14.24；0068／0069／0070 migration 前備份、結構與 `ymes_app` 權限狀態見下方與各模組文件。
-- [x] SC216、SC401 API／Web 已部署為 `sc401-readonly-20261124-a1`；readiness 200、未登入 SC401 API 回 401。app-browser Demo 登入、SC401 九條件查詢與關閉返回、SC216 查詢及四種 BindType 頁籤均已驗證；資料表為空，無法驗證有資料結果或分頁。
-- [ ] SC401 disposition／Lot release／ERF Info／附件仍未實作；下一個家用端事項依 FunctionKey 順序先接 SC402，再處理 SC501；SC301／SC311／SC312 正式 API 仍未完成。
+公司端已依 `frmINVRawInventory`／六個單據 Confirm Form、`wsINV`、`clsInventory` 完成 [IV201 DEV 頁與規格](docs/modules/INV/原物料倉庫房資料.md)，路由 `/YMES/INV/RawInventory`。頁面查原料庫房庫存、選列載入 Locator/Lot，並以 localStorage 假資料模擬六種 Confirm；正式單據與庫存 API 未實作。
+
+- [ ] Pull 最新 `main` 後核對 YMES PostgreSQL live schema／migration history：`TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC`、`TBLMTLMATERIALBASIS` 及各單據來源主檔／明細、transaction state/log 與領料投入點／WIP 副作用表。桌機受保護 Oracle profile 不存在；兩張 raw inventory 表沒有本版本可信 DDL／metadata，不能由 DEV fixture 推建 schema。
+- [ ] 先比 live schema 再決定是否新增 migration；若必須查 Oracle source，請公司端安全設定本機受保護 profile，以 PowerShell 5.1 + `Oracle.ManagedDataAccess` 只讀取 DDL／字典 metadata。
+- [ ] 提供登入與 `RAW INVENTORY` Function ACL 保護的有效 RAW 庫房 lookup、有限筆數庫存查詢、依 InventoryNo+MaterialNo 查 Locator/Lot 明細；固定舊畫面的 `InventoryType=0`、`IssueState=2`、`CurQty>0` 語意，使用參數化 SQL／明確排序，不接受任意 AdditionalXml。
+- [ ] 六種 Confirm 使用伺服器端授權 command，固定 Source 0/1/3/4/2/10，重新讀取 State=0 單據、重驗庫房／單位／數量／Locator／Lot／預訂與權限；以交易、鎖定／版本和冪等鍵同步單據狀態、交易 state/log、庫存主檔／儲位及投入點／WIP 副作用，錯誤時回滾或回報可恢復失敗，不可回報成功後留下部分寫入。舊 `AddINVTransactionState` 先回 success 再同步執行，且吞掉內層例外；正式 API 必須回傳最終執行狀態，不能複製假成功行為。
+- [ ] 區分交易方向：Material In／WIP Return 增加原料庫存；Material Out／Material Return 扣減庫存（Material Return 還會清相關元件庫存列）；Material Adjust 依 AdjustType 調整數量或儲位；PreOrder 只增加 AllocateQty，Material Out 依來源規則消耗預訂。
+- [ ] 繼續追各交易 Core 分支：完整多明細、單位換算、領料元件與 OE/WIP 投入、預訂消耗、AdjustType 儲位限制、WIP return Place 與產業包表；DEV 僅為單筆假資料示例。家用端負責 schema／migration、正式 API、部署及驗收。
+- [x] 公司端未連 YMES PostgreSQL、未建立 schema/migration、未實作正式 API；下一項公司端 DEV 為 IV202「開立進料單」。
 
 ## 公司端交接：SC501 品管項目檢測儀器對應（2026-11-24）
 
@@ -31,13 +36,11 @@
 
 公司端已依標準 `SC_ERFUnReleased` Form／處置子畫面、WIP Service/Core 與 SPC lookup 完成 [SC401 DEV 頁](docs/modules/SPC/未解除異常單.md)，路由 `/YMES/SPC/ErfUnreleased`。查詢限定 `ERFSource=1|2`、`Status=0|1|2|3|11`；這是標準 SPC 畫面，Lot Disposition 僅 Back／Go／Go Scrap Inventory，不能沿用 WP509 THEIL 客製版 14 種選項。Form 傳 MaterialNo／VendorNo，但舊 Service 漏解析，DEV 按畫面意圖套用並已記錄差異。
 
-- [x] 已核對 SC401 查詢表與共用 PRD／OP／MTL／Customer refs；migration 0070 只建立五張空表並授予查詢所需 SELECT，沒有讀取或匯入業務資料。
+- [ ] Pull 後核對 query、ERF disposition、Hold Reason、Lot disposition、附件等表的 YMES live schema／migration；主查詢沿用 QC409／WP101／PRD／OP／MTL／Customer refs。先核 live schema，不能由 CREATE-only 推定已部署。
 - [ ] 若 `TBLWIPERFDISPOSITION` 確實缺少，參考 `database/reference/mestest_wip_erf_disposition_create.sql` 建 forward migration；Oracle source DDL 在 `mestest_qc409_wip_disposition_dependencies_source_ddl.sql`。其他共用 ERF／附件表沿 WP501、WP508Info／WP509 refs 核對，不重複建表。
-- [x] 已建立登入保護、最多 100 筆分頁的 `GET /api/spc/erfs/unreleased`；固定 ERFSource 1/2、Status 0/1/2/3/11，九條件參數化，Lot No 支援 BatchLot 成員命中。
-- [x] SC401 API／Web 已部署；app-browser Demo 驗證正式路由、無條件與全部九條件查詢、關閉返回選單。正式來源表目前無業務列，console 無錯誤；分頁／選列與正向資料仍待核准資料後驗證。正式頁的 `...` lookup 按鈕目前停用，文字欄可手動輸入。
-- [ ] Pull 後核對 ERF disposition、Hold Reason、Lot disposition、附件等寫入依賴；若 `TBLWIPERFDISPOSITION` 確實缺少，參考 CREATE-only/source DDL 建 migration。不能由 CREATE-only 推定已部署。
+- [ ] 建立登入及 `SPC ERF UNRELEASED` Function ACL 保護、有限筆數分頁的查詢 API；固定 ERFSource 1/2 與五種狀態，參數化九個畫面條件並實際支援 Material/Vendor。批次 Lot No 命中任一 BatchLot 成員時回傳主 ERF。
 - [ ] ERF Disp／Lot Release 每次命令由伺服器重驗 CurGroup、OCAP 節點、ERFSource／Status、LotStamp、CreateERF 與目前 Lot 狀態；以交易及 expected state 寫 ERF／Lot／Hold Reason／附件，明確分開外部通知錯誤。Lot Release 對 SC401 限 Go 0、Scrap Inventory 7、Back 11。ERF Info 沿用 WP508 shared API。
-- [x] 公司端只交付 DEV／來源規格／CREATE-only，未連 YMES PostgreSQL、未建立 migration、未實作正式 API；SC402、SC501 為新交接，先依 FunctionKey 順序接 SC402。
+- [x] 公司端只交付 DEV／來源規格／CREATE-only，未連 YMES PostgreSQL、未建立 migration、未實作正式 API；下一個未完成 SPC FunctionKey 為 SC501。
 
 ## 公司端交接：SC312 管制圖月報表_以要因查詢（2026-11-24）
 
@@ -95,8 +98,8 @@
 
 公司端依 `frmQcItemBindingHisLog`、`wsSPC.LoadQCItemLogData`、`kcSPC.LoadQCItemLogData` 及 `clsQCBasis` 歷程寫入 helper 完成 [SC216 DEV 頁](docs/modules/SPC/品管項目綁定紀錄表.md)，路由 `/YMES/SPC/QcItemBindingHisLog`。支援五種 QC Item Type、Issue Item lookup、Type／ExecuteStatus／日期條件，並按 BindType 顯示 Product、OP、Material Type、MaterialNo 父子歷程。
 
-- [x] PPK SSH 唯讀核對 live schema 後套用 migration 0068／0069；BindLog 欄位與 PK 已存在，只建立缺少的空 lookup，保留 BindLog 原有 INSERT 權限，`ymes_app` 對四張表有 SELECT 且沒有新增寫權限。
-- [x] 登入保護唯讀 API／Web 已部署；From／To inclusive、366 天限制、有限父列／子列分頁與一致性 snapshot 已實作。app-browser 驗證 Query 與 Product／OP／Material Type／MaterialNo 頁籤，均正確回 0 組；資料庫沒有歷程列，正向明細／分頁待核准資料後補驗。
+- [ ] Pull 後核對 `TBLQCITEMBINDLOG` live schema／已部署 migration；沿用 `database/reference/mestest_mtl_qc_item_tables_source_ddl.sql` 與 `database/reference/mestest_mtl_qc_item_tables_create.sql`，不新增重複表。桌機沒有受保護 Oracle profile，本輪未直連 Oracle／YMES PostgreSQL。
+- [ ] 正式 API 按登入者 SC216 權限提供唯讀查詢，From／To 保留 inclusive 語意；所有日期、QC Item Type／No、ExecuteStatus 條件參數化，限制日期跨度、父列／子列數與分頁，並對父子結果使用同一一致性 snapshot。
 - [ ] ValueListProvider 的 QCItemType／ExecuteStatus／InLine 選項依部署版確認。舊 Core Relation key 缺 ProductNo／ProductVersion，正式 API 應用完整 binding identity 組父子資料，修正重複掛接需記錄行為差異。
 - [x] 公司端只交付 DEV／來源規格，未新增 schema／migration 或實作正式 API；下一個未完成 SPC FunctionKey 為 SC501。
 
@@ -3641,14 +3644,14 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## 公司端交接：IV101 庫房工程群組（2026-11-24）
 
-- 公司端已完成 IV101、IV102、IV103 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff，分別見 `docs/modules/INV/庫房工程群組.md`、`docs/modules/INV/庫房基本資料.md`、`docs/modules/INV/在製貨架基本資料.md`。下次 pull main 後可接公司端下一個尚無規格項目 IV201。
+- 公司端已完成 IV101、IV102、IV103、IV201 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff；IV201 見 `docs/modules/INV/原物料倉庫房資料.md`。目前公司端下一項是 IV202「開立進料單」。
 - 家用端工作：先比對 live `tblinvengineergroupbasis`。公司桌機未取得 `TBLINVENGINEERGROUPBASIS` Oracle DDL/metadata；`database/reference/mestest_first_phase_create_tables.sql` 的同名 CREATE 欄位未核實，請勿視為正式 schema。若無可信 Oracle source DDL，記錄差異與所需欄位後再決定 schema，不要猜。
 - `TBLUSRUSERGROUP` 已有可重用的 Oracle source DDL 與 PostgreSQL reference。正式 API 依模組規格提供主檔查詢/Add/Edit/Copy/Delete、active user lookup、GroupType=3 成員查詢及完整集合替換；成員替換須 DataStamp CAS、同步 AgentOf direct/agent rows 並交易回滾。舊 Copy 多次呼叫非原子，正式端需同交易。
 - 公司端未連 YMES PostgreSQL、未做正式 API/schema、未執行 build/test/browser。
 
 ## 公司端交接：IV102 庫房基本資料（2026-11-24）
 
-- 公司端已完成 IV102 主畫面／Property／Locator DEV 假資料及來源規格，見 `docs/modules/INV/庫房基本資料.md`。公司端下一個尚無規格項目為 IV201。
+- 公司端已完成 IV102 主畫面／Property／Locator DEV 假資料及來源規格，見 `docs/modules/INV/庫房基本資料.md`。其後 IV201 亦已交付，目前下一個公司端項目為 IV202。
 - 家用端先比對 live `tblinvinventorybasis`、`tblinvinventoryproperty`。公司桌機受保護 Oracle profile 不存在；repo first-phase Inventory Basis CREATE 不是可核實來源 DDL，Property table 也缺已驗證 CREATE。請按 live schema／正式 metadata 核實欄位、鍵、預設值與 FK，不要推測建表。
 - `TBLINVLOCATORBASIS` 已有 Oracle source DDL、metadata、PostgreSQL CREATE-only，直接沿用。主檔狀態 0／-1 依舊 Core 實體刪除主檔、Property、Locator；狀態 2 只軟刪主檔至 -1；狀態 1 拒絕。Property/Locator 也採 0／-1 實體刪除、2 軟刪、1 拒絕。主檔與 Property Approve 分別依 `INV BASIS`、`INV PROPERTY` IssueManagement mapping 決定直接 Active 或 Pending 工作。
 - 正式 API 需參數化、授權、DataStamp CAS、批次回應逐筆狀態，並交易保護 cascade／property／locator；部署和整合依家用端待辦既有程序處理。公司端未連 YMES PostgreSQL、未實作正式 API/schema、未執行 build/test/browser。

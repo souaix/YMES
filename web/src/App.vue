@@ -264,6 +264,7 @@ import SpcInspMachineParameterSetup from './components/SpcInspMachineParameterSe
 import InvEngineerGroupBasis from './components/InvEngineerGroupBasis.vue'
 import InvInventoryBasis from './components/InvInventoryBasis.vue'
 import InvStockerBasis from './components/InvStockerBasis.vue'
+import InvRawInventory from './components/InvRawInventory.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -1397,6 +1398,7 @@ const isSpcInspMachineParameterSetupPage = computed(() => activeMasterKey.value 
 const isInvEngineerGroupPage = computed(() => activeMasterKey.value === 'function:INV:INV ENGINEER GROUP')
 const isInvInventoryBasisPage = computed(() => activeMasterKey.value === 'function:INV:INV BASIS FOR INV')
 const isInvStockerBasisPage = computed(() => activeMasterKey.value === 'function:INV:STOCKER BASIS')
+const isInvRawInventoryPage = computed(() => activeMasterKey.value === 'function:INV:RAW INVENTORY')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
@@ -3249,6 +3251,12 @@ async function signOut(): Promise<void> {
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           :current-user-no="currentUser?.userNo || ''"
+          @close="navigateHome"
+        />
+        <InvRawInventory
+          v-else-if="isInvRawInventoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
         <WipErfBasis

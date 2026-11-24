@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## 公司端最新交付：IV201 原物料倉庫房資料（2026-11-24）
+
+- [x] 直接核對 `frmINVRawInventory` inline Designer、六個確認視窗、`wsINV.LoadRawInventory`／`LoadRawInventoryLoc`／`AddINVTransactionState`／`ExeINVTransactionState` 與 `clsInventory` 查詢／交易方法。
+- [x] 完成 `/YMES/INV/RawInventory` DEV：有效原料庫房選擇、庫存主 Grid、選列連動 Locator/Lot Grid、數量摘要、Refresh／Close、Material In/Out/Adjust、PreOrder、Material Return、WIP Return 單據確認入口與 localStorage 假交易。
+- [x] 記錄六個 Source code 0/1/3/4/2/10、`CurQty > 0` 主查詢、Locator 顯示欄及 `PreOrder` 只增加 `AllocateQty`；Material Return 扣庫存，WIP Return 回補原料庫；多明細、單位換算、投入點／WIP 副作用及產業包分支明確列為 DEV 簡化。
+- [x] 新增 [IV201 規格](docs/modules/INV/原物料倉庫房資料.md)，更新 Module Index、MES menu inventory 和家用端 handoff。
+- [ ] 家用端先比對 `TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC` 及單據交易所需表的 live schema／migration；桌機受保護 Oracle profile 不存在，本輪無可信 Oracle DDL／metadata，未新增猜測 SQL。
+- [x] 公司端未連 YMES PostgreSQL、未實作／驗收正式 API/schema、未設定 `ConnectionStrings__YMes`、未部署、未執行 build/test/browser。下一個 INV FunctionKey 為 IV202「開立進料單」。
+
 ## 公司端最新交付：SC501 品管項目檢測儀器對應（2026-11-24）
 
 - [x] 核對 `frmInspMachineParameterSetup`／`frmInspMachineParameterTest`、inline Designer、`wsQC.LoadQCItemForVariables`／`LoadInspMachineParameter`／`LoadQCItemGroupDetail` 與 `clsQCBasis`／`clsInspMachine`。
@@ -2592,7 +2601,7 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 更新 `docs/modules/INV/庫房工程群組.md`、模組索引、選單清冊及家用端 handoff。共用 `TBLUSRUSERGROUP` 沿用已查證 DDL；`TBLINVENGINEERGROUPBASIS` 缺 Oracle source DDL/metadata，現有 first-phase CREATE 是未核實推測，未複製為正式 CREATE-only。
 - [x] 本桌機受保護 Oracle profile 不存在；未連 YMES PostgreSQL、未執行 Oracle DDL/DML、未修改正式 API/schema，未執行 build/test/browser。
 - [ ] 家用端先查 live schema／取得可信來源 DDL，再依模組規格完成主檔、Copy、Delete、成員替換與代理人同步 API，確保交易及 DataStamp CAS；勿直接沿用未驗證 CREATE。
-- [x] IV102、IV103 已完成，詳見下方交接；下一個尚無規格的 FunctionKey 為 IV201「原物料倉庫房資料」。
+- [x] IV102、IV103 已完成，詳見下方歷史交接；其後 IV201 已交付，目前下一項為 IV202「開立進料單」。
 
 ## IV102 庫房基本資料已完成公司端 DEV／規格交接（2026-11-24）
 
@@ -2600,7 +2609,7 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 更新 `docs/modules/INV/庫房基本資料.md`、模組索引、選單清冊及家用端 handoff。Locator 沿用已查證 `TBLINVLOCATORBASIS` DDL；`TBLINVINVENTORYBASIS` 和 `TBLINVInventoryProperty` 缺 Oracle source DDL/metadata，repo 的 first-phase 主檔 CREATE 欄位未核實，不另產正式 CREATE-only。
 - [x] 本桌機受保護 Oracle profile 不存在；未連 YMES PostgreSQL、未執行 Oracle DDL/DML，未實作正式 API/schema，未執行 build/test/browser。
 - [ ] 家用端先核 live Inventory Basis／Property schema，再按模組規格接 IssueManagement、DataStamp、狀態 0/-1 實體刪除／狀態 2 軟刪與同交易 Property／Locator cascade。不可照抄推測 CREATE。
-- [x] IV103「在製貨架基本資料」已於下方完成；公司端下一個尚無規格 FunctionKey 為 IV201「原物料倉庫房資料」。
+- [x] IV103「在製貨架基本資料」已於下方完成；其後 IV201 已交付，目前下一個 FunctionKey 為 IV202「開立進料單」。
 
 ## IV103 在製貨架基本資料已完成公司端 DEV／規格交接（2026-11-24）
 
@@ -2608,4 +2617,4 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 更新 `docs/modules/INV/在製貨架基本資料.md`、規格索引、選單清冊與家用端 handoff。確認 `TBLINVSTOCKERBASIS` first-phase CREATE 為推測；`TBLINVSTOCKERDETAIL` 沒有已核實 Oracle DDL／metadata；未新增 CREATE-only。
 - [x] 本桌機受保護 Oracle profile 不存在；未連 YMES PostgreSQL、未執行 Oracle DDL/DML、未實作正式 API/schema、未執行 build/test/browser。
 - [ ] 家用端先核 live `tblinvstockerbasis`／`tblinvstockerdetail` schema；正式 API 需 DataStamp CAS，並交易保護主檔及明細整組替換／刪除。簽核須確認舊 Service 目前直接 Active 的規則是否仍適用。
-- [ ] 公司端下一個尚無規格 FunctionKey 為 IV201「原物料倉庫房資料」，先核原 Form／Service／Core 再做 DEV 與 handoff。
+- [x] IV201「原物料倉庫房資料」已完成，見文件上方最新交接與下方規格；目前下一個 FunctionKey 為 IV202「開立進料單」。
