@@ -2,7 +2,7 @@
 
 ## 家用端同步狀態（2026-11-24）
 
-- [x] 同步 GitHub `main` 至 `0160bfb`，接到公司端 IV202／IV207／IV203／IV208／IV205 交付；以一般 merge 保留本機 WP508 排版修正與 migration `0073`，沒有覆蓋其他 worktree 工作。
+- [x] 正常 merge GitHub 公司端交付 `12bb440`（IV203）、`c48f855`（IV208）、`0160bfb`（IV205），並將家用整合版 `9884fab` 快轉推至 `main`、讀回一致；保留本機 WP508 排版修正與 migration `0073`，未覆蓋任何一端工作、未 force push。
 - [x] YMES PostgreSQL migration `0071` 已建立 QC501 群組明細 lookup 表並只授予 `ymes_app` SELECT；備份與結構核對紀錄在 SC501 模組文件。
 - [x] SC501 正式 lookup API／頁面已建置並部署為 `sc501-setup-20261124-a2`；API readiness、未登入 401、頁面 200 與正式資料空結果已核對。app-browser 曾完成主要表單互動，但原生確認視窗後輸入控制失效；正式頁可讀、後續 Add／選單點擊均無動作，console 無錯誤，需待控制恢復再補驗刪除確認。
 - [x] SC402 查詢 API 已由 `sc402-query-20261124-b3` 提供；SC402 正式 ERF Info 五頁及附件唯讀下載接上 WP508 共用 API，版本 `wip-erf-info-20261124-a1` 已部署。正式唯讀查詢 0 筆；因來源沒有業務列，ERF Info 明細與實際附件下載尚無法做正向驗證。Function ACL 仍依安排暫緩，端點要求登入。
