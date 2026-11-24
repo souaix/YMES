@@ -19,14 +19,14 @@ interface InventoryOption { inventoryNo: string }
 interface LocatorForm { inventoryNo: string; locatorNo: string; locatorName: string; capacity: string; description: string }
 type FormMode = 'add' | 'edit' | 'copy' | null
 
-const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean }>(), { developmentPreview: false })
+const props = withDefaults(defineProps<{ apiBaseUrl: string; currentUserNo?: string; developmentPreview?: boolean; initialInventoryNo?: string }>(), { developmentPreview: false, initialInventoryNo: '' })
 const emit = defineEmits<{ close: [] }>()
 const appBase = import.meta.env.BASE_URL.replace(/\/+$/, '')
 const mockMode = computed(() => import.meta.env.DEV && props.developmentPreview)
 const rowsKey = 'ymes-dev-mock:smd-locator-basis:v1'
 const issueStateFilter = ref(0)
-const queryInventoryNo = ref('')
-const appliedInventoryNo = ref('')
+const queryInventoryNo = ref(props.initialInventoryNo)
+const appliedInventoryNo = ref(props.initialInventoryNo)
 const allRows = ref<LocatorRow[]>([])
 const inventoryOptions = ref<InventoryOption[]>([])
 const selectedKeys = ref<string[]>([])
@@ -369,7 +369,7 @@ onMounted(() => { void loadRows(); void loadInventoryOptions() })
     <header class="page-heading"><h1>儲位基本資料</h1></header>
     <div class="query-strip">
       <fieldset class="issue-filter"><legend>狀態</legend><label v-for="state in issueStates" :key="state.value"><input type="radio" name="locator-issue-state" :checked="issueStateFilter === state.value" @change="applyIssueFilter(state.value)" />{{ state.label }}</label></fieldset>
-      <label for="locator-query">庫存編號</label><input id="locator-query" v-model="queryInventoryNo" maxlength="20" @keyup.enter="loadRows" /><span class="wildcard">%</span><button class="btn" type="button" :disabled="loading" @click="loadRows">查詢</button><span v-if="loading" class="muted">載入中…</span>
+      <label for="locator-query">庫存編號</label><input id="locator-query" v-model="queryInventoryNo" maxlength="20" :readonly="Boolean(props.initialInventoryNo)" @keyup.enter="loadRows" /><span class="wildcard">%</span><button class="btn" type="button" :disabled="loading" @click="loadRows">查詢</button><span v-if="loading" class="muted">載入中…</span>
     </div>
     <div v-if="mockMode" class="preview-note">Development Preview：使用本機 localStorage 假資料，不連接正式 API。</div>
     <div v-if="errorMessage" class="notice error" role="alert">{{ errorMessage }}</div>

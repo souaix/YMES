@@ -3638,3 +3638,17 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] HOME：71份版本驗證檔整包上傳在程序建立前遭自動核准審查拒絕；原因是缺這批內部程式／部署／驗證資料與指定私有目的地的明確外傳授權。未連線、未上傳、未改checkpoint；已另送精確授權問題，不等待使用者而繼續其他開發。
 - [ ] 原CP33及Ready=false計畫保持，9224／f2c1工具均未遠端執行。若後續網站或API版本已前進，禁止直接執行綁舊497／4f runtime的73e結案器；須以新live版本與既有ET202歷史實證重新審查整合結案，不倒退服務或改寫舊證據。
 
+
+## 公司端交接：IV101 庫房工程群組（2026-11-24）
+
+- 公司端已完成 IV101 與 IV102 的 Vue DEV 假資料、WinForms／Service／Core 規格與 API/schema handoff，分別見 `docs/modules/INV/庫房工程群組.md`、`docs/modules/INV/庫房基本資料.md`。下次 pull main 後可接公司端下一項 IV103。
+- 家用端工作：先比對 live `tblinvengineergroupbasis`。公司桌機未取得 `TBLINVENGINEERGROUPBASIS` Oracle DDL/metadata；`database/reference/mestest_first_phase_create_tables.sql` 的同名 CREATE 欄位未核實，請勿視為正式 schema。若無可信 Oracle source DDL，記錄差異與所需欄位後再決定 schema，不要猜。
+- `TBLUSRUSERGROUP` 已有可重用的 Oracle source DDL 與 PostgreSQL reference。正式 API 依模組規格提供主檔查詢/Add/Edit/Copy/Delete、active user lookup、GroupType=3 成員查詢及完整集合替換；成員替換須 DataStamp CAS、同步 AgentOf direct/agent rows 並交易回滾。舊 Copy 多次呼叫非原子，正式端需同交易。
+- 公司端未連 YMES PostgreSQL、未做正式 API/schema、未執行 build/test/browser。
+
+## 公司端交接：IV102 庫房基本資料（2026-11-24）
+
+- 公司端已完成 IV102 主畫面／Property／Locator DEV 假資料及來源規格，見 `docs/modules/INV/庫房基本資料.md`。桌面下次 pull main 後可接公司端下一項 IV103。
+- 家用端先比對 live `tblinvinventorybasis`、`tblinvinventoryproperty`。公司桌機受保護 Oracle profile 不存在；repo first-phase Inventory Basis CREATE 不是可核實來源 DDL，Property table 也缺已驗證 CREATE。請按 live schema／正式 metadata 核實欄位、鍵、預設值與 FK，不要推測建表。
+- `TBLINVLOCATORBASIS` 已有 Oracle source DDL、metadata、PostgreSQL CREATE-only，直接沿用。主檔狀態 0／-1 依舊 Core 實體刪除主檔、Property、Locator；狀態 2 只軟刪主檔至 -1；狀態 1 拒絕。Property/Locator 也採 0／-1 實體刪除、2 軟刪、1 拒絕。主檔與 Property Approve 分別依 `INV BASIS`、`INV PROPERTY` IssueManagement mapping 決定直接 Active 或 Pending 工作。
+- 正式 API 需參數化、授權、DataStamp CAS、批次回應逐筆狀態，並交易保護 cascade／property／locator；部署和整合依家用端待辦既有程序處理。公司端未連 YMES PostgreSQL、未實作正式 API/schema、未執行 build/test/browser。

@@ -2585,3 +2585,19 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [ ] HOME：71份版本驗證檔整包上傳在程序建立前遭自動核准審查拒絕；原因是缺這批內部程式／部署／驗證資料與指定私有目的地的明確外傳授權。未連線、未上傳、未改checkpoint；已另送精確授權問題，不等待使用者而繼續其他開發。
 - [ ] 原CP33及Ready=false計畫保持，9224／f2c1工具均未遠端執行。若後續網站或API版本已前進，禁止直接執行綁舊497／4f runtime的73e結案器；須以新live版本與既有ET202歷史實證重新審查整合結案，不倒退服務或改寫舊證據。
 
+
+## IV101 庫房工程群組已完成公司端 DEV／規格交接（2026-11-24）
+
+- [x] 依 `frmINVEngineerGroupBasis`／Def、`wsINV`、`clsInventory`、`clsBasis_UPD` 完成群組 CRUD／Copy、GroupType=3 直接成員雙清單、整組 Confirm 與 DataStamp 假互動；Vue 路徑 `/YMES/INV/EngineerGroups`，資料只存瀏覽器 localStorage。
+- [x] 更新 `docs/modules/INV/庫房工程群組.md`、模組索引、選單清冊及家用端 handoff。共用 `TBLUSRUSERGROUP` 沿用已查證 DDL；`TBLINVENGINEERGROUPBASIS` 缺 Oracle source DDL/metadata，現有 first-phase CREATE 是未核實推測，未複製為正式 CREATE-only。
+- [x] 本桌機受保護 Oracle profile 不存在；未連 YMES PostgreSQL、未執行 Oracle DDL/DML、未修改正式 API/schema，未執行 build/test/browser。
+- [ ] 家用端先查 live schema／取得可信來源 DDL，再依模組規格完成主檔、Copy、Delete、成員替換與代理人同步 API，確保交易及 DataStamp CAS；勿直接沿用未驗證 CREATE。
+- [x] IV102「庫房基本資料」已於下方完成；公司端下一個 FunctionKey 為 IV103「在製貨架基本資料」。
+
+## IV102 庫房基本資料已完成公司端 DEV／規格交接（2026-11-24）
+
+- [x] 依 `frmInventoryBasis`／Def、Property／Locator 子畫面、`wsSMD`／`wsINV`、`clsINVBasis`／`clsBasis_UPD` 完成主檔查詢、四狀態、Add/Edit/Copy/Delete/Approve、Property 子畫面及重用 Locator DEV。路徑 `/YMES/INV/InventoryBasis`；假資料使用 localStorage，Locator 固定於所選 InventoryNo。
+- [x] 更新 `docs/modules/INV/庫房基本資料.md`、模組索引、選單清冊及家用端 handoff。Locator 沿用已查證 `TBLINVLOCATORBASIS` DDL；`TBLINVINVENTORYBASIS` 和 `TBLINVInventoryProperty` 缺 Oracle source DDL/metadata，repo 的 first-phase 主檔 CREATE 欄位未核實，不另產正式 CREATE-only。
+- [x] 本桌機受保護 Oracle profile 不存在；未連 YMES PostgreSQL、未執行 Oracle DDL/DML，未實作正式 API/schema，未執行 build/test/browser。
+- [ ] 家用端先核 live Inventory Basis／Property schema，再按模組規格接 IssueManagement、DataStamp、狀態 0/-1 實體刪除／狀態 2 軟刪與同交易 Property／Locator cascade。不可照抄推測 CREATE。
+- [ ] 公司端下一項 IV103「在製貨架基本資料」，先核對原 Form／Service／Core 後繼續 DEV 與 handoff。
