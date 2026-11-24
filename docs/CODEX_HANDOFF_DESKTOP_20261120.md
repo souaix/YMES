@@ -2,7 +2,7 @@
 
 ## 後續最新進度（2026-11-24）
 
-本檔下方的 WP401 起始指示是 2026-11-20 當時的歷史接手點。公司端後續已完成 SPC SC501 及 INV IV101、IV102、IV103、IV201；最新狀態和家用端具體工作請看 [公司端待辦](../todolist_officepc.md) 與 [家用端待辦](../todolist_homepc.md)。目前公司端下一項是 IV202「開立進料單」。本輪 `main` 已快轉同步；IV201 不包含 PostgreSQL/API/schema 實作。
+本檔下方的 WP401 起始指示是 2026-11-20 當時的歷史接手點。公司端後續已完成 SPC SC501 及 INV IV101、IV102、IV103、IV201、IV202；最新狀態和家用端具體工作請看 [公司端待辦](../todolist_officepc.md) 與 [家用端待辦](../todolist_homepc.md)。下一項依選單清冊列序為 IV207「進料單記錄」。本輪 `main` 僅交付公司端 DEV／規格，不包含 PostgreSQL/API/schema 實作。
 
 ## 立即接手
 

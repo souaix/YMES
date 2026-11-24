@@ -430,7 +430,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 最新補記（2026-11-24）：SC501「品管項目檢測儀器對應」已完成公司端 DEV／來源規格交接。SC501 僅將操作站對應寫入 `%LocalAppData%\iMESTech\InspMachineSetup.xml`；Web DEV 使用 localStorage／XML 預覽，沒有 MES 對應表或 CRUD Service。SPC 清冊目前所有 FunctionKey 均已交付；依總清冊順序接續 INV。
 
-公司端復刻進度（2026-11-24）：INV 的 IV101「庫房工程群組」、IV102「庫房基本資料」、IV103「在製貨架基本資料」及 IV201「原物料倉庫房資料」已完成公司端 DEV、WinForms／Service／Core 規格與家用端 handoff。IV201 含庫房／原料庫存 Grid、Locator/Lot 明細和六種待確認單據入口的本機 DEV 模擬。`TBLINVENGINEERGROUPBASIS`、`TBLINVInventoryBasis`、`TBLINVInventoryProperty`、`TBLINVSTOCKERBASIS`、`TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC` 缺本版本可核實 DDL／metadata；桌機受保護 Oracle profile 不存在，未猜 CREATE SQL。家用端先核 live schema，再實作參數化唯讀 API 與冪等、交易保護單據確認；下一項為 IV202「開立進料單」。
+公司端復刻進度（2026-11-24）：INV 的 IV101「庫房工程群組」、IV102「庫房基本資料」、IV103「在製貨架基本資料」、IV201「原物料倉庫房資料」及 IV202「開立進料單」已完成公司端 DEV、WinForms／Service／Core 規格與家用端 handoff。IV202 有單頭／明細雙 Grid、State=0 CRUD、Incoming QC 假連動與列印預覽。`TBLINVENGINEERGROUPBASIS`、`TBLINVInventoryBasis`、`TBLINVInventoryProperty`、`TBLINVSTOCKERBASIS`、`TBLINVRAWINVENTORY`、`TBLINVRAWINVENTORYLOC`、`TBLINVMATERIALINBASIS`、`TBLINVMATERIALINDETAIL`、`TBLSPCINCOMINGQCFORM` 缺本版本可核實 DDL／metadata；桌機受保護 Oracle profile 不存在，未猜 CREATE SQL。家用端先核 live schema，再實作參數化查詢、交易保護單頭／明細與 QC 相依更新；依此清冊列序下一項為 IV207「進料單記錄」。
 
 ### INV — 庫存管理（順序 13）
 
