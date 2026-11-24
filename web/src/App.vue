@@ -3164,6 +3164,7 @@ async function signOut(): Promise<void> {
         <SpcQcItemBindingHisLog
           v-else-if="isSpcQcItemBindingHisLogPage"
           class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
@@ -3201,6 +3202,7 @@ async function signOut(): Promise<void> {
           v-else-if="isSpcErfUnreleasedPage"
           class="framework-content office-wip-module"
           function-variant="spc"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :development-preview="isDevelopmentPreview"
           :current-user-no="currentUser?.userNo || ''"
           @close="navigateHome"

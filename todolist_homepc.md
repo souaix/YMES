@@ -1,20 +1,34 @@
 # 家裡電腦接手清單
 
+## 家用端最新同步與遠端資料庫狀態（2026-11-24）
+
+- [x] 同步 GitHub `main`：最新仍為 `58582b5`（SC401 DEV），此次沒有較新的提交或新增交接；以獨立分支 `codex/homepc-sc401-20261124` 接手，沒有 force push。
+- [x] PPK SSH 以 Linux root 登入後，確認可用 `runuser -u postgres` 經本機 peer 取得 PostgreSQL 管理連線；伺服器為 PostgreSQL 14.24，YMES DB 約 15 MB。先前「沒有資料庫維護者連線」的狀態已由此覆核結果取代。
+- [x] migration 前備份 `/opt/ymes/backups/ymes_before_0068_0069_20261124_01.dump`，659,744 bytes，SHA-256 `2de1a6f1c6b57b6019f0c88f77eebe2ee9744b73542f32d6a509782dbf9b360e`；`pg_restore --list` 驗證通過。
+- [x] 套用 migration 0068／0069；獨立 `BEGIN READ ONLY` 讀回 17／10／20／57 欄、主鍵與 0069 五個來源索引。`ymes_app` 對四張表皆有 SELECT 且沒有新增 INSERT／UPDATE／DELETE 權限；BindLog 原有 INSERT 權限保留。`SET ROLE ymes_app` 對四表 `WHERE false` 探測成功，未讀取業務列。
+- [x] SC216 API／Web 已整合至此最新 main 分支，程式碼與 migration 已備妥並編譯通過；尚待部署及 app-browser 驗證。SC301／SC311／SC312 正式 API 仍未完成。
+- [x] migration 0070 前備份 `/opt/ymes/backups/ymes_before_0070_20261124_01.dump`，670,759 bytes，SHA-256 `b06eddf6614e62f56a86aa92f1eb42ffcda408dc051658f396f83b48bd1735cc`；`pg_restore --list` 驗證通過。
+- [x] 套用 migration 0070 建立五張 SC401 唯讀查詢空表；資料目錄核對欄數為 42／6／38／63／10，`ymes_app` 只有 SELECT，沒有新授予 INSERT／UPDATE／DELETE；未讀／匯入業務資料。
+- [x] SC401 `GET /api/spc/erfs/unreleased` 與正式 Vue 查詢／100 筆分頁已實作；API Release、Vue 型別檢查及 Vite 編譯通過。正式站部署與 app-browser 操作驗證仍待完成。
+
 ## 公司端交接：SC401 未解除異常單（SPC）（2026-11-24）
 
 公司端已依標準 `SC_ERFUnReleased` Form／處置子畫面、WIP Service/Core 與 SPC lookup 完成 [SC401 DEV 頁](docs/modules/SPC/未解除異常單.md)，路由 `/YMES/SPC/ErfUnreleased`。查詢限定 `ERFSource=1|2`、`Status=0|1|2|3|11`；這是標準 SPC 畫面，Lot Disposition 僅 Back／Go／Go Scrap Inventory，不能沿用 WP509 THEIL 客製版 14 種選項。Form 傳 MaterialNo／VendorNo，但舊 Service 漏解析，DEV 按畫面意圖套用並已記錄差異。
 
-- [ ] Pull 後核對 query、ERF disposition、Hold Reason、Lot disposition、附件等表的 YMES live schema／migration；主查詢沿用 QC409／WP101／PRD／OP／MTL／Customer refs。先核 live schema，不能由 CREATE-only 推定已部署。
-- [ ] 若 `TBLWIPERFDISPOSITION` 確實缺少，參考 `database/reference/mestest_wip_erf_disposition_create.sql` 建 forward migration；Oracle source DDL 在 `mestest_qc409_wip_disposition_dependencies_source_ddl.sql`。其他共用 ERF／附件表沿 WP501、WP508Info／WP509 refs 核對，不重複建表。
-- [ ] 建立登入及 `SPC ERF UNRELEASED` Function ACL 保護、有限筆數分頁的查詢 API；固定 ERFSource 1/2 與五種狀態，參數化九個畫面條件並實際支援 Material/Vendor。批次 Lot No 命中任一 BatchLot 成員時回傳主 ERF。
-- [ ] ERF Disp／Lot Release 每次命令由伺服器重驗 CurGroup、OCAP 節點、ERFSource／Status、LotStamp、CreateERF 與目前 Lot 狀態；以交易及 expected state 寫 ERF／Lot／Hold Reason／附件，明確分開外部通知錯誤。Lot Release 對 SC401 限 Go 0、Scrap Inventory 7、Back 11。ERF Info 沿用 WP508 shared API。
+- [x] 以唯讀 catalog 核對 SC401 查詢表缺失；核實 WP501、WP101、QC409、MTL Vendor CREATE/source references 及共用 PRD／OP／MTL／Customer 表與 `ymes_app` SELECT。
+- [x] 依已核實 DDL 建立 0070 forward/rollback migration，只建立空表並授予查詢需要的 SELECT；migration 已備份後套用。
+- [x] 建立登入保護、有限筆數分頁的 `GET /api/spc/erfs/unreleased`；伺服器固定 `ERFSource=1|2`、`Status=0|1|2|3|11`，九個畫面條件參數化並支援 Material/Vendor。批次 Lot No 命中任一 BatchLot 成員時回傳主 ERF。
+- [ ] 將 SC401 這批 API/Web 部署到正式站，app-browser Demo 登入後逐項驗證查詢、九條件、分頁、返回選單、關閉與重新開啟；確認 API 401／資料庫空資料呈現及瀏覽器 console。資料庫無業務列，正向結果需有核准資料後補驗。
+- [ ] ERF Disp／Lot Release 每次命令由伺服器重驗 CurGroup、OCAP 節點、ERFSource／Status、LotStamp、CreateERF 與目前 Lot 狀態；以交易及 expected state 寫 ERF／Lot／Hold Reason／附件，明確分開外部通知錯誤。Lot Release 對 SC401 限 Go 0、Scrap Inventory 7、Back 11；ERF Info 沿用 WP508 shared API。
+- [ ] 處置 API 需先補齊 live dependency／權限／交易副作用核對；目前程式只供登入後唯讀查詢，沒有 FunctionNo/角色 ACL，也不實作 ERF/Lot 寫入或附件讀取。
 - [x] 公司端只交付 DEV／來源規格／CREATE-only，未連 YMES PostgreSQL、未建立 migration、未實作正式 API；下一個未完成 SPC FunctionKey 為 SC402。
 
 ## 公司端交接：SC312 管制圖月報表_以要因查詢（2026-11-24）
 
 公司端依 `frmQueryMnthVarChartRPTByFactor`／`frmRPTChartMnth`、`wsSPC.LoadSPCChartMonthReportByFactor`、`kcSPC` 同名 Core 與 QC Factor／MES Parameter lookup 完成 [SC312 DEV 頁](docs/modules/SPC/管制圖月報表_以要因查詢.md)，路由 `/YMES/SPC/MonthChartReportByFactor`。目前可見流程不選 QC Item，依全體有效 Variable 控制圖的 Factor 條件、Key_Node 與日期回傳月報 Grid。
 
-- [ ] Pull 後比對 YMES live schema／migrations 與 QC302／QC205／QC210 references；SC312 無新增表，勿重複建表。
+- [x] Pull 後比對 YMES live schema／migrations 與 QC302／QC205／QC210 references；沿用既有 Chart／QC Item 表，發現依賴的 `TBLSPCVARFACTORLOG` 在所有 schema 缺少，已整理來源對照 migration 0069，不建立重複表。
+- [x] 家用端備份後套用 migration 0069，讀回 `TBLSPCVARFACTORLOG` 的 57 欄、主鍵、五個來源索引與唯讀 SELECT grant；尚未讀取業務列。
 - [ ] 建立登入及 SC312 權限保護的 Factor options／月報 API；服務端核驗使用者可查的 QC Item 範圍，因舊 Core 未限制 QCItemNo，不能照搬全體控制圖查詢造成越權。
 - [ ] FactorNo 只接受有效 metadata allowlist，FactorValue、日期、Key_Node 參數化；限制日期跨度、Factor 數／值數、RawData 列數與執行時間，不照搬 6,000,000ms timeout／全量 DataSet。
 - [ ] 保留或明確修訂兩個前月＋選取期間、GetLastMonth、SPCID=0 spec line、`Excluded=0` 和 `Run3` 空列移除；核對 R2 比較 CPK1→CPK3 >20% 與 R1 比較 CPK2→CPK3 >25% 的 `@`／`!` 警示。
@@ -25,7 +39,8 @@
 
 公司端依 `frmQueryChartAllCapabilityByFactor`、ALL／YMW result forms、`wsSPC.LoadChartCapabilityDataByFactor`／`LoadChartYMWCapabilityData`、`kcSPC` 同名 Core 與 QC／MES Parameter lookup 完成 [SC311 DEV 頁](docs/modules/SPC/製程能力報表以要因查詢.md)，路由 `/YMES/SPC/ChartAllCapabilityByFactor`。此功能不選 QC Item，從所有 Variable QC Item 的 Factor 中帶條件，支援 ALL／週／月／年、Lot State／Result、CalRule、能力指標、週期結果及選列圖表。
 
-- [ ] Pull 後比對 YMES live schema／migrations 與 QC302／QC205／QC210 references；SC311 無新增表，避免重複建表。
+- [x] Pull 後比對 YMES live schema／migrations 與 QC302／QC205／QC210 references；沿用既有 Chart／QC Item／Detail Log 表，發現依賴的 `TBLSPCVARFACTORLOG` 在所有 schema 缺少，已整理來源對照 migration 0069，不建立重複表。
+- [x] 家用端備份後套用 migration 0069，讀回 `TBLSPCVARFACTORLOG` 的 57 欄、主鍵、五個來源索引與唯讀 SELECT grant；尚未讀取業務列。
 - [ ] 建立登入及 SC311 權限保護的 Factor options／能力報表查詢 API；服務端自行找有效 Variable QC Item Factor，核實 `blnByFactor` 舊 caller 疑點，不信任 client QCItemNo／FactorNo。
 - [ ] FactorNo 必須經核准 metadata allowlist 映射至固定欄位／JSON key，FactorValue 以參數化 array 條件處理；限制日期跨度、Factor 數、週期數、樣本列數、計算時間及輸出列數。
 - [ ] 統一摘要 LotCount 與能力統計 RawData 的日期／Factor／LotState／LotResult；ALL 摘要依狀態／結果但 ALL RawData 未套狀態／結果，YMW RawData 固定 `Excluded=0` 後再套選取條件（全選時實際仍只取 0）。需決定正式指標語意並記錄相對舊程式差異。
@@ -66,8 +81,9 @@
 
 公司端依 `frmQcItemBindingHisLog`、`wsSPC.LoadQCItemLogData`、`kcSPC.LoadQCItemLogData` 及 `clsQCBasis` 歷程寫入 helper 完成 [SC216 DEV 頁](docs/modules/SPC/品管項目綁定紀錄表.md)，路由 `/YMES/SPC/QcItemBindingHisLog`。支援五種 QC Item Type、Issue Item lookup、Type／ExecuteStatus／日期條件，並按 BindType 顯示 Product、OP、Material Type、MaterialNo 父子歷程。
 
-- [ ] Pull 後核對 `TBLQCITEMBINDLOG` live schema／已部署 migration；沿用 `database/reference/mestest_mtl_qc_item_tables_source_ddl.sql` 與 `database/reference/mestest_mtl_qc_item_tables_create.sql`，不新增重複表。桌機沒有受保護 Oracle profile，本輪未直連 Oracle／YMES PostgreSQL。
-- [ ] 正式 API 按登入者 SC216 權限提供唯讀查詢，From／To 保留 inclusive 語意；所有日期、QC Item Type／No、ExecuteStatus 條件參數化，限制日期跨度、父列／子列數與分頁，並對父子結果使用同一一致性 snapshot。
+- [x] 家用端 PPK 以唯讀 catalog 查核 `TBLQCITEMBINDLOG`：來源欄位與 PK 已存在；`ymes_app` 缺 SELECT。其餘三個既有 QC lookup 存在且有 SELECT，兩個群組 lookup 缺少；0068 migration 已依來源 DDL 備妥，不新增重複 BindLog 表。
+- [x] 正式唯讀 API `GET /api/spc/qc-item-binding-history`／`GET /api/spc/qc-item-binding-history/items` 與生產 Vue API 頁已接好；日期、QC Item Type／No、ExecuteStatus 全部參數化，日期含端點並限制 366 天，父列分頁和子事件數有限制，父子在 Repeatable Read／READ ONLY snapshot 中以完整 key 關聯。API/Web 編譯通過，尚未部署。
+- [x] 家用端已用 PPK SSH／postgres peer 套用 0068，讀回 SELECT grants 與兩張 lookup 結構；正式部署後仍待 app-browser 驗證查找、四頁籤、分頁、日期與限額。
 - [ ] ValueListProvider 的 QCItemType／ExecuteStatus／InLine 選項依部署版確認。舊 Core Relation key 缺 ProductNo／ProductVersion，正式 API 應用完整 binding identity 組父子資料，修正重複掛接需記錄行為差異。
 - [x] 公司端只交付 DEV／來源規格，未新增 schema／migration 或實作正式 API；下一個未完成 SPC FunctionKey 為 SC402。
 

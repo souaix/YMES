@@ -19,7 +19,7 @@ type Action = { erfNo: string; kind: 'erfDisposition' | 'lotDisposition' | 'abor
 type Saved = { actions: Action[]; recreated: ErfRow[]; nextSerial: number }
 type Reason = { holdItemNo: string; goodQty: number; scrapQty: number; description: string; holdDisposition: string }
 
-const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; functionVariant?: 'wip' | 'spc' }>()
+const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string; functionVariant?: 'wip' | 'spc'; apiBaseUrl?: string }>()
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
 const spcMode = props.functionVariant === 'spc'
@@ -105,7 +105,13 @@ const returnOrg = ref(true)
 const childLotNo = ref('')
 const childQty = ref('')
 const error = ref('')
-const message = ref(dev.value ? previewMessage : unavailableMessage)
+const message = ref(dev.value ? previewMessage : spcMode ? '正式唯讀查詢；處置與附件功能尚未開放。' : unavailableMessage)
+const loading = ref(false)
+const page = ref(1)
+const pageSize = 100
+const totalCount = ref(0)
+const pageCount = ref(0)
+let queryVersion = 0
 const active = computed(() => rows.value.find(row => row.erfNo === activeNo.value) || null)
 const activeActions = computed(() => saved.value.actions.filter(item => item.erfNo === activeNo.value))
 const latestReasons = computed(() => [...activeActions.value].reverse().find(item => item.reasons?.length)?.reasons || [])
@@ -152,10 +158,12 @@ const lookupOptions = computed(() => {
 const childVariant = computed(() => active.value?.hasGoodBin ? 'Bin' : active.value?.hasComponent ? active.value.carrierNo ? 'Carrier' : 'Component' : 'Standard')
 
 function clearFormal(): void {
+  queryVersion += 1; loading.value = false
   saved.value = { actions: [], recreated: [], nextSerial: 0 }; rows.value = []; activeNo.value = ''; queried.value = false
+  totalCount.value = 0; pageCount.value = 0; page.value = 1
   dialog.value = null; lookup.value = null; ocapPicker.value = false; ocapNode.value = ''; reasons.value = []; reasonIndex.value = -1
   attachmentNames.value = []; attachmentDraft.value = ''; lotOption.value = ''; releaseDisp.value = ''; childLotNo.value = ''; childQty.value = ''
-  dispDescription.value = ''; nextGroup.value = ''; finalGroup.value = ''; contactorName.value = ''; ocapResult.value = ''; error.value = ''; message.value = unavailableMessage
+  dispDescription.value = ''; nextGroup.value = ''; finalGroup.value = ''; contactorName.value = ''; ocapResult.value = ''; error.value = ''; message.value = spcMode ? '正式唯讀查詢；處置與附件功能尚未開放。' : unavailableMessage
   Object.assign(filters, { lotNo: '', opNo: '', curGroupNo: '', customerNo: '', mClassNo: '', erfNo: '', materialNo: '', vendorNo: '', productNo: '' })
   Object.assign(flags, { lotNo: false, opNo: false, curGroupNo: false, customerNo: false, mClassNo: false, erfNo: false, materialNo: false, vendorNo: false, productNo: false })
   Object.assign(target, { processNo: '', opNo: '', returnOp: '', moduleNo: '', moduleVersion: '', inventoryNo: '' })
@@ -211,16 +219,70 @@ function persist(): boolean {
   if (!dev.value) { return false }
  try { window.localStorage.setItem(storageKey, JSON.stringify(saved.value)); return true } catch { error.value = '無法儲存 DEV 假資料。'; return false } }
 function norm(value: string): string { return value.trim().toUpperCase() }
-function query(): void {
-  if (!dev.value) { clearFormal(); return }
-
+async function query(requestedPage = 1): Promise<void> {
   error.value = ''; lookup.value = null
-  if (!dev.value) { error.value = '此頁目前只提供 DEV 假資料。'; return }
-  loadSaved()
+  if (!dev.value && !spcMode) { clearFormal(); error.value = unavailableMessage; return }
   for (const field of queryFields) filters[field.key] = norm(filters[field.key])
+
+  if (!dev.value && spcMode) {
+    const version = ++queryVersion
+    loading.value = true
+    page.value = requestedPage
+    try {
+      const base = props.apiBaseUrl?.trim() || ''
+      if (!base) throw new Error('目前環境尚未設定 API 位址。')
+      const url = new URL(base, window.location.origin)
+      if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1')
+        throw new Error('API 連線必須使用 HTTPS。')
+      url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/spc/erfs/unreleased`
+      url.search = ''
+      for (const field of queryFields) {
+        const value = flags[field.key] ? filters[field.key] : ''
+        if (value) url.searchParams.set(field.key, value)
+      }
+      url.searchParams.set('page', String(requestedPage))
+      url.searchParams.set('pageSize', String(pageSize))
+      const response = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } })
+      const payload = await response.json().catch(() => ({})) as {
+        detail?: string; title?: string; totalCount?: number; page?: number; pageCount?: number; items?: Record<string, unknown>[]
+      }
+      if (!response.ok) throw new Error(payload.detail || payload.title || `API 回應 ${response.status}`)
+      if (version !== queryVersion) return
+      rows.value = (payload.items || []).map(item => ({
+        erfNo: String(item.erfNo || ''), lotNo: String(item.lotNo || ''), customerLotNo: String(item.customerLotNo || ''),
+        productNo: String(item.productNo || ''), productName: String(item.productName || ''), status: Number(item.status) || 0,
+        opNo: String(item.opNo || ''), opName: String(item.opName || ''), customerNo: String(item.customerNo || ''),
+        customerName: String(item.customerName || ''), mClassNo: String(item.mClassNo || ''), holdDescription: String(item.holdDescription || ''),
+        curGroupNo: String(item.curGroupNo || ''), dispDescription: String(item.dispDescription || ''), ruleNo: String(item.ruleNo || ''),
+        createQty: Number(item.createQty) || 0, erfRecordQty: Number(item.scrapQty) || 0, curQty: Number(item.curQty) || 0,
+        priority: Number(item.priority) || 0, batchLot: '', creator: String(item.creator || ''), createDate: String(item.createDate || ''),
+        erfType: Number(item.erfType) || 0, erfSource: Number(item.erfSource) || 0, lotStamp: 0, processNo: '', psNo: '', partialMode: false,
+        materialNo: String(item.materialNo || ''), materialName: String(item.materialName || ''),
+        vendorNo: String(item.vendorNo || ''), vendorName: String(item.vendorName || ''), attachmentName: '',
+        hasGoodBin: false, hasComponent: false, carrierNo: '', inStocker: false, ocapNo: '',
+      }))
+      totalCount.value = Number(payload.totalCount) || 0
+      page.value = Number(payload.page) || requestedPage
+      pageCount.value = Number(payload.pageCount) || 0
+      activeNo.value = rows.value[0]?.erfNo || ''
+      queried.value = true
+      message.value = `查得 ${totalCount.value.toLocaleString()} 筆未解除異常單。`
+    } catch (cause) {
+      if (version !== queryVersion) return
+      error.value = cause instanceof Error ? cause.message : 'SC401 查詢失敗。'
+      rows.value = []; totalCount.value = 0; pageCount.value = 0; activeNo.value = ''; queried.value = true
+      message.value = 'SC401 查詢失敗。'
+    } finally {
+      if (version === queryVersion) loading.value = false
+    }
+    return
+  }
+
+  loadSaved()
   rows.value = allRows().filter(row => (spcMode ? [1, 2].includes(row.erfSource) : row.erfSource === 0) && [0, 1, 2, 3, 11].includes(row.status) &&
     queryFields.every(field => !flags[field.key] || !filters[field.key] || (field.key === 'lotNo' ? [row.lotNo, ...row.batchLot.split(',')].some(no => no.includes(filters.lotNo)) : String(row[field.key]) === filters[field.key])))
     .sort((a, b) => spcMode ? a.erfNo.localeCompare(b.erfNo) : a.lotNo.localeCompare(b.lotNo) || a.erfNo.localeCompare(b.erfNo))
+  totalCount.value = rows.value.length; page.value = 1; pageCount.value = rows.value.length ? 1 : 0
   activeNo.value = rows.value[0]?.erfNo || ''; queried.value = true; message.value = `查得 ${rows.value.length} 筆未解除異常單。`
 }
 function pick(value: string): void {
@@ -404,16 +466,16 @@ watch(dev, enabled => { if (enabled) { message.value = previewMessage; loadPrevi
   <section class="erf-page">
     <h1>未解除異常單 <small>{{ spcMode ? 'SPC ERF UNRELEASED · SC401' : 'WIP ERF UNRELEASED · WP509' }}</small></h1>
     <p v-if="dev" class="note">{{ spcMode ? 'DEV 假資料；範圍模擬 SPC／收料 ERF。Material／Vendor 篩選按畫面意圖模擬，舊 Service 參數缺漏見規格。' : 'DEV 假資料；ERF／Lot／OCAP 交易需正式 API 完成。' }}</p>
-    <p v-if="!dev" class="note" role="status">{{ unavailableMessage }}</p>
+    <p v-if="!dev" class="note" role="status">{{ spcMode ? '正式環境提供唯讀查詢；處置與附件功能尚未開放。' : unavailableMessage }}</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <fieldset><legend>Query</legend><div class="query-grid">
-      <label v-for="field in queryFields" :key="field.key"><span><input v-model="flags[field.key]" type="checkbox" :disabled="!dev"> {{ field.label }}</span><input v-model="filters[field.key]" class="yellow" :disabled="!dev || !flags[field.key]" @keydown.enter.prevent="dev && (query())"><button v-if="field.lookup" type="button" :disabled="!dev" @click="dev && (lookup = field.key)">...</button></label>
-      <button type="button" class="button query-button" :disabled="!dev" @click="dev && (query())">Query</button>
+      <label v-for="field in queryFields" :key="field.key"><span><input v-model="flags[field.key]" type="checkbox" :disabled="!dev && !spcMode"> {{ field.label }}</span><input v-model="filters[field.key]" class="yellow" :disabled="(!dev && !spcMode) || !flags[field.key]" @keydown.enter.prevent="(dev || spcMode) && (query(1))"><button v-if="field.lookup" type="button" :disabled="!dev" @click="dev && (lookup = field.key)">...</button></label>
+      <button type="button" class="button query-button" :disabled="loading || (!dev && !spcMode)" @click="query(1)">{{ loading ? '查詢中…' : 'Query' }}</button>
     </div></fieldset>
-    <fieldset class="result"><legend>Result</legend><div class="result-layout"><div class="scroll"><table><thead><tr><th v-for="column in columns" :key="column.key + column.label">{{ column.label }}</th></tr></thead><tbody>
-      <tr v-for="row in rows" :key="row.erfNo" :class="{ active: activeNo === row.erfNo }" @click="dev && (activeNo = row.erfNo)" @dblclick="openInfo"><td v-for="column in columns" :key="column.key + column.label"><button v-if="spcMode && column.key === 'attachmentName'" type="button" class="button attachment-button" :disabled="!dev" @click.stop="openAttachment(row)">View</button><template v-else>{{ cell(row, column.key, column.label) }}</template></td></tr>
+    <fieldset class="result"><legend>Result</legend><div v-if="spcMode && !dev && pageCount > 0" class="pagination"><button type="button" class="button" :disabled="loading || page <= 1" @click="query(page - 1)">上一頁</button><span>第 {{ page }} / {{ pageCount }} 頁</span><button type="button" class="button" :disabled="loading || page >= pageCount" @click="query(page + 1)">下一頁</button></div><div class="result-layout"><div class="scroll"><table><thead><tr><th v-for="column in columns" :key="column.key + column.label">{{ column.label }}</th></tr></thead><tbody>
+      <tr v-for="row in rows" :key="row.erfNo" :class="{ active: activeNo === row.erfNo }" @click="activeNo = row.erfNo" @dblclick="dev && openInfo()"><td v-for="column in columns" :key="column.key + column.label"><button v-if="spcMode && column.key === 'attachmentName'" type="button" class="button attachment-button" :disabled="!dev" @click.stop="openAttachment(row)">View</button><template v-else>{{ cell(row, column.key, column.label) }}</template></td></tr>
       <tr v-if="!rows.length"><td :colspan="columns.length" class="empty">{{ queried ? '沒有符合條件的未解除異常單。' : '請先 Query。' }}</td></tr>
-    </tbody></table></div><div class="actions"><button type="button" class="button" :disabled="!active || !dev" @click="dev && (openDisposition())">ERF Disp</button><button v-if="!spcMode" type="button" class="button" :disabled="!active || !dev" @click="dev && (openAbort())">ERF Abort</button><button v-if="!spcMode" type="button" class="button" :disabled="!active || !dev" @click="dev && (openRecreate())">ERF Create</button><button type="button" class="button" :disabled="!dev || (!active)" @click="dev && (openInfo())">ERF Info</button><button type="button" class="button close-button" @click="emit('close')">Close (X)</button></div></div><div class="status"><span>{{ message }}</span><span>UserNo {{ currentUserNo || (dev ? 'DEV' : '') }} · {{ rows.length }} 筆</span></div></fieldset>
+    </tbody></table></div><div class="actions"><button type="button" class="button" :disabled="!active || !dev" @click="dev && (openDisposition())">ERF Disp</button><button v-if="!spcMode" type="button" class="button" :disabled="!active || !dev" @click="dev && (openAbort())">ERF Abort</button><button v-if="!spcMode" type="button" class="button" :disabled="!active || !dev" @click="dev && (openRecreate())">ERF Create</button><button type="button" class="button" :disabled="!dev || (!active)" @click="dev && (openInfo())">ERF Info</button><button type="button" class="button close-button" @click="emit('close')">Close (X)</button></div></div><div class="status"><span>{{ message }}</span><span>UserNo {{ currentUserNo || (dev ? 'DEV' : '') }} · {{ totalCount.toLocaleString() }} 筆</span></div></fieldset>
     <div v-if="dev && (ocapPicker)" class="overlay"><div class="dialog small" role="dialog" aria-modal="true"><h2>OCAP Process Show</h2><p>選擇未完成的 OCAP 節點；DEV 示意。</p><label><input v-model="ocapNode" type="radio" :value="active?.ocapNo + '-NODE-01'" :disabled="!dev"> {{ active?.ocapNo }} · NODE-01 · 待處置</label><div class="dialog-actions"><button type="button" class="button primary" @click="dev && (chooseOcap())" :disabled="!dev">Confirm</button><button type="button" class="button" @click="dev && (ocapPicker = false)" :disabled="!dev">Close</button></div></div></div>
     <div v-if="dev && (dialog === 'disposition' && active)" class="overlay"><div class="dialog disposition-dialog" role="dialog" aria-modal="true"><h2>ERF Disposition · {{ active.erfNo }}</h2><fieldset class="basis"><legend>ERFBasis</legend><span>Lot No: {{ active.lotNo }}</span><span>ERF Type: {{ active.erfType }}</span><span>Status: {{ statusLabels[active.status] }}</span><span>CurGroup: {{ active.curGroupNo }}</span><span>Hold Description: {{ active.holdDescription }}</span></fieldset><div class="tabs"><button type="button" class="button" :class="{ selected: tab === 'erf' }" :disabled="!dev || (!canErfDisposition)" @click="dev && (tab = 'erf')">ERF Disposition</button><button type="button" class="button" :class="{ selected: tab === 'lot' }" :disabled="!dev || (!canLotDisposition)" @click="dev && (tab = 'lot')">Lot Disposition</button></div>
       <template v-if="tab === 'erf'"><fieldset><legend>Disposition Select</legend><div class="radios"><label><input v-model="erfDispType" type="radio" value="next" :disabled="!dev"> Select next disp group</label><label><input v-model="erfDispType" type="radio" value="notice" :disabled="!dev"> Notice Customer</label><label><input v-model="erfDispType" type="radio" value="final" :disabled="!dev"> Final Disposition</label></div><label>Disp Description <textarea v-model="dispDescription" class="yellow" :disabled="!dev"></textarea></label><label v-if="erfDispType === 'next'">Next Group <input v-model="nextGroup" readonly class="yellow" :disabled="!dev"><button type="button" @click="dev && (lookup = 'nextGroup')" :disabled="!dev">...</button></label><label v-if="erfDispType === 'notice'">Contactor Name <input v-model="contactorName" class="yellow" :disabled="!dev"></label><label v-if="erfDispType === 'final'">Final Group <input v-model="finalGroup" readonly class="yellow" :disabled="!dev"><button type="button" @click="dev && (lookup = 'finalGroup')" :disabled="!dev">...</button></label><label v-if="active.ocapNo">OCAP Result <input v-model="ocapResult" class="yellow" :disabled="!dev"></label></fieldset>
@@ -441,4 +503,5 @@ watch(dev, enabled => { if (enabled) { message.value = previewMessage; loadPrevi
 
 /* The framework owns the page title for this opt-in mount. */
 .erf-page.office-wip-module > h1 { display: none; }
+.pagination{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 0 7px}.pagination span{color:#666}
 </style>
