@@ -801,7 +801,7 @@ onMounted(() => {
 .wp508-page:not(.spc-mode) .detail-table th { background: #f3f1ea; }
 .wp508-page:not(.spc-mode) .info-message { color: #6c6240; }
 .wp508-page:not(.spc-mode) .delete-confirm { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px; border: 1px solid #dfd5ad; background: #fff9dc; }
-@media (max-width: 950px) {
+@media (max-width: 1280px) {
   .wp508-page:not(.spc-mode) .query-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-areas: "lot op" "customer mclass" "group erf" "created created" "release release" "query query";
