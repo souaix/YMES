@@ -262,6 +262,7 @@ import SpcCoaReport from './components/SpcCoaReport.vue'
 import SpcVariableMeasurementImport from './components/SpcVariableMeasurementImport.vue'
 import SpcInspMachineParameterSetup from './components/SpcInspMachineParameterSetup.vue'
 import InvEngineerGroupBasis from './components/InvEngineerGroupBasis.vue'
+import InvInventoryBasis from './components/InvInventoryBasis.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -735,6 +736,7 @@ const fallbackMenuTree: MenuNode[] = [
     id: 'module:INV', label: '庫存管理', shortLabel: '庫', moduleNo: 'INV', children: [{
       id: 'menu:INV:CONFIG', label: '庫房設定', shortLabel: '設定', children: [
         { id: 'function:INV:INV ENGINEER GROUP', label: '庫房工程群組', shortLabel: '工程群組', functionNo: 'INV ENGINEER GROUP', moduleNo: 'INV' },
+        { id: 'function:INV:INV BASIS FOR INV', label: '庫房基本資料', shortLabel: '庫房', functionNo: 'INV BASIS FOR INV', moduleNo: 'INV' },
       ],
     }],
   },
@@ -1007,6 +1009,7 @@ const menuRoutes: Record<string, string> = {
   'function:SPC:IMPORT VAR MEASURE': appBasePath + '/SPC/VariableMeasurementImport',
   'function:SPC:INSP MACHINE PARAMETER SETUP': appBasePath + '/SPC/InspMachineParameterSetup',
   'function:INV:INV ENGINEER GROUP': appBasePath + '/INV/EngineerGroups',
+  'function:INV:INV BASIS FOR INV': appBasePath + '/INV/InventoryBasis',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1389,6 +1392,7 @@ const isWipErfBasisPage = computed(() => activeMasterKey.value === 'function:WIP
 const isSpcErfBasisPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF QUERY')
 const isSpcInspMachineParameterSetupPage = computed(() => activeMasterKey.value === 'function:SPC:INSP MACHINE PARAMETER SETUP')
 const isInvEngineerGroupPage = computed(() => activeMasterKey.value === 'function:INV:INV ENGINEER GROUP')
+const isInvInventoryBasisPage = computed(() => activeMasterKey.value === 'function:INV:INV BASIS FOR INV')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
@@ -3226,6 +3230,13 @@ async function signOut(): Promise<void> {
           v-else-if="isInvEngineerGroupPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvInventoryBasis
+          v-else-if="isInvInventoryBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          :current-user-no="currentUser?.userNo || ''"
           @close="navigateHome"
         />
         <WipErfBasis
