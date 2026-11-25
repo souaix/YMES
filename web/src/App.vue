@@ -3401,6 +3401,7 @@ async function signOut(): Promise<void> {
           v-else-if="isInvFgdInventoryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           @close="navigateHome"
         />
         <InvProductIn

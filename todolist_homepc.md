@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 家用端 IV501 唯讀 API（2026-11-26）
+
+- [x] 再次 fetch GitHub `origin/main`；截至 `29c0f98` 沒有新公司端提交，家用分支與 `origin/main` 一致。
+- [x] 依已核對的 IV501／0074 結構新增登入保護、只讀 API：成品庫房 lookup、`LocQty>0` 成品庫存分頁與完整主鍵 Component／Good Bin 明細、`State=0 && ToERP<>1` FGD In 待確認分頁及單號限定 Detail／Component。頁面參數化、排序、分頁與列數上限均在伺服器端執行；沒有寫入庫存或單據。
+- [x] 本機 .NET 9 build、Web build 成功（NuGet 弱點來源不可達有 NU1900 警告；Web 有既有 bundle-size 警告）；正式 API／UI 已接線並部署為 `iv501-read-20261126-a1`。首次正式頁檢查發現 `ymes_app` 對既有 `tblinvinventorybasis` 缺 SELECT，已完整備份後以 0075 migration 只補 SELECT，未改 schema 或資料列；備份與 checksum 見 [DATABASE_CONNECTION.md](docs/DATABASE_CONNECTION.md)。
+- [x] app-browser Demo 登入正式站並檢查 IV501 兩個分頁與查詢操作：入庫待確認 0 筆、唯讀提示正常；庫房 lookup 無可選資料，未選庫房時 Query 正確提示必選，無 API 服務錯誤。因正式環境沒有可選庫房／待確認單據，無法驗證庫存列、Component 或 Bin 明細。
+- [ ] `FunctionKey=IV501` 細部功能授權仍待確認現行 API 授權規範後接入。
+- [ ] Good Bin API 暫回傳原始 `bin1`–`bin8` 數值欄及 `TBLSYSBIN` 定義；待公司端確認 `BinNo` 到 Good Bin 欄位的舊系統對應後，再接動態標籤。
+- [ ] IV501 Source=30 原子過帳仍獨立待完成；實作前需完成過帳交易／冪等／Lot／Component／Locator capacity 邊界及回復策略，不可用無業務資料的正式環境試寫。
+
 ## 家用端同步與 IV502 驗證（2026-11-25）
 
 - [x] Fetch 並正常快轉整合 GitHub `origin/main` 至 `7de147c`；包含公司端 IV206／IV210／IV211／IV302–304／IV310／IV501／IV502 交接。家用端完成結構／瀏覽器修正（`03805fd`）、IV502 列表／父單明細 API（`eb1e491`）及來源 Lot／Component lookup（`4d6423b`）後，以一般 fast-forward 推到 `main`；push 後 fetch 確認 `origin/main` 相同，沒有覆蓋兩端提交或 force push。

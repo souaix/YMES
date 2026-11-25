@@ -29,6 +29,7 @@
 - [x] 新增 [IV501 規格與家用端 handoff](docs/modules/INV/成品庫庫房資料_IV501.md)，接入 Vue 路由及 DEV 預覽，更新索引、選單清冊與兩端待辦。
 - [x] 沿用 WP201／WP605、QC409 WIP Bin、PRD Bin references；本輪沒有新的 Oracle 查詢需求或新 DDL。已記錄 `AddINVTransactionState` 內層 Exe 失敗被空 catch 吞掉、外層可能仍回 success 的風險。
 - [x] 公司端未連 YMES PostgreSQL、未設定 `ConnectionStrings__YMes`、未實作正式 API/schema、未部署、未執行 build/test/browser。後續已完成 IV502，目前接續 IV503「成品入庫單記錄」。
+- [ ] 補充只讀來源說明：`TBLWIPGOODBINSTATE.BIN1`–`BIN8` 如何依 `TBLSYSBIN.BINNO/BINORDER` 對應顯示欄位，是否有固定 slot 順序或其他 mapping/helper；列出實際 Form／Service／Core 證據，供家用端接 IV501 動態 Bin 標籤時使用。不得用假資料推測對應。
 
 ## 公司端前項交付：IV310 包裝拆並箱作業（2026-11-24）
 

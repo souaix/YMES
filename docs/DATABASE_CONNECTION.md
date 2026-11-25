@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：0075 修正 IV501 庫房 lookup 的唯讀權限（2026-11-26）
+
+- 正式站初次驗證發現 `ymes_app` 可讀 0074 建立的 FGD 庫存與入庫表，但既有 `YMES.tblinvinventorybasis` 沒有 SELECT，導致成品庫房 lookup 回 503。只補此表 SELECT，不改 schema、資料列或其他 ACL。
+- 套用前完整 custom-format 備份：`/opt/ymes/backups/ymes_before_0075_inv_fgd_inventory_read_access_20261126_a1.dump`，737885 bytes、SHA-256 `632a225232f726e292b1cfe99e5fc31773271b76a238d393e249758404e692b1`；mode 600，`pg_restore --list` 成功，備份留在遠端。
+- 套用 [0075 migration](../database/migrations/0075_inv_fgd_inventory_read_access.sql)，SQL SHA-256 `48f79c0fb9586bbe7708da7bce30acfea4442c9e23389e030f25a5d54f188f1b`。SSH catalog 回讀 `ymes_app` 的 SELECT 權限由 false 變 true；未讀取或修改業務資料列。
+- IV501 唯讀 API／UI release `iv501-read-20261126-a1` 已部署。API image `sha256:2fa2ead5c8e11a07f6898f5c8731187719c27332ea965cb762e474a2da0c7f19`、Web image `sha256:9df7248699948aca03a1335d734ff3fa41cb365a7775efae42d3ac7469a5c55c`；ready 與正式頁 HTTP 200，兩個容器 healthy。`ymes-master-web` 與 `yakuyama-web` 未更動。
+- app-browser Demo 登入正式站後驗證 `/YMES/INV/FgdInventory`：入庫待確認顯示 0 筆且明確唯讀；成品庫房 lookup 沒有可選庫房，按查詢會提示先選庫房，無 API 錯誤。正式資料目前無可用成品庫房／待確認單據，因此沒有可做的庫存選列、明細正向驗證。Source=30 過帳與 FunctionKey 細部授權未交付。
+
 ## 最新：0074 建立 IV501／IV502 庫存及入庫草稿缺表（2026-11-25）
 
 - PPK SSH 唯讀核對遠端 `ymes`／schema `"YMES"` catalog：15 個有可信 MESTEST Oracle source／PostgreSQL CREATE-only 的功能表均缺少，且 0074 的三個新增 index 名稱無衝突。沒有讀取業務列。
