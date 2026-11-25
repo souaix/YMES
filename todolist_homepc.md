@@ -6,7 +6,7 @@
 - [x] 依已核對的 IV501／0074 結構新增登入保護、只讀 API：成品庫房 lookup、`LocQty>0` 成品庫存分頁與完整主鍵 Component／Good Bin 明細、`State=0 && ToERP<>1` FGD In 待確認分頁及單號限定 Detail／Component。頁面參數化、排序、分頁與列數上限均在伺服器端執行；沒有寫入庫存或單據。
 - [x] 本機 .NET 9 build、Web build 成功（NuGet 弱點來源不可達有 NU1900 警告；Web 有既有 bundle-size 警告）；正式 API／UI 已接線並部署為 `iv501-read-20261126-a1`。首次正式頁檢查發現 `ymes_app` 對既有 `tblinvinventorybasis` 缺 SELECT，已完整備份後以 0075 migration 只補 SELECT，未改 schema 或資料列；備份與 checksum 見 [DATABASE_CONNECTION.md](docs/DATABASE_CONNECTION.md)。
 - [x] app-browser Demo 登入正式站並檢查 IV501 兩個分頁與查詢操作：入庫待確認 0 筆、唯讀提示正常；庫房 lookup 無可選資料，未選庫房時 Query 正確提示必選，無 API 服務錯誤。因正式環境沒有可選庫房／待確認單據，無法驗證庫存列、Component 或 Bin 明細。
-- [ ] `FunctionKey=IV501` 細部功能授權仍待確認現行 API 授權規範後接入。
+- [x] 核對現行登入與 API 授權規範：controller 使用共用 cookie `[Authorize]`；認證文件明載目前沒有角色／FunctionKey 對照來源，且先前已將角色權限排除在此階段範圍外，因此不臆造 IV501 特殊 ACL。未來有統一角色／功能授權來源時再擴充。
 - [ ] Good Bin API 暫回傳原始 `bin1`–`bin8` 數值欄及 `TBLSYSBIN` 定義；待公司端確認 `BinNo` 到 Good Bin 欄位的舊系統對應後，再接動態標籤。
 - [ ] IV501 Source=30 原子過帳仍獨立待完成；實作前需完成過帳交易／冪等／Lot／Component／Locator capacity 邊界及回復策略，不可用無業務資料的正式環境試寫。
 
@@ -49,7 +49,7 @@
 - [x] 公司端已完成 IV501 `/YMES/INV/FgdInventory` DEV、WinForms／Service／Core 規格與 handoff；詳見 [IV501 規格](docs/modules/INV/成品庫庫房資料_IV501.md) 及 [公司端交接檔](docs/CODEX_HANDOFF_OFFICEPC.md)。
 - [x] IV501 查詢沿用 WP201／WP605 庫存與 FGD In DDL、QC409 WIP Bin、PRD Bin references；無新 schema/Create SQL。公司端沒有新 Oracle 查詢或 YMES PostgreSQL 連線。
 - [ ] 家用端核對 FGD Inventory／FGD In／Transaction State／Log／WIP Good Bin／SYS Bin live PostgreSQL schema 與 migration history；沿用共用資料表，不重複建表。
-- [ ] 實作登入及 IV501 ACL 保護的庫房、庫存、Component／Bin、FGD In Basis／Detail 查詢；父單號必填、LocQty>0、State=0、ToERP<>1，Bin columns 依授權 system-bin lookup 排序。
+- [x] 已實作共用登入保護的庫房、庫存、Component／Bin、FGD In Basis／Detail 唯讀查詢；父單號必填、LocQty>0、State=0、ToERP<>1。現行認證沒有角色／FunctionKey 對照，因此不在 API 虛構功能 ACL；Bin 欄位仍待公司端提供正確映射後再依 system-bin 顯示。
 - [ ] 實作 Source=30 FGD In 原子、冪等 confirm API：伺服器重驗 Basis／來源／目的／Locator／Capacity／Lot／Component，交易內更新庫存、Source=1 來源 WIP／SEMI、BookingFlag、Lot／Component history、Basis State 與 Transaction State→Log；回傳真實過帳結果，修正舊 Add Service 內層 Exe 失敗被吞但外層回 success 的風險。
 - [x] 公司端沒有連 PostgreSQL、未做 API/schema/migration、未部署、未執行 build/test/browser。後續已完成 IV502，目前接續 IV503「成品入庫單記錄」。
 
