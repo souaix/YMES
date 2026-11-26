@@ -79,6 +79,7 @@ if (!localDemoAuth)
     builder.Services.AddSingleton<YMes.Api.Inventory.InvProductInLogRepository>();
     builder.Services.AddSingleton<YMes.Api.Inventory.InvFgdInventoryRepository>();
     builder.Services.AddSingleton<YMes.Api.Reports.EquipmentMttrSummaryRepository>();
+    builder.Services.AddSingleton<YMes.Api.Reports.ConfirmLotRepository>();
 }
 builder.Services.AddControllers();
 

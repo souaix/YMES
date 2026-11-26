@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 家用端 RT501 生產批狀態查詢 API（2026-11-27）
+
+- [x] 依來源 PostgreSQL CREATE-only／Oracle DDL 與正式 catalog 核對；備份後套用 0078，只建立缺少的三張空狀態來源表、來源索引及 BaseLotNo 查詢索引，`ymes_app` 僅 SELECT。備份、SQL SHA 與 catalog 結果見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 完成登入保護、參數化唯讀 `GET /api/reports/confirm-lots`，固定 LotState 1 與 Status 0–5／11／12 數量條件；多值、pattern、分頁上限、空條件防呆及穩定排序已實作，正式 SQL `EXPLAIN` 通過。
+- [x] .NET 9 Release 發布成功；正式 API image `ymes-api:rt501-20261127-a2` 已部署，readiness 200、未登入 401，舊 API image 保留 rollback 標籤。正式 app-browser 驗證成功／防呆回應；本機 DEV app-browser 完成 RT501 查詢、lookup、篩選、列選取、屬性視窗及 Close 操作。詳 [RT501 模組紀錄](docs/modules/RPT/生產批狀態查詢_RT501.md)。
+- [ ] 正式 `ConfirmLot.vue` 仍是未開放 placeholder；已把正式 UI 連 API、lookup 與分頁交給公司端，見 `todolist_officepc.md`。有實際生產批資料後再做正向正式資料列驗證，不在正式庫灌測試資料。
+- [ ] 依跨機電腦流程，fetch/merge 最新 `origin/main`、保留公司端並行提交，將本次家用工作正常推送 GitHub 後再讀取最新接手清單。
+
 ## 家用端 RT412 設備 MTTR 統計表（2026-11-27）
 
 - [x] 以正式 schema／來源 DDL 對照後，建立並套用 0077：只新建缺少的設備狀態控制、現況、歷程空表及來源索引，保留既有設備／區域主檔；`ymes_app` 僅 SELECT。備份與 SQL SHA 見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
@@ -7,7 +15,8 @@
 - [x] .NET 9 Release build 與本機 DEV app-browser 操作驗收完成；DEV 使用合成資料，不能代替正式資料列驗收。
 - [x] 以獨立 API image `ymes-api:rt412-20261127-a1` 部署並保留舊 `ymes-api` rollback container；readiness 200、候選未登入 401、正式登入查詢在缺少唯一故障設定時回預期 503，日期倒置與 367 日範圍均回 400。其他 Web／master Web／Nginx／專案容器未更動。
 - [ ] `tbleqpstatecontrol` 尚無唯一故障控制值，狀態歷程亦未提供；請公司端唯讀提供原生 MES `ControlType='EQP Break Down'`、`ControlNo='BreakDown'` 的準確 `EquipmentState`／`StateName`，並確認可用狀態歷程已進入復刻庫後再驗證正式正向 MTTR 結果。不在正式資料庫灌假資料。
-- [ ] 完成文件與 GitHub 正常同步、重新 fetch 檢查最新版待辦後，接續下一個可做的家用工作。
+- [x] RT412 程式與維護文件以 fast-forward 推送 GitHub `main`，重新 fetch 確認 `origin/main=3102ea7`；依最新清單接續家用可做的 RT501。
+- [ ] RT413 是公司端下一項，但目前 repo 尚無 RT413 handoff MD；已列入公司待辦，取得來源規格前不猜查詢或月結行為。
 
 ## 家用端最新整合與驗收（2026-11-26）
 
@@ -55,7 +64,7 @@
 ## 前項公司端交付：RPT RT501 生產批狀態查詢（2026-11-26）
 
 - [x] 公司端已完成 Form／Service／Core 核對、DEV 假資料頁面及 [RT501 規格 handoff](docs/modules/RPT/生產批狀態查詢_RT501.md)。Status=6 的註解與查詢條件差異已記錄。
-- [ ] 比對 WIP／inventory DDL refs 與 YMES live schema／索引，再實作受授權、參數化、有上限的唯讀查詢 API；公司端不連 PostgreSQL。
+- [x] 家用端已比對 WIP／inventory DDL refs 與 YMES live schema／索引，套用 0078 並部署受授權、參數化、有上限的唯讀 API；正式 UI 接線留給公司端待辦。
 
 ## 前項公司端交付：RPT RT604 物料用於元件查詢（2026-11-26）
 

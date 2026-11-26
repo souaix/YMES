@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：0078 RT501 生產批狀態查詢結構與 API（2026-11-27）
+
+- 以家用電腦 PPK/SSH 連到正式主機，透過正式 API 使用的同一 PostgreSQL instance 唯讀盤點 catalog。WIP／Product／Operation／Process／Customer 主檔及 `tblinvwipinventory_semi` 已存在且 `ymes_app` 有 SELECT；只缺 `tblinvwip_scrap`、`tblinvwip_failbin`、`tblinvwip_componentscrap`，YMES 外無同名來源物件；四個來源／查詢索引名稱沒有衝突。
+- 套用前完整 DB custom-format 備份：`/opt/ymes/backups/ymes-before-rt501-20261127.dump`，758,044 bytes、SHA-256 `bdb5a6b93fdef18e0a972f5ed79ea236b67727a6cae0e7416c7f870812d56583`，`pg_restore --list` 通過。由 PostgreSQL 維護帳號建立備份；API `ymes_app` 沒有全庫備份所需讀權，未因此擴大應用權限。
+- 原子套用 [0078 RT501 schema migration](../database/migrations/0078_rpt_rt501_confirm_lot_read_schema.sql)，SHA-256 `b6c993e5fc2b6bb8f73c2ff3e6db1711926c16181aff10fce9211335fe4650d6`。建立三張來源 DDL 空表、WP603 來源索引與兩個 BaseLotNo 查詢支援索引；三張新表只授 `ymes_app` SELECT，沒有匯入或更新任何 MES 業務列。Catalog 回讀欄位數為 12／17／18，SELECT=true、INSERT=false。
+- RT501 Status 庫存彙總與主查詢於正式資料庫 `EXPLAIN` 通過；正式 API `GET /YMES/API/api/reports/confirm-lots` 由 `ymes-api:rt501-20261127-a2` 提供。Image ID `sha256:b78ebdafce04e378b9697768af2ef9e68e0ade9f82db6090efcf8dc174606880`；前版 API image 保留標籤 `ymes-api:before-rt501-a2-20261127-a1`。Release readiness 200、未登入 endpoint 401；Web／master Web／其他專案未更動。正式 app-browser 驗證回應見 [RT501 模組紀錄](modules/RPT/生產批狀態查詢_RT501.md)。
+- API 查詢上限、驗收限制與公司端正式 UI 交接見 [RT501 模組紀錄](modules/RPT/生產批狀態查詢_RT501.md) 與 `todolist_officepc.md`。
+
 ## 最新：0077 RT412 設備狀態查詢結構（2026-11-27）
 
 - PPK SSH 以 catalog 唯讀核對後確認 `YMES.tbleqpstatecontrol`、`tblemsequipmentstate`、`tblemsequipmentstatelog` 缺少；既有設備／區域表保留。migration 前 custom-format 備份：`/opt/ymes/backups/ymes-before-rt412-20261127.dump`，752,263 bytes、SHA-256 `fe16b7a1a900a6928daeab29d7c85d7855f92fec4ab66e3b45204f7c3ed27e67`，`pg_restore --list` 通過。

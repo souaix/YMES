@@ -1,5 +1,12 @@
 # 公司端待辦
 
+## 公司端接手：RPT RT501 正式介面連接（2026-11-27）
+
+- [x] 家用端已部署登入保護 `GET /YMES/API/api/reports/confirm-lots`；條件為 `roNo`、`moNo`、`productNo`、`productVersion`、`customerNo`、`lotNo`、`opNo`、`orgLotNo`、`psNo`、`page`、`pageSize`。空條件回 400、`pageSize` 最大 100、分頁回 `hasMore`；固定 LotState 1 與狀態／庫存限制。詳 [RT501 模組 MD](docs/modules/RPT/生產批狀態查詢_RT501.md)。
+- [ ] 將 `ConfirmLot.vue` 正式模式接上此 API；保留 DEV 假資料模式，補正式載入、錯誤、空結果與 `hasMore` 分頁操作，並遵守至少一項查詢條件。
+- [ ] 將 Customer／Product／PS／OP lookup 接至既有授權 API：`GET /api/ent/customer-basis?keyword=...`、`GET /api/products?keyword=...&issueState=...`、`GET /api/production-segments?psNo=...`、`GET /api/operations?keyword=...&issueState=...`。核對回傳欄位並維持原本選取條件與自動勾選邏輯。
+- [ ] 正式 UI 完成後更新 RT501 模組 MD，build 並用 app-browser 逐項驗證登入、查詢、各 lookup、分頁、防呆、選取列、LotProperty／CompProperty 與返回主頁；公司端不連 PostgreSQL、不部署正式站。
+
 ## 公司端最新交付：RPT RT412 設備 MTTR 統計表（2026-11-26）
 
 - [x] 核對 `frmEQP_MTTRSummary`／Designer、RPT `LoadEQPMTTRSummary` Service／Core；完成 `/YMES/RPT/EqpMttrSummary` DEV 日期、Area／Type／Equipment 多選、Chamber 顯示、故障次數／MTTR／MTBF／Availability 計算及說明窗。[RT412 規格與家用端 API handoff](docs/modules/RPT/設備MTTR統計表_RT412.md)
@@ -7,6 +14,12 @@
 - [x] 家用端已依 DDL refs 核對並套用缺少的 YMES state tables、完成唯讀 API 與正式部署；正式 query 的範圍防呆已驗證。DDL、API、部署與 app-browser 結果見 [RT412 模組紀錄](docs/modules/RPT/設備MTTR統計表_RT412.md)。
 - [ ] 請唯讀核對原生 MES `TBLEQPSTATECONTROL` 的 `ControlType='EQP Break Down'`、`ControlNo='BreakDown'` 唯一設定，回覆準確 `EquipmentState`／`StateName`；確認設備狀態歷程同步到復刻庫的來源／程序，提供一筆已可查的設備狀態歷程驗證條件。只回報指定設定及驗證必要資訊，不匯出其他設定或設備紀錄。
 - [x] RT412 完成後依清冊接續 RT413「設備 MTTR 統計表_以月份匯總」。
+
+## 公司端預備交付：RPT RT413 設備 MTTR 統計表_以月份匯總
+
+- [ ] 依實際 RT413 Form／Designer、RPT Service／Core 核對月結年月／起訖日期、BreakDown ControlType、Chamber、來源公式與隱藏儲存流程。
+- [ ] 新增 `docs/modules/RPT/設備MTTR統計表_以月份匯總_RT413.md`，記錄真實 FunctionNo／FunctionKey／路由、欄位／事件、來源 SQL 邊界、月結更新契約及資料表 DDL references；無來源證據的項目註明未確認，不推測。
+- [ ] 完成 DEV 假資料畫面與操作 handoff；公司端不連 YMES PostgreSQL、不建立正式 API/schema，交付後由家用端接手。
 
 ## 前項公司端交付：RPT RT411 每日設備稼動長條圖（2026-11-26）
 
