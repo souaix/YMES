@@ -313,6 +313,7 @@ import PmEqpRepairRegister from './components/PmEqpRepairRegister.vue'
 import PmEqpTypeSopBasis from './components/PmEqpTypeSopBasis.vue'
 import PmMaintenancePlanAdjust from './components/PmMaintenancePlanAdjust.vue'
 import PmMaintenancePlanQuery from './components/PmMaintenancePlanQuery.vue'
+import PmMaintenancePlanHistory from './components/PmMaintenancePlanHistory.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -810,6 +811,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:PM:EQPTYPE SOP BASIS', label: '設備保養標準程序', shortLabel: '設備 SOP', functionNo: 'EQPTYPE SOP BASIS', moduleNo: 'PM' },
         { id: 'function:PM:PM CALENDAR', label: '保養日曆設定', shortLabel: '保養日曆', functionNo: 'PM CALENDAR', moduleNo: 'PM' },
         { id: 'function:PM:PM MAINTENANCE QUERY', label: '設備保養計畫查詢', shortLabel: '保養計畫查詢', functionNo: 'PM MAINTENANCE QUERY', moduleNo: 'PM' },
+        { id: 'function:PM:PM PLAN HISTORY', label: '保養計劃歷史資料查詢', shortLabel: '保養計畫歷史', functionNo: 'PM PLAN HISTORY', moduleNo: 'PM' },
         { id: 'function:PM:PM PLAN CHANGE', label: '保養計劃變更', shortLabel: '計畫變更', functionNo: 'PM PLAN CHANGE', moduleNo: 'PM' },
         { id: 'function:PM:EQP FIXED QUANTITY SETUP', label: '設備定量保養設定', shortLabel: '定量保養', functionNo: 'EQP FIXED QUANTITY SETUP', moduleNo: 'PM' },
         { id: 'function:PM:EQP FIXED TIME SETUP', label: '設備定次定時保養設定', shortLabel: '定次定時', functionNo: 'EQP FIXED TIME SETUP', moduleNo: 'PM' },
@@ -1186,6 +1188,7 @@ const menuRoutes: Record<string, string> = {
   'function:PM:EQPTYPE SOP BASIS': appBasePath + '/PM/EquipmentTypeSopBasis',
   'function:PM:PM CALENDAR': appBasePath + '/PM/PlanCalendar',
   'function:PM:PM MAINTENANCE QUERY': appBasePath + '/PM/MaintenancePlanQuery',
+  'function:PM:PM PLAN HISTORY': appBasePath + '/PM/MaintenancePlanHistory',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1632,6 +1635,7 @@ const isPmEqpRepairRegisterPage = computed(() => activeMasterKey.value === 'func
 const isPmEqpTypeSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:EQPTYPE SOP BASIS')
 const isPmPlanCalendarPage = computed(() => activeMasterKey.value === 'function:PM:PM CALENDAR')
 const isPmMaintenancePlanQueryPage = computed(() => activeMasterKey.value === 'function:PM:PM MAINTENANCE QUERY')
+const isPmMaintenancePlanHistoryPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN HISTORY')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3785,6 +3789,12 @@ async function signOut(): Promise<void> {
         />
         <PmMaintenancePlanQuery
           v-else-if="isPmMaintenancePlanQueryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmMaintenancePlanHistory
+          v-else-if="isPmMaintenancePlanHistoryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

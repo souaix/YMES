@@ -1,11 +1,17 @@
 # 公司端待辦
 
-## 公司端最新交付：PM502 保養日曆設定（2026-11-26）
+## 公司端最新交付：PM503 保養計劃歷史資料查詢（2026-11-26）
+
+- [x] 核對 inline `frmEQPMaintenancePlanHistory`、`wsPM.LoadMaintenancePlanLog`／四組 distinct lookup、`clsPMPlanLog`；完成 `function:PM:PM PLAN HISTORY` Vue DEV 雙清單、日期、執行狀態及唯讀歷史 Grid。[PM503 規格與 API/schema handoff](docs/modules/PM/保養計劃歷史資料查詢_PM503.md)
+- [x] 記錄歷史表 inner join Frequency／SOP、CreateDate 升冪排序及舊 Core SQL 字串拼接；桌機 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE。未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 公司端下一項依清冊接續 PM504。
+
+## 前項公司端交付：PM502 保養日曆設定（2026-11-26）
 
 - [x] 核對 inline `frmPMPlanCalendar`／Designer、自訂 Appointment Dialog、`wsPM.LoadMaintenancePlan`／`LoadEQPPMPlanByEQPType`、`clsPMBasis`；完成 `function:PM:PM CALENDAR` Vue DEV 設備／類別／頻率查詢、Day／Week／Month、雙月導覽、唯讀事件與列印預覽，新增 [PM502 規格與家用端 handoff](docs/modules/PM/保養日曆設定_PM502.md)。
 - [x] PM501 日曆按鈕已接同一元件並傳入原始計畫結果。事件不寫回保養計畫；Core 查詢條件使用字串拼接。桌機 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema／同版 MESTEST metadata、鍵與欄位，完成 PM501／PM502 共用限量參數化查詢 API 及可信 CREATE-only DDL。
-- [ ] 下一項依清冊接續 PM503「保養計劃歷史資料查詢」。
+- [x] 當時下一項 PM503「保養計劃歷史資料查詢」現已完成；公司端接續 PM504。
 
 ## 前項公司端交付：PM501 設備保養計畫查詢（2026-11-26）
 
@@ -19,7 +25,7 @@
 - [x] 記錄四張歷史表寫入、EMS 狀態更新、移除待修單及寄信為非原子流程；`RepairState=default(int)` 實為 0，與 -999 註解不一致。UserNo SQL 篩選已註解；EquipmentNo 顯示選擇不會改變序號寫入目標。
 - [x] 桌機 Oracle profile 與四張歷史表可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、PK／FK／索引、歷史保留與 EMS／Chamber 交易邊界，再做參數化、冪等、可重試 API／CREATE-only DDL。
-- [x] 當時接續 PM501 現已完成；PM502 亦已完成，現在接續 PM503「保養計劃歷史資料查詢」。
+- [x] 當時接續 PM501 現已完成；PM502、PM503 亦已完成，現在依清冊接續 PM504。
 
 ## 前項公司端交付：PM404 設備故障登錄（2026-11-26）
 
