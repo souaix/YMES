@@ -314,6 +314,7 @@ import PmEqpTypeSopBasis from './components/PmEqpTypeSopBasis.vue'
 import PmMaintenancePlanAdjust from './components/PmMaintenancePlanAdjust.vue'
 import PmMaintenancePlanQuery from './components/PmMaintenancePlanQuery.vue'
 import PmMaintenancePlanHistory from './components/PmMaintenancePlanHistory.vue'
+import PmWorkOrderHistory from './components/PmWorkOrderHistory.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -809,9 +810,6 @@ const fallbackMenuTree: MenuNode[] = [
     }, {
       id: 'menu:PM:EQUIPMENT PM SETTING', label: '設備 PM 設定', shortLabel: '設備 PM', children: [
         { id: 'function:PM:EQPTYPE SOP BASIS', label: '設備保養標準程序', shortLabel: '設備 SOP', functionNo: 'EQPTYPE SOP BASIS', moduleNo: 'PM' },
-        { id: 'function:PM:PM CALENDAR', label: '保養日曆設定', shortLabel: '保養日曆', functionNo: 'PM CALENDAR', moduleNo: 'PM' },
-        { id: 'function:PM:PM MAINTENANCE QUERY', label: '設備保養計畫查詢', shortLabel: '保養計畫查詢', functionNo: 'PM MAINTENANCE QUERY', moduleNo: 'PM' },
-        { id: 'function:PM:PM PLAN HISTORY', label: '保養計劃歷史資料查詢', shortLabel: '保養計畫歷史', functionNo: 'PM PLAN HISTORY', moduleNo: 'PM' },
         { id: 'function:PM:PM PLAN CHANGE', label: '保養計劃變更', shortLabel: '計畫變更', functionNo: 'PM PLAN CHANGE', moduleNo: 'PM' },
         { id: 'function:PM:EQP FIXED QUANTITY SETUP', label: '設備定量保養設定', shortLabel: '定量保養', functionNo: 'EQP FIXED QUANTITY SETUP', moduleNo: 'PM' },
         { id: 'function:PM:EQP FIXED TIME SETUP', label: '設備定次定時保養設定', shortLabel: '定次定時', functionNo: 'EQP FIXED TIME SETUP', moduleNo: 'PM' },
@@ -821,6 +819,13 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:PM:PMWO BASIS', label: '開立保養工單', shortLabel: '開立工單', functionNo: 'PMWO BASIS', moduleNo: 'PM' },
         { id: 'function:PM:PMWO RELEASE', label: '保養工單下線', shortLabel: '工單下線', functionNo: 'PMWO RELEASE', moduleNo: 'PM' },
         { id: 'function:PM:PMWO COMPLETE', label: '保養工單完成與回報', shortLabel: '完工回報', functionNo: 'PMWO COMPLETE', moduleNo: 'PM' },
+      ],
+    }, {
+      id: 'menu:PM:PM QUERY', label: '查詢', shortLabel: '查詢', children: [
+        { id: 'function:PM:PM CALENDAR', label: '保養日曆設定', shortLabel: '保養日曆', functionNo: 'PM CALENDAR', moduleNo: 'PM' },
+        { id: 'function:PM:PM MAINTENANCE QUERY', label: '設備保養計畫查詢', shortLabel: '保養計畫查詢', functionNo: 'PM MAINTENANCE QUERY', moduleNo: 'PM' },
+        { id: 'function:PM:PM PLAN HISTORY', label: '保養計劃歷史資料查詢', shortLabel: '保養計畫歷史', functionNo: 'PM PLAN HISTORY', moduleNo: 'PM' },
+        { id: 'function:PM:PMWO HISTORY', label: '保養工單歷史資料查詢', shortLabel: '工單歷史', functionNo: 'PMWO HISTORY', moduleNo: 'PM' },
       ],
     }],
   },
@@ -1189,6 +1194,7 @@ const menuRoutes: Record<string, string> = {
   'function:PM:PM CALENDAR': appBasePath + '/PM/PlanCalendar',
   'function:PM:PM MAINTENANCE QUERY': appBasePath + '/PM/MaintenancePlanQuery',
   'function:PM:PM PLAN HISTORY': appBasePath + '/PM/MaintenancePlanHistory',
+  'function:PM:PMWO HISTORY': appBasePath + '/PM/WorkOrderHistory',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1636,6 +1642,7 @@ const isPmEqpTypeSopBasisPage = computed(() => activeMasterKey.value === 'functi
 const isPmPlanCalendarPage = computed(() => activeMasterKey.value === 'function:PM:PM CALENDAR')
 const isPmMaintenancePlanQueryPage = computed(() => activeMasterKey.value === 'function:PM:PM MAINTENANCE QUERY')
 const isPmMaintenancePlanHistoryPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN HISTORY')
+const isPmWorkOrderHistoryPage = computed(() => activeMasterKey.value === 'function:PM:PMWO HISTORY')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3795,6 +3802,12 @@ async function signOut(): Promise<void> {
         />
         <PmMaintenancePlanHistory
           v-else-if="isPmMaintenancePlanHistoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmWorkOrderHistory
+          v-else-if="isPmWorkOrderHistoryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

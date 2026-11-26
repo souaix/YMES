@@ -15,9 +15,11 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 ## Vue 復刻追蹤
 
-截至 2026-11-26，公司端已完成 PM101、PM102、PM103、PM104、PM105、PM106、PM107、PM108、PM109、PM110、PM201、PM202、PM203、PM204、PM301、PM302、PM303、PM401、PM402、PM403、PM404、PM405、PM501、PM502、PM503、IV306、IV307、IV401、IV402、IV403、IV404、IV405、IV406、IV407、IV601、IV602 DEV 與規格；IV405 共用 IV503 入庫記錄頁，IV103 也已完成。WAFERBANK vendor DLL 項目依先前決定不處理；下一項依未完成 PM FunctionKey 為 PM504。OE 分類「工單管理」中的 OE201–OE209 已有公司端規格／handoff；PM301–PM303 為保養工單流程。PM_ACCPLAN 也有 FunctionKey PM403；Vue 以 `EQPTYPE BREAKDOWN MAP` 與 FormName 區分本次映射頁。這段是 YMES 復刻進度，不改寫 Oracle 原始選單清冊。
+截至 2026-11-26，公司端已完成 PM101、PM102、PM103、PM104、PM105、PM106、PM107、PM108、PM109、PM110、PM201、PM202、PM203、PM204、PM301、PM302、PM303、PM401、PM402、PM403、PM404、PM405、PM501、PM502、PM503、PM504、IV306、IV307、IV401、IV402、IV403、IV404、IV405、IV406、IV407、IV601、IV602 DEV 與規格；IV405 共用 IV503 入庫記錄頁，IV103 也已完成。WAFERBANK vendor DLL 項目依先前決定不處理；下一項依未完成 PM FunctionKey 為 PM505。OE 分類「工單管理」中的 OE201–OE209 已有公司端規格／handoff；PM301–PM303 為保養工單流程。PM_ACCPLAN 也有 FunctionKey PM403；Vue 以 `EQPTYPE BREAKDOWN MAP` 與 FormName 區分本次映射頁。這段是 YMES 復刻進度，不改寫 Oracle 原始選單清冊。
 
-最新補記（2026-11-26）：PM503「保養計劃歷史資料查詢」已核對 `frmEQPMaintenancePlanHistory`／Designer、`wsPM.LoadMaintenancePlanLog` 與四組 distinct lookup、`clsPMPlanLog`；完成 `/YMES/PM/MaintenancePlanHistory` Vue DEV 四組雙清單、日期範圍、五種執行狀態及 19 欄唯讀歷史 Grid。Core 查 `tblPMEQPMaintenancePlanLog` 並內連 Frequency／SOP 主檔，UI 依 CreateDate 升冪；舊 SQL 將條件字串拼接。桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未 build／test／browser。詳 [PM503 規格](modules/PM/保養計劃歷史資料查詢_PM503.md)。接續 PM504。
+最新補記（2026-11-26）：PM504「保養工單歷史資料查詢」已核對 `frmPMWoHistory`／Designer、`wsPM.LoadPMWoBasis_His`／`LoadPMWoDetail_His`、`wsEQP.LoadEquipmentBasis`、`clsPMBasis`；完成 `/YMES/PM/WorkOrderHistory` Vue DEV 設備雙清單、Estimated PM／Finished Date、All／PM／REQ 類型、主 Grid 選取與明細 Grid。主查詢的設備／日期條件透過明細 `WONo` 子查詢套用，點選主工單再呼叫明細 Service；桌機受保護 Oracle profile 與可信歷史表 DDL／metadata 缺失，未猜 CREATE。未連 PostgreSQL、未 build／test／browser。詳 [PM504 規格](modules/PM/保養工單歷史資料查詢_PM504.md)。接續 PM505。
+
+最新補記（2026-11-26）：PM503「保養計劃歷史資料查詢」已核對 `frmEQPMaintenancePlanHistory`／Designer、`wsPM.LoadMaintenancePlanLog` 與四組 distinct lookup、`clsPMPlanLog`；完成 `/YMES/PM/MaintenancePlanHistory` Vue DEV 四組雙清單、日期範圍、五種執行狀態及 19 欄唯讀歷史 Grid。Core 查 `tblPMEQPMaintenancePlanLog` 並內連 Frequency／SOP 主檔，UI 依 CreateDate 升冪；舊 SQL 將條件字串拼接。桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未 build／test／browser。詳 [PM503 規格](modules/PM/保養計劃歷史資料查詢_PM503.md)。PM504 已完成，接續 PM505。
 
 最新補記（2026-11-26）：PM401「故障原因基本資料」已完成 `frmBreakDownBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveBreakDownBasis`、`clsPMBasis` 與 `clsBasis_UPD` 核對及 Vue DEV 四狀態 CRUD／Copy／核准／停用。PM403 設備與故障原因對應、PM404 設備故障登錄會載入此故障原因主檔。舊硬刪不帶 DataStamp，簽核結束 SQL 亦不更新版本／稽核；規格 handoff 要求核 references 並以參數化、原子 API 補足。桌機受保護 Oracle profile 不存在，repo 無可信 `TBLPMBreakDownBasis` DDL／metadata，未猜 CREATE SQL；未連 PostgreSQL、未 build／test／browser。詳 [PM401 規格](modules/PM/故障原因基本資料_PM401.md)。接續 PM402「維修項目基本資料」。
 
@@ -31,7 +33,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 最新補記（2026-11-26）：PM501「設備保養計畫查詢」已完成 inline Form／Designer、`wsPM.LoadMaintenancePlan`／`LoadSingleTableDistinctData`、`clsPMBasis.LoadMaintenancePlan` 核對及 Vue DEV 三組篩選、日期範圍、排序、PM502 日／週／月日曆。Core 內連 `tblPMEQPMaintenancePlan`、`tblPMFrequencyBasis`、`tblPMSOPBasis`，舊查詢以字串拼接條件；正式 API 應參數化並分頁。桌機受保護 Oracle profile 與可信表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未 build／test／browser。詳 [PM501 規格](modules/PM/設備保養計畫查詢_PM501.md)。
 
-最新補記（2026-11-26）：PM502「保養日曆設定」已完成 Form／Designer 與唯讀 Appointment Dialog、`wsPM.LoadMaintenancePlan`／`LoadEQPPMPlanByEQPType`、`clsPMBasis` 核對及 Vue DEV 篩選、日／週／月行事曆、雙月導覽和列印預覽；PM501 會傳原始計畫結果進共用日曆。事件由預估保養日期產生 all-day appointment，無新增／修改計畫的 Service；舊 Core 查詢字串拼接條件。桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未 build／test／browser。詳 [PM502 規格](modules/PM/保養日曆設定_PM502.md)。PM503 已完成，接續 PM504。
+最新補記（2026-11-26）：PM502「保養日曆設定」已完成 Form／Designer 與唯讀 Appointment Dialog、`wsPM.LoadMaintenancePlan`／`LoadEQPPMPlanByEQPType`、`clsPMBasis` 核對及 Vue DEV 篩選、日／週／月行事曆、雙月導覽和列印預覽；PM501 會傳原始計畫結果進共用日曆。事件由預估保養日期產生 all-day appointment，無新增／修改計畫的 Service；舊 Core 查詢字串拼接條件。桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未 build／test／browser。詳 [PM502 規格](modules/PM/保養日曆設定_PM502.md)。PM503、PM504 已完成，接續 PM505。
 
 ## 第一層與功能目錄
 
