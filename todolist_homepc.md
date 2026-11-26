@@ -1,12 +1,21 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：PM401 故障原因基本資料（2026-11-26）
+## 公司端最新交付：PM402 維修項目基本資料（2026-11-26）
+
+- [x] 公司端核對 `frmRepairBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveRepairBasis`、`clsPMBasis`／`clsBasis_UPD`，完成 `function:PM:REPAIR BASIS` DEV 四狀態 CRUD／Copy／核准／停用。
+- [x] 新增 [PM402 規格與家用端 API/schema handoff](docs/modules/PM/維修項目基本資料_PM402.md)，記錄 `tblPMRepairBasis`、RepairName 必填、DataStamp、IssueNo `REPAIR BASIS`。
+- [x] 核對客製 PM405 設備修復登錄以 IssueState=2 載入 RepairNo／RepairName 候選；硬刪未傳 DataStamp、簽核完成／退回不更新版本／稽核。
+- [x] 桌機受保護 Oracle profile 及 repo 可信業務表 DDL／metadata 均不存在，未猜型別／鍵或 CREATE；未連 YMES PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 PostgreSQL live schema／Oracle metadata 及 PM405 登錄引用規則，再實作參數化、DataStamp 併發安全與簽核 API；先確認再產生 CREATE-only DDL。
+- [ ] 下一項公司端 handoff：PM403「設備與故障原因對應」。`PM_ACCPLAN` 也標 PM403，請依 FunctionNo／FormName 區別。
+
+## 前項公司端交付：PM401 故障原因基本資料（2026-11-26）
 
 - [x] 公司端核對 `frmBreakDownBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveBreakDownBasis`、`clsPMBasis`／`clsBasis_UPD`，完成 `function:PM:BREAKDOWN BASIS` DEV 四狀態 CRUD／Copy／核准／停用。
 - [x] 新增 [PM401 規格與家用端 API/schema handoff](docs/modules/PM/故障原因基本資料_PM401.md)，已記錄 `tblPMBreakDownBasis` 欄位名、DataStamp、IssueNo `BREAKDOWN BASIS` 與 PM403／PM404 消費點。
 - [x] 桌機受保護 Oracle profile 及 repo 可信直接表 DDL／metadata 均不存在，未猜欄位型別／鍵或 CREATE SQL；公司端未連 YMES PostgreSQL，未實作正式 API/schema。
 - [ ] 家用端核 live PostgreSQL schema 與 MESTEST DDL／metadata，確認欄位型別、主鍵／索引／FK、PM403／PM404 引用與刪除限制；再實作參數化、DataStamp 併發安全及原子核准／停用 API。
-- [ ] 下一項公司端 handoff：PM402「維修項目基本資料」。
+- [x] 當時下一項 PM402 已完成；公司端接續 PM403「設備與故障原因對應」。
 
 ## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
 

@@ -15,9 +15,11 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 ## Vue 復刻追蹤
 
-截至 2026-11-26，公司端已完成 PM101、PM102、PM103、PM104、PM105、PM106、PM107、PM108、PM109、PM110、PM201、PM202、PM203、PM204、PM301、PM302、PM303、PM401、IV306、IV307、IV401、IV402、IV403、IV404、IV405、IV406、IV407、IV601、IV602 DEV 與規格；IV405 共用 IV503 入庫記錄頁，IV103 也已完成。WAFERBANK vendor DLL 項目依先前決定不處理；下一項依未完成 PM FunctionKey 為 PM402「維修項目基本資料」。OE 分類「工單管理」中的 OE201–OE209 已有公司端規格／handoff；PM301–PM303 為保養工單流程。這段是 YMES 復刻進度，不改寫 Oracle 原始選單清冊。
+截至 2026-11-26，公司端已完成 PM101、PM102、PM103、PM104、PM105、PM106、PM107、PM108、PM109、PM110、PM201、PM202、PM203、PM204、PM301、PM302、PM303、PM401、PM402、IV306、IV307、IV401、IV402、IV403、IV404、IV405、IV406、IV407、IV601、IV602 DEV 與規格；IV405 共用 IV503 入庫記錄頁，IV103 也已完成。WAFERBANK vendor DLL 項目依先前決定不處理；下一項依未完成 PM FunctionKey 為 PM403「設備與故障原因對應」。OE 分類「工單管理」中的 OE201–OE209 已有公司端規格／handoff；PM301–PM303 為保養工單流程。PM_ACCPLAN 也有 FunctionKey PM403，後續實作須依 FunctionNo／FormName 區別。這段是 YMES 復刻進度，不改寫 Oracle 原始選單清冊。
 
 最新補記（2026-11-26）：PM401「故障原因基本資料」已完成 `frmBreakDownBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveBreakDownBasis`、`clsPMBasis` 與 `clsBasis_UPD` 核對及 Vue DEV 四狀態 CRUD／Copy／核准／停用。PM403 設備與故障原因對應、PM404 設備故障登錄會載入此故障原因主檔。舊硬刪不帶 DataStamp，簽核結束 SQL 亦不更新版本／稽核；規格 handoff 要求核 references 並以參數化、原子 API 補足。桌機受保護 Oracle profile 不存在，repo 無可信 `TBLPMBreakDownBasis` DDL／metadata，未猜 CREATE SQL；未連 PostgreSQL、未 build／test／browser。詳 [PM401 規格](modules/PM/故障原因基本資料_PM401.md)。接續 PM402「維修項目基本資料」。
+
+最新補記（2026-11-26）：PM402「維修項目基本資料」已完成 `frmRepairBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveRepairBasis`、`clsPMBasis` 與 `clsBasis_UPD` 核對及 Vue DEV 四狀態 CRUD／Copy／核准／停用。客製 PM405 設備修復登錄呼叫預設載入，只列 IssueState=2 的 RepairNo／RepairName。舊硬刪不帶 DataStamp，簽核結束 SQL 不更新版本／稽核；家用端需先核 PM405 引用及資料庫 FK。桌機受保護 Oracle profile 不存在，repo 無可信 `TBLPMRepairBasis` DDL／metadata，未猜 CREATE SQL；未連 PostgreSQL、未 build／test／browser。詳 [PM402 規格](modules/PM/維修項目基本資料_PM402.md)。下一項 PM403「設備與故障原因對應」；另有 PM_ACCPLAN 同 FunctionKey，需按 FunctionNo／FormName 區別。
 
 ## 第一層與功能目錄
 

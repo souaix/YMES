@@ -1,13 +1,22 @@
 # 公司端待辦
 
-## 公司端最新交付：PM401 故障原因基本資料（2026-11-26）
+## 公司端最新交付：PM402 維修項目基本資料（2026-11-26）
+
+- [x] 核對 `frmRepairBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveRepairBasis`、`clsPMBasis` 與 `clsBasis_UPD`；完成 `function:PM:REPAIR BASIS` Vue DEV 四狀態查詢、CRUD／Copy、Approve、硬刪／停用。
+- [x] 新增 [PM402 規格與家用端 API/schema handoff](docs/modules/PM/維修項目基本資料_PM402.md)，更新模組索引、選單進度、handoff 與兩端待辦。
+- [x] 核對客製 PM405 設備修復登錄只載入 IssueState=2，顯示 RepairNo／RepairName；舊硬刪未帶 DataStamp、簽核完成／退回 SQL 不更新版本／稽核。
+- [x] 桌機受保護 Oracle profile 不存在，repo 無可信 `TBLPMRepairBasis` DDL／metadata；未查 Oracle／未猜 CREATE。公司端未連 PostgreSQL、未實作 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／Oracle metadata 及 PM405 登錄／明細引用，再實作參數化、併發安全的維護／簽核 API與經核實的 CREATE-only DDL。
+- [ ] 下一項公司端依清冊是 PM403「設備與故障原因對應」；`PM_ACCPLAN` 也標 PM403，依 FunctionNo／FormName 區別功能。
+
+## 前項公司端交付：PM401 故障原因基本資料（2026-11-26）
 
 - [x] 核對 `frmBreakDownBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveBreakDownBasis`、`clsPMBasis` 與 `clsBasis_UPD`；完成 `function:PM:BREAKDOWN BASIS` Vue DEV 查詢、四狀態、CRUD／Copy、Approve、硬刪／停用。
 - [x] 新增 [PM401 規格與家用端 API/schema handoff](docs/modules/PM/故障原因基本資料_PM401.md)，更新模組索引、選單進度、handoff 與兩端待辦。
 - [x] 記錄 PM403／PM404 會讀取故障原因主檔；舊硬刪未傳 DataStamp、簽核完成／退回 SQL 未更新版本及稽核欄。DEV 假資料 key 為 `ymes.dev.pm.breakdown-basis.v1`。
 - [x] 桌機指定受保護 Oracle profile 不存在，repo 無可信 `TBLPMBreakDownBasis` DDL／metadata；未查 Oracle／未猜 CREATE。公司端未連 PostgreSQL、未實作 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema、Oracle metadata 與 PM403／PM404 引用規則，再實作參數化、併發安全的查詢／維護／簽核 API 及經核實的 CREATE-only DDL。
-- [ ] 下一項公司端依 FunctionKey 為 PM402「維修項目基本資料」。
+- [x] 當時下一項 PM402 已完成；公司端接續 PM403「設備與故障原因對應」。
 
 ## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
 
