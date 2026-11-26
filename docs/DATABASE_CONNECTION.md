@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP803 部門表 Oracle defaults 對齊（2026-11-27）
+
+- 依 MESTEST 唯讀來源 DDL `database/reference/mestest_wip_wp803_department_source_ddl.sql` 與 PostgreSQL CREATE-only 核對正式 `YMES.tblusrdepartmentbasis`。原表欄位、型別、NULL 與 PK 已一致，僅缺 `issuestate`、`controldtconect`、`dtconectqty`、`datastamp` 的來源 `DEFAULT 0`。
+- 套用 `0087_wp803_department_source_defaults.sql`，SHA-256 `774FB1FDA215C7634204741107ABA38C9C80562E3CCB247898F64828F847AF5D`；rollback SHA-256 `07106E690D369F2DD7EE25B777560B3E7D9179D826F36D644FDEB2B37A2813CD`。Migration 以交易執行，先驗證目標表、四欄型別／NULL 與現有 default，僅執行 `ALTER COLUMN SET DEFAULT 0`，沒有更新既有資料列。Rollback 也會先驗證四個 default 仍是 migration 值。
+- 套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-wp803-0087-20261127.dump`，785,606 bytes，SHA-256 `2b18371eabf707ec14ae0387614cdedc2d2ea161fc0f6a1f88145a06c39d515a`，root:root mode 600；`pg_restore --list` 2,162 entries。套用後回查：`issuestate numeric(1,0) NOT NULL DEFAULT 0`、`controldtconect numeric(1,0) NOT NULL DEFAULT 0`、`dtconectqty numeric(3,0) NOT NULL DEFAULT 0`、`datastamp numeric(11,0) NULL DEFAULT 0`。
+- 本 migration 僅補齊 WP803 部門 lookup 表結構來源；WP803 正式結案 API、簽核原子性與附件仍依模組規格及待辦接續處理。沒有讀取或修改部門業務資料列。
+
 ## 最新：RPT RT205 OP Attribute lookup（2026-11-27）
 
 - PPK／SSH 只讀檢查 `YMES` catalog：`tblopattrib` 原先不存在；`tblwiplotlog_report`、`tblopbasis`、`tblsysparameter` 存在且 `ymes_app` 有 SELECT；`tblrpttimestepbasis` 不存在。未讀取生產 Lot／業務資料列。
@@ -1341,7 +1348,7 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ### 更新 2026-11-20：WIP WP803 8D 矯正單結案作業
 
-- Release/ReleaseLog/TeamMember 直接表沿 WP802，Basis 沿 WP508。Def 的 D1 部門/人員選擇由 `clsWIP.Load8DTeamMember` 左連 `TBLUSRDEPARTMENTBASIS` 帶 DepartmentName；公司端以既有受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp803_department_source_ddl.sql` 及 `mestest_wip_wp803_department_metadata.txt`。原表 14 欄、DepartmentNo PK/單一 unique index、無 trigger，四個 `DEFAULT 0` 為 IssueState、ControlDtConect、DtConectQty、DataStamp。`mestest_first_phase_create_tables.sql` 欄/PK 已有但少四 default；準確 PG CREATE-only 為 `mestest_wip_wp803_department_create.sql`。家用端先核 live schema/history，缺 default 才 forward ALTER；公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL，憑證未提交。
+- Release/ReleaseLog/TeamMember 直接表沿 WP802，Basis 沿 WP508。Def 的 D1 部門/人員選擇由 `clsWIP.Load8DTeamMember` 左連 `TBLUSRDEPARTMENTBASIS` 帶 DepartmentName；公司端以既有受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**取得 `database/reference/mestest_wip_wp803_department_source_ddl.sql` 及 `mestest_wip_wp803_department_metadata.txt`。原表 14 欄、DepartmentNo PK/單一 unique index、無 trigger，四個 `DEFAULT 0` 為 IssueState、ControlDtConect、DtConectQty、DataStamp。`mestest_first_phase_create_tables.sql` 欄/PK 已有但少四 default；準確 PG CREATE-only 為 `mestest_wip_wp803_department_create.sql`。家用端已於 2026-11-27 先備份並核對 live，再以 0087 補齊四個 default；公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL，憑證未提交。
 
 ### 更新 2026-11-20：WIP WP510 等待單資料
 

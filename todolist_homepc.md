@@ -1,5 +1,13 @@
 # 家裡電腦接手清單
 
+## 家用端 WIP WP803 部門表來源預設對齊（2026-11-27）
+
+- [x] 依可信 Oracle source DDL 比對正式 PostgreSQL catalog；`tblusrdepartmentbasis` 欄位／型別／NULL／PK 已一致，只缺四個來源 `DEFAULT 0`。
+- [x] 套用 migration `0087_wp803_department_source_defaults.sql` 補上 IssueState、ControlDtConect、DtConectQty、DataStamp 預設值；執行前完成可還原的完整備份，執行後回讀四欄定義。只改 schema，不讀寫既有部門資料列。
+- [ ] 接續完成 WP803 登入保護的查詢、結案編輯、部門/團隊 lookup 與原子簽核 API；遵守 [WP803 模組規格](docs/modules/WIP/8D矯正單結案作業.md)，不以 DEV 假資料回正式成功。
+
+詳見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+
 ## 家用端 SD104 區域基本資料 API（2026-11-27）
 
 - [x] PPK／SSH 唯讀核對正式 `YMES` catalog 的 Area Basis、Area Inventory、Area Map、Area Relation、SMT Area Equipment Map 與 Department Basis；五張 SMD 區域相關表均存在，未讀／寫正式業務列。
