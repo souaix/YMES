@@ -1,5 +1,20 @@
 # RT412 設備 MTTR 統計表
 
+## 家用端正式 API 與 schema（2026-11-27）
+
+- 登入保護唯讀端點：`GET /YMES/API/api/reports/equipment-mttr-summary`。接受 `startDate`、`endDate`、逗號分隔的 `areaNos`／`equipmentTypes`／`equipmentNos`，以及 `includeChambers`；不接受 SQL 片段。
+- 日期必填、不得倒置或晚於台灣今日，含首尾日最多 366 天；各條件最多 100 個值、單值最多 50 字元，候選設備最多 2,000 台，查詢採 Repeatable Read／READ ONLY snapshot，超量拒絕而不截斷。查詢以整日區間切割本地 YMES timestamp，當日現況截至台灣目前時間。
+- 使用有效設備 `IssueState=2`；Chamber 預設排除，勾選後納入，區域從主設備關聯帶入。`equipmentNos` 是精確設備編號清單，不會把父設備條件默認擴張成其 Chamber 子設備。
+- 故障狀態由唯一 `ControlType='EQP Break Down'`、`ControlNo='BreakDown'` 取得；缺值或不唯一回 503，不猜 state code。故障次數按區間內故障狀態紀錄筆數，非故障狀態時數沿用來源公式。API 回傳 `breakdownTimes`、`mttrHours`、`mtbfHours`、`availabilityRatio`。
+- 2026-11-27 正式 PostgreSQL 核對：既有 `tbleqpstatebasis`、`tbleqpequipmentbasis`、`tblsmdarearelation` 結構與索引沿用；只為缺少的 `tbleqpstatecontrol`、`tblemsequipmentstate`、`tblemsequipmentstatelog` 套用 [0077 migration](../../../database/migrations/0077_rpt_rt412_equipment_mttr_schema.sql)。依來源建立三張空表和兩個歷程索引，`ymes_app` 僅授 SELECT；沒有匯入或建立設備／狀態業務列。
+- 套用前備份：`/opt/ymes/backups/ymes-before-rt412-20261127.dump`，752,263 bytes，SHA-256 `fe16b7a1a900a6928daeab29d7c85d7855f92fec4ab66e3b45204f7c3ed27e67`；`pg_restore --list` 驗證通過。migration SHA-256 `0f2bbdb9ab980be8713389680b51fbc467dcc607981b9c51119f17fd0602ac0d`。
+- 正式 `tbleqpstatecontrol` 目前尚無故障控制設定，故真實 MTTR API 會明確回傳「尚未設定唯一的設備故障狀態」，不寫入推測代碼或合成正式資料。設備狀態歷程的正式正向資料列也尚未到位。
+- API Release build 通過；候選設備及彙總 SQL 已在正式資料庫以 `EXPLAIN` 解析，未執行寫入。NuGet 弱點來源無法連線造成既有 `NU1900` 警告。
+- 本機 app-browser 使用 DEV 合成資料驗證：RT412 選單入口、基本 5 筆查詢、Area-A 篩選 2 筆、Bonder＋設備編號篩選 1 筆、Chamber 顯示 8 筆、日期錯誤提示與公式說明。這不是正式資料列驗收。
+- 獨立 API image `ymes-api:rt412-20261127-a1` 已部署，image ID `sha256:8202178c3b12934161fb7f9a08c326700bc20bd6f6503b6ba5a1157950c7cfe5`。正式 `ymes-api` 已 healthy，readiness 回 200；舊 `ymes-api` 容器保留為停止狀態 `ymes-api-before-rt412-20261127-a1`（原 image `sha256:60ccc746c876b81bf663c9060064dcc54500da298b806ed5824650a96b34781a`）。原有 data-protection／QC112 volumes 沿用；`ymes-web`、`ymes-master-web`、`yakuyama-web` 與 Nginx 均未修改。
+- 正式 app-browser 登入狀態下查 2026-11-26 回 HTTP 503 與「尚未設定唯一的設備故障狀態（EQP Break Down / BreakDown）」；此為正式設定表空白時預期回應，不是 API 例外。起日晚於迄日及 367 日區間分別回 400。切換前候選 API readiness=200、未登入回 401。
+- 正式 RT412 頁面仍是未開放 placeholder；本次 home handoff 交付 API。待 office 提供唯一故障控制設定的來源值、正式設定／狀態歷程進入復刻庫後，再驗證正式正向資料列；不以 DEV 假資料代替。
+
 ## 功能與入口
 
 - 選單清冊：`EQP MTTR SUMMARY`／「設備MTTR統計表」，RPT／在製品，Function No `RT412`。

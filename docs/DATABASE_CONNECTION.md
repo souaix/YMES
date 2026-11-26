@@ -1,5 +1,18 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：0077 RT412 設備狀態查詢結構（2026-11-27）
+
+- PPK SSH 以 catalog 唯讀核對後確認 `YMES.tbleqpstatecontrol`、`tblemsequipmentstate`、`tblemsequipmentstatelog` 缺少；既有設備／區域表保留。migration 前 custom-format 備份：`/opt/ymes/backups/ymes-before-rt412-20261127.dump`，752,263 bytes、SHA-256 `fe16b7a1a900a6928daeab29d7c85d7855f92fec4ab66e3b45204f7c3ed27e67`，`pg_restore --list` 通過。
+- 原子套用 [0077 RT412 migration](../database/migrations/0077_rpt_rt412_equipment_mttr_schema.sql)，SQL SHA-256 `0f2bbdb9ab980be8713389680b51fbc467dcc607981b9c51119f17fd0602ac0d`。建立三張依來源 DDL 的空表與兩個歷程索引，註記 MES 來源；只授 `ymes_app` SELECT，沒有 seed 或異動任何設備／狀態業務列。
+- 獨立 catalog 回讀三張表欄位、PK、索引與 `ymes_app` SELECT grant；控制設定與兩張狀態表目前均無資料列。正式 API 需等有效 Breakdown ControlType 設定與狀態歷程到位，不能用假 state code 回填。
+- RT412 candidate／summary SQL 已於正式資料庫以 `PREPARE` + `EXPLAIN` 驗證 schema 欄位與 query plan，未執行寫入。API Release build 通過；部署與正式 endpoint 驗收另記於 RT412 模組紀錄。
+
+## 最新：RT412 唯讀 API 發布（2026-11-27）
+
+- 發布 image `ymes-api:rt412-20261127-a1`，image ID `sha256:8202178c3b12934161fb7f9a08c326700bc20bd6f6503b6ba5a1157950c7cfe5`。正式 `ymes-api` healthy、`/YMES/API/health/ready` 回 200；切換前保留停止的 rollback container `ymes-api-before-rt412-20261127-a1`，原 image 為 `sha256:60ccc746c876b81bf663c9060064dcc54500da298b806ed5824650a96b34781a`。既有 data-protection／QC112 volumes、Web／master Web／其他服務未更動。
+- 候選容器 readiness 200、未登入報表端點 401；正式 app-browser 以登入狀態呼叫 RT412 endpoint，因 `tbleqpstatecontrol` 尚無唯一 BreakDown 設定，正確回 503 與具體設定提示。起日大於迄日、367 日查詢各回 400；正式 366 日正向資料範圍待狀態設定／歷程到位後確認。
+- Web／正式 RT412 畫面尚未開放，本次只有 API image 發布；其他容器與反向代理沒有變更。
+
 ## 最新：IV503 入庫記錄唯讀 API 發布（2026-11-26）
 
 - 獨立部署 API image `ymes-api:iv503-log-20261126-a1`，image ID `sha256:60ccc746c876b81bf663c9060064dcc54500da298b806ed5824650a96b34781a`。正式 `ymes-api` 使用既有 `ymes-dpkeys`／`ymes-qc112-files` volumes、環境設定與 health check，現為 running／healthy；原 API 容器保留為 stopped rollback container `ymes-api-before-iv503-log-20261126-a1`（image `sha256:2fa2ead5c8e11a07f6898f5c8731187719c27332ea965cb762e474a2da0c7f19`）。沒有重建或修改 Web、master Web、Nginx、其他專案或資料庫 schema。

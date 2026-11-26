@@ -4,7 +4,9 @@
 
 - [x] 核對 `frmEQP_MTTRSummary`／Designer、RPT `LoadEQPMTTRSummary` Service／Core；完成 `/YMES/RPT/EqpMttrSummary` DEV 日期、Area／Type／Equipment 多選、Chamber 顯示、故障次數／MTTR／MTBF／Availability 計算及說明窗。[RT412 規格與家用端 API handoff](docs/modules/RPT/設備MTTR統計表_RT412.md)
 - [x] 記錄區間截短、故障狀態由 `TBLEQPSTATECONTROL` 設定、Chamber／父設備篩選限制、SQL 字串串接及隱藏的月結儲存 handler。所需 MESTEST DDL refs 已在 repo；未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端核對 DDL refs 與 YMES live schema／索引、有效 Breakdown ControlType 及 Chamber 篩選語意，實作授權、參數化、日期範圍／設備筆數受限的唯讀 API。下一項依清冊為 RT413「設備 MTTR 統計表_以月份匯總」。
+- [x] 家用端已依 DDL refs 核對並套用缺少的 YMES state tables、完成唯讀 API 與正式部署；正式 query 的範圍防呆已驗證。DDL、API、部署與 app-browser 結果見 [RT412 模組紀錄](docs/modules/RPT/設備MTTR統計表_RT412.md)。
+- [ ] 請唯讀核對原生 MES `TBLEQPSTATECONTROL` 的 `ControlType='EQP Break Down'`、`ControlNo='BreakDown'` 唯一設定，回覆準確 `EquipmentState`／`StateName`；確認設備狀態歷程同步到復刻庫的來源／程序，提供一筆已可查的設備狀態歷程驗證條件。只回報指定設定及驗證必要資訊，不匯出其他設定或設備紀錄。
+- [x] RT412 完成後依清冊接續 RT413「設備 MTTR 統計表_以月份匯總」。
 
 ## 前項公司端交付：RPT RT411 每日設備稼動長條圖（2026-11-26）
 

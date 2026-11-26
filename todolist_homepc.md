@@ -1,5 +1,14 @@
 # 家裡電腦接手清單
 
+## 家用端 RT412 設備 MTTR 統計表（2026-11-27）
+
+- [x] 以正式 schema／來源 DDL 對照後，建立並套用 0077：只新建缺少的設備狀態控制、現況、歷程空表及來源索引，保留既有設備／區域主檔；`ymes_app` 僅 SELECT。備份與 SQL SHA 見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 完成登入保護唯讀 API `/api/reports/equipment-mttr-summary`；完成參數化篩選、台灣整日區間、366 日／條件值／2,000 台上限、Chamber 與來源 MTTR／MTBF／Availability 公式；SQL 於正式資料庫 `EXPLAIN` 通過。
+- [x] .NET 9 Release build 與本機 DEV app-browser 操作驗收完成；DEV 使用合成資料，不能代替正式資料列驗收。
+- [x] 以獨立 API image `ymes-api:rt412-20261127-a1` 部署並保留舊 `ymes-api` rollback container；readiness 200、候選未登入 401、正式登入查詢在缺少唯一故障設定時回預期 503，日期倒置與 367 日範圍均回 400。其他 Web／master Web／Nginx／專案容器未更動。
+- [ ] `tbleqpstatecontrol` 尚無唯一故障控制值，狀態歷程亦未提供；請公司端唯讀提供原生 MES `ControlType='EQP Break Down'`、`ControlNo='BreakDown'` 的準確 `EquipmentState`／`StateName`，並確認可用狀態歷程已進入復刻庫後再驗證正式正向 MTTR 結果。不在正式資料庫灌假資料。
+- [ ] 完成文件與 GitHub 正常同步、重新 fetch 檢查最新版待辦後，接續下一個可做的家用工作。
+
 ## 家用端最新整合與驗收（2026-11-26）
 
 - [x] 合併公司端最新 `origin/main` `adf6831`，保留兩端歷史與待辦；RT411 DEV 頁面的 TypeScript 型別衝突已修正，避免字串片段 ID 繼承數字狀態 ID。
@@ -29,7 +38,7 @@
 ## 公司端最新交付：RPT RT412 設備 MTTR 統計表（2026-11-26）
 
 - [x] 公司端已核對 `frmEQP_MTTRSummary`／Designer、`wsRPT.LoadEQPMTTRSummary` 與 `clsReport`，完成 DEV 查詢、Chamber 顯示、公式說明及 [RT412 規格 handoff](docs/modules/RPT/設備MTTR統計表_RT412.md)。
-- [ ] 比對既有 Oracle DDL refs 與 YMES live schema／索引，確認 Breakdown ControlType 及 Chamber／父設備篩選；實作授權、參數化、日期跨度與設備筆數受限的唯讀 API。公司端不連 PostgreSQL、不做正式 API/schema。
+- [x] 家用端已依來源 DDL 對照 live schema／索引並完成唯讀 API；正式資料庫缺少唯一故障狀態設定，正向業務資料驗證待真實來源資料到位。詳見上方 RT412 進度與模組 MD。公司端不連 PostgreSQL。
 - [x] RT412 後依 RPT 清冊下一項 RT413「設備 MTTR 統計表_以月份匯總」。
 
 ## 前項公司端交付：RPT RT411 每日設備稼動長條圖（2026-11-26）
