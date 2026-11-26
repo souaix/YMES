@@ -1,5 +1,16 @@
 # 家裡電腦接手清單
 
+## 家用端 SD101 工廠基本資料 API（2026-11-27）
+
+- [x] 開始前 fetch GitHub `main` 並閱讀本待辦；依可信來源 DDL 唯讀核對正式 `YMES.tblsmdfactorybasis`，欄位、型別、長度、nullable/default 與 PK 一致，沒有重建表或改業務資料。
+- [x] 套用 migration 0083，只授予 `ymes_app` 對既有工廠表 SELECT／INSERT／UPDATE／DELETE。執行前完整備份、SHA-256、migration checksum 及角色權限回讀見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 完成登入保護清單／options／新增／修改／刪除 API，含輸入驗證、伺服器稽核、IssueState 規則與 DataStamp CAS；目前不做角色或 SMD 功能權限檢查。簽核 endpoint 在來源 Issue/Job provider 未核實前回 503 且不改資料。
+- [x] .NET 9 Release build 成功並部署 `ymes-api:sd101-factory-basis-20261127-a1`；正式容器 healthy、readiness 200、匿名 options 401。只更新 YMES API service。
+- [x] 正式 app-browser 登入後驗證 `/YMES/SMD/Factories` 可載入、工廠清單 `[]`、`factoryNameEnabled=false`；未在正式庫新增測試資料。正式 CRUD 有效資料操作待正式資料同步／核可測試資料後再驗。
+- [ ] 公司端交付 `funLoadSysActiveModule("IC_FT_PKG")` 的實際設定來源，以及 `FACTORY BASIS` Issue/Job provider、關聯映射、必要 DDL 與核准／退回通知規則；取得後完成設定接線及簽核 API。詳 [公司端待辦](todolist_officepc.md)。
+
+模組流程、端點及待補來源詳見 [SD101 模組紀錄](docs/modules/SMD/工廠基本資料.md)。
+
 ## 家用端 SD105 區域庫房 API（2026-11-27）
 
 - [x] PPK/SSH 核實 `YMES.tblsmdareainventory` 已依來源 DDL 建立且欄位、PK、nullable/default 一致；不重建表、不改任何業務列。
@@ -2944,13 +2955,13 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 
 - Oracle `TBLSMDFACTORYBASIS` 已由公司端在 2026-11-16 EP303 DDL 查詢中直連查得。Oracle source logical DDL、PostgreSQL 空表 CREATE SQL 已在 `database/reference/mestest_carrier_basis_dependencies_source_ddl.sql`、`mestest_carrier_basis_dependencies_create.sql`，first-phase bootstrap 已含表；不要重查或建立重複 CREATE SQL。
 - 欄位：FactoryNo varchar(20) NOT NULL PK、Description varchar(255)、Creator varchar(10) NOT NULL、CreateDate timestamp NOT NULL、IssueState numeric(1,0) DEFAULT 0 NOT NULL、FabCode varchar(10)、FactoryName varchar(50)、Reviser varchar(10)、ReviseDate timestamp、DataStamp numeric(11,0) DEFAULT 0 nullable。只有 PK unique index，沒有 Oracle FK/額外 index。
-- 先比對 YMES schema/migrations。缺表或欄位才建 forward migration；保留 YMES 擴充欄位。DATE 對應 timestamp without time zone。
+- 已完成 YMES live catalog/schema 核對；表及欄位已存在且符合來源，不需 CREATE migration。僅 migration 0083 授予 `ymes_app` 本表 CRUD。DATE 對應 timestamp without time zone。
 - API：`GET /api/smd/factory-basis?factoryNo=`（大小寫不敏感包含查詢、空值回全部）、`GET /api/smd/factory-basis/options` 回 `{factoryNameEnabled}`、POST `/api/smd/factory-basis`、PUT `/{factoryNo}?issueState=0&dataStamp=`、DELETE `/{factoryNo}?issueState=&dataStamp=`、POST `/{factoryNo}/approve` body `{issueState:0,dataStamp}`。DTO/回應依規格與 `FactoryBasisMaster.vue`。
-- CRUD 權限需登入與 SMD 權限；FactoryNo 必填唯一。只允許 IssueState=0 修改；DataStamp nullable 要 CAS 並以 COALESCE(DataStamp,0)+1 更新。伺服器產生 Creator/CreateDate/Reviser/ReviseDate。Delete 僅狀態 0、2、-1 可實體刪除，狀態 1 回 409。
-- Approve IssueNo=`FACTORY BASIS`：沒有 Job/Detail 時依設定直達 2；有工作流程時建立 Issue Master 並轉 1，之後核准 2/退回 0。Production 不得使用 DEV 的直接轉狀態邏輯；家用端需重用正式 Issue/Job API。
-- `options.factoryNameEnabled` 依正式 `IC_FT_PKG` 設定；主 Grid 只有啟用時顯示 FactoryName，定義表單仍有欄位。舊 WinForms 清空 FactoryName 不會清除資料，Vue 延續此語意。
+- 所有端點要求登入；現階段不做角色或 SMD 權限判斷。FactoryNo 必填唯一。只允許 IssueState=0 修改；DataStamp nullable 要 CAS 並以 COALESCE(DataStamp,0)+1 更新。伺服器產生 Creator/CreateDate/Reviser/ReviseDate。Delete 僅狀態 0、2、-1 可實體刪除，狀態 1 回 409。
+- Approve IssueNo=`FACTORY BASIS` 目前安全回 503，不改 IssueState。Function Catalog 顯示需要簽核，但 YMES 尚無經核實的 Issue/Job provider 或關聯映射；等公司端提供來源 provider、必要 DDL、核准/退回與通知規則後再完成。Production 不得使用 DEV 直接改狀態。
+- `options.factoryNameEnabled` 目前讀取環境設定 `YMES_IC_FT_PKG_ENABLED`，正式值預設 `false`；公司端需補核 `funLoadSysActiveModule("IC_FT_PKG")` 實際設定來源後，再接正式設定。主 Grid 只有啟用時顯示 FactoryName，定義表單仍有欄位。舊 WinForms 清空 FactoryName 不會清除資料，Vue 延續此語意。
 - 舊 ws/Core 有不同版本的 DataStamp/audit 方法簽章；實作以規格明確定義的 CAS/登入稽核為準，不沿用舊簽章差異。
-- schema/API/Issue 流程完成並部署後，更新本待辦及 API 文件，通知公司端 pull 對接 Production。
+- schema、CRUD API 與本次部署已完成；待簽核來源與 IC_FT_PKG lookup 仍請公司端交付。公司端 pull 後可接 Production UI；正式資料列目前 0 筆，不可用正式資料做 CRUD 測試。
 
 ## SMD SD103 儲位基本資料（公司端 2026-11-16 已交接）
 

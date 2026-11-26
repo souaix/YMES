@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：SMD SD101 工廠基本資料 API 權限（2026-11-27）
+
+- 由家用電腦以 PPK／SSH 唯讀比對 `YMES.tblsmdfactorybasis` live catalog 與公司提供的 Oracle/PG 來源 DDL：欄位、型別、長度、NULL/default 與 FactoryNo PK 一致；本次未重建表、改欄位或寫入正式工廠資料。
+- 套用 migration `0083_smd_sd101_factory_basis_api_grants.sql`，只授予 `ymes_app` 對既有工廠表 SELECT／INSERT／UPDATE／DELETE。套用前 PostgreSQL custom-format 完整備份 `/opt/ymes/backups/ymes-before-sd101-0083-20261127.dump`，776,846 bytes，SHA-256 `738653a59d0bd9b9873904ee42eaf0d4da703d8fb4193323bee2cc54a13fcaa5`；`pg_restore --list` 通過。Migration SHA-256 `7D9E1EC670CA77C1A0CF8D771398D8F7C260E4E811BFDBEED8B34444620DDA0C`；以 `SET ROLE ymes_app` 核對四種權限皆有效。
+- .NET 9 Release image `ymes-api:sd101-factory-basis-20261127-a1`（`sha256:12f3068c4a6a9571acdcc7d4e263fca17df70511a938ae9b464c916fa2e734c0`）已部署，前版保留 `ymes-api:before-sd101-factory-basis-20261127-a1`。readiness=200、匿名 options API=401、容器 healthy；僅替換 YMES API service。
+- 正式 app-browser Demo 登入後，`/YMES/SMD/Factories` 正常載入，清單 API 回 `[]`、options API 回 `{"factoryNameEnabled":false}`。正式工廠資料目前為空，沒有新增業務測試列，故正向 CRUD 未在 Production 執行。`IC_FT_PKG` 設定來源與 `FACTORY BASIS` Issue/Job provider 尚待公司端確認。
+
 ## 最新：SMD SD105 區域庫房 API 權限（2026-11-27）
 
 - PPK／SSH 先查 PostgreSQL catalog，確認 live `YMES.tblsmdareainventory` 已存在，欄位型別、長度、NULL/default 與來源 DDL 一致，PK 為 `(areano,inventoryno)`。本次沒有重播 CREATE SQL、改欄位或寫入業務資料。

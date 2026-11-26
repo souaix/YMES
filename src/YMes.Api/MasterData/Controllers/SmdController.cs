@@ -9,8 +9,40 @@ namespace MES.Api.Controllers;
 [Route("api/smd")]
 public sealed class SmdController(
     PostgresSmdRepository repository,
-    PostgresSmdAreaInventoryRepository areaInventoryRepository) : ControllerBase
+    PostgresSmdAreaInventoryRepository areaInventoryRepository,
+    PostgresSmdFactoryBasisRepository factoryBasisRepository,
+    IConfiguration configuration) : ControllerBase
 {
+    [HttpGet("factory-basis")]
+    public ActionResult<IReadOnlyList<SmdFactoryBasisDto>> FactoryBasis([FromQuery] string? factoryNo) =>
+        Execute(() => factoryBasisRepository.List(factoryNo), "工廠基本資料讀取失敗");
+
+    [HttpGet("factory-basis/options")]
+    public ActionResult<SmdFactoryBasisOptionsDto> FactoryBasisOptions() =>
+        Ok(new SmdFactoryBasisOptionsDto(configuration.GetValue<bool>("YMES_IC_FT_PKG_ENABLED")));
+
+    [HttpPost("factory-basis")]
+    public ActionResult<SmdFactoryBasisDto> CreateFactoryBasis([FromBody] SmdFactoryBasisWriteRequest request) =>
+        Execute(() => factoryBasisRepository.Create(request, ActorUserNo), "工廠基本資料無法建立");
+
+    [HttpPut("factory-basis/{factoryNo}")]
+    public ActionResult<SmdFactoryBasisDto> UpdateFactoryBasis(
+        string factoryNo,
+        [FromQuery] int issueState,
+        [FromQuery] long dataStamp,
+        [FromBody] SmdFactoryBasisWriteRequest request) =>
+        Execute(() => factoryBasisRepository.Update(factoryNo, issueState, dataStamp, request, ActorUserNo), "工廠基本資料無法修改");
+
+    [HttpDelete("factory-basis/{factoryNo}")]
+    public IActionResult DeleteFactoryBasis(string factoryNo, [FromQuery] int issueState, [FromQuery] long dataStamp) =>
+        ExecuteAction(() => factoryBasisRepository.Delete(factoryNo, issueState, dataStamp), "工廠基本資料無法刪除");
+
+    [HttpPost("factory-basis/{factoryNo}/approve")]
+    public ActionResult<SmdFactoryBasisDto> ApproveFactoryBasis(
+        string factoryNo,
+        [FromBody] SmdFactoryBasisExpectedRequest request) =>
+        Execute(() => factoryBasisRepository.Approve(factoryNo, request, ActorUserNo), "工廠基本資料尚未接妥簽核服務");
+
     [HttpGet("area-inventories")]
     public ActionResult<IReadOnlyList<SmdAreaInventoryDto>> AreaInventories([FromQuery] string? baseAreaNo) =>
         Execute(() => areaInventoryRepository.ListAreaInventories(baseAreaNo), "區域庫房資料讀取失敗");

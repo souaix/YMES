@@ -16,6 +16,36 @@ public sealed record SmdComputerAreaDto
 
 public sealed record SmdFactoryOptionDto(string FactoryNo, string? Description, string? FactoryName);
 
+public sealed record SmdFactoryBasisDto
+{
+    public required string FactoryNo { get; init; }
+    public string? Description { get; init; }
+    public required string Creator { get; init; }
+    public DateTime CreateDate { get; init; }
+    public required int IssueState { get; init; }
+    public string? FabCode { get; init; }
+    public string? FactoryName { get; init; }
+    public string? Reviser { get; init; }
+    public DateTime? ReviseDate { get; init; }
+    public long? DataStamp { get; init; }
+}
+
+public sealed record SmdFactoryBasisOptionsDto(bool FactoryNameEnabled);
+
+public sealed class SmdFactoryBasisWriteRequest
+{
+    [Required, StringLength(20)] public string FactoryNo { get; set; } = "";
+    [StringLength(50)] public string? FactoryName { get; set; }
+    [StringLength(10)] public string? FabCode { get; set; }
+    [StringLength(255)] public string? Description { get; set; }
+}
+
+public sealed class SmdFactoryBasisExpectedRequest
+{
+    [Required, Range(0, 0)] public int? IssueState { get; set; }
+    [Required, Range(0, long.MaxValue)] public long? DataStamp { get; set; }
+}
+
 public sealed record SmdAreaOptionDto(
     string AreaNo,
     string AreaName,

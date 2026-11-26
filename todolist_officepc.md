@@ -2360,7 +2360,9 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] Oracle `TBLSMDFACTORYBASIS` 原始 DDL、欄位 NULL/default、PK/index/FK 已於 2026-11-16 EP303 查詢直連取得；沿用 `mestest_carrier_basis_dependencies_*` 和 first-phase CREATE SQL，未重複查詢/新增 SQL。
 - [x] 新增 Vue DEV 頁 `web/src/components/FactoryBasisMaster.vue`，接上 `/YMES/SMD/Factories` 與 FunctionNo=`FACTORY BASIS`；包含查詢/狀態篩選、選列/多選、Add/Edit/Copy/Delete/Approve、KD 黃色定義表單、稽核及 Apply/Confirm。
 - [x] 新增 `docs/modules/SMD/工廠基本資料.md`，更新功能索引、Oracle 查詢記錄與家用端 API/schema/簽核 handoff。
-- [ ] 未執行 build、test 或瀏覽器驗收；Production API/schema 待家用端比對現況並補齊，核准需串正式 Issue/Job 流程。
+- [x] 家用端已比對 YMES live schema，套用 migration 0083（僅授權既有表），完成登入保護 CRUD/options API 並部署 .NET 9 image `ymes-api:sd101-factory-basis-20261127-a1`；readiness=200、匿名 options=401、容器 healthy。正式 app-browser 確認 `/YMES/SMD/Factories` 正常且 API 清單為空；正式庫沒有新增測試資料。
+- [ ] 公司端 pull 後確認 Production 頁面使用 `/YMES/API/api/smd/factory-basis` 與 `/options`，以 DEV mock 驗收新增／修改／複製／刪除按鈕互動及 API 錯誤狀態；Production 目前沒有工廠資料，不可用正式資料造測試列。
+- [ ] 由公司端提供 `funLoadSysActiveModule("IC_FT_PKG")` 實際設定 lookup，以及 `FACTORY BASIS` Issue/Job provider、映射與必要表 DDL、核准／退回／通知規則；目前 Production approve API 安全回 503、不改資料，來源確認後由家用端完成。
 
 ## 結束規則
 
