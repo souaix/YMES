@@ -165,18 +165,21 @@
 - [x] 核對 inline `frmPMWoHistory`、`wsPM.LoadPMWoBasis_His`／`LoadPMWoDetail_His`、`wsEQP.LoadEquipmentBasis`、`clsPMBasis`；完成 `function:PM:PMWO HISTORY` Vue DEV 設備雙清單、兩組日期條件、WO Type 與主從 Grid。[PM504 規格與 API/schema handoff](docs/modules/PM/保養工單歷史資料查詢_PM504.md)
 - [x] 記錄設備／日期條件經明細子查詢篩主工單、明細依選取的 WONo 延遲載入，以及舊 SQL 字串拼接。桌機 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [x] PM505–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+- [ ] 家用端唯讀確認正式 YMES 缺少 `TBLPMWOBASIS_HIS` 與 `TBLPMWODETAIL_HIS`，repo 無可信 source DDL。請公司端由原生 Oracle 唯讀交付兩表完整 DDL、欄位 type/precision/scale/null/default、PK/FK/unique/indexes 及必要 owner/synonym metadata；確認 WONo／WOItemNo 關聯、WOTYPE 值與歷史保留規則。只交結構，不匯出工單資料、不在 Oracle 建表；來源到位後家用端建空表及主從唯讀 API。
 
 ## 前項公司端交付：PM503 保養計劃歷史資料查詢（2026-11-26）
 
 - [x] 核對 inline `frmEQPMaintenancePlanHistory`、`wsPM.LoadMaintenancePlanLog`／四組 distinct lookup、`clsPMPlanLog`；完成 `function:PM:PM PLAN HISTORY` Vue DEV 雙清單、日期、執行狀態及唯讀歷史 Grid。[PM503 規格與 API/schema handoff](docs/modules/PM/保養計劃歷史資料查詢_PM503.md)
 - [x] 記錄歷史表 inner join Frequency／SOP、CreateDate 升冪排序及舊 Core SQL 字串拼接；桌機 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE。未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [x] PM504–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+- [x] 家用端確認 PM503 所需 `TBLPMEQPMAINTENANCEPLANLOG`、`TBLPMFREQUENCYBASIS`、`TBLPMSOPBASIS` 均缺少；三表原生 Oracle DDL／metadata 已合併在上方 PM506 公司端交付項目，避免重複索取。
 
 ## 前項公司端交付：PM502 保養日曆設定（2026-11-26）
 
 - [x] 核對 inline `frmPMPlanCalendar`／Designer、自訂 Appointment Dialog、`wsPM.LoadMaintenancePlan`／`LoadEQPPMPlanByEQPType`、`clsPMBasis`；完成 `function:PM:PM CALENDAR` Vue DEV 設備／類別／頻率查詢、Day／Week／Month、雙月導覽、唯讀事件與列印預覽，新增 [PM502 規格與家用端 handoff](docs/modules/PM/保養日曆設定_PM502.md)。
 - [x] PM501 日曆按鈕已接同一元件並傳入原始計畫結果。事件不寫回保養計畫；Core 查詢條件使用字串拼接。桌機 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live schema／同版 MESTEST metadata、鍵與欄位，完成 PM501／PM502 共用限量參數化查詢 API 及可信 CREATE-only DDL。
+- [x] 家用端已唯讀確認 `tbleqpequipmentbasis` 存在，`tblpmeqpmaintenanceplan`、`tblpmfrequencybasis`、`tblpmsopbasis` 缺少；未讀業務資料、未猜建表。
+- [ ] 請公司端原生 Oracle 唯讀交付 `TBLPMEQPMAINTENANCEPLAN` 完整 DDL／欄位 metadata／PK-FK-indexes。`TBLPMFREQUENCYBASIS` 與 `TBLPMSOPBASIS` 的 DDL 已列於上方 PM506 交付項目；三表資料不可匯出，Oracle 不建表。家用端收到來源後建空表並完成 PM501／PM502 共用 API。
 - [x] PM503–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM501 設備保養計畫查詢（2026-11-26）

@@ -275,27 +275,32 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 
 - [x] 公司端核對 `frmPMWoHistory`／Designer、`wsPM.LoadPMWoBasis_His`／`LoadPMWoDetail_His`、`wsEQP.LoadEquipmentBasis`、`clsPMBasis`；完成設備／日期／類型篩選、主工單及點選後明細的 Vue DEV 假資料頁。[PM504 規格與 API handoff](docs/modules/PM/保養工單歷史資料查詢_PM504.md)
 - [x] Core 由 `tblPMWOBasis_His`／`tblPMWODetail_His` 查詢；設備與兩組日期透過明細 WONo 子查詢限制主檔。公司桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
-- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、主明細鍵／FK／索引、WOTYPE enum 及 Chamber 規則，完成參數化分頁主查詢、延遲明細 API 與可信 CREATE-only DDL。
+- [x] 家用端 2026-11-27 以 SSH 唯讀核對正式 YMES，`tblpmwobasis_his` 與 `tblpmwodetail_his` 缺少；repo 無可信 source DDL／metadata，未讀業務資料、未猜建表。
+- [ ] 公司端原生 Oracle 唯讀交付兩表完整 DDL／metadata／PK-FK-indexes，確認 WONo／WOItemNo、WOTYPE 與歷史保留；詳 [公司端待辦](todolist_officepc.md)。收到來源後家用端建空表、完成參數化分頁主查詢、延遲明細 API，核 Chamber 規則並提供 CREATE-only。
 - [x] PM505–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM503 保養計劃歷史資料查詢（2026-11-26）
 
 - [x] 公司端核對 `frmEQPMaintenancePlanHistory`／Designer、`wsPM.LoadMaintenancePlanLog` 與 distinct lookup、`clsPMPlanLog`；完成四組清單、Estimated PM Date、Execute State、唯讀歷史 Grid 的 Vue DEV 假資料頁。[PM503 規格與 API handoff](docs/modules/PM/保養計劃歷史資料查詢_PM503.md)
 - [x] 來源查詢 `tblPMEQPMaintenancePlanLog` 並內連 Frequency／SOP 主檔，依 `CreateDate` 升冪。舊 Core 字串拼接 SQL；桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
-- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、歷史表鍵／FK／索引／保留規則及狀態值，完成參數化分頁 `GET /api/pm/maintenance-plan-logs` 與可信 CREATE-only DDL；同時核 PM501／PM502 共用查詢端點。
+- [x] 家用端 2026-11-27 以 SSH 唯讀確認正式 YMES 缺少 `tblpmeqpmaintenanceplanlog`、`tblpmfrequencybasis`、`tblpmsopbasis`；repo 無可信 source DDL／metadata。三表已併入 [PM506 公司端 DDL 交付](todolist_officepc.md)，未讀業務資料或猜建表。
+- [ ] 收到來源後家用端比對欄位、歷史表鍵／FK／索引／保留規則及狀態值，建可信空表，完成參數化分頁 `GET /api/pm/maintenance-plan-logs`；另核 PM501／PM502 共用查詢端點。
 - [x] PM504–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM502 保養日曆設定（2026-11-26）
 
 - [x] 公司端核對 `frmPMPlanCalendar`／`frmCustomAppointmentDialog`、`wsPM.LoadMaintenancePlan`／`LoadEQPPMPlanByEQPType`、`clsPMBasis`，完成 Vue DEV 類型／頻率／設備篩選、日／週／月行事曆、PM501 資料交接、唯讀事件及列印預覽。[PM502 規格與 handoff](docs/modules/PM/保養日曆設定_PM502.md)
 - [x] 舊事件由 `PMEstDateTime` 建立 all-day appointment，Calendar 本身不寫計畫。桌機 Oracle profile 與可信業務表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未實作正式 API/schema。
-- [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、PK／FK／索引及欄位型別，提供 PM501／PM502 共用限量參數化唯讀 API 與可信 CREATE-only DDL。
+- [x] 家用端 2026-11-27 以 SSH 唯讀確認 `tbleqpequipmentbasis` 存在、`tblpmeqpmaintenanceplan`、`tblpmfrequencybasis`、`tblpmsopbasis` 缺少；repo 缺 PM 三表 trusted DDL。未讀業務資料、未猜建表。
+- [ ] 公司端唯讀交付 `TBLPMEQPMAINTENANCEPLAN` 原生 DDL／欄位與鍵索引；Frequency／SOP DDL 與 PM506 共用公司交付項目。收到後家用端核 FK／欄位型別及 Chamber scope，建立可信空表並實作 PM501／PM502 共用限量參數化唯讀 API。
 - [x] PM503–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM501 設備保養計畫查詢（2026-11-26）
 
 - [x] 公司端核對 `frmPMMaintenancePlanQuery`／`wsPM.LoadMaintenancePlan`／`clsPMBasis.LoadMaintenancePlan`，完成 DEV 三組篩選、日期條件、排序及 PM502 日曆資料交接。[PM501 規格](docs/modules/PM/設備保養計畫查詢_PM501.md)
 - [x] 計畫／頻率／SOP 表 DDL／metadata 未核實，桌機受保護 Oracle profile 缺失，未猜 CREATE。
+- [x] 家用端 2026-11-27 唯讀核對 YMES：設備主檔存在，PM Plan／Frequency／SOP 三表缺少，repo 無可信 source DDL；PM Plan DDL 已列於 PM502 公司待辦，Frequency／SOP 與 PM506 共用。未讀業務資料、未猜建表。
+- [ ] 收到來源後的共用 PM501／PM502 空表與唯讀 API，追蹤於上方 PM502 家用待辦。
 
 ## 前項公司端交付：PM405 設備修復登錄（2026-11-26）
 
