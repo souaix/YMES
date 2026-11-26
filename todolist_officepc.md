@@ -1,6 +1,15 @@
 # 公司端待辦
 
-## 公司端最新交付：PM403 設備與故障原因對應（2026-11-26）
+## 公司端最新交付：PM404 設備故障登錄（2026-11-26）
+
+- [x] 核對 THEIL 客製 `frmEQPBreakDownRegister_THEIL_BU1`／Def、`wsTHEIL.wsPM` Add／Edit／Confirm、標準 Load／Delete／Detail Service，以及客製／標準 Core。
+- [x] 完成 `function:PM:EQP BREAKDOWN REGISTER` Vue DEV 查詢、未確認 State=0 清單、原因明細、Add／Edit／Copy／多選 Delete／Confirm、設備狀態連動假互動；更新 [PM404 規格與家用端 handoff](docs/modules/PM/設備故障登錄_PM404.md)。
+- [x] 記錄任一狀態的設備登錄會阻擋同設備再新增、Edit 傳入 DataStamp 但客製 Core 未檢查、父子寫入及確認 EMS／登錄／郵件有部分完成風險。
+- [x] 桌機受保護 Oracle profile 與父／子表可信 DDL／metadata 均缺失，未猜 CREATE；未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live PostgreSQL／可信 MESTEST metadata、主鍵／FK／索引、序號產生器與 EMS／Chamber 關聯後，再做參數化、併發安全、原子明細寫入及可重試確認 API／CREATE-only DDL。
+- [ ] 下一項依清冊接續 PM405「設備修復登錄」。
+
+## 前項公司端交付：PM403 設備與故障原因對應（2026-11-26）
 
 - [x] 核對 `frmEQPTypeBreakDownMap`／Def、`wsPM.Load/Add/Edit/DelEQPTypeBreakDownMap`、`clsPMBasis`／`clsBasis_UPD`；完成 `function:PM:EQPTYPE BREAKDOWN MAP` Vue DEV 主從查詢、Add／Edit／Delete／Copy。
 - [x] 新增 [PM403 規格與家用端 API/schema handoff](docs/modules/PM/設備與故障原因對應_PM403.md)，更新模組索引、選單進度、handoff 與兩端待辦。
@@ -8,7 +17,7 @@
 - [x] 記錄 Edit 使用 DataStamp 版本比對／遞增；舊 Delete 逐筆硬刪但未傳 DataStamp，Service 僅防止兩個條件同時空白，家用端需強制完整組合鍵及引用保護。
 - [x] 桌機受保護 Oracle attachment 不存在，repo 無可信 `tblPMEQPTypeBreakDownMap` DDL／metadata；未查 Oracle／未猜 CREATE。公司端未連 PostgreSQL、未實作 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema／Oracle metadata、複合鍵／FK 與 PM404 引用後，再實作參數化、版本安全的維護 API 及經核實的 CREATE-only DDL。
-- [ ] 下一項公司端依清冊為 PM404「設備故障登錄」。
+- [x] 當時下一項為 PM404「設備故障登錄」，現已完成；公司端接續 PM405「設備修復登錄」。
 
 ## 前項公司端交付：PM402 維修項目基本資料（2026-11-26）
 
@@ -26,7 +35,7 @@
 - [x] 記錄 PM403／PM404 會讀取故障原因主檔；舊硬刪未傳 DataStamp、簽核完成／退回 SQL 未更新版本及稽核欄。DEV 假資料 key 為 `ymes.dev.pm.breakdown-basis.v1`。
 - [x] 桌機指定受保護 Oracle profile 不存在，repo 無可信 `TBLPMBreakDownBasis` DDL／metadata；未查 Oracle／未猜 CREATE。公司端未連 PostgreSQL、未實作 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema、Oracle metadata 與 PM403／PM404 引用規則，再實作參數化、併發安全的查詢／維護／簽核 API 及經核實的 CREATE-only DDL。
-- [x] 當時下一項 PM402、PM403 均已完成；公司端現接續 PM404「設備故障登錄」。
+- [x] 當時下一項 PM402、PM403 均已完成；PM404 亦已完成，公司端現接續 PM405「設備修復登錄」。
 
 ## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
 

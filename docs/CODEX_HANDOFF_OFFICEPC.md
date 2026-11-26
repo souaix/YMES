@@ -2,13 +2,21 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：PM403 設備與故障原因對應（2026-11-26）
+## 公司端最新交付：PM404 設備故障登錄（2026-11-26）
+
+- [x] 核對客製 `frmEQPBreakDownRegister_THEIL_BU1`／Def、THEIL Add／Edit／Confirm Service、標準 Load／Delete／Detail Service 與 Core；完成 Vue DEV State=0 清單、原因明細及 Add／Edit／Copy／Delete／Confirm 假互動。規格：[PM404 設備故障登錄](modules/PM/設備故障登錄_PM404.md)。
+- [x] 記錄新登錄查重不限制 State、設備狀態 `ES102` 預設、NOCHANGED 不改 EMS、Confirm 改 State=1 並寄工程群組郵件。DEV 不連 EMS／寄信。Edit 的 DataStamp 未傳到 Core；父子資料、EMS 更新、登錄確認及郵件不是一個原子流程。
+- [x] 桌機 Oracle profile 與可信父／子表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端先核 live schema、同版 MESTEST metadata、序號產生器與 EMS／Chamber 關聯，再實作版本安全、交易式明細及可重試確認 API／CREATE-only DDL。
+- [ ] 公司端下一項 PM405「設備修復登錄」。
+
+## 前項公司端交付：PM403 設備與故障原因對應（2026-11-26）
 
 - [x] 核對 `frmEQPTypeBreakDownMap`／Def、`wsPM.Load/Add/Edit/DelEQPTypeBreakDownMap`、`clsPMBasis`／`clsBasis_UPD`；完成 `function:PM:EQPTYPE BREAKDOWN MAP` DEV 主從查詢、CRUD／Copy。規格：[PM403 設備與故障原因對應](modules/PM/設備與故障原因對應_PM403.md)。
 - [x] 故障原因選擇器只載入 IssueState=2；PM404 會按設備類型載入映射供故障登錄勾選。`PM_ACCPLAN` 重複 FunctionKey 已以功能名稱／FormName 區分。
 - [x] Edit 使用 DataStamp；舊 Delete 沒有版本條件且 Service 允許只帶單一鍵而批次刪除。桌機 Oracle attachment 與可信映射表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 PostgreSQL live schema／Oracle metadata、FK 與 PM404 引用後實作參數化、expected DataStamp API 及可信 CREATE-only DDL。
-- [ ] 公司端下一項 PM404「設備故障登錄」。
+- [x] 當時下一項 PM404「設備故障登錄」現已完成；公司端接續 PM405「設備修復登錄」。
 
 ## 前項公司端交付：PM402 維修項目基本資料（2026-11-26）
 
