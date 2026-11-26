@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import PmPlanCalendarDevPreview from './PmPlanCalendarDevPreview.vue'
 
 interface PlanRow {
   serialNo: string
@@ -46,7 +47,6 @@ const queryRows = ref<PlanRow[]>([])
 const queried = ref(false)
 const notice = ref('')
 const calendarOpen = ref(false)
-const calendarMonth = ref('2026-11')
 
 function readSavedRows(): PlanRow[] {
   try {
@@ -101,8 +101,6 @@ const choices = computed<Record<FilterKey, string[]>>(() => ({
   creator: [...new Set(rows.value.map((row) => row.creator).filter(Boolean))].sort(),
 }))
 const displayedRows = computed(() => queryRows.value.filter((row) => !/-CH\d+$/i.test(row.equipmentNo)))
-const calendarRows = computed(() => queryRows.value.filter((row) => row.estimatedDate.slice(0, 7) === calendarMonth.value))
-const monthLabel = computed(() => calendarMonth.value.replace('-', '/'))
 const selectedText = computed(() => {
   const describe = (key: FilterKey) => selectedLists.value[key].length ? selectedLists.value[key].join(', ') : '全部'
   return `設備 ${describe('equipment')}｜頻率 ${describe('frequency')}｜建立者 ${describe('creator')}`
@@ -144,14 +142,7 @@ function queryPlans() {
   notice.value = `查詢完成：原始 ${queryRows.value.length} 筆，畫面顯示 ${displayedRows.value.length} 筆。`
 }
 function showCalendar() {
-  const first = queryRows.value[0]?.estimatedDate ?? '2026-11-01'
-  calendarMonth.value = first.slice(0, 7)
   calendarOpen.value = true
-}
-function shiftCalendarMonth(offset: number) {
-  const [year, month] = calendarMonth.value.split('-').map(Number)
-  const next = new Date(year, month - 1 + offset, 1)
-  calendarMonth.value = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`
 }
 function dateLabel(value: string) { return value ? value.replaceAll('-', '/') : '—' }
 function frequencyLabel(row: PlanRow) { return frequencyNames.value[row.frequencyNo] || row.frequencyNo }
@@ -202,23 +193,18 @@ queryPlans()
     <footer class="page-footer"><span>DEV localStorage：{{ storageKey }}</span><span>查詢結果依 PMESTDATETIME 升冪排序；不呼叫正式 API。</span></footer>
 
     <div v-if="calendarOpen" class="modal-backdrop" @click.self="calendarOpen = false">
-      <section class="calendar-dialog" role="dialog" aria-modal="true" aria-labelledby="calendar-title">
-        <header><div><p>PM_PlanCalendar / PM502</p><h2 id="calendar-title">保養日曆預覽 — {{ monthLabel }}</h2></div><div><button type="button" class="secondary" @click="shiftCalendarMonth(-1)">‹</button> <button type="button" class="secondary" @click="shiftCalendarMonth(1)">›</button> <button type="button" class="secondary" aria-label="關閉日曆" @click="calendarOpen = false">×</button></div></header>
-        <p class="calendar-note">WinForms 將原始 MaintenancePlan DataTable 複製給外部 PM_PlanCalendar；以下用 DEV 月份清單模擬開啟結果，包含結果集內子設備列。</p>
-        <div class="table-wrap"><table><thead><tr><th>預估日期</th><th>設備</th><th>頻率</th><th>SOP</th><th>PM Serial</th><th>建立者</th></tr></thead><tbody><tr v-for="row in calendarRows" :key="row.serialNo"><td>{{ dateLabel(row.estimatedDate) }}</td><td>{{ row.equipmentNo }}</td><td>{{ frequencyLabel(row) }}</td><td>{{ sopLabel(row) }}</td><td>{{ row.pmSerialNo }}</td><td>{{ row.creator }}</td></tr><tr v-if="calendarRows.length === 0"><td colspan="6" class="empty">本月沒有計畫。</td></tr></tbody></table></div>
-        <footer><span>{{ calendarRows.length }} 筆</span><button type="button" class="secondary" @click="calendarOpen = false">關閉</button></footer>
-      </section>
+      <PmPlanCalendarDevPreview :development-preview="true" :initial-plans="queryRows" :embedded="true" @close="calendarOpen = false" />
     </div>
   </section>
 </template>
 
 <style scoped>
 .pm-plan-query { height:100%; min-height:0; display:flex; flex-direction:column; gap:9px; padding:12px; box-sizing:border-box; background:#f7f5ee; color:#26251f; font:12px/1.42 "Segoe UI","Microsoft JhengHei",sans-serif; }
-.page-header,.header-actions,.results-header,.page-footer,.calendar-dialog header,.calendar-dialog footer { display:flex; align-items:center; }.page-header,.results-header,.calendar-dialog header,.calendar-dialog footer { justify-content:space-between; gap:10px; }.page-header { border-bottom:1px solid #d6d2c6; padding-bottom:8px; }.page-header p,.calendar-dialog header p { margin:0; color:#777366; font-size:10px; letter-spacing:.06em; }h1 { margin:2px 0 0; font-size:20px; font-weight:600; }.header-actions { gap:8px; }.dev-tag { padding:3px 8px; border-radius:3px; background:#dce9de; color:#28533a; font-size:10px; }
+.page-header,.header-actions,.results-header,.page-footer { display:flex; align-items:center; }.page-header,.results-header { justify-content:space-between; gap:10px; }.page-header { border-bottom:1px solid #d6d2c6; padding-bottom:8px; }.page-header p { margin:0; color:#777366; font-size:10px; letter-spacing:.06em; }h1 { margin:2px 0 0; font-size:20px; font-weight:600; }.header-actions { gap:8px; }.dev-tag { padding:3px 8px; border-radius:3px; background:#dce9de; color:#28533a; font-size:10px; }
 button { min-height:28px; padding:4px 10px; border:1px solid #454237; border-radius:3px; background:#454237; color:#fff; font:inherit; cursor:pointer; }button:disabled { opacity:.42; cursor:default; }button.secondary { border-color:#bab6a8; background:#fffef9; color:#333126; }
 .filter-panel { display:grid; grid-template-columns:repeat(3,minmax(160px,1fr)) minmax(250px,1.2fr); gap:9px; padding:9px; border:1px solid #d0ccbf; background:#eeece4; }.dual-filter { min-width:0; }.filter-title { display:block; margin-bottom:4px; color:#514f45; font-weight:600; }.list-pair { display:grid; grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr); gap:4px; height:96px; }.list-pair select { width:100%; min-width:0; padding:4px; border:1px solid #bbb7a9; background:#fffef9; color:#26251f; font:inherit; }.list-arrows { display:flex; flex-direction:column; justify-content:center; gap:5px; }.list-arrows button { min-height:27px; padding:2px; font-size:16px; }.date-filter { display:flex; flex-direction:column; gap:5px; align-items:flex-start; }.date-choice { display:flex; align-items:center; gap:5px; color:#514f45; }.date-choice input[type=date] { min-height:27px; min-width:0; padding:3px 5px; border:1px solid #bbb7a9; background:#fffef9; color:#26251f; font:inherit; }.date-choice input:disabled { opacity:.5; }
 .results-panel { flex:1; min-height:0; display:flex; flex-direction:column; gap:8px; padding:9px; border:1px solid #d0ccbf; background:#fffef9; }.results-header h2 { margin:0; font-size:16px; }.results-header p { margin:2px 0 0; color:#777366; font-size:10px; }.table-wrap { min-height:0; overflow:auto; border:1px solid #e0ddd4; }table { width:100%; border-collapse:collapse; white-space:nowrap; }th,td { padding:6px 8px; border-bottom:1px solid #e7e4db; text-align:left; }th { position:sticky; top:0; z-index:1; background:#e9e6dc; color:#555246; font-weight:600; }tbody tr:nth-child(even) { background:#f8f7f1; }.empty { padding:20px; text-align:center; color:#777366; }.notice { margin:0; padding:6px 8px; background:#eeece4; color:#454237; }.notice span { margin-left:10px; color:#777366; }.page-footer { justify-content:space-between; gap:8px; color:#8a877c; font-size:10px; }
-.modal-backdrop { position:fixed; inset:0; z-index:120; display:grid; place-items:center; padding:16px; background:#28271f80; }.calendar-dialog { width:min(900px,100%); max-height:calc(100vh - 32px); display:flex; flex-direction:column; gap:9px; padding:14px; border:1px solid #b8b4a7; border-radius:5px; background:#f7f5ee; box-shadow:0 18px 60px #0004; }.calendar-dialog h2 { margin:2px 0 0; font-size:17px; }.calendar-dialog .table-wrap { flex:1; }.calendar-note { margin:0; padding:7px 9px; background:#eeece4; color:#777366; }.calendar-dialog footer { border-top:1px solid #d6d2c6; padding-top:8px; }
+.modal-backdrop { position:fixed; inset:0; z-index:120; display:grid; place-items:center; padding:16px; background:#28271f80; }
 @media(max-width:900px) { .filter-panel { grid-template-columns:repeat(2,minmax(0,1fr)); }.date-filter { grid-column:1/-1; flex-direction:row; flex-wrap:wrap; align-items:center; }.results-panel { min-height:260px; }.page-footer { align-items:flex-start; flex-direction:column; } }
-@media(max-width:560px) { .pm-plan-query { padding:7px; }.filter-panel { grid-template-columns:1fr; }.date-filter { grid-column:auto; flex-direction:column; align-items:flex-start; }.date-choice { flex-wrap:wrap; }.date-choice input[type=date] { flex:1; }.notice span { display:block; margin:3px 0 0; }.calendar-dialog { padding:8px; } }
+@media(max-width:560px) { .pm-plan-query { padding:7px; }.filter-panel { grid-template-columns:1fr; }.date-filter { grid-column:auto; flex-direction:column; align-items:flex-start; }.date-choice { flex-wrap:wrap; }.date-choice input[type=date] { flex:1; }.notice span { display:block; margin:3px 0 0; } }
 </style>

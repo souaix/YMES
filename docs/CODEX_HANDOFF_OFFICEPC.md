@@ -2,12 +2,18 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：PM501 設備保養計畫查詢（2026-11-26）
+## 公司端最新交付：PM502 保養日曆設定（2026-11-26）
 
-- [x] 核對 inline `frmPMMaintenancePlanQuery`／Designer、`wsPM.LoadMaintenancePlan`／distinct lookup、`clsPMBasis.LoadMaintenancePlan`；完成 `function:PM:PM MAINTENANCE QUERY` Vue DEV 三組雙清單、日期範圍、排序結果及 PM502 日曆資料預覽。規格：[PM501 設備保養計畫查詢](modules/PM/設備保養計畫查詢_PM501.md)。
-- [x] 記錄 Core 內連設備保養計畫、頻率與 SOP 表；舊 Core 把查詢值直接串入 SQL。桌機 Oracle profile 及可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live PostgreSQL 與同版 MESTEST metadata／鍵，提供 CREATE-only DDL 並實作分頁、參數化唯讀查詢 API。
-- [ ] 公司端下一項 PM502「保養日曆設定」。
+- [x] 核對 inline `frmPMPlanCalendar`／Designer、`frmCustomAppointmentDialog`、`wsPM.LoadMaintenancePlan`／`LoadEQPPMPlanByEQPType`、`clsPMBasis`；完成 `function:PM:PM CALENDAR` Vue DEV 設備／類別／頻率篩選、Day／Week／Month、雙月導覽、事件唯讀明細及列印預覽。PM501 會傳入原始查詢結果。規格：[PM502 保養日曆設定](modules/PM/保養日曆設定_PM502.md)。
+- [x] Calendar 只從保養計畫產生本機 all-day 事件，舊程式沒有計畫新增／修改 Service；查詢 SQL 字串拼接風險已交接。桌機 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／同版 MESTEST metadata 與鍵，完成 PM501／PM502 共用分頁參數化唯讀查詢 API 及可信 CREATE-only SQL。
+- [ ] 公司端下一項 PM503「保養計劃歷史資料查詢」。
+
+## 前項公司端交付：PM501 設備保養計畫查詢（2026-11-26）
+
+- [x] 核對 inline Form／Designer、`wsPM.LoadMaintenancePlan`／distinct lookup、`clsPMBasis.LoadMaintenancePlan`；完成 `function:PM:PM MAINTENANCE QUERY` Vue DEV 三組篩選、日期範圍、排序及 PM502 日／週／月日曆資料交接。規格：[PM501 設備保養計畫查詢](modules/PM/設備保養計畫查詢_PM501.md)。
+- [x] 查詢內連設備保養計畫、頻率與 SOP 表；舊 Core 把查詢值直接串入 SQL。Oracle profile 及可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端先核 live schema／metadata 並提供分頁、參數化唯讀 API 與可信 CREATE-only SQL。
 
 ## 前項公司端交付：PM405 設備修復登錄（2026-11-26）
 
@@ -15,7 +21,7 @@
 - [x] 儲存依序建立故障／修復歷史、更新 EMS、移除待修單、寄工程群組郵件；舊流程非原子。`RepairState=default(int)` 實為 0，與 -999 註解不一致；UserNo 過濾已註解。DEV 不呼叫 EMS／寄信。
 - [x] 桌機 Oracle profile 與可信四張歷史表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema 與 MESTEST metadata、外鍵、EMS／Chamber 交易邊界後，實作參數化、冪等與可重試 API／CREATE-only DDL。
-- [x] 當時下一項 PM501「設備保養計畫查詢」現已完成；公司端接續 PM502「保養日曆設定」。
+- [x] 當時接續 PM501「設備保養計畫查詢」現已完成；PM502 保養日曆亦完成，公司端接續 PM503「保養計劃歷史資料查詢」。
 
 ## 前項公司端交付：PM404 設備故障登錄（2026-11-26）
 
