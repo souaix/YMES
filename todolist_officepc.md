@@ -2617,7 +2617,8 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 用 Windows PowerShell 5.1 + Oracle.ManagedDataAccess，透過本機受保護連線唯讀查 MESTEST.TBLINVLOCATORBASIS DBMS_METADATA 與資料字典；確認複合 PK、沒有 FK/額外索引。新增原始 Oracle DDL 和 PostgreSQL 空表 CREATE SQL，校正 first-phase bootstrap 預設值並刪除未核實欄位註解。
 - [x] 新增 Vue DEV 頁 web/src/components/LocatorBasisMaster.vue，路由 /YMES/SMD/Locators、FunctionNo=LOCATOR BASIS；依 WinForms 具備查詢、狀態切換、選列、多選、Add/Edit/Copy/Delete/Approve、已核准庫存挑選器、KD 黃色欄位、稽核及 Apply/Confirm。
 - [x] 新增 docs/modules/SMD/儲位基本資料.md；更新資料庫連線查詢紀錄、功能索引、家用端 API/schema handoff。
-- [ ] 未執行 build、test 或瀏覽器驗收；家用端需比對已部署 YMES schema 並補 forward migration/API 和正式 Issue/Job 核准流程。
+- [x] 家用端已核對正式 YMES schema，套用 0084（僅授權既有儲位表）、完成登入保護的清單/options/CRUD API，.NET 9 Release build 並部署 SD103 API；readiness=200、匿名 options=401、容器 healthy。正式清單與核准庫存 options 皆為空，未寫入正式測試列；approve 因缺來源 provider/mapping 安全回 503。詳 `docs/modules/SMD/儲位基本資料.md`。
+- [ ] 公司端 pull 後檢查 Production `/YMES/SMD/Locators` 呼叫與錯誤處理，並在 DEV mock 完成 Add/Edit/Copy/Delete/Approve 按鈕操作。請補交 `LOCATOR BASIS` Issue/Job provider、mapping、必要 DDL、核准／退回與通知規則，供家用端完成簽核 API；正式有效 Inventory 資料同步後再做正向 CRUD 驗收。
 - [x] SD107「生產線別基本資料」已依 Form/Service/Core 完成 DEV 頁、規格、Oracle DDL/PG CREATE 與家用端 API/schema handoff。下一個尚未完成的 SMD FunctionKey 為 SD108「設備狀態監控_區域」。
 ## 2026-11-16 SMD SD107 生產線別基本資料公司端進度
 

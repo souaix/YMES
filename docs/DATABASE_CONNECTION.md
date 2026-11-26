@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：SMD SD103 儲位基本資料 API 權限（2026-11-27）
+
+- 家用端以 PPK／SSH 唯讀比對正式 `YMES.tblinvlocatorbasis` 與 Oracle 來源 DDL；12 欄、型別、長度、NULL/default 及 `(inventoryno,locatorno)` 複合 PK 一致。沒有重建表、改結構或寫入業務資料。
+- 套用 migration `0084_smd_sd103_locator_basis_api_grants.sql`，只授予 `ymes_app` 對既有儲位表 SELECT／INSERT／UPDATE／DELETE；既有 `tblinvinventorybasis` SELECT 權限沿用。執行前完整備份 `/opt/ymes/backups/ymes-before-sd103-0084-20261127.dump`，776,867 bytes，SHA-256 `b322ed3feb115ebbbc17ae430467520703c1bd8ce593c0097655d0af8fb7e962`，`pg_restore --list` 共 2,156 entries。Migration SHA-256 `44ac484763522049f3dd17f8befa89db04e303aba1953892754abdd9a78133fd`；以 `SET ROLE ymes_app` 回讀四種權限皆有效。
+- 以 `ymes_app` 執行清單、選項及新增／修改／刪除 SQL 的 `EXPLAIN`，確認欄位與權限可用；未執行任何 DML。沒有讀取或修改正式儲位／庫存業務列。
+- .NET 9 image `ymes-api:sd103-locator-basis-20261127-a1`（`sha256:f8c8752f06eaa7e3cd0c4e3831b02da4caf84f9860988f8cb248256cdef514c1`）已部署，前版保留 `ymes-api:before-sd103-locator-basis-20261127-a1`。readiness=200、匿名 options API=401、容器 healthy；僅更新 YMES API service。
+- 正式 app-browser Demo 登入後，`/YMES/SMD/Locators` 正常載入，清單與已核准 Inventory options 均為 `[]`，新增表單及 Inventory 選擇器可開啟；未送出新增或修改。正式資料為空，正向 CRUD 待有效資料同步／核可測試 fixture。`INV LOCATOR` Issue/Job provider 與映射尚待公司端來源證據；approve API 暫回 503 且不改資料。
+
 ## 最新：SMD SD101 工廠基本資料 API 權限（2026-11-27）
 
 - 由家用電腦以 PPK／SSH 唯讀比對 `YMES.tblsmdfactorybasis` live catalog 與公司提供的 Oracle/PG 來源 DDL：欄位、型別、長度、NULL/default 與 FactoryNo PK 一致；本次未重建表、改欄位或寫入正式工廠資料。

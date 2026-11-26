@@ -1,5 +1,17 @@
 # 家裡電腦接手清單
 
+## 家用端 SD103 儲位基本資料 API（2026-11-27）
+
+- [x] PPK／SSH 唯讀核對正式 `YMES.tblinvlocatorbasis` 與可信來源 DDL；欄位、型別、長度、NULL/default、複合 PK 一致，0017 已補來源預設值，不重建表或改正式資料。
+- [x] 套用 migration 0084，只授予 `ymes_app` 儲位表 SELECT／INSERT／UPDATE／DELETE；既有 `tblinvinventorybasis` SELECT 權限沿用。執行前完整備份、SHA-256、migration checksum 及 `SET ROLE ymes_app` 權限／SQL EXPLAIN 記錄見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。EXPLAIN 未執行任何 DML。
+- [x] 完成登入保護的限量清單、已核准庫存選項、新增、修改、刪除 API；複合鍵 CAS、稽核、容量精度驗證、來源狀態規則及隱藏 ERPNo 保留均已實作。現階段依使用者決定只要求登入，不檢查角色／SMD 功能權限。
+- [x] 核准 API 會驗證目標狀態／DataStamp，但因正式 YMES 無已核實的 `INV LOCATOR` Issue/Job provider 映射，安全回 503 且不改資料；公司端需交付來源 provider／關聯 DDL／核准退回規則後再完成。
+- [x] .NET 9 Release build 成功；image `ymes-api:sd103-locator-basis-20261127-a1`（`sha256:f8c8752f06eaa7e3cd0c4e3831b02da4caf84f9860988f8cb248256cdef514c1`）已部署，容器 healthy、readiness 200、匿名 options 401。只更新 YMES API service。
+- [x] 正式 app-browser 登入後確認 `/YMES/SMD/Locators` 正常；清單 `[]`、已核准庫存 `[]`、新增表單和選擇器可開啟；未提交新增或修改正式資料。正式資料列及已核准 Inventory 皆無，寫入正向 CRUD 留待同步真實資料／核可 fixture 後驗收。
+- [ ] 公司端提供 `LOCATOR BASIS` Issue/Job provider、映射、所需 DDL 及核准／退回通知規則；並 pull 後在 DEV mock 驗收 Add/Edit/Copy/Delete/Approve UI，確認 Production 端點與錯誤處理。詳 [公司端待辦](todolist_officepc.md)。
+
+模組規則、端點與正式驗證詳見 [SD103 模組紀錄](docs/modules/SMD/儲位基本資料.md)。
+
 ## 家用端 SD101 工廠基本資料 API（2026-11-27）
 
 - [x] 開始前 fetch GitHub `main` 並閱讀本待辦；依可信來源 DDL 唯讀核對正式 `YMES.tblsmdfactorybasis`，欄位、型別、長度、nullable/default 與 PK 一致，沒有重建表或改業務資料。
@@ -2968,12 +2980,12 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 先讀 docs/modules/SMD/儲位基本資料.md。公司端完成 /YMES/SMD/Locators Vue DEV 頁與 FunctionNo=LOCATOR BASIS。Oracle 原始 DDL 和 PostgreSQL 空表 CREATE SQL 為 database/reference/mestest_smd_locator_basis_source_ddl.sql、mestest_smd_locator_basis_create.sql；first-phase bootstrap 已校正。
 
 - Oracle table 為 TBLINVLOCATORBASIS，複合 PK (InventoryNo, LocatorNo)，無 FK/額外索引。欄位、NULL/default 以 CREATE SQL 為準；IssueState DEFAULT 0 NOT NULL，Capacity NUMBER(12,4) DEFAULT 0 nullable，DataStamp NUMBER(11,0) DEFAULT 0 nullable。
-- 先查目前 YMES schema/migration 狀態。舊 first-phase SQL 已在家用端執行時，新增 forward migration 修正 IssueState、Capacity、DataStamp 預設值；不刪資料、不重建表、不加 Oracle 沒有的外鍵。
+- 已查 YMES live schema：表已存在且符合來源，migration 0017 已修正 IssueState、Capacity、DataStamp 預設值；migration 0084 僅授予 ymes_app 此表 CRUD，不刪資料、不重建表、不加 Oracle 沒有的外鍵。
 - API：GET /api/smd/locator-basis?inventoryNo= 以 InventoryNo 完全相等比對，回傳四狀態並按複合鍵排序；GET /api/smd/locator-basis/options 回 { approvedInventories: [{ inventoryNo }] }，由既有 TBLINVInventoryBasis 篩 IssueState=2、distinct InventoryNo。POST /api/smd/locator-basis；PUT /api/smd/locator-basis/item?inventoryNo=&locatorNo=&issueState=0&dataStamp=；DELETE 同路徑並帶實際狀態/DataStamp；POST /api/smd/locator-basis/item/approve?inventoryNo=&locatorNo=&issueState=0&dataStamp=。
 - POST 設 Creator/CreateDate、IssueState=0。PUT UI 只允許狀態 0，鍵不可改；空白 LocatorName/Capacity/Description 在舊 WinForms 代表不送欄位，故 Edit 不清除舊值。Capacity 必須 >=0，最大 NUMBER(12,4) 範圍。
-- DELETE 狀態 0/-1 實體刪除、狀態 2 轉 -1 並更新 Reviser/ReviseDate/DataStamp、狀態 1 回衝突。Approve IssueNo=INV LOCATOR；無 Job/Detail 時直達 2，有流程時先 1，後續核准 2/退回 0。多筆 UI 逐筆請求，第一個失敗即停止。
-- 所有 API 驗證登入及 SMD 權限；DataStamp nullable 必須 CAS，以 COALESCE(datastamp,0)+1 遞增。若家用端已擴充 YMES 欄位，保留擴充內容。
-- 公司端 Production 頁只呼叫 API；家用端 schema/API 完成並部署後通知公司端 pull 對接。沒有把 DEV mock 當成正式流程。
+- DELETE 狀態 0/-1 實體刪除、狀態 2 轉 -1 並更新 Reviser/ReviseDate/DataStamp、狀態 1 回衝突。Approve IssueNo=INV LOCATOR 目前因缺已核實的 Issue/Job provider 映射而回 503、不改資料；公司端提供來源 provider／DDL 與核准退回規則後再完成。多筆 UI 逐筆請求，第一個失敗即停止。
+- 所有 API 驗證登入；目前依使用者決定不檢查角色或 SMD 權限。DataStamp nullable 必須 CAS，以 COALESCE(datastamp,0)+1 遞增。若家用端已擴充 YMES 欄位，保留擴充內容。
+- Production API 已完成並部署；正式 app-browser 清單與已核准 Inventory 選項皆為空。未新增正式測試列；待來源資料同步後再驗寫入正向操作。公司端 pull 後需驗 Production 接線並在 DEV mock 完成各按鈕操作。
 
 ## 公司電腦目前交付
 

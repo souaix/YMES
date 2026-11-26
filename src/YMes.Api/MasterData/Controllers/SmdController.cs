@@ -11,8 +11,46 @@ public sealed class SmdController(
     PostgresSmdRepository repository,
     PostgresSmdAreaInventoryRepository areaInventoryRepository,
     PostgresSmdFactoryBasisRepository factoryBasisRepository,
+    PostgresSmdLocatorBasisRepository locatorBasisRepository,
     IConfiguration configuration) : ControllerBase
 {
+    [HttpGet("locator-basis")]
+    public ActionResult<IReadOnlyList<SmdLocatorBasisDto>> LocatorBasis([FromQuery] string? inventoryNo) =>
+        Execute(() => locatorBasisRepository.List(inventoryNo), "儲位基本資料讀取失敗");
+
+    [HttpGet("locator-basis/options")]
+    public ActionResult<SmdLocatorBasisOptionsDto> LocatorBasisOptions() =>
+        Execute(locatorBasisRepository.Options, "已核准庫存選項讀取失敗");
+
+    [HttpPost("locator-basis")]
+    public ActionResult<SmdLocatorBasisDto> CreateLocatorBasis([FromBody] SmdLocatorBasisWriteRequest request) =>
+        Execute(() => locatorBasisRepository.Create(request, ActorUserNo), "儲位基本資料無法建立");
+
+    [HttpPut("locator-basis/item")]
+    public ActionResult<SmdLocatorBasisDto> UpdateLocatorBasis(
+        [FromQuery] string inventoryNo,
+        [FromQuery] string locatorNo,
+        [FromQuery] int issueState,
+        [FromQuery] long dataStamp,
+        [FromBody] SmdLocatorBasisWriteRequest request) =>
+        Execute(() => locatorBasisRepository.Update(inventoryNo, locatorNo, issueState, dataStamp, request, ActorUserNo), "儲位基本資料無法修改");
+
+    [HttpDelete("locator-basis/item")]
+    public IActionResult DeleteLocatorBasis(
+        [FromQuery] string inventoryNo,
+        [FromQuery] string locatorNo,
+        [FromQuery] int issueState,
+        [FromQuery] long dataStamp) =>
+        ExecuteAction(() => locatorBasisRepository.Delete(inventoryNo, locatorNo, issueState, dataStamp, ActorUserNo), "儲位基本資料無法刪除");
+
+    [HttpPost("locator-basis/item/approve")]
+    public ActionResult<SmdLocatorBasisDto> ApproveLocatorBasis(
+        [FromQuery] string inventoryNo,
+        [FromQuery] string locatorNo,
+        [FromQuery] int issueState,
+        [FromQuery] long dataStamp) =>
+        Execute(() => locatorBasisRepository.Approve(inventoryNo, locatorNo, issueState, dataStamp), "儲位基本資料尚未接妥簽核服務");
+
     [HttpGet("factory-basis")]
     public ActionResult<IReadOnlyList<SmdFactoryBasisDto>> FactoryBasis([FromQuery] string? factoryNo) =>
         Execute(() => factoryBasisRepository.List(factoryNo), "工廠基本資料讀取失敗");
