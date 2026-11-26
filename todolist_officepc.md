@@ -1,16 +1,21 @@
 # 公司端待辦
 
-## 公司端最新交付：RPT RTB02 Wafer 電性數據常態分析圖（2026-11-26）
+## 公司端最新交付：RPT RTB01 Wafer 電性數據運行圖（2026-11-26）
 
-- [x] 核對 Industry_Base inline `frmWaferEDCNormalityChartQuery`／`frmWaferEDCNormalityChartView`、RPT／SYS Service、`clsRPT_Industry_Base`／`clsSYSMesParameter_Industry_Base`；完成 RPT 行業包入口、DEV PS／Recipe 多選、設備／Component／Lot／日期條件、EDC 結果 Grid、選列分析、直方圖、頻率組、Exclude 重算及統計互動。[RTB02 規格](docs/modules/RPT/Wafer電性數據常態分析圖_RTB02.md)
-- [x] 記錄 EDC `TBLWIPRAWDATA_<type>` BLOB 與 MES `tblWIPLotLog_Report`／`tblOPBasis` join；舊分析會寫 `tblRPTEDCQCCalData`／`tblRPTNormalityChartData`，DEV 不寫 DB。記錄 Core 動態 SQL 拼接及 BLOB 解析疑似 row index 問題。桌機 Oracle profile／可信 RawData 與統計表 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 公司端接續 RPT 清冊 RTB01「Wafer電性數據運行圖」，依序核對來源程式。
+- [x] 核對 inline `frmWaferEDCRunChartQuery`／`frmWaferEDCRunChartView`、RPT／SYS Service／Core；完成 RTB01 Vue DEV 查詢、CheckFlag 多筆選取、量測序列圖與逐筆 SVG 儲存。[RTB01 規格](docs/modules/RPT/Wafer電性數據運行圖_RTB01.md)
+- [x] 記錄 EDC per-Recipe BLOB、`HAVECOORDINFO` 解析、MES LotLog join、舊 View 寫 `tblRPTEDCQCCalData` 的副作用與 EDC dialect 疑點。桌機 Oracle profile／RawData 與統計表可信 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 公司端接續 RPT 清冊 RTB03「Wafer Map 電性測試圖表」，依序核對來源程式。
+
+## 前項公司端交付：RPT RTB02 Wafer 電性數據常態分析圖（2026-11-26）
+
+- [x] 核對 inline Query／analysis View、RPT／SYS Service／Core；完成 DEV PS／Recipe 查詢、選列直方圖、量測明細及排除重算。[RTB02 規格](docs/modules/RPT/Wafer電性數據常態分析圖_RTB02.md)
+- [x] 記錄 per-Recipe BLOB、MES LotLog／OP lookup、統計表寫入副作用與解析疑點；DDL 缺失、未猜 CREATE、未連 PostgreSQL、未 build／test／browser。RTB01 已接續完成。
 
 ## 前項公司端交付：PM507 故障維修登錄查詢（2026-11-26）
 
 - [x] 核對 inline `frmBreakDown_RepairQuery`、`wsPM.LoadBreakDown_RepairQuery`、`clsPMMaintanceLog.LoadBreakDown_RepairQuery` 及設備／ChamberManage 載入；完成 `function:PM:BREAKDOWN_REPAIRQUERY` Vue DEV Equipment 多選、三組日期時間、狀態條件與 13 欄唯讀 Grid。[PM507 規格與 API/schema handoff](docs/modules/PM/故障維修登錄查詢_PM507.md)
 - [x] Core UNION `tblPMEqpBreakDownState` 未結案列與 RepairLog／BreakDownLog 結案列；未勾狀態代表全部。標記 Form 的 RepairStart To 誤傳 RepairEnd To。桌機 Oracle profile／可信 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [x] PM507 後依功能目錄接續 RPT RTS01、RTB02，已完成；目前接續 RTB01。
+- [x] PM507 後依功能目錄接續 RPT RTS01、RTB02、RTB01，均已完成；目前接續 RTB03。
 
 ## 前項公司端交付：PM506 設備保養效率查詢（2026-11-26）
 

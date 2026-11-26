@@ -1,11 +1,16 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：RPT RTB02 Wafer 電性數據常態分析圖（2026-11-26）
+## 公司端最新交付：RPT RTB01 Wafer 電性數據運行圖（2026-11-26）
 
-- [x] 公司端核對 inline Query／analysis View、RPT／SYS Service、Industry_Base RPT／SYS Core，完成 RTB02 Vue DEV EDC 查詢、直方圖、詳細量測、排除重算及規格。[RTB02 handoff](docs/modules/RPT/Wafer電性數據常態分析圖_RTB02.md)
-- [ ] 確認家用端可讀的 EDC RawData 來源、MES Recipe／PS／Equipment／LotLog／OP lookup 與跨 DB 連線方式；核實 `TBLWIPRAWDATA_<type>` BLOB 格式／欄位、`tblRPTEDCQCCalData`、`tblRPTNormalityChartData` schema、Owner、鍵與索引。來源表 DDL 未驗證前不建立猜測性 CREATE。
-- [ ] 若 YMES 有可用資料源，實作只接受核准 Recipe metadata 的參數化、限量分頁唯讀 API，提供 Recipe options、查詢記錄與單筆量測明細。確定圖表結果是否要跨工作階段保存；舊 WinForms 會寫兩張統計表，需先核實其用途與保留策略再定 API／schema 寫入需求。
-- [ ] 公司端接續 RPT 清冊 RTB01「Wafer電性數據運行圖」。
+- [x] 公司端核對 RTB01 inline Query／View、RPT／SYS Service、Industry_Base RPT／SYS Core，完成 Vue DEV EDC 查詢、CheckFlag 多選、量測序列圖與規格。[RTB01 handoff](docs/modules/RPT/Wafer電性數據運行圖_RTB01.md)
+- [ ] 確認 YMES 可讀的 EDC RawData 來源與跨 EDC／MES 資料方式；核實 `TBLWIPRAWDATA_<type>` per-Recipe BLOB 格式、欄型別、Owner，以及 MES Recipe／PS／Equipment／LotLog lookup 和 `tblRPTEDCQCCalData` 欄位／鍵／索引。DDL 未驗證前不建立猜測性 CREATE。
+- [ ] 若 YMES 可取得 EDC 資料，實作以核准 Recipe metadata allowlist 解析動態識別字、參數化、限量分頁唯讀 API，批次查詢記錄及量測明細。確認舊 `tblRPTEDCQCCalData` 計算快照是否要保留及其寫入權限，再決定 API/schema 寫入需求。
+- [ ] 公司端接續 RPT 清冊 RTB03「Wafer Map 電性測試圖表」。
+
+## 前項公司端交付：RPT RTB02 Wafer 電性數據常態分析圖
+
+- [x] 公司端完成 RTB02 Vue DEV 直方圖、統計摘要、量測明細與排除重算。[RTB02 handoff](docs/modules/RPT/Wafer電性數據常態分析圖_RTB02.md)
+- [ ] RTB02 同樣需要核實 EDC RawData 及 `tblRPTEDCQCCalData`、`tblRPTNormalityChartData` schema；另確認圖表的統計資料是否需保存。
 
 ## 前項公司端交付：RPT RTS01 電性測試資料查詢
 
@@ -18,7 +23,7 @@
 - [x] Core UNION `tblPMEqpBreakDownState` 與 RepairLog／BreakDownLog 查詢分支，未選狀態代表全部；舊 Form 的 RepairStart To 誤傳 RepairEnd To，DEV 依欄位實作。
 - [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、三表欄位／型別／PK／FK／索引、可空日期及 RepairLog 一對多基數，提供可信 CREATE-only SQL。
 - [ ] 家用端實作參數化唯讀分頁 `GET /api/pm/breakdown-repair-query`，保留空 `states[]` 查全部狀態與同一故障多筆維修列。
-- [x] PM507 後依功能目錄接續 RPT RTS01、RTB02，已完成；目前接續 RTB01。
+- [x] PM507 後依功能目錄接續 RPT RTS01、RTB02、RTB01，均已完成；目前接續 RTB03。
 
 ## 前項公司端交付：PM506 設備保養效率查詢（2026-11-26）
 
