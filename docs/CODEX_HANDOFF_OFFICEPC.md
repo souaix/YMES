@@ -2,13 +2,20 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：PM405 設備修復登錄（2026-11-26）
+## 公司端最新交付：PM501 設備保養計畫查詢（2026-11-26）
+
+- [x] 核對 inline `frmPMMaintenancePlanQuery`／Designer、`wsPM.LoadMaintenancePlan`／distinct lookup、`clsPMBasis.LoadMaintenancePlan`；完成 `function:PM:PM MAINTENANCE QUERY` Vue DEV 三組雙清單、日期範圍、排序結果及 PM502 日曆資料預覽。規格：[PM501 設備保養計畫查詢](modules/PM/設備保養計畫查詢_PM501.md)。
+- [x] 記錄 Core 內連設備保養計畫、頻率與 SOP 表；舊 Core 把查詢值直接串入 SQL。桌機 Oracle profile 及可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live PostgreSQL 與同版 MESTEST metadata／鍵，提供 CREATE-only DDL 並實作分頁、參數化唯讀查詢 API。
+- [ ] 公司端下一項 PM502「保養日曆設定」。
+
+## 前項公司端交付：PM405 設備修復登錄（2026-11-26）
 
 - [x] 核對 THEIL Form／Def、客製 `UpdEQPRepairRegister`、標準待修查詢與歷史 Service／Core；完成 `function:PM:EQP REPAIR REGISTER` Vue DEV State=1 清單、原因明細、維修表單、有效 Repair Item 與假狀態連動。規格：[PM405 設備修復登錄](modules/PM/設備修復登錄_PM405.md)。
 - [x] 儲存依序建立故障／修復歷史、更新 EMS、移除待修單、寄工程群組郵件；舊流程非原子。`RepairState=default(int)` 實為 0，與 -999 註解不一致；UserNo 過濾已註解。DEV 不呼叫 EMS／寄信。
 - [x] 桌機 Oracle profile 與可信四張歷史表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema 與 MESTEST metadata、外鍵、EMS／Chamber 交易邊界後，實作參數化、冪等與可重試 API／CREATE-only DDL。
-- [ ] 公司端下一項 PM501「設備保養計畫查詢」。
+- [x] 當時下一項 PM501「設備保養計畫查詢」現已完成；公司端接續 PM502「保養日曆設定」。
 
 ## 前項公司端交付：PM404 設備故障登錄（2026-11-26）
 

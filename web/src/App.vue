@@ -312,6 +312,7 @@ import PmEqpBreakDownRegister from './components/PmEqpBreakDownRegister.vue'
 import PmEqpRepairRegister from './components/PmEqpRepairRegister.vue'
 import PmEqpTypeSopBasis from './components/PmEqpTypeSopBasis.vue'
 import PmMaintenancePlanAdjust from './components/PmMaintenancePlanAdjust.vue'
+import PmMaintenancePlanQuery from './components/PmMaintenancePlanQuery.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
 import PmWorkOrderBasis from './components/PmWorkOrderBasis.vue'
@@ -806,6 +807,7 @@ const fallbackMenuTree: MenuNode[] = [
     }, {
       id: 'menu:PM:EQUIPMENT PM SETTING', label: '設備 PM 設定', shortLabel: '設備 PM', children: [
         { id: 'function:PM:EQPTYPE SOP BASIS', label: '設備保養標準程序', shortLabel: '設備 SOP', functionNo: 'EQPTYPE SOP BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:PM MAINTENANCE QUERY', label: '設備保養計畫查詢', shortLabel: '保養計畫查詢', functionNo: 'PM MAINTENANCE QUERY', moduleNo: 'PM' },
         { id: 'function:PM:PM PLAN CHANGE', label: '保養計劃變更', shortLabel: '計畫變更', functionNo: 'PM PLAN CHANGE', moduleNo: 'PM' },
         { id: 'function:PM:EQP FIXED QUANTITY SETUP', label: '設備定量保養設定', shortLabel: '定量保養', functionNo: 'EQP FIXED QUANTITY SETUP', moduleNo: 'PM' },
         { id: 'function:PM:EQP FIXED TIME SETUP', label: '設備定次定時保養設定', shortLabel: '定次定時', functionNo: 'EQP FIXED TIME SETUP', moduleNo: 'PM' },
@@ -1180,6 +1182,7 @@ const menuRoutes: Record<string, string> = {
   'function:PM:EQP BREAKDOWN REGISTER': appBasePath + '/PM/EqpBreakDownRegister',
   'function:PM:EQP REPAIR REGISTER': appBasePath + '/PM/EqpRepairRegister',
   'function:PM:EQPTYPE SOP BASIS': appBasePath + '/PM/EquipmentTypeSopBasis',
+  'function:PM:PM MAINTENANCE QUERY': appBasePath + '/PM/MaintenancePlanQuery',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1624,6 +1627,7 @@ const isPmEqpTypeBreakDownMapPage = computed(() => activeMasterKey.value === 'fu
 const isPmEqpBreakDownRegisterPage = computed(() => activeMasterKey.value === 'function:PM:EQP BREAKDOWN REGISTER')
 const isPmEqpRepairRegisterPage = computed(() => activeMasterKey.value === 'function:PM:EQP REPAIR REGISTER')
 const isPmEqpTypeSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:EQPTYPE SOP BASIS')
+const isPmMaintenancePlanQueryPage = computed(() => activeMasterKey.value === 'function:PM:PM MAINTENANCE QUERY')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3765,6 +3769,12 @@ async function signOut(): Promise<void> {
         />
         <PmEqpTypeSopBasis
           v-else-if="isPmEqpTypeSopBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmMaintenancePlanQuery
+          v-else-if="isPmMaintenancePlanQueryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

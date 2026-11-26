@@ -1,13 +1,20 @@
 # 公司端待辦
 
-## 公司端最新交付：PM405 設備修復登錄（2026-11-26）
+## 公司端最新交付：PM501 設備保養計畫查詢（2026-11-26）
+
+- [x] 核對 inline `frmPMMaintenancePlanQuery`／Designer、`wsPM.LoadMaintenancePlan`／distinct lookup、`clsPMBasis.LoadMaintenancePlan`；完成 `function:PM:PM MAINTENANCE QUERY` Vue DEV 三組雙清單、日期條件、排序及 PM502 日曆資料預覽，新增 [PM501 規格與家用端 handoff](docs/modules/PM/設備保養計畫查詢_PM501.md)。
+- [x] 記錄 Core 內連計畫／頻率／SOP 主檔並用字串拼接篩選；正式 API 應參數化及分頁。桌機 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／同版 MESTEST metadata、鍵與欄位，提供 CREATE-only DDL 及限量參數化查詢 API。
+- [ ] 下一項依清冊接續 PM502「保養日曆設定」。
+
+## 前項公司端交付：PM405 設備修復登錄（2026-11-26）
 
 - [x] 核對 THEIL `frmEQPRepairRegister_THEIL_BU1`／Def、`THEIL.wsPM.UpdEQPRepairRegister`，以及標準待修查詢、故障／維修歷史與明細 Service／Core。
 - [x] 完成 `function:PM:EQP REPAIR REGISTER` Vue DEV State=1 清單、故障原因明細、Repair Register 表單、有效 Repair Item 選取、時間驗證、狀態／Chamber 假互動；新增 [PM405 規格與家用端 handoff](docs/modules/PM/設備修復登錄_PM405.md)。
 - [x] 記錄四張歷史表寫入、EMS 狀態更新、移除待修單及寄信為非原子流程；`RepairState=default(int)` 實為 0，與 -999 註解不一致。UserNo SQL 篩選已註解；EquipmentNo 顯示選擇不會改變序號寫入目標。
 - [x] 桌機 Oracle profile 與四張歷史表可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、PK／FK／索引、歷史保留與 EMS／Chamber 交易邊界，再做參數化、冪等、可重試 API／CREATE-only DDL。
-- [ ] 下一項依清冊接續 PM501「設備保養計畫查詢」。
+- [x] 當時下一項依清冊 PM501「設備保養計畫查詢」現已完成；接續 PM502「保養日曆設定」。
 
 ## 前項公司端交付：PM404 設備故障登錄（2026-11-26）
 

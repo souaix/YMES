@@ -2,6 +2,8 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
+- PM501「設備保養計畫查詢」：[功能規格](modules/PM/設備保養計畫查詢_PM501.md)。核對 inline Form／Designer、`wsPM.LoadMaintenancePlan`／`LoadSingleTableDistinctData`、`clsPMBasis.LoadMaintenancePlan`；完成 `/YMES/PM/MaintenancePlanQuery` DEV 三組雙清單、可選日期、結果排序及 PM502 日曆資料預覽。Core 內連計畫／頻率／SOP 主檔；舊 Service/Core 用字串拼接條件，正式 API 應參數化及分頁。桌機 Oracle profile 與可核實 DDL／metadata 缺失，未猜 CREATE。未連 PostgreSQL、未實作正式 API/schema、未 build/test/browser；接續 PM502「保養日曆設定」。
+
 - PM404「設備故障登錄」：[功能規格](modules/PM/設備故障登錄_PM404.md)。核對 THEIL 客製 WinForms／Service／Core 與標準查詢／明細維護；完成 State=0 查詢、原因明細、Add／Edit／Delete／Copy／Confirm DEV 互動。確認會更新 EMS 狀態、State=1 並寄工程群組郵件，DEV 不呼叫外部服務；舊 Edit 未落實 DataStamp、父子資料與確認流程可部分完成。Oracle profile 及父／子表可信 DDL／metadata 缺失，未猜 CREATE。未連 PostgreSQL、未做正式 API/schema、未 build/test/browser。
 - PM405「設備修復登錄」：[功能規格](modules/PM/設備修復登錄_PM405.md)。核對 THEIL Form／Def、客製 `UpdEQPRepairRegister`、標準查詢／歷史 Service 與 Core；完成 State=1 待修清單、原因明細、Repair Register DEV 互動。依序寫故障／修復歷史、更新 EMS、刪待修登錄及寄信，非原子；RepairState 未傳時程式預設 int 0（Idle），註解不一致。桌機 Oracle profile 與四張歷史表可信 DDL／metadata 缺失，未猜 CREATE。未連 PostgreSQL、未做正式 API/schema、未 build/test/browser。
 - PM301「開立保養工單」：[功能規格](modules/PM/開立保養工單_PM301.md)。核對 `frmPMWoBasis`／Create／Detail／SOP Detail、`wsPM`、`clsPMBasis`／`clsBasis_UPD`、`clsIssue`；完成 `/YMES/PM/WorkOrderBasis` DEV 主從查詢、計畫帶入並移轉 PlanLog、狀態處理、明細編修及 SOP／工具／備品檢視。Required Work Order 頁在 WinForms Designer 隱藏；`EWyyMM####` 編號、計畫消耗交易與 Issue workflow handoff 已記錄。PM301 直接表 DDL／metadata 未取得，桌機 Oracle profile 不存在，未猜 CREATE。公司端未連 PostgreSQL、未實作正式 API/schema、未 build/test/browser。
