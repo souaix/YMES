@@ -2,19 +2,25 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：RPT RT206 作業站時段產出_良率儀表板（2026-11-26）
+## 公司端最新交付：RPT RT207 作業站時段產出_趨勢圖（2026-11-26）
+
+- [x] 核對 TrendChart Form／Designer、共用 SetupType 5、RPT `LoadBillBoardOPStateConfig`／`UpdBillBoardOPStateConfig`／`LoadBillBoardOPOutputSummary`／`LoadBillBoardOPOutputLotDetail` Service 與 `clsReport` Core；完成 `/YMES/RPT/OpOutputTrendChart` DEV 假資料複合圖、四欄 OP 圖表、共用數量軸、Yield 折線、刷新設定、雙擊放大及右鍵 Lot Detail。[RT207 規格與家用端 API/schema handoff](modules/RPT/作業站時段產出趨勢圖_RT207.md)
+- [x] 已開始時段顯示 Good／Scrap／Defect 群組柱及 Yield；未開始時段 Legacy Form 將空資料點轉成零值。DEV 右鍵 copy 以 toast 模擬、Lot Detail 用假資料；不觸碰系統剪貼簿或後端。LotLog MESTEST DDL reference 可用；time-step／設定表 DDL 未找到，未查 Oracle／猜 CREATE。未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端沿 RT205 唯讀摘要 API 核時段、Yield、區間和 LotLog schema；確認 user/device 設定 scope 後設計 SetupType 5 設定 API。RPT 清冊下一項 RT201「作業站現況看板」。
+
+## 前項公司端交付：RPT RT206 作業站時段產出_良率儀表板（2026-11-26）
 
 - [x] 核對 `frmBillBoard_OPOutputSummary_Gauge`／Designer、`RT_BillBoard` 共用 Setup、`LoadBillBoardOPStateConfig(SetupType=4)` 與 RT205 共用的 `LoadBillBoardOPOutputSummary` Service／Core；完成 `/YMES/RPT/OpOutputYieldGauge` DEV 圓形 Gauge、OP／時段排序、OP／字級／更新設定與自動刷新。[RT206 規格與家用端 API/schema handoff](modules/RPT/作業站時段產出良率儀表板_RT206.md)
 - [x] 顯示每個已開始時段 × OP 的 Yield、Good／Scrap／Defect／累計 Good。固定色帶為 0–60／60–80／80–100%；StdYield 雖載入但自訂門檻程式已註解。`YieldContainDefect != 0` 隱藏 DefectQty。
 - [x] RT205 使用的 LotLog MESTEST DDL reference 存於 `database/reference/mestest_wip_wp201_dependency_source_ddl.sql`；RT206 `tblRPTBillBoardOPStateConfig`／Content 與 `tblRPTTimeStepBasis` DDL 缺。桌機 Oracle profile metadata 未驗證、未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 公司端依 RPT 清冊接續 RT207「作業站時段產出_趨勢圖」。
+- [x] RT206 後已完成 RT207；下一項依 RPT 清冊為 RT201。
 
 ## 前項公司端交付：RPT RT205 作業站時段產出看板（2026-11-26）
 
 - [x] 核對 `frmBillBoard_OPOutputSummary`／Setup／History Query Form／Designer、RPT `LoadBillBoardOPOutputConfig`／`UpdBillBoardOPOutputConfig`／`LoadBillBoardOPOutputSummary` Service 與 `clsReport` Core；完成 `/YMES/RPT/OpOutputSummary` DEV 假資料、定時刷新、設定與指定日期歷史查詢。[RT205 規格與家用端 API/schema handoff](modules/RPT/作業站時段產出看板_RT205.md)
 - [x] 確認報表查 `tblWIPLotLog_Report` + `tblOPBasis`，時段取 `tblRPTTimeStepBasis`，依 `YieldContainDefect` 算 Yield、依 `StdYield` 標色；記錄 `tbl_NBWIPOPOutputSummary` 屬另一寫入路徑、Core 時段閉區間可能重複及設定 LEFT JOIN 收窄疑點。repo 有 2026-11-19 擷取的 LotLog MESTEST DDL；time-step／設定 DDL 與桌機 Oracle profile metadata 未驗證，未猜 CREATE；未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
 - [ ] 家用端依 RT205 規格確認同版 MESTEST DDL／鍵索引、時段與時區、系統參數來源；核對舊 Core 時段邊界及 Yield 結果，再提供可信 PostgreSQL CREATE-only SQL 與唯讀報表 API。設定持久化的使用者／裝置範圍待定。
-- [x] RT205 後接續完成 RT206 作業站時段產出_良率儀表板；現在接 RT207。
+- [x] RT205 後接續完成 RT206 作業站時段產出_良率儀表板與 RT207 趨勢圖；下一項依清冊為 RT201。
 
 ## 前項公司端交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
 

@@ -324,6 +324,7 @@ import WaferEDCRunningChart from './components/WaferEDCRunningChart.vue'
 import WaferMAPTestChart from './components/WaferMAPTestChart.vue'
 import OpOutputSummary from './components/OpOutputSummary.vue'
 import OpOutputYieldGauge from './components/OpOutputYieldGauge.vue'
+import OpOutputTrendChart from './components/OpOutputTrendChart.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -853,6 +854,7 @@ const fallbackMenuTree: MenuNode[] = [
       id: 'menu:RPT:BILL BOARD', label: '看板', shortLabel: '看板', children: [
         { id: 'function:RPT:BILLBOARD OPOUTPUT SUMMARY', label: '作業站時段產出看板', shortLabel: '時段產出', functionNo: 'BILLBOARD OPOUTPUT SUMMARY', moduleNo: 'RPT' },
         { id: 'function:RPT:BILLBOARD OPOUTPUT SUMMARY GAUGE', label: '作業站時段產出_良率儀表板', shortLabel: '良率儀表板', functionNo: 'BILLBOARD OPOUTPUT SUMMARY GAUGE', moduleNo: 'RPT' },
+        { id: 'function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART', label: '作業站時段產出_趨勢圖', shortLabel: '產出趨勢', functionNo: 'BILLBOARD OPOUTPUT SUMMARY TRENDCHART', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1231,6 +1233,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:B_WAFER MAP TEST CHART': appBasePath + '/RPT/WaferMAPTestChart',
   'function:RPT:BILLBOARD OPOUTPUT SUMMARY': appBasePath + '/RPT/OpOutputSummary',
   'function:RPT:BILLBOARD OPOUTPUT SUMMARY GAUGE': appBasePath + '/RPT/OpOutputYieldGauge',
+  'function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART': appBasePath + '/RPT/OpOutputTrendChart',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1333,6 +1336,7 @@ const functionRoutes: Record<string, string> = {
   'B_WAFER MAP TEST CHART': appBasePath + '/RPT/WaferMAPTestChart',
   'BILLBOARD OPOUTPUT SUMMARY': appBasePath + '/RPT/OpOutputSummary',
   'BILLBOARD OPOUTPUT SUMMARY GAUGE': appBasePath + '/RPT/OpOutputYieldGauge',
+  'BILLBOARD OPOUTPUT SUMMARY TRENDCHART': appBasePath + '/RPT/OpOutputTrendChart',
   'FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
   'SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
   'SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
@@ -1694,6 +1698,7 @@ const isRtb01WaferEDCRunningChartPage = computed(() => activeMasterKey.value ===
 const isRtb03WaferMAPTestChartPage = computed(() => activeMasterKey.value === 'function:RPT:B_WAFER MAP TEST CHART')
 const isRt205OpOutputSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPOUTPUT SUMMARY')
 const isRt206OpOutputYieldGaugePage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPOUTPUT SUMMARY GAUGE')
+const isRt207OpOutputTrendChartPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3913,6 +3918,12 @@ async function signOut(): Promise<void> {
         />
         <OpOutputYieldGauge
           v-else-if="isRt206OpOutputYieldGaugePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OpOutputTrendChart
+          v-else-if="isRt207OpOutputTrendChartPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
