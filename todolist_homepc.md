@@ -1,40 +1,48 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：PM506 設備保養效率查詢（2026-11-26）
+## 公司端最新交付：PM507 故障維修登錄查詢（2026-11-26）
+
+- [x] 公司端核對 `frmBreakDown_RepairQuery`、`wsPM.LoadBreakDown_RepairQuery`、`clsPMMaintanceLog.LoadBreakDown_RepairQuery`；完成設備多選、三組日期時間、狀態篩選和 13 欄 DEV 假資料結果。[PM507 規格與 API handoff](docs/modules/PM/故障維修登錄查詢_PM507.md)
+- [x] Core UNION `tblPMEqpBreakDownState` 與 RepairLog／BreakDownLog 查詢分支，未選狀態代表全部；舊 Form 的 RepairStart To 誤傳 RepairEnd To，DEV 依欄位實作。
+- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、三表欄位／型別／PK／FK／索引、可空日期及 RepairLog 一對多基數，提供可信 CREATE-only SQL。
+- [ ] 家用端實作參數化唯讀分頁 `GET /api/pm/breakdown-repair-query`，保留空 `states[]` 查全部狀態與同一故障多筆維修列。
+- [ ] 公司端從功能目錄盤點下一個尚未復刻的 FunctionKey，依來源程式繼續。
+
+## 前項公司端交付：PM506 設備保養效率查詢（2026-11-26）
 
 - [x] 公司端核對 `frmPMPerformance`、`wsPM.LoadPMPerformance`／`LoadSingleTableDistinceData`、`clsPMPlanLog.LoadPMPerformance`；完成四組條件雙清單、兩組可選日期、工單類型及 12 欄 DEV 假資料效率結果。[PM506 規格與 API handoff](docs/modules/PM/設備保養效率查詢_PM506.md)
 - [x] Core 合併已完工 PM Log current／history detail 與 WOType=1 Required history；Act Done 為 Release 至 Finished 小時數。舊 Core 的 WO Finished end-date 判斷誤讀 Estimated PM end，規格要求確認正式日期邊界。
 - [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、三類來源表欄位／鍵／索引、WOTYPE 對應、ChamberManage 規則及日期邊界；提供可信 CREATE-only SQL。
 - [ ] 家用端實作參數化唯讀分頁 `GET /api/pm/performance` 與 `GET /api/pm/performance/filters`；不要採用舊 Core 對清單值的 SQL 字串拼接。
-- [ ] 公司端依選單清冊接續 PM507「故障維修登錄查詢」。
+- [x] 當時依清冊接續的 PM507 已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM505 故障原因統計（2026-11-26）
 
 - [x] 公司端核對 `frmBreakDownQuery`／Designer、`wsPM.LoadSumOfEQPBreakDown`、Equipment lookup 與 `clsPMMaintanceLog`，完成原因次數 Grid、圖表及 DEV 假資料頁。[PM505 規格與 API handoff](docs/modules/PM/故障原因統計_PM505.md)
 - [x] Core 四表內連後依 BreakDownNo／Cause 計數；舊 Repair Time filter 實際比較 `RepairEndTime`。公司桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
 - [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、RepairLog 關聯／重複計數規則及四表 PK／FK／索引，實作參數化唯讀統計 API 與可信 CREATE-only DDL。
-- [x] 當時下一項 PM506 已完成；公司端依清冊接續 PM507「故障維修登錄查詢」。
+- [x] PM507 已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM504 保養工單歷史資料查詢（2026-11-26）
 
 - [x] 公司端核對 `frmPMWoHistory`／Designer、`wsPM.LoadPMWoBasis_His`／`LoadPMWoDetail_His`、`wsEQP.LoadEquipmentBasis`、`clsPMBasis`；完成設備／日期／類型篩選、主工單及點選後明細的 Vue DEV 假資料頁。[PM504 規格與 API handoff](docs/modules/PM/保養工單歷史資料查詢_PM504.md)
 - [x] Core 由 `tblPMWOBasis_His`／`tblPMWODetail_His` 查詢；設備與兩組日期透過明細 WONo 子查詢限制主檔。公司桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
 - [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、主明細鍵／FK／索引、WOTYPE enum 及 Chamber 規則，完成參數化分頁主查詢、延遲明細 API 與可信 CREATE-only DDL。
-- [x] 當時接續 PM505 與 PM506 均已完成；公司端依清冊接續 PM507「故障維修登錄查詢」。
+- [x] PM505–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM503 保養計劃歷史資料查詢（2026-11-26）
 
 - [x] 公司端核對 `frmEQPMaintenancePlanHistory`／Designer、`wsPM.LoadMaintenancePlanLog` 與 distinct lookup、`clsPMPlanLog`；完成四組清單、Estimated PM Date、Execute State、唯讀歷史 Grid 的 Vue DEV 假資料頁。[PM503 規格與 API handoff](docs/modules/PM/保養計劃歷史資料查詢_PM503.md)
 - [x] 來源查詢 `tblPMEQPMaintenancePlanLog` 並內連 Frequency／SOP 主檔，依 `CreateDate` 升冪。舊 Core 字串拼接 SQL；桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
 - [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、歷史表鍵／FK／索引／保留規則及狀態值，完成參數化分頁 `GET /api/pm/maintenance-plan-logs` 與可信 CREATE-only DDL；同時核 PM501／PM502 共用查詢端點。
-- [x] 當時接續 PM504，現 PM504–PM506 均已完成；公司端依清冊接續 PM507「故障維修登錄查詢」。
+- [x] PM504–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM502 保養日曆設定（2026-11-26）
 
 - [x] 公司端核對 `frmPMPlanCalendar`／`frmCustomAppointmentDialog`、`wsPM.LoadMaintenancePlan`／`LoadEQPPMPlanByEQPType`、`clsPMBasis`，完成 Vue DEV 類型／頻率／設備篩選、日／週／月行事曆、PM501 資料交接、唯讀事件及列印預覽。[PM502 規格與 handoff](docs/modules/PM/保養日曆設定_PM502.md)
 - [x] 舊事件由 `PMEstDateTime` 建立 all-day appointment，Calendar 本身不寫計畫。桌機 Oracle profile 與可信業務表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未實作正式 API/schema。
 - [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、PK／FK／索引及欄位型別，提供 PM501／PM502 共用限量參數化唯讀 API 與可信 CREATE-only DDL。
-- [x] 當時接續 PM503，現 PM503–PM506 均已完成；公司端依清冊接續 PM507「故障維修登錄查詢」。
+- [x] PM503–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM501 設備保養計畫查詢（2026-11-26）
 
@@ -47,7 +55,7 @@
 - [x] 新增 [PM405 規格與 API/schema handoff](docs/modules/PM/設備修復登錄_PM405.md)：記錄待修 State=1、PM402 active repair lookup、四張歷史表可見欄位及 EMS／通知流程。
 - [x] 公司桌機受保護 Oracle profile 與四張歷史表可信 DDL／metadata 不存在，未猜型別／鍵或 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
 - [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、PK／FK／索引及 EMS／Chamber 邊界；以交易寫四張歷史表並移除待修單，採冪等更新與可重試通知，再提供 CREATE-only DDL。
-- [x] 當時接續 PM501 已完成；PM502–PM506 亦已完成，現在下一項依清冊是 PM507「故障維修登錄查詢」。
+- [x] PM501–PM507 保養查詢均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM404 設備故障登錄（2026-11-26）
 

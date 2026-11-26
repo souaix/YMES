@@ -316,6 +316,7 @@ import PmMaintenancePlanQuery from './components/PmMaintenancePlanQuery.vue'
 import PmMaintenancePlanHistory from './components/PmMaintenancePlanHistory.vue'
 import PmWorkOrderHistory from './components/PmWorkOrderHistory.vue'
 import PmBreakdownStatistics from './components/PmBreakdownStatistics.vue'
+import PmBreakdownRepairQuery from './components/PmBreakdownRepairQuery.vue'
 import PmPerformance from './components/PmPerformance.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
@@ -830,6 +831,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:PM:PMWO HISTORY', label: '保養工單歷史資料查詢', shortLabel: '工單歷史', functionNo: 'PMWO HISTORY', moduleNo: 'PM' },
         { id: 'function:PM:PMBRAEKDOWN QUERY', label: '故障原因統計', shortLabel: '故障統計', functionNo: 'PMBRAEKDOWN QUERY', moduleNo: 'PM' },
         { id: 'function:PM:PM PERFORMANCE QUERY', label: '設備保養效率查詢', shortLabel: '保養效率', functionNo: 'PM PERFORMANCE QUERY', moduleNo: 'PM' },
+        { id: 'function:PM:BREAKDOWN_REPAIRQUERY', label: '故障維修登錄查詢', shortLabel: '故障維修查詢', functionNo: 'BREAKDOWN_REPAIRQUERY', moduleNo: 'PM' },
       ],
     }],
   },
@@ -1201,6 +1203,7 @@ const menuRoutes: Record<string, string> = {
   'function:PM:PMWO HISTORY': appBasePath + '/PM/WorkOrderHistory',
   'function:PM:PMBRAEKDOWN QUERY': appBasePath + '/PM/BreakdownQuery',
   'function:PM:PM PERFORMANCE QUERY': appBasePath + '/PM/Performance',
+  'function:PM:BREAKDOWN_REPAIRQUERY': appBasePath + '/PM/BreakdownRepairQuery',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1651,6 +1654,7 @@ const isPmMaintenancePlanHistoryPage = computed(() => activeMasterKey.value === 
 const isPmWorkOrderHistoryPage = computed(() => activeMasterKey.value === 'function:PM:PMWO HISTORY')
 const isPmBreakdownStatisticsPage = computed(() => activeMasterKey.value === 'function:PM:PMBRAEKDOWN QUERY')
 const isPmPerformancePage = computed(() => activeMasterKey.value === 'function:PM:PM PERFORMANCE QUERY')
+const isPmBreakdownRepairQueryPage = computed(() => activeMasterKey.value === 'function:PM:BREAKDOWN_REPAIRQUERY')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3828,6 +3832,12 @@ async function signOut(): Promise<void> {
         />
         <PmPerformance
           v-else-if="isPmPerformancePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmBreakdownRepairQuery
+          v-else-if="isPmBreakdownRepairQueryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
