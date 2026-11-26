@@ -307,7 +307,8 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 - [x] 公司端核對 THEIL Form／Def、客製 `UpdEQPRepairRegister`、標準待修查詢及故障／修復歷史寫入，完成 `function:PM:EQP REPAIR REGISTER` DEV 清單與登錄表單。
 - [x] 新增 [PM405 規格與 API/schema handoff](docs/modules/PM/設備修復登錄_PM405.md)：記錄待修 State=1、PM402 active repair lookup、四張歷史表可見欄位及 EMS／通知流程。
 - [x] 公司桌機受保護 Oracle profile 與四張歷史表可信 DDL／metadata 不存在，未猜型別／鍵或 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
-- [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、PK／FK／索引及 EMS／Chamber 邊界；以交易寫四張歷史表並移除待修單，採冪等更新與可重試通知，再提供 CREATE-only DDL。
+- [x] 家用端 2026-11-27 以 SSH 唯讀確認 `tblpmeqpbreakdownstate`、`tblpmeqpbreakdownlog`、`tblpmeqpbreakdownlogdetail`、`tblpmeqprepairlog`、`tblpmeqprepairlogdetail`、`tblpmrepairbasis` 六表均缺少，repo 無可信 source DDL／metadata；未讀業務資料、未猜建表。
+- [ ] 公司端原生 Oracle 唯讀交付六表完整 DDL／欄位 metadata／PK-FK-索引與關聯鍵；共用 Breakdown/RepairLog 表由 PM505／PM507 待辦集中索取，PM405 獨有 RepairLogDetail 詳 [公司端待辦](todolist_officepc.md)，RepairBasis DDL 與 PM402 共用。取得後家用端核 EMS／Chamber 邊界及交易方案，再建立可信空表與具冪等保護的正式 command API。
 - [x] PM501–PM507 保養查詢均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM404 設備故障登錄（2026-11-26）
@@ -315,7 +316,8 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 - [x] 公司端核對 THEIL 客製 `frmEQPBreakDownRegister_THEIL_BU1`／Def、`wsTHEIL.wsPM` Add／Edit／Confirm、標準查詢／刪除／明細 Service 與 Core，完成 Vue DEV State=0 查詢、原因明細、Add／Edit／Copy／Delete／Confirm 假互動。
 - [x] 新增 [PM404 規格與 API／schema handoff](docs/modules/PM/設備故障登錄_PM404.md)：記錄父表 `tblPMEQPBreakDownState`、子表 `tblPMEQPBreakDownStateDetail` 可見欄位、EquipmentNo 查重、DataStamp 未落實、父子非原子寫入、EMS／Chamber 更新及工程群組郵件流程。
 - [x] 公司桌機受保護 Oracle profile 與可信 DDL／metadata 不存在，未猜欄位型別、PK／FK 或 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
-- [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、序號產生器、欄位型別、索引／FK、`-9999`／DataStamp 語義及設備狀態／Chamber 關聯，再提供 CREATE-only DDL 與交易式、可重試 API。
+- [x] 家用端 2026-11-27 以 SSH 唯讀確認 `tblpmeqpbreakdownstate`、`tblpmeqpbreakdownstatedetail` 均缺少，repo 無可信 source DDL／metadata；未讀業務資料、未猜建表。
+- [ ] 公司端交付 StateDetail 原生 Oracle DDL／metadata；BreakdownState DDL 與 PM405／PM507 共用公司待辦。來源到位後家用端核序號產生器、`-9999`／DataStamp、設備狀態／Chamber 關聯，再提供可信空表與交易式、可重試 API。
 - [x] 公司端接續 PM405「設備修復登錄」現已完成交接；下一項依清冊是 PM501「設備保養計畫查詢」。
 
 ## 前項公司端交付：PM403 設備與故障原因對應（2026-11-26）
@@ -324,7 +326,8 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 - [x] 新增 [PM403 規格與家用端 API/schema handoff](docs/modules/PM/設備與故障原因對應_PM403.md)：記錄 `tblPMEQPTypeBreakDownMap` 可見欄位、複合鍵候選、DataStamp 更新、舊 Delete 未版本保護及 PM404 消費點。
 - [x] 故障原因 picker 依舊 Service 預設 `IssueState=2`；PM404 依設備類型載入映射供使用者勾選。
 - [x] 公司桌機受保護 Oracle attachment 不存在，repo 無可信映射表 DDL／metadata；未猜型別、約束或 CREATE。公司端未連 YMES PostgreSQL、未實作正式 API/schema。
-- [ ] 家用端核對 PostgreSQL live schema／同版 Oracle metadata、主鍵／FK／索引與 PM404 使用中的映射引用；再實作參數化、expected DataStamp 維護 API 及經核實 CREATE-only DDL。
+- [x] 家用端 2026-11-27 以 SSH 唯讀確認 `tblpmeqptypebreakdownmap` 與 joined `tblpmbreakdownbasis` 均缺少，repo 無可信 source DDL／metadata；未讀業務資料、未猜建表。
+- [ ] 公司端原生 Oracle 唯讀提供映射表／原因主檔完整 DDL、metadata、鍵與 PM404 引用規則；已集中列於 [公司端 PM 主檔 DDL 待辦](todolist_officepc.md)。收到後家用端建空表並實作參數化、expected DataStamp API。
 - [x] 當時公司端接續 PM404「設備故障登錄」；PM404、PM405 均已完成並交接，下一項依清冊是 PM501「設備保養計畫查詢」。
 
 ## 前項公司端交付：PM402 維修項目基本資料（2026-11-26）
@@ -333,7 +336,8 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 - [x] 新增 [PM402 規格與家用端 API/schema handoff](docs/modules/PM/維修項目基本資料_PM402.md)，記錄 `tblPMRepairBasis`、RepairName 必填、DataStamp、IssueNo `REPAIR BASIS`。
 - [x] 核對客製 PM405 設備修復登錄以 IssueState=2 載入 RepairNo／RepairName 候選；硬刪未傳 DataStamp、簽核完成／退回不更新版本／稽核。
 - [x] 桌機受保護 Oracle profile 及 repo 可信業務表 DDL／metadata 均不存在，未猜型別／鍵或 CREATE；未連 YMES PostgreSQL、未實作正式 API/schema。
-- [ ] 家用端核 PostgreSQL live schema／Oracle metadata 及 PM405 登錄引用規則，再實作參數化、DataStamp 併發安全與簽核 API；先確認再產生 CREATE-only DDL。
+- [x] 家用端 2026-11-27 以 SSH 唯讀確認 `tblpmrepairbasis` 缺少，repo 無可信 source DDL／metadata；未讀業務資料、未猜建表。
+- [ ] 公司端原生 Oracle 唯讀交付 `TBLPMREPAIRBASIS` 欄位／PK-FK-indexes 及 PM405 引用；已集中列於 [公司端 PM 主檔 DDL 待辦](todolist_officepc.md)。收到後家用端建空表並實作參數化、DataStamp 併發安全與簽核 API。
 - [x] 當時下一項 PM403「設備與故障原因對應」已完成；`PM_ACCPLAN` 同 FunctionKey 的功能已按 FunctionName／FormName 區別。
 
 ## 前項公司端交付：PM401 故障原因基本資料（2026-11-26）
@@ -341,7 +345,8 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 - [x] 公司端核對 `frmBreakDownBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveBreakDownBasis`、`clsPMBasis`／`clsBasis_UPD`，完成 `function:PM:BREAKDOWN BASIS` DEV 四狀態 CRUD／Copy／核准／停用。
 - [x] 新增 [PM401 規格與家用端 API/schema handoff](docs/modules/PM/故障原因基本資料_PM401.md)，已記錄 `tblPMBreakDownBasis` 欄位名、DataStamp、IssueNo `BREAKDOWN BASIS` 與 PM403／PM404 消費點。
 - [x] 桌機受保護 Oracle profile 及 repo 可信直接表 DDL／metadata 均不存在，未猜欄位型別／鍵或 CREATE SQL；公司端未連 YMES PostgreSQL，未實作正式 API/schema。
-- [ ] 家用端核 live PostgreSQL schema 與 MESTEST DDL／metadata，確認欄位型別、主鍵／索引／FK、PM403／PM404 引用與刪除限制；再實作參數化、DataStamp 併發安全及原子核准／停用 API。
+- [x] 家用端 2026-11-27 以 SSH 唯讀確認 `tblpmbreakdownbasis` 缺少，repo 無可信 source DDL／metadata；未讀業務資料、未猜建表。
+- [ ] 公司端原生 Oracle 唯讀交付 `TBLPMBREAKDOWNBASIS` 欄位／PK-FK-indexes 及 PM403／PM404 引用規則；已集中列於 [公司端 PM 主檔 DDL 待辦](todolist_officepc.md)。收到後家用端建空表，再實作參數化、DataStamp 併發安全及原子核准／停用 API。
 - [x] 當時下一項 PM402、PM403 均已完成；PM404、PM405 亦已完成，公司端現接續 PM501「設備保養計畫查詢」。
 
 ## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
