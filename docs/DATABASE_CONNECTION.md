@@ -1394,3 +1394,12 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - API 發佈包從本機 Release publish 上傳，SHA-256 相同；遠端 image `ymes-api:current` 為 `sha256:877bb4a8d45a66dd11cd997de6f4cc3d87f70578ab790efd9a0fa61b4e9b8614`。`ymes-api` 健康檢查 healthy，`/YMES/API/health/ready` 回 200。僅重建 API 容器，Web/其他容器 ID 保持不變。Rollback image `ymes-api:before-qc212-20261127-a1` 保留為 `sha256:d6d40bab48737f28d76c40a634ef61ec836caddf6d0a24d803134c014e73b4fc`。
 - app-browser Demo 登入後可載入 `/YMES/QC/VariableItemGroup`，清單顯示查無資料；直接 GET `/YMES/API/api/qc/item-groups?functionNo=QCITEM_G` 回 `{ "items": [] }`。新增表單欄位檢核與未選資料之修改/複製/刪除/核准防護正常。正式端沒有業務資料，未執行任何資料寫入；需等核准 lookup 資料及安全測試資料可用後，補測完整 CRUD/簽核/子項往返。
 - 發佈後 `/` 根檔案系統約剩 621 MB，使用率 99%；部署下一個 API 前盤點磁碟與 Docker 映像，保留 rollback image 及 DB backup，不要直接執行 prune。
+
+### 更新 2026-11-27：QC213 計數品管項目群組正式 schema/API
+
+- 家用端以 PPK/SSH 核對正式 PostgreSQL `ymes`／`YMES` schema。既有 `tblqcitemattgrouporderbasis` 欄位、型別、長度、nullable/default 與 Oracle source 一致；保留既有 Attribute/Variable QC Item、一般/PMI 群組、QC Parameter/OP 及 WIP guard，不重建、不覆寫、不搬入 MES 業務資料。僅缺 `tblqcitemattgorderdetail`、`tblopgqcitemdetail`、`tblprdqcitem`，由 migration `0090_qc213_attribute_item_group.sql` 建立三張空表。
+- 套用前完整備份 `/opt/ymes/backups/ymes-before-qc213-0090-20261127.dump`，797,396 bytes，SHA-256 `6b11ec45708589bafce3a5a4cf1c1014cc8bd53bf6e7ed0a109582d11906cb00`；`pg_restore --list` 成功。Migration SHA-256 `5a4e4fd879d49a7656b7d952997d0f6cbb4adf5200f55bcef7045e4009ef3815`；rollback SHA-256 `b0b55da83da7b7d02e1ae47ce03382b40ad42ad10c3a2de8d218349108c6177b`。Rollback 先確認三張新表為空才移除，並保留原有群組/WIP/共用表。
+- 權限限於 `ymes_app`：群組主檔/明細 CRUD、OP Group/PRD 關聯表只給 DELETE、原有 WIP 使用 guard 只讀；lookup 沿用既有權限。遷移後新表及當次核對的相關主檔/lookup 都是 0 rows。
+- QC213 API 對外為 `/YMES/API/api/qc/attribute-item-groups` 及共用 Attribute/Operation lookups；要求登入，未依使用者決定接 FunctionKey/RBAC。Release API image `sha256:13cf84efdbee479a0b381acd6d5cdf01d4cceca10b39b786c6fa853429f20f16`；API readiness 200、未登入 QC213 endpoint 401。回復 image `ymes-api:before-qc213-a2-20261127` 保留，hash `sha256:0cfdb6f17a6377033b1b77e6d59a187568a486d1c629ce19e3fa57c85a1a21fe`。僅更新 API container，Web 與其他專案服務未重建。
+- app-browser Demo 驗證正式頁、清單、GroupNo 查詢、四種狀態篩選與空白新增欄位檢核；正式表無資料，未建立假資料，因此新增/編輯/核准/刪除的有資料往返留待安全測試資料具備後再驗。
+- 遠端根檔案系統此次部署後約剩 595 MB、使用率 99%；未 prune/刪除任何映像。部署下一個 API 前先盤點可用空間，保留 current/rollback images 與資料庫備份。

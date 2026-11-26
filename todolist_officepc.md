@@ -2819,7 +2819,8 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 依 PowerShell 5.1 + Oracle.ManagedDataAccess 透過本機受保護連線唯讀取得 QC213 主/明細及硬刪 OP/PRD 依賴 DDL/欄位/PK/index；WIP 檢查表沿用既有來源 DDL。沒有查詢 MES 業務列、沒有在 Oracle 執行 DDL，連線資料未輸出。
 - [x] 新增 Oracle source DDL reference、含 WIP/OP/PRD 關聯表的 PostgreSQL schema-only CREATE 參考、QC213 功能規格、DATABASE_CONNECTION.md 與 MODULE_REPLICATION_SPEC_INDEX.md 更新。
 - [x] 更新 todolist_homepc.md：先完成既有 QC212 API/schema，再依 QC213 handoff 比對所有主/明細/硬刪依賴及 YMES live schema，僅補缺 migration，實作 QC213 API/Issue Job/共用 QCType=3 operation。
-- [ ] 公司端未連 YMES PostgreSQL，也未執行 build、測試或瀏覽器驗收。家用端完成 migration/API 後 pull 再做整合驗收；之後依 MES_MENU_FUNCTION_INVENTORY.md 接下一個未遷移功能。
+- [x] 家用端已完成 QC213 migration 0090、登入保護 API 與正式部署；Demo app-browser 已驗證清單、GroupNo 查詢、四狀態篩選和空白新增必填檢核。正式資料為空，未灌入測試業務資料。
+- [ ] 公司端 pull 到此版本後，確認 `/YMES/QC/AttributeItemGroup` 正式模式呼叫家用端 API，Development 模式仍可用 localStorage 假資料完成群組、明細排序及 QCType=3 作業站互動；發現契約差異時更新此模組 MD。公司端不可連 YMES PostgreSQL 或 SSH。
 
 ## 2026-11-18 QC409 OCAP異常單處置調整公司端進度
 

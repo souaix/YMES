@@ -2622,18 +2622,17 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 - [ ] 共用子功能 Parameter 使用 QCItemType=4，PlanNo 有值時傳遞已核准 PlanType；Op 使用 QCType=4，GET 已核准作業站候選清單及該群組目前的關聯/FAI-IPQC-PQC 設定，PUT 以 transaction 完整替換。只允許已核准群組修改；LotIsValid=0 禁止 InLine；每筆 InLine 至少要有一種 FAI/IPQC/PQC。共享 API 仍需要求 QC216 授權。
 - [ ] migration、API、選項及 API 文件完成後 commit/push；公司端再 pull 並對接。公司端沒有連 YMES PostgreSQL，也沒有執行 build、test 或瀏覽器驗收。
 
-## 最新公司端 handoff：QC213 計數品管項目群組（2026-11-17）
+## QC213 計數品管項目群組（家用端完成 2026-11-27）
 
-- [ ] QC212 是本功能前置工作；先完成下方 QC212 handoff 的 live schema 比對與 API，再接 QC213，避免 QC 主檔 API 路徑重複或漏掉共用資源。
-- [ ] 先讀 docs/modules/QC/計數品管項目群組.md、docs/DATABASE_CONNECTION.md、docs/MES_MENU_FUNCTION_INVENTORY.md；FunctionNo=QCITEM_G_A_ORDER，FunctionKey=QC213。
-- [ ] Oracle source DDL 已由公司端以 Windows PowerShell 5.1 + Oracle.ManagedDataAccess 直連 MESTEST 唯讀取得，無須重查：QC213 主/明細及 OP/PRD 硬刪依賴表各有 reference；WIP 檢查表在 QC205 dependency reference。PostgreSQL CREATE-only 參考 `database/reference/mestest_qc213_attribute_item_group_create.sql` 列出這些表及必要索引。
-- [ ] 查 YMES PostgreSQL live schema、migrations、API 現況。僅在缺表時新增 forward migration；主檔與明細 PK 分別是 tblqcitemattgrouporderbasis(groupno)、tblqcitemattgorderdetail(groupno,qcitemno)。逐一比較 CREATE 參考中的硬刪依賴表及既有 QC 共用表欄位/PK/index，不可覆寫現有資料，也不可把 PostgreSQL SQL 放到 MES Oracle 執行。
-- [ ] 實作登入保護及 QC213 FunctionKey 授權 API：GET/POST/PUT/DELETE /api/qc/attribute-item-groups、GET/PUT /{groupNo}/details、POST /{groupNo}/approval。詳細 DTO、欄位限制、交易及錯誤處理依 QC213 功能規格。
-- [ ] 主檔欄位限制 GroupNo 25、GroupName 50、Description 255；LotIsValid 僅 0/1。Add/Edit 應避免 GroupNo 與 Attribute QC Item、Variable QC Item、計量群組 TBLQCITEMGROUPBASIS、PMI 群組 TBLQCITEMGROUPBASIS_PMI 重複（來源 Core 以大小寫無關比對）。
-- [ ] 伺服器依實際 IssueState/DataStamp 決定操作：新增狀態 0；編輯僅 0；刪除 0/-1 硬刪、2 改 -1、1 拒絕。硬刪先檢查 TBLWIPTEMP_QCITEM 是否在線使用；來源 Core 另清除 QC Item Parameter、OPQCItem、OPGQCItemDetail、PRDQCItem 關聯。單一 transaction 執行，並核對 YMES 現有表的 QCType 條件與刪除順序。
-- [ ] 核准使用 Issue Job ATTQCITEM_G_ORDER；有 Job 時設 1 並啟動簽核，核准後 2、退回回 0；沒有 Job 直接設 2。API 每筆都確認群組至少有一筆有效 Attribute 明細，批次逐筆回報。
-- [ ] 明細 API lookup 沿用已核准 Attribute QC Item：GET /api/qc/attribute-qc-items?issueState=2。Add/Remove/reorder 寫入以單一 transaction 完整替換 details，檢查群組未簽核、QC item IssueState=2、Attribute 類型、唯一性；ShowOrder 連續 0..N-1。沿用共用作業站資源 QCType=3，LotIsValid=0 不可指定 Inline，InLine 至少勾選 FAI/IPQC/PQC 一種；不要建 QC213 專屬 operation table。
-- [ ] 更新 migration/API 文件與 todolist_homepc.md，commit/push 後通知公司端 pull。公司端尚未連 YMES PostgreSQL，未執行 build、測試或瀏覽器驗收。
+- [x] 閱讀 QC213 Form/Service/Core、公司端 handoff、來源 DDL、QC212 API 與 YMES PostgreSQL schema。FunctionNo=`QCITEM_G_A_ORDER`、FunctionKey=`QC213`；登入驗證已接通。依目前專案決定，角色/FunctionKey API 授權未啟用。
+- [x] 正式 schema 中 `tblqcitemattgrouporderbasis` 欄位與原生來源一致，且已有 WIP、Attribute/Variable QC Item、一般/PMI 群組、Parameter、OP 等共用表；只為缺少的 Attribute detail、OP group detail、product QC relation 建立 migration `0090_qc213_attribute_item_group.sql`。沒有重建共用表或複製 MES 業務資料。
+- [x] API 已完成主檔 list/create/edit/copy/delete/approve、明細完整替換與排序、QCType=3 operation lookup/write。驗證 group/item/一般群組/PMI 群組撞號、issue state、DataStamp、已核准 Attribute Item/OP；所有寫入採參數化交易。硬刪檢查 WIP QCType=3 使用狀態，再清理 QCType=3 關聯。
+- [x] YMES 沒有 Issue/Job 表；依來源「找不到簽核 Job 時直接核准」設定為 IssueState=2。若未來出現任一標準 Issue/Job 表，API 會以 503 阻止未接簽核的核准操作。
+- [x] 套用 migration 前建立完整備份 `/opt/ymes/backups/ymes-before-qc213-0090-20261127.dump`，`pg_restore --list` 驗證成功。`ymes_app` 有主/明細 CRUD、OP Group/PRD 只給 DELETE；WIP guard 維持 SELECT。
+- [x] .NET 9 Release build/publish 成功；僅有 NuGet vulnerability feed 無法連線的 NU1900 警告，沒有執行自動化測試。部署 `ymes-api:current` 並保留 `ymes-api:before-qc213-a2-20261127`；API ready=200、匿名 QC213 endpoint=401，Web/master Web 未更新。
+- [x] app-browser Demo 登入並重載正式 `/YMES/QC/AttributeItemGroup`：清單、GroupNo 查詢、四種狀態篩選、空白新增必填檢核正常；無資料時修改/刪除/複製/核准/Op/Add QC 停用。正式群組、明細、Attribute Item、OP、WIP 和 PMI 群組均 0 筆，未新增測試業務資料。
+- [ ] 待 YMES 有已核准 Attribute Item/OP 和安全測試群組後，補做新增/修改/複製/明細排序/作業站/核准/停用/硬刪資料往返驗收；目前不可用正式假資料替代。
+- [x] 更新模組文件、Migration/DATABASE_CONNECTION 記錄、Module index 與本待辦；完成後 fast-forward push GitHub，push 後重新 fetch 並檢查新家用待辦。
 
 ## QC212 計量品管項目_群組（家用端 2026-11-27）
 
@@ -2649,8 +2648,8 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 
 ## 下一項家用端工作
 
-- [ ] 接續 `QC213 計數品管項目群組`：先讀 `docs/modules/QC/計數品管項目群組.md`、公司端 QC213 handoff 與 `docs/DATABASE_CONNECTION.md`；核對 live schema/migrations，僅為缺漏結構補 migration，再完成登入保護 API、build/deploy、app-browser 驗收與模組文件。
-- [ ] 伺服器根目錄在 QC212 發佈後約剩 621 MB 可用空間；部署下一模組前盤點 Docker 映像與磁碟使用，保留現行與 `before-qc212` 回復映像及資料庫備份，不要直接 prune。
+- [ ] 接續 QC214「計量品管項目匯入」API：先讀 `docs/modules/QC/計量品管項目匯入.md`、本待辦 QC214 handoff、QC205/QC210/QC201 依賴規格及 `docs/DATABASE_CONNECTION.md`。此功能沒有專屬新表；先核對 live schema，僅補缺漏結構，再做受限 Excel preview/check/逐列匯入 API，禁止動態 Factor DDL。
+- [ ] 遠端根目錄部署後約剩 595 MB、使用率 99%；部署下一個 API 前檢視 Docker/磁碟空間，保留 current 與 `before-qc213-a2` rollback 及兩次資料庫備份；不要執行全域 prune 或刪除尚未盤點的映像。
 
 ## 前一公司端 handoff：QC211 二次檢驗抽樣計畫（2026-11-17）
 
