@@ -1,12 +1,19 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：RPT RT205 作業站時段產出看板（2026-11-26）
+## 公司端最新交付：RPT RT206 作業站時段產出_良率儀表板（2026-11-26）
+
+- [x] 公司端核對 Gauge Form／Designer、共用 SetupType 4 設定、RPT Service／Core；完成 DEV 圓形 Gauge、OP／時段排序、已開始時段 × OP 卡片及假資料刷新。[RT206 handoff](docs/modules/RPT/作業站時段產出良率儀表板_RT206.md)
+- [ ] 家用端沿 RT205 查詢 API 確認 LotLog 的 Status／時間界線、time-step 真實班別／時區及 Yield 參數；提供 `tblRPTBillBoardOPStateConfig`／Content 與 `tblRPTTimeStepBasis` 同版可信 DDL／鍵索引，決定設定 user/device scope。
+- [ ] 家用端共用 RT205 的參數化唯讀 `/api/reports/op-output-summary`；將 `nowTimeStep` × OP 展開 Gauge。固定 60／80 色階；批次取得 StdYield，但目前舊版不按它改色。
+- [ ] 公司端依 RPT 清冊接續 RT207「作業站時段產出_趨勢圖」。
+
+## 前項公司端交付：RPT RT205 作業站時段產出看板（2026-11-26）
 
 - [x] 公司端核對 RT205 主看板／Setup／History Query、RPT Service／`clsReport` Core；完成 DEV 假時段看板、自動更新、OP／尺寸設定與指定日期歷史查詢。[RT205 handoff](docs/modules/RPT/作業站時段產出看板_RT205.md)
 - [ ] 家用端確認 `tblRPTTimeStepBasis`、`tblWIPLotLog_Report`、`tblOPBasis`、StdYield 與 `YieldContainDefect` 同版 MESTEST owner／型別／鍵索引、時區／時段配置及時間邊界；查核 legacy 重疊與零分母行為，決定左閉右開切片規則。
 - [ ] 家用端按 RT205 handoff 設計參數化唯讀 `/api/reports/op-output-summary`；先查可信 schema 與 LotLog 大小／索引，確認 OP/date 限制、快取／刷新方式及歷史保留後，再建 CREATE-only SQL。設定 API 另決定 user／device scope，不信任未授權 PCNo。
 - [ ] 家用端決定是否保存 per-user／device 看板設定；公司端 DEV 設定目前只存頁面記憶體。
-- [ ] 公司端接續 RPT 清冊 RT206「作業站時段產出_良率儀表板」。
+- [x] RT205 後依清冊接續完成 RT206；下一項為 RT207。
 
 ## 前項公司端交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
 

@@ -1,10 +1,16 @@
 # 公司端待辦
 
-## 公司端最新交付：RPT RT205 作業站時段產出看板（2026-11-26）
+## 公司端最新交付：RPT RT206 作業站時段產出_良率儀表板（2026-11-26）
+
+- [x] 核對 `frmBillBoard_OPOutputSummary_Gauge`／Designer、共用 `frmBillBoard_OPStateSetup`、`LoadBillBoardOPStateConfig(SetupType=4)` 和共用摘要 Service／Core；完成 `function:RPT:BILLBOARD OPOUTPUT SUMMARY GAUGE` Vue DEV Gauge、已開始時段 × OP 卡片、依 OP／時段排序、設定及自動刷新。[RT206 規格與 API/schema handoff](docs/modules/RPT/作業站時段產出良率儀表板_RT206.md)
+- [x] 同步 Good／Scrap／Defect／累計 Good 與 `YieldContainDefect`；Gauge 固定色帶 0–60／60–80／80–100%，StdYield 雖載入但原碼自訂門檻註解掉。LotLog MESTEST DDL reference 已有，RT206 config／時段 DDL 缺；未猜 CREATE、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 公司端依 RPT 清冊接續 RT207「作業站時段產出_趨勢圖」。
+
+## 前項公司端交付：RPT RT205 作業站時段產出看板（2026-11-26）
 
 - [x] 核對主看板、Setup、History Query Form／Designer，`wsRPT.LoadBillBoardOPOutputConfig`／`UpdBillBoardOPOutputConfig`／`LoadBillBoardOPOutputSummary` 與 `clsReport` Core；完成 `function:RPT:BILLBOARD OPOUTPUT SUMMARY` Vue DEV 自動更新、設定、歷史查詢及 StdYield 標紅。[RT205 規格與 API/schema handoff](docs/modules/RPT/作業站時段產出看板_RT205.md)
-- [x] 說明時段表 `tblRPTTimeStepBasis`、LotLog `tblWIPLotLog_Report`、Good／Fail／Defect 與 `YieldContainDefect`；標記舊 Core 時段閉區間重疊與設定 LEFT JOIN 疑點。repo 無可信 DDL、Oracle profile metadata 未驗證，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 公司端依 RPT 清冊接續 RT206「作業站時段產出_良率儀表板」。
+- [x] 說明時段表 `tblRPTTimeStepBasis`、LotLog `tblWIPLotLog_Report`、Good／Fail／Defect 與 `YieldContainDefect`；標記舊 Core 時段閉區間重疊與設定 LEFT JOIN 疑點。repo 有 2026-11-19 擷取的 LotLog MESTEST DDL；時段／設定 DDL 與桌機 Oracle profile metadata 未驗證，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [x] RT205 後依清冊接續完成 RT206；下一項為 RT207。
 
 ## 前項公司端交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
 
