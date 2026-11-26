@@ -2,14 +2,22 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：PM303 保養工單完成與回報（2026-11-26）
+## 公司端最新交付：PM401 故障原因基本資料（2026-11-26）
+
+- [x] 核對 `frmBreakDownBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveBreakDownBasis`、`clsPMBasis`／`clsBasis_UPD`；完成 `function:PM:BREAKDOWN BASIS` DEV 四狀態 CRUD／Copy／核准、停用與硬刪。規格：[PM401 故障原因基本資料](modules/PM/故障原因基本資料_PM401.md)。
+- [x] PM403 設備與故障原因對應及 PM404 設備故障登錄會讀取此主檔；舊硬刪未傳 DataStamp，簽核完成／退回沒有更新版本或稽核欄。
+- [x] 桌機受保護 Oracle profile 不存在，repo 無可信 `TBLPMBreakDownBasis` DDL／metadata，未猜 CREATE。未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／Oracle metadata 與 PM403／PM404 引用限制，再實作參數化、併發安全、原子簽核／停用 API。
+- [ ] 公司端接續 PM402「維修項目基本資料」。
+
+## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
 
 - [x] 核對 `frmPMWoFinish`／Def、`wsPM.RepayForWoDetail`、`clsPMBasis.RepayForWoDetail` 與整單完工歷史搬移；完成 `/YMES/PM/WorkOrderFinish` DEV 查詢、主從明細、SOP Detail、逐項／整張回報。
 - [x] 新增 [PM303 規格與家用端 API/schema handoff](modules/PM/保養工單完成與回報_PM303.md)，更新模組索引、選單進度與兩端 TODO。
 - [x] DEV 共用 PM301／PM302 工單與 PlanLog 假資料；模擬 WOStatus=3、PlanLog ExecuteState 3→4、整單完成搬移本機歷史與 EQP 狀態。
 - [x] 舊 Form 對早於 ReleaseDate 的完成時間只提示仍送出；家用端 API handoff 已要求伺服器拒絕。桌機受保護 Oracle profile 不存在，直接表 DDL／metadata 未取得，未猜 CREATE。
 - [ ] 家用端核 live schema／Oracle metadata，交易式實作 PM303 回報、全單完成歷史搬移與可重試 EQP／Chamber 狀態。
-- [ ] 下一項依未完成 FunctionKey 為 PM401「故障原因基本資料」，沿清冊接續。
+- [x] 當時下一項 PM401 已完成；公司端接續 PM402「維修項目基本資料」。
 
 ## 前項公司端交付：PM302 保養工單下線（2026-11-26）
 

@@ -305,6 +305,7 @@ import PmMaintenanceType from './components/PmMaintenanceType.vue'
 import PmMaintenanceItem from './components/PmMaintenanceItem.vue'
 import PmSopBasis from './components/PmSopBasis.vue'
 import PmToolBasis from './components/PmToolBasis.vue'
+import PmBreakdownBasis from './components/PmBreakdownBasis.vue'
 import PmEqpTypeSopBasis from './components/PmEqpTypeSopBasis.vue'
 import PmMaintenancePlanAdjust from './components/PmMaintenancePlanAdjust.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
@@ -1600,6 +1601,7 @@ const isPmMaintenanceTypePage = computed(() => activeMasterKey.value === 'functi
 const isPmMaintenanceItemPage = computed(() => activeMasterKey.value === 'function:PM:PM ITEM')
 const isPmSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:SOP BASIS')
 const isPmToolBasisPage = computed(() => activeMasterKey.value === 'function:PM:TOOL BASIS')
+const isPmBreakdownBasisPage = computed(() => activeMasterKey.value === 'function:PM:BREAKDOWN BASIS')
 const isPmEqpTypeSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:EQPTYPE SOP BASIS')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
@@ -3706,6 +3708,12 @@ async function signOut(): Promise<void> {
         />
         <PmToolBasis
           v-else-if="isPmToolBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmBreakdownBasis
+          v-else-if="isPmBreakdownBasisPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

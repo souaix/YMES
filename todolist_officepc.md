@@ -1,5 +1,16 @@
 # 公司端待辦
 
+## 公司端最新交付：PM401 故障原因基本資料（2026-11-26）
+
+- [x] 核對 `frmBreakDownBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveBreakDownBasis`、`clsPMBasis` 與 `clsBasis_UPD`；完成 `function:PM:BREAKDOWN BASIS` Vue DEV 查詢、四狀態、CRUD／Copy、Approve、硬刪／停用。
+- [x] 新增 [PM401 規格與家用端 API/schema handoff](docs/modules/PM/故障原因基本資料_PM401.md)，更新模組索引、選單進度、handoff 與兩端待辦。
+- [x] 記錄 PM403／PM404 會讀取故障原因主檔；舊硬刪未傳 DataStamp、簽核完成／退回 SQL 未更新版本及稽核欄。DEV 假資料 key 為 `ymes.dev.pm.breakdown-basis.v1`。
+- [x] 桌機指定受保護 Oracle profile 不存在，repo 無可信 `TBLPMBreakDownBasis` DDL／metadata；未查 Oracle／未猜 CREATE。公司端未連 PostgreSQL、未實作 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema、Oracle metadata 與 PM403／PM404 引用規則，再實作參數化、併發安全的查詢／維護／簽核 API 及經核實的 CREATE-only DDL。
+- [ ] 下一項公司端依 FunctionKey 為 PM402「維修項目基本資料」。
+
+## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
+
 ## 公司端最新交付：PM303 保養工單完成與回報（2026-11-26）
 
 - [x] 核對 `frmPMWoFinish`／Def、`wsPM.RepayForWoDetail`、`clsPMBasis.RepayForWoDetail` 與工單全數完成搬移歷史流程；完成 `/YMES/PM/WorkOrderFinish` DEV 查詢、主從明細、SOP Detail、逐項／整張回報。
@@ -7,7 +18,7 @@
 - [x] DEV 共用 PM301／PM302 工單與 PlanLog 假資料；模擬 WOStatus=3、ExecuteState 3→4、整單完工後搬移本機歷史與 EQP 狀態。
 - [x] 記錄 WinForms 對早於 ReleaseDate 的完成時間只提示仍送出；家用端 API handoff 要求拒絕。桌機無受保護 Oracle profile、直接表 DDL／metadata 未取得，未猜 CREATE。
 - [ ] 家用端核 live schema／Oracle metadata；交易式實作明細／PlanLog 回報、全單歷史歸檔與可重試 EQP 狀態更新。
-- [ ] 下一項公司端依 FunctionKey 為 PM401「故障原因基本資料」，沿清冊持續復刻未完成模組。
+- [x] 當時下一項 PM401 已完成；公司端接續 PM402「維修項目基本資料」。
 
 ## 前項公司端交付：PM302 保養工單下線（2026-11-26）
 
