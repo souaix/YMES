@@ -1,5 +1,11 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：0081 RT603／RT604 共用 WIP LotLog 空表（2026-11-27）
+
+- WP101 的 `tblwiplotbasis` Oracle／PostgreSQL CREATE-only refs 已存在，正式 YMES `tblwiplotbasis` 已有 38 欄且 `ymes_app` 僅有查詢權限。QC409 dependency 的 Oracle DDL 與 `database/reference/mestest_wip_lot_log_create.sql` CREATE-only 核實 `TBLWIPLOTLOG` 欄位、`PK(LOTSERIAL)`、`I_TBLWIPLOTLOG_01(LOGGROUPSERIAL)`、`I_TBLWIPLOTLOG_02(LOTNO)`；正式 YMES 原本缺少此表。
+- 0081 套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-rt603-604-lotlog-20261127.dump`，773,831 bytes、SHA-256 `e7c54c918b3efff830b477ab1c1b64bf834207721721fdfa2bf361d0179af103`，`pg_restore --list` 2,148 entries。migration [0081](../database/migrations/0081_rpt_wip_lot_log_schema.sql) SHA-256 `1B9B9BD2EC17C0A444B0CDF957B1570131580534DBFE3BE3B9969B35B361FB1F`；原子建立 21 欄空表、來源 PK 與兩來源索引。Catalog 回讀欄位／索引吻合，表列數為 0，`ymes_app` SELECT=true、INSERT／UPDATE／DELETE=false；沒有新增或複製業務資料。
+- `TBLWIPCONT_MATERIALLOTCOMP` 尚無可信原生 DDL／metadata／CREATE-only，正式 YMES 亦缺此表。已列公司端只讀 DDL／metadata 交付待辦；收到後才能建該空表及完成 RT603／RT604 API。細節見兩份 RPT 模組文件與 `todolist_officepc.md`。
+
 ## 最新：0079／0080 RT410 設備稼動查詢結構與唯讀權限（2026-11-27）
 
 - PPK／SSH 從正式 PostgreSQL catalog 唯讀確認 `tblsmdarearelation` 存在但 `ymes_app` 沒有 SELECT；`tblwipcont_equipment`、`tblwiplotlog_report` 在 YMES 與其他 schema 均缺。設備主檔、狀態 Basis／現況／歷程及 Area Relation 欄位／索引核對完成。

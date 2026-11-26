@@ -6,7 +6,14 @@
 - [x] 完成登入保護唯讀 `GET /api/reports/equipment-daily-utilization`；參數化日期、Area、Equipment、Chamber 條件；31 天／100 項條件／2,000 設備上限與穩定排序，回傳 state percentages、Moves、Loss、巢狀 Chamber；主／子設備來源時間邊界依 handoff 保留差異並記錄待公司核實處。
 - [x] 複查修正 Moves SQL 多餘 SELECT；.NET 9 Release build 成功，正式 PostgreSQL 以 `ymes_app` 唯讀 `EXPLAIN` 驗證 Moves／狀態查詢欄位與計畫。部署 image a2；readiness 200、匿名 401、Demo app-browser 無命中 Chamber 查詢 200、超 31 天 400。a1 保留回復標籤，僅替換 YMES API。詳 [RT410 模組紀錄](docs/modules/RPT/設備稼動查詢_RT410.md)。
 - [ ] 正式設備主檔目前沒有 active main equipment，兩張新 WIP 表沒有同步業務列；等資料來源同步後做設備／狀態／Moves 正向驗證，不在正式庫灌測試列。Legacy 主設備時間條件仍請公司端核對原始 Core。
-- [x] 以一般 fast-forward 推送至 GitHub `main`，commit `efe5829`；推送後重新 fetch 確認 `origin/main=efe5829`，無公司端更新，接續核查 RT604／RT603 家用端 DDL 與 API 待辦。
+- [x] RT410 API 以一般 fast-forward 推至 GitHub `main`，commit `efe5829`；同步紀錄 commit `1399151`，推送後 fetch 確認 `origin/main=1399151`，當時無公司端更新，接續核查 RT604／RT603 家用端 DDL 與 API 待辦。
+
+## 家用端 RT603／RT604 共用 WIP 表（2026-11-27）
+
+- [x] 可信來源已核實：WP101 提供 `TBLWIPLotBasis` Oracle DDL／PG CREATE-only；QC409 dependency 提供 `TBLWIPLotLog` Oracle DDL，repo 有 `mestest_wip_lot_log_create.sql`。正式 YMES 僅有 38 欄 `tblwiplotbasis`（`ymes_app` SELECT）；`tblwiplotlog` 與 `tblwipcont_materiallotcomp` 原本不存在。
+- [x] 依可信 LotLog CREATE-only 套用 0081，建立空 21 欄 `tblwiplotlog`、來源 PK／兩個來源索引；`ymes_app` 僅 SELECT。完整備份、migration checksum、catalog／權限回讀見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。沒有新增／複製 MES 業務列。
+- [ ] `TBLWIPCont_MaterialLotComp` 缺可信原生 DDL／metadata，正式 YMES 亦無此表。公司端須唯讀交付 Oracle DDL、欄位型別／精度／nullable/default、PK／unique／FK、index；詳 [公司端待辦](todolist_officepc.md)。取得後才建立來源空表與實作 RT603／RT604 API。
+- [ ] 完成來源表同步並取得可用資料後，再做 RT603／RT604 正式 API 正向資料驗證。
 
 ## 家用端 RT501 生產批狀態查詢 API（2026-11-27）
 
@@ -77,13 +84,13 @@
 ## 前項公司端交付：RPT RT604 物料用於元件查詢（2026-11-26）
 
 - [x] 公司端核對 Form／Designer、物料與產品選取 Service、WIP 查詢 Service／Core；完成 DEV Material／Product No 雙模式、MaterialLot No 篩選、選取窗與 Grid 排序。[RT604 handoff](docs/modules/RPT/物料用於元件查詢_RT604.md)
-- [ ] 家用端核對 `tblWIPLotBasis`、`tblWIPLotLog`、`tblWIPCont_MaterialLotComp` 可信 MESTEST DDL／metadata、YMES live schema／索引與權限；實作受授權、參數化唯讀 API，以非空 materialNo + MaterialLevel 0／1 查詢，可選 MaterialLotNo，固定穩定排序及筆數上限。Product No 在舊 Service 仍用 MaterialNo 欄位傳遞；不可猜 CREATE SQL。
+- [x] 家用端已核實 WP101／QC409 的 Basis／LotLog refs 與 live catalog，套用 0081 建立空 `tblwiplotlog` 並限制 SELECT 權限；RT604 API 仍等缺少的 `TBLWIPCont_MaterialLotComp` 原生 DDL／metadata，細節見上方 RT603／RT604 最新進度及公司端待辦。Product No 在舊 Service 仍用 MaterialNo 欄位傳遞；不可猜 CREATE SQL。
 - [x] RT501、RT410、RT411 已完成，下一項依 RPT 清冊為 RT412「設備 MTTR 統計表」。
 
 ## 前項公司端交付：RPT RT603 元件使用物料查詢（2026-11-26）
 
 - [x] 公司端核對 Form／Service／Core，完成 DEV 假資料 Component No 查詢與 RT603 規格。[RT603 handoff](docs/modules/RPT/元件使用物料查詢_RT603.md)
-- [ ] 家用端核對 `tblWIPLotBasis`、`tblWIPLotLog`、`tblWIPCont_MaterialLotComp` 的可信 MESTEST DDL／metadata 與 YMES live schema／索引；依表單 join 語意實作受授權、參數化、拒絕空 ComponentNo 的唯讀報表 API，設定回傳筆數上限及穩定排序。來源 SQL 字串串接且空白 ComponentNo 會移除條件；不要照搬此行為或猜 CREATE SQL。
+- [x] 家用端已核實 WP101／QC409 的 Basis／LotLog refs 與 live catalog，套用 0081 建立空 `tblwiplotlog` 並限制 SELECT 權限；RT603 API 仍等缺少的 `TBLWIPCont_MaterialLotComp` 原生 DDL／metadata，細節見上方 RT603／RT604 最新進度及公司端待辦。來源 SQL 字串串接且空白 ComponentNo 會移除條件；不要照搬此行為或猜 CREATE SQL。
 - [x] RT604 已接續完成；下一項依 RPT 清冊為 RT501「生產批狀態查詢」。
 
 ## 公司端最新交付：RPT RT204 產出看板時段主檔（2026-11-26）
