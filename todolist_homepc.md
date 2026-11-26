@@ -1,11 +1,15 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：RPT RTB01 Wafer 電性數據運行圖（2026-11-26）
+## 公司端最新交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
 
-- [x] 公司端核對 RTB01 inline Query／View、RPT／SYS Service、Industry_Base RPT／SYS Core，完成 Vue DEV EDC 查詢、CheckFlag 多選、量測序列圖與規格。[RTB01 handoff](docs/modules/RPT/Wafer電性數據運行圖_RTB01.md)
-- [ ] 確認 YMES 可讀的 EDC RawData 來源與跨 EDC／MES 資料方式；核實 `TBLWIPRAWDATA_<type>` per-Recipe BLOB 格式、欄型別、Owner，以及 MES Recipe／PS／Equipment／LotLog lookup 和 `tblRPTEDCQCCalData` 欄位／鍵／索引。DDL 未驗證前不建立猜測性 CREATE。
-- [ ] 若 YMES 可取得 EDC 資料，實作以核准 Recipe metadata allowlist 解析動態識別字、參數化、限量分頁唯讀 API，批次查詢記錄及量測明細。確認舊 `tblRPTEDCQCCalData` 計算快照是否要保留及其寫入權限，再決定 API/schema 寫入需求。
-- [ ] 公司端接續 RPT 清冊 RTB03「Wafer Map 電性測試圖表」。
+- [x] 公司端核對 RTB03 inline Query／View、`COM_WaferMAPTestChartLib`、RPT／SYS Service、Industry_Base RPT／SYS Core，完成 Wafer Map DEV 查詢、多筆結果選取、多 Recipe 圓形 Map、四種統計值及 SVG 匯出。[RTB03 handoff](docs/modules/RPT/WaferMap電性測試圖表_RTB03.md)
+- [ ] 核實 `TBLWIPRAWRECORD_<type>` 的 EDC owner／schema、座標／序號／動態 Recipe 數值欄型別與索引，確認 RawRecord 到 MES `TBLWIPLOTLOG_REPORT`／`TBLOPBASIS` 的跨庫查詢連線、join 基數及 Legacy Core 拼接問題。DDL 未驗證前不建立猜測性 CREATE。
+- [ ] 若 YMES 可讀 EDC，實作以 Recipe basis metadata allowlist 產生動態欄、值參數化、限量分頁的唯讀 Record API 與批次 Map points API；核實 record 複合鍵、日期／點數限制與跨 EDC／MES 查詢方案。
+- [ ] 公司端接續盤點 RTB03 後尚未復刻的 RPT FunctionKey；清冊下一列為 RT205 作業站時段產出看板。
+
+## 前項公司端交付：RPT RTB01 Wafer 電性數據運行圖
+
+- [x] 公司端完成 RTB01 DEV EDC 查詢、CheckFlag 多選及序列圖；RawData／統計快照 DDL、Oracle metadata 與 EDC datasource handoff 見 [RTB01 規格](docs/modules/RPT/Wafer電性數據運行圖_RTB01.md)。RTB03 已接續完成。
 
 ## 前項公司端交付：RPT RTB02 Wafer 電性數據常態分析圖
 
@@ -23,7 +27,7 @@
 - [x] Core UNION `tblPMEqpBreakDownState` 與 RepairLog／BreakDownLog 查詢分支，未選狀態代表全部；舊 Form 的 RepairStart To 誤傳 RepairEnd To，DEV 依欄位實作。
 - [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、三表欄位／型別／PK／FK／索引、可空日期及 RepairLog 一對多基數，提供可信 CREATE-only SQL。
 - [ ] 家用端實作參數化唯讀分頁 `GET /api/pm/breakdown-repair-query`，保留空 `states[]` 查全部狀態與同一故障多筆維修列。
-- [x] PM507 後依功能目錄接續 RPT RTS01、RTB02、RTB01，均已完成；目前接續 RTB03。
+- [x] PM507 後依功能目錄接續 RPT RTS01、RTB02、RTB01、RTB03，均已完成；繼續盤點清冊下一個未復刻 FunctionKey。
 
 ## 前項公司端交付：PM506 設備保養效率查詢（2026-11-26）
 

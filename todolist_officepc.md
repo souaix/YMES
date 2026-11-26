@@ -1,10 +1,15 @@
 # 公司端待辦
 
-## 公司端最新交付：RPT RTB01 Wafer 電性數據運行圖（2026-11-26）
+## 公司端最新交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
 
-- [x] 核對 inline `frmWaferEDCRunChartQuery`／`frmWaferEDCRunChartView`、RPT／SYS Service／Core；完成 RTB01 Vue DEV 查詢、CheckFlag 多筆選取、量測序列圖與逐筆 SVG 儲存。[RTB01 規格](docs/modules/RPT/Wafer電性數據運行圖_RTB01.md)
-- [x] 記錄 EDC per-Recipe BLOB、`HAVECOORDINFO` 解析、MES LotLog join、舊 View 寫 `tblRPTEDCQCCalData` 的副作用與 EDC dialect 疑點。桌機 Oracle profile／RawData 與統計表可信 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 公司端接續 RPT 清冊 RTB03「Wafer Map 電性測試圖表」，依序核對來源程式。
+- [x] 核對 inline `frmWaferMAPTestChart`／View、`COM_WaferMAPTestChartLib`、RPT／SYS Service／Core；完成 Vue DEV 查詢、多選 Wafer、RecipeType 下多 Recipe 圓形 Map、Max／Min／Mean／Sigma 任意組合與 SVG 報表匯出。[RTB03 規格](docs/modules/RPT/WaferMap電性測試圖表_RTB03.md)
+- [x] 記錄 `TBLWIPRAWRECORD_<type>` 座標／動態 Recipe 欄、MES LotLog／OP join、母體 Sigma 計算；標示 `A.And`／`B.And`、SQL tuning 字串與 EDC/MES 分庫查詢疑點。Oracle profile／可信 RawRecord DDL 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 公司端接續盤點 RTB03 後尚未復刻的 RPT FunctionKey（清冊下一列為 RT205 作業站時段產出看板），先檢查是否已有 Vue 實作再追 Form／Service／Core。
+
+## 前項公司端交付：RPT RTB01 Wafer 電性數據運行圖（2026-11-26）
+
+- [x] 核對 RTB01 inline Query／View、RPT／SYS Service／Core；完成 DEV EDC 查詢、CheckFlag 多選及量測序列圖。[RTB01 規格](docs/modules/RPT/Wafer電性數據運行圖_RTB01.md)
+- [x] 記錄動態 BLOB、LotLog join、統計快照副作用與 SQL／dialect 疑點；DDL／Oracle metadata 缺失，未猜 CREATE、未連 PostgreSQL、未 build／test／browser。RTB03 已完成。
 
 ## 前項公司端交付：RPT RTB02 Wafer 電性數據常態分析圖（2026-11-26）
 
@@ -15,7 +20,7 @@
 
 - [x] 核對 inline `frmBreakDown_RepairQuery`、`wsPM.LoadBreakDown_RepairQuery`、`clsPMMaintanceLog.LoadBreakDown_RepairQuery` 及設備／ChamberManage 載入；完成 `function:PM:BREAKDOWN_REPAIRQUERY` Vue DEV Equipment 多選、三組日期時間、狀態條件與 13 欄唯讀 Grid。[PM507 規格與 API/schema handoff](docs/modules/PM/故障維修登錄查詢_PM507.md)
 - [x] Core UNION `tblPMEqpBreakDownState` 未結案列與 RepairLog／BreakDownLog 結案列；未勾狀態代表全部。標記 Form 的 RepairStart To 誤傳 RepairEnd To。桌機 Oracle profile／可信 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [x] PM507 後依功能目錄接續 RPT RTS01、RTB02、RTB01，均已完成；目前接續 RTB03。
+- [x] PM507 後依功能目錄接續 RPT RTS01、RTB02、RTB01、RTB03，均已完成；繼續盤點清冊下一個未復刻 FunctionKey。
 
 ## 前項公司端交付：PM506 設備保養效率查詢（2026-11-26）
 

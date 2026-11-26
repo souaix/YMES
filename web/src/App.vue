@@ -321,6 +321,7 @@ import PmPerformance from './components/PmPerformance.vue'
 import ElectricalTestDataQuery from './components/ElectricalTestDataQuery.vue'
 import WaferEDCNormalityChart from './components/WaferEDCNormalityChart.vue'
 import WaferEDCRunningChart from './components/WaferEDCRunningChart.vue'
+import WaferMAPTestChart from './components/WaferMAPTestChart.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -844,6 +845,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:RPT:B_ELECTRICAL TEST DATA QUERY', label: '電性測試資料查詢', shortLabel: '電性測試', functionNo: 'B_ELECTRICAL TEST DATA QUERY', moduleNo: 'RPT' },
         { id: 'function:RPT:B_WAFER EDC NORMALITY CHART', label: 'Wafer 電性數據常態分析圖', shortLabel: '常態分析', functionNo: 'B_WAFER EDC NORMALITY CHART', moduleNo: 'RPT' },
         { id: 'function:RPT:B_WAFER EDC RUUNING CHART', label: 'Wafer 電性數據運行圖', shortLabel: '運行圖', functionNo: 'B_WAFER EDC RUUNING CHART', moduleNo: 'RPT' },
+        { id: 'function:RPT:B_WAFER MAP TEST CHART', label: 'Wafer Map 電性測試圖表', shortLabel: 'Wafer Map', functionNo: 'B_WAFER MAP TEST CHART', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1219,6 +1221,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:B_ELECTRICAL TEST DATA QUERY': appBasePath + '/RPT/ElectricalTestData',
   'function:RPT:B_WAFER EDC NORMALITY CHART': appBasePath + '/RPT/WaferEDCNormalityChart',
   'function:RPT:B_WAFER EDC RUUNING CHART': appBasePath + '/RPT/WaferEDCRunningChart',
+  'function:RPT:B_WAFER MAP TEST CHART': appBasePath + '/RPT/WaferMAPTestChart',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1318,6 +1321,7 @@ const functionRoutes: Record<string, string> = {
   'B_ELECTRICAL TEST DATA QUERY': appBasePath + '/RPT/ElectricalTestData',
   'B_WAFER EDC NORMALITY CHART': appBasePath + '/RPT/WaferEDCNormalityChart',
   'B_WAFER EDC RUUNING CHART': appBasePath + '/RPT/WaferEDCRunningChart',
+  'B_WAFER MAP TEST CHART': appBasePath + '/RPT/WaferMAPTestChart',
   'FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
   'SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
   'SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
@@ -1676,6 +1680,7 @@ const isPmBreakdownRepairQueryPage = computed(() => activeMasterKey.value === 'f
 const isRts01ElectricalTestDataPage = computed(() => activeMasterKey.value === 'function:RPT:B_ELECTRICAL TEST DATA QUERY')
 const isRtb02WaferEDCNormalityChartPage = computed(() => activeMasterKey.value === 'function:RPT:B_WAFER EDC NORMALITY CHART')
 const isRtb01WaferEDCRunningChartPage = computed(() => activeMasterKey.value === 'function:RPT:B_WAFER EDC RUUNING CHART')
+const isRtb03WaferMAPTestChartPage = computed(() => activeMasterKey.value === 'function:RPT:B_WAFER MAP TEST CHART')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3877,6 +3882,12 @@ async function signOut(): Promise<void> {
         />
         <WaferEDCRunningChart
           v-else-if="isRtb01WaferEDCRunningChartPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <WaferMAPTestChart
+          v-else-if="isRtb03WaferMAPTestChartPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
