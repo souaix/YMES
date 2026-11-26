@@ -315,6 +315,7 @@ import PmMaintenancePlanAdjust from './components/PmMaintenancePlanAdjust.vue'
 import PmMaintenancePlanQuery from './components/PmMaintenancePlanQuery.vue'
 import PmMaintenancePlanHistory from './components/PmMaintenancePlanHistory.vue'
 import PmWorkOrderHistory from './components/PmWorkOrderHistory.vue'
+import PmBreakdownStatistics from './components/PmBreakdownStatistics.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -826,6 +827,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:PM:PM MAINTENANCE QUERY', label: '設備保養計畫查詢', shortLabel: '保養計畫查詢', functionNo: 'PM MAINTENANCE QUERY', moduleNo: 'PM' },
         { id: 'function:PM:PM PLAN HISTORY', label: '保養計劃歷史資料查詢', shortLabel: '保養計畫歷史', functionNo: 'PM PLAN HISTORY', moduleNo: 'PM' },
         { id: 'function:PM:PMWO HISTORY', label: '保養工單歷史資料查詢', shortLabel: '工單歷史', functionNo: 'PMWO HISTORY', moduleNo: 'PM' },
+        { id: 'function:PM:PMBRAEKDOWN QUERY', label: '故障原因統計', shortLabel: '故障統計', functionNo: 'PMBRAEKDOWN QUERY', moduleNo: 'PM' },
       ],
     }],
   },
@@ -1195,6 +1197,7 @@ const menuRoutes: Record<string, string> = {
   'function:PM:PM MAINTENANCE QUERY': appBasePath + '/PM/MaintenancePlanQuery',
   'function:PM:PM PLAN HISTORY': appBasePath + '/PM/MaintenancePlanHistory',
   'function:PM:PMWO HISTORY': appBasePath + '/PM/WorkOrderHistory',
+  'function:PM:PMBRAEKDOWN QUERY': appBasePath + '/PM/BreakdownQuery',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1643,6 +1646,7 @@ const isPmPlanCalendarPage = computed(() => activeMasterKey.value === 'function:
 const isPmMaintenancePlanQueryPage = computed(() => activeMasterKey.value === 'function:PM:PM MAINTENANCE QUERY')
 const isPmMaintenancePlanHistoryPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN HISTORY')
 const isPmWorkOrderHistoryPage = computed(() => activeMasterKey.value === 'function:PM:PMWO HISTORY')
+const isPmBreakdownStatisticsPage = computed(() => activeMasterKey.value === 'function:PM:PMBRAEKDOWN QUERY')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3808,6 +3812,12 @@ async function signOut(): Promise<void> {
         />
         <PmWorkOrderHistory
           v-else-if="isPmWorkOrderHistoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmBreakdownStatistics
+          v-else-if="isPmBreakdownStatisticsPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
