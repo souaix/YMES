@@ -328,6 +328,13 @@ import OpOutputTrendChart from './components/OpOutputTrendChart.vue'
 import OpStateBoard from './components/OpStateBoard.vue'
 import OpStateProductTypeBoard from './components/OpStateProductTypeBoard.vue'
 import OpStateProductNoBoard from './components/OpStateProductNoBoard.vue'
+import TimeStepBasisBoard from './components/TimeStepBasisBoard.vue'
+import ContMaterialByComponent from './components/ContMaterialByComponent.vue'
+import ContMaterialByMaterial from './components/ContMaterialByMaterial.vue'
+import ConfirmLot from './components/ConfirmLot.vue'
+import EqpDailyReport from './components/EqpDailyReport.vue'
+import EqpDailyUtilizationChart from './components/EqpDailyUtilizationChart.vue'
+import EqpMttrSummary from './components/EqpMttrSummary.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -861,6 +868,22 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:RPT:BILLBOARD OPSTATE', label: '作業站現況看板', shortLabel: '作業站現況', functionNo: 'BILLBOARD OPSTATE', moduleNo: 'RPT' },
         { id: 'function:RPT:BILLBOARD OPSTATE_PRDTYPE', label: '作業站現況看板_產品類別', shortLabel: '產品類別看板', functionNo: 'BILLBOARD OPSTATE_PRDTYPE', moduleNo: 'RPT' },
         { id: 'function:RPT:BILLBOARD OPSTATE_PRODUCTNO', label: '作業站現況看板_產品', shortLabel: '產品看板', functionNo: 'BILLBOARD OPSTATE_PRODUCTNO', moduleNo: 'RPT' },
+        { id: 'function:RPT:BILLBOARD TIME_STEP BASIS', label: '產出看板時段主檔', shortLabel: '時段主檔', functionNo: 'BILLBOARD TIME_STEP BASIS', moduleNo: 'RPT' },
+      ],
+    }, {
+      id: 'menu:RPT:RESOURCE', label: '資源', shortLabel: '資源', children: [
+        { id: 'function:RPT:COMP MATERIAL BY COMPONENT', label: '元件使用物料查詢', shortLabel: '元件用料', functionNo: 'COMP MATERIAL BY COMPONENT', moduleNo: 'RPT' },
+        { id: 'function:RPT:COMP MATERIAL BY MATERIAL', label: '物料用於元件查詢', shortLabel: '物料用途', functionNo: 'COMP MATERIAL BY MATERIAL', moduleNo: 'RPT' },
+      ],
+    }, {
+      id: 'menu:RPT:LOT', label: '生產批', shortLabel: '生產批', children: [
+        { id: 'function:RPT:CONFIRM LOT', label: '生產批狀態查詢', shortLabel: '生產批查詢', functionNo: 'CONFIRM LOT', moduleNo: 'RPT' },
+      ],
+    }, {
+      id: 'menu:RPT:INPROCESS', label: '在製品', shortLabel: '在製品', children: [
+        { id: 'function:RPT:EQP DAILY REPORT', label: '設備稼動查詢', shortLabel: '設備稼動', functionNo: 'EQP DAILY REPORT', moduleNo: 'RPT' },
+        { id: 'function:RPT:EQP DAILY UTILIZATION CHART', label: '每日設備稼動長條圖', shortLabel: '稼動長條圖', functionNo: 'EQP DAILY UTILIZATION CHART', moduleNo: 'RPT' },
+        { id: 'function:RPT:EQP MTTR SUMMARY', label: '設備 MTTR 統計表', shortLabel: '設備 MTTR', functionNo: 'EQP MTTR SUMMARY', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1243,6 +1266,13 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:BILLBOARD OPSTATE': appBasePath + '/RPT/OpStateBoard',
   'function:RPT:BILLBOARD OPSTATE_PRDTYPE': appBasePath + '/RPT/OpStateProductTypeBoard',
   'function:RPT:BILLBOARD OPSTATE_PRODUCTNO': appBasePath + '/RPT/OpStateProductNoBoard',
+  'function:RPT:BILLBOARD TIME_STEP BASIS': appBasePath + '/RPT/TimeStepBasis',
+  'function:RPT:COMP MATERIAL BY COMPONENT': appBasePath + '/RPT/ContMaterialByComponent',
+  'function:RPT:COMP MATERIAL BY MATERIAL': appBasePath + '/RPT/ContMaterialByMaterial',
+  'function:RPT:CONFIRM LOT': appBasePath + '/RPT/ConfirmLot',
+  'function:RPT:EQP DAILY REPORT': appBasePath + '/RPT/EqpDailyReport',
+  'function:RPT:EQP DAILY UTILIZATION CHART': appBasePath + '/RPT/EqpDailyUtilizationChart',
+  'function:RPT:EQP MTTR SUMMARY': appBasePath + '/RPT/EqpMttrSummary',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1351,6 +1381,7 @@ const functionRoutes: Record<string, string> = {
   'BILLBOARD OPSTATE': appBasePath + '/RPT/OpStateBoard',
   'BILLBOARD OPSTATE_PRDTYPE': appBasePath + '/RPT/OpStateProductTypeBoard',
   'BILLBOARD OPSTATE_PRODUCTNO': appBasePath + '/RPT/OpStateProductNoBoard',
+  'BILLBOARD TIME_STEP BASIS': appBasePath + '/RPT/TimeStepBasis',
   'FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
   'SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
   'SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
@@ -1718,6 +1749,13 @@ const isRt207OpOutputTrendChartPage = computed(() => activeMasterKey.value === '
 const isRt201OpStateBoardPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE')
 const isRt202OpStateProductTypePage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE_PRDTYPE')
 const isRt203OpStateProductNoPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE_PRODUCTNO')
+const isRt204TimeStepBasisPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD TIME_STEP BASIS')
+const isRt603ContMaterialByComponentPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY COMPONENT')
+const isRt604ContMaterialByMaterialPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY MATERIAL')
+const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function:RPT:CONFIRM LOT')
+const isRt410EqpDailyReportPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY REPORT')
+const isRt411EqpDailyUtilizationChartPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY UTILIZATION CHART')
+const isRt412EqpMttrSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3968,6 +4006,48 @@ async function signOut(): Promise<void> {
         />
         <OpStateProductNoBoard
           v-else-if="isRt203OpStateProductNoPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <TimeStepBasisBoard
+          v-else-if="isRt204TimeStepBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ContMaterialByComponent
+          v-else-if="isRt603ContMaterialByComponentPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ContMaterialByMaterial
+          v-else-if="isRt604ContMaterialByMaterialPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ConfirmLot
+          v-else-if="isRt501ConfirmLotPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <EqpDailyReport
+          v-else-if="isRt410EqpDailyReportPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <EqpDailyUtilizationChart
+          v-else-if="isRt411EqpDailyUtilizationChartPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <EqpMttrSummary
+          v-else-if="isRt412EqpMttrSummaryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

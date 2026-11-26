@@ -1,40 +1,81 @@
 # 公司端待辦
 
-## 公司端最新交付：RPT RT203 作業站現況看板_產品（2026-11-26）
+## 公司端最新交付：RPT RT412 設備 MTTR 統計表（2026-11-26）
+
+- [x] 核對 `frmEQP_MTTRSummary`／Designer、RPT `LoadEQPMTTRSummary` Service／Core；完成 `/YMES/RPT/EqpMttrSummary` DEV 日期、Area／Type／Equipment 多選、Chamber 顯示、故障次數／MTTR／MTBF／Availability 計算及說明窗。[RT412 規格與家用端 API handoff](docs/modules/RPT/設備MTTR統計表_RT412.md)
+- [x] 記錄區間截短、故障狀態由 `TBLEQPSTATECONTROL` 設定、Chamber／父設備篩選限制、SQL 字串串接及隱藏的月結儲存 handler。所需 MESTEST DDL refs 已在 repo；未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端核對 DDL refs 與 YMES live schema／索引、有效 Breakdown ControlType 及 Chamber 篩選語意，實作授權、參數化、日期範圍／設備筆數受限的唯讀 API。下一項依清冊為 RT413「設備 MTTR 統計表_以月份匯總」。
+
+## 前項公司端交付：RPT RT411 每日設備稼動長條圖（2026-11-26）
+
+- [x] 核對主／子設備 Form、RPT Service／Core；完成 `/YMES/RPT/EqpDailyUtilizationChart` DEV Gantt 狀態時間軸、Area／Type／Equipment 多選、稼動率、區段明細及 ChamberManage 子設備查詢。[RT411 規格與家用端 API handoff](docs/modules/RPT/每日設備稼動長條圖_RT411.md)
+- [x] 記錄狀態區間 overlap／clip 條件及 `UtilizationType=0` 稼動率口徑；所需 DDL refs 已在 repo。未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT412 已完成，下一項依清冊為 RT413。
+
+## 前項公司端交付：RPT RT410 設備稼動查詢（2026-11-26）
+
+- [x] 核對 `frmEQPDailyReport`、`wsRPT.LoadEQPDailyReport`／`LoadData_SonEQPData`、`clsReport` Core；完成 `/YMES/RPT/EqpDailyReport` Vue DEV 日期範圍、Area／多設備 lookup、狀態百分比／Moves、點列圓餅明細及 ChamberManage 子設備展開。[RT410 規格與家用端 API handoff](docs/modules/RPT/設備稼動查詢_RT410.md)
+- [x] 記錄主設備狀態查詢以 `EndTime <= queryEnd` 過濾、子設備用時間區間 overlap 條件的差異；state percentages 及 Moves SQL 邊界待家用端核對。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端比對已存在的 Oracle DDL refs 與 YMES live schema／索引；核實主／子設備區間語意，再實作授權、參數化、期間與筆數受限的唯讀設備稼動 API。RT412 已完成，下一項依 RPT 清冊為 RT413。
+
+## 前項公司端交付：RPT RT501 生產批狀態查詢（2026-11-26）
+
+- [x] 核對 `frmLotState`、WIP `LoadLotBasisJoinState` Service／Core；完成 `/YMES/RPT/ConfirmLot` DEV 八條件查詢、lookup、Status／庫存限制、排序和屬性明細假視窗。[RT501 規格與家用端 API handoff](docs/modules/RPT/生產批狀態查詢_RT501.md)
+- [x] Status=6 在狀態註解中出現、但 AdditionalXml 僅允許 0–5、11、12；已記錄。所需 DDL refs 在 repo，未用桌機 Oracle profile，未連 PostgreSQL／做正式 API/schema／build／test／browser。
+- [ ] 家用端比對 WIP／inventory DDL refs 與 live schema／索引，實作授權、參數化、固定狀態條件及有上限分頁的唯讀查詢 API。
+
+## 前項公司端交付：RPT RT604 物料用於元件查詢（2026-11-26）
+
+- [x] 核對 `frmCont_CompMaterial_byMaterial`、物料／產品選取 Service、`wsWIP.LoadCont_MaterialLotComp_JoinLog` 及 `tcWIP_IC.clsLot`；完成 `/YMES/RPT/ContMaterialByMaterial` DEV 雙模式、兩種選取窗、MaterialLot No 篩選及依 MO／BaseLot／OP／Component 排序。[RT604 規格與家用端 API/schema handoff](docs/modules/RPT/物料用於元件查詢_RT604.md)
+- [x] 記錄 Product No 仍以 MaterialNo 參數加 MaterialLevel=1 傳給 Core；RT603／RT604 共用三張 WIP 表。可信 MESTEST DDL／metadata 未找到，桌機 Oracle profile 不存在，未查 Oracle／猜 CREATE。
+- [ ] 家用端核對三表 MESTEST DDL／metadata、YMES live schema／索引與權限；實作參數化唯讀 material-component-usage API，要求非空編號、限制 MaterialLevel=0／1、可選 MaterialLotNo 及回傳筆數上限。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT501、RT410、RT411 已完成，下一項依清冊為 RT412「設備 MTTR 統計表」。
+
+## 前項公司端交付：RPT RT603 元件使用物料查詢（2026-11-26）
+
+- [x] 核對 `frmCont_CompMaterial_byComp`、`wsWIP.LoadCont_MaterialLotComp_JoinLog`、`tcWIP_IC.clsLot.LoadCont_MaterialLotComp_JoinLog`；完成 `/YMES/RPT/ContMaterialByComponent` DEV 假資料查詢、欄位 Grid、大小寫、OP No 排序及空條件行為說明。[RT603 規格與家用端 API/schema handoff](docs/modules/RPT/元件使用物料查詢_RT603.md)
+- [x] 確認查詢以 Report Mode 讀取 `tblWIPLotBasis`／`tblWIPLotLog`／`tblWIPCont_MaterialLotComp`，依 BaseLotNo、LotSerial 連結。三表可信 MESTEST DDL／metadata 未找到；桌機受保護 Oracle profile 不存在，未查 Oracle／猜 CREATE。
+- [ ] 家用端核對三表 MESTEST DDL／metadata 和 YMES live schema／索引；以參數化、受授權、非空 ComponentNo 的唯讀報表 API 提供穩定排序及筆數上限。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT501、RT410、RT411 已完成，下一項依清冊為 RT412。
+
+## 公司端最新交付：RPT RT204 產出看板時段主檔（2026-11-26）
+
+- [x] 核對主 Form／Designer、定義 Form／Designer、RPT TimeStep CRUD／Approve Service 與 clsReport Core；完成 Vue DEV 四狀態篩選、Grid、Add／Edit／Copy、Apply／Confirm、Approve、刪除／停用與跨午夜重疊互動。[RT204 規格與家用端 API/schema handoff](docs/modules/RPT/產出看板時段主檔_RT204.md)
+- [x] 記錄舊 Core 只比對狀態 0／2，重疊條件可能漏掉完整包含，核准不重驗；Repo 無可信 tblRPTTimeStepBasis DDL，桌機 Oracle profile 不存在，未猜 CREATE。
+- [ ] 家用端核對 MESTEST DDL／metadata、YMES live schema／索引及日期型別；設計參數化 CRUD 與交易式重疊核准 API。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT603、RT604 已完成，下一項依 RPT 清冊為 RT501。
+
+## 前項公司端交付：RPT RT203 作業站現況看板_產品（2026-11-26）
 
 - [x] 公司端核對 `frmBillBoard_OPState_ProductNo`／Designer、SetupType 3、RPT config／ProductNo Service／Core 與 WIP Lot Detail；完成 Vue DEV ProductNo 堆疊狀態圖、共用數量軸、設定、刷新、雙擊放大、右鍵 Lot Detail 與 Copy toast。[RT203 規格與家用端 API/schema handoff](docs/modules/RPT/作業站現況看板_產品_RT203.md)
 - [x] LotState／LotBasis／ProductBasis DDL refs 可用；共用看板 config／content DDL 缺。桌機 Oracle attachment 不存在，未新查 Oracle／猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端依 handoff 核 live schema／索引，以受授權、參數化 API 支援 ProductNo 狀態彙總及分頁 Lot Detail；確認 SetupType 3 user/device scope。下一項依 RPT 清冊為 RT204。
+- [ ] 家用端依 handoff 核 live schema／索引，以受授權、參數化 API 支援 ProductNo 狀態彙總及分頁 Lot Detail；確認 SetupType 3 user/device scope。RT603、RT604 已完成，下一項依 RPT 清冊為 RT501。
 
 ## 前項公司端交付：RPT RT202 作業站現況看板_產品類別（2026-11-26）
 
 - [x] 公司端核對 `frmBillBoard_OPState_PRDType`／Designer、共用 SetupType 2、RPT config／產品類別 Service／Core 與 WIP Lot Detail Service／Core；完成 Vue DEV 多 ProductType 系列堆疊 Queue／Run／Hold／Wait、跨 OP 共用數量軸、設定、刷新、雙擊放大、ProductNo 鑽取與右鍵 Lot Detail。[RT202 規格與家用端 API/schema handoff](docs/modules/RPT/作業站現況看板_產品類別_RT202.md)
 - [x] WIP LotState／LotBasis／ProductBasis DDL refs 可用；共用看板 config／content DDL 缺。桌機 Oracle attachment 不存在，未新查 Oracle／猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端沿 RT201 handoff 做受授權、參數化的 ProductType 狀態彙總 API，核 live schema／索引；確認 SetupType 2 設定 user/device scope。RT203 公司端 handoff 已完成，下一項依 RPT 清冊為 RT204。
+- [ ] 家用端沿 RT201 handoff 做受授權、參數化的 ProductType 狀態彙總 API，核 live schema／索引；確認 SetupType 2 設定 user/device scope。RT203 公司端 handoff 已完成，RT603、RT604 已完成，下一項依 RPT 清冊為 RT501。
 
 ## 前項公司端交付：RPT RT201 作業站現況看板（2026-11-26）
 
 - [x] 公司端核對 `frmBillBoard_OPState`／Designer、共用 SetupType 1／Child Form、RPT config／狀態／產品鑽取 Service／Core 與 WIP Lot Detail Service／Core；完成 Vue DEV Queue／Run／Hold／Wait 柱／圓餅、產品類別／編號鑽取、設定、刷新、雙擊放大及 Lot Detail。[RT201 規格與家用端 API/schema handoff](docs/modules/RPT/作業站現況看板_RT201.md)
 - [x] WIP Lot、OP、Product、Process、Customer DDL references 可用；看板 config／content DDL 缺。桌機 Oracle attachment 不存在，未查 Oracle／猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端核對 `/api/reports/op-state`、`op-state-breakdown`、`op-state-lots` 的 live schema／索引、查詢授權與分頁；確定設定 user/device scope 後建正式 API 與可信 CREATE-only SQL。RT202、RT203 已完成，下一項 RT204。
+- [ ] 家用端核對 `/api/reports/op-state`、`op-state-breakdown`、`op-state-lots` 的 live schema／索引、查詢授權與分頁；確定設定 user/device scope 後建正式 API 與可信 CREATE-only SQL。RT202、RT203 已完成，RT603、RT604 已完成，下一項 RT501。
 
 ## 前項公司端交付：RPT RT207 作業站時段產出_趨勢圖（2026-11-26）
 
 - [x] 公司端核對 TrendChart Form／Designer、共用 SetupType 5、RPT config／summary／LotDetail Service／Core；完成 `function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART` Vue DEV 複合趨勢圖、設定、刷新、雙擊放大和右鍵 Lot Detail。[RT207 規格與 API/schema handoff](docs/modules/RPT/作業站時段產出趨勢圖_RT207.md)
 - [x] 呈現 Good／Scrap／Defect 柱、Yield 折線、共用數量軸及未開始時段零值；LotLog MESTEST DDL reference 已有，time-step／設定 DDL 未找到。DEV 全是假資料，右鍵 copy 僅模擬提示；未查 Oracle／猜 CREATE、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端沿 RT205 核實摘要 API、Yield／時段邊界與 Lot Detail schema／索引；決定安全 user/device 設定 scope，再實作 SetupType 5 設定 API／可信 CREATE-only SQL。RT201–RT203 已完成，下一項 RT204。
+- [ ] 家用端沿 RT205 核實摘要 API、Yield／時段邊界與 Lot Detail schema／索引；決定安全 user/device 設定 scope，再實作 SetupType 5 設定 API／可信 CREATE-only SQL。RT201–RT203 已完成，RT603、RT604 已完成，下一項 RT501。
 
 ## 前項公司端交付：RPT RT206 作業站時段產出_良率儀表板（2026-11-26）
 
 - [x] 核對 `frmBillBoard_OPOutputSummary_Gauge`／Designer、共用 `frmBillBoard_OPStateSetup`、`LoadBillBoardOPStateConfig(SetupType=4)` 和共用摘要 Service／Core；完成 `function:RPT:BILLBOARD OPOUTPUT SUMMARY GAUGE` Vue DEV Gauge、已開始時段 × OP 卡片、依 OP／時段排序、設定及自動刷新。[RT206 規格與 API/schema handoff](docs/modules/RPT/作業站時段產出良率儀表板_RT206.md)
 - [x] 同步 Good／Scrap／Defect／累計 Good 與 `YieldContainDefect`；Gauge 固定色帶 0–60／60–80／80–100%，StdYield 雖載入但原碼自訂門檻註解掉。LotLog MESTEST DDL reference 已有，RT206 config／時段 DDL 缺；未猜 CREATE、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [x] RT206 後已完成 RT207、RT201–RT203；下一項依 RPT 清冊為 RT204。
+- [x] RT206 後已完成 RT207、RT201–RT203；RT603、RT604 已完成，下一項依 RPT 清冊為 RT501。
 
 ## 前項公司端交付：RPT RT205 作業站時段產出看板（2026-11-26）
 
 - [x] 核對主看板、Setup、History Query Form／Designer，`wsRPT.LoadBillBoardOPOutputConfig`／`UpdBillBoardOPOutputConfig`／`LoadBillBoardOPOutputSummary` 與 `clsReport` Core；完成 `function:RPT:BILLBOARD OPOUTPUT SUMMARY` Vue DEV 自動更新、設定、歷史查詢及 StdYield 標紅。[RT205 規格與 API/schema handoff](docs/modules/RPT/作業站時段產出看板_RT205.md)
 - [x] 說明時段表 `tblRPTTimeStepBasis`、LotLog `tblWIPLotLog_Report`、Good／Fail／Defect 與 `YieldContainDefect`；標記舊 Core 時段閉區間重疊與設定 LEFT JOIN 疑點。repo 有 2026-11-19 擷取的 LotLog MESTEST DDL；時段／設定 DDL 與桌機 Oracle profile metadata 未驗證，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [x] RT205 後依清冊接續完成 RT206、RT207、RT201–RT203；下一項為 RT204。
+- [x] RT205 後依清冊接續完成 RT206、RT207、RT201–RT203；RT603、RT604 已完成，下一項 RT501。
 
 ## 前項公司端交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
 
