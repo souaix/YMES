@@ -1,11 +1,20 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP803 8D 結案 schema 與正式 API（2026-11-27）
+
+- 依 repo 中 WP508／WP802 的 Oracle source DDL、metadata 與 PostgreSQL CREATE-only 建立 migration `0088_wip_wp803_close_schema.sql`，正式 YMES 原先缺少 8D Basis／Release／ReleaseLog／TeamMember 四表。Migration checksum `929C1BC4EF4DD708B02DB156ADD4A9A981720D8011AD453D5DC4FAEBAA1344E1`；rollback checksum `BA50B8769989D7A7BACE70E6F95CF0AFF33AFAA34DD6F304C76FDFCCF04C219D`。只建立空結構，不匯入 MES 業務資料。Rollback 只允許在四表均為空時 DROP。
+- 套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-wp803-0088-20261127.dump`，785,646 bytes，SHA-256 `1d484f7bc381341f05143d0720064138e752a625dac466deb334446eaae3065b`，root:root mode 600；`pg_restore --list` 通過（2,162 entries）。
+- 套用後 catalog 確認 Basis／Release／ReleaseLog／TeamMember 分別為 43／10／10／14 欄，四表資料筆數均為 0；`ymes_app` 僅取得四表 SELECT，Release 另只對結案編輯六欄授 UPDATE。`SET ROLE ymes_app` 的清單與 D1 部門聯查 EXPLAIN 通過，未執行 DML。
+- 正式 API 實作登入保護的 `GET /api/wip/8d-close`、`GET /{qrsNo}`、`GET /{qrsNo}/team-members`、`PUT /{qrsNo}`；修改以完整 expected snapshot、IssueState=0、主單未結案、Serializable 交易及目前 D1 部門/人員成員驗證保護。`POST /approve` 因 `8D CLOSE` Issue Job／回呼來源未核實，固定回 503，不變更 Release、ReleaseLog 或 Basis。
+- .NET 9 Release build 成功（NU1900 僅表示 NuGet 弱點資料來源無法連線）。API-only 發布為 `ymes-api:wp803-close-20261127-a2`，image ID `sha256:d6d40bab48737f28d76c40a634ef61ec836caddf6d0a24d803134c014e73b4fc`；上一版 a1 保留為 `ymes-api:before-wp803-close-20261127-a2`（`sha256:2ad40652f14b8848c339b0399101531ee7a3dfc302d0ed333e3f045c18622357`）。Compose 僅更新 `ymes-api`，其他 Web／專案容器未重建。
+- 正式 readiness 回 200、匿名清單 API 回 401；app-browser Demo session 的清單回 `totalCount=0`，不存在的明細及 D1 團隊查詢各回 404。正式表無資料，未寫入測試列，因此尚無法在正式端執行有效資料的修改操作；WP803 `/YMES/WIP/8DClose` GUI 維持 F1 隔離停用。
+
 ## 最新：WIP WP803 部門表 Oracle defaults 對齊（2026-11-27）
 
 - 依 MESTEST 唯讀來源 DDL `database/reference/mestest_wip_wp803_department_source_ddl.sql` 與 PostgreSQL CREATE-only 核對正式 `YMES.tblusrdepartmentbasis`。原表欄位、型別、NULL 與 PK 已一致，僅缺 `issuestate`、`controldtconect`、`dtconectqty`、`datastamp` 的來源 `DEFAULT 0`。
 - 套用 `0087_wp803_department_source_defaults.sql`，SHA-256 `774FB1FDA215C7634204741107ABA38C9C80562E3CCB247898F64828F847AF5D`；rollback SHA-256 `07106E690D369F2DD7EE25B777560B3E7D9179D826F36D644FDEB2B37A2813CD`。Migration 以交易執行，先驗證目標表、四欄型別／NULL 與現有 default，僅執行 `ALTER COLUMN SET DEFAULT 0`，沒有更新既有資料列。Rollback 也會先驗證四個 default 仍是 migration 值。
 - 套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-wp803-0087-20261127.dump`，785,606 bytes，SHA-256 `2b18371eabf707ec14ae0387614cdedc2d2ea161fc0f6a1f88145a06c39d515a`，root:root mode 600；`pg_restore --list` 2,162 entries。套用後回查：`issuestate numeric(1,0) NOT NULL DEFAULT 0`、`controldtconect numeric(1,0) NOT NULL DEFAULT 0`、`dtconectqty numeric(3,0) NOT NULL DEFAULT 0`、`datastamp numeric(11,0) NULL DEFAULT 0`。
-- 本 migration 僅補齊 WP803 部門 lookup 表結構來源；WP803 正式結案 API、簽核原子性與附件仍依模組規格及待辦接續處理。沒有讀取或修改部門業務資料列。
+- 本 migration 僅補齊 WP803 部門 lookup 表結構來源；結案查詢/編輯 API 已依上方 0088 紀錄部署。簽核原子性與附件仍依模組規格及待辦接續處理。沒有讀取或修改部門業務資料列。
 
 ## 最新：RPT RT205 OP Attribute lookup（2026-11-27）
 

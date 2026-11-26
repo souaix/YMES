@@ -1,10 +1,14 @@
 # 家裡電腦接手清單
 
-## 家用端 WIP WP803 部門表來源預設對齊（2026-11-27）
+## 家用端 WIP WP803 8D 結案 schema／API（2026-11-27）
 
-- [x] 依可信 Oracle source DDL 比對正式 PostgreSQL catalog；`tblusrdepartmentbasis` 欄位／型別／NULL／PK 已一致，只缺四個來源 `DEFAULT 0`。
-- [x] 套用 migration `0087_wp803_department_source_defaults.sql` 補上 IssueState、ControlDtConect、DtConectQty、DataStamp 預設值；執行前完成可還原的完整備份，執行後回讀四欄定義。只改 schema，不讀寫既有部門資料列。
-- [ ] 接續完成 WP803 登入保護的查詢、結案編輯、部門/團隊 lookup 與原子簽核 API；遵守 [WP803 模組規格](docs/modules/WIP/8D矯正單結案作業.md)，不以 DEV 假資料回正式成功。
+- [x] 依可信 Oracle source DDL 比對正式 PostgreSQL catalog；`tblusrdepartmentbasis` 欄位／型別／NULL／PK 一致，套用 0087 補上來源 `DEFAULT 0`，執行前完整備份，未讀寫既有部門資料列。
+- [x] 套用 0088 建立四張來源空表 `tblwip8dbasis_factory`、`tblwip8d_release`、`tblwip8d_releaselog`、`tblwip8d_teammember`，授予最小 SELECT 及 Release 六欄 UPDATE；執行前完整備份、checksum 與回讀詳見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。四表都是 0 筆，未灌正式測試資料。
+- [x] 完成登入保護的清單／明細／D1 團隊 lookup／結案編輯 API。編輯要求 expected snapshot、IssueState=0、主單未結案、Serializable/CAS，並驗證部門與人員編號/姓名都屬該 QRS 的 D1 團隊。
+- [x] .NET 9 Release build 成功，API-only 部署 `ymes-api:wp803-close-20261127-a2`（`sha256:d6d40bab48737f28d76c40a634ef61ec836caddf6d0a24d803134c014e73b4fc`）；ready 200、匿名 401。app-browser Demo 驗證空清單及不存在資料明細/團隊查找 404；正式表無資料，未能驗證有效資料的結案編輯操作。
+- [ ] 批次核准 endpoint 先安全回 503、不改資料；等公司端交付 `8D CLOSE` Issue Job Map、簽核 callback、通知與 ReleaseLog/Basis D9 正確寫入來源，再完成原子簽核 API。
+- [ ] 公司端接 `/YMES/WIP/8DClose` 正式 UI 到以上 API、保留 DEV 假資料模式；不得在未核實簽核來源前啟用正式 Approve。詳 [公司端待辦](todolist_officepc.md)。
+- [ ] 正式同步有效 8D 主單／Release／D1 TeamMember 後，用既有 QRSNo 在 app-browser 補驗清單、明細、部門/人員、結案欄位更新及 stale snapshot 409；目前正式四表皆空，不在正式庫造測試列。
 
 詳見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 

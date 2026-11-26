@@ -1,5 +1,13 @@
 # 部署設定檔
 
+## 家用端 WP803 結案 API a2 發布（2026-11-27；API-only）
+
+- 來源基底 `b64c95f`，加入 WP803 結案 Controller／Repository、0088 schema migrations 及 D1 成員驗證；本機 `.NET 9` Release build 成功。NuGet 弱點資料來源連線警告 `NU1900` 不影響編譯。
+- 私有封裝 `.codex-build/ymes-api-wp803-api-20261127-a2.tar.gz` SHA-256 `4F7DC316F50C8B964059DDCC991BBF989CE7CA8D4053AD373EF206F1F6D033AA`；封裝內 `YMes.Api.dll` SHA-256 `43750D84B27DA90F97739A343D1BD213B59AFE9CFBC7BC4D9949E563098B608F`。不含 `.env`／DB 機密；遠端來源為 `/opt/ymes/releases/wp803-api-20261127-a2/`。
+- 正式映像 `ymes-api:wp803-close-20261127-a2`，image ID `sha256:d6d40bab48737f28d76c40a634ef61ec836caddf6d0a24d803134c014e73b4fc`；回復標籤 `ymes-api:before-wp803-close-20261127-a2` 指向 a1 `sha256:2ad40652f14b8848c339b0399101531ee7a3dfc302d0ed333e3f045c18622357`。更新 Compose 僅替換 `ymes-api`；`ymes-web`、`ymes-master-web` 及其他專案不變。
+- 部署 readiness 200、匿名 API 401。app-browser Demo session 確認正式清單 API 回 0 筆、不存在 QRS 明細及 D1 團隊查找回 404。四張 WP803 表均為空，沒有正式測試列，故不宣稱編輯正向操作已驗；WP803 正式 GUI 維持 F1 停用。Approve API 固定 503 且無資料寫入，直到公司端提供 Issue Job Map／callback 來源。
+- 前置 migration 0088 只建立四張空表並授予最小讀取／Release 六欄更新權限，完整備份及 checksum 記於 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。保留遠端部署 a1 與資料庫備份以供分別回復；程式回復不會回復資料庫。
+
 ## 家用端 SC215 正式發行（2026-11-23；空資料環境操作驗收）
 
 來源基底 `b36f99b`；API 映像 `sha256:04eb130a6ade95c31d519a8711a55fbb3e2db4a5a6d460b37c8d8b9b6f046af0`，Web 映像 `sha256:23e3fa00665cee0dde3697ec60447e2d42afa64514900a2b04fafe6938a16b42`。使用獨立 .NET 9 API/Web 預建映像部署；API、Web 分容器維持 `/YMES/API` 與 `/YMES/` 路由，沒有資料庫 migration／DDL。

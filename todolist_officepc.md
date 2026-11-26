@@ -1,5 +1,12 @@
 # 公司端待辦
 
+## 公司端接手：WIP WP803 正式 API UI 對接（2026-11-27）
+
+- [x] 家用端已部署登入保護 `/YMES/API/api/wip/8d-close` 清單、`/{qrsNo}` 明細、`/{qrsNo}/team-members?departmentNo=...` D1 部門/人員查找及 `PUT /{qrsNo}` 結案欄位更新；修改會驗 expected snapshot、IssueState、主單未結案及人員屬於該 QRS 的 D1 團隊。詳 [WP803 模組規格](docs/modules/WIP/8D矯正單結案作業.md)。
+- [ ] 公司端 pull 後將 `/YMES/WIP/8DClose` 正式模式接到家用端 API；保留 DEV localStorage 假資料流程。接清單條件／日期／分頁、明細、D1 部門及人員 lookup、expected+value 編輯提交與正式 loading/error/empty/conflict 狀態；正式模式不得讀假資料或回假成功。
+- [ ] `Approve` 在正式模式維持停用並提示簽核來源尚未就緒；API 暫回 503 且不改資料。請公司端補交原生 `8D CLOSE` Issue Job Map、Approve/Reject callback、通知與 ReleaseLog/Basis D9 的交易來源，家用端再完成簽核 API。
+- [ ] 公司端以 DEV 假資料驗收清單、查詢條件、分頁、明細、D1 部門/人員、編輯成功、必填/欄長錯誤、409 stale snapshot、Close/重進/直接網址；完成後更新 WP803 模組 MD。正式資料目前四張 8D 表皆空，先不灌生產測試列；公司端不連 PostgreSQL、不做 SSH/部署。
+
 ## 公司端接手：RT201–RT203 作業站看板 API 對接與設定來源（2026-11-27）
 
 - [ ] 正式 DEV 頁接線到家用端唯讀 API：/YMES/API/api/reports/op-state?opNos=...、/api/reports/op-state-breakdown?opNos=...&groupBy=productType|productNo&productType=...、/api/reports/op-state-lots?opNos=...&statuses=0,1,2,3&productType=...&productNo=...&page=...&pageSize=...。保留 DEV 假資料，確認 Production 載入、錯誤、空結果、分頁及 RT201→ProductType→ProductNo／Lot Detail 操作。
