@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 公司端接手：RT201–RT203 作業站看板 API 對接與設定來源（2026-11-27）
+
+- [ ] 正式 DEV 頁接線到家用端唯讀 API：/YMES/API/api/reports/op-state?opNos=...、/api/reports/op-state-breakdown?opNos=...&groupBy=productType|productNo&productType=...、/api/reports/op-state-lots?opNos=...&statuses=0,1,2,3&productType=...&productNo=...&page=...&pageSize=...。保留 DEV 假資料，確認 Production 載入、錯誤、空結果、分頁及 RT201→ProductType→ProductNo／Lot Detail 操作。
+- [ ] 透過公司端原生 Oracle 唯讀 metadata 取得 TBLRPTBillBoardOPStateConfig／TBLRPTBillBoardOPStateContent 原始 DDL、欄位型別／長度／precision／nullable／default、PK／unique／FK／indexes；說明 HostName／PCNo、SetupType 1／2／3 的關聯與儲存範圍，確認是否含 user id。只交結構與必要範例鍵，不匯出其他使用者設定或業務資料，不在 Oracle 建表。
+- [ ] API 目前依登入驗證，要求 OPNo 存在並限制查詢值／回傳列數；YMES 尚無已核實 per-user OP 權限或共用設定表結構。待 DDL／scope 交付後再共同定義正式設定與單一 OP 存取規則，不用 PCNo 冒充使用者授權。
+
 ## 公司端接手：RPT RT410 設備稼動查詢正式 UI（2026-11-27）
 
 - [x] 家用端已部署登入保護 `GET /YMES/API/api/reports/equipment-daily-utilization`。必填 `startTime`／`endTime`（台灣本地、不含時區），可帶 `areaNos`、`equipmentNos`（逗號分隔）及 `chamberManage=true|false`；上限 31 天、100 個條件、2,000 設備。Response 含狀態目錄、父設備、巢狀 Chamber、state percentages、Moves／`LotQtyEqp`、Loss／NoData。詳 [RT410 模組 MD](docs/modules/RPT/設備稼動查詢_RT410.md)。
@@ -73,19 +79,19 @@
 
 - [x] 公司端核對 `frmBillBoard_OPState_ProductNo`／Designer、SetupType 3、RPT config／ProductNo Service／Core 與 WIP Lot Detail；完成 Vue DEV ProductNo 堆疊狀態圖、共用數量軸、設定、刷新、雙擊放大、右鍵 Lot Detail 與 Copy toast。[RT203 規格與家用端 API/schema handoff](docs/modules/RPT/作業站現況看板_產品_RT203.md)
 - [x] LotState／LotBasis／ProductBasis DDL refs 可用；共用看板 config／content DDL 缺。桌機 Oracle attachment 不存在，未新查 Oracle／猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端依 handoff 核 live schema／索引，以受授權、參數化 API 支援 ProductNo 狀態彙總及分頁 Lot Detail；確認 SetupType 3 user/device scope。RT603、RT604 已完成，下一項依 RPT 清冊為 RT501。
+- [x] 家用端已核 live schema／索引並部署登入保護、參數化的 ProductNo 狀態彙總及分頁 Lot Detail API；正式 app-browser 範圍防呆已驗證，正向資料待來源同步。SetupType 3 設定 DDL／scope 仍列於本檔頂端 RT201–RT203 共用交接。
 
 ## 前項公司端交付：RPT RT202 作業站現況看板_產品類別（2026-11-26）
 
 - [x] 公司端核對 `frmBillBoard_OPState_PRDType`／Designer、共用 SetupType 2、RPT config／產品類別 Service／Core 與 WIP Lot Detail Service／Core；完成 Vue DEV 多 ProductType 系列堆疊 Queue／Run／Hold／Wait、跨 OP 共用數量軸、設定、刷新、雙擊放大、ProductNo 鑽取與右鍵 Lot Detail。[RT202 規格與家用端 API/schema handoff](docs/modules/RPT/作業站現況看板_產品類別_RT202.md)
 - [x] WIP LotState／LotBasis／ProductBasis DDL refs 可用；共用看板 config／content DDL 缺。桌機 Oracle attachment 不存在，未新查 Oracle／猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端沿 RT201 handoff 做受授權、參數化的 ProductType 狀態彙總 API，核 live schema／索引；確認 SetupType 2 設定 user/device scope。RT203 公司端 handoff 已完成，RT603、RT604 已完成，下一項依 RPT 清冊為 RT501。
+- [x] 家用端已核 live schema／索引並部署登入保護、參數化的 ProductType 狀態彙總 API；正式 app-browser 範圍防呆已驗證，正向資料待來源同步。SetupType 2 設定 DDL／scope 仍列於本檔頂端 RT201–RT203 共用交接。
 
 ## 前項公司端交付：RPT RT201 作業站現況看板（2026-11-26）
 
 - [x] 公司端核對 `frmBillBoard_OPState`／Designer、共用 SetupType 1／Child Form、RPT config／狀態／產品鑽取 Service／Core 與 WIP Lot Detail Service／Core；完成 Vue DEV Queue／Run／Hold／Wait 柱／圓餅、產品類別／編號鑽取、設定、刷新、雙擊放大及 Lot Detail。[RT201 規格與家用端 API/schema handoff](docs/modules/RPT/作業站現況看板_RT201.md)
 - [x] WIP Lot、OP、Product、Process、Customer DDL references 可用；看板 config／content DDL 缺。桌機 Oracle attachment 不存在，未查 Oracle／猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端核對 `/api/reports/op-state`、`op-state-breakdown`、`op-state-lots` 的 live schema／索引、查詢授權與分頁；確定設定 user/device scope 後建正式 API 與可信 CREATE-only SQL。RT202、RT203 已完成，RT603、RT604 已完成，下一項 RT501。
+- [x] 家用端已核對 `/api/reports/op-state`、`op-state-breakdown`、`op-state-lots` 的 live schema／索引、登入授權與分頁，並完成唯讀 API、正式部署及 app-browser 範圍防呆驗證。正式 OP basis 目前 0 筆，正向資料待來源同步；設定 API 暫不建立，待本檔頂端要求的可信 Config／Content DDL 與 scope。
 
 ## 前項公司端交付：RPT RT207 作業站時段產出_趨勢圖（2026-11-26）
 

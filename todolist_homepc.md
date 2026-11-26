@@ -1,5 +1,17 @@
 # 家裡電腦接手清單
 
+## 家用端 RT201–RT203 作業站看板唯讀 API（2026-11-27）
+
+- [x] PPK／SSH 以 ymes_app 唯讀核對 LotState／LotBasis／OP／Product live 欄位、SELECT 權限及現有索引；四組 SQL PREPARE／EXPLAIN 通過，未讀取 WIP 業務列，未新增 schema／索引。
+- [x] 實作登入保護、參數化唯讀 /api/reports/op-state、op-state-breakdown、op-state-lots；要求明確 OP 清單並驗證存在，最多 100 OP、2,000 彙總群組、每頁 100 筆與 10,000 頁，Status 僅 0–3。Release build 成功，NU1900 僅為 NuGet 弱點來源連線警告。
+- [x] .NET 9 Release 已發布為 `ymes-api:rt201-board-20261127-a1`（image `sha256:4eadbe4950b9710d2a046b6cace87ef686db2c31bf33e2094e553322851bb`）；正式 API healthy、readiness 200、匿名端點 401。已用 app-browser 登入驗證三個端點及非法 groupBy／Status／pageSize 防呆，均回預期 400。
+- [ ] 正式正向資料列驗證待來源同步：live `YMES.tblopbasis` 目前 0 筆，無可用 OP，故無法在正式庫得到有效看板結果；不灌測試列。空結果及有效 OP 查詢待同步後補驗。
+- [ ] 公司端以唯讀方式交付看板 Config／Content 原生 Oracle DDL、完整 columns／nullability／defaults、PK／unique／FK／indexes、HostName／PCNo／SetupType 及實際保存 scope；取得後再設計 user/device 設定 API。詳公司端待辦。
+- [ ] 公司端將 RT201／RT202／RT203 DEV 畫面接到已部署 API；目前不改正式 UI，SetupType 1／2／3 設定仍待可信來源結構與 scope。
+- [x] 登入驗證與有效 OP 清單限制已實作；目前系統沒有可信 per-user OP 權限來源，不能宣稱存在角色或單一 OP 權限隔離。
+
+API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RPT/作業站現況看板_RT201.md)。正式設定 CRUD 依賴公司端提供可信 Config／Content DDL 與儲存範圍；RT201–RT203 DEV UI 接線由公司端待辦追蹤。
+
 ## 家用端 RT410 設備稼動查詢 API（2026-11-27）
 
 - [x] PPK/SSH 比對正式 schema 與來源 WP201／WP305 PostgreSQL CREATE-only refs；建立 0079 兩張空來源表、索引，授 `ymes_app` Area Relation／新表 SELECT；另套 0080 設備／LogGroupSerial 支援索引。兩次完整備份、SQL SHA、catalog／權限見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。未匯入或修改 MES 業務列。

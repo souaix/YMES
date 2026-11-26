@@ -81,6 +81,7 @@ if (!localDemoAuth)
     builder.Services.AddSingleton<YMes.Api.Reports.EquipmentMttrSummaryRepository>();
     builder.Services.AddSingleton<YMes.Api.Reports.ConfirmLotRepository>();
     builder.Services.AddSingleton<YMes.Api.Reports.EquipmentDailyUtilizationRepository>();
+    builder.Services.AddSingleton<YMes.Api.Reports.OpStateBoardRepository>();
 }
 builder.Services.AddControllers();
 

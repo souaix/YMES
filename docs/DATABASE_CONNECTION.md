@@ -1,5 +1,14 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## RT201–RT203 看板唯讀 API live schema 核對（2026-11-27）
+
+- 以家用電腦 PPK／SSH 連正式主機，唯讀檢查 YMES.tblwiplotstate、tblwiplotbasis、tblopbasis、tblprdproductbasis；ymes_app 對四表皆有 SELECT。LotState 有既有 i_tblwiplotstate_04(opno)／i_tblwiplotstate_01(baselotno)；LotBasis PK 為 baselotno、ProductBasis PK 為 (productno, productversion)、OPBasis PK 為 opno。producttype 來自 ProductBasis。
+- 用 ymes_app 執行四組看板 SQL 的 PREPARE／EXPLAIN；OP 主查詢使用 OPNo index，產品彙總／批次明細使用 BaseLotNo index。沒有實際讀取 WIP 業務列、沒有變更資料或權限，亦未新增 migration／索引；因此不需要 schema backup。
+- tblRPTBillBoardOPStateConfig／Content 在 live YMES 和 repo references 均無可信結構。本次未建立或猜測設定表；RT201／202／203 的儲存 scope 及設定 API 待公司端交付 Oracle 原生唯讀 DDL、欄位 metadata、鍵／索引與 HostName／PCNo／SetupType 規則。
+- API 端點與限制見 RT201 規格；所有正式 API 查詢使用登入驗證及唯讀交易。
+- .NET 9 Release image `ymes-api:rt201-board-20261127-a1`（`sha256:4eadbe4950b9710d2a046b6cace87ef686db2c31bf33e2094e553322851bb`）已取代 YMES API service；前版 image 保留為 `ymes-api:before-rt201-board-20261127-a1`。readiness=200、匿名報表端點=401，Compose 僅重建 `ymes-api`；Web／master Web／Nginx／其他容器未更新。
+- 正式 app-browser Demo 登入後檢查三個端點及 groupBy、Status、pageSize 防呆，預期錯誤回應正常。正式 `tblopbasis` 目前 0 筆，無法驗證有效 OP 與有資料回應；沒有新增正式業務測試資料。
+
 ## 最新：0081 RT603／RT604 共用 WIP LotLog 空表（2026-11-27）
 
 - WP101 的 `tblwiplotbasis` Oracle／PostgreSQL CREATE-only refs 已存在，正式 YMES `tblwiplotbasis` 已有 38 欄且 `ymes_app` 僅有查詢權限。QC409 dependency 的 Oracle DDL 與 `database/reference/mestest_wip_lot_log_create.sql` CREATE-only 核實 `TBLWIPLOTLOG` 欄位、`PK(LOTSERIAL)`、`I_TBLWIPLOTLOG_01(LOGGROUPSERIAL)`、`I_TBLWIPLOTLOG_02(LOTNO)`；正式 YMES 原本缺少此表。
