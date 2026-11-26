@@ -2,13 +2,21 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：PM404 設備故障登錄（2026-11-26）
+## 公司端最新交付：PM405 設備修復登錄（2026-11-26）
+
+- [x] 核對 THEIL Form／Def、客製 `UpdEQPRepairRegister`、標準待修查詢與歷史 Service／Core；完成 `function:PM:EQP REPAIR REGISTER` Vue DEV State=1 清單、原因明細、維修表單、有效 Repair Item 與假狀態連動。規格：[PM405 設備修復登錄](modules/PM/設備修復登錄_PM405.md)。
+- [x] 儲存依序建立故障／修復歷史、更新 EMS、移除待修單、寄工程群組郵件；舊流程非原子。`RepairState=default(int)` 實為 0，與 -999 註解不一致；UserNo 過濾已註解。DEV 不呼叫 EMS／寄信。
+- [x] 桌機 Oracle profile 與可信四張歷史表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema 與 MESTEST metadata、外鍵、EMS／Chamber 交易邊界後，實作參數化、冪等與可重試 API／CREATE-only DDL。
+- [ ] 公司端下一項 PM501「設備保養計畫查詢」。
+
+## 前項公司端交付：PM404 設備故障登錄（2026-11-26）
 
 - [x] 核對客製 `frmEQPBreakDownRegister_THEIL_BU1`／Def、THEIL Add／Edit／Confirm Service、標準 Load／Delete／Detail Service 與 Core；完成 Vue DEV State=0 清單、原因明細及 Add／Edit／Copy／Delete／Confirm 假互動。規格：[PM404 設備故障登錄](modules/PM/設備故障登錄_PM404.md)。
 - [x] 記錄新登錄查重不限制 State、設備狀態 `ES102` 預設、NOCHANGED 不改 EMS、Confirm 改 State=1 並寄工程群組郵件。DEV 不連 EMS／寄信。Edit 的 DataStamp 未傳到 Core；父子資料、EMS 更新、登錄確認及郵件不是一個原子流程。
 - [x] 桌機 Oracle profile 與可信父／子表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端先核 live schema、同版 MESTEST metadata、序號產生器與 EMS／Chamber 關聯，再實作版本安全、交易式明細及可重試確認 API／CREATE-only DDL。
-- [ ] 公司端下一項 PM405「設備修復登錄」。
+- [x] 當時下一項 PM405「設備修復登錄」已完成；公司端接續 PM501「設備保養計畫查詢」。
 
 ## 前項公司端交付：PM403 設備與故障原因對應（2026-11-26）
 

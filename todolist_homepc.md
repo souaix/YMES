@@ -1,12 +1,20 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：PM404 設備故障登錄（2026-11-26）
+## 公司端最新交付：PM405 設備修復登錄（2026-11-26）
+
+- [x] 公司端核對 THEIL Form／Def、客製 `UpdEQPRepairRegister`、標準待修查詢及故障／修復歷史寫入，完成 `function:PM:EQP REPAIR REGISTER` DEV 清單與登錄表單。
+- [x] 新增 [PM405 規格與 API/schema handoff](docs/modules/PM/設備修復登錄_PM405.md)：記錄待修 State=1、PM402 active repair lookup、四張歷史表可見欄位及 EMS／通知流程。
+- [x] 公司桌機受保護 Oracle profile 與四張歷史表可信 DDL／metadata 不存在，未猜型別／鍵或 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、PK／FK／索引及 EMS／Chamber 邊界；以交易寫四張歷史表並移除待修單，採冪等更新與可重試通知，再提供 CREATE-only DDL。
+- [ ] 公司端接續 PM501「設備保養計畫查詢」。
+
+## 前項公司端交付：PM404 設備故障登錄（2026-11-26）
 
 - [x] 公司端核對 THEIL 客製 `frmEQPBreakDownRegister_THEIL_BU1`／Def、`wsTHEIL.wsPM` Add／Edit／Confirm、標準查詢／刪除／明細 Service 與 Core，完成 Vue DEV State=0 查詢、原因明細、Add／Edit／Copy／Delete／Confirm 假互動。
 - [x] 新增 [PM404 規格與 API／schema handoff](docs/modules/PM/設備故障登錄_PM404.md)：記錄父表 `tblPMEQPBreakDownState`、子表 `tblPMEQPBreakDownStateDetail` 可見欄位、EquipmentNo 查重、DataStamp 未落實、父子非原子寫入、EMS／Chamber 更新及工程群組郵件流程。
 - [x] 公司桌機受保護 Oracle profile 與可信 DDL／metadata 不存在，未猜欄位型別、PK／FK 或 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
 - [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、序號產生器、欄位型別、索引／FK、`-9999`／DataStamp 語義及設備狀態／Chamber 關聯，再提供 CREATE-only DDL 與交易式、可重試 API。
-- [ ] 公司端接續 PM405「設備修復登錄」。
+- [x] 公司端接續 PM405「設備修復登錄」現已完成交接；下一項依清冊是 PM501「設備保養計畫查詢」。
 
 ## 前項公司端交付：PM403 設備與故障原因對應（2026-11-26）
 
@@ -15,7 +23,7 @@
 - [x] 故障原因 picker 依舊 Service 預設 `IssueState=2`；PM404 依設備類型載入映射供使用者勾選。
 - [x] 公司桌機受保護 Oracle attachment 不存在，repo 無可信映射表 DDL／metadata；未猜型別、約束或 CREATE。公司端未連 YMES PostgreSQL、未實作正式 API/schema。
 - [ ] 家用端核對 PostgreSQL live schema／同版 Oracle metadata、主鍵／FK／索引與 PM404 使用中的映射引用；再實作參數化、expected DataStamp 維護 API 及經核實 CREATE-only DDL。
-- [x] 當時公司端接續 PM404「設備故障登錄」，現已完成並交接；下一項是 PM405「設備修復登錄」。
+- [x] 當時公司端接續 PM404「設備故障登錄」；PM404、PM405 均已完成並交接，下一項依清冊是 PM501「設備保養計畫查詢」。
 
 ## 前項公司端交付：PM402 維修項目基本資料（2026-11-26）
 
@@ -32,7 +40,7 @@
 - [x] 新增 [PM401 規格與家用端 API/schema handoff](docs/modules/PM/故障原因基本資料_PM401.md)，已記錄 `tblPMBreakDownBasis` 欄位名、DataStamp、IssueNo `BREAKDOWN BASIS` 與 PM403／PM404 消費點。
 - [x] 桌機受保護 Oracle profile 及 repo 可信直接表 DDL／metadata 均不存在，未猜欄位型別／鍵或 CREATE SQL；公司端未連 YMES PostgreSQL，未實作正式 API/schema。
 - [ ] 家用端核 live PostgreSQL schema 與 MESTEST DDL／metadata，確認欄位型別、主鍵／索引／FK、PM403／PM404 引用與刪除限制；再實作參數化、DataStamp 併發安全及原子核准／停用 API。
-- [x] 當時下一項 PM402、PM403 均已完成；PM404 亦已完成，公司端現接續 PM405「設備修復登錄」。
+- [x] 當時下一項 PM402、PM403 均已完成；PM404、PM405 亦已完成，公司端現接續 PM501「設備保養計畫查詢」。
 
 ## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
 
