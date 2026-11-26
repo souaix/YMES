@@ -7,8 +7,41 @@ namespace MES.Api.Controllers;
 
 [ApiController]
 [Route("api/smd")]
-public sealed class SmdController(PostgresSmdRepository repository) : ControllerBase
+public sealed class SmdController(
+    PostgresSmdRepository repository,
+    PostgresSmdAreaInventoryRepository areaInventoryRepository) : ControllerBase
 {
+    [HttpGet("area-inventories")]
+    public ActionResult<IReadOnlyList<SmdAreaInventoryDto>> AreaInventories([FromQuery] string? baseAreaNo) =>
+        Execute(() => areaInventoryRepository.ListAreaInventories(baseAreaNo), "區域庫房資料讀取失敗");
+
+    [HttpPost("area-inventories")]
+    public ActionResult<SmdAreaInventoryDto> CreateAreaInventory([FromBody] SmdAreaInventoryWriteRequest request) =>
+        Execute(() => areaInventoryRepository.CreateAreaInventory(request, ActorUserNo), "區域庫房資料無法建立");
+
+    [HttpPut("area-inventories/{areaNo}/{inventoryNo}")]
+    public ActionResult<SmdAreaInventoryDto> UpdateAreaInventory(
+        string areaNo,
+        string inventoryNo,
+        [FromQuery] long dataStamp,
+        [FromBody] SmdAreaInventoryUpdateRequest request) =>
+        Execute(() => areaInventoryRepository.UpdateAreaInventory(
+            areaNo, inventoryNo, request.BaseAreaNo, dataStamp, request, ActorUserNo), "區域庫房資料無法更新");
+
+    [HttpDelete("area-inventories/{areaNo}/{inventoryNo}")]
+    public IActionResult DeleteAreaInventory(
+        string areaNo,
+        string inventoryNo,
+        [FromQuery] string? baseAreaNo,
+        [FromQuery] long dataStamp) =>
+        ExecuteAction(
+            () => areaInventoryRepository.DeleteAreaInventory(areaNo, inventoryNo, baseAreaNo, dataStamp),
+            "區域庫房資料無法刪除");
+
+    [HttpGet("areas/{baseAreaNo}/layout")]
+    public ActionResult<SmdAreaLayoutRelationsDto> AreaLayout(string baseAreaNo) =>
+        Execute(() => areaInventoryRepository.ListAreaRelations(baseAreaNo), "區域配置資料讀取失敗");
+
     [HttpGet("computer-areas")]
     public ActionResult<IReadOnlyList<SmdComputerAreaDto>> ComputerAreas([FromQuery] string? computerNo, [FromQuery] string? factoryNo) =>
         Execute(() => repository.ListComputerAreas(computerNo, factoryNo));

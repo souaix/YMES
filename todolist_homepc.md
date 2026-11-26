@@ -1,5 +1,15 @@
 # 家裡電腦接手清單
 
+## 家用端 SD105 區域庫房 API（2026-11-27）
+
+- [x] PPK/SSH 核實 `YMES.tblsmdareainventory` 已依來源 DDL 建立且欄位、PK、nullable/default 一致；不重建表、不改任何業務列。
+- [x] Migration 0082 僅授予 `ymes_app` 此表 SELECT/INSERT/UPDATE/DELETE；備份與 SHA-256 記錄於 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] SD105 登入保護 CRUD、區域配置選項、同 Base Area/Area 的唯一預設庫房與 DataStamp CAS 已完成；.NET 9 Release build 成功並部署 image `ymes-api:sd105-area-inventory-20261127-a1`。API healthy，readiness 200、匿名 401。
+- [x] 正式 app-browser 驗證 `/YMES/SMD/AreaInventories` 頁面、options API 空回應與不存在 Base Area 的 layout 404；正式 `baseAreas`、`factories` 都是空清單，故新增/修改/複製/刪除無資料可做正向操作，未灌正式測試列。
+- [ ] 正式有效 Base Area／AreaRelation 同步後，再請公司端從 UI 完成 SD105 CRUD 正向驗收；目前由公司端待辦追蹤資料同步及接線檢查。
+
+模組行為、端點、欄位、來源差異及部署驗證詳見 [SD105 模組紀錄](docs/modules/SMD/區域庫房基本設定.md)。
+
 ## 家用端 RT201–RT203 作業站看板唯讀 API（2026-11-27）
 
 - [x] PPK／SSH 以 ymes_app 唯讀核對 LotState／LotBasis／OP／Product live 欄位、SELECT 權限及現有索引；四組 SQL PREPARE／EXPLAIN 通過，未讀取 WIP 業務列，未新增 schema／索引。
@@ -2892,17 +2902,17 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 
 ## SMD SD105 區域庫房基本設定（公司端 2026-11-16 已交接）
 
-- [x] `TBLSMDAREAINVENTORY` 已由 `0017_smd_computer_area_api.sql` 建立空表，欄位長度/複合 PK 依來源 DDL；SD105 CRUD API 尚待完成。
+- [x] `TBLSMDAREAINVENTORY` 已由 `0017_smd_computer_area_api.sql` 建立空表，欄位長度/複合 PK 依來源 DDL；SD105 CRUD API 已完成並部署，詳本檔最新 SD105 進度及模組紀錄。
 
 先讀 `docs/modules/SMD/區域庫房基本設定.md` 及上方 SD104 handoff。公司端已有 `/YMES/SMD/AreaInventories` Vue DEV 頁，FunctionNo=`AREA INV MAP`；沒有 IssueState/核准。
 
 - Oracle `TBLSMDAREAINVENTORY` 已由公司端 SD104 直連查 DDL，來源 logical DDL/PG 空表 CREATE 已包含在 `database/reference/mestest_smd_area_basis_source_ddl.sql`、`mestest_smd_area_basis_create.sql`。不要重複建表；先比對 YMES schema/migrations，缺表才新增。
 - Table PK 是 `(AreaNo,InventoryNo)`，不是 `(BaseAreaNo,AreaNo,InventoryNo)`；BaseAreaNo 是額外範圍條件。沒有 Oracle FK/其他 index。DefaultINV DEFAULT 0 NOT NULL；DataStamp DEFAULT 0 nullable。完整欄位見來源 SQL。
-- 延伸 SMD API：`GET /api/smd/area-inventories?baseAreaNo=`、`POST /api/smd/area-inventories`、`PUT /{areaNo}/{inventoryNo}?dataStamp=`、`DELETE /{areaNo}/{inventoryNo}?baseAreaNo=&dataStamp=`。Base Area 選項沿用 `GET /api/smd/area-basis/options`；Area/Inventory picker 使用 `GET /api/smd/areas/{baseAreaNo}/layout` 中 ObjectType 0/1 nodes。
+- 已部署 SMD API：`GET /api/smd/area-inventories?baseAreaNo=`、`POST /api/smd/area-inventories`、`PUT /{areaNo}/{inventoryNo}?dataStamp=`、`DELETE /{areaNo}/{inventoryNo}?baseAreaNo=&dataStamp=`。Base Area 選項沿用並擴充 `GET /api/smd/area-basis/options`；Area/Inventory picker 使用 `GET /api/smd/areas/{baseAreaNo}/layout` 中 ObjectType 0/1 nodes。
 - Create 必填 BaseAreaNo/AreaNo/InventoryNo；DefaultINV 僅 0/1；伺服器產生 Creator/CreateDate/DataStamp。Edit 不改 key，只改 DefaultINV，更新 Reviser/ReviseDate 並做 DataStamp CAS（支援 NULL）；Delete 交易內比較 DataStamp 後移除。
-- Default=Yes 每一 Area 只能一筆。舊 Add 檢查 BaseAreaNo+AreaNo；舊 Edit 的 `GetAreaInventory` 未帶 BaseAreaNo，可能跨 BaseArea 影響相同 AreaNo。規格已記錄來源差異；實作時保留觀察行為，或在 API change log 明確列出核准的修正。
-- wsSMD Add/Edit 呼叫傳 Creator/CreateDate/DataStamp/Reviser/ReviseDate，但本 checkout 的 clsSMDBasis 方法簽章沒有這些命名參數。新 API 需明確由伺服器產生稽核/CAS，不要假設舊 Core SQL 已寫入這些欄位。所有 API 檢查登入與 SMD 權限，`ymes_app` 只授最小 CRUD。
-- DDL 已從 2026-11-16 直接 metadata query 交付，不必重查 Oracle。schema/API/部署完成後通知公司端 pull 驗收。
+- Default=Yes 每一 BaseAreaNo+AreaNo 只能一筆。舊 Edit 曾漏 BaseAreaNo，YMES API 已一致以 Base Area 範圍驗證，避免跨基底區域互相阻擋。
+- API 由伺服器產生建立／修改稽核欄位並處理 DataStamp CAS；只要求登入，角色／功能權限依使用者指示暫不實作。`ymes_app` 權限只限必要表級 CRUD。
+- DDL 已由公司端 2026-11-16 直查交付，正式表已存在且對齊，不重查、不重建；家用端 API/schema grant/deploy 已完成。等有效 Area 主檔與關聯同步後，再由公司端完成正向 UI 驗收。
 
 ## SMD SD106 過帳電腦之區域（公司端 2026-11-16 已交接）
 

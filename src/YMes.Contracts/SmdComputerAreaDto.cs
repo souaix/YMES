@@ -24,7 +24,45 @@ public sealed record SmdAreaOptionDto(
     int AreaClass,
     string FactoryNo);
 
-public sealed record SmdAreaBasisOptionsDto(IReadOnlyList<SmdFactoryOptionDto> Factories);
+public sealed record SmdAreaBasisOptionsDto(
+    IReadOnlyList<SmdFactoryOptionDto> Factories,
+    IReadOnlyList<SmdAreaOptionDto> BaseAreas);
+
+public sealed record SmdAreaInventoryDto
+{
+    public required string AreaNo { get; init; }
+    public required string InventoryNo { get; init; }
+    public required string BaseAreaNo { get; init; }
+    public required int DefaultInv { get; init; }
+    public string? Creator { get; init; }
+    public DateTime? CreateDate { get; init; }
+    public string? Reviser { get; init; }
+    public DateTime? ReviseDate { get; init; }
+    public long? DataStamp { get; init; }
+}
+
+public sealed record SmdAreaRelationOptionDto(
+    string ObjectNo,
+    string ObjectText,
+    int ObjectType,
+    string? ContainAreaNo,
+    int? ObjectAreaType);
+
+public sealed record SmdAreaLayoutRelationsDto(IReadOnlyList<SmdAreaRelationOptionDto> Relations);
+
+public sealed class SmdAreaInventoryWriteRequest
+{
+    [Required, StringLength(50)] public string AreaNo { get; set; } = "";
+    [Required, StringLength(50)] public string InventoryNo { get; set; } = "";
+    [Required, StringLength(50)] public string BaseAreaNo { get; set; } = "";
+    [Required] public int? DefaultInv { get; set; }
+}
+
+public sealed class SmdAreaInventoryUpdateRequest
+{
+    [Required, StringLength(50)] public string BaseAreaNo { get; set; } = "";
+    [Required] public int? DefaultInv { get; set; }
+}
 
 public sealed class SmdComputerAreaWriteRequest
 {

@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：SMD SD105 區域庫房 API 權限（2026-11-27）
+
+- PPK／SSH 先查 PostgreSQL catalog，確認 live `YMES.tblsmdareainventory` 已存在，欄位型別、長度、NULL/default 與來源 DDL 一致，PK 為 `(areano,inventoryno)`。本次沒有重播 CREATE SQL、改欄位或寫入業務資料。
+- 套用 migration 0082，只授予 `ymes_app` 對此表 SELECT／INSERT／UPDATE／DELETE。執行前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-sd105-0082-20261127.dump`，736,548 bytes，SHA-256 `04bfdf97b91c93ceede050a77fa7ef1f2910a7a1f8f39cc27b2498a11756bf2d`；`pg_restore --list` 通過。
+- 作業執行後以 `SET ROLE ymes_app` 確認四種權限皆有效；使用 `EXPLAIN` 驗證清單／layout 查詢與 DML 欄位相容（DML EXPLAIN 未執行寫入）。沒有讀取或修改正式業務列。
+- .NET 9 image `ymes-api:sd105-area-inventory-20261127-a1`（`sha256:56be7eb37631f79b5810a4b7f67716401f088c043593e886d3ef0af05e25038f`）已部署；前版保留 `ymes-api:before-sd105-area-inventory-20261127-a1`。readiness 200、匿名 options API 401、容器 healthy；僅更新 API service。
+- app-browser 正式 SD105 options 回傳 `factories=[]`、`baseAreas=[]`；未知 Base Area 的 layout 回 404。Production 目前無有效基底區域可做 CRUD 正向測試，不造正式測試資料；等待 Area／AreaRelation 同步後補 UI 驗收。
+
 ## RT201–RT203 看板唯讀 API live schema 核對（2026-11-27）
 
 - 以家用電腦 PPK／SSH 連正式主機，唯讀檢查 YMES.tblwiplotstate、tblwiplotbasis、tblopbasis、tblprdproductbasis；ymes_app 對四表皆有 SELECT。LotState 有既有 i_tblwiplotstate_04(opno)／i_tblwiplotstate_01(baselotno)；LotBasis PK 為 baselotno、ProductBasis PK 為 (productno, productversion)、OPBasis PK 為 opno。producttype 來自 ProductBasis。

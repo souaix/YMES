@@ -38,11 +38,26 @@ public sealed class PostgresSmdRepository(NpgsqlDataSource dataSource)
             WHERE issuestate=2
             ORDER BY factoryno;
             """);
-        using var reader = command.ExecuteReader();
         var factories = new List<SmdFactoryOptionDto>();
-        while (reader.Read())
-            factories.Add(new SmdFactoryOptionDto(reader.GetString(0), NullableString(reader, 1), NullableString(reader, 2)));
-        return new SmdAreaBasisOptionsDto(factories);
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+                factories.Add(new SmdFactoryOptionDto(reader.GetString(0), NullableString(reader, 1), NullableString(reader, 2)));
+        }
+
+        using var areasCommand = dataSource.CreateCommand("""
+            SELECT areano,areaname,description,issuestate::int,areaclass::int,factoryno
+            FROM "YMES".tblsmdareabasis
+            WHERE issuestate=2 AND areaclass=1
+            ORDER BY areano;
+            """);
+        using var areasReader = areasCommand.ExecuteReader();
+        var baseAreas = new List<SmdAreaOptionDto>();
+        while (areasReader.Read())
+            baseAreas.Add(new SmdAreaOptionDto(
+                areasReader.GetString(0), areasReader.GetString(1), NullableString(areasReader, 2),
+                areasReader.GetInt32(3), areasReader.GetInt32(4), areasReader.GetString(5)));
+        return new SmdAreaBasisOptionsDto(factories, baseAreas);
     }
 
     public IReadOnlyList<SmdAreaOptionDto> ListAreas(string? factoryNo, int? issueState, int? areaClass)
