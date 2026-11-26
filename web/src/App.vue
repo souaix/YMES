@@ -265,6 +265,7 @@ import InvEngineerGroupBasis from './components/InvEngineerGroupBasis.vue'
 import InvInventoryBasis from './components/InvInventoryBasis.vue'
 import InvStockerBasis from './components/InvStockerBasis.vue'
 import InvRawInventory from './components/InvRawInventory.vue'
+import InvWaferReceiving from './components/InvWaferReceiving.vue'
 import InvMaterialIn from './components/InvMaterialIn.vue'
 import InvMaterialInLog from './components/InvMaterialInLog.vue'
 import InvMaterialOut from './components/InvMaterialOut.vue'
@@ -279,6 +280,36 @@ import InvWipReturnConfirm from './components/InvWipReturnConfirm.vue'
 import InvPackingCombineDismantle from './components/InvPackingCombineDismantle.vue'
 import InvFgdInventory from './components/InvFgdInventory.vue'
 import InvProductIn from './components/InvProductIn.vue'
+import InvProductInLog from './components/InvProductInLog.vue'
+import InvRawAcclimation from './components/InvRawAcclimation.vue'
+import InvWipInventory from './components/InvWipInventory.vue'
+import InvStockerManager from './components/InvStockerManager.vue'
+import InvStockerState from './components/InvStockerState.vue'
+import InvStockerHistory from './components/InvStockerHistory.vue'
+import InvSemiInventory from './components/InvSemiInventory.vue'
+import InvSemiOut from './components/InvSemiOut.vue'
+import InvSemiIn from './components/InvSemiIn.vue'
+import InvSemiInLog from './components/InvSemiInLog.vue'
+import InvSemiOutLog from './components/InvSemiOutLog.vue'
+import InvMaterialAdjust from './components/InvMaterialAdjust.vue'
+import InvMaterialAdjustLog from './components/InvMaterialAdjustLog.vue'
+import InvScrInventory from './components/InvScrInventory.vue'
+import InvScrIn from './components/InvScrIn.vue'
+import PmFrequencyBasis from './components/PmFrequencyBasis.vue'
+import PmSubstitutionVendor from './components/PmSubstitutionVendor.vue'
+import PmSubstitutionType from './components/PmSubstitutionType.vue'
+import PmSubstitutionBasis from './components/PmSubstitutionBasis.vue'
+import PmSubstitutionGroup from './components/PmSubstitutionGroup.vue'
+import PmJobType from './components/PmJobType.vue'
+import PmMaintenanceType from './components/PmMaintenanceType.vue'
+import PmMaintenanceItem from './components/PmMaintenanceItem.vue'
+import PmSopBasis from './components/PmSopBasis.vue'
+import PmToolBasis from './components/PmToolBasis.vue'
+import PmEqpTypeSopBasis from './components/PmEqpTypeSopBasis.vue'
+import PmMaintenancePlanAdjust from './components/PmMaintenancePlanAdjust.vue'
+import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
+import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
+import PmWorkOrderBasis from './components/PmWorkOrderBasis.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -749,6 +780,28 @@ const fallbackMenuTree: MenuNode[] = [
     ],
   }] },
   {
+    id: 'module:PM', label: '設備保養管理', shortLabel: '保養', moduleNo: 'PM', children: [{
+      id: 'menu:PM:SETTING', label: 'PM 設定', shortLabel: '設定', children: [
+        { id: 'function:PM:FREQUENCY BASIS', label: '頻率基本資料', shortLabel: '保養頻率', functionNo: 'FREQUENCY BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:SUBSTITUTION VENDOR', label: '備品供應商基本資料', shortLabel: '備品供應商', functionNo: 'SUBSTITUTION VENDOR', moduleNo: 'PM' },
+        { id: 'function:PM:SUBSTITUTION TYPE BASIS', label: '備品類別資料', shortLabel: '備品類別', functionNo: 'SUBSTITUTION TYPE BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:SUBSTITUTION BASIS', label: '備品基本資料', shortLabel: '備品', functionNo: 'SUBSTITUTION BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:SUBSTITUTION GROUP', label: '備品群組資料', shortLabel: '備品群組', functionNo: 'SUBSTITUTION GROUP', moduleNo: 'PM' },
+      ],
+    }, {
+      id: 'menu:PM:EQUIPMENT PM SETTING', label: '設備 PM 設定', shortLabel: '設備 PM', children: [
+        { id: 'function:PM:EQPTYPE SOP BASIS', label: '設備保養標準程序', shortLabel: '設備 SOP', functionNo: 'EQPTYPE SOP BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:PM PLAN CHANGE', label: '保養計劃變更', shortLabel: '計畫變更', functionNo: 'PM PLAN CHANGE', moduleNo: 'PM' },
+        { id: 'function:PM:EQP FIXED QUANTITY SETUP', label: '設備定量保養設定', shortLabel: '定量保養', functionNo: 'EQP FIXED QUANTITY SETUP', moduleNo: 'PM' },
+        { id: 'function:PM:EQP FIXED TIME SETUP', label: '設備定次定時保養設定', shortLabel: '定次定時', functionNo: 'EQP FIXED TIME SETUP', moduleNo: 'PM' },
+      ],
+    }, {
+      id: 'menu:PM:PM WO', label: '保養工單', shortLabel: '保養工單', children: [
+        { id: 'function:PM:PMWO BASIS', label: '開立保養工單', shortLabel: '開立工單', functionNo: 'PMWO BASIS', moduleNo: 'PM' },
+      ],
+    }],
+  },
+  {
     id: 'module:INV', label: '庫存管理', shortLabel: '庫', moduleNo: 'INV', children: [{
       id: 'menu:INV:CONFIG', label: '庫房設定', shortLabel: '設定', children: [
         { id: 'function:INV:INV ENGINEER GROUP', label: '庫房工程群組', shortLabel: '工程群組', functionNo: 'INV ENGINEER GROUP', moduleNo: 'INV' },
@@ -758,6 +811,10 @@ const fallbackMenuTree: MenuNode[] = [
     }, {
       id: 'menu:INV:RAW MATERIAL', label: '原物料倉', shortLabel: '原物料', children: [
         { id: 'function:INV:RAW INVENTORY', label: '原物料倉庫房資料', shortLabel: '原料庫存', functionNo: 'RAW INVENTORY', moduleNo: 'INV' },
+        { id: 'function:INV:B_RAW WAFER RECEIVING', label: '來料庫房管理', shortLabel: '晶圓來料', functionNo: 'B_RAW WAFER RECEIVING', moduleNo: 'INV' },
+        { id: 'function:INV:INV_RAW_ACCLIMATION', label: '回溫回冰作業(膠)', shortLabel: '回溫回冰', functionNo: 'INV_RAW_ACCLIMATION', moduleNo: 'INV' },
+        { id: 'function:INV:MATERIAL ADJUST', label: '開立庫存調整單', shortLabel: '庫存調整', functionNo: 'MATERIAL ADJUST', moduleNo: 'INV' },
+        { id: 'function:INV:MATERIAL ADJUST LOG', label: '庫存調整單記錄', shortLabel: '調整記錄', functionNo: 'MATERIAL ADJUST LOG', moduleNo: 'INV' },
         { id: 'function:INV:MATERIAL IN', label: '開立進料單', shortLabel: '進料單', functionNo: 'MATERIAL IN', moduleNo: 'INV' },
         { id: 'function:INV:MATERIAL IN LOG', label: '進料單記錄', shortLabel: '進料記錄', functionNo: 'MATERIAL IN LOG', moduleNo: 'INV' },
         { id: 'function:INV:MATERIAL OUT', label: '開立領料單', shortLabel: '領料單', functionNo: 'MATERIAL OUT', moduleNo: 'INV' },
@@ -769,12 +826,32 @@ const fallbackMenuTree: MenuNode[] = [
       ],
     }, {
       id: 'menu:INV:WIP INV', label: '在製品庫', shortLabel: '在製品', children: [
+        { id: 'function:INV:WIP INVENTORY', label: '在製品庫庫房資料', shortLabel: '在製品庫存', functionNo: 'WIP INVENTORY', moduleNo: 'INV' },
+        { id: 'function:INV:STOCKER STATE', label: '在製貨架查詢作業', shortLabel: '貨架查詢', functionNo: 'STOCKER STATE', moduleNo: 'INV' },
+        { id: 'function:INV:STOCKER HISTORY', label: '在製貨架歷程查詢', shortLabel: '貨架歷程', functionNo: 'STOCKER HISTORY', moduleNo: 'INV' },
+        { id: 'function:INV:STOCKER MANAGER', label: '在製貨架上下架作業', shortLabel: '貨架上下架', functionNo: 'STOCKER MANAGER', moduleNo: 'INV' },
         { id: 'function:INV:WIPINV MO PACKING COMBINE DISMANTLE', label: '包裝拆並箱作業', shortLabel: '拆並箱', functionNo: 'WIPINV MO PACKING COMBINE DISMANTLE', moduleNo: 'INV' },
+      ],
+    }, {
+      id: 'menu:INV:SEMI INV', label: '半成品庫', shortLabel: '半成品', children: [
+        { id: 'function:INV:SEMI INVENTORY', label: '半成品庫庫房資料', shortLabel: '半成品庫存', functionNo: 'SEMI INVENTORY', moduleNo: 'INV' },
+        { id: 'function:INV:SEMI PRODUCT IN', label: '開立半成品入庫單', shortLabel: '半成品入庫', functionNo: 'SEMI PRODUCT IN', moduleNo: 'INV' },
+        { id: 'function:INV:SEMI PRODUCT IN LOG', label: '成品/半成品入庫單紀錄', shortLabel: '半成品入庫記錄', functionNo: 'SEMI PRODUCT IN LOG', moduleNo: 'INV' },
+        { id: 'function:INV:SEMI IN', label: '開立半成品進料單', shortLabel: '半成品進料', functionNo: 'SEMI IN', moduleNo: 'INV' },
+        { id: 'function:INV:SEMI IN LOG', label: '半成品進料單記錄', shortLabel: '半成品進料記錄', functionNo: 'SEMI IN LOG', moduleNo: 'INV' },
+        { id: 'function:INV:SEMI OUT', label: '開立半成品出庫單', shortLabel: '半成品出庫', functionNo: 'SEMI OUT', moduleNo: 'INV' },
+        { id: 'function:INV:SEMI OUT LOG', label: '半成品出庫單記錄', shortLabel: '半成品出庫記錄', functionNo: 'SEMI OUT LOG', moduleNo: 'INV' },
       ],
     }, {
       id: 'menu:INV:FGD INV', label: '成品庫', shortLabel: '成品庫', children: [
         { id: 'function:INV:FGD INVENTORY', label: '成品庫庫房資料', shortLabel: '成品庫存', functionNo: 'FGD INVENTORY', moduleNo: 'INV' },
         { id: 'function:INV:FGD PRODUCT IN', label: '開立成品/半成品入庫單', shortLabel: '成品入庫', functionNo: 'FGD PRODUCT IN', moduleNo: 'INV' },
+        { id: 'function:INV:FGD PRODUCT IN LOG', label: '成品入庫單記錄', shortLabel: '成品入庫記錄', functionNo: 'FGD PRODUCT IN LOG', moduleNo: 'INV' },
+      ],
+    }, {
+      id: 'menu:INV:SCR INV', label: '報廢倉', shortLabel: '報廢', children: [
+        { id: 'function:INV:SCR INVENTORY', label: '報廢倉庫房資料', shortLabel: '報廢庫存', functionNo: 'SCR INVENTORY', moduleNo: 'INV' },
+        { id: 'function:INV:SCR PRODUCT IN', label: '不良品入庫', shortLabel: '不良品入庫', functionNo: 'SCR PRODUCT IN', moduleNo: 'INV' },
       ],
     }],
   },
@@ -1050,6 +1127,10 @@ const menuRoutes: Record<string, string> = {
   'function:INV:INV BASIS FOR INV': appBasePath + '/INV/InventoryBasis',
   'function:INV:STOCKER BASIS': appBasePath + '/INV/StockerBasis',
   'function:INV:RAW INVENTORY': appBasePath + '/INV/RawInventory',
+  'function:INV:B_RAW WAFER RECEIVING': appBasePath + '/INV/WaferReceiving',
+  'function:INV:INV_RAW_ACCLIMATION': appBasePath + '/INV/RawAcclimation',
+  'function:INV:MATERIAL ADJUST': appBasePath + '/INV/MaterialAdjust',
+  'function:INV:MATERIAL ADJUST LOG': appBasePath + '/INV/MaterialAdjustLog',
   'function:INV:MATERIAL IN': appBasePath + '/INV/MaterialIn',
   'function:INV:MATERIAL IN LOG': appBasePath + '/INV/MaterialInLog',
   'function:INV:MATERIAL OUT': appBasePath + '/INV/MaterialOut',
@@ -1061,9 +1142,31 @@ const menuRoutes: Record<string, string> = {
   'function:INV:WIP MATERIAL RETURN': appBasePath + '/INV/MaterialWipReturn',
   'function:INV:WIP MATERIAL RETURN LOG': appBasePath + '/INV/MaterialWipReturnLog',
   'function:INV:WIP RETURN CONFIRM': appBasePath + '/INV/WipReturnConfirm',
+  'function:INV:WIP INVENTORY': appBasePath + '/INV/WipInventory',
+  'function:INV:STOCKER STATE': appBasePath + '/INV/StockerState',
+  'function:INV:STOCKER HISTORY': appBasePath + '/INV/StockerHistory',
+  'function:INV:STOCKER MANAGER': appBasePath + '/INV/StockerManager',
   'function:INV:WIPINV MO PACKING COMBINE DISMANTLE': appBasePath + '/INV/PackingCombineDismantle',
+  'function:INV:SEMI INVENTORY': appBasePath + '/INV/SemiInventory',
+  'function:INV:SEMI PRODUCT IN': appBasePath + '/INV/SemiProductIn',
+  'function:INV:SEMI IN': appBasePath + '/INV/SemiIn',
+  'function:INV:SEMI IN LOG': appBasePath + '/INV/SemiInLog',
+  'function:INV:SEMI OUT': appBasePath + '/INV/SemiOut',
+  'function:INV:SEMI OUT LOG': appBasePath + '/INV/SemiOutLog',
   'function:INV:FGD INVENTORY': appBasePath + '/INV/FgdInventory',
+  'function:INV:SCR INVENTORY': appBasePath + '/INV/ScrInventory',
+  'function:INV:SCR PRODUCT IN': appBasePath + '/INV/ScrIn',
+  'function:PM:FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
+  'function:PM:EQPTYPE SOP BASIS': appBasePath + '/PM/EquipmentTypeSopBasis',
+  'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
+  'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
+  'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
+  'function:PM:PMWO BASIS': appBasePath + '/PM/WorkOrderBasis',
+  'function:PM:SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
+  'function:PM:SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
   'function:INV:FGD PRODUCT IN': appBasePath + '/INV/ProductIn',
+  'function:INV:FGD PRODUCT IN LOG': appBasePath + '/INV/ProductInLog',
+  'function:INV:SEMI PRODUCT IN LOG': appBasePath + '/INV/ProductInLog',
   'function:QC:HOLD DESCRIPTION': appBasePath + '/QC/HoldDescription',
   'function:QC:HOLD DISP GROUP': appBasePath + '/QC/HoldDispGroup',
   'function:QC:MCLASS BASIS': appBasePath + '/QC/MClassBasis',
@@ -1149,6 +1252,9 @@ const menuRoutes: Record<string, string> = {
 }
 
 const functionRoutes: Record<string, string> = {
+  'FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
+  'SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
+  'SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
   'OPERATOR LOGIN': appBasePath + '/WIP/OperatorLogin',
   'OPERATOR LOGIN_LOT': appBasePath + '/WIP/OperatorLoginLot',
   'OPERATOR CLOCKIN': appBasePath + '/WIP/OperatorClockIn',
@@ -1449,6 +1555,10 @@ const isInvEngineerGroupPage = computed(() => activeMasterKey.value === 'functio
 const isInvInventoryBasisPage = computed(() => activeMasterKey.value === 'function:INV:INV BASIS FOR INV')
 const isInvStockerBasisPage = computed(() => activeMasterKey.value === 'function:INV:STOCKER BASIS')
 const isInvRawInventoryPage = computed(() => activeMasterKey.value === 'function:INV:RAW INVENTORY')
+const isInvWaferReceivingPage = computed(() => activeMasterKey.value === 'function:INV:B_RAW WAFER RECEIVING')
+const isInvRawAcclimationPage = computed(() => activeMasterKey.value === 'function:INV:INV_RAW_ACCLIMATION')
+const isInvMaterialAdjustPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL ADJUST')
+const isInvMaterialAdjustLogPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL ADJUST LOG')
 const isInvMaterialInPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL IN')
 const isInvMaterialInLogPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL IN LOG')
 const isInvMaterialOutPage = computed(() => activeMasterKey.value === 'function:INV:MATERIAL OUT')
@@ -1460,9 +1570,38 @@ const isInvMaterialReturnLogPage = computed(() => activeMasterKey.value === 'fun
 const isInvMaterialWipReturnPage = computed(() => activeMasterKey.value === 'function:INV:WIP MATERIAL RETURN')
 const isInvMaterialWipReturnLogPage = computed(() => activeMasterKey.value === 'function:INV:WIP MATERIAL RETURN LOG')
 const isInvWipReturnConfirmPage = computed(() => activeMasterKey.value === 'function:INV:WIP RETURN CONFIRM')
+const isInvWipInventoryPage = computed(() => activeMasterKey.value === 'function:INV:WIP INVENTORY')
+const isInvStockerStatePage = computed(() => activeMasterKey.value === 'function:INV:STOCKER STATE')
+const isInvStockerHistoryPage = computed(() => activeMasterKey.value === 'function:INV:STOCKER HISTORY')
+const isInvStockerManagerPage = computed(() => activeMasterKey.value === 'function:INV:STOCKER MANAGER')
+const invStockerManagerInitialNo = computed(() => isInvStockerManagerPage.value ? new URLSearchParams(window.location.search).get('stockerNo') ?? '' : '')
+const isInvSemiInventoryPage = computed(() => activeMasterKey.value === 'function:INV:SEMI INVENTORY')
+const isInvSemiInPage = computed(() => activeMasterKey.value === 'function:INV:SEMI IN')
+const isInvSemiInLogPage = computed(() => activeMasterKey.value === 'function:INV:SEMI IN LOG')
+const isInvSemiOutLogPage = computed(() => activeMasterKey.value === 'function:INV:SEMI OUT LOG')
+const isInvSemiOutPage = computed(() => activeMasterKey.value === 'function:INV:SEMI OUT')
 const isInvPackingCombineDismantlePage = computed(() => activeMasterKey.value === 'function:INV:WIPINV MO PACKING COMBINE DISMANTLE')
 const isInvFgdInventoryPage = computed(() => activeMasterKey.value === 'function:INV:FGD INVENTORY')
+const isInvScrInventoryPage = computed(() => activeMasterKey.value === 'function:INV:SCR INVENTORY')
+const isInvScrInPage = computed(() => activeMasterKey.value === 'function:INV:SCR PRODUCT IN')
+const isPmFrequencyBasisPage = computed(() => activeMasterKey.value === 'function:PM:FREQUENCY BASIS')
+const isPmSubstitutionVendorPage = computed(() => activeMasterKey.value === 'function:PM:SUBSTITUTION VENDOR')
+const isPmSubstitutionTypePage = computed(() => activeMasterKey.value === 'function:PM:SUBSTITUTION TYPE BASIS')
+const isPmSubstitutionBasisPage = computed(() => activeMasterKey.value === 'function:PM:SUBSTITUTION BASIS')
+const isPmSubstitutionGroupPage = computed(() => activeMasterKey.value === 'function:PM:SUBSTITUTION GROUP')
+const isPmJobTypePage = computed(() => activeMasterKey.value === 'function:PM:JOB TYPE')
+const isPmMaintenanceTypePage = computed(() => activeMasterKey.value === 'function:PM:PM TYPE')
+const isPmMaintenanceItemPage = computed(() => activeMasterKey.value === 'function:PM:PM ITEM')
+const isPmSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:SOP BASIS')
+const isPmToolBasisPage = computed(() => activeMasterKey.value === 'function:PM:TOOL BASIS')
+const isPmEqpTypeSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:EQPTYPE SOP BASIS')
+const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
+const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
+const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
+const isPmWorkOrderBasisPage = computed(() => activeMasterKey.value === 'function:PM:PMWO BASIS')
 const isInvProductInPage = computed(() => activeMasterKey.value === 'function:INV:FGD PRODUCT IN')
+const isInvSemiProductInPage = computed(() => activeMasterKey.value === 'function:INV:SEMI PRODUCT IN')
+const isInvProductInLogPage = computed(() => activeMasterKey.value === 'function:INV:FGD PRODUCT IN LOG' || activeMasterKey.value === 'function:INV:SEMI PRODUCT IN LOG')
 const isWipErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:WIP:WIP ERF UNRELEASED')
 const isSpcErfUnreleasedPage = computed(() => activeMasterKey.value === 'function:SPC:SPC ERF UNRELEASED')
 const isWipWaitBasisPage = computed(() => activeMasterKey.value === 'function:WIP:WAIT BASIS')
@@ -1930,6 +2069,12 @@ function navigateHome(): void {
   pending8dMaintainReadOnly.value = false
   pending8dQueryReturnPath.value = ''
   window.history.pushState({}, '', appHomeRoute)
+  syncRouteState()
+}
+
+function openInvStockerManager(stockerNo: string): void {
+  const route = menuRoutes['function:INV:STOCKER MANAGER']
+  window.history.pushState({}, '', `${route}?stockerNo=${encodeURIComponent(stockerNo)}`)
   syncRouteState()
 }
 
@@ -3324,6 +3469,87 @@ async function signOut(): Promise<void> {
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
+        <InvWaferReceiving
+          v-else-if="isInvWaferReceivingPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvRawAcclimation
+          v-else-if="isInvRawAcclimationPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvWipInventory
+          v-else-if="isInvWipInventoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvStockerState
+          v-else-if="isInvStockerStatePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+          @open-manager="openInvStockerManager"
+        />
+        <InvStockerHistory
+          v-else-if="isInvStockerHistoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvStockerManager
+          v-else-if="isInvStockerManagerPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          :initial-stocker-no="invStockerManagerInitialNo"
+          @close="navigateHome"
+        />
+        <InvSemiInventory
+          v-else-if="isInvSemiInventoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvSemiIn
+          v-else-if="isInvSemiInPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvSemiInLog
+          v-else-if="isInvSemiInLogPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvSemiOutLog
+          v-else-if="isInvSemiOutLogPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvSemiOut
+          v-else-if="isInvSemiOutPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvMaterialAdjust
+          v-else-if="isInvMaterialAdjustPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          :current-user-no="currentUser?.userNo || ''"
+          @close="navigateHome"
+        />
+        <InvMaterialAdjustLog
+          v-else-if="isInvMaterialAdjustLogPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
         <InvMaterialIn
           v-else-if="isInvMaterialInPage"
           class="framework-content"
@@ -3404,8 +3630,116 @@ async function signOut(): Promise<void> {
           :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           @close="navigateHome"
         />
+        <InvScrInventory
+          v-else-if="isInvScrInventoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvScrIn
+          v-else-if="isInvScrInPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmFrequencyBasis
+          v-else-if="isPmFrequencyBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmSubstitutionVendor
+          v-else-if="isPmSubstitutionVendorPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmSubstitutionType
+          v-else-if="isPmSubstitutionTypePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmSubstitutionBasis
+          v-else-if="isPmSubstitutionBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmSubstitutionGroup
+          v-else-if="isPmSubstitutionGroupPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmJobType
+          v-else-if="isPmJobTypePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmMaintenanceType
+          v-else-if="isPmMaintenanceTypePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmMaintenanceItem
+          v-else-if="isPmMaintenanceItemPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmSopBasis
+          v-else-if="isPmSopBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmToolBasis
+          v-else-if="isPmToolBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmEqpTypeSopBasis
+          v-else-if="isPmEqpTypeSopBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmMaintenancePlanAdjust
+          v-else-if="isPmMaintenancePlanAdjustPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmFixedQuantitySetUp
+          v-else-if="isPmFixedQuantitySetUpPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmFixedTimesSetUp
+          v-else-if="isPmFixedTimesSetUpPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmWorkOrderBasis
+          v-else-if="isPmWorkOrderBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
         <InvProductIn
-          v-else-if="isInvProductInPage"
+          v-else-if="isInvProductInPage || isInvSemiProductInPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <InvProductInLog
+          v-else-if="isInvProductInLogPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

@@ -1,13 +1,236 @@
 # Codex handoff：公司筆電 → 桌電
 
-更新：2026-11-24。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
+更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-> **最新公司端接手（2026-11-24）**：公司端已依清冊完成 IV502「開立成品／半成品入庫單」DEV 與規格交接；請先讀本檔的 IV502 checkpoint、[公司端待辦](../todolist_officepc.md)、[家用端待辦](../todolist_homepc.md) 及 [模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)，下一項依 INV 清冊為 IV503「成品入庫單記錄」。WP401 段落是較早的歷史接手點。
+## 公司端最新交付：PM301 開立保養工單（2026-11-26）
+
+- [x] 核對 `frmPMWoBasis`／Create／Detail／SOP Detail、`wsPM`、`clsPMBasis`／`clsBasis_UPD` 與 `clsIssue`；完成 `/YMES/PM/WorkOrderBasis` DEV 主從查詢、PM 計畫選取開單、計畫移入 PlanLog、狀態簽核／刪除、未凍結明細編修與 SOP／工具／備品檢視。
+- [x] 新增 [PM301 規格與家用端 API/schema handoff](docs/modules/PM/開立保養工單_PM301.md)。已記錄可見 PM Work Order、隱藏 Required Work Order 分頁、IssueState／WOStatus、EWyyMM#### 編號及計畫消耗交易要求。
+- [x] 桌機沒有受保護 Oracle profile，repo 無可核實 PM Work Order／Plan Log DDL；未查 Oracle、未猜 CREATE。DEV 使用 localStorage 假資料，未連 YMES PostgreSQL、未實作正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。下一項公司端依 FunctionKey 為 PM302「保養工單下線」。
+- [ ] GitHub 同步：桌機已 fast-forward 至 `origin/main` `02a4b1a`；本地公司端交付仍待靜態檢閱後正常 commit/push，不 force push。
+
+## 前項公司端交付：PM204 設備定次定時保養設定（2026-11-26）
+
+- [x] 核對 `frmFixedTimesSetUp`／Def／Def_EQP、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/FixedTimesSetup` DEV 類型設定、設備列及 SET 批次互動。
+- [x] [PM204 規格與家用端 API/schema handoff](modules/PM/設備定次定時保養設定_PM204.md) 記錄 TypeCode 0／1、QtyType 0/1/2、DataStamp、整類刪除與 SET 重建。舊 Service 先刪後逐筆新增、非原子；關閉 AutoCreateWo 時 Core 可能留下舊 PMSOPNo。
+- [x] 桌機受保護 Oracle profile 不存在，repo 無可核實 `TBLPMFIXEDTIMESPMBASIS` DDL／索引；未連 Oracle、未猜 CREATE／輸出 credentials。
+- [ ] 家用端核 live PostgreSQL schema／migration 與 Oracle metadata；以交易實作類型預設、設備覆寫、QtyType、SET 清單、DataStamp 更新及整類刪除。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未 build／test／browser。下一項依 FunctionKey 為 PM301「開立保養工單」。
+
+## 前項公司端交付：PM203 設備定量保養設定（2026-11-26）
+
+- [x] 核對 `frmFixedQuantitySetUp`／Def／Def_EQP、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/FixedQuantitySetup` DEV 類型設定、設備列與 SET 批次互動。
+- [x] [PM203 規格與家用端 API/schema handoff](modules/PM/設備定量保養設定_PM203.md) 記錄 TypeCode 0／1、DataStamp、整類刪除及 SET 重建。舊 Service 先刪後逐筆新增、非原子；關閉 AutoCreateWo 時 Core 可能留下舊 PMSOPNo。
+- [x] 桌機受保護 Oracle profile 不存在，repo 無可核實 `TBLPMFIXEDQTYPMBASIS` DDL／索引；未連 Oracle、未猜 CREATE／輸出 credentials。
+- [ ] 家用端核 live PostgreSQL schema／migration 與 Oracle metadata；以交易實作類型預設、設備覆寫、SET 清單、DataStamp 更新及整類刪除。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未 build／test／browser。當時下一項為 PM204，現已完成。
+
+## 前項公司端交付：PM202 保養計劃變更（2026-11-26）
+
+- [x] 核對 `frmEQPMaintenancePlanAdjust`／Def、`wsPM.Load/Edit/MoveEQPMaintenancePlan`、`clsPMBasis`；完成 `/YMES/PM/MaintenancePlanAdjust` DEV 月曆查詢、改期、取消轉歷史互動。
+- [x] [PM202 規格與家用端 API/schema handoff](modules/PM/保養計劃變更_PM202.md) 記錄計畫查詢、改期與取消流程。舊 Core 取消先新增 PlanLog，隨後又刪除相同 SerialNo 的 PlanLog；家用端應交易式保留取消歷史，不應複製此缺陷。
+- [x] 桌機受保護 Oracle profile 不存在，repo 無可核實的計畫／歷史 DDL；未連 Oracle、未猜 CREATE／輸出 credentials。
+- [ ] 家用端核 live PostgreSQL schema、Oracle metadata、計畫及 PlanLog 主鍵／索引／日期精度，再實作有界查詢、版本化改期及原子取消 API。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未 build／test／browser。當時下一項為 PM203，現已完成。
+
+## 前項公司端交付：PM201 設備保養標準程序（2026-11-26）
+
+- [x] 核對 `frmEQPTypeSOPBasis`／Def、`PM_EQPTypeSOPBatchCopy`、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/EquipmentTypeSopBasis` DEV 查詢、CRUD／Copy、參照 lookup、計畫轉歷史刪除與批次複製互動。
+- [x] [PM201 規格與家用端 API/schema handoff](modules/PM/設備保養標準程序_PM201.md) 已記錄主檔欄位、歷史計畫刪除、批次生成來源及簡化處。PM201 沒有 IssueState／Approve；Plan Data／Plan Set 是獨立視窗，本次提供 DEV 唯讀樣例／摘要。
+- [x] 桌機受保護 Oracle profile 不存在，repo 沒有可核實的 `tblPMEQPTypeSOPBasis` DDL；未連 Oracle、未猜 CREATE／輸出 credentials。DEV 批次排程依 localStorage 假頻率估算。
+- [ ] 家用端先核 live PostgreSQL schema／Oracle metadata、年度與設備／頻率／SOP／State 參照、Plan／PlanLog 關係，再作交易式 CRUD、計畫轉歷史及排程批次 API。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未 build／test／browser。當時下一項依 FunctionKey 為 PM202「保養計劃變更」，現已完成。
+
+## 前一項公司端交付：PM110 工具基本資料（2026-11-26）
+
+- [x] 核對 `frmEQPToolBasis`／Def、`wsEQP`、`clsToolBasis`／`clsBasis_UPD`；完成 `/YMES/PM/ToolBasis` DEV 四狀態 CRUD／Copy／Approve／Delete，並接入選單。
+- [x] 規格與家用端 API/schema handoff：[PM110](modules/PM/工具基本資料_PM110.md)。IssueNo `TOOL BASIS` 控制 Active／Pending；Core 硬刪未檢查 PM108 `ToolUsedDetail` 引用；ToolName XML Type 誤標 Integer、Service 實讀字串。
+- [x] PM108 DEV 工具 lookup 改讀 PM110 localStorage key。Repo 已有 `tbleqptoolbasis` provisional CREATE 草稿，但註解標示欄位推測；公司桌機 Oracle profile 不存在，未查 Oracle／未修改 CREATE。
+- [ ] 家用端核 live PostgreSQL schema／Oracle metadata、PK/FK／索引／DataStamp，處理 PM108 工具引用並建立正式 API／Issue workflow。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+- [x] PM201 完成時下一項依 FunctionKey 為 PM202；目前最新進度與待辦見本檔開頭（PM203 已完成，下一項 PM204）。
+
+## 前一項公司端交付：PM109 標準作業程序（2026-11-26）
+
+- [x] 核對 `frmSOPBasis`／Def、SOP Detail／Def、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/SopBasis` DEV 四狀態主檔與步驟明細 CRUD／Copy。
+- [x] 規格與家用端 API/schema handoff：[PM109](modules/PM/標準作業程序_PM109.md)。SOP File Path 只存用戶端路徑字串；主檔 Copy 和 steps Copy 分開呼叫；`SOP BASIS` IssueNo 控制 Active／Pending。
+- [x] 步驟 Add Service 序號先 floor 至一位小數再轉 int、Edit 保留一位小數；舊 Core 的自動重排已註解；DEV 依序號顯示。
+- [x] 兩張業務表 DDL／metadata 未取得，公司桌機受保護 Oracle profile 不存在，未猜 CREATE SQL。
+- [ ] 家用端核 live PostgreSQL schema、PK/FK／序號精度與 DataStamp 條件；交易式處理主從 Copy／Delete、狀態保護、bounded 參數化 API 及正式 Issue workflow；決定 SOP 文件路徑／文件儲存策略。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+- [x] PM110、PM201 已接續完成；此段為當時進度快照，PM202、PM203 已完成，現依清冊續做 PM204。
+
+## 前一項公司端交付：PM108 預防保養項目資料（2026-11-26）
+
+- [x] 核對 `frmMaintenanceItem`／Def、兩種明細 Form／Def、`wsPM`／`wsEQP`／`wsSYS`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/MaintenanceItem` DEV 主檔及 Tool／Substitution 子明細維護。
+- [x] 規格與家用端 handoff：[PM108](modules/PM/預防保養項目資料_PM108.md)。主檔硬刪會移除兩種子表；Copy 子資料分開呼叫且 Service 空 catch 會吞錯；`MAINTENANCE ITEM` IssueNo 控制 Active／Pending。
+- [x] 三張業務表 DDL／metadata 未取得，桌機受保護 Oracle profile 不存在，未猜 CREATE。
+- [ ] 家用端核 live schema、複合鍵及 lookup 引用；在交易內實作主從 Copy／Delete、DataStamp／audit、父狀態與正式 Issue workflow。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+- [x] PM109、PM110、PM201 均已接續完成；此段為當時進度快照，PM202、PM203 已完成，現依清冊續做 PM204。
+
+## 前一項公司端交付：PM107 預防保養維護方式設定（2026-11-25）
+
+- [x] 核對 `frmMaintenanceType`／Def、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/MaintenanceType` DEV 四狀態 CRUD／Copy／Delete／Approve 並接入 App。
+- [x] 規格與家用端 handoff：[PM107](modules/PM/預防保養維護方式設定_PM107.md)。`MAINTENANCE TYPE` IssueNo 控制 Active／Pending；PM108 MaintenanceItem 會 Join MaintainNo，舊硬刪未檢查引用。
+- [x] 業務 DDL／metadata 未取得，桌機受保護 Oracle profile 不存在，未猜 CREATE。
+- [ ] 家用端核 live schema 與 MaintainNo 引用，交易式實作版本化修改／狀態轉換、參數化查詢及正式 Issue workflow。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+- [x] PM108、PM109、PM110、PM201 均已接續完成；此段為當時進度快照，PM202、PM203 已完成，現依清冊續做 PM204。
+
+## 前一項公司端交付：PM106 工作形式設定（2026-11-25）
+
+- [x] 核對 `frmJobType`／Def、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/JobType` DEV 四狀態 CRUD／Copy／Delete／Approve 並接入 App。
+- [x] 規格與家用端 handoff：[PM106](modules/PM/工作形式設定_PM106.md)。IssueNo `JOB TYPE` 控制直達 Active／Pending；批次逐筆可部分成功，workflow 結束 SQL 未更新 DataStamp／稽核欄位。
+- [x] 選單快照僅確認 `tblPMJobTypeBasis` 表名；業務 DDL／metadata 未取得，桌機受保護 Oracle profile 不存在，未猜 CREATE。
+- [ ] 家用端核 live PostgreSQL schema 與 PMJobNo 引用，交易式實作版本化修改／狀態轉換、參數化查詢及正式 Issue workflow。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+- [ ] 下一項依 FunctionKey 為 PM108「預防保養項目資料」。
+
+## 前一項公司端交付：PM105 備品群組資料（2026-11-25）
+
+- [x] 核對 inline Designer `frmSubstitutionGroup`／Def、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/SubstitutionGroup` DEV 群組與成員維護，接入 App 選單／路由。
+- [x] 規格與家用端 handoff：[PM105](modules/PM/備品群組資料_PM105.md)。修改群組類別會清空明細；同一備品不可屬於多個群組；多選儲存重用 ActiveRow 成員清單；Copy Service 會吞 Core 複製例外。
+- [x] 選單 IssueTable 為 NULL；群組 Basis／Detail DDL／metadata 未找到，桌機受保護 Oracle profile 不存在，未猜 CREATE。
+- [ ] 家用端核 PostgreSQL schema／migration，交易式處理群組唯一性、成員類別／狀態／跨群組驗證、DataStamp、Copy 與 Delete。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+- [ ] 下一項依 FunctionKey 為 PM107「預防保養維護方式設定」。
+
+## 前一項公司端交付：PM104 備品基本資料（2026-11-25）
+
+- [x] 核對 inline Designer `frmSubstitutionBasis`／Def／VendorMapDef、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/SubstitutionBasis` DEV 主從頁與 App 選單／路由。
+- [x] 規格及家用端 handoff：[PM104](modules/PM/備品基本資料_PM104.md)。硬刪包含 VendorMap、SubstitutionGroupDetail；Copy 分段呼叫且 Service 內層 catch 會吞掉映射複製例外。PM103／PM104 跨表代碼碰撞檢查已註解。
+- [x] 導覽 seed 只確認 PM104 FunctionKey 與 Basis 表名；Basis／VendorMap／GroupDetail DDL／metadata 未取得，桌機 Oracle profile 不存在，未猜 CREATE。
+- [ ] 家用端核 PostgreSQL live schema／引用，交易式處理 Copy／delete／共用 Property 唯一性，接入 DataStamp 與 Issue workflow。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+- [ ] 下一項依 FunctionKey 為 PM105「備品群組資料」。
+
+## 前一項公司端交付：PM103 備品類別資料（2026-11-25）
+
+- [x] 核對 `frmSubstitutionType`／Def、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/SubstitutionType` DEV CRUD／複製／核准／刪除假互動並接入 App 選單／路由。
+- [x] 新增 [PM103 規格及家用端 API/schema handoff](modules/PM/備品類別資料_PM103.md)，更新索引、清冊進度與兩端 TODO。Core 的 SubstitutionBasis 共用 Property 代碼衝突檢查已註解，需由正式 API／schema 加強驗證。
+- [x] 選單 seed 僅確認 `TBLPMSUBSTITUTIONTYPE` 表名；桌機受保護 Oracle profile 不存在，實際業務 DDL／metadata 未取得，未猜 CREATE。
+- [ ] 家用端先核 live schema 與類別引用，再實作授權、bounded paging、交易式 DataStamp／Issue workflow、引用保護與必要的 CREATE-only migration。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+
+## 前一項公司端交付：PM102 備品供應商基本資料（2026-11-25）
+
+- [x] DEV／來源規格見 [PM102](modules/PM/備品供應商基本資料_PM102.md)；Vendor／Contactor／VendorMap 的可信同版 DDL／metadata 未取得，未猜 CREATE。
+
+## 公司端最新交付：PM102 備品供應商基本資料（2026-11-25）
+
+- [x] 核對 `frmSubstitutionVendor`／Def／ContactorDef、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/SubstitutionVendor` DEV Vendor／Contactor CRUD、複製、簽核／刪除假互動與 Email 預覽，接入 App 選單／路由。
+- [x] 新增 [PM102 規格及家用端 API/schema handoff](modules/PM/備品供應商基本資料_PM102.md)，更新索引、清冊進度與兩端 TODO。舊刪除會移除聯絡人／備品映射，整家複製是分段服務呼叫，API 需改為交易式處理。
+- [x] 桌機受保護 Oracle profile 不存在；選單快照只確認 Vendor 主表名，Vendor／Contactor／Map 的實際 DDL／metadata 均未取得，未猜 CREATE。
+- [ ] 家用端先核 live PostgreSQL schema／migration、複合鍵及映射引用，再依規格實作登入授權 API、bounded paging、DataStamp 與原子 copy/delete/workflow。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+
+## 前一項公司端交付：PM101 頻率基本資料（2026-11-25）
+
+- [x] 核對來源並完成 `/YMES/PM/FrequencyBasis` DEV；規格為 [PM101](modules/PM/頻率基本資料_PM101.md)。選單 snapshot 可確認表名 `TBLPMFREQUENCYBASIS`，但無業務表 DDL／metadata，未猜 CREATE。
+- [x] 家用端 API／schema handoff、索引與 TODO 已更新；公司端未連 PostgreSQL，未做 build／test／browser。
+
+## 公司端最新交付：PM101 頻率基本資料（2026-11-25）
+
+- [x] 核對 `frmFrequencyBasis`／Def、`wsPM`、`clsPMBasis`／`clsBasis_UPD`；完成 `/YMES/PM/FrequencyBasis` DEV 搜尋、狀態頁籤、FixedType 0–3、CRUD／複製／刪除／簽核假互動並接入 App 選單／路由。
+- [x] 新增 [PM101 規格及家用端 API/schema handoff](modules/PM/頻率基本資料_PM101.md)，更新 Module Index、選單進度與兩端 TODO。
+- [x] 選單 seed 能確認 `TBLPMFREQUENCYBASIS` 名稱，但桌機受保護 Oracle profile 不存在，實際業務表 DDL／metadata 未取得；沒有產生臆測 CREATE SQL。
+- [ ] 家用端先核 live PostgreSQL schema／migration，再依模組規格實作正式授權 API、版本化寫入與 workflow；CREATE-only 僅能在缺表且 DDL 已確認後新增。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。
+
+## 公司端最新交付：IV602 不良品入庫（2026-11-25）
+
+- [x] 核對 frmINVSCRIn／frmINVSCRInDef inline Form／Designer、wsINV／wsSYS、clsInventory；IV602 草稿維護和 IV601 Source=40 確認／過帳入口分離。
+- [x] 完成 /YMES/INV/ScrIn DEV：State=0 查詢、三種 TurnType 來源勾選、取號、單頭新增／修改、BookingFlag 模擬、State=-1 作廢與明細；新增 modules/INV/不良品入庫_IV602.md，接入 App 選單／路由及索引。
+- [x] 四張 SCR In 單據表 DDL／metadata 沿 WP603 既有唯讀 MESTEST references；IV601 的三張 SCR Inventory 目標表 DDL 仍缺。記錄舊作廢的部分狀態風險、ComponentNo-only 編輯回選錯列風險。
+- [ ] 家用端核 PostgreSQL live schema 後實作父單授權／bounded paging、完整來源複合鍵及原子預約；Source=40 worker／ExeSCRIn 過帳獨立處理。
+- [ ] 公司端未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署，未執行 build／test／browser。下一步掃描 INV 清冊尚未復刻且有可讀來源的功能。
+
+## 前一項公司端交付：IV601 報廢倉庫房資料（2026-11-25）
+
+- [x] 核對 inline frmINVSCRInventory／Designer、同頁 frmINVSCRInConfirm、wsSMD.LoadInventoryBasis、wsSYS.LoadBin、wsINV 查詢／刪除 methods 與 clsInventory。
+- [x] 完成 /YMES/INV/ScrInventory DEV InventoryType=3 查詢、SCR Inventory Grid、Component 優先／FailBin fallback、BinOrder 動態欄、批次刪除確認與 SCR In Source=40 交易排程互動；新增 IV601 規格並接入 App 路由／選單。
+- [x] 舊 Core 查詢無排序／分頁且 SQL 字串串接；刪除用 InventoryNo＋LotSerial 清 Component、FailBin、主列，沒有狀態／預約檢查。多列刪除由 Form 逐筆呼叫，可能部分完成。
+- [x] SCR In Confirm 的 Service 只排 Source=40 交易並逐筆設定 Lot reverse lock；正式庫存異動由下游執行。三張 SCR Inventory Oracle DDL／metadata 缺失，桌機 profile 不可用，未猜 CREATE。
+- [ ] 未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署，未執行 build／test／browser。IV602 已完成；下一步掃描 INV 清冊尚未復刻且有可讀來源的功能。
+
+> **最新公司端接手（2026-11-26）**：PM301「開立保養工單」已完成公司端 DEV 與家用端 handoff；下一項 PM302「保養工單下線」。目前本機 `main` 已快轉到 GitHub `origin/main` `02a4b1a`；PM101–PM110、PM201–PM204、PM301 與既有 INV 公司端工作仍待正常 commit/push。先看本檔、兩端 TODO、[模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)。桌機沒有 Oracle 受保護 profile，PM301 DDL／metadata 未取得；不猜 CREATE。
+
+## 公司端最新交付：IV406 半成品出庫單記錄（2026-11-25）
+
+- [x] 核對 `frmINVSEMIOutLog` inline Designer、`wsINV.LoadINVSEMIOutBasis/LoadINVSEMIOutDetailAndComponent`、`clsInventory` 及 IV403／IV401 邊界。
+- [x] 完成 `/YMES/INV/SemiOutLog` DEV 唯讀查詢，含 SEMIOutNo／Inventory／State／CreateDate／INVDate、Basis／Detail／Component；詳 [IV406 規格](modules/INV/半成品出庫單記錄_IV406.md)。
+- [x] 記錄 INVDate 透過 `TBLINVTransactionLog.Source=21` 的 CreateDate 篩 TicketNo，與 Basis.ConfirmDate 分開；舊 Core 沒排序／分頁且無條件可讀大量資料。
+- [x] 出庫三表沿 IV403；沒有可用受保護 Oracle profile／可信同版 DDL，未新增臆測 schema。IV406 唯讀，不需新表。
+- [x] IV405 `SEMI PRODUCT IN LOG` 已加入半成品庫選單並指向 IV503 共用 `/YMES/INV/ProductInLog` 頁；規格沿 [IV503](modules/INV/成品入庫單記錄_IV503.md)。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署，未執行 build／test／browser。IV103 已完成；IV602 已完成；下一步掃描 INV 清冊尚未復刻且有可讀來源的功能。
+
+## 公司端最新交付：IV407 半成品進料單記錄（2026-11-25）
+
+- [x] 核對 `frmINVSEMIInLog` inline Designer、`wsINV.LoadINVSEMIInBasis/LoadINVSEMIInDetailAndComponent` 與 `clsInventory`，確認固定 Source=0、狀態及兩組日期篩選。
+- [x] 完成 `/YMES/INV/SemiInLog` DEV 唯讀查詢，包含 SEMIInNo／Inventory／State／CreateDate／InputDate、選列載入 Detail 與 Component；規格見 [IV407](modules/INV/半成品進料單記錄_IV407.md)。
+- [x] 記錄 InputDate 在舊 UI 顯示為 ConfirmDate、-1 對應 Scrap、Detail relation 僅 `(SEMIInNo, LotNo)`；舊 Core 沒排序／分頁，無條件可讀大量資料。
+- [x] 使用 IV404 已知三表；沒有可用受保護 Oracle profile 或可信同版 DDL，未新增臆測 schema。IV407 無新資料表需求。
+- [x] 公司端未連 PostgreSQL、未建立 schema／migration、未實作正式 API、未部署，未執行 build／test／browser。下一項 IV406。
+
+## 公司端最新交付：IV404 開立半成品進料單（2026-11-25）
+
+- [x] 核對 `frmINVSEMIIn`／BasisDef／DetailDef inline Designer、`wsINV` 單頭與明細 Load／Add／Edit／Delete、`clsInventory`／`clsBasis_UPD`、IV401 確認入口。
+- [x] 完成 `/YMES/INV/SemiIn` DEV 外購 Source=0／State=0 草稿、單頭／明細 CRUD、手動 Lot／Component、假 Unit Transfer、刪除確認；規格見 [IV404](modules/INV/開立半成品進料單_IV404.md)。
+- [x] 記錄 SEMIInNo 手動輸入、InventoryType=2、CustomerLotNo→LotNo／BaseLotNo、目前 ProductVersion、Component GoodQty 換算及 VB `CInt(Qty)` 對 Component 筆數限制。確認／庫存入帳只由 IV401 `ExeSEMIIn` 執行。
+- [x] `TBLINVSEMIInBasis/Detail/Component` 未找到可信同版 Oracle DDL／metadata；桌機受保護 profile 不可用，未猜 CREATE SQL。家用端須先核 live PostgreSQL schema，再決定 CREATE-only migration。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署，未執行 build／test／browser。IV407 已接續完成，下一項 IV406。
+
+## 公司端最新交付：IV403 開立半成品出庫單（2026-11-25）
+
+- [x] 核對 `frmINVSEMIOut`、BasisDef／DetailDef inline Designer、`wsINV` 單頭／明細 Load／Add／Edit／Del 與 `clsInventory`／`clsBasis_UPD`。
+- [x] 完成 `/YMES/INV/SemiOut` DEV State=0 單頭查詢、單頭／明細 CRUD、來源 Lot／Locator 假 Lookup、Component 整批帶入顯示及 DEV 列印預覽。
+- [x] 新增 [IV403 規格與家用端 API／schema handoff](modules/INV/開立半成品出庫單_IV403.md)，接入 App 選單／路由並更新 Module Index、MES menu progress 與兩端 TODO。
+- [x] 記錄舊 Core SQL 字串串接、單頭／明細 State=0、明細 DataStamp、MO Material List／替代料、HaveLevel／HaveComponent 數量鎖定，以及 Component 以完整複合鍵整批預約。
+- [x] 出庫單 Basis／Detail／Component 沒有找到可信同版 Oracle DDL／metadata；桌機受保護 Oracle profile 不存在，未猜 CREATE SQL。共用 SEMI Inventory／Component 與 Lot State 需家用端核 WP201／WP604／WP101 live schema。
+- [ ] 家用端先核 live PostgreSQL 是否已有出庫三表；若缺少再產 CREATE-only migration，原子處理 Inventory／Lot／Locator／Component booking、DataStamp 與 MO 驗證。出庫確認／扣庫存仍由獨立 IV401 確認流程負責。
+- [ ] Git sync pending：恢復 `.git` 寫入及 auto-review 後，fetch／比對 remote 並保留家用端變更，再正常提交／push所有待同步模組，包含 IV403；不可 force push。
+- [x] 公司端未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署、未執行 build/test/browser。接著 IV404。
+
+## 公司端最新交付：IV401 半成品庫庫房資料（2026-11-25）
+
+- [x] 核對 `frmINVSEMIInventory` inline Form／Designer、Inventory Basis／SEMI Inventory／Component／GoodBin／Bin loaders 與 Core 查詢；InventoryType=2／IssueState=2，主列 LocQty>0。
+- [x] 完成 `/YMES/INV/SemiInventory` DEV InventoryNo Lookup／Enter 查詢、庫存主表、選列 Component 優先／GoodBin fallback、按 BinOrder 動態 Bin 欄。
+- [x] 新增 [IV401 規格與家用端 API／schema handoff](modules/INV/半成品庫庫房資料_IV401.md)，接入 App 選單／路由並更新 Module Index、MES menu progress 及兩端待辦。
+- [x] IV402 的 `SEMI PRODUCT IN` FunctionKey 另接至共用 `/YMES/INV/SemiProductIn` DEV 入庫頁，引用 [IV502／IV402 規格](modules/INV/開立成品半成品入庫單_IV502.md)；Form 仍依來源預設 FGD radio，使用者可切 SEMI。
+- [x] SEMI Inventory／Component／GoodBin 沿 WP201／WP604／QC409；`TBLSYSBIN` 沿 PD102 dictionary logical reference；`TBLINVINVENTORYBASIS` 同版 Oracle DDL／metadata 缺失，桌機 profile 不存在，未猜 CREATE。
+- [x] 記錄舊 Core 字串串接、GoodBin fallback 只帶 LotNo、ProductName 僅 current／approved Product；SEMI In／Out 按鈕呼叫 IV404／IV403 確認 Form，非本頁寫入。
+- [ ] 家用端核 live PostgreSQL／WP201／WP604 references，實作 Inventory ACL、bounded main query 與完整 Component key；確認 Basis／SYS Bin 表版本，IV403／IV404 API 由各自規格處理。
+- [ ] Git sync pending：恢復 `.git` 寫入及 auto-review 後，fetch origin/main、比對並保留家用端變更，再正常提交／push IV503／IV212／IV204／IV209／IVB01／IV301／IV305／IV306／IV307／IV401／IV402；不可 force push。
+- [x] 公司端未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署、未執行 build/test/browser。接著掃描 INV 清冊尚未復刻功能。
+
+## 公司端最新交付：IV307 在製貨架歷程查詢（2026-11-25）
+
+- [x] 核對 `frmIV_StockerHistory` inline Form／Designer、`wsINV.LoadINVStockerHistory/LoadStockerNo`、`clsInventory` 查詢及 StockOn／StockOff 歷程語意。
+- [x] 完成 `/YMES/INV/StockerHistory` DEV，含 Stocker／Lot／Carrier exact、可選 TimeInterval、當班 07:30 起始與新到舊歷程 Grid。
+- [x] 新增 [IV307 規格與家用端 API/schema handoff](modules/INV/在製貨架歷程查詢_IV307.md)，接入 App 選單／路由並更新 Module Index、MES menu progress、兩端待辦。
+- [x] DetailLog 沿 WP902 DDL／metadata、Lot State 沿 WP101；Stocker Basis DDL／metadata 缺同版可信來源，profile 不存在，未猜 CREATE。
+- [x] 記錄空條件／日期範圍可查全表、Core 字串串接、沒有 paging、Lot Join 只用 LotNo、LogGroupSerial 過濾未實作；DEV 加上反向日期防呆。
+- [ ] 家用端核 live PostgreSQL／WP902 references，實作 ACL 保護、參數化查詢、分頁／上限、穩定排序與 Lot Join 唯一鍵；不要支援任意 XML additional filter。
+- [ ] Git sync pending：恢復 `.git` 寫入及 auto-review 後，fetch origin/main、比對並保留家用端變更，再正常提交／push IV503／IV212／IV204／IV209／IVB01／IV301／IV305／IV306／IV307；不可 force push。
+- [x] 公司端未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署、未執行 build/test/browser。接著掃描 INV 清冊其餘尚未復刻功能。
+
+## 前項公司端交付：IV306 在製貨架查詢作業（2026-11-25）
+
+- [x] 核對 inline Form／Designer、`wsINV.LoadINVstockerStateJoinQtyLimit`／`LoadINVStockerDetail`、`clsInventory` query；無自動查詢，四條件可選且可全部不帶，LotNo contains，其餘 exact。
+- [x] 完成 `/YMES/INV/StockerState` DEV 結果 Grid、空／滿／選取格位圖與 Stocker In/Out 導 IV305；從 IV306 會傳 StockerNo 給 IV305 預選。
+- [x] 新增 [IV306 規格及 API／schema handoff](modules/INV/在製貨架查詢作業_IV306.md)，更新 Module Index、公司接手檔、MES menu inventory 與兩端待辦。
+- [x] Stocker State 沿用 WP302；Stocker Basis／Detail 缺可信同版 Oracle DDL／metadata，桌機 profile 不存在，未猜 CREATE SQL。
+- [x] 已記錄舊 Core 無條件查詢可無上限全表、字串串接，Stocker／Area Lookup 由現況 distinct 而漏空貨架；正式 API 需參數化、權限範圍、穩定排序／分頁，格位圖以 Detail + State 組合。
+- [ ] 家用端核 PostgreSQL live schema／WP302／IV103 references，實作 ACL 保護、bounded query／lookup／Detail API；IV305 操作需重查目前 Stocker 狀態。
+- [ ] Git sync pending：恢復 `.git` 寫入及 auto-review 後，fetch origin/main、比對並保留家用端變更，再正常提交／push IV503／IV212／IV204／IV209／IVB01／IV301／IV305／IV306；不可 force push。
+- [x] 公司端未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署、未執行 build/test/browser。IV307 已接續完成，詳上方 checkpoint。
 
 ## 接手方式
 
 1. 在桌電開啟同一個 GitHub repository `souaix/YMES`，執行 `git pull origin main`。
-2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 與 [MES 選單清冊](MES_MENU_FUNCTION_INVENTORY.md)，再直接核對下一項 IV503 的 WinForms／Service／Core 原始碼。
+2. 先讀本檔、`todolist_officepc.md`、`todolist_homepc.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md` 與 [MES 選單清冊](MES_MENU_FUNCTION_INVENTORY.md)，再直接核對尚未復刻功能的 WinForms／Service／Core 原始碼。
 3. 本機 Codex 使用 YMES repo；MES WinForms 原始碼在公司筆電 `D:\iMES\CSiMES`，桌電可能是另一個路徑。若桌電有既有 MES checkout，先核對路徑；不可用 UI 截圖代替 Form/Designer/Service/Core 原始碼。原始碼缺少時記錄具體缺檔，先做不依賴它的工作。
 4. 若在桌電打開同一個 Codex 對話，thread 對話與 Goal 脈絡仍在；若另開新對話，把本檔及 TODO 當成接手上下文，不要假設新 thread 自動有舊 Goal 狀態。
 
@@ -28,6 +251,19 @@
 - 公司端允許使用的是 MES 原生 Oracle MESTEST 受保護唯讀連線，僅用於查 DDL/資料字典；不在 Oracle 寫入資料。
 
 ## 目前檢查點與下一步
+
+- **2026-11-25 INV IV305 接續點**：`frmStockManagement`／Designer、`wsINV.LoadStockerBasis/LoadINVStockerDetail/LoadStockerState/StockOn/StockOff`、`clsInventory` 已核對；完成 `/YMES/INV/StockerManager` DEV 格位圖、Lot／Carrier 上下架假操作與[規格](modules/INV/在製貨架上下架作業_IV305.md)。舊 Form 依 CapacityCtrl／QtyLimit 前端擋滿格，但 Core 無併發容量重驗；Core 限 Lot Status 1／11／12／99，StockOn Carrier Basis 須 IssueState=2、StockOff 未對稱檢查；現況＋Detail Log 之後才由 Service 寫 EventLog。StockerState／DetailLog／Lot／Carrier 沿 WP302／WP902／WP101／Carrier references，Stocker Basis／Detail 的可信 DDL／metadata 缺失；受保護 Oracle profile 不存在，未猜 CREATE。未連 PostgreSQL、未 build/test/browser。接著掃描其餘尚未復刻且可查證來源的 INV 功能。
+- **2026-11-25 INV IV301 接續點**：inline `frmINVWIPInventory`／Designer、`wsINV.LoadWIPInventory_All`、`clsInventory.LoadWIPInventory_All`、Component／GoodBin 的 `wsWIP`／`clsLot` loaders 及 Inventory／SYS Bin Lookup 已核對；完成 `/YMES/INV/WipInventory` DEV RAW、SEMI Lot／Component／Bin 四分頁及選列明細，[規格](modules/INV/在製品庫房資料_IV301.md) 已記錄。半成品查詢有三分組條件、日期需起訖同傳；舊 Detail 的 GoodBin 只以 LotNo 查、Component 無 Locator 條件，且舊 SQL 字串串接。RAW／SEMI 等依賴沿用 WP201、WP101、QC409、MTL／PRD references；`TBLINVINVENTORYBASIS`／`TBLSYSBIN` 同版 DDL／metadata 未找到，桌機受保護 Oracle profile 不存在，未猜 CREATE SQL。公司端未連 PostgreSQL、未 build/test/browser。接著掃描其他尚未復刻且可查證來源的庫存功能。
+- **2026-11-25 INV IV301 接續點**：inline `frmINVWIPInventory`／Designer、`wsINV.LoadWIPInventory_All`、`clsInventory.LoadWIPInventory_All`、Component／GoodBin 的 `wsWIP`／`clsLot` loaders 及 Inventory／SYS Bin Lookup 已核對；完成 `/YMES/INV/WipInventory` DEV RAW、SEMI Lot／Component／Bin 四分頁及選列明細，[規格](modules/INV/在製品庫庫房資料_IV301.md) 已記錄。半成品查詢有三分組條件、日期需起訖同傳；舊 Detail 的 GoodBin 只以 LotNo 查、Component 無 Locator 條件，且舊 SQL 字串串接。RAW／SEMI 等依賴沿用 WP201、WP101、QC409、MTL／PRD references；`TBLINVINVENTORYBASIS`／`TBLSYSBIN` 同版 DDL／metadata 未找到，桌機受保護 Oracle profile 不存在，未猜 CREATE SQL。公司端未連 PostgreSQL、未 build/test/browser。接著掃描其他尚未復刻且可查證來源的庫存功能。
+- **2026-11-25 INV IVB01 接續點**：Industry Base `frmINVWaferReceiving`／`frmINVWaferReceivingImport` inline Form／Designer、`wsINV_Base.LoadINVRAWInventoryData/DelINVRAWInventoryDetail/SaveTestSumData`、`clsInventory_Industry_Base` 已核對；完成 `/YMES/INV/WaferReceiving` DEV 三層 Raw／Locator／Wafer Test Summary、五條件查詢、假匯入／刪除互動與[規格](modules/INV/來料庫房管理_IVB01.md)。舊匯入依 Vendor AutoLoader Script 解析 CSV／Excel，直接建立 State=2 MaterialIn，更新 Raw／Locator／Component／TestSummary／Log；刪除會扣 Raw 並產生 State=2 MaterialReturn。Core Join／Component 刪除漏 LocatorNo、Capacity 只比本次匯入數，正式端須按完整 Locator 鍵重驗，upload→preview→commit 原子寫入。Industry Base Component／MaterialIn／Return／Temp／動態 TestSummary DDL／metadata 未能核實；受保護 Oracle profile 不存在，未猜 CREATE SQL。WAFERBANK vendor DLL 未處理。公司端未連 PostgreSQL，未 build/test/browser。接著掃描其他尚未復刻且有來源的 INV 功能。
+- **2026-11-25 INV IV209 歷史接續點**：inline `frmINVMaterialAdjustLog`／Designer、`wsINV.LoadINVMaterialAdjustBasis/Detail`、`clsInventory` 已核對；完成 `/YMES/INV/MaterialAdjustLog` DEV 唯讀查詢與[規格](modules/INV/庫存調整單記錄_IV209.md)。查詢支援單號／原料庫房／State／CreateDate／INV Date；後者以 `TBLINVTransactionLog.Source=3` TicketNo／CreateDate 篩選，不等於 Basis.ConfirmDate。選取 Basis 載入 Detail／Component。舊 Core 空父單號 Detail 可回整表、Component DataRelation 僅用 MaterialNo，家用端須父單號必填並依 PostgreSQL live 複合鍵建立關聯。調整 Basis／Detail／Component Oracle DDL／metadata 缺失，桌機受保護 Oracle profile 不存在，未猜 CREATE SQL；TransactionLog 沿用 WP605 reference。未連 PostgreSQL、未 build/test/browser。接著依清冊掃描尚未復刻且來源可用的 INV 功能。
+
+- **2026-11-25 INV IV204 歷史接續點**：`frmINVMaterialAdjust`／BasisDef／DetailDef inline Form／Designer、`wsINV`、`clsInventory` 與 IV201 的 `frmINVMaterialAdjustConfirm`／`ExeMaterialAdjust` 已核對；完成 `/YMES/INV/MaterialAdjust` DEV 主／明細 State=0 CRUD、數量調帳／儲位調撥、Raw Lot／Locator 假 Lookup 及家用端 handoff，詳[規格](modules/INV/開立庫存調整單_IV204.md)。IV204 僅維護草稿，真實過帳由 IV201 Source=3 負責。數量調帳更新 Raw CurQty／LocQty；Locator 調撥會重查未確認領料、目的容量，再以 OrgQty 移轉。舊容量檢核只看首筆且將容量轉整數，Component DataRelation／刪除不完整；正式 API 須核 live PostgreSQL schema、參數化並在原子交易中重驗狀態／庫存／容量及同步 Component。調整 Basis／Detail／Component、Raw Inventory／Raw Component、MaterialOut DDL／metadata 未能從 repo 或桌機受保護 Oracle profile 取得，未猜 CREATE SQL；LocatorBasis 沿用既有 reference。公司端未連 PostgreSQL，未執行 build/test/browser。IV209 已接續完成，詳上項。
+
+- **2026-11-25 INV IV212 歷史接續點**：inline `frmINVRaw_Acclimation`、`wsINV.LoadWIPInventory_Raw/Edit_IVN_Raw_Split/SetInventoryRawFrozen`、`wsMTL`／`wsWIP_Material`、`clsInventory`／`clsMTLBasis`／`clsMaterialHandler` 已核對；完成 `/YMES/INV/RawAcclimation` DEV 與[規格](modules/INV/回溫回冰作業_IV212.md)。查詢使用 GumMaterialType、未過期且 Qty>0 的原料批；回溫檢查核准類別、FrozenDate+FROZENMIN；回冰檢查設備 QTY、REFROZENFLAG／次數限制。DEV 假設 `MATERIALMULTITIMECTRL=1`，資料只在本頁記憶體更新。Raw 沿用 WP201、TBLMTLTYPEACCLIMATION 沿用 MTL master、設備上料狀態沿用 WP301；`TBLINVWIPINVENTORY_RAWLOG` 原生 DDL／metadata 缺失，筆電的受保護 attachment 路徑在桌機不存在，未猜 CREATE SQL。舊 Core 的 UPDATE 沒有 LocatorNo（Raw PK 含 LocatorNo），設定查詢也未明定物料專屬／`*` 優先序；家用端需先核 live schema，採完整鍵、狀態版本、參數化與 Raw＋RawLog 原子交易。公司端未連 PostgreSQL，未執行 build/test/browser。IV204 已接續完成；下一項依清冊 IV209「庫存調整單記錄」。
+
+- **2026-11-24 INV IV503 歷史接續點**：`frmINVProductInLog` inline Form／Designer、`wsINV.LoadINVSEMIInAndFGDIn`／FGD／SEMI Detail+Component loaders 與 `clsInventory` 已核對；完成 `/YMES/INV/ProductInLog` 唯讀 DEV 與[規格](modules/INV/成品入庫單記錄_IV503.md)。查詢合併 FGD／SEMI Basis，支援單號、目的／來源庫房、State、CreateDate／InputDate 與選列 Lot／Component 子列；InputDate 在舊 Form 顯示為 ConfirmDate，VOID 的 SelectedIndex bug 由 DEV 使用實際 State=-1 修正。FGD／SEMI 表沿用 WP605／WP604，其他 Lookup 沿用 Inventory／Product／ComponentProperty refs，無新 DDL。家用端需核 live schema 與 FGD Detail／Component 複合鍵；舊 Core 空父單號會回全表，正式 API 必須父單號限定、參數化、穩定排序及分頁。未連 Oracle／PostgreSQL，未執行 build/test/browser。後續 IV212 已完成；目前下一項 IV204「開立庫存調整單」。
+- **2026-11-24 INV IV503 接續點**：`frmINVProductInLog` inline Form／Designer、`wsINV.LoadINVSEMIInAndFGDIn`／FGD／SEMI Detail+Component loaders 與 `clsInventory` 已核對；完成 `/YMES/INV/ProductInLog` 唯讀 DEV 與[規格](modules/INV/成品入庫單記錄_IV503.md)。查詢合併 FGD／SEMI Basis，支援單號、目的／來源庫房、State、CreateDate／InputDate 與選列 Lot／Component 子列；InputDate 在舊 Form 顯示為 ConfirmDate，VOID 的 SelectedIndex bug 由 DEV 使用實際 State=-1 修正。FGD／SEMI 表沿用 WP605／WP604，其他 Lookup 沿用 Inventory／Product／ComponentProperty refs，無新 DDL。家用端需核 live schema 與 FGD Detail／Component 複合鍵；舊 Core 空父單號會回全表，正式 API 必須父單號限定、參數化、穩定排序及分頁。未連 Oracle／PostgreSQL，未執行 build/test/browser。IV212 已完成；目前下一項 IV204「開立庫存調整單」。
 
 - **2026-11-24 INV IV502 接續點**：共用 `frmINVProductIn`／`frmINVProductInDef` 已完成 `/YMES/INV/ProductIn` DEV 與 [規格](modules/INV/開立成品半成品入庫單_IV502.md)。直接核對 FGD／SEMI Add／Edit／Delete／combined Load Service、`clsInventory`、`clsBasis_UPD`。DEV 支援 FGD 預設與 SEMI 切換、State=0／Source=1 草稿查詢、來源 WIP 半成品 Lot／Component 選取及假預約、完整最高層包裝子 Lot 檢核、DataStamp 編輯、作廢保留明細／解除預約和列印預覽。建立草稿不執行庫存過帳；IV501 Source=30 確認才過帳。
 - FGD In 表沿用 WP605、SEMI In 表沿用 WP604；WIP Semi／Component、Lot、ReverseHistory、Package、Locator 使用 WP201／603／101／215／601／PRD112 refs，無需新增 Oracle DDL／CREATE-only。本家用端已以 0074 migration 建立經 live 確認缺少的 15 張來源表；完整備份、欄位／鍵／索引／權限回讀見 [資料庫連線紀錄](../DATABASE_CONNECTION.md)。本機已新增登入保護的 IV502 列表／父單號明細／來源 Lot Component lookup 唯讀 API 並通過 .NET 9 build，尚未部署或接正式頁面；建立／編輯／作廢仍待實作。草稿交易仍須重驗 Qty、BookingFlag、Component、包裝完整性、DataStamp；作廢是 State=-1、釋放預約並保留明細。公司端下一項依清冊為 IV503「成品入庫單記錄」。
@@ -141,7 +377,7 @@
 - 規格：[IV501 成品庫庫房資料](modules/INV/成品庫庫房資料_IV501.md)。DEV route `/YMES/INV/FgdInventory`；庫房查詢顯示 `LocQty>0`，選列先查 Component，無 Component 才依 `TBLSYSBIN.BinOrder` 顯示 Lot Bin；FGD In 使用 Source=30。
 - 已直接核對 `frmINVFGDInventory`／`frmINVFGDInConfirm`、相關 Service 與 `clsInventory.ExeFGDIn`。重要風險：`AddINVTransactionState` 會吞內層 `ExeINVTransactionState` 例外，外層仍可能回 success，雖然 Basis 已標 State=3；正式 API 不可沿用。
 - DDL／metadata 沿用 WP201／WP605、QC409 WIP Bin、PRD Bin refs；沒有新表或 CREATE SQL。桌機未重連 Oracle、未連 PostgreSQL、未 build/test/browser。
-- IV502 已完成；下一項 IV503「成品入庫單記錄」。
+- IV502、IV503、IV212 均已完成；下一項 IV204「開立庫存調整單」。
 
 ## IV310 checkpoint
 
