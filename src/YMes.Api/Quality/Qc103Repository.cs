@@ -44,6 +44,30 @@ public sealed class Qc103Repository(NpgsqlDataSource dataSource)
         return rows;
     }
 
+    public IReadOnlyList<Qc103WaferPlanOption> ListWaferPlans(int? issueState, string? searchFieldName, string? searchFieldValue)
+    {
+        if (issueState is not null and not (-1 or 0 or 1 or 2)) throw Rule(400, "IssueState 僅允許 -1、0、1、2。");
+        if (!string.IsNullOrWhiteSpace(searchFieldName) && !string.Equals(searchFieldName.Trim(), "PlanNo", StringComparison.OrdinalIgnoreCase))
+            throw Rule(400, "查詢欄位只允許 PlanNo。");
+        var search = OptionalText(searchFieldValue, "PlanNo 查詢", 25) ?? "";
+        using var connection = dataSource.OpenConnection();
+        EnsureTable(connection, null, "tblqcsamplingplan_wafer");
+        var sql = "SELECT planno,sampletype::int,issuestate::int FROM \"YMES\".tblqcsamplingplan_wafer WHERE (@search='' OR position(lower(@search) in lower(planno))>0)" +
+            (issueState is null ? "" : " AND issuestate=@state") + " ORDER BY planno;";
+        using var command = new NpgsqlCommand(sql, connection);
+        Text(command, "search", search, 25);
+        if (issueState is { } state) Number(command, "state", state);
+        var rows = new List<Qc103WaferPlanOption>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var planNo = reader.GetString(0);
+            // Oracle source has no PlanName column; expose the stable PlanNo as its display name.
+            rows.Add(new(planNo, planNo, reader.GetInt32(1), 1, reader.GetInt32(2)));
+        }
+        return rows;
+    }
+
     public Qc103PlanDto Get(string planNo)
     {
         var no = Key(planNo);

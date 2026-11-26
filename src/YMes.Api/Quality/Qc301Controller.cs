@@ -95,7 +95,7 @@ public sealed class Qc301Controller(NpgsqlDataSource dataSource, ILogger<Qc301Co
 public sealed class Qc301SamplingPlanLookupController(NpgsqlDataSource dataSource) : ControllerBase
 {
     // QC103 owns this aggregate; retain the published QC301 lookup routes and
-    // envelope so existing chart-basis callers continue using the same API.
+    // response envelope while routing Wafer plans to their source table.
     private readonly Qc103Repository _repository = new(dataSource);
 
     [HttpGet]
@@ -104,7 +104,10 @@ public sealed class Qc301SamplingPlanLookupController(NpgsqlDataSource dataSourc
         Execute(() =>
         {
             ValidateCollectQuery(componentCollect);
-            return Ok(new { items = _repository.List(issueState, componentCollect, searchFieldName, searchFieldValue) });
+            object items = componentCollect == 1
+                ? _repository.ListWaferPlans(issueState, searchFieldName, searchFieldValue)
+                : _repository.List(issueState, 0, searchFieldName, searchFieldValue);
+            return Ok(new { items });
         });
 
     [HttpGet("{planNo}/parameters")]
@@ -119,6 +122,8 @@ public sealed class Qc301SamplingPlanLookupController(NpgsqlDataSource dataSourc
     {
         if (Request.Query.ContainsKey("componentCollect") && !componentCollect.HasValue)
             throw new Qc103RuleException(400, "ComponentCollect 不可為空；省略時才採既有一般抽樣計劃契約。");
+        if (componentCollect is not null and not (0 or 1))
+            throw new Qc103RuleException(400, "ComponentCollect 僅允許 0（一般）或 1（Wafer）。");
     }
 
     private IActionResult Execute(Func<IActionResult> action)

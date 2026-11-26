@@ -11,6 +11,7 @@ public sealed record Qc103PlanDto(string PlanNo, string PlanName, int PlanType, 
 
 public sealed record Qc103ParameterDto(string ParameterNo, string? ParameterValue, int? ShowFlag);
 public sealed record Qc103PlanTypeOption(int Value, string Label);
+public sealed record Qc103WaferPlanOption(string PlanNo, string PlanName, int PlanType, int ComponentCollect, int IssueState);
 
 public sealed class Qc103PlanWriteRequest
 {

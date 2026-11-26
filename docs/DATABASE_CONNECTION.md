@@ -1384,3 +1384,13 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 ### 更新 2026-11-20：WIP WP112 工單撤派工
 
 - 同一公司端受保護 MESTEST profile、PowerShell 5.1/Oracle.ManagedDataAccess **唯讀**查 `TBLWIPCONT_MATERIALLOT`（18 欄、無 PK、兩個非唯一 index）、`TBLSYSSERIALCREATEMAX`（6 欄、四鍵 PK）、`XX_TBLOEMO_OS_BU1`（10 欄、四鍵 PK）、`ZPPT0025A/B/C1`（10/8/10 欄、各複合 PK）的 DBMS_METADATA table/index DDL、ALL_TAB_COLUMNS／CONSTRAINTS／INDEXES／TRIGGERS；六表均無 trigger。交付 `database/reference/mestest_wip_wp112_<table>_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt` 與 PG CREATE-only `mestest_wip_wp112_create.sql`。Source DDL 的 `VARCHAR2(n CHAR)` 已按字元長度轉 PG，不能用 metadata DATA_LENGTH 位元組值。原交易寫 `THSAP.ZPPT0025A/B/C1@SAP_DBLINK`，MESTEST 本地表 DDL 不能證明外部實表一致；家用端先核外部契約與 PG live schema/history，再僅補真缺項。公司端未查業務列、未寫 Oracle、未連 YMES PostgreSQL，憑證未提交。
+
+### 更新 2026-11-27：QC212 計量品管項目_群組正式 API
+
+- 家用端以 `C:\Users\User\Desktop\DigitalOcean.ppk` / SSH 連線到 YMES 遠端 PostgreSQL；公司端未連 PostgreSQL。migration 0089 套用前建立完整備份 `/opt/ymes/backups/ymes-before-qc212-0089-20261127.dump`（789,509 bytes，SHA-256 `3dcc6bb2e9b90c107cca1d7b6ff3ca94e799e27e04a969dc76076d10f2ba4fb8`），`pg_restore --list` 驗證成功。
+- 已先查 live schema：`tblqcitemgroupbasis`、`tblqcitemgroupdetail`、`tblqcitemparameter`、`tblopqcitem`、QC Item、一般抽樣計畫、MES Parameter 等原有表保留；唯缺少 QC212 腳本、Memo、WIP 刪除檢查及 Wafer 計畫 header 四表。migration `0089_qc212_variable_item_group.sql` 建立四張空表、Wafer/WIP 索引及必要 grants，沒有複製 Oracle 業務列。Rollback 只會撤銷新權限並移除仍為空的新表。
+- Migration SHA-256 `6B3F72CA0B7990393A6803B6B4FE1C7595FC8E9161EC68636A3A221A2ACF8DB5`；rollback SHA-256 `3AD042287B986984F00274EE3F33E133FA67C591B7FDEBE455C273A660F05C32`。遠端資料庫四張新表皆為 0 rows；既有 QC212 群組主檔與明細亦為 0 rows。QC Variable Item、一般/Wafer Sampling Plan、MES Parameter、Operation lookup 當下也皆為 0 rows。
+- `ymes_app` 對群組主檔、明細、計算腳本、Memo 具 CRUD；對 WIP guard、Wafer sampling plan 僅 SELECT。`SET ROLE ymes_app` 後可讀取所有新表，清單/明細/plan/WIP guard 查詢計畫均可解析。
+- API 發佈包從本機 Release publish 上傳，SHA-256 相同；遠端 image `ymes-api:current` 為 `sha256:877bb4a8d45a66dd11cd997de6f4cc3d87f70578ab790efd9a0fa61b4e9b8614`。`ymes-api` 健康檢查 healthy，`/YMES/API/health/ready` 回 200。僅重建 API 容器，Web/其他容器 ID 保持不變。Rollback image `ymes-api:before-qc212-20261127-a1` 保留為 `sha256:d6d40bab48737f28d76c40a634ef61ec836caddf6d0a24d803134c014e73b4fc`。
+- app-browser Demo 登入後可載入 `/YMES/QC/VariableItemGroup`，清單顯示查無資料；直接 GET `/YMES/API/api/qc/item-groups?functionNo=QCITEM_G` 回 `{ "items": [] }`。新增表單欄位檢核與未選資料之修改/複製/刪除/核准防護正常。正式端沒有業務資料，未執行任何資料寫入；需等核准 lookup 資料及安全測試資料可用後，補測完整 CRUD/簽核/子項往返。
+- 發佈後 `/` 根檔案系統約剩 621 MB，使用率 99%；部署下一個 API 前盤點磁碟與 Docker 映像，保留 rollback image 及 DB backup，不要直接執行 prune。

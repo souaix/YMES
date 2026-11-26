@@ -2797,11 +2797,20 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 
 - [x] pull `origin/main`（Already up to date），依 Customer/Production THEIL BU1 原始碼閱讀群組主 Form、Define Form、Memo Form/Designer、共用 Include/Parameter/OP/Calculate Script 子視窗，以及 `wsQC`、`clsQCBasis`；依據不是截圖。
 - [x] 完成 `/YMES/QC/VariableItemGroup` Vue 3 DEV 畫面與三層選單，包含四狀態/GroupNo 查詢、上下主/明細 Grid、Add/Edit/Delete/Copy/Approve、雙清單 Add QC/順序、Remove QC、Parameter、Op、Calculate Script、Memo；使用獨立 localStorage 假資料及 KD 黃橘配色。
-- [x] 主/明細/核准/刪除/Copy/Memo 的實際限制與 legacy 差異已寫入 `docs/modules/QC/計量品管項目群組.md`。已整理 API handoff，並記錄 QCITEM_G Issue Job、WIP 刪除檢查、DataStamp 與 Memo Type=1。
+- [x] 主/明細/核准/刪除/Copy/Memo 的實際限制與 legacy 差異已寫入 `docs/modules/QC/計量品管項目_群組.md`。已整理 API handoff，並記錄 QCITEM_G Issue Job、WIP 刪除檢查、DataStamp 與 Memo Type=1。
 - [x] Oracle DDL 沿用既有 PowerShell 5.1 + Oracle.ManagedDataAccess 唯讀 metadata 擷取：主表、明細、計算腳本、Memo 及共用表都已有 Oracle source reference；本次未再次連 Oracle、未讀業務資料、未在 Oracle 執行 DDL。
 - [x] 新增 `database/reference/mestest_qc212_item_group_create.sql`，供家用端核對並補缺的 `tblqcitemgroupdetail`、`tblqccalculatescript` PostgreSQL 建表參考；主表與 Memo 既有 Create reference 已在規格中引用。
 - [x] 更新 `todolist_homepc.md` 最新 QC212 schema/API handoff、`docs/DATABASE_CONNECTION.md`、`docs/MODULE_REPLICATION_SPEC_INDEX.md`。
 - [ ] 公司端未連 YMES PostgreSQL，未執行 build、測試或瀏覽器驗收；家用端完成 migration/API 後公司端 pull 再驗收。下一項依目錄為 QC213 計數品管項目群組。
+
+## QC212 家用端 API／正式部署交接（2026-11-27）
+
+- [x] 家用端已建立模組規格 `docs/modules/QC/計量品管項目_群組.md`、資料庫 migration 0089、登入保護 API，並部署至 `/YMES/API`；Web/API 分離架構維持原設定。
+- [x] 家用端 app-browser 已 Demo 登入，確認 QC212 路由、群組清單 API、查詢、空白新增必填檢核及未選資料的操作防護。正式群組與所有 lookup 資料均為 0 筆，沒有新增正式測試資料，尚未完成有資料時的寫入往返驗證。
+- [ ] 公司端同步 `origin/main` 後確認原生 MES `TBLQCITEMPARAMETER`／Parameter 表單 `SpecType` 0/1/2 的對應語意；提供來源 Form／Service/Core 的程式碼位置或實際讀寫欄位，不需要連 PostgreSQL 或 SSH。
+- [ ] 確認 WinSPC Form、QC Class 的原生 lookup 來源與篩選條件；家用端目前是依既有群組／變數 QC Item 欄位推導選項，正式參照表尚未證實。
+- [ ] 依來源證據修正 QC212 Vue/API 規格；確認後由家用端負責 PostgreSQL/API/正式部署，公司端維持 Vue/UI 與原生 MES 行為查證。
+- [ ] 公司端仍不可連 YMES PostgreSQL 或 SSH；所有 DB/schema/API 部署由家用端處理。
 
 ## QC213 計數品管項目群組公司端交接（2026-11-17）
 
