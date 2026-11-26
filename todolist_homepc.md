@@ -108,7 +108,8 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 ## 公司端最新交付：RPT RT204 產出看板時段主檔（2026-11-26）
 
 - [x] 公司端核對 RT204 主／定義 Form、Service／Core；完成 DEV 四狀態時段主檔與 Add／Edit／Copy／Apply／Confirm、Approve、刪除／停用流程。[RT204 handoff](docs/modules/RPT/產出看板時段主檔_RT204.md)
-- [ ] 家用端取得 tblRPTTimeStepBasis 可信 MESTEST DDL／metadata 並核對 YMES live schema／索引；依 handoff 建受授權、參數化 CRUD API，以交易完整重驗跨午夜重疊與核准。
+- [x] 家用端已用 PPK／SSH 唯讀查正式 PostgreSQL catalog；YMES 與其他 schema 均沒有 tblRPTTimeStepBasis，repo 亦無可信 DDL，未猜建表。詳 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [ ] 公司端交付 tblRPTTimeStepBasis 原生 Oracle CREATE／完整欄位與鍵索引、FromTime／ToTime 型別及日期成分；取得後再建來源 migration，實作受授權參數化 CRUD 與交易式重疊核准 API。詳公司端待辦。
 - [x] RPT 清冊下一項 RT501「生產批狀態查詢」。
 
 ## 前項公司端交付：RPT RT203 作業站現況看板_產品（2026-11-26）

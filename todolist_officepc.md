@@ -6,6 +6,10 @@
 - [ ] 透過公司端原生 Oracle 唯讀 metadata 取得 TBLRPTBillBoardOPStateConfig／TBLRPTBillBoardOPStateContent 原始 DDL、欄位型別／長度／precision／nullable／default、PK／unique／FK／indexes；說明 HostName／PCNo、SetupType 1／2／3 的關聯與儲存範圍，確認是否含 user id。只交結構與必要範例鍵，不匯出其他使用者設定或業務資料，不在 Oracle 建表。
 - [ ] API 目前依登入驗證，要求 OPNo 存在並限制查詢值／回傳列數；YMES 尚無已核實 per-user OP 權限或共用設定表結構。待 DDL／scope 交付後再共同定義正式設定與單一 OP 存取規則，不用 PCNo 冒充使用者授權。
 
+## 公司端資料交付：RPT RT204 時段主檔原生 DDL（2026-11-27）
+
+- [ ] 以公司端原生 Oracle 唯讀方式交付 TBLRPTTimeStepBasis 完整 CREATE／columns、型別與長度／precision、nullable／default、PK／unique／FK／indexes；確認 FromTime／ToTime 是 DATE 或其他型別，以及值內是否包含日期。只交結構 metadata，不修改 Oracle。家用端 SSH 已核實正式 YMES PostgreSQL 及其他 schema 均無此表，repo 也沒有可信 DDL；收到來源後家用端才會建復刻空表並做 API。
+
 ## 公司端接手：RPT RT410 設備稼動查詢正式 UI（2026-11-27）
 
 - [x] 家用端已部署登入保護 `GET /YMES/API/api/reports/equipment-daily-utilization`。必填 `startTime`／`endTime`（台灣本地、不含時區），可帶 `areaNos`、`equipmentNos`（逗號分隔）及 `chamberManage=true|false`；上限 31 天、100 個條件、2,000 設備。Response 含狀態目錄、父設備、巢狀 Chamber、state percentages、Moves／`LotQtyEqp`、Loss／NoData。詳 [RT410 模組 MD](docs/modules/RPT/設備稼動查詢_RT410.md)。

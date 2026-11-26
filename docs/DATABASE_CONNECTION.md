@@ -9,6 +9,11 @@
 - .NET 9 Release image `ymes-api:rt201-board-20261127-a1`（`sha256:4eadbe4950b9710d2a046b6cace87ef686db2c31bf33e2094e553322851bb`）已取代 YMES API service；前版 image 保留為 `ymes-api:before-rt201-board-20261127-a1`。readiness=200、匿名報表端點=401，Compose 僅重建 `ymes-api`；Web／master Web／Nginx／其他容器未更新。
 - 正式 app-browser Demo 登入後檢查三個端點及 groupBy、Status、pageSize 防呆，預期錯誤回應正常。正式 `tblopbasis` 目前 0 筆，無法驗證有效 OP 與有資料回應；沒有新增正式業務測試資料。
 
+## RT204 時段主檔 live catalog 檢查（2026-11-27）
+
+- 由家用電腦以 PPK／SSH 登入正式主機，使用 PostgreSQL 維護帳號在 `ymes` database 唯讀查詢 `pg_catalog.pg_class`／`pg_namespace`；YMES 與其他 schema 均沒有 `tblRPTTimeStepBasis`。
+- Repo 的 `database/reference` 亦沒有可信來源 DDL。未建表、未改 schema／權限、未查業務列；需要公司端透過原生 Oracle 唯讀交付完整 DDL／metadata 後才能產生復刻 migration 與 API。
+
 ## 最新：0081 RT603／RT604 共用 WIP LotLog 空表（2026-11-27）
 
 - WP101 的 `tblwiplotbasis` Oracle／PostgreSQL CREATE-only refs 已存在，正式 YMES `tblwiplotbasis` 已有 38 欄且 `ymes_app` 僅有查詢權限。QC409 dependency 的 Oracle DDL 與 `database/reference/mestest_wip_lot_log_create.sql` CREATE-only 核實 `TBLWIPLOTLOG` 欄位、`PK(LOTSERIAL)`、`I_TBLWIPLOTLOG_01(LOGGROUPSERIAL)`、`I_TBLWIPLOTLOG_02(LOTNO)`；正式 YMES 原本缺少此表。
