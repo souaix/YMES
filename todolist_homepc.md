@@ -1,5 +1,17 @@
 # 家裡電腦接手清單
 
+## 家用端 SD104 區域基本資料 API（2026-11-27）
+
+- [x] PPK／SSH 唯讀核對正式 `YMES` catalog 的 Area Basis、Area Inventory、Area Map、Area Relation、SMT Area Equipment Map 與 Department Basis；五張 SMD 區域相關表均存在，未讀／寫正式業務列。
+- [x] 套用 migration 0085，只授予 `ymes_app` 對既有 `tblsmdareabasis` CRUD 與 `tblusrdepartmentbasis` SELECT；套用前完整備份、checksum、權限回讀及五種 SQL EXPLAIN 見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。EXPLAIN 未執行 DML。
+- [x] 完成登入保護的區域清單、factory/department/base-area options、新增、修改、刪除 API；欄位、有效型別組合、稽核、DataStamp、狀態及 relation delete guard 已實作。照使用者決定僅要求登入，暫不檢查角色／SMD 功能權限。
+- [x] .NET 9 Release build 成功並部署 `ymes-api:sd104-area-basis-20261127-a1`（image `sha256:b0d0704331d51a5b68c3910301d2c4ccb8c788466215747a39d1f92f74e5b81e`）；API healthy/readiness 200，匿名 options=401；web 與其他專案容器未更新。
+- [x] 正式 app-browser Demo session 驗證 `/YMES/SMD/Areas` 清單可載入（0 筆）、新增表單可開啟；重載 options API 回 `factories=[]`、`baseAreas=[]`、`departments=[]`。未寫入正式業務列。
+- [x] `AREA BASIS` approve 尚無核實 Issue/Job provider，API 安全回 503；layout options/save 缺 `LoadAreaRelationDefine`／`funSaveAreaData` 原生來源，也安全回 503 且不修改資料。
+- [ ] 公司端 pull 後在 DEV 假資料驗收主檔 Add/Edit/Copy/Delete/Approve 欄位與錯誤流程；提供完整 `AREA BASIS` Issue/Job provider mapping、部門選項來源及 `LoadAreaRelationDefine`／`funSaveAreaData` 對四張衍生表的保存規則。取得來源後，家用端完成簽核與 layout API，再安排正式正向 CRUD 驗收。
+
+詳細規格、API 行為與正式端點驗證見 [SD104 模組紀錄](docs/modules/SMD/區域基本資料.md)。
+
 ## 家用端 SD103 儲位基本資料 API（2026-11-27）
 
 - [x] PPK／SSH 唯讀核對正式 `YMES.tblinvlocatorbasis` 與可信來源 DDL；欄位、型別、長度、NULL/default、複合 PK 一致，0017 已補來源預設值，不重建表或改正式資料。
@@ -2902,9 +2914,11 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 
 ## SMD SD104 區域基本資料（公司端 2026-11-16 已交接）
 
-- [x] 2026-11-16 家用端比對 YMES：`TBLSMDAREABASIS` 已存在但四項來源 DEFAULT 缺漏；`TBLSMDAREAINVENTORY`、`TBLSMDAREAMAP`、`TBLSMDAREARELATION`、`TBLSMDSMTAREAEQPMAP` 缺表。已透過 `0017_smd_computer_area_api.sql` 補回 DEFAULT 並建立四張空表；未匯入 MES 業務資料。SD104 Production CRUD/layout API 仍待完成。
+- [x] 2026-11-16 家用端比對 YMES：`TBLSMDAREABASIS` 已存在但四項來源 DEFAULT 缺漏；`TBLSMDAREAINVENTORY`、`TBLSMDAREAMAP`、`TBLSMDAREARELATION`、`TBLSMDSMTAREAEQPMAP` 缺表。已透過 `0017_smd_computer_area_api.sql` 補回 DEFAULT 並建立四張空表；未匯入 MES 業務資料。2026-11-27 已完成 SD104 主檔 CRUD/options API 部署；簽核與 layout API 等來源交接，見本檔頂端最新進度。
 
 先讀 `docs/modules/SMD/區域基本資料.md`、`todolist_officepc.md` 的 SD104 區塊及以下 Oracle reference。公司端已有 `/YMES/SMD/Areas` Vue DEV 頁與 SMD 三層 fallback 選單；Production 不使用 localStorage 假資料。
+
+2026-11-27 家用端狀態已更新於本檔頂端：主檔 list/options/CRUD 已部署；下列 API 條目保留來源規格與驗收條件，簽核及 layout 仍待公司端來源交接。依使用者決定，端點只要求登入，暫不做角色／SMD 功能權限檢查。
 
 ### Schema / migration
 
@@ -2915,13 +2929,13 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 
 ### API / Service handoff
 
-1. 建 SMD API 並檢查登入者 SMD 權限：`GET /api/smd/areas?issueState=&areaNo=`、`GET /api/smd/area-basis/options`、`POST /api/smd/areas`、`PUT/DELETE /api/smd/areas/{areaNo}`、`POST /{areaNo}/approve`、`GET/PUT /{areaNo}/layout`、`GET /{areaNo}/layout-options`。JSON camelCase DTO 與 query/body 欄位以功能規格和 `AreaBasisMaster.vue` 為準；layout PUT 回更新後完整 Area DTO/DataStamp。
+1. 已部署主檔 API：`GET /api/smd/areas?areaNo=&factoryNo=&issueState=&areaClass=`、`GET /api/smd/area-basis/options`、`POST /api/smd/areas`、`PUT/DELETE /api/smd/areas/{areaNo}`。`POST /{areaNo}/approve` 與 `GET/PUT /{areaNo}/layout`、`GET /{areaNo}/layout-options` 尚待來源 provider／關聯推導交接；實際回應狀態見模組紀錄。JSON camelCase DTO 與 query/body 欄位以 `AreaBasisMaster.vue` 為準。
 2. 新增只接受有效的區域類型組合；AreaNo 長度20、AreaName 50、Description 255；編號大寫。AreaNo/AreaName/FactoryNo/Creator/CreateDate 在 DB NOT NULL；DepartmentNo DB nullable 但 UI/API required。一般區域 BaseAreaNo 必填且必須屬於 active Base Area，FactoryNo 從 Base Area 繼承；Base Area 必須選 active Factory。Factory/Department options 不得使用 DEV 假資料。
 3. Create 設 IssueState=0、稽核與 DataStamp；Edit 僅 state 0，以 DataStamp compare-and-swap 更新；NULL DataStamp 也要正確 CAS，遞增 `COALESCE(DataStamp,0)+1`。Delete state 0/-1 實體刪除；2 改 -1；1 回 409。實體刪除要 transaction 檢查 `TBLSMDAREARELATION.ContainAreaNo`，若仍有 layout relation 要拒絕。多筆 UI 逐筆請求，錯誤回報完成筆數。
 4. Approval 僅接受 state 0，IssueNo=`AREA BASIS`，重用 YMES Issue/Job service：無 Job/Detail 依 WinForms 規則直達 2；有設定轉 1，核准2/退回0。Production 不得照 Vue DEV 直接轉狀態。
 5. Layout 必須讀舊 `frmAreaLayout.vb`、`frmNodeDef.vb` 與 `funSaveAreaData`，在 PostgreSQL 同一 transaction 處理 `TBLSMDAREARELATION`、`TBLSMDAREAMAP`、`TBLSMDAREAINVENTORY`、`TBLSMDSMTAREAEQPMAP` 及 `TBLSMDAREABASIS.BackgroundImage`。從節點推導 parent/child area map、top production line、inventory mapping、equipment/equipment group mapping，驗證 ObjectType、唯一鍵、節點尺寸/座標/顏色與 BaseArea 關聯。保存 BaseArea DataStamp 並回傳更新後完整 DTO，前端下一次操作才不會拿舊 stamp。
 6. WinForms AddFlow 支援多選/群組、Node Define、完整線型巢狀推導；公司端第一版簡化成可拖曳/數值調整節點與背景圖，尚未聲稱完整 AddFlow 等價。需按來源 Service 完成 API 邏輯並記錄無法逐一等價的部分。`ymes_app` 只授予所需 SELECT/INSERT/UPDATE/DELETE。
-7. 建 migration 前逐欄比對 PostgreSQL schema；缺表才新增。完成後部署 API、更新 migration/API 文件，再通知公司端 pull 接正式 API 驗收。公司端 DEV 還未執行 build/test/browser。
+7. Schema 比對、migration 0085 權限、主檔 API build/deployment 與正式 app-browser 頁面驗收已完成。公司端 pull 後需在 DEV mock 驗收 UI；approve/layout API 完成前不可標為全功能完成。
 
 ## SMD SD105 區域庫房基本設定（公司端 2026-11-16 已交接）
 

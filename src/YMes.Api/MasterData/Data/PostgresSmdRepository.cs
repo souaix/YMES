@@ -30,56 +30,6 @@ public sealed class PostgresSmdRepository(NpgsqlDataSource dataSource)
         return rows;
     }
 
-    public SmdAreaBasisOptionsDto AreaBasisOptions()
-    {
-        using var command = dataSource.CreateCommand("""
-            SELECT factoryno,description,factoryname
-            FROM "YMES".tblsmdfactorybasis
-            WHERE issuestate=2
-            ORDER BY factoryno;
-            """);
-        var factories = new List<SmdFactoryOptionDto>();
-        using (var reader = command.ExecuteReader())
-        {
-            while (reader.Read())
-                factories.Add(new SmdFactoryOptionDto(reader.GetString(0), NullableString(reader, 1), NullableString(reader, 2)));
-        }
-
-        using var areasCommand = dataSource.CreateCommand("""
-            SELECT areano,areaname,description,issuestate::int,areaclass::int,factoryno
-            FROM "YMES".tblsmdareabasis
-            WHERE issuestate=2 AND areaclass=1
-            ORDER BY areano;
-            """);
-        using var areasReader = areasCommand.ExecuteReader();
-        var baseAreas = new List<SmdAreaOptionDto>();
-        while (areasReader.Read())
-            baseAreas.Add(new SmdAreaOptionDto(
-                areasReader.GetString(0), areasReader.GetString(1), NullableString(areasReader, 2),
-                areasReader.GetInt32(3), areasReader.GetInt32(4), areasReader.GetString(5)));
-        return new SmdAreaBasisOptionsDto(factories, baseAreas);
-    }
-
-    public IReadOnlyList<SmdAreaOptionDto> ListAreas(string? factoryNo, int? issueState, int? areaClass)
-    {
-        using var command = dataSource.CreateCommand("""
-            SELECT areano,areaname,description,issuestate::int,areaclass::int,factoryno
-            FROM "YMES".tblsmdareabasis
-            WHERE (@factoryNo IS NULL OR factoryno=@factoryNo)
-              AND (@issueState IS NULL OR issuestate=@issueState)
-              AND (@areaClass IS NULL OR areaclass=@areaClass)
-            ORDER BY areano;
-            """);
-        AddVarchar(command, "factoryNo", OptionalFilter(factoryNo));
-        AddNumeric(command, "issueState", issueState);
-        AddNumeric(command, "areaClass", areaClass);
-        using var reader = command.ExecuteReader();
-        var rows = new List<SmdAreaOptionDto>();
-        while (reader.Read())
-            rows.Add(new SmdAreaOptionDto(reader.GetString(0), reader.GetString(1), NullableString(reader, 2), reader.GetInt32(3), reader.GetInt32(4), reader.GetString(5)));
-        return rows;
-    }
-
     public IReadOnlyList<SmdPdLineBasisDto> ListPdLineBasis(string? pdLineNo)
     {
         using var command = dataSource.CreateCommand($"""

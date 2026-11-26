@@ -10,6 +10,7 @@ namespace MES.Api.Controllers;
 public sealed class SmdController(
     PostgresSmdRepository repository,
     PostgresSmdAreaInventoryRepository areaInventoryRepository,
+    PostgresSmdAreaBasisRepository areaBasisRepository,
     PostgresSmdFactoryBasisRepository factoryBasisRepository,
     PostgresSmdLocatorBasisRepository locatorBasisRepository,
     IConfiguration configuration) : ControllerBase
@@ -143,11 +144,45 @@ public sealed class SmdController(
         Execute(() => repository.CopyComputerArea(request, ActorUserNo), "過帳電腦之區域資料無法複製");
 
     [HttpGet("area-basis/options")]
-    public ActionResult<SmdAreaBasisOptionsDto> AreaBasisOptions() => Execute(repository.AreaBasisOptions);
+    public ActionResult<SmdAreaBasisOptionsDto> AreaBasisOptions() => Execute(areaBasisRepository.Options);
 
     [HttpGet("areas")]
-    public ActionResult<IReadOnlyList<SmdAreaOptionDto>> Areas([FromQuery] string? factoryNo, [FromQuery] int? issueState, [FromQuery] int? areaClass) =>
-        Execute(() => repository.ListAreas(factoryNo, issueState, areaClass));
+    public ActionResult<IReadOnlyList<SmdAreaBasisDto>> Areas(
+        [FromQuery] string? areaNo,
+        [FromQuery] string? factoryNo,
+        [FromQuery] int? issueState,
+        [FromQuery] int? areaClass) =>
+        Execute(() => areaBasisRepository.ListAreas(areaNo, factoryNo, issueState, areaClass));
+
+    [HttpPost("areas")]
+    public ActionResult<SmdAreaBasisDto> CreateArea([FromBody] SmdAreaBasisWriteRequest request) =>
+        Execute(() => areaBasisRepository.Create(request, ActorUserNo), "區域資料無法建立");
+
+    [HttpPut("areas/{areaNo}")]
+    public ActionResult<SmdAreaBasisDto> UpdateArea(
+        string areaNo,
+        [FromQuery] long dataStamp,
+        [FromBody] SmdAreaBasisWriteRequest request) =>
+        Execute(() => areaBasisRepository.Update(areaNo, dataStamp, request, ActorUserNo), "區域資料無法更新");
+
+    [HttpDelete("areas/{areaNo}")]
+    public IActionResult DeleteArea(
+        string areaNo,
+        [FromQuery] int issueState,
+        [FromQuery] long dataStamp) =>
+        ExecuteAction(() => areaBasisRepository.Delete(areaNo, issueState, dataStamp, ActorUserNo), "區域資料無法刪除");
+
+    [HttpPost("areas/{areaNo}/approve")]
+    public ActionResult<SmdAreaBasisDto> ApproveArea(string areaNo, [FromQuery] long dataStamp) =>
+        Execute(() => areaBasisRepository.Approve(areaNo, dataStamp), "區域資料尚未接妥簽核服務");
+
+    [HttpGet("areas/{areaNo}/layout-options")]
+    public IActionResult AreaLayoutOptions(string areaNo) =>
+        Problem(statusCode: 503, title: "區域配置選項尚未備妥", detail: "尚未取得可核對的 MES funSaveAreaData／LoadAreaRelationDefine 選項來源；此端點不回傳推測資料。");
+
+    [HttpPut("areas/{areaNo}/layout")]
+    public IActionResult UpdateAreaLayout(string areaNo, [FromQuery] long dataStamp) =>
+        Problem(statusCode: 503, title: "區域配置儲存尚未備妥", detail: "尚未取得可核對的 MES funSaveAreaData 關聯推導規則；此端點不會修改正式資料。");
 
     [HttpGet("pd-line-basis")]
     public ActionResult<IReadOnlyList<SmdPdLineBasisDto>> PdLineBasis([FromQuery] string? pdLineNo) =>

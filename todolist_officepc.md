@@ -2301,7 +2301,8 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 建立 SMD fallback 三層目錄（8 個 WinForms Function）；SD104 接上 DEV Vue 頁，其他 7 個仍由 FunctionPending 說明。
 - [x] 新增 `docs/modules/SMD/區域基本資料.md`，並更新規格索引、資料庫連線紀錄及家用端待辦。
 - [x] 修正 SD104 DEV 預設列，使未簽核子區可選已簽核 Base Area；套用新增後轉入 Edit 狀態；核准頁採用 API 回傳實際 IssueState；配置保存不限制 IssueState，符合 WinForms 對應程式。
-- [ ] 本段尚未執行 build/test/瀏覽器驗收；家用端 API/schema 完成後需 pull、逐欄對接並檢查正式行為。
+- [x] 家用端 2026-11-27 已部署 SD104 主檔 list/options/create/update/delete API；正式頁清單與新增表單可開啟，資料清單／factory、department、Base Area 選項目前皆空，沒有建立正式測試列。Approve 因 provider mapping 未確認回安全 503；layout options/save 因原生來源規則未交付回 503。細節見 `docs/modules/SMD/區域基本資料.md`。
+- [ ] 公司端 pull 後於 DEV mock 逐欄驗收主檔 Add/Edit/Copy/Delete/Approve 與錯誤流程；依 WinForms source 補齊 `AREA BASIS` Issue/Job provider mapping、Department 選項範圍，以及 `LoadAreaRelationDefine`／`funSaveAreaData` 對 relation/map/inventory/SMT map/background image 的完整輸入輸出與推導規則，供家用端完成 layout／簽核 API。Production 不造測試列。
 
 ## 2026-11-16 SMD SD105 區域庫房基本設定公司端交接
 

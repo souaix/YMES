@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：SMD SD104 區域基本資料 API（2026-11-27）
+
+- 透過 PPK／SSH 唯讀檢查正式 `YMES` catalog：`tblsmdareabasis`、`tblsmdareainventory`、`tblsmdareamap`、`tblsmdarearelation`、`tblsmdsmtareaeqpmap`、`tblusrdepartmentbasis` 均存在；AreaBasis、AreaInventory、AreaMap、AreaRelation、SMT map 欄位／鍵及來源預設核對結果見 `docs/modules/SMD/區域基本資料.md`。沒有讀取或改寫業務列。
+- 套用 migration `0085_smd_sd104_area_basis_api_grants.sql`，SQL SHA-256 `AB96442861695675EB16CA176C5B954BB39755B7DFBC3831BFDC2824E0D7FAB9`。只授予 `ymes_app` 對 `YMES.tblsmdareabasis` SELECT／INSERT／UPDATE／DELETE，及對 `YMES.tblusrdepartmentbasis` SELECT；`SET ROLE ymes_app` 回讀確認，另五組清單／options／新增／修改／刪除 EXPLAIN 通過，未執行 DML。
+- 套用前完整 PostgreSQL custom-format 備份 `/opt/ymes/backups/ymes-before-sd104-0085-20261127.dump`，777,092 bytes，SHA-256 `99cc14844d45c778f4ae3d3cffcedbee5a83cc59a0c98d514b24fd93abe22ad5`；`pg_restore --list` 通過，檔案 mode 600。資料庫剩餘磁碟空間約 717 MiB，當時使用率 99%。
+- .NET 9 API image `ymes-api:sd104-area-basis-20261127-a1`，image ID `sha256:b0d0704331d51a5b68c3910301d2c4ccb8c788466215747a39d1f92f74e5b81e`，已標記為 `ymes-api:current`；回復標籤 `ymes-api:before-sd104-area-basis-20261127-a1`。readiness=200、匿名 options API=401、容器 healthy；Compose 只更新 `ymes-api`，`ymes-web`、`ymes-master-web`、`yakuyama-web` 未重建或重啟。
+- 正式 app-browser Demo 登入後，`/YMES/SMD/Areas` 清單載入 0 筆，新增表單可開啟；options API 重載回 `factories=[]`、`baseAreas=[]`、`departments=[]`。正式主檔無可選資料，因此未提交 CRUD。Approve 與 layout options/save 在來源 Issue/Job、`LoadAreaRelationDefine`、`funSaveAreaData` 規則未核實前安全回 503，不會修改資料。
+
 ## 最新：SMD SD103 儲位基本資料 API 權限（2026-11-27）
 
 - 家用端以 PPK／SSH 唯讀比對正式 `YMES.tblinvlocatorbasis` 與 Oracle 來源 DDL；12 欄、型別、長度、NULL/default 及 `(inventoryno,locatorno)` 複合 PK 一致。沒有重建表、改結構或寫入業務資料。

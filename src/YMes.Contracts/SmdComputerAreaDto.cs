@@ -56,7 +56,10 @@ public sealed record SmdAreaOptionDto(
 
 public sealed record SmdAreaBasisOptionsDto(
     IReadOnlyList<SmdFactoryOptionDto> Factories,
-    IReadOnlyList<SmdAreaOptionDto> BaseAreas);
+    IReadOnlyList<SmdAreaOptionDto> BaseAreas,
+    IReadOnlyList<SmdDepartmentOptionDto> Departments);
+
+public sealed record SmdDepartmentOptionDto(string DepartmentNo, string DepartmentName);
 
 public sealed record SmdAreaInventoryDto
 {
