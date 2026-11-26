@@ -318,6 +318,7 @@ import PmWorkOrderHistory from './components/PmWorkOrderHistory.vue'
 import PmBreakdownStatistics from './components/PmBreakdownStatistics.vue'
 import PmBreakdownRepairQuery from './components/PmBreakdownRepairQuery.vue'
 import PmPerformance from './components/PmPerformance.vue'
+import ElectricalTestDataQuery from './components/ElectricalTestDataQuery.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -836,6 +837,13 @@ const fallbackMenuTree: MenuNode[] = [
     }],
   },
   {
+    id: 'module:RPT', label: '報表管理', shortLabel: '報表', moduleNo: 'RPT', children: [{
+      id: 'menu:RPT:INDUSTRY', label: '行業包', shortLabel: '行', children: [
+        { id: 'function:RPT:B_ELECTRICAL TEST DATA QUERY', label: '電性測試資料查詢', shortLabel: '電性測試', functionNo: 'B_ELECTRICAL TEST DATA QUERY', moduleNo: 'RPT' },
+      ],
+    }],
+  },
+  {
     id: 'module:INV', label: '庫存管理', shortLabel: '庫', moduleNo: 'INV', children: [{
       id: 'menu:INV:CONFIG', label: '庫房設定', shortLabel: '設定', children: [
         { id: 'function:INV:INV ENGINEER GROUP', label: '庫房工程群組', shortLabel: '工程群組', functionNo: 'INV ENGINEER GROUP', moduleNo: 'INV' },
@@ -1204,6 +1212,7 @@ const menuRoutes: Record<string, string> = {
   'function:PM:PMBRAEKDOWN QUERY': appBasePath + '/PM/BreakdownQuery',
   'function:PM:PM PERFORMANCE QUERY': appBasePath + '/PM/Performance',
   'function:PM:BREAKDOWN_REPAIRQUERY': appBasePath + '/PM/BreakdownRepairQuery',
+  'function:RPT:B_ELECTRICAL TEST DATA QUERY': appBasePath + '/RPT/ElectricalTestData',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1300,6 +1309,7 @@ const menuRoutes: Record<string, string> = {
 }
 
 const functionRoutes: Record<string, string> = {
+  'B_ELECTRICAL TEST DATA QUERY': appBasePath + '/RPT/ElectricalTestData',
   'FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
   'SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
   'SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
@@ -1655,6 +1665,7 @@ const isPmWorkOrderHistoryPage = computed(() => activeMasterKey.value === 'funct
 const isPmBreakdownStatisticsPage = computed(() => activeMasterKey.value === 'function:PM:PMBRAEKDOWN QUERY')
 const isPmPerformancePage = computed(() => activeMasterKey.value === 'function:PM:PM PERFORMANCE QUERY')
 const isPmBreakdownRepairQueryPage = computed(() => activeMasterKey.value === 'function:PM:BREAKDOWN_REPAIRQUERY')
+const isRts01ElectricalTestDataPage = computed(() => activeMasterKey.value === 'function:RPT:B_ELECTRICAL TEST DATA QUERY')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3838,6 +3849,12 @@ async function signOut(): Promise<void> {
         />
         <PmBreakdownRepairQuery
           v-else-if="isPmBreakdownRepairQueryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ElectricalTestDataQuery
+          v-else-if="isRts01ElectricalTestDataPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

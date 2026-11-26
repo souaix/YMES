@@ -1,10 +1,16 @@
 # 公司端待辦
 
-## 公司端最新交付：PM507 故障維修登錄查詢（2026-11-26）
+## 公司端最新交付：RPT RTS01 電性測試資料查詢（2026-11-26）
+
+- [x] 核對 Industry_Base inline `frmElectricalTestDataQuery`、`wsRPT.LoadTestRecipeType`／`LoadSummaryTable`／`GetPSNoByOPNo`、`clsRPT_Industry_Base`；完成 RPT「行業包」入口、DEV PS／Recipe 多選、Lot／Component／日期條件、Now／History、兩種分組及動態欄位階層 Grid。[RTS01 規格](docs/modules/RPT/電性測試資料查詢_RTS01.md)
+- [x] Core 依核准 Recipe 的 SummaryTableName／ConversionField 讀 Now／History 動態表，並從 MES 站點記錄補 OP 名稱。記錄 end-date 只有在 From 有值時才套用及舊 SQL 字串拼接風險。桌機 Oracle profile／動態表可信 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 公司端接續 RPT 清冊 RTB02「Wafer電性數據常態分析圖」，依序核對來源程式。
+
+## 前項公司端交付：PM507 故障維修登錄查詢（2026-11-26）
 
 - [x] 核對 inline `frmBreakDown_RepairQuery`、`wsPM.LoadBreakDown_RepairQuery`、`clsPMMaintanceLog.LoadBreakDown_RepairQuery` 及設備／ChamberManage 載入；完成 `function:PM:BREAKDOWN_REPAIRQUERY` Vue DEV Equipment 多選、三組日期時間、狀態條件與 13 欄唯讀 Grid。[PM507 規格與 API/schema handoff](docs/modules/PM/故障維修登錄查詢_PM507.md)
 - [x] Core UNION `tblPMEqpBreakDownState` 未結案列與 RepairLog／BreakDownLog 結案列；未勾狀態代表全部。標記 Form 的 RepairStart To 誤傳 RepairEnd To。桌機 Oracle profile／可信 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 公司端從功能目錄盤點下一個尚未復刻的 FunctionKey，依來源程式繼續。
+- [x] PM507 後依功能目錄接續 RPT RTS01，已完成；目前接續 RTB02。
 
 ## 前項公司端交付：PM506 設備保養效率查詢（2026-11-26）
 

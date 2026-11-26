@@ -1,12 +1,20 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：PM507 故障維修登錄查詢（2026-11-26）
+## 公司端最新交付：RPT RTS01 電性測試資料查詢（2026-11-26）
+
+- [x] 公司端核對 Industry_Base inline `frmElectricalTestDataQuery`、RPT Service／Core，完成 RTS01 Vue DEV 動態欄位查詢與規格。[RTS01 handoff](docs/modules/RPT/電性測試資料查詢_RTS01.md)
+- [ ] 核對同版 MESTEST 與 YMES live schema 的 `TBLSYSTESTRECIPEBASIS`、OP／站點／LotLog 來源及動態 `TBLWIPTESTSUM_<type>`／`TBLWIPTESTSUMLOG_<type>` 欄位、Owner、索引。動態表名／欄位只能由伺服器端核准 Recipe metadata allowlist 解析。
+- [ ] 實作 RTS01 參數化、限量分頁唯讀 API：RecipeType options、Now／History 查詢、TestRecipeType／Component 階層與動態欄位 metadata/value DTO；支援 PSNo、可選 Lot／Component／RecipeType／日期及明確的 From／To 獨立端點語義。不要接受任意識別字串或照搬舊 Core 字串 SQL。
+- [ ] 若 live PostgreSQL 無對應已存在結構，只依核實的需求提供 CREATE-only；動態量測表不可用單一猜測 DDL 取代 MES 的 per-Recipe 欄位結構。
+- [ ] 公司端接續 RPT 清冊 RTB02「Wafer電性數據常態分析圖」。
+
+## 前項公司端交付：PM507 故障維修登錄查詢（2026-11-26）
 
 - [x] 公司端核對 `frmBreakDown_RepairQuery`、`wsPM.LoadBreakDown_RepairQuery`、`clsPMMaintanceLog.LoadBreakDown_RepairQuery`；完成設備多選、三組日期時間、狀態篩選和 13 欄 DEV 假資料結果。[PM507 規格與 API handoff](docs/modules/PM/故障維修登錄查詢_PM507.md)
 - [x] Core UNION `tblPMEqpBreakDownState` 與 RepairLog／BreakDownLog 查詢分支，未選狀態代表全部；舊 Form 的 RepairStart To 誤傳 RepairEnd To，DEV 依欄位實作。
 - [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、三表欄位／型別／PK／FK／索引、可空日期及 RepairLog 一對多基數，提供可信 CREATE-only SQL。
 - [ ] 家用端實作參數化唯讀分頁 `GET /api/pm/breakdown-repair-query`，保留空 `states[]` 查全部狀態與同一故障多筆維修列。
-- [ ] 公司端從功能目錄盤點下一個尚未復刻的 FunctionKey，依來源程式繼續。
+- [x] PM507 後依功能目錄接續 RPT RTS01，已完成；目前接續 RTB02。
 
 ## 前項公司端交付：PM506 設備保養效率查詢（2026-11-26）
 
