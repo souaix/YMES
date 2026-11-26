@@ -1,5 +1,11 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：IV503 入庫記錄唯讀 API 發布（2026-11-26）
+
+- 獨立部署 API image `ymes-api:iv503-log-20261126-a1`，image ID `sha256:60ccc746c876b81bf663c9060064dcc54500da298b806ed5824650a96b34781a`。正式 `ymes-api` 使用既有 `ymes-dpkeys`／`ymes-qc112-files` volumes、環境設定與 health check，現為 running／healthy；原 API 容器保留為 stopped rollback container `ymes-api-before-iv503-log-20261126-a1`（image `sha256:2fa2ead5c8e11a07f6898f5c8731187719c27332ea965cb762e474a2da0c7f19`）。沒有重建或修改 Web、master Web、Nginx、其他專案或資料庫 schema。
+- 正式 health readiness 回 200。app-browser 以正式 Demo 重新登入後，呼叫 `GET /YMES/API/api/inventory/product-in/logs?createDateFrom=2025-11-26&createDateTo=2026-11-26&page=1&pageSize=1` 回 HTTP 200；JSON 為 `items=[]`、`totalCount=0`。更短的單日查詢也回 HTTP 200。正式資料庫目前沒有此範圍的入庫單，故 Detail 正向資料列無法驗證；未插入測試資料、未查改正式業務列。
+- 本次只有 API code/image 發布，沒有新 migration／DDL／權限變更。發行前本機 .NET 9 Release build 成功；公開路由的正式登入、bounded read 與健康檢查已透過 app-browser／readiness 驗證。若之後有真實正式單據，再補 Detail／Component 正向驗收。
+
 ## 最新：0076 建立 IV304 WIP／MO 支援表（2026-11-26）
 
 - PPK SSH 的結構盤點只查 YMES PostgreSQL catalog，沒有用查詢讀取或修改既有業務資料列。確認有 repo 可信 CREATE-only reference 的 `tblinvwipinventory_raw`、`tblinvsemiinventory`、`tblinvsemiinventorycomponent`、`tbloemomaterialstate`、`tbloemomtlstate_component`、`tbloemocomponent` 均不存在，且 YMES 外無同名 table／view。依 WP201／WP604／OE source references 建立六張空表；未加 FK 或來源之外的索引。

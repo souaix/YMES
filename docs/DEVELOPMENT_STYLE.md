@@ -65,6 +65,7 @@ KD Logo 是 YMES 的品牌與配色依據。新增或調整畫面時，沿用以
 - 選單捲動區使用 `overflow-y: auto`，內容超出高度才出現捲軸。標準 `scrollbar-color` 使用 `rgba(147, 141, 125, 0.4) transparent`；WebKit thumb 同樣使用 40% 透明度、透明 track／border 及 `background-clip: padding-box`。保持原生細捲軸，不改成常駐或實色背景。
 - 側欄收合時取消所有層級的水平縮排，圖示完整置中於窄欄；不得被子層邊框或捲動條裁切。每個選單按鈕以完整階層名稱提供 `title` 與 `aria-label`，收合後仍能辨識、點選並導向原功能。
 - 主選單項目由 API 提供，Vue 不自行猜測舊系統的 Module、MenuNo、FunctionNo 或翻譯名稱。API 尚未提供完整選單時，Development 可以清楚標示並使用五個已開發主檔的簡化導覽；Production 不以簡化導覽假裝完整。
+- `VITE_LOCAL_DEMO_API=true` 的本機 Demo 不連資料庫，也不呼叫資料庫版選單 API；直接使用有明確「簡化選單」提示的 DEV fallback，避免把刻意未提供的導覽 API 顯示成 404 錯誤。
 - 已有 Web 畫面的功能導向既有 Vue 頁面；公司電腦遷移期間，尚無 API 的頁面可使用 Development 本地假資料完成畫面與互動，必須在頁面清楚標示「開發假資料」；Production 對未完成 API 的功能顯示未遷移狀態，不可回傳假成功。
 
 ### 主選單 API 契約
