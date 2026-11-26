@@ -6,7 +6,7 @@
 - [x] 完成登入保護唯讀 `GET /api/reports/equipment-daily-utilization`；參數化日期、Area、Equipment、Chamber 條件；31 天／100 項條件／2,000 設備上限與穩定排序，回傳 state percentages、Moves、Loss、巢狀 Chamber；主／子設備來源時間邊界依 handoff 保留差異並記錄待公司核實處。
 - [x] 複查修正 Moves SQL 多餘 SELECT；.NET 9 Release build 成功，正式 PostgreSQL 以 `ymes_app` 唯讀 `EXPLAIN` 驗證 Moves／狀態查詢欄位與計畫。部署 image a2；readiness 200、匿名 401、Demo app-browser 無命中 Chamber 查詢 200、超 31 天 400。a1 保留回復標籤，僅替換 YMES API。詳 [RT410 模組紀錄](docs/modules/RPT/設備稼動查詢_RT410.md)。
 - [ ] 正式設備主檔目前沒有 active main equipment，兩張新 WIP 表沒有同步業務列；等資料來源同步後做設備／狀態／Moves 正向驗證，不在正式庫灌測試列。Legacy 主設備時間條件仍請公司端核對原始 Core。
-- [ ] 以一般 fast-forward 將本次 API／schema／文件同步至 GitHub `main`；同步後 fetch 並依最新家用待辦接續。
+- [x] 以一般 fast-forward 推送至 GitHub `main`，commit `efe5829`；推送後重新 fetch 確認 `origin/main=efe5829`，無公司端更新，接續核查 RT604／RT603 家用端 DDL 與 API 待辦。
 
 ## 家用端 RT501 生產批狀態查詢 API（2026-11-27）
 
