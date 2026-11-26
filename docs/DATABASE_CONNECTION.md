@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：0076 建立 IV304 WIP／MO 支援表（2026-11-26）
+
+- PPK SSH 的結構盤點只查 YMES PostgreSQL catalog，沒有用查詢讀取或修改既有業務資料列。確認有 repo 可信 CREATE-only reference 的 `tblinvwipinventory_raw`、`tblinvsemiinventory`、`tblinvsemiinventorycomponent`、`tbloemomaterialstate`、`tbloemomtlstate_component`、`tbloemocomponent` 均不存在，且 YMES 外無同名 table／view。依 WP201／WP604／OE source references 建立六張空表；未加 FK 或來源之外的索引。
+- 套用前完整 custom-format 備份（包含備份時點的資料庫資料快照）：`/opt/ymes/backups/iv304_0076_20261126_a1/ymes_before_0076.dump`，738093 bytes、SHA-256 `8092426244387b7747c6ffbaf76a9a97264f3e1c1ffef2f0dd21d055ce5c0919`；檔案 mode 600，`pg_restore --list` 成功，備份留在遠端。
+- 原子套用 [0076 migration](../database/migrations/0076_inv_wip_return_support_schema.sql)，SQL SHA-256 `a867d32ab4d110946fcdd8201e3a51e4627c709edf0b49a39a16fc19a17d4b79`。migration 只建表／註記來源／授 SELECT，沒有匯入或更新業務資料列。新連線 catalog 回讀欄位數／PK：WIP Raw 36、SEMI inventory 11、SEMI component 11、MO material state 16、MO material component 14、MO component 20；`ymes_app` 只有六表 SELECT，INSERT／UPDATE／DELETE 均為 false。
+- IV304 尚缺 `tblinvmaterialwipreturnbasis/detail`、`tblinvmtlwipreturncomp`、`tblinvrawinventory`／`tblinvrawinventoryloc`／`tblinvrawinventorycomponent`、`tblinvtemp_component` 與 repo 未找到可信 reference 的 `tblinvwip_raw_component`。既有 `tblinvlocatorbasis` 缺 `ymes_app` SELECT；Transaction State／Log 目前也只有 SELECT，`tblsyseventlog` 只有 INSERT。待 office source DDL 到齊及 writer 交易設計後再建缺表／補最小寫入權限。
+- 正式 app-browser Demo 登入並直達 `/YMES/INV/WipReturnConfirm`，頁面正常顯示「正式環境尚未開放此功能」placeholder；本次只建立 schema 基礎，尚未交付 IV304 API 或過帳。
+
 ## 最新：0075 修正 IV501 庫房 lookup 的唯讀權限（2026-11-26）
 
 - 正式站初次驗證發現 `ymes_app` 可讀 0074 建立的 FGD 庫存與入庫表，但既有 `YMES.tblinvinventorybasis` 沒有 SELECT，導致成品庫房 lookup 回 503。只補此表 SELECT，不改 schema、資料列或其他 ACL。

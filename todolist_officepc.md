@@ -3,7 +3,7 @@
 ## 公司端補交：IV302／IV303／IV304 原生 Oracle DDL 與 metadata
 
 - [ ] 在公司端受保護的 MESTEST Oracle profile 可用時，只讀匯出 `TBLINVMATERIALWIPRETURNBASIS`、`TBLINVMATERIALWIPRETURNDETAIL`、`TBLINVMTLWIPRETURNCOMP` 的 Oracle `CREATE TABLE`、欄位 metadata、PK／FK／unique constraint、index、default 與 trigger；三個功能共用這組退料單表。不得查業務資料列或執行 Oracle DDL／DML。
-- [ ] IV304 額外核對並補 repo 尚缺的 `TBLINVRAWINVENTORYCOMPONENT`、`TBLINVTEMP_COMPONENT` 原生結構；`TBLINVRAWINVENTORY`／`TBLINVRAWINVENTORYLOC` 已列於下方 IV201 補件項目，請同一輪回覆結果，避免重複查詢。Core 其餘來源元件表先逐名核對既有 references，只有確實沒有可信 source DDL／metadata 的表才補交。
+- [ ] IV304 額外核對並補 repo 尚缺的 `TBLINVRAWINVENTORYCOMPONENT`、`TBLINVTEMP_COMPONENT`、`TBLINVWIP_RAW_COMPONENT` 原生 `CREATE TABLE` 與欄位／PK／FK／unique／index／default／trigger metadata；`TBLINVRAWINVENTORY`／`TBLINVRAWINVENTORYLOC` 已列於下方 IV201 補件項目，請同一輪回覆結果，避免重複查詢。家用端已依可信 repo references 將 WP201／WP604／OE 支援表建成空表，這些表不需重複匯出；Core 其餘元件來源先逐名核對 references，只有確實沒有可信 source DDL／metadata 的表才補交。
 - [ ] 將來源 SQL、metadata 與 MESTEST owner／查詢日期寫入 `database/reference/` 及相關 INV 模組文件；CREATE-only PostgreSQL 參照須依 Oracle 真實鍵、型別、nullable/default 與 index 產生。若 profile 仍不可用，逐表註明未取得，不得依舊 Core SQL 猜結構。
 
 ## 公司端最新交付：IV502 開立成品／半成品入庫單（2026-11-24）
@@ -45,8 +45,8 @@
 - [x] 完成 `/YMES/INV/WipReturnConfirm` DEV：State=0 查詢、條件篩選、單選 Basis、Detail／Component 子列、確認對話框、localStorage 假過帳列（來源／目標庫房、Locator、數量／元件）、Reset DEV。
 - [x] 記錄 2／3／5／6／7 來源扣量與目標 Raw／Semi 庫存過帳。舊 AddINVTransactionState 會吞內部 Exe 失敗；Core 讀 Basis State 但未重驗、未使用 DataStamp，忽略 ToLocatorNo；Type 7 多目標索引與合計數量需家用端逐鍵重做。
 - [x] 新增 [IV304 規格](docs/modules/INV/退料單確認_WIP.md)，接入 Vue DEV 路由，更新 Module Index、MES menu inventory 與兩端待辦。受保護 Oracle profile 不存在；退料／Raw inventory 核心表 DDL／metadata 未取得，沒有猜 CREATE SQL。
-- [ ] 家用端先比對 WIP Return Basis／Detail／Component、RAW Inventory／Locator／Component、Temp Component live schema／migration。沿用 repo WP201／603／604／605 與 OE references；不可重建共用表或從 Core SQL 猜欄位型別／鍵。
-- [ ] 提供登入與 IV304 ACL 保護的單筆 confirm command；伺服器重驗 State=0、DataStamp、來源可用量、MO ReleaseState、元件預約與退入庫房，使用伺服器生成交易 ID／冪等鍵，在單一 transaction 原子更新來源、Raw／Semi 目標庫存、Locator、元件、交易 State／Log 與 Basis State／ReturnDate。
+- [x] 家用端已以 PPK SSH 完成 WIP Return／RAW／Semi／MO schema catalog 盤點，並依可信 WP201／603／604／OE references 以 0076 建立六張缺少的空支援表；沒有從 Core SQL 猜欄位或重建 live 共用表。剩餘缺表／來源 DDL 見本節與上方公司端補件清單。
+- [ ] 提供既有登入保護的單筆 confirm command；伺服器重驗 State=0、DataStamp、來源可用量、MO ReleaseState、元件預約與退入庫房，使用伺服器生成交易 ID／冪等鍵，在單一 transaction 原子更新來源、Raw／Semi 目標庫存、Locator、元件、交易 State／Log 與 Basis State／ReturnDate。角色／FunctionKey 細部權限沿用全站統一規劃，不另造 IV304 專用規則。
 - [ ] 修正／明確裁決舊 Core 忽略 ToLocatorNo、Type 7 多目標分流及 Add Service 失敗被吞的行為；需提供可追蹤錯誤，確認不可只更新狀態或重複過帳。
 - [x] 公司端未連 YMES PostgreSQL、未設定 `ConnectionStrings__YMes`、未建 schema/migration、未實作正式 API、未部署、未執行 build/test/browser。下一項依清冊列序為 IV310「包裝拆並箱作業」。
 

@@ -1,5 +1,12 @@
 # 家裡電腦接手清單
 
+## 家用端 IV304 支援表 schema（2026-11-26）
+
+- [x] 以 PPK SSH 唯讀核對遠端 YMES schema catalog；確認六張已有可信 PostgreSQL CREATE-only references 的 WIP／MO 支援表在正式復刻庫不存在，且 schema 外無同名物件。沒有用查詢讀取或修改既有業務資料列；migration 前的完整備份含當時資料庫快照。
+- [x] 依 WP201／WP604／OE references 新增並原子套用 migration `0076_inv_wip_return_support_schema.sql`，只建空表 `tblinvwipinventory_raw`、`tblinvsemiinventory`、`tblinvsemiinventorycomponent`、`tbloemomaterialstate`、`tbloemomtlstate_component`、`tbloemocomponent`；只授 `ymes_app` SELECT。備份、SQL SHA、欄位／PK／權限回讀見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 正式 app-browser Demo 登入並直達 `/YMES/INV/WipReturnConfirm`；route 正常載入明確的正式未開放 placeholder，無頁面錯誤。IV304 API／帳務沒有因此交付。
+- [ ] 待公司端提供 IV304 Basis／Detail／Component、RAW Inventory／Locator／Component、`TBLINVWIP_RAW_COMPONENT`、`TBLINVTEMP_COMPONENT` 可核實原生 DDL／metadata；`tblinvlocatorbasis` 缺 `ymes_app` SELECT，Transaction State／Log 目前只有 SELECT，寫入權限等 transaction contract 確定後再最小授權。完成後繼續 IV304 查詢及單筆原子 confirm API，處理 State／DataStamp、來源可用量、MO ReleaseState、Locator、元件、交易流水、冪等與失敗可追蹤。
+
 ## 家用端 IV501 唯讀 API（2026-11-26）
 
 - [x] 再次 fetch GitHub `origin/main`；截至 `29c0f98` 沒有新公司端提交，家用分支與 `origin/main` 一致。
@@ -57,10 +64,11 @@
 
 公司端已依 inline `frmINVWIPReturnConfirm`／Designer、`wsINV.AddINVTransactionState/ExeINVTransactionState`、`clsInventory.ExeMaterialWIPReturn_ForMaterialWIPMOReturn` 完成 [IV304 DEV 頁與規格](docs/modules/INV/退料單確認_WIP.md)，功能鍵 `IV304`／`WIP RETURN CONFIRM`，路由 `/YMES/INV/WipReturnConfirm`。DEV 有 State=0 查詢、來源／日期條件、Basis 選列載入 Detail／Component、確認對話框與 localStorage 假過帳；Source=10 完成後單據離開待確認清單。舊 Core 忽略 `ToLocatorNo`、Type 7 多目標分流疑點及 Add Service 吞錯已記錄；DEV 沒有修改正式庫存或呼叫正式 API。
 
-- [ ] 家用端先比對 WIP Return Basis／Detail／Component、RAW Inventory／Locator／Component、Temp Component live schema／migrations。桌機受保護 Oracle profile 不存在；勿從 Core SQL 字串推測欄位型別、PK、FK、index、default 或 trigger。
-- [ ] 實作登入與 IV304 Function ACL 保護的單筆確認 API：重驗 State=0、DataStamp、來源可用量、MO ReleaseState、元件預約及目標庫房；伺服器產生交易 ID／冪等鍵，以單一交易更新來源、Raw／Semi 目標庫存、Locator、元件、Transaction State／Log 與 Basis State／ReturnDate。
+- [x] 家用端以 PPK SSH 完成 live catalog 核對，並依 WP201／WP604／OE refs 用 migration `0076` 建立六張缺少的空支援表；詳細來源、欄位數、PK、SELECT-only 權限及備份見 [DATABASE_CONNECTION.md](docs/DATABASE_CONNECTION.md)。
+- [ ] 待公司端補 WIP Return Basis／Detail／Component、RAW Inventory／Locator／Component、`TBLINVWIP_RAW_COMPONENT`、Temp Component 的可信來源結構後，建立必要 migration；不得由 Core SQL 字串推測欄位型別、PK、FK、index、default 或 trigger。
+- [ ] 實作登入保護的單筆確認 API：重驗 State=0、DataStamp、來源可用量、MO ReleaseState、元件預約及目標庫房；伺服器產生交易 ID／冪等鍵，以單一交易更新來源、Raw／Semi 目標庫存、Locator、元件、Transaction State／Log 與 Basis State／ReturnDate。角色／FunctionKey 細部授權沿用全站統一規劃，現階段不另造 IV304 專用角色規則。
 - [ ] 修正或明確裁決舊 Core 忽略 `ToLocatorNo`、Type 7 多目標過帳，以及 `AddINVTransactionState` 內部 Exe 失敗仍回成功的行為；確認結果需回傳可追蹤錯誤，避免重複過帳。
-- [ ] 沿用 repo WP201／603／604／605 與 OE DDL references，不重建已存在共用表；未有可信來源的 WIP Return／RAW 專用表先記錄缺項再決定 schema。
+- [x] 沿用 repo WP201／603／604／605 與 OE DDL references，不重建 live 已存在的 WIP Semi／Component／Transaction 表；有可信 refs 的六張來源／目標支援表已由 0076 建立。
 - [x] 公司端未連 YMES PostgreSQL、未建 migration／schema、未實作正式 API／部署，亦未執行 build/test/browser。公司端下一項依清冊為 IV310「包裝拆並箱作業」。
 
 ## 公司端前項交接：IV303 退料單記錄(WIP)（2026-11-24）

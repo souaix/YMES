@@ -46,7 +46,7 @@
 - `ExeMaterialWIPReturn_ForMaterialWIPMOReturn` 讀 Basis 的 State 欄位，但沒有檢查 State 值；Core 也不使用 DataStamp 做確認 CAS。正式確認需伺服器端重讀並鎖定 `State=0`、DataStamp、來源量、元件 BookingFlag／MO ReleaseState，防止重複確認與併發超退。
 - Type 7 對每筆 Material/Lot 查詢分組後的 ReturnInventoryNo／ReturnInventoryType，卻用外層 Material/Lot 索引 `Rows[i]` 選目標，且依 Material/Lot 合計 Qty 過帳。多目標庫房／多明細的分配需要逐筆核對；家用端應使用明細與元件完整鍵，逐個目標彙總，避免錯配、重複加量或索引越界。
 - 元件刪除有多處只按 LotNo／Material／ComponentNo，未一律包含來源 InventoryNo／LocatorNo／TicketNo。正式 API 必須依可信完整鍵限定元件，並在同一交易內移動元件、更新庫存及 BookingFlag。
-- Core 讀寫欄位可用來確認業務流程，但不足以推導 CREATE schema；正式 API 須參數化 SQL、有登入／Function ACL、父單號限定、伺服器生成交易 ID、冪等鍵、庫存守恆檢查與可追蹤失敗結果。
+- Core 讀寫欄位可用來確認業務流程，但不足以推導 CREATE schema；正式 API 須使用既有登入保護、參數化 SQL、父單號限定、伺服器生成交易 ID、冪等鍵、庫存守恆檢查與可追蹤失敗結果。角色／FunctionKey 細部權限沿用全站統一規劃，本階段不另造 IV304 專用規則。
 - 建議正式 command API：`POST /api/inventory/wip-returns/{materialReturnNo}/confirm`。在同一資料庫交易中鎖定單據與來源量，重驗 State／DataStamp／來源庫存／MO ReleaseState／元件預約，完成來源扣減、Raw／Semi 目標量、Locator、Component、交易列／Log 與狀態更新；重複提交不得再次過帳。查詢 API 應有穩定排序、日期跨度限制及分頁。
 
 ## DEV 實作
@@ -58,6 +58,8 @@
 ## Oracle metadata 與 schema handoff
 
 - 桌機受保護 Oracle profile 不存在；本輪未用 PowerShell 5.1／ODP.NET 連 MESTEST，未查業務資料，也未產生猜測的 CREATE SQL。
-- IV304 核心退料表 `TBLINVMATERIALWIPRETURNBASIS`、`TBLINVMATERIALWIPRETURNDETAIL`、`TBLINVMTLWIPRETURNCOMP`，以及 `TBLINVRAWINVENTORY`／`TBLINVRAWINVENTORYLOC`／`TBLINVRAWINVENTORYCOMPONENT` 和 `TBLINVTEMP_COMPONENT`，沒有在 repo 找到本輪可確認的同版 DDL／完整 metadata。家用端先核 YMES live schema／migration；缺可信結構時記錄欄位證據與缺項，不可由舊 SQL 推測型別、PK、FK、index 或 default。
-- 可沿用 repo 已有參考而不重建：`TBLINVWIPINVENTORY_RAW/SEMI`（WP201）、`TBLINVWIPINVENTORY_COMPONENT`（WP603）、`TBLINVSEMIINVENTORY`（WP201）、`TBLINVSEMIINVENTORYCOMPONENT`（WP604）、`TBLOEMOMTLSTATE_COMPONENT`（OE Component reference）、`TBLINVTRANSACTIONSTATE/LOG`（WP605／migration `0073`）。其他 lookup 表依各自模組 reference 核對。
+- 2026-11-26 家用端以 PPK SSH 唯讀核對遠端 YMES PostgreSQL catalog，確認六張有可信 CREATE-only references 的表原先缺失後，依 migration `0076_inv_wip_return_support_schema.sql` 建立空表：`TBLINVWIPINVENTORY_RAW`、`TBLINVSEMIINVENTORY`、`TBLINVSEMIINVENTORYCOMPONENT`、`TBLOEMOMATERIALSTATE`、`TBLOEMOMTLSTATE_COMPONENT`、`TBLOEMOCOMPONENT`。欄位、PK 與 `ymes_app` SELECT-only 權限已由新連線讀回核對；migration 沒有新增／更新業務資料列。套用前的完整備份含資料庫快照，詳見 [DATABASE_CONNECTION.md](../../DATABASE_CONNECTION.md)。
+- IV304 核心退料表 `TBLINVMATERIALWIPRETURNBASIS`、`TBLINVMATERIALWIPRETURNDETAIL`、`TBLINVMTLWIPRETURNCOMP`，以及 `TBLINVRAWINVENTORY`／`TBLINVRAWINVENTORYLOC`／`TBLINVRAWINVENTORYCOMPONENT`、`TBLINVTEMP_COMPONENT`，在本次 YMES live catalog 均不存在，repo 也沒有可確認的同版 DDL／完整 metadata。`TBLINVWIP_RAW_COMPONENT` 同樣在 live 缺少，且 repo 沒找到可信 CREATE-only reference；已列入公司端補件。不可由舊 SQL 推測型別、PK、FK、index、default 或 trigger。
+- 可沿用且已在 live：`TBLINVWIPINVENTORY_RAW/SEMI`、`TBLINVWIPINVENTORY_COMPONENT`、`TBLINVSEMIINVENTORY`、`TBLINVSEMIINVENTORYCOMPONENT`、`TBLOEMOMATERIALSTATE`、`TBLOEMOMTLSTATE_COMPONENT`、`TBLOEMOCOMPONENT`，以及 `TBLINVTRANSACTIONSTATE/LOG`。其中前七張依 WP201／WP603／WP604／OE references 建立或沿用；Transaction State／Log 由 WP605／migration `0073` 建立。確認 writer 前，`ymes_app` 對這些交易／來源表的寫入權限仍須按實作交易範圍另行評估。
+- live 權限另有 `TBLINVLOCATORBASIS` 缺 `ymes_app` SELECT、`TBLSYSEVENTLOG` 僅有 INSERT；若 IV304 command 使用 locator lookup 或系統事件記錄，需在實作時授予必要且最小的權限。正式 app-browser 已 Demo 登入直達本功能，route 正常呈現「正式環境尚未開放此功能」placeholder；API／帳務尚未交付。
 - 公司端不連 YMES PostgreSQL、不新增 migration/schema；正式 schema、API、權限、交易與部署都由家用電腦負責。
