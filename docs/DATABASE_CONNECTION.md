@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：0079／0080 RT410 設備稼動查詢結構與唯讀權限（2026-11-27）
+
+- PPK／SSH 從正式 PostgreSQL catalog 唯讀確認 `tblsmdarearelation` 存在但 `ymes_app` 沒有 SELECT；`tblwipcont_equipment`、`tblwiplotlog_report` 在 YMES 與其他 schema 均缺。設備主檔、狀態 Basis／現況／歷程及 Area Relation 欄位／索引核對完成。
+- 0079 套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-rt410-20261127.dump`，765,707 bytes、SHA-256 `4f97bf8478cb7167dc195cc0b11ce9fdcf9aeaf8404028715897130aaa1dfc9b`，`pg_restore --list` 2,133 entries。套用 [0079 migration](../database/migrations/0079_rpt_rt410_equipment_daily_utilization_schema.sql)，SHA-256 `D14A0D54186A8204D74AEA5D658C1D8BD97DDD57E5AFA9A64F88B491922C09B6`；建立來源 21／49 欄空表及來源／RT410 支援索引，Area Relation 和兩新表只授 `ymes_app` SELECT，無業務資料寫入。
+- 0080 套用前完整備份 `/opt/ymes/backups/ymes-before-rt410-0080-20261127.dump`，773,113 bytes、SHA-256 `b0eb34f96e34a73ff876ed1d7e7118507aace1b600dfb8dd595bbeab0ee5dae9`，`pg_restore --list` 2,146 entries。套用 [0080 migration](../database/migrations/0080_rpt_rt410_equipment_log_lookup_index.sql)，SHA-256 `B238044DF85D1D6B1D096FC2097CF0C582AB6D482C63B2D69E1188793AAFB4EA`；只補 `equipmentno, loggroupserial` 查詢索引，不改表或業務資料。Catalog 回讀兩新表 0 列，SELECT=true、INSERT／UPDATE／DELETE=false。
+- .NET 9 Release build 有既有 NU1900（NuGet 弱點來源無法連線）警告。複查後修正 Moves SQL 多餘 SELECT，正式 PostgreSQL 以 `SET ROLE ymes_app`、`PREPARE`／`EXPLAIN` 驗證 Moves／狀態查詢計畫及讀取權限，未寫入資料。修正版 `ymes-api:rt410-20261127-a2`／`ymes-api:current` image ID `sha256:896a4c490aa985ce4db28d777ed75f92b657f021f3309b9055e4e1e812838ced`；a1 回復標籤 `ymes-api:before-rt410-fix-20261127-a1` 保留 `sha256:8307f2936e8e58608da35a89aa3f85bc63909178c30e671705f65ecb85a075aa`，較早 pre-RT410 image 仍保留 `ymes-api:before-rt410-20261127`。僅以 Compose project `ymes` 更新 `ymes-api`；API healthy／readiness 200／未登入 401；`ymes-web`、`ymes-master-web`、`yakuyama-web` 未更新。正式 app-browser 與實際資料列驗收限制見 [RT410 模組紀錄](modules/RPT/設備稼動查詢_RT410.md)。
+
 ## 最新：0078 RT501 生產批狀態查詢結構與 API（2026-11-27）
 
 - 以家用電腦 PPK/SSH 連到正式主機，透過正式 API 使用的同一 PostgreSQL instance 唯讀盤點 catalog。WIP／Product／Operation／Process／Customer 主檔及 `tblinvwipinventory_semi` 已存在且 `ymes_app` 有 SELECT；只缺 `tblinvwip_scrap`、`tblinvwip_failbin`、`tblinvwip_componentscrap`，YMES 外無同名來源物件；四個來源／查詢索引名稱沒有衝突。

@@ -6,7 +6,7 @@
 
 - RT411「每日設備稼動長條圖」：[功能規格與家用端 API handoff](modules/RPT/每日設備稼動長條圖_RT411.md)。核對主／子設備 Form、RPT `LoadEQPRealTimeReport`／`LoadEQPRealTimeReport_Chamber` Service 與 `clsReport` Core；完成 `/YMES/RPT/EqpDailyUtilizationChart` DEV Gantt、多選條件、Utilization Rate、狀態 tooltip／選取明細、圖表控制與 Chamber 子設備查詢。狀態 DDL refs 已在 repo；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。RT412 已完成，下一項為 RT413。
 
-- RT410「設備稼動查詢」：[功能規格與家用端 API handoff](modules/RPT/設備稼動查詢_RT410.md)。核對 `frmEQPDailyReport`、`wsRPT.LoadEQPDailyReport`／`LoadData_SonEQPData`、`clsReport` Core；完成 `/YMES/RPT/EqpDailyReport` DEV 日期範圍、Area／多設備 lookup、狀態百分比／Moves、圓餅明細與 ChamberManage 子設備展開。已記錄主／子設備狀態 SQL 時間邊界差異；DDL refs 已在 repo，未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。RT410–RT412 已完成，下一項為 RT413。
+- RT410「設備稼動查詢」：[功能規格與家用端 API handoff](modules/RPT/設備稼動查詢_RT410.md)。核對 `frmEQPDailyReport`、`wsRPT.LoadEQPDailyReport`／`LoadData_SonEQPData`、`clsReport` Core；公司端 DEV 日期範圍、Area／多設備 lookup、狀態百分比／Moves、圓餅明細與 ChamberManage 子設備展開已交接。家用端已套用 0079／0080、建立唯讀 schema/API 並部署 `GET /api/reports/equipment-daily-utilization`；正式 Demo app-browser 驗證成功與防呆。Legacy 主／子設備時間邊界差異仍待公司端核源碼，正式設備／狀態／WIP rows 目前為空，正向業務資料待同步。RT410 API 已完成；公司端 UI 接線待辦仍開啟。
 
 - RT501「生產批狀態查詢」：[功能規格與家用端 API handoff](modules/RPT/生產批狀態查詢_RT501.md)。核對 `frmLotState`、WIP `LoadLotBasisJoinState` Service／Core；完成 `/YMES/RPT/ConfirmLot` DEV 八條件查詢、lookup、Confirm Lot／Status／庫存條件、Lot／OP 排序及屬性明細假視窗。記錄狀態 6 註解與 AdditionalXml 條件不一致；所需 DDL refs 已在 repo，未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。
 

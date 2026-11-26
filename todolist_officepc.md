@@ -1,5 +1,12 @@
 # 公司端待辦
 
+## 公司端接手：RPT RT410 設備稼動查詢正式 UI（2026-11-27）
+
+- [x] 家用端已部署登入保護 `GET /YMES/API/api/reports/equipment-daily-utilization`。必填 `startTime`／`endTime`（台灣本地、不含時區），可帶 `areaNos`、`equipmentNos`（逗號分隔）及 `chamberManage=true|false`；上限 31 天、100 個條件、2,000 設備。Response 含狀態目錄、父設備、巢狀 Chamber、state percentages、Moves／`LotQtyEqp`、Loss／NoData。詳 [RT410 模組 MD](docs/modules/RPT/設備稼動查詢_RT410.md)。
+- [ ] 正式 `EqpDailyReport` 畫面接上端點；保留 DEV 假資料模式，串 area／equipment／state lookups，補正式 loading／error／empty／too-many 結果顯示、日期及 ChamberManage query；維持 Status columns／圓餅／Moves 與子設備巢狀互動。
+- [ ] 讀 RT410 原始 `clsReport.LoadEQPDailyReport` 與 `LoadData_SonEQPData` 確認主設備 `EndTime` 範圍與子設備 overlap 條件不同是否為舊缺陷；若需更正，更新模組 MD、API handoff 與 UI 驗收口徑。不要猜，也不要在正式庫造設備／狀態／WIP 測試列。
+- [ ] 正式資料目前沒有 active main equipment，新增 WIP source tables 也沒有同步列；確認公司端／資料同步流程後，提供家用端做正向報表資料驗收。
+
 ## 公司端接手：RPT RT501 正式介面連接（2026-11-27）
 
 - [x] 家用端已部署登入保護 `GET /YMES/API/api/reports/confirm-lots`；條件為 `roNo`、`moNo`、`productNo`、`productVersion`、`customerNo`、`lotNo`、`opNo`、`orgLotNo`、`psNo`、`page`、`pageSize`。空條件回 400、`pageSize` 最大 100、分頁回 `hasMore`；固定 LotState 1 與狀態／庫存限制。詳 [RT501 模組 MD](docs/modules/RPT/生產批狀態查詢_RT501.md)。
@@ -30,7 +37,7 @@
 
 - [x] 核對 `frmEQPDailyReport`、`wsRPT.LoadEQPDailyReport`／`LoadData_SonEQPData`、`clsReport` Core；完成 `/YMES/RPT/EqpDailyReport` Vue DEV 日期範圍、Area／多設備 lookup、狀態百分比／Moves、點列圓餅明細及 ChamberManage 子設備展開。[RT410 規格與家用端 API handoff](docs/modules/RPT/設備稼動查詢_RT410.md)
 - [x] 記錄主設備狀態查詢以 `EndTime <= queryEnd` 過濾、子設備用時間區間 overlap 條件的差異；state percentages 及 Moves SQL 邊界待家用端核對。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端比對已存在的 Oracle DDL refs 與 YMES live schema／索引；核實主／子設備區間語意，再實作授權、參數化、期間與筆數受限的唯讀設備稼動 API。RT412 已完成，下一項依 RPT 清冊為 RT413。
+- [x] 家用端已比對 DDL refs 與 YMES live schema／索引，完成登入保護、參數化、期間與筆數受限的唯讀 API（0079／0080）；主／子設備時間邊界差異已保留並記錄，原生 Core 語意仍由公司端 RT410 待辦核實。API 規格見 [RT410 模組 MD](docs/modules/RPT/設備稼動查詢_RT410.md)。
 
 ## 前項公司端交付：RPT RT501 生產批狀態查詢（2026-11-26）
 

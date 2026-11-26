@@ -1,12 +1,20 @@
 # 家裡電腦接手清單
 
+## 家用端 RT410 設備稼動查詢 API（2026-11-27）
+
+- [x] PPK/SSH 比對正式 schema 與來源 WP201／WP305 PostgreSQL CREATE-only refs；建立 0079 兩張空來源表、索引，授 `ymes_app` Area Relation／新表 SELECT；另套 0080 設備／LogGroupSerial 支援索引。兩次完整備份、SQL SHA、catalog／權限見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。未匯入或修改 MES 業務列。
+- [x] 完成登入保護唯讀 `GET /api/reports/equipment-daily-utilization`；參數化日期、Area、Equipment、Chamber 條件；31 天／100 項條件／2,000 設備上限與穩定排序，回傳 state percentages、Moves、Loss、巢狀 Chamber；主／子設備來源時間邊界依 handoff 保留差異並記錄待公司核實處。
+- [x] 複查修正 Moves SQL 多餘 SELECT；.NET 9 Release build 成功，正式 PostgreSQL 以 `ymes_app` 唯讀 `EXPLAIN` 驗證 Moves／狀態查詢欄位與計畫。部署 image a2；readiness 200、匿名 401、Demo app-browser 無命中 Chamber 查詢 200、超 31 天 400。a1 保留回復標籤，僅替換 YMES API。詳 [RT410 模組紀錄](docs/modules/RPT/設備稼動查詢_RT410.md)。
+- [ ] 正式設備主檔目前沒有 active main equipment，兩張新 WIP 表沒有同步業務列；等資料來源同步後做設備／狀態／Moves 正向驗證，不在正式庫灌測試列。Legacy 主設備時間條件仍請公司端核對原始 Core。
+- [ ] 以一般 fast-forward 將本次 API／schema／文件同步至 GitHub `main`；同步後 fetch 並依最新家用待辦接續。
+
 ## 家用端 RT501 生產批狀態查詢 API（2026-11-27）
 
 - [x] 依來源 PostgreSQL CREATE-only／Oracle DDL 與正式 catalog 核對；備份後套用 0078，只建立缺少的三張空狀態來源表、來源索引及 BaseLotNo 查詢索引，`ymes_app` 僅 SELECT。備份、SQL SHA 與 catalog 結果見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [x] 完成登入保護、參數化唯讀 `GET /api/reports/confirm-lots`，固定 LotState 1 與 Status 0–5／11／12 數量條件；多值、pattern、分頁上限、空條件防呆及穩定排序已實作，正式 SQL `EXPLAIN` 通過。
 - [x] .NET 9 Release 發布成功；正式 API image `ymes-api:rt501-20261127-a2` 已部署，readiness 200、未登入 401，舊 API image 保留 rollback 標籤。正式 app-browser 驗證成功／防呆回應；本機 DEV app-browser 完成 RT501 查詢、lookup、篩選、列選取、屬性視窗及 Close 操作。詳 [RT501 模組紀錄](docs/modules/RPT/生產批狀態查詢_RT501.md)。
 - [ ] 正式 `ConfirmLot.vue` 仍是未開放 placeholder；已把正式 UI 連 API、lookup 與分頁交給公司端，見 `todolist_officepc.md`。有實際生產批資料後再做正向正式資料列驗證，不在正式庫灌測試資料。
-- [ ] 依跨機電腦流程，fetch/merge 最新 `origin/main`、保留公司端並行提交，將本次家用工作正常推送 GitHub 後再讀取最新接手清單。
+- [x] RT501 已以 fast-forward 推送 GitHub `main`，commit `ed645c9`；推送後 re-fetch 確認 `origin/main=ed645c95`，再依最新待辦接續 RT410。
 
 ## 家用端 RT412 設備 MTTR 統計表（2026-11-27）
 
@@ -58,7 +66,7 @@
 ## 前項公司端交付：RPT RT410 設備稼動查詢（2026-11-26）
 
 - [x] 公司端已完成 Form／Service／Core 核對、DEV 假資料頁面及 [RT410 規格 handoff](docs/modules/RPT/設備稼動查詢_RT410.md)。
-- [ ] 比對已存在的 MESTEST DDL refs 與 YMES live schema／索引；核實主設備／子設備時間區間條件的差異，後續實作授權、參數化、查詢期間與回傳量受限的唯讀 API。勿在公司端連 PostgreSQL或做正式 API/schema。
+- [x] 已比對 MESTEST DDL refs 與 YMES live schema／索引並完成登入保護、參數化、查詢期間與回傳量受限的唯讀 API；主設備／子設備時間條件差異已記錄於模組文件，原生 Core 確認仍由公司端 RT410 待辦追蹤。勿在公司端連 PostgreSQL 或做正式 API/schema。
 - [x] RT412 已接續完成；下一項依 RPT 清冊為 RT413「設備 MTTR 統計表_以月份匯總」。
 
 ## 前項公司端交付：RPT RT501 生產批狀態查詢（2026-11-26）
