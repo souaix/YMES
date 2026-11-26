@@ -1,11 +1,19 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
+## 公司端最新交付：RPT RT205 作業站時段產出看板（2026-11-26）
+
+- [x] 公司端核對 RT205 主看板／Setup／History Query、RPT Service／`clsReport` Core；完成 DEV 假時段看板、自動更新、OP／尺寸設定與指定日期歷史查詢。[RT205 handoff](docs/modules/RPT/作業站時段產出看板_RT205.md)
+- [ ] 家用端確認 `tblRPTTimeStepBasis`、`tblWIPLotLog_Report`、`tblOPBasis`、StdYield 與 `YieldContainDefect` 同版 MESTEST owner／型別／鍵索引、時區／時段配置及時間邊界；查核 legacy 重疊與零分母行為，決定左閉右開切片規則。
+- [ ] 家用端按 RT205 handoff 設計參數化唯讀 `/api/reports/op-output-summary`；先查可信 schema 與 LotLog 大小／索引，確認 OP/date 限制、快取／刷新方式及歷史保留後，再建 CREATE-only SQL。設定 API 另決定 user／device scope，不信任未授權 PCNo。
+- [ ] 家用端決定是否保存 per-user／device 看板設定；公司端 DEV 設定目前只存頁面記憶體。
+- [ ] 公司端接續 RPT 清冊 RT206「作業站時段產出_良率儀表板」。
+
+## 前項公司端交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
 
 - [x] 公司端核對 RTB03 inline Query／View、`COM_WaferMAPTestChartLib`、RPT／SYS Service、Industry_Base RPT／SYS Core，完成 Wafer Map DEV 查詢、多筆結果選取、多 Recipe 圓形 Map、四種統計值及 SVG 匯出。[RTB03 handoff](docs/modules/RPT/WaferMap電性測試圖表_RTB03.md)
 - [ ] 核實 `TBLWIPRAWRECORD_<type>` 的 EDC owner／schema、座標／序號／動態 Recipe 數值欄型別與索引，確認 RawRecord 到 MES `TBLWIPLOTLOG_REPORT`／`TBLOPBASIS` 的跨庫查詢連線、join 基數及 Legacy Core 拼接問題。DDL 未驗證前不建立猜測性 CREATE。
 - [ ] 若 YMES 可讀 EDC，實作以 Recipe basis metadata allowlist 產生動態欄、值參數化、限量分頁的唯讀 Record API 與批次 Map points API；核實 record 複合鍵、日期／點數限制與跨 EDC／MES 查詢方案。
-- [ ] 公司端接續盤點 RTB03 後尚未復刻的 RPT FunctionKey；清冊下一列為 RT205 作業站時段產出看板。
+- [x] RTB03 後依清冊接續完成 RT205；下一項為 RT206。
 
 ## 前項公司端交付：RPT RTB01 Wafer 電性數據運行圖
 

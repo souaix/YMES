@@ -1,10 +1,16 @@
 # 公司端待辦
 
-## 公司端最新交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
+## 公司端最新交付：RPT RT205 作業站時段產出看板（2026-11-26）
+
+- [x] 核對主看板、Setup、History Query Form／Designer，`wsRPT.LoadBillBoardOPOutputConfig`／`UpdBillBoardOPOutputConfig`／`LoadBillBoardOPOutputSummary` 與 `clsReport` Core；完成 `function:RPT:BILLBOARD OPOUTPUT SUMMARY` Vue DEV 自動更新、設定、歷史查詢及 StdYield 標紅。[RT205 規格與 API/schema handoff](docs/modules/RPT/作業站時段產出看板_RT205.md)
+- [x] 說明時段表 `tblRPTTimeStepBasis`、LotLog `tblWIPLotLog_Report`、Good／Fail／Defect 與 `YieldContainDefect`；標記舊 Core 時段閉區間重疊與設定 LEFT JOIN 疑點。repo 無可信 DDL、Oracle profile metadata 未驗證，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 公司端依 RPT 清冊接續 RT206「作業站時段產出_良率儀表板」。
+
+## 前項公司端交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
 
 - [x] 核對 inline `frmWaferMAPTestChart`／View、`COM_WaferMAPTestChartLib`、RPT／SYS Service／Core；完成 Vue DEV 查詢、多選 Wafer、RecipeType 下多 Recipe 圓形 Map、Max／Min／Mean／Sigma 任意組合與 SVG 報表匯出。[RTB03 規格](docs/modules/RPT/WaferMap電性測試圖表_RTB03.md)
 - [x] 記錄 `TBLWIPRAWRECORD_<type>` 座標／動態 Recipe 欄、MES LotLog／OP join、母體 Sigma 計算；標示 `A.And`／`B.And`、SQL tuning 字串與 EDC/MES 分庫查詢疑點。Oracle profile／可信 RawRecord DDL 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 公司端接續盤點 RTB03 後尚未復刻的 RPT FunctionKey（清冊下一列為 RT205 作業站時段產出看板），先檢查是否已有 Vue 實作再追 Form／Service／Core。
+- [x] RTB03 後依清冊接續完成 RT205；下一項為 RT206。
 
 ## 前項公司端交付：RPT RTB01 Wafer 電性數據運行圖（2026-11-26）
 

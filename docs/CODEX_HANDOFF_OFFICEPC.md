@@ -2,12 +2,19 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
+## 公司端最新交付：RPT RT205 作業站時段產出看板（2026-11-26）
+
+- [x] 核對 `frmBillBoard_OPOutputSummary`／Setup／History Query Form／Designer、RPT `LoadBillBoardOPOutputConfig`／`UpdBillBoardOPOutputConfig`／`LoadBillBoardOPOutputSummary` Service 與 `clsReport` Core；完成 `/YMES/RPT/OpOutputSummary` DEV 假資料、定時刷新、設定與指定日期歷史查詢。[RT205 規格與家用端 API/schema handoff](modules/RPT/作業站時段產出看板_RT205.md)
+- [x] 確認報表查 `tblWIPLotLog_Report` + `tblOPBasis`，時段取 `tblRPTTimeStepBasis`，依 `YieldContainDefect`／`StdYield` 算與標色；記錄 `tbl_NBWIPOPOutputSummary` 屬另一寫入路徑、Core 時段閉區間可能重複及設定 LEFT JOIN 收窄疑點。桌機 Oracle profile／可信 DDL metadata 未驗證，未猜 CREATE；未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
+- [ ] 家用端依 RT205 規格確認同版 MESTEST DDL／鍵索引、時段與時區、系統參數來源；核對舊 Core 時段邊界及 Yield 結果，再提供可信 PostgreSQL CREATE-only SQL 與唯讀報表 API。設定持久化的使用者／裝置範圍待定。
+- [ ] 公司端依 RPT 清冊接續 RT206「作業站時段產出_良率儀表板」。
+
+## 前項公司端交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
 
 - [x] 核對 Industry_Base inline Query／View、`COM_WaferMAPTestChartLib`、RPT／SYS Service 與 `clsRPT_Industry_Base`／`clsSYSMesParameter_Industry_Base` Core；完成 RPT「行業包」入口、DEV PS／TestRecipeType 多選、Equipment／Component／Lot／TestDate 條件、CheckFlag 多選、依 X/Y 繪多個 Recipe wafer maps、Max／Min／Mean／Sigma 選項與 SVG 報表下載。[RTB03 規格](modules/RPT/WaferMap電性測試圖表_RTB03.md)
 - [x] 記錄動態 `TBLWIPRAWRECORD_<type>` 座標與 RecipeNo 欄、MES LotLog／OP join、統計計算方式及 Core 疑點：條件拼成 `A.And`／`B.And`、tuning 套錯 SQL 字串、EDC/MES 分庫註解與 active 跨表查詢不一致。桌機 Oracle profile／RawRecord 可信 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端確認 EDC RawRecord owner／欄型別、Recipe 動態欄規則、跨 EDC／MES join 實際連線與基數、索引及分頁限制，再依可信 DDL 建 schema／參數化唯讀 API。
-- [ ] 公司端接續 RPT 清冊盤點下一個未復刻 FunctionKey（表中 RTB03 後為 RT205 作業站時段產出看板）。
+- [x] RTB03 後接續完成 RT205 作業站時段產出看板；現在接 RT206。
 
 ## 前項公司端交付：RPT RTB01 Wafer 電性數據運行圖（2026-11-26）
 
