@@ -1,12 +1,20 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：PM302 保養工單下線（2026-11-26）
+## 公司端最新交付：PM303 保養工單完成與回報（2026-11-26）
+
+- [x] 公司端核對 `frmPMWoFinish`／Def、`wsPM.RepayForWoDetail`、`clsPMBasis.RepayForWoDetail` 及完工後搬移歷史；完成 `/YMES/PM/WorkOrderFinish` DEV 逐項／整張回報與 SOP Detail。
+- [x] 新增 [PM303 規格與家用端 API/schema handoff](docs/modules/PM/保養工單完成與回報_PM303.md)，記錄 WOStatus、PM PlanLog ExecuteState=4、整單完成歷史搬移、EQP／Chamber 狀態及舊日期檢查缺陷。
+- [x] 桌機受保護 Oracle profile 不存在，PM303 直接表 DDL／metadata 未取得，未猜 CREATE；DEV 使用 localStorage，未連 YMES PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live schema／Oracle metadata，交易式更新明細與 PlanLog；整單完成後原子歸檔 History，並處理 EQP／Chamber 更新失敗。
+- [ ] 下一項公司端 handoff：PM401「故障原因基本資料」。
+
+## 前項公司端交付：PM302 保養工單下線（2026-11-26）
 
 - [x] 核對 `frmPMWORelease`、`wsPM.ReleaseWoDetail`、`clsPMBasis.ReleaseWoDetail`；公司端完成 `/YMES/PM/WorkOrderRelease` DEV 查詢、主從 Grid、狀態篩選、SOP 檢視、Release／Release All。
 - [x] 新增 [PM302 規格與家用端 API/schema handoff](docs/modules/PM/保養工單下線_PM302.md)。已記錄 PM Log／設備 PM 累計副作用、EQP 狀態更新分段及資料表待核項目。
 - [x] 桌機受保護 Oracle profile 不存在，直接表 DDL／metadata 未取得，未猜 CREATE。DEV 使用 localStorage 假資料；公司端未連 YMES PostgreSQL、未實作正式 API/schema。
 - [ ] 家用端核 live schema／Oracle metadata，確認 `tblPMWODetail`、`tblPMEQPMaintenancePlanLog`、`tblPMEquipmentState` 欄位與鍵；實作交易式冪等下線 API、PlanLog 與設備累計更新，定義 EQP／Chamber 狀態一致性。
-- [ ] 下一項公司端 handoff：PM303「保養工單完成與回報」。
+- [ ] 當時下一項 PM303「保養工單完成與回報」現已完成；公司端接續 PM401「故障原因基本資料」。
 
 ## 前項公司端交付：PM301 開立保養工單（2026-11-26）
 
@@ -23,7 +31,7 @@
 - [x] 桌機 Oracle profile 不存在，repo 無可核實 `TBLPMFIXEDTIMESPMBASIS` DDL／索引；未查 Oracle、未猜 CREATE／輸出 credentials。
 - [ ] 家用端核 live schema／migration 與 Oracle metadata；交易式實作設備類型預設、設備覆寫、QtyType、SET 重新套用、DataStamp 與參照驗證。關閉 AutoCreateWo 時明確清除舊 PMSOPNo。
 - [ ] 桌機已 fast-forward 至 GitHub `origin/main` `02a4b1a`；公司端本機交付仍待靜態檢閱、正常 commit/push，需保留家用端修改且勿 force push。
-- [x] PM301「開立保養工單」已完成；其後 PM302 已完成，當前下一項為 PM303（PM 保養工單；OE 分類的工單管理 OE201–OE209 已有規格）。
+- [x] PM301「開立保養工單」已完成；其後 PM302／PM303 已完成，當前下一項為 PM401（PM 設備維修；OE 分類的工單管理 OE201–OE209 已有規格）。
 
 ## 前項公司端交接：PM203 設備定量保養設定（2026-11-26）
 

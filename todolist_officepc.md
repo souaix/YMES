@@ -1,13 +1,22 @@
 # 公司端待辦
 
-## 公司端最新交付：PM302 保養工單下線（2026-11-26）
+## 公司端最新交付：PM303 保養工單完成與回報（2026-11-26）
+
+- [x] 核對 `frmPMWoFinish`／Def、`wsPM.RepayForWoDetail`、`clsPMBasis.RepayForWoDetail` 與工單全數完成搬移歷史流程；完成 `/YMES/PM/WorkOrderFinish` DEV 查詢、主從明細、SOP Detail、逐項／整張回報。
+- [x] 新增 [PM303 規格與家用端 API/schema handoff](docs/modules/PM/保養工單完成與回報_PM303.md)，更新模組索引、選單進度、handoff 與兩端 TODO。
+- [x] DEV 共用 PM301／PM302 工單與 PlanLog 假資料；模擬 WOStatus=3、ExecuteState 3→4、整單完工後搬移本機歷史與 EQP 狀態。
+- [x] 記錄 WinForms 對早於 ReleaseDate 的完成時間只提示仍送出；家用端 API handoff 要求拒絕。桌機無受保護 Oracle profile、直接表 DDL／metadata 未取得，未猜 CREATE。
+- [ ] 家用端核 live schema／Oracle metadata；交易式實作明細／PlanLog 回報、全單歷史歸檔與可重試 EQP 狀態更新。
+- [ ] 下一項公司端依 FunctionKey 為 PM401「故障原因基本資料」，沿清冊持續復刻未完成模組。
+
+## 前項公司端交付：PM302 保養工單下線（2026-11-26）
 
 - [x] 核對 `frmPMWORelease`、`wsPM.ReleaseWoDetail`、`clsPMBasis.ReleaseWoDetail`；完成 `/YMES/PM/WorkOrderRelease` DEV 多條件查詢、主從 Grid、狀態篩選、SOP 檢視、Release／Release All。
 - [x] 新增 [PM302 規格與家用端 API/schema handoff](docs/modules/PM/保養工單下線_PM302.md)，更新規格索引、選單清冊、handoff 與兩端待辦。
 - [x] DEV 共用 PM301 工單／PlanLog 假資料，下線會更新明細狀態、PM PlanLog ExecuteState、設備 PM 累計及假設備狀態。
 - [x] 桌機無受保護 Oracle profile，repo 無可核實直接表 DDL／metadata；未連 MESTEST、未猜 CREATE。未連 YMES PostgreSQL、未實作正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema／Oracle metadata；以原子、可重試 API 實作下線，重驗 IssueState／WOStatus／PlanLog，更新設備 PM 累計並處理 EQP 狀態與 Chamber Manage。
-- [ ] 下一項公司端依 FunctionKey 為 PM303「保養工單完成與回報」，沿序持續復刻未完成模組。
+- [ ] 當時下一項 PM303「保養工單完成與回報」現已完成；公司端接續 PM401「故障原因基本資料」。
 
 ## 前項公司端交付：PM301 開立保養工單（2026-11-26）
 
@@ -32,7 +41,7 @@
 - [x] 桌機受保護 Oracle profile 不存在，repo 無可核實 `TBLPMFIXEDTIMESPMBASIS` DDL／索引；未查 Oracle、未猜 CREATE／輸出 credentials。
 - [ ] 家用端核 live schema／Oracle metadata；交易式實作 SET、參照驗證、併發保護及設定刪除。
 - [ ] Git sync pending：`.git` 目前唯讀；恢復後先 fetch 比對、保留家用端修改，再正常 commit/push PM101–PM110、PM201–PM204 與所有未推內容，不可 force push。
-- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。當時下一項 PM301，現已完成。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。當時下一項 PM301，現已完成；PM302／PM303 也已完成，當前接續 PM401。
 
 ## 前項公司端交付：PM203 設備定量保養設定（2026-11-26）
 

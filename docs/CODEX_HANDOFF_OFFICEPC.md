@@ -2,14 +2,23 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：PM302 保養工單下線（2026-11-26）
+## 公司端最新交付：PM303 保養工單完成與回報（2026-11-26）
+
+- [x] 核對 `frmPMWoFinish`／Def、`wsPM.RepayForWoDetail`、`clsPMBasis.RepayForWoDetail` 與整單完工歷史搬移；完成 `/YMES/PM/WorkOrderFinish` DEV 查詢、主從明細、SOP Detail、逐項／整張回報。
+- [x] 新增 [PM303 規格與家用端 API/schema handoff](modules/PM/保養工單完成與回報_PM303.md)，更新模組索引、選單進度與兩端 TODO。
+- [x] DEV 共用 PM301／PM302 工單與 PlanLog 假資料；模擬 WOStatus=3、PlanLog ExecuteState 3→4、整單完成搬移本機歷史與 EQP 狀態。
+- [x] 舊 Form 對早於 ReleaseDate 的完成時間只提示仍送出；家用端 API handoff 已要求伺服器拒絕。桌機受保護 Oracle profile 不存在，直接表 DDL／metadata 未取得，未猜 CREATE。
+- [ ] 家用端核 live schema／Oracle metadata，交易式實作 PM303 回報、全單完成歷史搬移與可重試 EQP／Chamber 狀態。
+- [ ] 下一項依未完成 FunctionKey 為 PM401「故障原因基本資料」，沿清冊接續。
+
+## 前項公司端交付：PM302 保養工單下線（2026-11-26）
 
 - [x] 核對 `frmPMWORelease`、`wsPM.ReleaseWoDetail`、`clsPMBasis.ReleaseWoDetail`；完成 `/YMES/PM/WorkOrderRelease` DEV 主從查詢、五種狀態篩選、SOP 檢視、Release／Release All。
 - [x] 新增 [PM302 規格與家用端 API/schema handoff](modules/PM/保養工單下線_PM302.md)，更新索引、清冊進度及兩端 TODO。
 - [x] DEV 共用 PM301 工單與 PlanLog 假資料；模擬 WOStatus=2、PM ExecuteState=3、PM 設備累計歸零與可選 EQP 狀態更新。
 - [x] 桌機受保護 Oracle profile 不存在；repo 沒有直接表可核實 DDL／metadata，本次未連 MESTEST、未猜 CREATE。公司端未連 YMES PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema／Oracle metadata，實作交易式冪等下線 API，並處理 EQP 狀態更新部分完成風險。
-- [ ] 下一項公司端依 FunctionKey 為 PM303「保養工單完成與回報」，沿序接續未完成功能。
+- [ ] 當時下一項 PM303「保養工單完成與回報」現已完成；公司端接續 PM401「故障原因基本資料」。
 
 ## 前項公司端交付：PM301 開立保養工單（2026-11-26）
 
@@ -25,7 +34,7 @@
 - [x] [PM204 規格與家用端 API/schema handoff](modules/PM/設備定次定時保養設定_PM204.md) 記錄 TypeCode 0／1、QtyType 0/1/2、DataStamp、整類刪除與 SET 重建。舊 Service 先刪後逐筆新增、非原子；關閉 AutoCreateWo 時 Core 可能留下舊 PMSOPNo。
 - [x] 桌機受保護 Oracle profile 不存在，repo 無可核實 `TBLPMFIXEDTIMESPMBASIS` DDL／索引；未連 Oracle、未猜 CREATE／輸出 credentials。
 - [ ] 家用端核 live PostgreSQL schema／migration 與 Oracle metadata；以交易實作類型預設、設備覆寫、QtyType、SET 清單、DataStamp 更新及整類刪除。
-- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未 build／test／browser。當時下一項 PM301，現已完成。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未 build／test／browser。當時下一項 PM301，現已完成；PM302／PM303 也已完成，當前接續 PM401。
 
 ## 前項公司端交付：PM203 設備定量保養設定（2026-11-26）
 
@@ -164,7 +173,7 @@
 - [x] SCR In Confirm 的 Service 只排 Source=40 交易並逐筆設定 Lot reverse lock；正式庫存異動由下游執行。三張 SCR Inventory Oracle DDL／metadata 缺失，桌機 profile 不可用，未猜 CREATE。
 - [ ] 未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署，未執行 build／test／browser。IV602 已完成；下一步掃描 INV 清冊尚未復刻且有可讀來源的功能。
 
-> **最新公司端接手（2026-11-26）**：PM301、PM302 已完成公司端 DEV 與家用端 handoff；PM301 與之前累積工作已由 `21cca14` 正常推上 GitHub，PM302 依本次工作正常提交／推送後接續 PM303「保養工單完成與回報」。先看本檔、兩端 TODO、[模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)。桌機沒有 Oracle 受保護 profile，PM302 直接表 DDL／metadata 未取得；不猜 CREATE。公司端只做 Vue DEV 與來源／handoff，不做 PostgreSQL、正式 API 或部署。
+> **最新公司端接手（2026-11-26）**：PM301、PM302、PM303 已完成公司端 DEV 與家用端 handoff；PM301／PM302 已正常推上 GitHub，PM303 依本次工作正常提交／推送後接續 PM401「故障原因基本資料」。先看本檔、兩端 TODO、[模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)。PM303 直接表 DDL／metadata 未取得，桌機沒有受保護 Oracle profile，不猜 CREATE。公司端只做 Vue DEV 與來源／handoff，不連 YMES PostgreSQL、不做正式 API 或部署。
 
 ## 公司端最新交付：IV406 半成品出庫單記錄（2026-11-25）
 
