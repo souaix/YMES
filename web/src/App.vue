@@ -305,11 +305,35 @@ import PmMaintenanceType from './components/PmMaintenanceType.vue'
 import PmMaintenanceItem from './components/PmMaintenanceItem.vue'
 import PmSopBasis from './components/PmSopBasis.vue'
 import PmToolBasis from './components/PmToolBasis.vue'
+import PmBreakdownBasis from './components/PmBreakdownBasis.vue'
+import PmRepairBasis from './components/PmRepairBasis.vue'
+import PmEqpTypeBreakDownMap from './components/PmEqpTypeBreakDownMap.vue'
+import PmEqpBreakDownRegister from './components/PmEqpBreakDownRegister.vue'
+import PmEqpRepairRegister from './components/PmEqpRepairRegister.vue'
 import PmEqpTypeSopBasis from './components/PmEqpTypeSopBasis.vue'
 import PmMaintenancePlanAdjust from './components/PmMaintenancePlanAdjust.vue'
+import PmMaintenancePlanQuery from './components/PmMaintenancePlanQuery.vue'
+import PmMaintenancePlanHistory from './components/PmMaintenancePlanHistory.vue'
+import PmWorkOrderHistory from './components/PmWorkOrderHistory.vue'
+import PmBreakdownStatistics from './components/PmBreakdownStatistics.vue'
+import PmBreakdownRepairQuery from './components/PmBreakdownRepairQuery.vue'
+import PmPerformance from './components/PmPerformance.vue'
+import ElectricalTestDataQuery from './components/ElectricalTestDataQuery.vue'
+import WaferEDCNormalityChart from './components/WaferEDCNormalityChart.vue'
+import WaferEDCRunningChart from './components/WaferEDCRunningChart.vue'
+import WaferMAPTestChart from './components/WaferMAPTestChart.vue'
+import OpOutputSummary from './components/OpOutputSummary.vue'
+import OpOutputYieldGauge from './components/OpOutputYieldGauge.vue'
+import OpOutputTrendChart from './components/OpOutputTrendChart.vue'
+import OpStateBoard from './components/OpStateBoard.vue'
+import OpStateProductTypeBoard from './components/OpStateProductTypeBoard.vue'
+import OpStateProductNoBoard from './components/OpStateProductNoBoard.vue'
+import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
 import PmWorkOrderBasis from './components/PmWorkOrderBasis.vue'
+import PmWoRelease from './components/PmWoRelease.vue'
+import PmWoFinish from './components/PmWoFinish.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -789,6 +813,14 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:PM:SUBSTITUTION GROUP', label: '備品群組資料', shortLabel: '備品群組', functionNo: 'SUBSTITUTION GROUP', moduleNo: 'PM' },
       ],
     }, {
+      id: 'menu:PM:EQUIPMENT REPAIR', label: '設備維修', shortLabel: '設備維修', children: [
+        { id: 'function:PM:BREAKDOWN BASIS', label: '故障原因基本資料', shortLabel: '故障原因', functionNo: 'BREAKDOWN BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:REPAIR BASIS', label: '維修項目基本資料', shortLabel: '維修項目', functionNo: 'REPAIR BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:EQPTYPE BREAKDOWN MAP', label: '設備與故障原因對應', shortLabel: '故障原因對應', functionNo: 'EQPTYPE BREAKDOWN MAP', moduleNo: 'PM' },
+        { id: 'function:PM:EQP BREAKDOWN REGISTER', label: '設備故障登錄', shortLabel: '故障登錄', functionNo: 'EQP BREAKDOWN REGISTER', moduleNo: 'PM' },
+        { id: 'function:PM:EQP REPAIR REGISTER', label: '設備修復登錄', shortLabel: '修復登錄', functionNo: 'EQP REPAIR REGISTER', moduleNo: 'PM' },
+      ],
+    }, {
       id: 'menu:PM:EQUIPMENT PM SETTING', label: '設備 PM 設定', shortLabel: '設備 PM', children: [
         { id: 'function:PM:EQPTYPE SOP BASIS', label: '設備保養標準程序', shortLabel: '設備 SOP', functionNo: 'EQPTYPE SOP BASIS', moduleNo: 'PM' },
         { id: 'function:PM:PM PLAN CHANGE', label: '保養計劃變更', shortLabel: '計畫變更', functionNo: 'PM PLAN CHANGE', moduleNo: 'PM' },
@@ -798,6 +830,37 @@ const fallbackMenuTree: MenuNode[] = [
     }, {
       id: 'menu:PM:PM WO', label: '保養工單', shortLabel: '保養工單', children: [
         { id: 'function:PM:PMWO BASIS', label: '開立保養工單', shortLabel: '開立工單', functionNo: 'PMWO BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:PMWO RELEASE', label: '保養工單下線', shortLabel: '工單下線', functionNo: 'PMWO RELEASE', moduleNo: 'PM' },
+        { id: 'function:PM:PMWO COMPLETE', label: '保養工單完成與回報', shortLabel: '完工回報', functionNo: 'PMWO COMPLETE', moduleNo: 'PM' },
+      ],
+    }, {
+      id: 'menu:PM:PM QUERY', label: '查詢', shortLabel: '查詢', children: [
+        { id: 'function:PM:PM CALENDAR', label: '保養日曆設定', shortLabel: '保養日曆', functionNo: 'PM CALENDAR', moduleNo: 'PM' },
+        { id: 'function:PM:PM MAINTENANCE QUERY', label: '設備保養計畫查詢', shortLabel: '保養計畫查詢', functionNo: 'PM MAINTENANCE QUERY', moduleNo: 'PM' },
+        { id: 'function:PM:PM PLAN HISTORY', label: '保養計劃歷史資料查詢', shortLabel: '保養計畫歷史', functionNo: 'PM PLAN HISTORY', moduleNo: 'PM' },
+        { id: 'function:PM:PMWO HISTORY', label: '保養工單歷史資料查詢', shortLabel: '工單歷史', functionNo: 'PMWO HISTORY', moduleNo: 'PM' },
+        { id: 'function:PM:PMBRAEKDOWN QUERY', label: '故障原因統計', shortLabel: '故障統計', functionNo: 'PMBRAEKDOWN QUERY', moduleNo: 'PM' },
+        { id: 'function:PM:PM PERFORMANCE QUERY', label: '設備保養效率查詢', shortLabel: '保養效率', functionNo: 'PM PERFORMANCE QUERY', moduleNo: 'PM' },
+        { id: 'function:PM:BREAKDOWN_REPAIRQUERY', label: '故障維修登錄查詢', shortLabel: '故障維修查詢', functionNo: 'BREAKDOWN_REPAIRQUERY', moduleNo: 'PM' },
+      ],
+    }],
+  },
+  {
+    id: 'module:RPT', label: '報表管理', shortLabel: '報表', moduleNo: 'RPT', children: [{
+      id: 'menu:RPT:INDUSTRY', label: '行業包', shortLabel: '行', children: [
+        { id: 'function:RPT:B_ELECTRICAL TEST DATA QUERY', label: '電性測試資料查詢', shortLabel: '電性測試', functionNo: 'B_ELECTRICAL TEST DATA QUERY', moduleNo: 'RPT' },
+        { id: 'function:RPT:B_WAFER EDC NORMALITY CHART', label: 'Wafer 電性數據常態分析圖', shortLabel: '常態分析', functionNo: 'B_WAFER EDC NORMALITY CHART', moduleNo: 'RPT' },
+        { id: 'function:RPT:B_WAFER EDC RUUNING CHART', label: 'Wafer 電性數據運行圖', shortLabel: '運行圖', functionNo: 'B_WAFER EDC RUUNING CHART', moduleNo: 'RPT' },
+        { id: 'function:RPT:B_WAFER MAP TEST CHART', label: 'Wafer Map 電性測試圖表', shortLabel: 'Wafer Map', functionNo: 'B_WAFER MAP TEST CHART', moduleNo: 'RPT' },
+      ],
+    }, {
+      id: 'menu:RPT:BILL BOARD', label: '看板', shortLabel: '看板', children: [
+        { id: 'function:RPT:BILLBOARD OPOUTPUT SUMMARY', label: '作業站時段產出看板', shortLabel: '時段產出', functionNo: 'BILLBOARD OPOUTPUT SUMMARY', moduleNo: 'RPT' },
+        { id: 'function:RPT:BILLBOARD OPOUTPUT SUMMARY GAUGE', label: '作業站時段產出_良率儀表板', shortLabel: '良率儀表板', functionNo: 'BILLBOARD OPOUTPUT SUMMARY GAUGE', moduleNo: 'RPT' },
+        { id: 'function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART', label: '作業站時段產出_趨勢圖', shortLabel: '產出趨勢', functionNo: 'BILLBOARD OPOUTPUT SUMMARY TRENDCHART', moduleNo: 'RPT' },
+        { id: 'function:RPT:BILLBOARD OPSTATE', label: '作業站現況看板', shortLabel: '作業站現況', functionNo: 'BILLBOARD OPSTATE', moduleNo: 'RPT' },
+        { id: 'function:RPT:BILLBOARD OPSTATE_PRDTYPE', label: '作業站現況看板_產品類別', shortLabel: '產品類別看板', functionNo: 'BILLBOARD OPSTATE_PRDTYPE', moduleNo: 'RPT' },
+        { id: 'function:RPT:BILLBOARD OPSTATE_PRODUCTNO', label: '作業站現況看板_產品', shortLabel: '產品看板', functionNo: 'BILLBOARD OPSTATE_PRODUCTNO', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1157,11 +1220,35 @@ const menuRoutes: Record<string, string> = {
   'function:INV:SCR INVENTORY': appBasePath + '/INV/ScrInventory',
   'function:INV:SCR PRODUCT IN': appBasePath + '/INV/ScrIn',
   'function:PM:FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
+  'function:PM:BREAKDOWN BASIS': appBasePath + '/PM/BreakdownBasis',
+  'function:PM:REPAIR BASIS': appBasePath + '/PM/RepairBasis',
+  'function:PM:EQPTYPE BREAKDOWN MAP': appBasePath + '/PM/EqpTypeBreakDownMap',
+  'function:PM:EQP BREAKDOWN REGISTER': appBasePath + '/PM/EqpBreakDownRegister',
+  'function:PM:EQP REPAIR REGISTER': appBasePath + '/PM/EqpRepairRegister',
   'function:PM:EQPTYPE SOP BASIS': appBasePath + '/PM/EquipmentTypeSopBasis',
+  'function:PM:PM CALENDAR': appBasePath + '/PM/PlanCalendar',
+  'function:PM:PM MAINTENANCE QUERY': appBasePath + '/PM/MaintenancePlanQuery',
+  'function:PM:PM PLAN HISTORY': appBasePath + '/PM/MaintenancePlanHistory',
+  'function:PM:PMWO HISTORY': appBasePath + '/PM/WorkOrderHistory',
+  'function:PM:PMBRAEKDOWN QUERY': appBasePath + '/PM/BreakdownQuery',
+  'function:PM:PM PERFORMANCE QUERY': appBasePath + '/PM/Performance',
+  'function:PM:BREAKDOWN_REPAIRQUERY': appBasePath + '/PM/BreakdownRepairQuery',
+  'function:RPT:B_ELECTRICAL TEST DATA QUERY': appBasePath + '/RPT/ElectricalTestData',
+  'function:RPT:B_WAFER EDC NORMALITY CHART': appBasePath + '/RPT/WaferEDCNormalityChart',
+  'function:RPT:B_WAFER EDC RUUNING CHART': appBasePath + '/RPT/WaferEDCRunningChart',
+  'function:RPT:B_WAFER MAP TEST CHART': appBasePath + '/RPT/WaferMAPTestChart',
+  'function:RPT:BILLBOARD OPOUTPUT SUMMARY': appBasePath + '/RPT/OpOutputSummary',
+  'function:RPT:BILLBOARD OPOUTPUT SUMMARY GAUGE': appBasePath + '/RPT/OpOutputYieldGauge',
+  'function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART': appBasePath + '/RPT/OpOutputTrendChart',
+  'function:RPT:BILLBOARD OPSTATE': appBasePath + '/RPT/OpStateBoard',
+  'function:RPT:BILLBOARD OPSTATE_PRDTYPE': appBasePath + '/RPT/OpStateProductTypeBoard',
+  'function:RPT:BILLBOARD OPSTATE_PRODUCTNO': appBasePath + '/RPT/OpStateProductNoBoard',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
   'function:PM:PMWO BASIS': appBasePath + '/PM/WorkOrderBasis',
+  'function:PM:PMWO RELEASE': appBasePath + '/PM/WorkOrderRelease',
+  'function:PM:PMWO COMPLETE': appBasePath + '/PM/WorkOrderFinish',
   'function:PM:SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
   'function:PM:SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
   'function:PM:SUBSTITUTION BASIS': appBasePath + '/PM/SubstitutionBasis',
@@ -1254,6 +1341,16 @@ const menuRoutes: Record<string, string> = {
 }
 
 const functionRoutes: Record<string, string> = {
+  'B_ELECTRICAL TEST DATA QUERY': appBasePath + '/RPT/ElectricalTestData',
+  'B_WAFER EDC NORMALITY CHART': appBasePath + '/RPT/WaferEDCNormalityChart',
+  'B_WAFER EDC RUUNING CHART': appBasePath + '/RPT/WaferEDCRunningChart',
+  'B_WAFER MAP TEST CHART': appBasePath + '/RPT/WaferMAPTestChart',
+  'BILLBOARD OPOUTPUT SUMMARY': appBasePath + '/RPT/OpOutputSummary',
+  'BILLBOARD OPOUTPUT SUMMARY GAUGE': appBasePath + '/RPT/OpOutputYieldGauge',
+  'BILLBOARD OPOUTPUT SUMMARY TRENDCHART': appBasePath + '/RPT/OpOutputTrendChart',
+  'BILLBOARD OPSTATE': appBasePath + '/RPT/OpStateBoard',
+  'BILLBOARD OPSTATE_PRDTYPE': appBasePath + '/RPT/OpStateProductTypeBoard',
+  'BILLBOARD OPSTATE_PRODUCTNO': appBasePath + '/RPT/OpStateProductNoBoard',
   'FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
   'SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
   'SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
@@ -1598,11 +1695,35 @@ const isPmMaintenanceTypePage = computed(() => activeMasterKey.value === 'functi
 const isPmMaintenanceItemPage = computed(() => activeMasterKey.value === 'function:PM:PM ITEM')
 const isPmSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:SOP BASIS')
 const isPmToolBasisPage = computed(() => activeMasterKey.value === 'function:PM:TOOL BASIS')
+const isPmBreakdownBasisPage = computed(() => activeMasterKey.value === 'function:PM:BREAKDOWN BASIS')
+const isPmRepairBasisPage = computed(() => activeMasterKey.value === 'function:PM:REPAIR BASIS')
+const isPmEqpTypeBreakDownMapPage = computed(() => activeMasterKey.value === 'function:PM:EQPTYPE BREAKDOWN MAP')
+const isPmEqpBreakDownRegisterPage = computed(() => activeMasterKey.value === 'function:PM:EQP BREAKDOWN REGISTER')
+const isPmEqpRepairRegisterPage = computed(() => activeMasterKey.value === 'function:PM:EQP REPAIR REGISTER')
 const isPmEqpTypeSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:EQPTYPE SOP BASIS')
+const isPmPlanCalendarPage = computed(() => activeMasterKey.value === 'function:PM:PM CALENDAR')
+const isPmMaintenancePlanQueryPage = computed(() => activeMasterKey.value === 'function:PM:PM MAINTENANCE QUERY')
+const isPmMaintenancePlanHistoryPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN HISTORY')
+const isPmWorkOrderHistoryPage = computed(() => activeMasterKey.value === 'function:PM:PMWO HISTORY')
+const isPmBreakdownStatisticsPage = computed(() => activeMasterKey.value === 'function:PM:PMBRAEKDOWN QUERY')
+const isPmPerformancePage = computed(() => activeMasterKey.value === 'function:PM:PM PERFORMANCE QUERY')
+const isPmBreakdownRepairQueryPage = computed(() => activeMasterKey.value === 'function:PM:BREAKDOWN_REPAIRQUERY')
+const isRts01ElectricalTestDataPage = computed(() => activeMasterKey.value === 'function:RPT:B_ELECTRICAL TEST DATA QUERY')
+const isRtb02WaferEDCNormalityChartPage = computed(() => activeMasterKey.value === 'function:RPT:B_WAFER EDC NORMALITY CHART')
+const isRtb01WaferEDCRunningChartPage = computed(() => activeMasterKey.value === 'function:RPT:B_WAFER EDC RUUNING CHART')
+const isRtb03WaferMAPTestChartPage = computed(() => activeMasterKey.value === 'function:RPT:B_WAFER MAP TEST CHART')
+const isRt205OpOutputSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPOUTPUT SUMMARY')
+const isRt206OpOutputYieldGaugePage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPOUTPUT SUMMARY GAUGE')
+const isRt207OpOutputTrendChartPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART')
+const isRt201OpStateBoardPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE')
+const isRt202OpStateProductTypePage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE_PRDTYPE')
+const isRt203OpStateProductNoPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE_PRODUCTNO')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
 const isPmWorkOrderBasisPage = computed(() => activeMasterKey.value === 'function:PM:PMWO BASIS')
+const isPmWoReleasePage = computed(() => activeMasterKey.value === 'function:PM:PMWO RELEASE')
+const isPmWoFinishPage = computed(() => activeMasterKey.value === 'function:PM:PMWO COMPLETE')
 const isInvProductInPage = computed(() => activeMasterKey.value === 'function:INV:FGD PRODUCT IN')
 const isInvSemiProductInPage = computed(() => activeMasterKey.value === 'function:INV:SEMI PRODUCT IN')
 const isInvProductInLogPage = computed(() => activeMasterKey.value === 'function:INV:FGD PRODUCT IN LOG' || activeMasterKey.value === 'function:INV:SEMI PRODUCT IN LOG')
@@ -3713,8 +3834,140 @@ async function signOut(): Promise<void> {
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
+        <PmBreakdownBasis
+          v-else-if="isPmBreakdownBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmRepairBasis
+          v-else-if="isPmRepairBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmEqpTypeBreakDownMap
+          v-else-if="isPmEqpTypeBreakDownMapPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmEqpBreakDownRegister
+          v-else-if="isPmEqpBreakDownRegisterPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmEqpRepairRegister
+          v-else-if="isPmEqpRepairRegisterPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
         <PmEqpTypeSopBasis
           v-else-if="isPmEqpTypeSopBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmPlanCalendar
+          v-else-if="isPmPlanCalendarPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmMaintenancePlanQuery
+          v-else-if="isPmMaintenancePlanQueryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmMaintenancePlanHistory
+          v-else-if="isPmMaintenancePlanHistoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmWorkOrderHistory
+          v-else-if="isPmWorkOrderHistoryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmBreakdownStatistics
+          v-else-if="isPmBreakdownStatisticsPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmPerformance
+          v-else-if="isPmPerformancePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmBreakdownRepairQuery
+          v-else-if="isPmBreakdownRepairQueryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ElectricalTestDataQuery
+          v-else-if="isRts01ElectricalTestDataPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <WaferEDCNormalityChart
+          v-else-if="isRtb02WaferEDCNormalityChartPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <WaferEDCRunningChart
+          v-else-if="isRtb01WaferEDCRunningChartPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <WaferMAPTestChart
+          v-else-if="isRtb03WaferMAPTestChartPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OpOutputSummary
+          v-else-if="isRt205OpOutputSummaryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OpOutputYieldGauge
+          v-else-if="isRt206OpOutputYieldGaugePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OpOutputTrendChart
+          v-else-if="isRt207OpOutputTrendChartPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OpStateBoard
+          v-else-if="isRt201OpStateBoardPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OpStateProductTypeBoard
+          v-else-if="isRt202OpStateProductTypePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OpStateProductNoBoard
+          v-else-if="isRt203OpStateProductNoPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
@@ -3739,6 +3992,18 @@ async function signOut(): Promise<void> {
         />
         <PmWorkOrderBasis
           v-else-if="isPmWorkOrderBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmWoRelease
+          v-else-if="isPmWoReleasePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmWoFinish
+          v-else-if="isPmWoFinishPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

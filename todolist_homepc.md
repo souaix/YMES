@@ -9,7 +9,8 @@
 - [x] Production 部署獨立 API image `ymes-api:iv503-log-20261126-a1`；正式站 `/YMES/API` readiness 為 200，IV503 無登入回 401。只替換 `ymes-api`，舊容器保留為 `ymes-api-before-iv503-log-20261126-a1`，Web／master Web／其他專案與資料列未更動。
 - [x] 正式 app-browser Demo 登入後，對 2026-11-25 及完整 366 日 CreateDate 範圍查詢均回 HTTP 200、合法 JSON、`totalCount=0`。正式庫沒有入庫單，Detail 正向資料列無法驗證；未建立測試資料。舊登入票證初次回 401，重新按 Demo 後查詢成功。
 - [x] API／Web build 與 DEV 操作驗收見上項；瀏覽器 IV503 API 查詢沒有頁面／API 錯誤。
-- [ ] 將本次已驗證的家用端工作與公司端交付正常合併並同步 GitHub，再重讀最新版 `todolist_homepc.md`，接續下一項家用端可執行工作。
+- [x] 已用一般 merge 整合家用 IV503、公司端先前交付與最新 `origin/main` `0e659e8`；解決待辦衝突時保留兩端內容。整合後 Web build 與 RT203 DEV app-browser 操作驗收通過。
+- [ ] 完成此次最新 main 合併提交，正常快轉推送 GitHub，再重新 fetch／閱讀最新版 `todolist_homepc.md`，接續下一項家用端 API 工作。
 
 ## 家用端 IV304 支援表 schema（2026-11-26）
 
@@ -17,13 +18,189 @@
 - [x] 依 WP201／WP604／OE references 新增並原子套用 migration `0076_inv_wip_return_support_schema.sql`，只建空表 `tblinvwipinventory_raw`、`tblinvsemiinventory`、`tblinvsemiinventorycomponent`、`tbloemomaterialstate`、`tbloemomtlstate_component`、`tbloemocomponent`；只授 `ymes_app` SELECT。備份、SQL SHA、欄位／PK／權限回讀見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [x] 正式 app-browser Demo 登入並直達 `/YMES/INV/WipReturnConfirm`；route 正常載入明確的正式未開放 placeholder，無頁面錯誤。IV304 API／帳務沒有因此交付。
 - [ ] 待公司端提供 IV304 Basis／Detail／Component、RAW Inventory／Locator／Component、`TBLINVWIP_RAW_COMPONENT`、`TBLINVTEMP_COMPONENT` 可核實原生 DDL／metadata；`tblinvlocatorbasis` 缺 `ymes_app` SELECT，Transaction State／Log 目前只有 SELECT，寫入權限等 transaction contract 確定後再最小授權。完成後繼續 IV304 查詢及單筆原子 confirm API，處理 State／DataStamp、來源可用量、MO ReleaseState、Locator、元件、交易流水、冪等與失敗可追蹤。
-## 公司端最新交付：PM301 開立保養工單（2026-11-26）
+
+## 公司端最新交付：RPT RT203 作業站現況看板_產品（2026-11-26）
+
+- [x] 公司端核對 RT203 ProductNo Form／Designer、SetupType 3、RPT ProductNo Service／Core 與 WIP Lot Detail；完成 DEV ProductNo 系列堆疊、Queue／Run／Hold／Wait、共用數量軸、設定／刷新、放大、Lot Detail 與 Copy 模擬。[RT203 handoff](docs/modules/RPT/作業站現況看板_產品_RT203.md)
+- [x] 家用端以本機開發區 Demo 從三層報表選單開啟 RT203；app-browser 驗證設定空選清單／更新週期防呆、套用 OP 設定、立即更新、雙擊放大、Lot Detail 排序及 Copy 提示。均為 DEV 假資料，不呼叫正式 API。
+- [x] 合併後 Web `vue-tsc`／Vite build 通過；修正 RT207 圖表 `ChartSeries.key` literal type，只有既有大型 bundle 提醒。
+- [ ] 家用端沿 RT201 breakdown／lots handoff 核對 YMES live schema／索引及授權，實作受授權、參數化且有筆數上限的 ProductNo 彙總和分頁 Lot Detail API；確認 SetupType 3 設定範圍。公司端未連 PostgreSQL、未做正式 API/schema。
+- [x] RPT 清冊下一項為 RT204「產出看板時段主檔」。
+
+## 前項公司端交付：RPT RT202 作業站現況看板_產品類別（2026-11-26）
+
+- [x] 公司端核對 RT202 ProductType Form／Designer、共用 SetupType 2、RPT `LoadBillBoard_OPState_PRDType` Service／Core 與 WIP Lot detail；完成 DEV 多 ProductType 系列堆疊 Queue／Run／Hold／Wait、共用數量軸、設定／刷新、放大、ProductNo 鑽取及 Lot Detail。[RT202 handoff](docs/modules/RPT/作業站現況看板_產品類別_RT202.md)
+- [ ] 家用端核對 LotState／LotBasis／ProductBasis MESTEST refs 與 YMES live schema、關聯及索引；共用看板 config／content DDL 未取得，勿猜建表。
+- [ ] 家用端延用 RT201 的受授權 `/api/reports/op-state-breakdown?opNos=...&groupBy=productType`，限制 OP 範圍／筆數並參數化；確認 SetupType 2 的 user/device scope。公司端未連 PostgreSQL、未實作正式 API/schema。
+- [x] RT203 公司端規格與 DEV handoff 已交付；RPT 清冊下一項為 RT204「產出看板時段主檔」。
+
+## 前項公司端交付：RPT RT201 作業站現況看板（2026-11-26）
+
+- [x] 公司端核對 RT201 Form／Designer、共用看板 Setup／Child Form、RPT config／狀態／產品鑽取 Service／Core 與 WIP Lot detail；完成 DEV 狀態柱／圓餅、產品類別／編號鑽取、設定／刷新、放大及 Lot Detail。[RT201 handoff](docs/modules/RPT/作業站現況看板_RT201.md)
+- [ ] 家用端核對 WIP LotState／LotBasis、OP、Product、Process、Customer DDL refs 與 YMES live schema／索引；看板 config／content DDL 未取得，勿據此猜建表。
+- [ ] 家用端落實唯讀 `/api/reports/op-state`、`/api/reports/op-state-breakdown`、`/api/reports/op-state-lots`；加上授權範圍、OP／status 驗證、分頁／筆數上限，並確認設定的 user/device scope。公司端未連 PostgreSQL、未實作正式 API/schema。
+- [x] RT202、RT203 已完成，RPT 清冊下一項為 RT204。
+
+## 前項公司端交付：RPT RT207 作業站時段產出_趨勢圖（2026-11-26）
+
+- [x] 公司端核對 TrendChart Form／Designer、共用 SetupType 5、config／summary／LotDetail Service／Core；完成 DEV 數量群組柱＋Yield 折線、共用數量軸、自動刷新、OP／字級設定、雙擊放大及右鍵 Lot Detail 假資料。[RT207 handoff](docs/modules/RPT/作業站時段產出趨勢圖_RT207.md)
+- [ ] 家用端沿 RT205 摘要 API 複核動態時段、BelongDate、Yield 分子與 LotLog 時間範圍；確認同版 `tblWIPLotLog_Report` PostgreSQL schema／索引。repo 有 MESTEST LotLog DDL reference；`tblRPTTimeStepBasis`、`tblRPTBillBoardOPStateConfig`／Content DDL 與完整鍵索引未找到。
+- [ ] 家用端沿 RT205 唯讀 `/api/reports/op-output-summary` 回傳 OP 時段數值／Yield，補受授權的 `/api/reports/op-output-lot-detail`，限制日期與筆數；確認設定 user/device scope 後提供 SetupType 5 設定 API 與可信 CREATE-only SQL。公司端未連 PostgreSQL、未實作正式 API/schema。
+- [x] RT201–RT203 已完成，RPT 清冊下一項為 RT204。
+
+## 前項公司端交付：RPT RT206 作業站時段產出_良率儀表板（2026-11-26）
+
+- [x] 公司端核對 Gauge Form／Designer、共用 SetupType 4 設定、RPT Service／Core；完成 DEV 圓形 Gauge、OP／時段排序、已開始時段 × OP 卡片及假資料刷新。[RT206 handoff](docs/modules/RPT/作業站時段產出良率儀表板_RT206.md)
+- [ ] 家用端沿 RT205 查詢 API 確認 LotLog 的 Status／時間界線、time-step 真實班別／時區及 Yield 參數；提供 `tblRPTBillBoardOPStateConfig`／Content 與 `tblRPTTimeStepBasis` 同版可信 DDL／鍵索引，決定設定 user/device scope。
+- [ ] 家用端共用 RT205 的參數化唯讀 `/api/reports/op-output-summary`；將 `nowTimeStep` × OP 展開 Gauge。固定 60／80 色階；批次取得 StdYield，但目前舊版不按它改色。
+- [x] RT206 後已接續完成 RT207、RT201–RT203；下一項為 RT204。
+
+## 前項公司端交付：RPT RT205 作業站時段產出看板（2026-11-26）
+
+- [x] 公司端核對 RT205 主看板／Setup／History Query、RPT Service／`clsReport` Core；完成 DEV 假時段看板、自動更新、OP／尺寸設定與指定日期歷史查詢。[RT205 handoff](docs/modules/RPT/作業站時段產出看板_RT205.md)
+- [ ] 家用端確認 `tblRPTTimeStepBasis`、`tblWIPLotLog_Report`、`tblOPBasis`、StdYield 與 `YieldContainDefect` 同版 MESTEST owner／型別／鍵索引、時區／時段配置及時間邊界；查核 legacy 重疊與零分母行為，決定左閉右開切片規則。
+- [ ] 家用端按 RT205 handoff 設計參數化唯讀 `/api/reports/op-output-summary`；先查可信 schema 與 LotLog 大小／索引，確認 OP/date 限制、快取／刷新方式及歷史保留後，再建 CREATE-only SQL。設定 API 另決定 user／device scope，不信任未授權 PCNo。
+- [ ] 家用端決定是否保存 per-user／device 看板設定；公司端 DEV 設定目前只存頁面記憶體。
+- [x] RT205 後依清冊接續完成 RT206、RT207、RT201–RT203；下一項為 RT204。
+
+## 前項公司端交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）
+
+- [x] 公司端核對 RTB03 inline Query／View、`COM_WaferMAPTestChartLib`、RPT／SYS Service、Industry_Base RPT／SYS Core，完成 Wafer Map DEV 查詢、多筆結果選取、多 Recipe 圓形 Map、四種統計值及 SVG 匯出。[RTB03 handoff](docs/modules/RPT/WaferMap電性測試圖表_RTB03.md)
+- [ ] 核實 `TBLWIPRAWRECORD_<type>` 的 EDC owner／schema、座標／序號／動態 Recipe 數值欄型別與索引，確認 RawRecord 到 MES `TBLWIPLOTLOG_REPORT`／`TBLOPBASIS` 的跨庫查詢連線、join 基數及 Legacy Core 拼接問題。DDL 未驗證前不建立猜測性 CREATE。
+- [ ] 若 YMES 可讀 EDC，實作以 Recipe basis metadata allowlist 產生動態欄、值參數化、限量分頁的唯讀 Record API 與批次 Map points API；核實 record 複合鍵、日期／點數限制與跨 EDC／MES 查詢方案。
+- [x] RTB03 後依清冊接續完成 RT205；下一項為 RT206。
+
+## 前項公司端交付：RPT RTB01 Wafer 電性數據運行圖
+
+- [x] 公司端完成 RTB01 DEV EDC 查詢、CheckFlag 多選及序列圖；RawData／統計快照 DDL、Oracle metadata 與 EDC datasource handoff 見 [RTB01 規格](docs/modules/RPT/Wafer電性數據運行圖_RTB01.md)。RTB03 已接續完成。
+
+## 前項公司端交付：RPT RTB02 Wafer 電性數據常態分析圖
+
+- [x] 公司端完成 RTB02 Vue DEV 直方圖、統計摘要、量測明細與排除重算。[RTB02 handoff](docs/modules/RPT/Wafer電性數據常態分析圖_RTB02.md)
+- [ ] RTB02 同樣需要核實 EDC RawData 及 `tblRPTEDCQCCalData`、`tblRPTNormalityChartData` schema；另確認圖表的統計資料是否需保存。
+
+## 前項公司端交付：RPT RTS01 電性測試資料查詢
+
+- [x] 公司端已核對 Industry_Base Form／Service／Core，完成 Vue DEV 與規格。[RTS01 handoff](docs/modules/RPT/電性測試資料查詢_RTS01.md)
+- [ ] RTS01 動態 `TBLWIPTESTSUM_<type>`／History 欄位仍待核實 schema 與 metadata，沿用核准 Recipe metadata allowlist 原則設計 API。
+
+## 前項公司端交付：PM507 故障維修登錄查詢（2026-11-26）
+
+- [x] 公司端核對 `frmBreakDown_RepairQuery`、`wsPM.LoadBreakDown_RepairQuery`、`clsPMMaintanceLog.LoadBreakDown_RepairQuery`；完成設備多選、三組日期時間、狀態篩選和 13 欄 DEV 假資料結果。[PM507 規格與 API handoff](docs/modules/PM/故障維修登錄查詢_PM507.md)
+- [x] Core UNION `tblPMEqpBreakDownState` 與 RepairLog／BreakDownLog 查詢分支，未選狀態代表全部；舊 Form 的 RepairStart To 誤傳 RepairEnd To，DEV 依欄位實作。
+- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、三表欄位／型別／PK／FK／索引、可空日期及 RepairLog 一對多基數，提供可信 CREATE-only SQL。
+- [ ] 家用端實作參數化唯讀分頁 `GET /api/pm/breakdown-repair-query`，保留空 `states[]` 查全部狀態與同一故障多筆維修列。
+- [x] PM507 後依功能目錄接續 RPT RTS01、RTB02、RTB01、RTB03，均已完成；繼續盤點清冊下一個未復刻 FunctionKey。
+
+## 前項公司端交付：PM506 設備保養效率查詢（2026-11-26）
+
+- [x] 公司端核對 `frmPMPerformance`、`wsPM.LoadPMPerformance`／`LoadSingleTableDistinceData`、`clsPMPlanLog.LoadPMPerformance`；完成四組條件雙清單、兩組可選日期、工單類型及 12 欄 DEV 假資料效率結果。[PM506 規格與 API handoff](docs/modules/PM/設備保養效率查詢_PM506.md)
+- [x] Core 合併已完工 PM Log current／history detail 與 WOType=1 Required history；Act Done 為 Release 至 Finished 小時數。舊 Core 的 WO Finished end-date 判斷誤讀 Estimated PM end，規格要求確認正式日期邊界。
+- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、三類來源表欄位／鍵／索引、WOTYPE 對應、ChamberManage 規則及日期邊界；提供可信 CREATE-only SQL。
+- [ ] 家用端實作參數化唯讀分頁 `GET /api/pm/performance` 與 `GET /api/pm/performance/filters`；不要採用舊 Core 對清單值的 SQL 字串拼接。
+- [x] 當時依清冊接續的 PM507 已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+
+## 前項公司端交付：PM505 故障原因統計（2026-11-26）
+
+- [x] 公司端核對 `frmBreakDownQuery`／Designer、`wsPM.LoadSumOfEQPBreakDown`、Equipment lookup 與 `clsPMMaintanceLog`，完成原因次數 Grid、圖表及 DEV 假資料頁。[PM505 規格與 API handoff](docs/modules/PM/故障原因統計_PM505.md)
+- [x] Core 四表內連後依 BreakDownNo／Cause 計數；舊 Repair Time filter 實際比較 `RepairEndTime`。公司桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、RepairLog 關聯／重複計數規則及四表 PK／FK／索引，實作參數化唯讀統計 API 與可信 CREATE-only DDL。
+- [x] PM507 已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+
+## 前項公司端交付：PM504 保養工單歷史資料查詢（2026-11-26）
+
+- [x] 公司端核對 `frmPMWoHistory`／Designer、`wsPM.LoadPMWoBasis_His`／`LoadPMWoDetail_His`、`wsEQP.LoadEquipmentBasis`、`clsPMBasis`；完成設備／日期／類型篩選、主工單及點選後明細的 Vue DEV 假資料頁。[PM504 規格與 API handoff](docs/modules/PM/保養工單歷史資料查詢_PM504.md)
+- [x] Core 由 `tblPMWOBasis_His`／`tblPMWODetail_His` 查詢；設備與兩組日期透過明細 WONo 子查詢限制主檔。公司桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、主明細鍵／FK／索引、WOTYPE enum 及 Chamber 規則，完成參數化分頁主查詢、延遲明細 API 與可信 CREATE-only DDL。
+- [x] PM505–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+
+## 前項公司端交付：PM503 保養計劃歷史資料查詢（2026-11-26）
+
+- [x] 公司端核對 `frmEQPMaintenancePlanHistory`／Designer、`wsPM.LoadMaintenancePlanLog` 與 distinct lookup、`clsPMPlanLog`；完成四組清單、Estimated PM Date、Execute State、唯讀歷史 Grid 的 Vue DEV 假資料頁。[PM503 規格與 API handoff](docs/modules/PM/保養計劃歷史資料查詢_PM503.md)
+- [x] 來源查詢 `tblPMEQPMaintenancePlanLog` 並內連 Frequency／SOP 主檔，依 `CreateDate` 升冪。舊 Core 字串拼接 SQL；桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、歷史表鍵／FK／索引／保留規則及狀態值，完成參數化分頁 `GET /api/pm/maintenance-plan-logs` 與可信 CREATE-only DDL；同時核 PM501／PM502 共用查詢端點。
+- [x] PM504–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+
+## 前項公司端交付：PM502 保養日曆設定（2026-11-26）
+
+- [x] 公司端核對 `frmPMPlanCalendar`／`frmCustomAppointmentDialog`、`wsPM.LoadMaintenancePlan`／`LoadEQPPMPlanByEQPType`、`clsPMBasis`，完成 Vue DEV 類型／頻率／設備篩選、日／週／月行事曆、PM501 資料交接、唯讀事件及列印預覽。[PM502 規格與 handoff](docs/modules/PM/保養日曆設定_PM502.md)
+- [x] 舊事件由 `PMEstDateTime` 建立 all-day appointment，Calendar 本身不寫計畫。桌機 Oracle profile 與可信業務表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、PK／FK／索引及欄位型別，提供 PM501／PM502 共用限量參數化唯讀 API 與可信 CREATE-only DDL。
+- [x] PM503–PM507 均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+
+## 前項公司端交付：PM501 設備保養計畫查詢（2026-11-26）
+
+- [x] 公司端核對 `frmPMMaintenancePlanQuery`／`wsPM.LoadMaintenancePlan`／`clsPMBasis.LoadMaintenancePlan`，完成 DEV 三組篩選、日期條件、排序及 PM502 日曆資料交接。[PM501 規格](docs/modules/PM/設備保養計畫查詢_PM501.md)
+- [x] 計畫／頻率／SOP 表 DDL／metadata 未核實，桌機受保護 Oracle profile 缺失，未猜 CREATE。
+
+## 前項公司端交付：PM405 設備修復登錄（2026-11-26）
+
+- [x] 公司端核對 THEIL Form／Def、客製 `UpdEQPRepairRegister`、標準待修查詢及故障／修復歷史寫入，完成 `function:PM:EQP REPAIR REGISTER` DEV 清單與登錄表單。
+- [x] 新增 [PM405 規格與 API/schema handoff](docs/modules/PM/設備修復登錄_PM405.md)：記錄待修 State=1、PM402 active repair lookup、四張歷史表可見欄位及 EMS／通知流程。
+- [x] 公司桌機受保護 Oracle profile 與四張歷史表可信 DDL／metadata 不存在，未猜型別／鍵或 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、PK／FK／索引及 EMS／Chamber 邊界；以交易寫四張歷史表並移除待修單，採冪等更新與可重試通知，再提供 CREATE-only DDL。
+- [x] PM501–PM507 保養查詢均已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+
+## 前項公司端交付：PM404 設備故障登錄（2026-11-26）
+
+- [x] 公司端核對 THEIL 客製 `frmEQPBreakDownRegister_THEIL_BU1`／Def、`wsTHEIL.wsPM` Add／Edit／Confirm、標準查詢／刪除／明細 Service 與 Core，完成 Vue DEV State=0 查詢、原因明細、Add／Edit／Copy／Delete／Confirm 假互動。
+- [x] 新增 [PM404 規格與 API／schema handoff](docs/modules/PM/設備故障登錄_PM404.md)：記錄父表 `tblPMEQPBreakDownState`、子表 `tblPMEQPBreakDownStateDetail` 可見欄位、EquipmentNo 查重、DataStamp 未落實、父子非原子寫入、EMS／Chamber 更新及工程群組郵件流程。
+- [x] 公司桌機受保護 Oracle profile 與可信 DDL／metadata 不存在，未猜欄位型別、PK／FK 或 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live PostgreSQL／同版 MESTEST metadata、序號產生器、欄位型別、索引／FK、`-9999`／DataStamp 語義及設備狀態／Chamber 關聯，再提供 CREATE-only DDL 與交易式、可重試 API。
+- [x] 公司端接續 PM405「設備修復登錄」現已完成交接；下一項依清冊是 PM501「設備保養計畫查詢」。
+
+## 前項公司端交付：PM403 設備與故障原因對應（2026-11-26）
+
+- [x] 公司端核對 `frmEQPTypeBreakDownMap`／Def、`wsPM.Load/Add/Edit/DelEQPTypeBreakDownMap`、`clsPMBasis`／`clsBasis_UPD`，完成 `function:PM:EQPTYPE BREAKDOWN MAP` DEV 主從頁及新增／修改／刪除／複製。
+- [x] 新增 [PM403 規格與家用端 API/schema handoff](docs/modules/PM/設備與故障原因對應_PM403.md)：記錄 `tblPMEQPTypeBreakDownMap` 可見欄位、複合鍵候選、DataStamp 更新、舊 Delete 未版本保護及 PM404 消費點。
+- [x] 故障原因 picker 依舊 Service 預設 `IssueState=2`；PM404 依設備類型載入映射供使用者勾選。
+- [x] 公司桌機受保護 Oracle attachment 不存在，repo 無可信映射表 DDL／metadata；未猜型別、約束或 CREATE。公司端未連 YMES PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核對 PostgreSQL live schema／同版 Oracle metadata、主鍵／FK／索引與 PM404 使用中的映射引用；再實作參數化、expected DataStamp 維護 API 及經核實 CREATE-only DDL。
+- [x] 當時公司端接續 PM404「設備故障登錄」；PM404、PM405 均已完成並交接，下一項依清冊是 PM501「設備保養計畫查詢」。
+
+## 前項公司端交付：PM402 維修項目基本資料（2026-11-26）
+
+- [x] 公司端核對 `frmRepairBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveRepairBasis`、`clsPMBasis`／`clsBasis_UPD`，完成 `function:PM:REPAIR BASIS` DEV 四狀態 CRUD／Copy／核准／停用。
+- [x] 新增 [PM402 規格與家用端 API/schema handoff](docs/modules/PM/維修項目基本資料_PM402.md)，記錄 `tblPMRepairBasis`、RepairName 必填、DataStamp、IssueNo `REPAIR BASIS`。
+- [x] 核對客製 PM405 設備修復登錄以 IssueState=2 載入 RepairNo／RepairName 候選；硬刪未傳 DataStamp、簽核完成／退回不更新版本／稽核。
+- [x] 桌機受保護 Oracle profile 及 repo 可信業務表 DDL／metadata 均不存在，未猜型別／鍵或 CREATE；未連 YMES PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 PostgreSQL live schema／Oracle metadata 及 PM405 登錄引用規則，再實作參數化、DataStamp 併發安全與簽核 API；先確認再產生 CREATE-only DDL。
+- [x] 當時下一項 PM403「設備與故障原因對應」已完成；`PM_ACCPLAN` 同 FunctionKey 的功能已按 FunctionName／FormName 區別。
+
+## 前項公司端交付：PM401 故障原因基本資料（2026-11-26）
+
+- [x] 公司端核對 `frmBreakDownBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveBreakDownBasis`、`clsPMBasis`／`clsBasis_UPD`，完成 `function:PM:BREAKDOWN BASIS` DEV 四狀態 CRUD／Copy／核准／停用。
+- [x] 新增 [PM401 規格與家用端 API/schema handoff](docs/modules/PM/故障原因基本資料_PM401.md)，已記錄 `tblPMBreakDownBasis` 欄位名、DataStamp、IssueNo `BREAKDOWN BASIS` 與 PM403／PM404 消費點。
+- [x] 桌機受保護 Oracle profile 及 repo 可信直接表 DDL／metadata 均不存在，未猜欄位型別／鍵或 CREATE SQL；公司端未連 YMES PostgreSQL，未實作正式 API/schema。
+- [ ] 家用端核 live PostgreSQL schema 與 MESTEST DDL／metadata，確認欄位型別、主鍵／索引／FK、PM403／PM404 引用與刪除限制；再實作參數化、DataStamp 併發安全及原子核准／停用 API。
+- [x] 當時下一項 PM402、PM403 均已完成；PM404、PM405 亦已完成，公司端現接續 PM501「設備保養計畫查詢」。
+
+## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
+
+## 公司端最新交付：PM303 保養工單完成與回報（2026-11-26）
+
+- [x] 公司端核對 `frmPMWoFinish`／Def、`wsPM.RepayForWoDetail`、`clsPMBasis.RepayForWoDetail` 及完工後搬移歷史；完成 `/YMES/PM/WorkOrderFinish` DEV 逐項／整張回報與 SOP Detail。
+- [x] 新增 [PM303 規格與家用端 API/schema handoff](docs/modules/PM/保養工單完成與回報_PM303.md)，記錄 WOStatus、PM PlanLog ExecuteState=4、整單完成歷史搬移、EQP／Chamber 狀態及舊日期檢查缺陷。
+- [x] 桌機受保護 Oracle profile 不存在，PM303 直接表 DDL／metadata 未取得，未猜 CREATE；DEV 使用 localStorage，未連 YMES PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live schema／Oracle metadata，交易式更新明細與 PlanLog；整單完成後原子歸檔 History，並處理 EQP／Chamber 更新失敗。
+- [x] 當時下一項 PM401 已完成；公司端接續 PM402「維修項目基本資料」。
+
+## 前項公司端交付：PM302 保養工單下線（2026-11-26）
+
+- [x] 核對 `frmPMWORelease`、`wsPM.ReleaseWoDetail`、`clsPMBasis.ReleaseWoDetail`；公司端完成 `/YMES/PM/WorkOrderRelease` DEV 查詢、主從 Grid、狀態篩選、SOP 檢視、Release／Release All。
+- [x] 新增 [PM302 規格與家用端 API/schema handoff](docs/modules/PM/保養工單下線_PM302.md)。已記錄 PM Log／設備 PM 累計副作用、EQP 狀態更新分段及資料表待核項目。
+- [x] 桌機受保護 Oracle profile 不存在，直接表 DDL／metadata 未取得，未猜 CREATE。DEV 使用 localStorage 假資料；公司端未連 YMES PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live schema／Oracle metadata，確認 `tblPMWODetail`、`tblPMEQPMaintenancePlanLog`、`tblPMEquipmentState` 欄位與鍵；實作交易式冪等下線 API、PlanLog 與設備累計更新，定義 EQP／Chamber 狀態一致性。
+- [ ] 當時下一項 PM303「保養工單完成與回報」現已完成；公司端接續 PM401「故障原因基本資料」。
+
+## 前項公司端交付：PM301 開立保養工單（2026-11-26）
+
 
 - [x] 核對 `frmPMWoBasis`／Create／Detail／SOP Detail、`wsPM`、`clsPMBasis`／`clsBasis_UPD` 與 `clsIssue`；完成 `/YMES/PM/WorkOrderBasis` DEV 主從查詢、PM 計畫選取開單、計畫移入 PlanLog、狀態簽核／刪除、未凍結明細編修與 SOP／工具／備品檢視。
 - [x] 新增 [PM301 規格與家用端 API/schema handoff](docs/modules/PM/開立保養工單_PM301.md)。已記錄可見 PM Work Order、隱藏 Required Work Order 分頁、IssueState／WOStatus、EWyyMM#### 編號及計畫消耗交易要求。
 - [x] 桌機沒有受保護 Oracle profile，repo 無可核實 PM Work Order／Plan Log DDL；未查 Oracle、未猜 CREATE。DEV 使用 localStorage 假資料，未連 YMES PostgreSQL、未實作正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。下一項公司端依 FunctionKey 為 PM302「保養工單下線」。
-- [ ] GitHub 同步：桌機已 fast-forward 至 `origin/main` `02a4b1a`；本地公司端交付仍待靜態檢閱後正常 commit/push，不 force push。
+- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。當時下一項 PM302，現已完成，後續公司端接 PM303。
+- [x] PM301 與當時累積的公司端待同步工作已正常 commit/push，提交 `21cca14`。
 
 ## 前項公司端交接：PM204 設備定次定時保養設定（2026-11-26）
 
@@ -32,7 +209,7 @@
 - [x] 桌機 Oracle profile 不存在，repo 無可核實 `TBLPMFIXEDTIMESPMBASIS` DDL／索引；未查 Oracle、未猜 CREATE／輸出 credentials。
 - [ ] 家用端核 live schema／migration 與 Oracle metadata；交易式實作設備類型預設、設備覆寫、QtyType、SET 重新套用、DataStamp 與參照驗證。關閉 AutoCreateWo 時明確清除舊 PMSOPNo。
 - [ ] 桌機已 fast-forward 至 GitHub `origin/main` `02a4b1a`；公司端本機交付仍待靜態檢閱、正常 commit/push，需保留家用端修改且勿 force push。
-- [ ] 下一項公司端 handoff：PM301「開立保養工單」（PM 保養工單；OE 分類的工單管理 OE201–OE209 已有規格）。
+- [x] PM301「開立保養工單」已完成；其後 PM302／PM303 已完成，當前下一項為 PM401（PM 設備維修；OE 分類的工單管理 OE201–OE209 已有規格）。
 
 ## 前項公司端交接：PM203 設備定量保養設定（2026-11-26）
 
