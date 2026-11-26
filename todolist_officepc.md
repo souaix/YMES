@@ -113,6 +113,7 @@
 
 - [x] 核對主看板、Setup、History Query Form／Designer，`wsRPT.LoadBillBoardOPOutputConfig`／`UpdBillBoardOPOutputConfig`／`LoadBillBoardOPOutputSummary` 與 `clsReport` Core；完成 `function:RPT:BILLBOARD OPOUTPUT SUMMARY` Vue DEV 自動更新、設定、歷史查詢及 StdYield 標紅。[RT205 規格與 API/schema handoff](docs/modules/RPT/作業站時段產出看板_RT205.md)
 - [x] 說明時段表 `tblRPTTimeStepBasis`、LotLog `tblWIPLotLog_Report`、Good／Fail／Defect 與 `YieldContainDefect`；標記舊 Core 時段閉區間重疊與設定 LEFT JOIN 疑點。repo 有 2026-11-19 擷取的 LotLog MESTEST DDL；時段／設定 DDL 與桌機 Oracle profile metadata 未驗證，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端 2026-11-27 已只讀檢查 live YMES：`tblWIPLotLog_Report`、`tblOPBasis`、`tblSysParameter` 存在且 `ymes_app` 有 SELECT；`tblOPAttrib` 依公司已交付的來源 DDL 建立為空表，只有 SELECT 權限。請公司端補交 `TBLWIPLotLog_Report` 的完整原生索引定義（欄位順序／方向），讓家用端判斷是否需為 OP／EndTime 查詢加索引；RT204 時段表 DDL 仍見本檔頂端交接項。
 - [x] RT205 後依清冊接續完成 RT206、RT207、RT201–RT203；RT603、RT604 已完成，下一項 RT501。
 
 ## 前項公司端交付：RPT RTB03 Wafer Map 電性測試圖表（2026-11-26）

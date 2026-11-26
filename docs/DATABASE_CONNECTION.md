@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：RPT RT205 OP Attribute lookup（2026-11-27）
+
+- PPK／SSH 只讀檢查 `YMES` catalog：`tblopattrib` 原先不存在；`tblwiplotlog_report`、`tblopbasis`、`tblsysparameter` 存在且 `ymes_app` 有 SELECT；`tblrpttimestepbasis` 不存在。未讀取生產 Lot／業務資料列。
+- 來源 `database/reference/mestest_operation_and_system_source_ddl.sql` 與 `mestest_operation_and_system_create.sql` 均定義 `TBLOPATTRIB` 的 10 欄、`(OPNo,AttribNo)` PK 及 `AttribValue`／`AttribScript` defaults；live 缺表後套用 migration `0086_rpt_rt205_op_attrib_lookup.sql`，只建立空表並授予 `ymes_app` SELECT。Migration SHA-256 `8D8F046EB4CBC6A349924FC7DD581C9E3B0912E3229B989CAD4BC62A2A324045`；Rollback 會檢查表必須為空才允許刪除。
+- 套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-rt205-0086-20261127.dump`，784,059 bytes、SHA-256 `c5efe51f824a623c7b17eda3bf58677e3eb4fb485fd9be276794a49935ce469e`、root:root mode 600；`pg_restore --list` 2,158 entries。資料庫大小 16 MB，備份檔留在遠端主機。
+- 套用後以 catalog 核對 10 欄型別／NULL／default、單一 PK 及 `ymes_app` SELECT=true；以 `SET ROLE ymes_app` 執行 StdYield filter `EXPLAIN`，由 `(opno,attribno)` PK index scan，未執行 DML。
+- `tblrpttimestepbasis` 與看板設定表仍無可信 DDL，RT205 正式摘要 API 未實作。LotLog live 目前只有 RT410 `(loggroupserial,endtime)` index；OP／EndTime 範圍所需來源 index definition 仍待公司端提供。未讀取業務資料。
+
 ## 最新：SMD SD104 區域基本資料 API（2026-11-27）
 
 - 透過 PPK／SSH 唯讀檢查正式 `YMES` catalog：`tblsmdareabasis`、`tblsmdareainventory`、`tblsmdareamap`、`tblsmdarearelation`、`tblsmdsmtareaeqpmap`、`tblusrdepartmentbasis` 均存在；AreaBasis、AreaInventory、AreaMap、AreaRelation、SMT map 欄位／鍵及來源預設核對結果見 `docs/modules/SMD/區域基本資料.md`。沒有讀取或改寫業務列。

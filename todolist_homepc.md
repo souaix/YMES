@@ -12,6 +12,15 @@
 
 詳細規格、API 行為與正式端點驗證見 [SD104 模組紀錄](docs/modules/SMD/區域基本資料.md)。
 
+## 家用端 RT205 作業站時段產出看板前置（2026-11-27）
+
+- [x] PPK／SSH 只讀核對正式 YMES catalog：`tblWIPLotLog_Report`、`tblOPBasis`、`tblSysParameter` 存在且 `ymes_app` 有 SELECT；`tblRPTTimeStepBasis`、`tblOPAttrib` 不存在。未讀生產批次資料列。
+- [x] 依可信 `mestest_operation_and_system_source_ddl.sql`／`mestest_operation_and_system_create.sql` 建立 0086，補上空的 `tblOPAttrib` 及 `ymes_app` SELECT；沒有匯入任何屬性資料。Rollback 會先確認表為空才允許 DROP。
+- [x] 核對 `tblWIPLotLog_Report` 欄位可供 Good/Fail/Defect 與 EndTime 查詢；現有索引只有 RT410 `(loggroupserial,endtime)`，沒有確認到 OP／EndTime 查詢合適索引。
+- [ ] 等公司端交付 RT204 `tblRPTTimeStepBasis` Oracle DDL／完整欄位與鍵索引／FromTime、ToTime 型別及日期成分，再建正確空表並設最小讀權限；取得看板設定 DDL/scope 之前不做持久化設定表。正式摘要 API 尚未實作，不能以假班別或客戶傳入時間範圍代替來源。
+
+詳見 [RT205 規格](docs/modules/RPT/作業站時段產出看板_RT205.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+
 ## 家用端 SD103 儲位基本資料 API（2026-11-27）
 
 - [x] PPK／SSH 唯讀核對正式 `YMES.tblinvlocatorbasis` 與可信來源 DDL；欄位、型別、長度、NULL/default、複合 PK 一致，0017 已補來源預設值，不重建表或改正式資料。
@@ -197,8 +206,8 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 ## 前項公司端交付：RPT RT205 作業站時段產出看板（2026-11-26）
 
 - [x] 公司端核對 RT205 主看板／Setup／History Query、RPT Service／`clsReport` Core；完成 DEV 假時段看板、自動更新、OP／尺寸設定與指定日期歷史查詢。[RT205 handoff](docs/modules/RPT/作業站時段產出看板_RT205.md)
-- [ ] 家用端確認 `tblRPTTimeStepBasis`、`tblWIPLotLog_Report`、`tblOPBasis`、StdYield 與 `YieldContainDefect` 同版 MESTEST owner／型別／鍵索引、時區／時段配置及時間邊界；查核 legacy 重疊與零分母行為，決定左閉右開切片規則。
-- [ ] 家用端按 RT205 handoff 設計參數化唯讀 `/api/reports/op-output-summary`；先查可信 schema 與 LotLog 大小／索引，確認 OP/date 限制、快取／刷新方式及歷史保留後，再建 CREATE-only SQL。設定 API 另決定 user／device scope，不信任未授權 PCNo。
+- [x] 2026-11-27 家用端只讀核對正式 catalog：LotLog、OP Basis、SysParameter 存在且 `ymes_app` 可讀；Step Basis 缺表、OPAttrib 已依可信 DDL 用 0086 建立空表。未讀業務列；LotLog 目前只見 RT410 `(loggroupserial,endtime)` 索引，相關來源及核對詳 [RT205 規格](docs/modules/RPT/作業站時段產出看板_RT205.md)。
+- [ ] 待公司端交付 Step Basis 原生 DDL／鍵索引、LotLog 完整索引定義後，核 MESTEST 同版資料型別／時區／時段與時間邊界；查核 Core 重疊及零分母行為後，再定稿左閉右開切片並實作登入保護唯讀 `/api/reports/op-output-summary`。設定 API 另需可信設定 DDL 與 user／device scope，不信任未授權 PCNo。
 - [ ] 家用端決定是否保存 per-user／device 看板設定；公司端 DEV 設定目前只存頁面記憶體。
 - [x] RT205 後依清冊接續完成 RT206、RT207、RT201–RT203；RT603、RT604 已完成，下一項 RT501。
 
