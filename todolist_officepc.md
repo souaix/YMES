@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## 家用端追加交接：PM301–PM303 工單流程缺少來源結構（2026-11-27）
+
+- [ ] 請在原生 MES Oracle 以唯讀方式提供 `TBLPMWOBASIS`、`TBLPMEQPTYPESOPBASIS`、`TBLPMEQUIPMENTSTATE` 的 `DBMS_METADATA.GET_DDL` 與完整結構 metadata：owner／synonym、欄位 type/precision/scale、nullable/default、PK／FK／unique／indexes、trigger。另說明工單主從、工單明細至設備類型 SOP 關聯、設備狀態變更的實際鍵與限制；不要依名稱推測。
+- [ ] 只交結構，不匯出 MES 業務資料、不在 Oracle 執行 DDL／DML。家用端已唯讀核對 YMES PostgreSQL 缺少這三表，repo 亦無可信 source DDL／CREATE-only SQL。
+- [x] 其餘缺表 `TBLPMEQPMAINTENANCEPLAN`、`TBLPMEQPMAINTENANCEPLANLOG`、`TBLPMWOBASIS_HIS`、`TBLPMWODETAIL`、`TBLPMWODETAIL_HIS` 已列在 PM502／PM506 DDL 交付項目，共用表不需重複匯出；請一併提供其與 `TBLPMWOBASIS`／`TBLPMWODETAIL` 的正式關聯鍵及歷史搬移要求。
+
+家用端查核與各流程依賴詳見 [PM301](docs/modules/PM/開立保養工單_PM301.md)、[PM302](docs/modules/PM/保養工單下線_PM302.md)、[PM303](docs/modules/PM/保養工單完成與回報_PM303.md)。
+
 ## 公司端接手：WIP WP803 正式 API UI 對接（2026-11-27）
 
 - [x] 家用端已部署登入保護 `/YMES/API/api/wip/8d-close` 清單、`/{qrsNo}` 明細、`/{qrsNo}/team-members?departmentNo=...` D1 部門/人員查找及 `PUT /{qrsNo}` 結案欄位更新；修改會驗 expected snapshot、IssueState、主單未結案及人員屬於該 QRS 的 D1 團隊。詳 [WP803 模組規格](docs/modules/WIP/8D矯正單結案作業.md)。
@@ -244,7 +252,8 @@
 - [x] 新增 [PM303 規格與家用端 API/schema handoff](docs/modules/PM/保養工單完成與回報_PM303.md)，更新模組索引、選單進度、handoff 與兩端 TODO。
 - [x] DEV 共用 PM301／PM302 工單與 PlanLog 假資料；模擬 WOStatus=3、ExecuteState 3→4、整單完工後搬移本機歷史與 EQP 狀態。
 - [x] 記錄 WinForms 對早於 ReleaseDate 的完成時間只提示仍送出；家用端 API handoff 要求拒絕。桌機無受保護 Oracle profile、直接表 DDL／metadata 未取得，未猜 CREATE。
-- [ ] 家用端核 live schema／Oracle metadata；交易式實作明細／PlanLog 回報、全單歷史歸檔與可重試 EQP 狀態更新。
+- [x] 家用端已於 2026-11-27 以 PPK／SSH 唯讀確認 PM303 所需工單、History、PlanLog、設備狀態表皆缺少；詳 [家用端查核與待辦](todolist_homepc.md)。
+- [ ] 公司端 DDL 交付後，家用端建立空表並交易式實作明細／PlanLog 回報、全單歷史歸檔與可重試 EQP 狀態更新。
 - [x] 當時下一項 PM401 已完成；公司端接續 PM402「維修項目基本資料」。
 
 ## 前項公司端交付：PM302 保養工單下線（2026-11-26）
@@ -253,7 +262,8 @@
 - [x] 新增 [PM302 規格與家用端 API/schema handoff](docs/modules/PM/保養工單下線_PM302.md)，更新規格索引、選單清冊、handoff 與兩端待辦。
 - [x] DEV 共用 PM301 工單／PlanLog 假資料，下線會更新明細狀態、PM PlanLog ExecuteState、設備 PM 累計及假設備狀態。
 - [x] 桌機無受保護 Oracle profile，repo 無可核實直接表 DDL／metadata；未連 MESTEST、未猜 CREATE。未連 YMES PostgreSQL、未實作正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live schema／Oracle metadata；以原子、可重試 API 實作下線，重驗 IssueState／WOStatus／PlanLog，更新設備 PM 累計並處理 EQP 狀態與 Chamber Manage。
+- [x] 家用端已於 2026-11-27 以 PPK／SSH 唯讀確認 PM302 所需工單、PlanLog、設備狀態及設備類型 SOP 對應表皆缺少；詳 [家用端查核與待辦](todolist_homepc.md)。
+- [ ] 公司端 DDL 交付後，家用端建立空表並實作交易式冪等下線 API、PlanLog 與設備累計更新，定義 EQP／Chamber 狀態一致性。
 - [ ] 當時下一項 PM303「保養工單完成與回報」現已完成；公司端接續 PM401「故障原因基本資料」。
 
 ## 前項公司端交付：PM301 開立保養工單（2026-11-26）
@@ -261,7 +271,8 @@
 - [x] 核對 `frmPMWoBasis`／Create／Detail／SOP Detail、`wsPM`、`clsPMBasis`／`clsBasis_UPD` 與 `clsIssue`；完成 `/YMES/PM/WorkOrderBasis` DEV 主從查詢、PM 計畫選取開單、計畫移入 PlanLog、狀態簽核／刪除、未凍結明細編修與 SOP／工具／備品檢視。
 - [x] 新增 [PM301 規格與家用端 API/schema handoff](docs/modules/PM/開立保養工單_PM301.md)。已記錄可見 PM Work Order、隱藏 Required Work Order 分頁、IssueState／WOStatus、EWyyMM#### 編號及計畫消耗交易要求。
 - [x] 桌機沒有受保護 Oracle profile，repo 無可核實 PM Work Order／Plan Log DDL；未查 Oracle、未猜 CREATE。DEV 使用 localStorage 假資料，未連 YMES PostgreSQL、未實作正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。當時下一項 PM302，現已完成，後續公司端接 PM303。
+- [x] 家用端已於 2026-11-27 以 PPK／SSH 唯讀確認 PM301 所需工單、History、計畫、PlanLog 與設備類型 SOP 對應表皆缺少；詳 [家用端查核與待辦](todolist_homepc.md)。
+- [ ] 公司端 DDL 交付後，家用端建立空表並交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。
 - [x] PM301 與當時累積的公司端待同步工作已正常 commit/push，提交 `21cca14`。
 
 ## 公司端補交：IV302／IV303／IV304 原生 Oracle DDL 與 metadata

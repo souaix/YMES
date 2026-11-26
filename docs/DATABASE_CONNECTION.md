@@ -1,5 +1,11 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## PM301–PM303 工單流程 live schema 查核（2026-11-27）
+
+- 家用端以 PPK／SSH 登入正式主機，在 `ymes` database 唯讀查詢 PostgreSQL catalog。`tblpmeqpmaintenanceplan`、`tblpmeqpmaintenanceplanlog`、`tblpmeqptypesopbasis`、`tblpmequipmentstate`、`tblpmwobasis`、`tblpmwobasis_his`、`tblpmwodetail`、`tblpmwodetail_his` 均不存在；未查詢或修改業務資料列。
+- repo 的 `database/reference` 沒有上述八表可核實的 Oracle source DDL／PostgreSQL CREATE-only SQL。除 `TBLPMEQPMAINTENANCEPLAN`、`TBLPMEQPMAINTENANCEPLANLOG`、`TBLPMWOBASIS_HIS`、`TBLPMWODETAIL`、`TBLPMWODETAIL_HIS` 已在 PM502／PM506 公司待辦索取外，另已要求原生來源交付 `TBLPMWOBASIS`、`TBLPMEQPTYPESOPBASIS`、`TBLPMEQUIPMENTSTATE`；詳 [公司端待辦](../todolist_officepc.md)。
+- 目前不建立猜測欄位的表，也不實作依賴未知欄位的寫入 API。取得 Oracle DDL／鍵及欄位 metadata 後，先比對 catalog，再建立空表 migration、最小權限與交易 API。模組規則見 PM301／PM302／PM303 MD。
+
 ## 最新：WIP WP803 8D 結案 schema 與正式 API（2026-11-27）
 
 - 依 repo 中 WP508／WP802 的 Oracle source DDL、metadata 與 PostgreSQL CREATE-only 建立 migration `0088_wip_wp803_close_schema.sql`，正式 YMES 原先缺少 8D Basis／Release／ReleaseLog／TeamMember 四表。Migration checksum `929C1BC4EF4DD708B02DB156ADD4A9A981720D8011AD453D5DC4FAEBAA1344E1`；rollback checksum `BA50B8769989D7A7BACE70E6F95CF0AFF33AFAA34DD6F304C76FDFCCF04C219D`。只建立空結構，不匯入 MES 業務資料。Rollback 只允許在四表均為空時 DROP。
