@@ -310,6 +310,7 @@ import PmMaintenancePlanAdjust from './components/PmMaintenancePlanAdjust.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
 import PmWorkOrderBasis from './components/PmWorkOrderBasis.vue'
+import PmWoRelease from './components/PmWoRelease.vue'
 import QcAttributeItemGroup from './components/QcAttributeItemGroup.vue'
 import QcPmiItemGroup from './components/QcPmiItemGroup.vue'
 import QcInspectionMaster from './components/QcInspectionMaster.vue'
@@ -798,6 +799,7 @@ const fallbackMenuTree: MenuNode[] = [
     }, {
       id: 'menu:PM:PM WO', label: '保養工單', shortLabel: '保養工單', children: [
         { id: 'function:PM:PMWO BASIS', label: '開立保養工單', shortLabel: '開立工單', functionNo: 'PMWO BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:PMWO RELEASE', label: '保養工單下線', shortLabel: '工單下線', functionNo: 'PMWO RELEASE', moduleNo: 'PM' },
       ],
     }],
   },
@@ -1162,6 +1164,7 @@ const menuRoutes: Record<string, string> = {
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
   'function:PM:PMWO BASIS': appBasePath + '/PM/WorkOrderBasis',
+  'function:PM:PMWO RELEASE': appBasePath + '/PM/WorkOrderRelease',
   'function:PM:SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
   'function:PM:SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
   'function:INV:FGD PRODUCT IN': appBasePath + '/INV/ProductIn',
@@ -1599,6 +1602,7 @@ const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === '
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
 const isPmWorkOrderBasisPage = computed(() => activeMasterKey.value === 'function:PM:PMWO BASIS')
+const isPmWoReleasePage = computed(() => activeMasterKey.value === 'function:PM:PMWO RELEASE')
 const isInvProductInPage = computed(() => activeMasterKey.value === 'function:INV:FGD PRODUCT IN')
 const isInvSemiProductInPage = computed(() => activeMasterKey.value === 'function:INV:SEMI PRODUCT IN')
 const isInvProductInLogPage = computed(() => activeMasterKey.value === 'function:INV:FGD PRODUCT IN LOG' || activeMasterKey.value === 'function:INV:SEMI PRODUCT IN LOG')
@@ -3728,6 +3732,12 @@ async function signOut(): Promise<void> {
         />
         <PmWorkOrderBasis
           v-else-if="isPmWorkOrderBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmWoRelease
+          v-else-if="isPmWoReleasePage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

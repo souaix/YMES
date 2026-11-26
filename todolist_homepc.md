@@ -1,12 +1,20 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：PM301 開立保養工單（2026-11-26）
+## 公司端最新交付：PM302 保養工單下線（2026-11-26）
+
+- [x] 核對 `frmPMWORelease`、`wsPM.ReleaseWoDetail`、`clsPMBasis.ReleaseWoDetail`；公司端完成 `/YMES/PM/WorkOrderRelease` DEV 查詢、主從 Grid、狀態篩選、SOP 檢視、Release／Release All。
+- [x] 新增 [PM302 規格與家用端 API/schema handoff](docs/modules/PM/保養工單下線_PM302.md)。已記錄 PM Log／設備 PM 累計副作用、EQP 狀態更新分段及資料表待核項目。
+- [x] 桌機受保護 Oracle profile 不存在，直接表 DDL／metadata 未取得，未猜 CREATE。DEV 使用 localStorage 假資料；公司端未連 YMES PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核 live schema／Oracle metadata，確認 `tblPMWODetail`、`tblPMEQPMaintenancePlanLog`、`tblPMEquipmentState` 欄位與鍵；實作交易式冪等下線 API、PlanLog 與設備累計更新，定義 EQP／Chamber 狀態一致性。
+- [ ] 下一項公司端 handoff：PM303「保養工單完成與回報」。
+
+## 前項公司端交付：PM301 開立保養工單（2026-11-26）
 
 - [x] 核對 `frmPMWoBasis`／Create／Detail／SOP Detail、`wsPM`、`clsPMBasis`／`clsBasis_UPD` 與 `clsIssue`；完成 `/YMES/PM/WorkOrderBasis` DEV 主從查詢、PM 計畫選取開單、計畫移入 PlanLog、狀態簽核／刪除、未凍結明細編修與 SOP／工具／備品檢視。
 - [x] 新增 [PM301 規格與家用端 API/schema handoff](docs/modules/PM/開立保養工單_PM301.md)。已記錄可見 PM Work Order、隱藏 Required Work Order 分頁、IssueState／WOStatus、EWyyMM#### 編號及計畫消耗交易要求。
 - [x] 桌機沒有受保護 Oracle profile，repo 無可核實 PM Work Order／Plan Log DDL；未查 Oracle、未猜 CREATE。DEV 使用 localStorage 假資料，未連 YMES PostgreSQL、未實作正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。下一項公司端依 FunctionKey 為 PM302「保養工單下線」。
-- [ ] GitHub 同步：桌機已 fast-forward 至 `origin/main` `02a4b1a`；本地公司端交付仍待靜態檢閱後正常 commit/push，不 force push。
+- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。當時下一項 PM302，現已完成，後續公司端接 PM303。
+- [x] PM301 與當時累積的公司端待同步工作已正常 commit/push，提交 `21cca14`。
 
 ## 前項公司端交接：PM204 設備定次定時保養設定（2026-11-26）
 
@@ -15,7 +23,7 @@
 - [x] 桌機 Oracle profile 不存在，repo 無可核實 `TBLPMFIXEDTIMESPMBASIS` DDL／索引；未查 Oracle、未猜 CREATE／輸出 credentials。
 - [ ] 家用端核 live schema／migration 與 Oracle metadata；交易式實作設備類型預設、設備覆寫、QtyType、SET 重新套用、DataStamp 與參照驗證。關閉 AutoCreateWo 時明確清除舊 PMSOPNo。
 - [ ] 桌機已 fast-forward 至 GitHub `origin/main` `02a4b1a`；公司端本機交付仍待靜態檢閱、正常 commit/push，需保留家用端修改且勿 force push。
-- [ ] 下一項公司端 handoff：PM301「開立保養工單」（PM 保養工單；OE 分類的工單管理 OE201–OE209 已有規格）。
+- [x] PM301「開立保養工單」已完成；其後 PM302 已完成，當前下一項為 PM303（PM 保養工單；OE 分類的工單管理 OE201–OE209 已有規格）。
 
 ## 前項公司端交接：PM203 設備定量保養設定（2026-11-26）
 

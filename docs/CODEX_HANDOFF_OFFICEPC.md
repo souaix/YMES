@@ -2,13 +2,22 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：PM301 開立保養工單（2026-11-26）
+## 公司端最新交付：PM302 保養工單下線（2026-11-26）
+
+- [x] 核對 `frmPMWORelease`、`wsPM.ReleaseWoDetail`、`clsPMBasis.ReleaseWoDetail`；完成 `/YMES/PM/WorkOrderRelease` DEV 主從查詢、五種狀態篩選、SOP 檢視、Release／Release All。
+- [x] 新增 [PM302 規格與家用端 API/schema handoff](modules/PM/保養工單下線_PM302.md)，更新索引、清冊進度及兩端 TODO。
+- [x] DEV 共用 PM301 工單與 PlanLog 假資料；模擬 WOStatus=2、PM ExecuteState=3、PM 設備累計歸零與可選 EQP 狀態更新。
+- [x] 桌機受保護 Oracle profile 不存在；repo 沒有直接表可核實 DDL／metadata，本次未連 MESTEST、未猜 CREATE。公司端未連 YMES PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／Oracle metadata，實作交易式冪等下線 API，並處理 EQP 狀態更新部分完成風險。
+- [ ] 下一項公司端依 FunctionKey 為 PM303「保養工單完成與回報」，沿序接續未完成功能。
+
+## 前項公司端交付：PM301 開立保養工單（2026-11-26）
 
 - [x] 核對 `frmPMWoBasis`／Create／Detail／SOP Detail、`wsPM`、`clsPMBasis`／`clsBasis_UPD` 與 `clsIssue`；完成 `/YMES/PM/WorkOrderBasis` DEV 主從查詢、PM 計畫選取開單、計畫移入 PlanLog、狀態簽核／刪除、未凍結明細編修與 SOP／工具／備品檢視。
 - [x] 新增 [PM301 規格與家用端 API/schema handoff](docs/modules/PM/開立保養工單_PM301.md)。已記錄可見 PM Work Order、隱藏 Required Work Order 分頁、IssueState／WOStatus、EWyyMM#### 編號及計畫消耗交易要求。
 - [x] 桌機沒有受保護 Oracle profile，repo 無可核實 PM Work Order／Plan Log DDL；未查 Oracle、未猜 CREATE。DEV 使用 localStorage 假資料，未連 YMES PostgreSQL、未實作正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。下一項公司端依 FunctionKey 為 PM302「保養工單下線」。
-- [ ] GitHub 同步：桌機已 fast-forward 至 `origin/main` `02a4b1a`；本地公司端交付仍待靜態檢閱後正常 commit/push，不 force push。
+- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。當時下一項 PM302，現已完成，後續公司端接 PM303。
+- [x] PM301 與當時累積的公司端待同步工作已正常 commit/push，提交 `21cca14`。
 
 ## 前項公司端交付：PM204 設備定次定時保養設定（2026-11-26）
 
@@ -16,7 +25,7 @@
 - [x] [PM204 規格與家用端 API/schema handoff](modules/PM/設備定次定時保養設定_PM204.md) 記錄 TypeCode 0／1、QtyType 0/1/2、DataStamp、整類刪除與 SET 重建。舊 Service 先刪後逐筆新增、非原子；關閉 AutoCreateWo 時 Core 可能留下舊 PMSOPNo。
 - [x] 桌機受保護 Oracle profile 不存在，repo 無可核實 `TBLPMFIXEDTIMESPMBASIS` DDL／索引；未連 Oracle、未猜 CREATE／輸出 credentials。
 - [ ] 家用端核 live PostgreSQL schema／migration 與 Oracle metadata；以交易實作類型預設、設備覆寫、QtyType、SET 清單、DataStamp 更新及整類刪除。
-- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未 build／test／browser。下一項依 FunctionKey 為 PM301「開立保養工單」。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未 build／test／browser。當時下一項 PM301，現已完成。
 
 ## 前項公司端交付：PM203 設備定量保養設定（2026-11-26）
 
@@ -155,7 +164,7 @@
 - [x] SCR In Confirm 的 Service 只排 Source=40 交易並逐筆設定 Lot reverse lock；正式庫存異動由下游執行。三張 SCR Inventory Oracle DDL／metadata 缺失，桌機 profile 不可用，未猜 CREATE。
 - [ ] 未連 PostgreSQL、未新增 schema／migration、未實作正式 API、未部署，未執行 build／test／browser。IV602 已完成；下一步掃描 INV 清冊尚未復刻且有可讀來源的功能。
 
-> **最新公司端接手（2026-11-26）**：PM301「開立保養工單」已完成公司端 DEV 與家用端 handoff；下一項 PM302「保養工單下線」。目前本機 `main` 已快轉到 GitHub `origin/main` `02a4b1a`；PM101–PM110、PM201–PM204、PM301 與既有 INV 公司端工作仍待正常 commit/push。先看本檔、兩端 TODO、[模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)。桌機沒有 Oracle 受保護 profile，PM301 DDL／metadata 未取得；不猜 CREATE。
+> **最新公司端接手（2026-11-26）**：PM301、PM302 已完成公司端 DEV 與家用端 handoff；PM301 與之前累積工作已由 `21cca14` 正常推上 GitHub，PM302 依本次工作正常提交／推送後接續 PM303「保養工單完成與回報」。先看本檔、兩端 TODO、[模組規格索引](MODULE_REPLICATION_SPEC_INDEX.md)。桌機沒有 Oracle 受保護 profile，PM302 直接表 DDL／metadata 未取得；不猜 CREATE。公司端只做 Vue DEV 與來源／handoff，不做 PostgreSQL、正式 API 或部署。
 
 ## 公司端最新交付：IV406 半成品出庫單記錄（2026-11-25）
 

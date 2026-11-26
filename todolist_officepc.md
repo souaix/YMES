@@ -1,12 +1,21 @@
 # 公司端待辦
 
-## 公司端最新交付：PM301 開立保養工單（2026-11-26）
+## 公司端最新交付：PM302 保養工單下線（2026-11-26）
+
+- [x] 核對 `frmPMWORelease`、`wsPM.ReleaseWoDetail`、`clsPMBasis.ReleaseWoDetail`；完成 `/YMES/PM/WorkOrderRelease` DEV 多條件查詢、主從 Grid、狀態篩選、SOP 檢視、Release／Release All。
+- [x] 新增 [PM302 規格與家用端 API/schema handoff](docs/modules/PM/保養工單下線_PM302.md)，更新規格索引、選單清冊、handoff 與兩端待辦。
+- [x] DEV 共用 PM301 工單／PlanLog 假資料，下線會更新明細狀態、PM PlanLog ExecuteState、設備 PM 累計及假設備狀態。
+- [x] 桌機無受保護 Oracle profile，repo 無可核實直接表 DDL／metadata；未連 MESTEST、未猜 CREATE。未連 YMES PostgreSQL、未實作正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／Oracle metadata；以原子、可重試 API 實作下線，重驗 IssueState／WOStatus／PlanLog，更新設備 PM 累計並處理 EQP 狀態與 Chamber Manage。
+- [ ] 下一項公司端依 FunctionKey 為 PM303「保養工單完成與回報」，沿序持續復刻未完成模組。
+
+## 前項公司端交付：PM301 開立保養工單（2026-11-26）
 
 - [x] 核對 `frmPMWoBasis`／Create／Detail／SOP Detail、`wsPM`、`clsPMBasis`／`clsBasis_UPD` 與 `clsIssue`；完成 `/YMES/PM/WorkOrderBasis` DEV 主從查詢、PM 計畫選取開單、計畫移入 PlanLog、狀態簽核／刪除、未凍結明細編修與 SOP／工具／備品檢視。
 - [x] 新增 [PM301 規格與家用端 API/schema handoff](docs/modules/PM/開立保養工單_PM301.md)。已記錄可見 PM Work Order、隱藏 Required Work Order 分頁、IssueState／WOStatus、EWyyMM#### 編號及計畫消耗交易要求。
 - [x] 桌機沒有受保護 Oracle profile，repo 無可核實 PM Work Order／Plan Log DDL；未查 Oracle、未猜 CREATE。DEV 使用 localStorage 假資料，未連 YMES PostgreSQL、未實作正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。下一項公司端依 FunctionKey 為 PM302「保養工單下線」。
-- [ ] GitHub 同步：桌機已 fast-forward 至 `origin/main` `02a4b1a`；本地公司端交付仍待靜態檢閱後正常 commit/push，不 force push。
+- [ ] 家用端核 live schema 與 Oracle metadata，交易式建立工單、明細、PlanLog 並消耗活動計畫；實作核准／下線及 DataStamp API。當時下一項 PM302，現已完成，後續公司端接 PM303。
+- [x] PM301 與當時累積的公司端待同步工作已正常 commit/push，提交 `21cca14`。
 
 ## 公司端補交：IV302／IV303／IV304 原生 Oracle DDL 與 metadata
 
@@ -23,7 +32,7 @@
 - [x] 桌機受保護 Oracle profile 不存在，repo 無可核實 `TBLPMFIXEDTIMESPMBASIS` DDL／索引；未查 Oracle、未猜 CREATE／輸出 credentials。
 - [ ] 家用端核 live schema／Oracle metadata；交易式實作 SET、參照驗證、併發保護及設定刪除。
 - [ ] Git sync pending：`.git` 目前唯讀；恢復後先 fetch 比對、保留家用端修改，再正常 commit/push PM101–PM110、PM201–PM204 與所有未推內容，不可 force push。
-- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。下一項依未完成 FunctionKey 為 PM301「開立保養工單」。
+- [x] 公司端未連 PostgreSQL、未建 schema／migration、未實作正式 API、未部署、未執行 build／test／browser。當時下一項 PM301，現已完成。
 
 ## 前項公司端交付：PM203 設備定量保養設定（2026-11-26）
 

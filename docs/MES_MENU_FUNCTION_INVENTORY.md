@@ -15,7 +15,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 ## Vue 復刻追蹤
 
-截至 2026-11-26，公司端已完成 PM101、PM102、PM103、PM104、PM105、PM106、PM107、PM108、PM109、PM110、PM201、PM202、PM203、PM204、PM301、IV306、IV307、IV401、IV402、IV403、IV404、IV405、IV406、IV407、IV601、IV602 DEV 與規格；IV405 共用 IV503 入庫記錄頁，IV103 也已完成。WAFERBANK vendor DLL 項目依先前決定不處理；下一項依未完成的 PM FunctionKey 為 PM302「保養工單下線」。OE 分類「工單管理」中的 OE201–OE209 已有公司端規格／handoff；PM302–PM303 是後續保養工單流程。這段是 YMES 復刻進度，不改寫 Oracle 原始選單清冊。
+截至 2026-11-26，公司端已完成 PM101、PM102、PM103、PM104、PM105、PM106、PM107、PM108、PM109、PM110、PM201、PM202、PM203、PM204、PM301、PM302、IV306、IV307、IV401、IV402、IV403、IV404、IV405、IV406、IV407、IV601、IV602 DEV 與規格；IV405 共用 IV503 入庫記錄頁，IV103 也已完成。WAFERBANK vendor DLL 項目依先前決定不處理；下一項依未完成的 PM FunctionKey 為 PM303「保養工單完成與回報」。OE 分類「工單管理」中的 OE201–OE209 已有公司端規格／handoff；PM301–PM303 為保養工單流程。這段是 YMES 復刻進度，不改寫 Oracle 原始選單清冊。
 
 ## 第一層與功能目錄
 
