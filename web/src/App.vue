@@ -327,6 +327,7 @@ import OpOutputYieldGauge from './components/OpOutputYieldGauge.vue'
 import OpOutputTrendChart from './components/OpOutputTrendChart.vue'
 import OpStateBoard from './components/OpStateBoard.vue'
 import OpStateProductTypeBoard from './components/OpStateProductTypeBoard.vue'
+import OpStateProductNoBoard from './components/OpStateProductNoBoard.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -859,6 +860,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART', label: '作業站時段產出_趨勢圖', shortLabel: '產出趨勢', functionNo: 'BILLBOARD OPOUTPUT SUMMARY TRENDCHART', moduleNo: 'RPT' },
         { id: 'function:RPT:BILLBOARD OPSTATE', label: '作業站現況看板', shortLabel: '作業站現況', functionNo: 'BILLBOARD OPSTATE', moduleNo: 'RPT' },
         { id: 'function:RPT:BILLBOARD OPSTATE_PRDTYPE', label: '作業站現況看板_產品類別', shortLabel: '產品類別看板', functionNo: 'BILLBOARD OPSTATE_PRDTYPE', moduleNo: 'RPT' },
+        { id: 'function:RPT:BILLBOARD OPSTATE_PRODUCTNO', label: '作業站現況看板_產品', shortLabel: '產品看板', functionNo: 'BILLBOARD OPSTATE_PRODUCTNO', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1240,6 +1242,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART': appBasePath + '/RPT/OpOutputTrendChart',
   'function:RPT:BILLBOARD OPSTATE': appBasePath + '/RPT/OpStateBoard',
   'function:RPT:BILLBOARD OPSTATE_PRDTYPE': appBasePath + '/RPT/OpStateProductTypeBoard',
+  'function:RPT:BILLBOARD OPSTATE_PRODUCTNO': appBasePath + '/RPT/OpStateProductNoBoard',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1345,6 +1348,7 @@ const functionRoutes: Record<string, string> = {
   'BILLBOARD OPOUTPUT SUMMARY TRENDCHART': appBasePath + '/RPT/OpOutputTrendChart',
   'BILLBOARD OPSTATE': appBasePath + '/RPT/OpStateBoard',
   'BILLBOARD OPSTATE_PRDTYPE': appBasePath + '/RPT/OpStateProductTypeBoard',
+  'BILLBOARD OPSTATE_PRODUCTNO': appBasePath + '/RPT/OpStateProductNoBoard',
   'FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
   'SUBSTITUTION VENDOR': appBasePath + '/PM/SubstitutionVendor',
   'SUBSTITUTION TYPE BASIS': appBasePath + '/PM/SubstitutionType',
@@ -1709,6 +1713,7 @@ const isRt206OpOutputYieldGaugePage = computed(() => activeMasterKey.value === '
 const isRt207OpOutputTrendChartPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPOUTPUT SUMMARY TRENDCHART')
 const isRt201OpStateBoardPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE')
 const isRt202OpStateProductTypePage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE_PRDTYPE')
+const isRt203OpStateProductNoPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE_PRODUCTNO')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -3946,6 +3951,12 @@ async function signOut(): Promise<void> {
         />
         <OpStateProductTypeBoard
           v-else-if="isRt202OpStateProductTypePage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <OpStateProductNoBoard
+          v-else-if="isRt203OpStateProductNoPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
