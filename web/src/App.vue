@@ -307,6 +307,7 @@ import PmSopBasis from './components/PmSopBasis.vue'
 import PmToolBasis from './components/PmToolBasis.vue'
 import PmBreakdownBasis from './components/PmBreakdownBasis.vue'
 import PmRepairBasis from './components/PmRepairBasis.vue'
+import PmEqpTypeBreakDownMap from './components/PmEqpTypeBreakDownMap.vue'
 import PmEqpTypeSopBasis from './components/PmEqpTypeSopBasis.vue'
 import PmMaintenancePlanAdjust from './components/PmMaintenancePlanAdjust.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
@@ -793,6 +794,12 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:PM:SUBSTITUTION GROUP', label: '備品群組資料', shortLabel: '備品群組', functionNo: 'SUBSTITUTION GROUP', moduleNo: 'PM' },
       ],
     }, {
+      id: 'menu:PM:EQUIPMENT REPAIR', label: '設備維修', shortLabel: '設備維修', children: [
+        { id: 'function:PM:BREAKDOWN BASIS', label: '故障原因基本資料', shortLabel: '故障原因', functionNo: 'BREAKDOWN BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:REPAIR BASIS', label: '維修項目基本資料', shortLabel: '維修項目', functionNo: 'REPAIR BASIS', moduleNo: 'PM' },
+        { id: 'function:PM:EQPTYPE BREAKDOWN MAP', label: '設備與故障原因對應', shortLabel: '故障原因對應', functionNo: 'EQPTYPE BREAKDOWN MAP', moduleNo: 'PM' },
+      ],
+    }, {
       id: 'menu:PM:EQUIPMENT PM SETTING', label: '設備 PM 設定', shortLabel: '設備 PM', children: [
         { id: 'function:PM:EQPTYPE SOP BASIS', label: '設備保養標準程序', shortLabel: '設備 SOP', functionNo: 'EQPTYPE SOP BASIS', moduleNo: 'PM' },
         { id: 'function:PM:PM PLAN CHANGE', label: '保養計劃變更', shortLabel: '計畫變更', functionNo: 'PM PLAN CHANGE', moduleNo: 'PM' },
@@ -1163,6 +1170,9 @@ const menuRoutes: Record<string, string> = {
   'function:INV:SCR INVENTORY': appBasePath + '/INV/ScrInventory',
   'function:INV:SCR PRODUCT IN': appBasePath + '/INV/ScrIn',
   'function:PM:FREQUENCY BASIS': appBasePath + '/PM/FrequencyBasis',
+  'function:PM:BREAKDOWN BASIS': appBasePath + '/PM/BreakdownBasis',
+  'function:PM:REPAIR BASIS': appBasePath + '/PM/RepairBasis',
+  'function:PM:EQPTYPE BREAKDOWN MAP': appBasePath + '/PM/EqpTypeBreakDownMap',
   'function:PM:EQPTYPE SOP BASIS': appBasePath + '/PM/EquipmentTypeSopBasis',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
@@ -1604,6 +1614,7 @@ const isPmSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:S
 const isPmToolBasisPage = computed(() => activeMasterKey.value === 'function:PM:TOOL BASIS')
 const isPmBreakdownBasisPage = computed(() => activeMasterKey.value === 'function:PM:BREAKDOWN BASIS')
 const isPmRepairBasisPage = computed(() => activeMasterKey.value === 'function:PM:REPAIR BASIS')
+const isPmEqpTypeBreakDownMapPage = computed(() => activeMasterKey.value === 'function:PM:EQPTYPE BREAKDOWN MAP')
 const isPmEqpTypeSopBasisPage = computed(() => activeMasterKey.value === 'function:PM:EQPTYPE SOP BASIS')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
@@ -3722,6 +3733,12 @@ async function signOut(): Promise<void> {
         />
         <PmRepairBasis
           v-else-if="isPmRepairBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <PmEqpTypeBreakDownMap
+          v-else-if="isPmEqpTypeBreakDownMapPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

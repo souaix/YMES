@@ -1,13 +1,23 @@
 # 公司端待辦
 
-## 公司端最新交付：PM402 維修項目基本資料（2026-11-26）
+## 公司端最新交付：PM403 設備與故障原因對應（2026-11-26）
+
+- [x] 核對 `frmEQPTypeBreakDownMap`／Def、`wsPM.Load/Add/Edit/DelEQPTypeBreakDownMap`、`clsPMBasis`／`clsBasis_UPD`；完成 `function:PM:EQPTYPE BREAKDOWN MAP` Vue DEV 主從查詢、Add／Edit／Delete／Copy。
+- [x] 新增 [PM403 規格與家用端 API/schema handoff](docs/modules/PM/設備與故障原因對應_PM403.md)，更新模組索引、選單進度、handoff 與兩端待辦。
+- [x] 故障原因選擇器依 `LoadBreakDownBasis` 的 Service 預設 IssueState=2 限定已生效資料；核對 PM404 以設備類型讀取對應供故障登錄勾選。
+- [x] 記錄 Edit 使用 DataStamp 版本比對／遞增；舊 Delete 逐筆硬刪但未傳 DataStamp，Service 僅防止兩個條件同時空白，家用端需強制完整組合鍵及引用保護。
+- [x] 桌機受保護 Oracle attachment 不存在，repo 無可信 `tblPMEQPTypeBreakDownMap` DDL／metadata；未查 Oracle／未猜 CREATE。公司端未連 PostgreSQL、未實作 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／Oracle metadata、複合鍵／FK 與 PM404 引用後，再實作參數化、版本安全的維護 API 及經核實的 CREATE-only DDL。
+- [ ] 下一項公司端依清冊為 PM404「設備故障登錄」。
+
+## 前項公司端交付：PM402 維修項目基本資料（2026-11-26）
 
 - [x] 核對 `frmRepairBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveRepairBasis`、`clsPMBasis` 與 `clsBasis_UPD`；完成 `function:PM:REPAIR BASIS` Vue DEV 四狀態查詢、CRUD／Copy、Approve、硬刪／停用。
 - [x] 新增 [PM402 規格與家用端 API/schema handoff](docs/modules/PM/維修項目基本資料_PM402.md)，更新模組索引、選單進度、handoff 與兩端待辦。
 - [x] 核對客製 PM405 設備修復登錄只載入 IssueState=2，顯示 RepairNo／RepairName；舊硬刪未帶 DataStamp、簽核完成／退回 SQL 不更新版本／稽核。
 - [x] 桌機受保護 Oracle profile 不存在，repo 無可信 `TBLPMRepairBasis` DDL／metadata；未查 Oracle／未猜 CREATE。公司端未連 PostgreSQL、未實作 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema／Oracle metadata 及 PM405 登錄／明細引用，再實作參數化、併發安全的維護／簽核 API與經核實的 CREATE-only DDL。
-- [ ] 下一項公司端依清冊是 PM403「設備與故障原因對應」；`PM_ACCPLAN` 也標 PM403，依 FunctionNo／FormName 區別功能。
+- [x] 當時下一項 PM403「設備與故障原因對應」已完成；另有 PM_ACCPLAN 同 FunctionKey，已按功能名稱／FormName 區分。
 
 ## 前項公司端交付：PM401 故障原因基本資料（2026-11-26）
 
@@ -16,7 +26,7 @@
 - [x] 記錄 PM403／PM404 會讀取故障原因主檔；舊硬刪未傳 DataStamp、簽核完成／退回 SQL 未更新版本及稽核欄。DEV 假資料 key 為 `ymes.dev.pm.breakdown-basis.v1`。
 - [x] 桌機指定受保護 Oracle profile 不存在，repo 無可信 `TBLPMBreakDownBasis` DDL／metadata；未查 Oracle／未猜 CREATE。公司端未連 PostgreSQL、未實作 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema、Oracle metadata 與 PM403／PM404 引用規則，再實作參數化、併發安全的查詢／維護／簽核 API 及經核實的 CREATE-only DDL。
-- [x] 當時下一項 PM402 已完成；公司端接續 PM403「設備與故障原因對應」。
+- [x] 當時下一項 PM402、PM403 均已完成；公司端現接續 PM404「設備故障登錄」。
 
 ## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
 

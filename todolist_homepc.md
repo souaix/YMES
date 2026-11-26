@@ -1,13 +1,22 @@
 # 家裡電腦接手清單
 
-## 公司端最新交付：PM402 維修項目基本資料（2026-11-26）
+## 公司端最新交付：PM403 設備與故障原因對應（2026-11-26）
+
+- [x] 公司端核對 `frmEQPTypeBreakDownMap`／Def、`wsPM.Load/Add/Edit/DelEQPTypeBreakDownMap`、`clsPMBasis`／`clsBasis_UPD`，完成 `function:PM:EQPTYPE BREAKDOWN MAP` DEV 主從頁及新增／修改／刪除／複製。
+- [x] 新增 [PM403 規格與家用端 API/schema handoff](docs/modules/PM/設備與故障原因對應_PM403.md)：記錄 `tblPMEQPTypeBreakDownMap` 可見欄位、複合鍵候選、DataStamp 更新、舊 Delete 未版本保護及 PM404 消費點。
+- [x] 故障原因 picker 依舊 Service 預設 `IssueState=2`；PM404 依設備類型載入映射供使用者勾選。
+- [x] 公司桌機受保護 Oracle attachment 不存在，repo 無可信映射表 DDL／metadata；未猜型別、約束或 CREATE。公司端未連 YMES PostgreSQL、未實作正式 API/schema。
+- [ ] 家用端核對 PostgreSQL live schema／同版 Oracle metadata、主鍵／FK／索引與 PM404 使用中的映射引用；再實作參數化、expected DataStamp 維護 API 及經核實 CREATE-only DDL。
+- [ ] 公司端接續 PM404「設備故障登錄」。
+
+## 前項公司端交付：PM402 維修項目基本資料（2026-11-26）
 
 - [x] 公司端核對 `frmRepairBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveRepairBasis`、`clsPMBasis`／`clsBasis_UPD`，完成 `function:PM:REPAIR BASIS` DEV 四狀態 CRUD／Copy／核准／停用。
 - [x] 新增 [PM402 規格與家用端 API/schema handoff](docs/modules/PM/維修項目基本資料_PM402.md)，記錄 `tblPMRepairBasis`、RepairName 必填、DataStamp、IssueNo `REPAIR BASIS`。
 - [x] 核對客製 PM405 設備修復登錄以 IssueState=2 載入 RepairNo／RepairName 候選；硬刪未傳 DataStamp、簽核完成／退回不更新版本／稽核。
 - [x] 桌機受保護 Oracle profile 及 repo 可信業務表 DDL／metadata 均不存在，未猜型別／鍵或 CREATE；未連 YMES PostgreSQL、未實作正式 API/schema。
 - [ ] 家用端核 PostgreSQL live schema／Oracle metadata 及 PM405 登錄引用規則，再實作參數化、DataStamp 併發安全與簽核 API；先確認再產生 CREATE-only DDL。
-- [ ] 下一項公司端 handoff：PM403「設備與故障原因對應」。`PM_ACCPLAN` 也標 PM403，請依 FunctionNo／FormName 區別。
+- [x] 當時下一項 PM403「設備與故障原因對應」已完成；`PM_ACCPLAN` 同 FunctionKey 的功能已按 FunctionName／FormName 區別。
 
 ## 前項公司端交付：PM401 故障原因基本資料（2026-11-26）
 
@@ -15,7 +24,7 @@
 - [x] 新增 [PM401 規格與家用端 API/schema handoff](docs/modules/PM/故障原因基本資料_PM401.md)，已記錄 `tblPMBreakDownBasis` 欄位名、DataStamp、IssueNo `BREAKDOWN BASIS` 與 PM403／PM404 消費點。
 - [x] 桌機受保護 Oracle profile 及 repo 可信直接表 DDL／metadata 均不存在，未猜欄位型別／鍵或 CREATE SQL；公司端未連 YMES PostgreSQL，未實作正式 API/schema。
 - [ ] 家用端核 live PostgreSQL schema 與 MESTEST DDL／metadata，確認欄位型別、主鍵／索引／FK、PM403／PM404 引用與刪除限制；再實作參數化、DataStamp 併發安全及原子核准／停用 API。
-- [x] 當時下一項 PM402 已完成；公司端接續 PM403「設備與故障原因對應」。
+- [x] 當時下一項 PM402、PM403 均已完成；公司端現接續 PM404「設備故障登錄」。
 
 ## 前項公司端交付：PM303 保養工單完成與回報（2026-11-26）
 

@@ -2,13 +2,21 @@
 
 更新：2026-11-26。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 公司端最新交付：PM402 維修項目基本資料（2026-11-26）
+## 公司端最新交付：PM403 設備與故障原因對應（2026-11-26）
+
+- [x] 核對 `frmEQPTypeBreakDownMap`／Def、`wsPM.Load/Add/Edit/DelEQPTypeBreakDownMap`、`clsPMBasis`／`clsBasis_UPD`；完成 `function:PM:EQPTYPE BREAKDOWN MAP` DEV 主從查詢、CRUD／Copy。規格：[PM403 設備與故障原因對應](modules/PM/設備與故障原因對應_PM403.md)。
+- [x] 故障原因選擇器只載入 IssueState=2；PM404 會按設備類型載入映射供故障登錄勾選。`PM_ACCPLAN` 重複 FunctionKey 已以功能名稱／FormName 區分。
+- [x] Edit 使用 DataStamp；舊 Delete 沒有版本條件且 Service 允許只帶單一鍵而批次刪除。桌機 Oracle attachment 與可信映射表 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 PostgreSQL live schema／Oracle metadata、FK 與 PM404 引用後實作參數化、expected DataStamp API 及可信 CREATE-only DDL。
+- [ ] 公司端下一項 PM404「設備故障登錄」。
+
+## 前項公司端交付：PM402 維修項目基本資料（2026-11-26）
 
 - [x] 核對 `frmRepairBasis`／Def、`wsPM.Load/Add/Edit/Del/ApproveRepairBasis`、`clsPMBasis`／`clsBasis_UPD`；完成 `function:PM:REPAIR BASIS` DEV 四狀態 CRUD／Copy／核准、停用與硬刪。規格：[PM402 維修項目基本資料](modules/PM/維修項目基本資料_PM402.md)。
 - [x] 核對客製 PM405 設備修復登錄以預設 IssueState=2 載入候選，顯示 RepairNo／RepairName；舊硬刪未傳 DataStamp、簽核結束 SQL 不更新版本或稽核欄。
 - [x] 桌機受保護 Oracle profile／attachment 不存在，repo 無可信 `TBLPMRepairBasis` DDL／metadata，未猜 CREATE；未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema 與 PM405 登錄／明細 FK，再做參數化、版本安全的查詢／維護／簽核 API。
-- [ ] 公司端接續 PM403「設備與故障原因對應」；注意選單另有一列 PM_ACCPLAN 也使用 FunctionKey PM403，需按 FunctionNo／FormName 區別。
+- [x] 當時下一項 PM403「設備與故障原因對應」已完成，並依功能名稱／FormName 與 PM_ACCPLAN 區分。
 
 ## 前項公司端交付：PM401 故障原因基本資料（2026-11-26）
 
@@ -25,7 +33,7 @@
 - [x] DEV 共用 PM301／PM302 工單與 PlanLog 假資料；模擬 WOStatus=3、PlanLog ExecuteState 3→4、整單完成搬移本機歷史與 EQP 狀態。
 - [x] 舊 Form 對早於 ReleaseDate 的完成時間只提示仍送出；家用端 API handoff 已要求伺服器拒絕。桌機受保護 Oracle profile 不存在，直接表 DDL／metadata 未取得，未猜 CREATE。
 - [ ] 家用端核 live schema／Oracle metadata，交易式實作 PM303 回報、全單完成歷史搬移與可重試 EQP／Chamber 狀態。
-- [x] 當時下一項 PM401 已完成；PM402 亦已完成，現接續 PM403「設備與故障原因對應」。
+- [x] 當時下一項 PM401、PM402、PM403 均已完成；現接續 PM404「設備故障登錄」。
 
 ## 前項公司端交付：PM302 保養工單下線（2026-11-26）
 
