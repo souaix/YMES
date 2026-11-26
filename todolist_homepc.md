@@ -248,7 +248,8 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 
 - [x] 公司端核對 `frmBreakDown_RepairQuery`、`wsPM.LoadBreakDown_RepairQuery`、`clsPMMaintanceLog.LoadBreakDown_RepairQuery`；完成設備多選、三組日期時間、狀態篩選和 13 欄 DEV 假資料結果。[PM507 規格與 API handoff](docs/modules/PM/故障維修登錄查詢_PM507.md)
 - [x] Core UNION `tblPMEqpBreakDownState` 與 RepairLog／BreakDownLog 查詢分支，未選狀態代表全部；舊 Form 的 RepairStart To 誤傳 RepairEnd To，DEV 依欄位實作。
-- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、三表欄位／型別／PK／FK／索引、可空日期及 RepairLog 一對多基數，提供可信 CREATE-only SQL。
+- [x] 家用端 2026-11-27 以 SSH 唯讀檢查正式 PostgreSQL YMES catalog，三表 `tblpmeqpbreakdownstate`、`tblpmeqprepairlog`、`tblpmeqpbreakdownlog` 均不存在，repo 也沒有可信 Oracle source DDL／metadata 或 PostgreSQL CREATE-only；未建立猜測性 schema。
+- [ ] 公司端由 Oracle 唯讀交付三表完整 DDL／metadata、鍵與索引及 RepairLog 對 Breakdown 的一對多鍵；詳 [公司端待辦](todolist_officepc.md)。收到來源後再建立正式空表並提供可信 CREATE-only SQL。
 - [ ] 家用端實作參數化唯讀分頁 `GET /api/pm/breakdown-repair-query`，保留空 `states[]` 查全部狀態與同一故障多筆維修列。
 - [x] PM507 後依功能目錄接續 RPT RTS01、RTB02、RTB01、RTB03，均已完成；繼續盤點清冊下一個未復刻 FunctionKey。
 
@@ -256,7 +257,8 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 
 - [x] 公司端核對 `frmPMPerformance`、`wsPM.LoadPMPerformance`／`LoadSingleTableDistinceData`、`clsPMPlanLog.LoadPMPerformance`；完成四組條件雙清單、兩組可選日期、工單類型及 12 欄 DEV 假資料效率結果。[PM506 規格與 API handoff](docs/modules/PM/設備保養效率查詢_PM506.md)
 - [x] Core 合併已完工 PM Log current／history detail 與 WOType=1 Required history；Act Done 為 Release 至 Finished 小時數。舊 Core 的 WO Finished end-date 判斷誤讀 Estimated PM end，規格要求確認正式日期邊界。
-- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、三類來源表欄位／鍵／索引、WOTYPE 對應、ChamberManage 規則及日期邊界；提供可信 CREATE-only SQL。
+- [x] 家用端 2026-11-27 以 SSH 唯讀核對正式 YMES catalog：`tbleqpequipmentbasis` 存在；`tblpmwodetail_his`、`tblpmfrequencybasis`、`tblpmwodetail`、`tblpmeqpmaintenanceplanlog`、`tblpmsopbasis`、`tblpmwobasis_his` 缺少，repo 無可信 CREATE DDL／metadata。未讀業務資料，未猜建表。
+- [ ] 公司端唯讀交付上述六張 PM506 來源表的原生 Oracle DDL、欄位型別／nullable/default、PK/FK/索引及必要 owner/synonym metadata；收到後再比 live schema、建立空表並提供可信 CREATE-only SQL。詳 [公司端待辦](todolist_officepc.md)。
 - [ ] 家用端實作參數化唯讀分頁 `GET /api/pm/performance` 與 `GET /api/pm/performance/filters`；不要採用舊 Core 對清單值的 SQL 字串拼接。
 - [x] 當時依清冊接續的 PM507 已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
@@ -264,7 +266,9 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 
 - [x] 公司端核對 `frmBreakDownQuery`／Designer、`wsPM.LoadSumOfEQPBreakDown`、Equipment lookup 與 `clsPMMaintanceLog`，完成原因次數 Grid、圖表及 DEV 假資料頁。[PM505 規格與 API handoff](docs/modules/PM/故障原因統計_PM505.md)
 - [x] Core 四表內連後依 BreakDownNo／Cause 計數；舊 Repair Time filter 實際比較 `RepairEndTime`。公司桌機受保護 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；公司端未連 PostgreSQL、未實作正式 API/schema。
-- [ ] 家用端核 live PostgreSQL schema 與同版 MESTEST metadata、RepairLog 關聯／重複計數規則及四表 PK／FK／索引，實作參數化唯讀統計 API 與可信 CREATE-only DDL。
+- [x] 家用端 2026-11-27 以 SSH 唯讀確認正式 YMES 缺少 `tblpmeqpbreakdownlog`、`tblpmeqpbreakdownlogdetail`、`tblpmeqprepairlog`、`tblpmbreakdownbasis`；repo 無可信 source DDL／metadata，未讀業務資料、未猜建表。
+- [ ] 公司端由原生 Oracle 唯讀提供四表 DDL／欄位 metadata／PK-FK-indexes，確認 BreakdownSerialNo／BreakDownNo 關聯、RepairLog 一對多與原因狀態；詳 [公司端待辦](todolist_officepc.md)。來源到位後家用端才建空表及 API。
+- [ ] 家用端實作參數化唯讀統計 API，確認 RepairLog 關聯不放大 Count，並提供可信 CREATE-only DDL。
 - [x] PM507 已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
 
 ## 前項公司端交付：PM504 保養工單歷史資料查詢（2026-11-26）

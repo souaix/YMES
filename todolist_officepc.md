@@ -144,18 +144,21 @@
 - [x] 核對 inline `frmBreakDown_RepairQuery`、`wsPM.LoadBreakDown_RepairQuery`、`clsPMMaintanceLog.LoadBreakDown_RepairQuery` 及設備／ChamberManage 載入；完成 `function:PM:BREAKDOWN_REPAIRQUERY` Vue DEV Equipment 多選、三組日期時間、狀態條件與 13 欄唯讀 Grid。[PM507 規格與 API/schema handoff](docs/modules/PM/故障維修登錄查詢_PM507.md)
 - [x] Core UNION `tblPMEqpBreakDownState` 未結案列與 RepairLog／BreakDownLog 結案列；未勾狀態代表全部。標記 Form 的 RepairStart To 誤傳 RepairEnd To。桌機 Oracle profile／可信 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [x] PM507 後依功能目錄接續 RPT RTS01、RTB02、RTB01、RTB03，均已完成；繼續盤點清冊下一個未復刻 FunctionKey。
+- [ ] 家用端已唯讀確認正式 PostgreSQL YMES 缺少 `TBLPMEQPBREAKDOWNSTATE`、`TBLPMEQPREPAIRLOG`、`TBLPMEQPBREAKDOWNLOG`，repo 也無可信 references。請公司端由原生 Oracle 唯讀匯出三表完整 `DBMS_METADATA.GET_DDL`、欄位 type/precision/scale/null/default、PK/FK/unique/indexes 及 owner/synonym/trigger metadata；確認 RepairLog 對 Breakdown 一對多鍵。只交 schema，不匯出業務資料，也不在 Oracle 建表。交付後家用端再建立正式空表與 PM507 API。
 
 ## 前項公司端交付：PM506 設備保養效率查詢（2026-11-26）
 
 - [x] 核對 inline `frmPMPerformance`、`wsPM.LoadPMPerformance`／`LoadSingleTableDistinceData`、`clsPMPlanLog.LoadPMPerformance`；完成 `function:PM:PM PERFORMANCE QUERY` Vue DEV 四組多選雙清單、兩組可選日期、All／PM／Required 類型與 12 欄唯讀效率 Grid。[PM506 規格與 API/schema handoff](docs/modules/PM/設備保養效率查詢_PM506.md)
 - [x] Core 合併完工 PM Log 的 current／history detail 與 Required history，Act Done 依下線至完工時間換算小時。標記 WO Finished end-date 分支誤讀 `EstPMDateEnd` 的舊程式疑點。桌機 Oracle profile／可信 DDL metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [x] 當時依清冊接續的 PM507 已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+- [ ] 家用端唯讀確認 YMES 只有 `tbleqpequipmentbasis`，PM506 查詢所需六表缺少：`TBLPMEQPMAINTENANCEPLANLOG`、`TBLPMSOPBASIS`、`TBLPMWODETAIL`、`TBLPMWODETAIL_HIS`、`TBLPMWOBASIS_HIS`、`TBLPMFREQUENCYBASIS`；repo 無可信 source DDL。請公司端以原生 Oracle 唯讀提供完整 DDL、欄位 type/precision/scale/null/default、PK/FK/unique/indexes、owner/synonym/trigger metadata，及主檔/工單/歷史 detail 的連接鍵與唯一性；只交結構，不匯出業務資料，不在 Oracle 建表。收到後家用端才能建空表與 PM506 API。
 
 ## 前項公司端交付：PM505 故障原因統計（2026-11-26）
 
 - [x] 核對 inline `frmBreakDownQuery`、`wsPM.LoadSumOfEQPBreakDown`、`wsEQP.LoadEquipmentType`／`LoadEquipmentBasis`、`clsPMMaintanceLog`；完成 `function:PM:PMBRAEKDOWN QUERY` Vue DEV 查詢條件、摘要 Grid、五種圖表與列印。[PM505 規格與 API/schema handoff](docs/modules/PM/故障原因統計_PM505.md)
 - [x] 記錄舊查詢四表內連、Repair Time 篩選實際使用 `RepairEndTime`、設備類型只載 lookup、SQL 字串拼接及重複 RepairLog 可能放大 Count。桌機 Oracle profile 與可信 DDL／metadata 缺失，未猜 CREATE；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [x] PM507 已完成；接著從功能目錄盤點下一項未復刻 FunctionKey。
+- [ ] 家用端唯讀確認 YMES 缺少 `TBLPMEQPBREAKDOWNLOG`、`TBLPMEQPBREAKDOWNLOGDETAIL`、`TBLPMEQPREPAIRLOG`、`TBLPMBREAKDOWNBASIS`，repo 無可信 source DDL。請公司端由原生 Oracle 唯讀交付四表完整 DDL、欄位 type/precision/scale/null/default、PK/FK/unique/indexes、owner/synonym/trigger metadata；說明 BreakdownSerialNo／BreakDownNo 關聯、RepairLog 一對多與原因主檔狀態。只交結構不匯出業務資料、不在 Oracle 建表；完成後家用端建立空表與參數化統計 API。
 
 ## 前項公司端交付：PM504 保養工單歷史資料查詢（2026-11-26）
 
