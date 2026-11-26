@@ -117,21 +117,21 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 - [x] 公司端核對 RT203 ProductNo Form／Designer、SetupType 3、RPT ProductNo Service／Core 與 WIP Lot Detail；完成 DEV ProductNo 系列堆疊、Queue／Run／Hold／Wait、共用數量軸、設定／刷新、放大、Lot Detail 與 Copy 模擬。[RT203 handoff](docs/modules/RPT/作業站現況看板_產品_RT203.md)
 - [x] 家用端以本機開發區 Demo 從三層報表選單開啟 RT203；app-browser 驗證設定空選清單／更新週期防呆、套用 OP 設定、立即更新、雙擊放大、Lot Detail 排序及 Copy 提示。均為 DEV 假資料，不呼叫正式 API。
 - [x] 合併後 Web `vue-tsc`／Vite build 通過；修正 RT207 圖表 `ChartSeries.key` literal type，只有既有大型 bundle 提醒。
-- [ ] 家用端沿 RT201 breakdown／lots handoff 核對 YMES live schema／索引及授權，實作受授權、參數化且有筆數上限的 ProductNo 彙總和分頁 Lot Detail API；確認 SetupType 3 設定範圍。公司端未連 PostgreSQL、未做正式 API/schema。
+- [x] 家用端已核對 YMES live schema／索引並完成登入保護、參數化 ProductNo 彙總與分頁 Lot Detail API，已部署及 app-browser 驗證範圍防呆；SetupType 3 設定仍待可信 DDL／scope，正式正向資料待來源同步。詳本檔頂端 RT201–RT203 進度。
 - [x] RPT 清冊下一項 RT501「生產批狀態查詢」。
 
 ## 前項公司端交付：RPT RT202 作業站現況看板_產品類別（2026-11-26）
 
 - [x] 公司端核對 RT202 ProductType Form／Designer、共用 SetupType 2、RPT `LoadBillBoard_OPState_PRDType` Service／Core 與 WIP Lot detail；完成 DEV 多 ProductType 系列堆疊 Queue／Run／Hold／Wait、共用數量軸、設定／刷新、放大、ProductNo 鑽取及 Lot Detail。[RT202 handoff](docs/modules/RPT/作業站現況看板_產品類別_RT202.md)
-- [ ] 家用端核對 LotState／LotBasis／ProductBasis MESTEST refs 與 YMES live schema、關聯及索引；共用看板 config／content DDL 未取得，勿猜建表。
-- [ ] 家用端延用 RT201 的受授權 `/api/reports/op-state-breakdown?opNos=...&groupBy=productType`，限制 OP 範圍／筆數並參數化；確認 SetupType 2 的 user/device scope。公司端未連 PostgreSQL、未實作正式 API/schema。
+- [x] 家用端已核對 LotState／LotBasis／ProductBasis refs 與 YMES live schema、關聯及索引；共用看板 Config／Content DDL 未取得，沒有猜建表。
+- [x] 家用端已部署登入保護、參數化 ProductType breakdown API，並以正式 app-browser 驗證範圍防呆；SetupType 2 設定仍待可信 DDL／scope，正式正向資料待同步。詳本檔頂端 RT201–RT203 進度。
 - [x] RT203 公司端規格與 DEV handoff 已交付；RPT 清冊下一項 RT501「生產批狀態查詢」。
 
 ## 前項公司端交付：RPT RT201 作業站現況看板（2026-11-26）
 
 - [x] 公司端核對 RT201 Form／Designer、共用看板 Setup／Child Form、RPT config／狀態／產品鑽取 Service／Core 與 WIP Lot detail；完成 DEV 狀態柱／圓餅、產品類別／編號鑽取、設定／刷新、放大及 Lot Detail。[RT201 handoff](docs/modules/RPT/作業站現況看板_RT201.md)
-- [ ] 家用端核對 WIP LotState／LotBasis、OP、Product、Process、Customer DDL refs 與 YMES live schema／索引；看板 config／content DDL 未取得，勿據此猜建表。
-- [ ] 家用端落實唯讀 `/api/reports/op-state`、`/api/reports/op-state-breakdown`、`/api/reports/op-state-lots`；加上授權範圍、OP／status 驗證、分頁／筆數上限，並確認設定的 user/device scope。公司端未連 PostgreSQL、未實作正式 API/schema。
+- [x] 家用端已核對 WIP LotState／LotBasis、OP、Product、Process、Customer DDL refs 與 YMES live schema／索引；共用看板 Config／Content DDL 未取得，沒有猜建表。
+- [x] 家用端已完成登入保護唯讀 API、OP／status 驗證、分頁與筆數上限；正式部署及 app-browser 範圍防呆驗證完成。設定 scope 仍待可信 DDL／規則，正式正向資料待同步。詳本檔頂端 RT201–RT203 進度。
 - [x] RT202、RT203 已完成，RPT 清冊RT603、RT604 已完成，下一項 RT501。
 
 ## 前項公司端交付：RPT RT207 作業站時段產出_趨勢圖（2026-11-26）
