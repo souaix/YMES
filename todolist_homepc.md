@@ -5,7 +5,7 @@
 - [x] 合併公司端最新 `origin/main` `adf6831`，保留兩端歷史與待辦；RT411 DEV 頁面的 TypeScript 型別衝突已修正，避免字串片段 ID 繼承數字狀態 ID。
 - [x] 完整 Web `vue-tsc`／Vite build 通過（1231 modules）；只有既有大型 bundle 提醒。
 - [x] 本機開發區 Demo app-browser 驗證 RT411：選單入口、24 小時主設備查詢、Area 多選及篩選、狀態明細、超過 24 小時提示、Chamber 開關、子設備查詢及返回主設備均可操作。使用 DEV 合成資料，未呼叫正式 API 或修改資料。
-- [ ] 完成一般 merge commit；確認 GitHub `main` 最新後正常快轉推送，再讀最新版 `todolist_homepc.md` 並接續家用端工作；不可 force push。
+- [x] 建立一般 merge commit `fc49b7a` 並正常快轉推送 GitHub；推送後重新 fetch，確認 `origin/main` 為 `fc49b7a` 並重讀本檔，接續 RT412 API。未使用 force push。
 
 ## 家用端 IV503 唯讀 API（2026-11-26）
 
@@ -16,8 +16,7 @@
 - [x] Production 部署獨立 API image `ymes-api:iv503-log-20261126-a1`；正式站 `/YMES/API` readiness 為 200，IV503 無登入回 401。只替換 `ymes-api`，舊容器保留為 `ymes-api-before-iv503-log-20261126-a1`，Web／master Web／其他專案與資料列未更動。
 - [x] 正式 app-browser Demo 登入後，對 2026-11-25 及完整 366 日 CreateDate 範圍查詢均回 HTTP 200、合法 JSON、`totalCount=0`。正式庫沒有入庫單，Detail 正向資料列無法驗證；未建立測試資料。舊登入票證初次回 401，重新按 Demo 後查詢成功。
 - [x] API／Web build 與 DEV 操作驗收見上項；瀏覽器 IV503 API 查詢沒有頁面／API 錯誤。
-- [x] 已用一般 merge 整合家用 IV503、公司端先前交付與 `origin/main` `0e659e8`，並繼續合併 `adf6831`；本次 Web build 與 RT411 DEV app-browser 操作驗收通過。
-- [ ] 對本次 `adf6831` 合併與型別修正完成 commit，正常快轉推送 GitHub，再重新 fetch／閱讀最新版 `todolist_homepc.md`，接續下一項家用端 API 工作。
+- [x] 已用一般 merge 整合家用 IV503、公司端先前交付與 `origin/main` `0e659e8`、`adf6831`；本次 Web build、RT411 DEV app-browser 操作驗收與 GitHub 正常快轉同步完成，細節見頂端最新驗收段。
 
 ## 家用端 IV304 支援表 schema（2026-11-26）
 
