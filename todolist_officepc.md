@@ -1,5 +1,10 @@
 # 公司端待辦
 
+## 2026-11-27 OE 工單管理優先覆核
+
+- [x] 依使用者指定優先檢查 OE「工單管理」：OE101–OE209、OEB01、OEP01 共 13 項均有來源、Vue DEV 入口及單項規格，並完成跨畫面 [模組總覽](docs/modules/OE/工單管理模組總覽.md)。公司端無缺頁；正式 API／schema 仍由家用端按單項 handoff 執行。
+- [x] 公司端接續回清冊 RT414。PM301–PM303「保養工單」為不同功能群，來源結構待交付事項仍列於下節及 PM 規格。
+
 ## 家用端追加交接：PM301–PM303 工單流程缺少來源結構（2026-11-27）
 
 - [ ] 請在原生 MES Oracle 以唯讀方式提供 `TBLPMWOBASIS`、`TBLPMEQPTYPESOPBASIS`、`TBLPMEQUIPMENTSTATE` 的 `DBMS_METADATA.GET_DDL` 與完整結構 metadata：owner／synonym、欄位 type/precision/scale、nullable/default、PK／FK／unique／indexes、trigger。另說明工單主從、工單明細至設備類型 SOP 關聯、設備狀態變更的實際鍵與限制；不要依名稱推測。

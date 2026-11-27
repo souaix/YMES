@@ -7,7 +7,7 @@
 - [x] 核對主／Chamber `frmEQP_MTTRSummary_byMonth`／Designer、`wsRPT.LoadEQPMTTRSummary_ByMonth`、`clsReport.LoadEQPMTTRSummary_byMonth` 與趨勢圖 Form；完成 `/YMES/RPT/EqpMttrSummaryByMonth` DEV 月報表、Chamber 子報表、多條件查詢及 MTTR／MTBF／Availability 趨勢圖。[RT413 規格](modules/RPT/設備MTTR統計表_以月份匯總_RT413.md)
 - [x] 記錄 Core 逐月重算 RT412 單月統計、每台設備輸出三個指標列、動態 `yyyy/MM` 欄位；來源無月份上限。DDL refs 沿用 RT412；未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema／索引與月份跨度，設計受授權、參數化、有跨度／設備筆數上限的月度唯讀 API。
-- [x] OE 工單管理優先覆核完成：OE101–OE209、OEB01、OEP01 共 13 項皆有原始 Form、獨立規格、Vue route／page mode；共用 Service／Core 引用對得上可讀來源，未發現公司端缺頁。正式 API／schema 仍由家用端負責。下一項回到 RT414。
+- [x] OE 工單管理優先覆核與跨畫面總覽完成：OE101–OE209、OEB01、OEP01 共 13 項皆有原始 Form、獨立規格、Vue route／page mode；共用 Service／Core 引用對得上可讀來源，未發現公司端缺頁。見 [OE 工單管理總覽](modules/OE/工單管理模組總覽.md)。正式 API／schema 仍由家用端負責。接續依清冊回到 RT414。
 
 ## 前項公司端交付：RPT RT412 設備 MTTR 統計表（2026-11-26）
 
