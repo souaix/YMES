@@ -17,7 +17,7 @@
 - [x] 修正 `WipSwrBasisDevPreview.vue`：新增／修改／核准／作廢備份改為明確複製 Vue reactive 資料，避免 `structuredClone` Proxy 例外讓確認流程無聲停止。只改 DEV localStorage 假資料流程，正式 API／資料庫未變。
 - [x] 本機 fake-auth／fake-provider API 與 Vite 獨立 origin 完成 app-browser 驗收：三層 WIP 入口、預設查詢、CustomerNo filter／lookup、必填與 Lot 客戶歸屬防呆、新增／修改／複製／核准／作廢原因／ACTIVE→UNUSED→刪除／UNFROZEN 刪除均通過。兩筆驗收資料已清除，正式 PostgreSQL／Oracle／正式站沒有寫入。
 - [ ] 完整 Web build 未完成：`npm run build` 的 `vue-tsc` 在 2GB／3GB Node heap OOM；獨立 Vite production build 在 1GB heap OOM。當時可用實體記憶體約 1,084MB；待記憶體空間足夠時重跑完整建置。DEV server 的 HMR 編譯與 app-browser 操作已通過。
-- [ ] WP109 API186／writer UI 正式部署仍待辦；遠端根 filesystem 100%，約 403MB 可用。本輪未清除影像、未改其他容器、未部署；後續先檢視可安全回收空間，再完整 build 並逐頁驗收。
+- [ ] WP109 API186／writer UI 正式部署仍待辦；遠端根 filesystem 100%，約 403MB 可用。2026-11-28 SSH 唯讀盤點未找到可明確回收且不影響其他專案／回滾的空間：YMES `releases` 約 782MB、`backups` 約 195MB、`checkpoints` 約 180MB 均保留；全機另有其他專案目錄及約 1.9GB system journal；Docker build cache 約 5.8GB、工具未提供 buildx 分類，無法安全歸屬 YMES。未刪除映像、快取或檔案，未改其他容器、未部署；待有安全可用磁碟空間後完成 build／逐頁驗收。
 - [ ] SWR 正式 API／writer 按鈕仍未部署或啟用；上線前依 module 文件重新核 migration／版本和空間，正式 Demo 驗收不得對正式空資料建立或修改業務列。
 
 ## 公司端 RT611 取消報工單_E10ICD handoff（2026-11-27）
