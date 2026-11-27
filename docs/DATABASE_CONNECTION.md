@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：QC214 計量品管項目匯入 API（2026-11-27）
+
+- PPK／SSH 唯讀比對正式 YMES PostgreSQL catalog，確認 QC214 所需主檔、子表、Plan、Factor、OP、WIP、Material、Product、Group、Spec、Chart、量測與群組引用表均已存在；本功能沒有專屬業務表，不需要 CREATE TABLE。原先 `ymes_app` 僅缺計量主檔 INSERT／DELETE 與兩個引用查詢 SELECT；主檔 `UPDATE(qcitemno)` 欄級權限和 PMI Group SELECT 原已存在。
+- migration `0091_qc214_variable_item_import_permissions.sql` 只補上述最小權限；rollback 僅撤銷本次 grants。套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-qc214-0091-20261127.dump`，802,767 bytes，SHA-256 `6f20952a845f6eebdc75ed24e605c520dfbf03f1b565d3fda553f3d01c24d459`；`pg_restore --list` 驗證 2,225 entries。Migration SHA-256 `7E19F8403B2EFEE4168387013F7AC31AC54C8DB93B6194A6735FD2DFFC8361B3`；rollback SHA-256 `0EF66649F50C882FED4A495AD429F875F9B08ACD0D26A29A5AC535FCDA993399`。套用後以 ACL 回讀確認：`tblqcitemforvariables` SELECT／INSERT／DELETE 允許，UPDATE 僅既有 `qcitemno` 欄級權限；`tblprdqcitem`、`tblopgqcitemdetail` 只有所需 SELECT；沒有讀取或修改 QC 業務資料列。
+- .NET 9 Release API image `sha256:51a385a8280025bee77dc3171e900da7efecca8867c23d7b7ec4dd9959b71fa5` 已部署。回復映像標籤 `ymes-api:before-qc214-variable-item-import-20261127-a1`，基底為 QC213 image `sha256:13cf84efdbee479a0b381acd6d5cdf01d4cceca10b39b786c6fa853429f20f16`。Readiness=200、匿名 Check API=401、容器 healthy；只更新 `ymes-api`，`ymes-web`／`ymes-master-web` 未重建。主機可用空間約 592 MiB；沒有全域 prune 或刪除 image/cache。
+- 正式 app-browser Demo session 載入 `/YMES/QC/VariableItemImport`。合成 `.xlsx` Preview／Check 曾於先前分頁成功，`MinValue=5`、`MaxValue=2` 收到預期欄級錯誤且未寫入；在新分頁直接讀官方 template endpoint 確認回 503（`IMPORT QCITEM VARIABLES` 範本尚未移轉）。正式資料缺少足夠核准 lookup，未建立正向 Import 測試列。舊分頁 27 的 CDP 焦點命令逾時；保持同一 in-app browser 並開新分頁 28 後，頁面與登入恢復正常。正向 Import／覆寫待公司端提供安全測試資料與官方範本。
+
 ## PM301–PM303 工單流程 live schema 查核（2026-11-27）
 
 - 家用端以 PPK／SSH 登入正式主機，在 `ymes` database 唯讀查詢 PostgreSQL catalog。`tblpmeqpmaintenanceplan`、`tblpmeqpmaintenanceplanlog`、`tblpmeqptypesopbasis`、`tblpmequipmentstate`、`tblpmwobasis`、`tblpmwobasis_his`、`tblpmwodetail`、`tblpmwodetail_his` 均不存在；未查詢或修改業務資料列。

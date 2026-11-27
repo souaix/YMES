@@ -2646,10 +2646,16 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 - [ ] 有核准的群組與 lookup 資料後，在正式站以安全測試資料驗證新增/修改/刪除/核准/明細/Parameter/OP/Script/Memo 往返；目前正式資料為空，未建立測試列。
 - [ ] 專案開始使用角色/FunctionKey 授權時，將 `QC212` 接入共用 API 權限檢查。現階段依使用者決策只做登入保護。
 
-## 下一項家用端工作
+## 家用端 QC214 目前接手
 
-- [ ] 接續 QC214「計量品管項目匯入」API：先讀 `docs/modules/QC/計量品管項目匯入.md`、本待辦 QC214 handoff、QC205/QC210/QC201 依賴規格及 `docs/DATABASE_CONNECTION.md`。此功能沒有專屬新表；先核對 live schema，僅補缺漏結構，再做受限 Excel preview/check/逐列匯入 API，禁止動態 Factor DDL。
-- [ ] 遠端根目錄部署後約剩 595 MB、使用率 99%；部署下一個 API 前檢視 Docker/磁碟空間，保留 current 與 `before-qc213-a2` rollback 及兩次資料庫備份；不要執行全域 prune 或刪除尚未盤點的映像。
+- [x] 讀完 QC214 模組規格及 QC205/QC210/QC201 依賴；正式 YMES schema 只讀比對完成，沒有 QC214 專屬新表，所需主檔、子表、Plan、Factor、OP、WIP、Material、Product、Group、Spec、Chart、量測引用表皆已存在。
+- [x] `ymes_app` 權限查核完成：計量主檔原先只有 SELECT；Product Item 與 QC Item Operation Group Detail 缺 SELECT；PMI group basis 已有 SELECT。新增 migration 0091 僅補主檔 INSERT/DELETE 與兩個引用查詢 SELECT，不授予多餘寫權限；主檔 `UPDATE(qcitemno)` 欄位權限原已存在，供 `FOR UPDATE` 使用。
+- [x] 新增登入保護 `/api/qc/variable-item-import` Preview／Check／逐列 Import／官方範本端點。支援 `.xls/.xlsx` 5 MiB、1000 列、128 欄限制；每列獨立交易與回報、忽略客戶端 Creator/CreateDate/Grid 狀態、只用核准 Factor metadata、覆寫先檢查引用，沒有動態 DDL；.NET 9 Release build 成功。
+- [x] 建立完整資料庫備份後套用 migration 0091，記錄備份及 SQL checksum，回讀最小權限。
+- [x] API-only candidate 部署 QC214，保留 `ymes-api:before-qc214-variable-item-import-20261127-a1` rollback；主機空間約 595 MB（99%），未全域 prune 或刪除 image/cache，只更新 `ymes-api`。
+- [x] 用正式 app-browser Demo 登入確認 QC214 頁、合成檔 Preview／Check 與錯誤回應；範本 API 回預期 503。正式無足夠核准 Plan／Class1 Parameter／OP／QC Item，未寫入測試資料；正向 Import／覆寫留待來源資料可安全驗收時處理。舊 tab 27 焦點逾時，重新開新 tab 28 恢復頁面與登入。
+- [ ] 更新模組與資料庫紀錄、同步 GitHub（只 fast-forward，不 force），再 fetch 檢查家用端下一項待辦並接續。
+- [ ] 官方 `VariablesQCItem_Template.xls/.xlsx` 尚未移轉，已列入公司端待辦；收到原始檔前 `/template` 安全回 503，不產生自製範本。
 
 ## 前一公司端 handoff：QC211 二次檢驗抽樣計畫（2026-11-17）
 

@@ -162,7 +162,7 @@
 - QC305「產品規格設定」：[功能規格](modules/QC/產品規格設定.md)。公司端依 `frmQCProductSpec` 與 `clsQCBasis` 完成產品類別/編號查詢、ProductData、SPEC 編輯與多產品套用 Vue DEV 頁；規格記錄 Product 因子、GroupNo、QC_Count、SPCID 映射及舊 Core 的 ProductNo-only 行為。沿用 QC302 圖表表與既有產品/QC Item 表，無 QC305 專屬新表或 CREATE SQL；家用端待核對 live schema 並實作批次 API。
 - QC302「匯入管制圖內容」：[功能規格](modules/QC/匯入管制圖內容.md)。已直接閱讀 WinForms Form、wsQC、clsQCBasis，透過 PowerShell 5.1 唯讀取得四張 SPC QC Chart Oracle DDL，並完成 Vue DEV 頁與 PostgreSQL CREATE-only 參考；家用端待比對 live schema、建立缺漏 migration/API。
 - QC215「計數品管項目匯入」：[功能規格](modules/QC/計數品管項目匯入.md)。已直接對照 WinForms Form、wsQC、clsQCBasis，完成 QC215 Vue DEV 頁與逐列匯入規則文件。沿用 QC201/QC205/QC213 的主子表與依賴表，不需要新表或 CREATE SQL；家用端待核對 YMES schema 並實作 API。
-- QC214「計量品管項目匯入」：[功能規格](modules/QC/計量品管項目匯入.md)。已直接對照 WinForms Form、wsQC、clsQCBasis，完成 Vue DEV 頁與逐列匯入規則文件。沿用 QC201/QC205/QC210 的主子表與依賴表，不需要新表或 CREATE SQL；家用端待核對 YMES schema 並實作 API。
+- QC214「計量品管項目匯入」：[功能規格](modules/QC/計量品管項目匯入.md)。已對照 WinForms Form、wsQC、clsQCBasis，完成 Vue DEV 頁、規格文件、登入保護的逐列 Preview/Check/Import API 與最小權限 migration，並部署正式 YMES；沿用 QC201/QC205/QC210 的主子表與依賴表，無 QC214 專屬新表。官方範本移轉、正式頁空狀態文字修正及正向匯入驗收仍待完成。
 
 ## 2026-11-17 新增完成規格
 

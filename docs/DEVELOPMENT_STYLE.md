@@ -121,6 +121,12 @@ API 從 YMES 復刻資料庫的 `tblSYSModule`、`tblSYSMenuItem`、`tblSYSFunct
 4. 新增樣式遵循 KD 色票、收合式三層選單與自適應版面。
 5. 修改部署路徑時，同步檢查 `deploy/compose.yaml` 和 `deploy/nginx-ymes.locations.conf`。
 
+### app-browser／本機服務故障排除
+
+- `http://127.0.0.1:<port>` 顯示 `ERR_CONNECTION_REFUSED` 時，先檢查該專案 Web／API 服務是否正在執行與監聽該 port；服務未啟動就只啟動或重啟對應專案服務，不要先重開瀏覽器或重開機。瀏覽器沒有伺服器可連時無法修復連線。
+- 若 app-browser 只有單一頁籤無回應，或顯示 `Emulation.setFocusEmulationEnabled` 逾時，而其他頁面/API 仍可使用，保留目前 in-app browser session，開一個新頁籤載入同一正式頁並重新確認登入狀態；不要因此重啟 YMES 遠端服務、所有瀏覽器或整台電腦。故障舊頁籤之後仍逾時時，避免在該頁籤重複送出新增、儲存、刪除等操作。
+- 每次修復後記錄具體故障訊息、採取的最小恢復步驟和恢復後的頁面/API 證據；瀏覽器頁籤故障與 Web/API 服務故障要分開判斷。
+
 相關文件：[GitHub 原型整合](GITHUB_INTEGRATION.md)、[共用系統架構](../ARCHITECTURE_BASE.md)、[部署設定](../DEPLOYMENT_PROFILES.md)。
 
 2026-11-20 ET105 Web224 A2維持既有KD框架，修復正式站選單捲軸變回實色的問題。Root在正式app-browser確認40%透明度、透明底、圖示收合與21項選單；本輪105個有效檢查點包含102項GUI與3項SQL證據，原109筆事件中的4個已解測試工具觀察完整保留。取貨公司實際主檔操作與維護範圍見[ET105 QA](qa/20261120-et105.md)，Git同步狀態以該文件為準。

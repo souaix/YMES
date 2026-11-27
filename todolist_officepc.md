@@ -2069,8 +2069,11 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 確認 QC214 無專用資料表，不新增 CREATE SQL。沿用已查好的 QC205 主檔與 QC205/QC210/QC201 dependency Oracle DDL/PG CREATE 參考；本次未重連 Oracle、未讀業務列、未執行 Oracle DDL。
 - [x] 新增 `/YMES/QC/VariableItemImport` Vue 3 DEV 畫面和 QC214 三層選單；重現 File/Check Data/Save/Template DownLoad/Select All/UnSelect All/MultiSelect/Close、唯讀欄位、勾選匯入、逐列粉紅失敗/灰色成功。DEV sample 儲存在獨立 localStorage，成功操作僅改假資料。
 - [x] 新增 `docs/modules/QC/計量品管項目匯入.md`，記錄來源程式、解析欄位、驗證條件、覆寫副作用、API 契約和引用表；更新功能索引、DB 查詢紀錄及 `todolist_homepc.md`。
-- [ ] QC214 production API/schema 待家用端依 `todolist_homepc.md` 實作；沒有 QC214 新表，沿用既有 QC205 tables。API 需逐列交易/結果、FunctionKey QC214、服務端 audit、參數化 SQL，並禁止 Factor 動態 DDL。
-- [ ] 本段未執行 build、test 或瀏覽器驗收；接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 和未完成頁面直接讀 WinForms Form/Service/Core，再完成 UI/spec/API handoff。
+- [x] 家用端已完成 QC214 登入保護 API、逐列交易/結果、伺服器 audit、參數化 SQL，並禁止 Factor 動態 DDL；依目前專案決策尚未啟用 FunctionKey/RBAC。
+- [ ] 從 MES 官方 template storage 匯出 FunctionNo=`IMPORT QCITEM VARIABLES` 的 `VariablesQCItem_Template.xls/.xlsx`，交付家用端放入既有 YMES template storage。正式 API `/template` 在收到原始範本前安全回 503，不以自製範本代替 MES 檔案。
+- [ ] Production `/YMES/QC/VariableItemImport` 空表目前仍寫「開發預覽中的資料均為假資料」；改成正式環境適用的通用提示，保留 File 匯入按鈕與 DEV 假資料行為。
+- [x] 家用端已以正式 app-browser Demo session 開啟頁面並確認範本 API 回 503（官方範本尚未移轉）；QC214 API／schema 已部署。正式 lookup 無可用核准資料，無正向 Import 測試資料，沒有建立正式測試列。
+- [ ] 本段未執行測試套件；接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 和未完成頁面直接讀 WinForms Form/Service/Core，再完成 UI/spec/API handoff。
 
 ### QC218 計數品管項目產品原因對應設定（公司端 2026-11-17）
 
