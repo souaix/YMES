@@ -15,7 +15,9 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 ## Vue 復刻追蹤
 
-優先順序更新（2026-11-27）：OE「工單管理」的 13 個公司端 Vue DEV 畫面、來源覆核與規格已完成；正式 API／schema 依原 handoff 由家用端處理。使用者提高 WIP「在製品管理」優先度；WP803 正式 API UI 接線已完成；WIPINV_CS「入庫作業」已完成來源可核對部分的 DEV／規格，Service/Core 與 SAP 交易來源缺失；WPI05 原始來源缺失。公司端先處理其餘可核實 WIP 項目，再回 RT416。OE 跨畫面總覽見 `docs/modules/OE/工單管理模組總覽.md`。
+優先順序更新（2026-11-27）：OE「工單管理」的 13 個公司端 Vue DEV 畫面、來源覆核與規格已完成；正式 API／schema 依原 handoff 由家用端處理。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。WP803 正式 API UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；清冊與 Vue route 差異覆核範圍內，WPI05 是唯一待來源的 WIP 選單功能，取得其 Form／Service／Core 後先接續。來源未到位期間，繼續目前已在進行的 RT416。RT416「整體設備效率 (OEE)」已完成公司端 DEV／規格；OEE summary Oracle DDL 待桌機受保護 profile 可用後唯讀交付。OE 跨畫面總覽見 `docs/modules/OE/工單管理模組總覽.md`。
+
+最新補記（2026-11-27）：RT416 核對 `frmEQPOEESummary`／Designer、`wsRPT.LoadEQPOEESummary`、`clsReport.LoadEQPOEESummary` 及 MESAutoRun 日彙總產生邏輯；完成 `/YMES/RPT/EqpOeeSummary` DEV 日期及設備多選篩選、13 欄表格。`TBLRPTEQPOEESUMMARY`／`TBLRPTEQPOEELot` DDL 未在 repo，桌機無受保護 Oracle profile，未查 Oracle／猜 DDL；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。詳 [RT416 規格及 handoff](modules/RPT/整體設備效率OEE_RT416.md)。
 
 最新補記（2026-11-27）：WIPINV_CS 依 THEIL `frmWP_INV_THEIL_BU1`／Designer／`WEBAPI.vb` 完成 Vue DEV 搜尋、Normal／Lite-On 數量轉換、GOOD／BAD 明細示意及逐筆 Inbound／部分失敗互動；未找到 server endpoint 實作或直接 Oracle 表名，不猜 SQL／DDL、不連 Oracle 或 YMES PostgreSQL、不做正式 API/schema、不 build／test／browser。詳 [WIPINV_CS 規格與家用端 handoff](modules/WIP/WIPINV_CS入庫作業.md)。
 

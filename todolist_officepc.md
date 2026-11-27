@@ -2,17 +2,25 @@
 
 ## 2026-11-27 使用者優先順序：WIP 在製品管理
 
-- [x] 優先盤點並接續 WIP。WP803 正式 API UI 接線已完成；尚未做 DEV 假資料驗收。
+- [x] 已將 WIP 排在其他尚未開始模組之前，並完成清冊／Vue route 差異盤點。WP803 正式 API UI 接線已完成。
+- [ ] WP803 的 DEV 假資料驗收仍待執行；這不影響家用端尚未完成的其他 API/schema handoff。
 - [x] WIPINV_CS「入庫作業」已核對 THEIL Form／Designer／WinForms API client，完成 DEV 假資料畫面與逐筆入庫互動、規格及家用端 handoff；未找到 server Service/Core，未猜資料表 DDL。
-- [x] 清冊與 Vue route 差異覆核後，WP804 已完成；目前唯一缺原始來源的 WIP 選單功能為 WPI05。
-- [ ] WPI05「配件領用單維護作業」原始 Form／Service／Core 缺失，維持待來源，不以相似功能推測；先接續 RPT RT416。
+- [x] 依使用者最新指示，WIP 在製品管理優先於其他尚未開始的模組。清冊與 Vue route 差異覆核後，除 WPI05 外，其餘 WIP 選單功能已有對應；WP804 已完成。
+- [ ] WIP 第一個待續項為 WPI05「配件領用單維護作業」。目前原始 Form／Service／Core 缺失，不能臆造；來源到位後先完成 WPI05。等待來源期間，繼續已在進行中的 RT416，再選其他可取得來源的功能。
+
+## 2026-11-27 RT416 整體設備效率 (OEE)
+
+- [x] 核對 `frmEQPOEESummary`／Designer、`wsRPT.LoadEQPOEESummary`、`clsReport.LoadEQPOEESummary`，另追 MESAutoRun `funOEESummary`／`fuOEEAvailRate`／`fuOEEPerforRate` 的日彙總來源及指標公式。
+- [x] 完成 `/YMES/RPT/EqpOeeSummary` DEV 假資料：日期驗證、Area／EquipmentType／EquipmentNo 多選、條件查詢及 13 欄 OEE grid；不在查詢頁重算指標。詳 [RT416 規格與家用端 handoff](docs/modules/RPT/整體設備效率OEE_RT416.md)。
+- [ ] `TBLRPTEQPOEESUMMARY`、`TBLRPTEQPOEELot` 原生 Oracle DDL／metadata 未在 repo；桌機找不到受保護 Oracle profile/attachment，未查 Oracle、未猜 CREATE-only。profile 可用後只讀查結構，不查業務資料。
+- [ ] 家用端先確認 summary rows 的正式同步／產生來源，再按規格設計登入保護唯讀 API；公司端未連 PostgreSQL、未做 API/schema、未 build／test／browser。
 
 ## 2026-11-27 OE 工單管理優先覆核
 
 - [x] 公司端 OE「工單管理」：OE101–OE209、OEB01、OEP01 共 13 項的來源、Vue DEV 入口、單項規格及跨畫面 [模組總覽](docs/modules/OE/工單管理模組總覽.md) 已完成。
 - [x] 正式 API／schema 仍由家用端依原 handoff 處理；使用者最新優先順序已改為 WIP 在製品管理。
 - [x] RT414 已接續完成，獨立入口重用 ES409 畫面；詳 [RT414 規格](docs/modules/RPT/設備狀態期間統計_RT414.md)。
-- [x] RT415 已完成 DEV 與來源／API 規格交接，詳 [RT415 規格](docs/modules/RPT/異常單柏拉圖分析_RT415.md)。公司端下一項依清冊為 RT416。PM301–PM303「保養工單」為不同功能群，來源結構待交付事項仍列於下節及 PM 規格。
+- [x] RT415 已完成 DEV 與來源／API 規格交接，RT416 亦已完成公司端 DEV／規格交接；後續先依本檔 WIP 優先順序處理 WPI05 來源缺口，再接續其他可取得來源的功能。PM301–PM303「保養工單」為不同功能群，來源結構待交付事項仍列於下節及 PM 規格。
 
 ## 家用端追加交接：PM301–PM303 工單流程缺少來源結構（2026-11-27）
 

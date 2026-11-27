@@ -137,6 +137,7 @@ import EmsApplyEquipmentAccessory from './components/EmsApplyEquipmentAccessory.
 import EmsEquipmentStateControlSetting from './components/EmsEquipmentStateControlSetting.vue'
 import EmsEquipmentStateStatistics from './components/EmsEquipmentStateStatistics.vue'
 import RptErfPareto from './components/RptErfPareto.vue'
+import RptEqpOeeSummary from './components/RptEqpOeeSummary.vue'
 import EmsEquipmentReasonBasis from './components/EmsEquipmentReasonBasis.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
@@ -891,6 +892,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:RPT:EQP MTTR SUMMARY BYMONTH', label: '設備 MTTR 統計表_以月份匯總', shortLabel: 'MTTR 月報', functionNo: 'EQP MTTR SUMMARY BYMONTH', moduleNo: 'RPT' },
         { id: 'function:RPT:EQP STATE STATISTICS', label: '設備狀態期間統計', shortLabel: '設備狀態統計', functionNo: 'EQP STATE STATISTICS', moduleNo: 'RPT' },
         { id: 'function:RPT:ERFPARETO', label: '異常單柏拉圖分析', shortLabel: '異常柏拉圖', functionNo: 'ERFPARETO', moduleNo: 'RPT' },
+        { id: 'function:RPT:EQP OEE SUMMARY', label: '整體設備效率 (OEE)', shortLabel: '設備 OEE', functionNo: 'EQP OEE SUMMARY', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1284,6 +1286,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:EQP MTTR SUMMARY BYMONTH': appBasePath + '/RPT/EqpMttrSummaryByMonth',
   'function:RPT:EQP STATE STATISTICS': appBasePath + '/RPT/EquipmentStateStatistics',
   'function:RPT:ERFPARETO': appBasePath + '/RPT/ErfPareto',
+  'function:RPT:EQP OEE SUMMARY': appBasePath + '/RPT/EqpOeeSummary',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1770,6 +1773,7 @@ const isRt412EqpMttrSummaryPage = computed(() => activeMasterKey.value === 'func
 const isRt413EqpMttrSummaryByMonthPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY BYMONTH')
 const isRt414EqpStateStatisticsPage = computed(() => activeMasterKey.value === 'function:RPT:EQP STATE STATISTICS')
 const isRt415ErfParetoPage = computed(() => activeMasterKey.value === 'function:RPT:ERFPARETO')
+const isRt416EqpOeeSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:EQP OEE SUMMARY')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -4454,6 +4458,7 @@ async function signOut(): Promise<void> {
         <EmsEquipmentStateControlSetting v-else-if="isEmsEquipmentStateControlSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateStatistics v-else-if="isEmsEquipmentStateStatisticsPage || isRt414EqpStateStatisticsPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <RptErfPareto v-else-if="isRt415ErfParetoPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <RptEqpOeeSummary v-else-if="isRt416EqpOeeSummaryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentReasonBasis v-else-if="isEmsEquipmentReasonBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

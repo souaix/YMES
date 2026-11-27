@@ -6,6 +6,12 @@
 - [ ] UI client 沒有直接指出 Oracle table，現階段不建立 guessed schema／CREATE-only SQL。若 server/Core 確認 MES 表名，請公司端再唯讀交付 MESTEST DDL／metadata。
 - [ ] WP803 公司端正式 UI 已接家用端 8D Close API，DEV 驗收仍待執行；正式 Approve 保持停用，詳 [公司端待辦](todolist_officepc.md) 與 [WP803 規格](docs/modules/WIP/8D矯正單結案作業.md)。
 
+## 公司端 RT416 OEE handoff（2026-11-27）
+
+- [ ] 公司端已完成 `/YMES/RPT/EqpOeeSummary` DEV 假資料及 RT416 Form／Designer／Service／Core／MESAutoRun 規格。RT416 Core 讀 `TBLRPTEQPOEESUMMARY`，AutoRun 會重算該表並維護 `TBLRPTEQPOEELot`；先核實家用端是否有主表同步 rows 及其更新頻率，不要把 AutoRun 刪除／重建流程直接搬到正式 YMES API。
+- [ ] 待公司端以受保護 Oracle profile 唯讀交付 `TBLRPTEQPOEESUMMARY`（及確認 scope 後的 `TBLRPTEQPOEELot`）DDL／metadata。桌機目前找不到 Oracle attachment/profile，repo 無可信 source DDL；收到結構前不新增 CREATE-only schema。
+- [ ] 主表資料來源確認後，設計登入／RT416 ACL 保護的唯讀 `GET /api/reports/equipment-oee-summary`，支援 startDate/endDate、areaNos、equipmentTypes、equipmentNos，回 13 個 grid 欄位；需 parameterized SQL、日期跨度及設備數上限。指標由既有 OEE summary 供應，不在 API 臨時計算。詳 [RT416 規格](docs/modules/RPT/整體設備效率OEE_RT416.md)。
+
 ## 公司端交接優先順序（2026-11-27）
 
 - [x] RT413「設備 MTTR 統計表_以月份匯總」已完成公司端 DEV／規格交接，家用端 API/schema 工作由本清單另行追蹤。

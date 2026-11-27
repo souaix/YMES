@@ -4,7 +4,7 @@
 
 ## 全案優先順序更新（2026-11-27）
 
-- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者提高 WIP「在製品管理」優先度；WP803 正式 UI 接線與 WIPINV_CS「入庫作業」DEV／規格 handoff 已完成。WIPINV_CS 的 server Service/Core／SAP 交易來源缺失；WPI05 原始來源也缺失。先處理可核實 WIP 項目，再回 RT416；公司端不連 PostgreSQL、不實作正式 API/schema。
+- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。等待來源期間，延續手上的 RT416 與其他可取得來源的工作。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
 
 ## 公司端最新交付：RPT RT413 設備 MTTR 統計表_以月份匯總（2026-11-27）
 

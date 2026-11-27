@@ -2,10 +2,13 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
+使用者最新優先序（2026-11-27）：WIP「在製品管理」先於其他尚未開始的模組。清冊與 Vue route 差異覆核範圍內，WPI05 是唯一待原始來源的 WIP 選單功能；取得 Form／Service／Core 後優先復刻。來源未到位期間，繼續已在進行中的 RT416 與其他可取得來源的功能。
+
 - WIP `WIPINV_CS`「入庫作業」：[功能規格與家用端 API handoff](modules/WIP/WIPINV_CS入庫作業.md)。核對 THEIL `frmWP_INV_THEIL_BU1`／Designer／`WEBAPI.vb`；完成 `/YMES/WIP/InvInbound` DEV 假資料搜尋、Normal／Lite-On payload、GOOD／BAD 示意明細、逐筆入庫與部分成功情境。可讀 source 沒有 server Service/Core、ERP 交易或直接 Oracle 表名；未猜 DDL、未連 Oracle／YMES PostgreSQL、未做正式 API/schema、未 build／test／browser。家用端先補 endpoint server contract，再確定安全正式介接。
 
-- RT414「設備狀態期間統計」：[功能規格與家用端 API handoff](modules/RPT/設備狀態期間統計_RT414.md)。核對清冊及 ES409 共用 Form／Designer、RPT Service／Core；新增獨立 RT414 選單與 `/YMES/RPT/EquipmentStateStatistics` 路徑，DEV 重用 ES409 查詢畫面及假資料。Oracle DDL refs 沿用 ES409，未新查 Oracle；正式 API/schema 由家用端接續。RT415 已完成，下一項為 RT416。
-- RT415「異常單柏拉圖分析」：[功能規格與家用端 API handoff](modules/RPT/異常單柏拉圖分析_RT415.md)。核對查詢／結果／魚骨 Form、RPT Service／Core；完成 `/YMES/RPT/ErfPareto` DEV 假資料查詢、五種多選條件、Hold Qty Pareto 與累積線、Top-N、明細和魚骨要因摘要。沿用 QC409／WP501／WP503／WP305／WP101／QC HoldItem DDL及 CREATE-only refs；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。下一項為 RT416。
+- RT414「設備狀態期間統計」：[功能規格與家用端 API handoff](modules/RPT/設備狀態期間統計_RT414.md)。核對清冊及 ES409 共用 Form／Designer、RPT Service／Core；新增獨立 RT414 選單與 `/YMES/RPT/EquipmentStateStatistics` 路徑，DEV 重用 ES409 查詢畫面及假資料。Oracle DDL refs 沿用 ES409，未新查 Oracle；正式 API/schema 由家用端接續。RT415、RT416 均已完成；未來優先序依本索引開頭的 WIP 指示及清冊安排。
+- RT415「異常單柏拉圖分析」：[功能規格與家用端 API handoff](modules/RPT/異常單柏拉圖分析_RT415.md)。核對查詢／結果／魚骨 Form、RPT Service／Core；完成 `/YMES/RPT/ErfPareto` DEV 假資料查詢、五種多選條件、Hold Qty Pareto 與累積線、Top-N、明細和魚骨要因摘要。沿用 QC409／WP501／WP503／WP305／WP101／QC HoldItem DDL及 CREATE-only refs；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。RT416 已完成，後續依目前優先序接續。
+- RT416「整體設備效率 (OEE)」：[功能規格與家用端 API handoff](modules/RPT/整體設備效率OEE_RT416.md)。核對 `frmEQPOEESummary`／Designer、`wsRPT.LoadEQPOEESummary`、`clsReport.LoadEQPOEESummary` 及 MESAutoRun OEE summary 產生流程；完成 `/YMES/RPT/EqpOeeSummary` DEV 多選條件與 13 欄報表。OEE summary/lot table Oracle DDL 未在 repo，桌機受保護 Oracle profile 不存在，未查 Oracle／猜 DDL；未連 PostgreSQL／做正式 API/schema／build/test/browser。家用端先核實 summary 同步與 refresh 來源。
 
 - RT412「設備 MTTR 統計表」：[功能規格與家用端 API handoff](modules/RPT/設備MTTR統計表_RT412.md)。核對 `frmEQP_MTTRSummary`／Designer、`wsRPT.LoadEQPMTTRSummary` 與 `clsReport.LoadEQPMTTRSummary`／`ShowEQPMTTRSummary`；完成 `/YMES/RPT/EqpMttrSummary` DEV 日期／多選篩選、Chamber 顯示、MTTR／MTBF／Availability 報表。記錄來源 SQL 區間截短、故障狀態控制、父設備篩選未通過 Service 及隱藏的月結 Save。所需 MESTEST DDL refs 已在 repo；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。RT413 已接續完成。
 
