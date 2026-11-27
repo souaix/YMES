@@ -1,8 +1,16 @@
 # 公司端待辦
 
+## 2026-11-27 使用者優先順序：WIP 在製品管理
+
+- [x] 優先盤點並接續 WIP。WP803 正式 API UI 接線已完成；尚未做 DEV 假資料驗收。
+- [x] WIPINV_CS「入庫作業」已核對 THEIL Form／Designer／WinForms API client，完成 DEV 假資料畫面與逐筆入庫互動、規格及家用端 handoff；未找到 server Service/Core，未猜資料表 DDL。
+- [x] 清冊與 Vue route 差異覆核後，WP804 已完成；目前唯一缺原始來源的 WIP 選單功能為 WPI05。
+- [ ] WPI05「配件領用單維護作業」原始 Form／Service／Core 缺失，維持待來源，不以相似功能推測；先接續 RPT RT416。
+
 ## 2026-11-27 OE 工單管理優先覆核
 
-- [x] 依使用者指定優先檢查 OE「工單管理」：OE101–OE209、OEB01、OEP01 共 13 項均有來源、Vue DEV 入口及單項規格，並完成跨畫面 [模組總覽](docs/modules/OE/工單管理模組總覽.md)。公司端無缺頁；正式 API／schema 仍由家用端按單項 handoff 執行。
+- [x] 公司端 OE「工單管理」：OE101–OE209、OEB01、OEP01 共 13 項的來源、Vue DEV 入口、單項規格及跨畫面 [模組總覽](docs/modules/OE/工單管理模組總覽.md) 已完成。
+- [x] 正式 API／schema 仍由家用端依原 handoff 處理；使用者最新優先順序已改為 WIP 在製品管理。
 - [x] RT414 已接續完成，獨立入口重用 ES409 畫面；詳 [RT414 規格](docs/modules/RPT/設備狀態期間統計_RT414.md)。
 - [x] RT415 已完成 DEV 與來源／API 規格交接，詳 [RT415 規格](docs/modules/RPT/異常單柏拉圖分析_RT415.md)。公司端下一項依清冊為 RT416。PM301–PM303「保養工單」為不同功能群，來源結構待交付事項仍列於下節及 PM 規格。
 
@@ -14,11 +22,11 @@
 
 家用端查核與各流程依賴詳見 [PM301](docs/modules/PM/開立保養工單_PM301.md)、[PM302](docs/modules/PM/保養工單下線_PM302.md)、[PM303](docs/modules/PM/保養工單完成與回報_PM303.md)。
 
-## 公司端接手：WIP WP803 正式 API UI 對接（2026-11-27）
+## WIP 在製品管理優先接續：WP803 正式 API UI 對接（2026-11-27）
 
 - [x] 家用端已部署登入保護 `/YMES/API/api/wip/8d-close` 清單、`/{qrsNo}` 明細、`/{qrsNo}/team-members?departmentNo=...` D1 部門/人員查找及 `PUT /{qrsNo}` 結案欄位更新；修改會驗 expected snapshot、IssueState、主單未結案及人員屬於該 QRS 的 D1 團隊。詳 [WP803 模組規格](docs/modules/WIP/8D矯正單結案作業.md)。
-- [ ] 公司端 pull 後將 `/YMES/WIP/8DClose` 正式模式接到家用端 API；保留 DEV localStorage 假資料流程。接清單條件／日期／分頁、明細、D1 部門及人員 lookup、expected+value 編輯提交與正式 loading/error/empty/conflict 狀態；正式模式不得讀假資料或回假成功。
-- [ ] `Approve` 在正式模式維持停用並提示簽核來源尚未就緒；API 暫回 503 且不改資料。請公司端補交原生 `8D CLOSE` Issue Job Map、Approve/Reject callback、通知與 ReleaseLog/Basis D9 的交易來源，家用端再完成簽核 API。
+- [x] `/YMES/WIP/8DClose` 正式模式已接家用端 API；DEV localStorage 假資料流程保留。正式頁支援清單條件／日期／分頁、明細、D1 部門及人員 lookup、expected+value 編輯提交與 loading/error/empty/conflict 狀態，不讀假資料或回假成功。詳 [WP803 規格](docs/modules/WIP/8D矯正單結案作業.md)。
+- [x] `Approve` 在正式模式停用並提示簽核來源尚未就緒；API 暫回 503 且不改資料。待交付原生 `8D CLOSE` Issue Job Map、Approve/Reject callback、通知與 ReleaseLog/Basis D9 的交易來源後，再由家用端完成簽核 API。
 - [ ] 公司端以 DEV 假資料驗收清單、查詢條件、分頁、明細、D1 部門/人員、編輯成功、必填/欄長錯誤、409 stale snapshot、Close/重進/直接網址；完成後更新 WP803 模組 MD。正式資料目前四張 8D 表皆空，先不灌生產測試列；公司端不連 PostgreSQL、不做 SSH/部署。
 
 ## 公司端接手：RT201–RT203 作業站看板 API 對接與設定來源（2026-11-27）

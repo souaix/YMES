@@ -2,6 +2,8 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
+- WIP `WIPINV_CS`「入庫作業」：[功能規格與家用端 API handoff](modules/WIP/WIPINV_CS入庫作業.md)。核對 THEIL `frmWP_INV_THEIL_BU1`／Designer／`WEBAPI.vb`；完成 `/YMES/WIP/InvInbound` DEV 假資料搜尋、Normal／Lite-On payload、GOOD／BAD 示意明細、逐筆入庫與部分成功情境。可讀 source 沒有 server Service/Core、ERP 交易或直接 Oracle 表名；未猜 DDL、未連 Oracle／YMES PostgreSQL、未做正式 API/schema、未 build／test／browser。家用端先補 endpoint server contract，再確定安全正式介接。
+
 - RT414「設備狀態期間統計」：[功能規格與家用端 API handoff](modules/RPT/設備狀態期間統計_RT414.md)。核對清冊及 ES409 共用 Form／Designer、RPT Service／Core；新增獨立 RT414 選單與 `/YMES/RPT/EquipmentStateStatistics` 路徑，DEV 重用 ES409 查詢畫面及假資料。Oracle DDL refs 沿用 ES409，未新查 Oracle；正式 API/schema 由家用端接續。RT415 已完成，下一項為 RT416。
 - RT415「異常單柏拉圖分析」：[功能規格與家用端 API handoff](modules/RPT/異常單柏拉圖分析_RT415.md)。核對查詢／結果／魚骨 Form、RPT Service／Core；完成 `/YMES/RPT/ErfPareto` DEV 假資料查詢、五種多選條件、Hold Qty Pareto 與累積線、Top-N、明細和魚骨要因摘要。沿用 QC409／WP501／WP503／WP305／WP101／QC HoldItem DDL及 CREATE-only refs；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。下一項為 RT416。
 

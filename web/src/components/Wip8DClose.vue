@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 
 type Cell = string | number | null
 type Basis = Record<string, Cell> & { qrsNo: string; issueState: number; curStage: string }
@@ -8,9 +8,10 @@ type ReleaseLog = { qrsNo: string; releaseType: number; releaseMemo: string; rel
 type TeamMember = { departmentNo: string; departmentName: string; memberNo: string; memberName: string }
 type ChildRecord = { tables?: Record<string, Record<string, unknown>[]>; attachments?: Record<string, string[]> }
 
-const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string }>()
+const props = defineProps<{ apiBaseUrl?: string; developmentPreview?: boolean; currentUserNo?: string }>()
 const emit = defineEmits<{ close: []; open8dQuery: [qrsNo: string] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
+const LivePage = defineAsyncComponent(() => import('./Wip8DCloseLive.vue'))
 const unavailableText = '正式環境尚未開放此功能。'
 const basisKey = 'ymes-dev-mock:wip-8d-basis-factory:state:v1'
 const childKey = 'ymes-dev-mock:wip-8d-maintain:state:v1'
@@ -214,7 +215,8 @@ watch(dev, enabled => {
 </script>
 
 <template>
-  <section class="wp803">
+  <component :is="LivePage" v-if="!dev" :api-base-url="props.apiBaseUrl || ''" :current-user-no="props.currentUserNo || ''" @close="emit('close')" @open8d-query="emit('open8dQuery', $event)" />
+  <section v-else class="wp803">
     <div v-if="dev" class="dev-note">DEV 假資料預覽 · 結案申請沿用 WP802 的本機資料；正式簽核及資料庫寫入由 API 執行。</div>
     <h1>8D 矯正單結案作業 <small>8D CLOSE · WP803</small></h1>
     <p v-if="error" class="feedback error" role="alert">{{ error }}</p><p v-else class="feedback" role="status">{{ message }}</p>

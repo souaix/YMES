@@ -2,6 +2,10 @@
 
 更新：2026-11-27。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
+## 全案優先順序更新（2026-11-27）
+
+- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者提高 WIP「在製品管理」優先度；WP803 正式 UI 接線與 WIPINV_CS「入庫作業」DEV／規格 handoff 已完成。WIPINV_CS 的 server Service/Core／SAP 交易來源缺失；WPI05 原始來源也缺失。先處理可核實 WIP 項目，再回 RT416；公司端不連 PostgreSQL、不實作正式 API/schema。
+
 ## 公司端最新交付：RPT RT413 設備 MTTR 統計表_以月份匯總（2026-11-27）
 
 - [x] 核對主／Chamber `frmEQP_MTTRSummary_byMonth`／Designer、`wsRPT.LoadEQPMTTRSummary_ByMonth`、`clsReport.LoadEQPMTTRSummary_byMonth` 與趨勢圖 Form；完成 `/YMES/RPT/EqpMttrSummaryByMonth` DEV 月報表、Chamber 子報表、多條件查詢及 MTTR／MTBF／Availability 趨勢圖。[RT413 規格](modules/RPT/設備MTTR統計表_以月份匯總_RT413.md)
@@ -519,7 +523,7 @@
 - **2026-11-20 WP508 接續**：已核 `frmERFBasis`／`wsWIP.LoadERFBasisJoinLotBasis`／`clsLot.LoadERFBasisJoinLotBasis`，完成 `/YMES/WIP/ErfBasis` 六條件＋日期、batch member 查詢、25 欄 Grid 與 8D 待接提示。追 `WP_ERFInformation` 後更正「只讀」描述：附件 Grid 有 View/Delete，會保護異常單產生檔；DEV 已補五頁欄位與假附件操作。受保護 MESTEST 唯讀取得 8D Basis 43 欄及 LotDisposition 16 欄/PK/索引 DDL/metadata，交 PG CREATE-only；OCAP 附件源 DDL 沿 QC409，CREATE 補在 WP508info。正式五頁真資料/附件 API 與 WP801 8D 工作流待家用端；公司端接著追 WP801 source。未執行 build/test/browser。
 - **2026-11-20 WP801 接續**：已追 `frmWP8DBasisFactory`／Def、Service/Core/流水號；`/YMES/WIP/8DBasisFactory` Vue DEV 有四狀態/QRSNo、40 欄、ADD/EDIT/DEL/Copy/Approve/ERFINFO，與 WP508 無 QRSNo 的假 ERF 建立關聯。主表 DDL 沿 WP508，Oracle 唯讀補兩張 SerialRule source DDL/metadata；原 first_phase PG CREATE 漏五個 Oracle default，新交準確 CREATE-only。公司端未連 PG、未 build/test/browser。家用端負責真序號/ERF 原子交易、Issue Job、API/遷移；公司端下一項 WP802 8D 維護來源。
 - **2026-11-20 WP802 接續**：已追 `frmWP8DMaintain`、`frmWP_8DMaintainDefine`、子 Form 入口與 `wsWIP`/`clsWIP`；`/YMES/WIP/8DMaintain` Vue DEV 有 38 欄已簽核/未結案清單、Basis 至 D9 十頁及 D1–D7 明細/Verify/Track、D8 假總結、附件檔名與 WP508 有 QRSNo 直達。公司端用受保護 MESTEST 唯讀取得 12 張 8D 子表 source/index/metadata，另交 PG CREATE-only；TeamMember 是 unique index、無 PK constraint。專屬 Form/FishBone/附件 BLOB 詳情的 DEV 簡化見 `docs/modules/WIP/8D矯正單維護作業.md`。家用端接真 API/PG，下一項公司端 WP803 結案作業；未連 PG、未 build/test/browser。
-- **2026-11-20 WP803 接續**：已追 `frmWP8DClose`／Def、`wsWIP`/`clsWIP`；`/YMES/WIP/8DClose` Vue DEV 有四狀態、五條件、九欄、結案編輯、D1 lookup、多選 Approve 及 8DQuery 唯讀。Release/ReleaseLog/TeamMember/Basis 沿 WP802/WP508；另唯讀取得部門表 14 欄 Oracle DDL/metadata，PG CREATE-only 補原 bootstrap 四個 default。WinForms Pending 提前結案、工作流 SQL 改錯表與 ActiveRow 錯列詳見 `docs/modules/WIP/8D矯正單結案作業.md`；家用端須用原子交易/正確 Issue 表接正式 API。公司端下一項 WP804；未連 PG、未 build/test/browser。
+- **2026-11-20 WP803 接續**：已追 `frmWP8DClose`／Def、`wsWIP`/`clsWIP`；`/YMES/WIP/8DClose` Vue DEV 有四狀態、五條件、九欄、結案編輯、D1 lookup、多選 Approve 及 8DQuery 唯讀。Release/ReleaseLog/TeamMember/Basis 沿 WP802/WP508；另唯讀取得部門表 14 欄 Oracle DDL/metadata，PG CREATE-only 補原 bootstrap 四個 default。WinForms Pending 提前結案、工作流 SQL 改錯表與 ActiveRow 錯列詳見 `docs/modules/WIP/8D矯正單結案作業.md`；家用端須用原子交易/正確 Issue 表接正式 API。當時下一項 WP804 已完成；未連 PG、未 build/test/browser。
 - **2026-11-20 WP804 接續**：已追 `frmWP8DQuery`、`wsWIP.Load8DBasisFactory`、`clsWIP.Load8DBasisFactory`；`/YMES/WIP/8DQuery` Vue DEV 十組條件、39 欄跨狀態查詢、ERFNo 外部參數與 WP802 唯讀十頁。來源只勾 WIPERF/Other 會漏 QRSClass 條件，已於 DEV 修正並在 `docs/modules/WIP/8D矯正單查詢.md` 記錄。主表 Oracle source/PG CREATE-only 沿 WP508，無新表；家用端接分頁真 API。未連 PG、未 build/test/browser。
 - **2026-11-20 WP501 Release EQP 補核**：來源 Form → wsWIP → clsLot 確認 0 行警告無法阻擋提交，且把無設備與其他 Lot 共用混在一起。公司 DEV 已補 Vendor/Material、數字 EquipmentState 選單、共用／獨佔設備兩種假分支與原 v1 storage 增量升級。`TBLWIPTEMP_EQUIPMENT`、`TBLEMSEQUIPMENTSTATE`、`TBLEQPSTATEBASIS` 都有既有 reference，無新增直接表。詳 `docs/modules/WIP/立即異常設定.md` 和 home TODO；正式 API 必須在交易中驗證設備占用。接續 inventory 其他未完成 WIP 功能。未連 PG、未 build/test/browser。
 - **WP203「過帳設備設定」（`EQP FAVORITE SETUP`）公司端 DEV 與 handoff 已完成。** 原始來源為 `STD/MESWin/WIP/WP_EquipmentFavorite/frmEquipmentFavorite.vb`、`frmEquipmentFavoriteDef.vb`、`STD/MESws_STD/wsSTD/wsEQP/wsEQP.cs`、`STD/MESkc/kcEQP/clsEQPBasis.cs`。重用 WP204 的 `TBLEQPFAVORITE` source DDL/CREATE-only；沒有新增 Oracle table。HostId 是 workstation-scoped，Production API 不得信任瀏覽器傳值。

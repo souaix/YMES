@@ -1,9 +1,15 @@
 # 家裡電腦接手清單
 
+## 公司端最新 WIP 交接（2026-11-27）
+
+- [ ] WIPINV_CS「入庫作業」公司端已完成 `/YMES/WIP/InvInbound` DEV 假資料與規格。WinForms client 呼叫 `api/WipInventory/GetLotList`、`GetGoodDetail`、`GetBadDetail`、`Inbound`；目前可讀樹只有 Form／Designer／WEBAPI client，缺 endpoint server、Service/Core、SQL 與 SAP 交易實作。先取得可信 server contract，核對授權、SAP runtime config、交易、重試／冪等、逾時及部分成功對帳，再設計 YMES API；不得直接把舊 endpoint 或 SAP 設定暴露到瀏覽器。
+- [ ] UI client 沒有直接指出 Oracle table，現階段不建立 guessed schema／CREATE-only SQL。若 server/Core 確認 MES 表名，請公司端再唯讀交付 MESTEST DDL／metadata。
+- [ ] WP803 公司端正式 UI 已接家用端 8D Close API，DEV 驗收仍待執行；正式 Approve 保持停用，詳 [公司端待辦](todolist_officepc.md) 與 [WP803 規格](docs/modules/WIP/8D矯正單結案作業.md)。
+
 ## 公司端交接優先順序（2026-11-27）
 
 - [x] RT413「設備 MTTR 統計表_以月份匯總」已完成公司端 DEV／規格交接，家用端 API/schema 工作由本清單另行追蹤。
-- [x] 公司桌機已優先覆核 OE 工單管理 13 項：原始 Form、獨立規格與 Vue route／page mode 均有對應，未發現公司端缺頁；跨畫面入口與流程見 [OE 工單管理總覽](docs/modules/OE/工單管理模組總覽.md)。RT414 已新增獨立 RPT 入口並重用 ES409 DEV 畫面；RT415 完成 DEV 假資料 Pareto／魚骨分析及 API handoff。詳 [RT414](docs/modules/RPT/設備狀態期間統計_RT414.md)、[RT415](docs/modules/RPT/異常單柏拉圖分析_RT415.md)。正式 API／schema 仍由家用端接續；公司端下一項為 RT416。
+- [x] 公司桌機已完成 OE 工單管理 13 項的 Form／Service／Core 覆核、DEV 與規格；正式 API／schema 由家用端依原 handoff 處理。RT414 已新增獨立 RPT 入口並重用 ES409 DEV 畫面；RT415 完成 DEV 假資料 Pareto／魚骨分析及 API handoff。詳 [RT414](docs/modules/RPT/設備狀態期間統計_RT414.md)、[RT415](docs/modules/RPT/異常單柏拉圖分析_RT415.md)。
 
 ## 家用端 PM301–PM303 工單流程 schema 查核（2026-11-27）
 

@@ -110,6 +110,7 @@ import WipTransferFactory from './components/WipTransferFactory.vue'
 import WipLabelPrint from './components/WipLabelPrint.vue'
 import WipBartenderPrint from './components/WipBartenderPrint.vue'
 import WipUnInventory from './components/WipUnInventory.vue'
+import WipInvInbound from './components/WipInvInbound.vue'
 import WipLotQuantityAdjust from './components/WipLotQuantityAdjust.vue'
 import EmsEquipmentStateChange from './components/EmsEquipmentStateChange.vue'
 import EmsEquipmentControl from './components/EmsEquipmentControl.vue'
@@ -774,6 +775,7 @@ const fallbackMenuTree: MenuNode[] = [
       { id: 'function:WIP:INV COUNT STATE', label: '盤點關／開帳（DEV）', shortLabel: '盤點狀態', functionNo: 'INV COUNT STATE', moduleNo: 'WIP' },
       { id: 'function:WIP:BARTENDER', label: 'Bartender print（DEV）', shortLabel: '標籤列印', functionNo: 'BARTENDER', moduleNo: 'WIP' },
       { id: 'function:WIP:WIPUNINV', label: '取消入庫作業（DEV）', shortLabel: '取消入庫', functionNo: 'WIPUNINV', moduleNo: 'WIP' },
+      { id: 'function:WIP:WIPINV_CS', label: '入庫作業（DEV）', shortLabel: '入庫作業', functionNo: 'WIPINV_CS', moduleNo: 'WIP' },
       { id: 'function:WIP:PACKING_MOLINE', label: '包裝作業', tableName: 'tblwipmolinepackl1', shortLabel: '包裝', functionNo: 'PACKING_MOLINE', moduleNo: 'WIP' },
       { id: 'function:WIP:PACKING_MOLINE_INV', label: '在製品庫包裝作業', tableName: 'tblinvpackstate', shortLabel: '庫包', functionNo: 'PACKING_MOLINE_INV', moduleNo: 'WIP' },
       { id: 'function:WIP:WIP INV', label: '在製品庫帳務維護', tableName: 'tblinvwipinventory_semi', shortLabel: '在製品庫', functionNo: 'WIP INV', moduleNo: 'WIP' },
@@ -1041,6 +1043,7 @@ const menuRoutes: Record<string, string> = {
   'function:WIP:INV COUNT STATE': appBasePath + '/WIP/InvCountState',
   'function:WIP:BARTENDER': appBasePath + '/WIP/BartenderPrint',
   'function:WIP:WIPUNINV': appBasePath + '/WIP/UnInventory',
+  'function:WIP:WIPINV_CS': appBasePath + '/WIP/InvInbound',
   'function:WIP:EQP FAVORITE SETUP': appBasePath + '/WIP/EquipmentFavorites',
   'function:WIP:EQP QCLIST ONLINE CHECK': appBasePath + '/WIP/EquipmentOnlineQC',
   'function:WIP:EQP QCLIST LOG': appBasePath + '/WIP/EquipmentQcListLog',
@@ -1818,6 +1821,7 @@ const isWipInvCountStatePrintPage = computed(() => activeMasterKey.value === 'fu
 const isWipInvCountStatePage = computed(() => activeMasterKey.value === 'function:WIP:INV COUNT STATE')
 const isWipBartenderPrintPage = computed(() => activeMasterKey.value === 'function:WIP:BARTENDER')
 const isWipUnInventoryPage = computed(() => activeMasterKey.value === 'function:WIP:WIPUNINV')
+const isWipInvInboundPage = computed(() => activeMasterKey.value === 'function:WIP:WIPINV_CS')
 const isWipOperatorLoginPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN')
 const isWipOperatorLoginLotPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR LOGIN_LOT')
 const isWipOperatorClockInPage = computed(() => activeMasterKey.value === 'function:WIP:OPERATOR CLOCKIN')
@@ -4367,7 +4371,7 @@ async function signOut(): Promise<void> {
         <WipWaitDisposition v-else-if="isWipWaitDispositionPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <Wip8DBasisFactory v-else-if="isWip8DBasisFactoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :linked-erf="pending8dErf" @open-erf-info="openErfInfoFrom8d" @close="navigateHome" />
         <Wip8DMaintain v-else-if="isWip8DMaintainPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-qrs-no="pending8dMaintainNo" :read-only="pending8dMaintainReadOnly" @open-erf-info="openErfInfoFrom8d" @close="close8dMaintain" />
-        <Wip8DClose v-else-if="isWip8DClosePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromClose" @close="navigateHome" />
+        <Wip8DClose v-else-if="isWip8DClosePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromClose" @close="navigateHome" />
         <Wip8DQuery v-else-if="isWip8DQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromQuery" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
@@ -4402,6 +4406,7 @@ async function signOut(): Promise<void> {
         <WipInvCountState v-else-if="isWipInvCountStatePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipBartenderPrint v-else-if="isWipBartenderPrintPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipUnInventory v-else-if="isWipUnInventoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <WipInvInbound v-else-if="isWipInvInboundPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLogin v-else-if="isWipOperatorLoginPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorLoginLot v-else-if="isWipOperatorLoginLotPage" class="framework-content office-wip-module" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipOperatorClockIn v-else-if="isWipOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
