@@ -19,6 +19,8 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 最新補記（2026-11-27）：RT601「生產批使用物料查詢」已核對 inline `frmCont_Material_byLot`／`wsWIP.LoadCont_Material_JoinLog`／`clsLot.LoadCont_Material_JoinLog`，完成 `/YMES/RPT/ContMaterialByLot` DEV Lot No 查詢與 16 欄 Grid。記錄空 LotNo 會觸發 Core 未限制資料分支、MaterialLot join 鍵缺 LotSerial；WP201／WP112／MTL／PRD／OP DDL refs 沿用。未連 PostgreSQL、未新查 Oracle／新增 DDL、未做 API/schema、未 build／test／browser。詳 [RT601 規格與家用端 handoff](modules/RPT/生產批使用物料查詢_RT601.md)。
 
+最新補記（2026-11-27）：RT602「物料用於生產批查詢」已核對 inline `frmCont_Material_byMaterial`／`wsWIP.LoadCont_Material_JoinLog`／`clsLot.LoadCont_Material_JoinLog`；完成 `/YMES/RPT/MaterialUsageByMaterial` DEV Material／Product radio、lookup、獨立 DeductTime 範圍與 11 欄 Grid。ProductNo 舊參數映射及 `%` 提示／Core 等號不一致已記錄，DEV 依 UI 意圖處理。WP201／WP112／MTL／PRD／OP DDL refs 沿用；未連 PostgreSQL、未新查 Oracle／新增 DDL、未做 API/schema、未 build／test／browser。詳 [RT602 規格與家用端 handoff](modules/RPT/物料用於生產批查詢_RT602.md)。
+
 最新補記（2026-11-27）：RT416 核對 `frmEQPOEESummary`／Designer、`wsRPT.LoadEQPOEESummary`、`clsReport.LoadEQPOEESummary` 及 MESAutoRun 日彙總產生邏輯；完成 `/YMES/RPT/EqpOeeSummary` DEV 日期及設備多選篩選、13 欄表格。`TBLRPTEQPOEESUMMARY`／`TBLRPTEQPOEELot` DDL 未在 repo，桌機無受保護 Oracle profile，未查 Oracle／猜 DDL；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。詳 [RT416 規格及 handoff](modules/RPT/整體設備效率OEE_RT416.md)。
 
 最新補記（2026-11-27）：RT417 核對 `frmRPTLotReleaseLog`／`wsRPT.LoadReleaseLog_Report`／`clsReport.LoadReleaseLog_Report` 及 component／BIN、split／merge 明細路徑；完成 `/YMES/RPT/LotReleaseLog` DEV 假資料查詢與 Lot 明細示意。`TBLWIPRELEASELOG` 等表 DDL refs 不在 repo，桌機受保護 Oracle profile 不存在，未查 Oracle／猜 DDL；未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。詳 [RT417 規格及 handoff](modules/RPT/生產批下線後歷程總表_RT417.md)。

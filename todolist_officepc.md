@@ -8,6 +8,13 @@
 - [x] 依使用者最新指示，WIP 在製品管理優先於其他尚未開始的模組。清冊與 Vue route 差異覆核後，除 WPI05 外，其餘 WIP 選單功能已有對應；WP804 已完成。
 - [ ] WIP 在製品管理維持全案最高優先序。公司端先做可核對來源的 WIP WinForms／DEV／規格；目前唯一缺公司端來源的 WIP 選單項是 WPI05「配件領用單維護作業」，CSiMES、THEIL、DEV_SILVA 均缺指定 Form／Service／Core，不能臆造，來源到位後先完成。缺來源期間可接續其他可做項目，有可做的 WIP 項目即插隊。家用端先處理 [家用端待辦](todolist_homepc.md) 中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目；受來源阻擋時記錄缺項並切換到下一個可做的 WIP 工作。
 
+## 2026-11-27 RT602 物料用於生產批查詢
+
+- [x] 核對 `frmCont_Material_byMaterial`（Designer 內嵌）、`wsWIP.LoadCont_Material_JoinLog` 與 `clsLot.LoadCont_Material_JoinLog`；DEV 完成 Material／Product radio、獨立 DeductTime 日期界線、lookup、萬用字元查詢與 11 欄 Grid。詳 [RT602 規格與家用端 API handoff](docs/modules/RPT/物料用於生產批查詢_RT602.md)。
+- [x] 記錄來源偏差：Product No 模式把 ProductNo 送為 MaterialNo、Core 仍等號比對 `TBLWIPCONT_MATERIAL.MaterialNo`；UI `%` 提示也未由 Core 實作。DEV 以畫面預期 ProductNo 欄位篩選並標示來源差異，家用端 API 不複製舊映射。
+- [x] 原生表與 lookup DDL refs 已在 repo（WP201／WP112／MTL／PRD／OP）；未新查 Oracle／猜 CREATE。公司端未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／同步，實作登入保護、參數化、bounded paging 唯讀 API；確認 ProductNo 預期來源欄位、萬用字元口徑與正式正向資料。
+
 ## 2026-11-27 RT601 生產批使用物料查詢
 
 - [x] 直接核對 `frmCont_Material_byLot`（Designer 內嵌）、`wsWIP.LoadCont_Material_JoinLog` 與 `clsLot.LoadCont_Material_JoinLog`；Form 只輸入 Lot No，ReportMode=True，Core 匯出 16 欄並經報表連線查詢。LotNo 空白會進未限制 Lot 的大查詢；Core 條件字串串接；MaterialLot join 未含 LotSerial，可能展開重複列。
