@@ -2060,8 +2060,10 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 確認 QC215 沒有專用資料表，不新增 CREATE SQL。沿用已保存 QC201/QC205/QC213 Oracle DDL 與 PostgreSQL CREATE 參考；本次未重連 Oracle、未讀業務列、未執行 Oracle DDL。
 - [x] 新增 `/YMES/QC/AttributeItemImport` Vue 3 DEV 頁與 QC215 三層選單；保留 WinForms File/Check Data/Save/Template DownLoad/Select All/UnSelect All/MultiSelect/Close、勾選列處理、逐列結果樣式與假資料操作。API 漏回列級結果時前端顯示失敗。
 - [x] 新增 `docs/modules/QC/計數品管項目匯入.md`，記錄來源程式、欄位、驗證、覆寫副作用、API 契約與資料表參照；更新規格索引、資料庫查詢紀錄及 `todolist_homepc.md`。
-- [ ] QC215 Production API/schema 由家用端依 `todolist_homepc.md` 實作；無新表/CREATE SQL。API 需在每列交易內重驗引用、逐列回報、要求 QC215 FunctionKey、由伺服器寫 audit，並禁止 Factor 動態 DDL。
-- [ ] 本段未執行 build、test 或瀏覽器驗收。接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 直接讀未遷移功能的 WinForms Form/Service/Core，完成 UI、規格與 API/schema handoff。
+- [x] 家用端完成登入保護 Preview／Check／逐列 Import／Template API，依來源核對 YMES schema，僅以 migration 0092 建立原本缺少的覆寫保護表 `TBLSPCATTBASISLOG`；API 已部署並完成 Release build 與正式 app-browser 的無效列檢核。專案目前要求登入、不做 FunctionKey/RBAC；詳細契約及限制見 `docs/modules/QC/計數品管項目匯入.md`。
+- [x] 本地 Release build 與正式瀏覽器操作已完成；正式有效列 Save／覆寫因沒有可安全使用的核准 lookup fixture，未在正式庫造資料。
+- [ ] 公司端由 MES 範本儲存區唯讀匯出 FunctionNo=`IMPORT QCITEM ATTRIBUTES` 的原始 `AttributesQCItem_Template.xls` 或 `.xlsx`（檔名 `AttributesQCItem_Template`），保留原工作表、欄名和第 2 列範例／說明，不要製作替代範本。將原檔交付家用端納入 YMES API 範本儲存及部署設定；家用端收到後驗證 `/api/qc/attribute-item-import/template` 下載。
+- [x] 公司端本段既有來源程式與 DDL handoff 已完成；無需重查 Oracle、無新增 CREATE SQL。接續依 `docs/MES_MENU_FUNCTION_INVENTORY.md` 公司端清冊繼續下一個未遷移功能。
 
 ### 前一項：QC214 計量品管項目匯入（公司端 2026-11-17）
 

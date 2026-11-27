@@ -2564,14 +2564,10 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 
 ## 前一項公司端 handoff：QC215 計數品管項目匯入（2026-11-17）
 
-- [ ] Pull 最新 `main`，先讀 `docs/modules/QC/計數品管項目匯入.md`、`docs/DATABASE_CONNECTION.md` 與本節。FunctionNo=`IMPORT QCITEM ATTRIBUTES`、FunctionKey=`QC215`；Vue DEV 頁 `/YMES/QC/AttributeItemImport` 已掛在品質資料 → 品管設定。
-- [ ] QC215 匯入既有計數品管資料，沒有 QC215 專用表，也沒有新的 CREATE SQL。先核對 YMES PostgreSQL live schema/migrations；主檔沿用 `mestest_mtl_qc_item_tables_source_ddl.sql` / `mestest_mtl_qc_item_tables_create.sql`，Parameter/Factor/ReasonMap 等子表參考 `mestest_qc_item_attributes_source_ddl.sql` / `mestest_qc_item_attributes_create.sql`，群組與依賴表參考 QC205/QC213 既有 source/CREATE。不得複製重建共用表；只為 live schema 真正缺少的 YMES 結構新增 forward migration。
-- [ ] 實作登入保護並要求 FunctionKey QC215 的 API：`POST /api/qc/attribute-item-import/preview`（multipart `.xls/.xlsx` 第一工作表；保留 WinForms 第 1 列欄名、第 2 列跳過、第 3 列起讀取）、`POST /check`（唯讀驗證）、`POST /import`（Save）及 `GET /template`。Production Vue 目前依此路徑呼叫；如配合既有 controller 改路徑，請同步改 Vue/spec。
-- [ ] Preview 回 `{rows:[{recognizedColumns...}]}`；Check/Import 每列回 `{rows:[{rowNo,qcItemNo,succeeded,result,execute}]}`。只處理前端勾選列，逐列獨立交易並回列級結果；缺少任何列結果要視為失敗，不能因 HTTP 200 或空訊息標成功。
-- [ ] 依 QC215 規格驗證 QCItemNo/Name、量測記錄引用、LotIsVaild、PlanNo/ComponentCollect、核准 RuleNo、正整數 LimitLotNum、MClass、FactorNo/FactorOnline、核准 OP/Inline/Offline、檢驗旗標與核准 Reason 清單；修正 legacy 重複 Reason 檢查失效問題。FactorNo 只能是核准 Parameter 白名單，絕不可由上傳值構造 SQL 欄名或觸發任意 `ALTER TABLE`。
-- [ ] Save 覆寫前在該列交易中重查 WIP、SPC Attribute Log、Material/MaterialType/OP/Product、`TBLQCITEMATTGORDERDETAIL` 及一般 QC Item Group 綁定。Legacy 會刪除既有主/子資料且未先保護一般 Group Detail；YMES 必須在群組仍有引用時拒絕覆寫，不可靜默解除綁定。完整清除/重建範圍及欄位預設值依 QC215 規格實作。
-- [ ] Creator/CreateDate 必須由登入身份與伺服器時間產生，不信任檔案內容；限制上傳檔案大小/列數/欄數，不執行公式或使用者提供的路徑。範本沿用 FunctionNo=`IMPORT QCITEM ATTRIBUTES` 的既有 template storage。
-- [ ] 公司端沿用已保存 Oracle DDL reference，本次沒有再查 Oracle、沒有讀業務列、不需要索取 IP/帳密/SID，也沒有新 CREATE SQL。家用端完成 schema/API/權限/template 後 commit/push；公司端再 pull 對接。公司端本段未執行 build、測試或瀏覽器驗收。
+- [x] 公司端已完成 WinForms／Service／Core 來源核對、Vue DEV 頁、規格與 Oracle DDL references；家用端依來源完成 YMES schema 核對、登入保護 Preview／Check／逐列 Import API 與 migration 0092，沒有要求或執行 FunctionKey/RBAC。
+- [x] Check 與 Import 每列重驗規則及引用，逐列獨立交易回報；Creator/CreateDate 由伺服器產生。Factor 只用核准 Parameter 白名單，覆寫會守住 SPC/WIP/Material/OP/Product/一般與 PMI Group 等引用，不執行動態 DDL。
+- [x] .NET 9 Release API 已部署；正式 app-browser 頁面、無效 Excel Preview／Check、欄位錯誤、單列勾選及全選／取消全選已驗證。無效列的 Save 確認視窗在提交前取消，沒有寫入正式業務資料。
+- [ ] 尚缺原生 MES `AttributesQCItem_Template.xls/.xlsx`。官方 Template endpoint 暫回 503；取得原始範本及安全有效 lookup fixture 後，再驗下載與正向 Save／覆寫。公司端交付要求詳 `todolist_officepc.md` QC215 區段。
 
 ## 前一項公司端 handoff：QC214 計量品管項目匯入（2026-11-17）
 
@@ -2654,8 +2650,16 @@ OPB03 只完成本模組已提供的操作，不把其他 MES 交易 provider �
 - [x] 建立完整資料庫備份後套用 migration 0091，記錄備份及 SQL checksum，回讀最小權限。
 - [x] API-only candidate 部署 QC214，保留 `ymes-api:before-qc214-variable-item-import-20261127-a1` rollback；主機空間約 595 MB（99%），未全域 prune 或刪除 image/cache，只更新 `ymes-api`。
 - [x] 用正式 app-browser Demo 登入確認 QC214 頁、合成檔 Preview／Check 與錯誤回應；範本 API 回預期 503。正式無足夠核准 Plan／Class1 Parameter／OP／QC Item，未寫入測試資料；正向 Import／覆寫留待來源資料可安全驗收時處理。舊 tab 27 焦點逾時，重新開新 tab 28 恢復頁面與登入。
-- [ ] 更新模組與資料庫紀錄、同步 GitHub（只 fast-forward，不 force），再 fetch 檢查家用端下一項待辦並接續。
-- [ ] 官方 `VariablesQCItem_Template.xls/.xlsx` 尚未移轉，已列入公司端待辦；收到原始檔前 `/template` 安全回 503，不產生自製範本。
+- [x] 更新模組、索引、資料庫與瀏覽器恢復紀錄；commit `5268fc8` fast-forward 到 GitHub `main`，push 後 fetch 確認沒有公司端新提交。
+- [x] 官方 `VariablesQCItem_Template.xls/.xlsx` 尚未移轉，已列入公司端待辦；收到原始檔前 `/template` 安全回 503，不產生自製範本。
+
+## 家用端完成：QC215 計數品管項目匯入 API（2026-11-27）
+
+- [x] 讀取 QC215/QC201/QC205/QC213 規格、公司 handoff、資料庫維護紀錄及現有逐列匯入 API。依來源 DDL 唯讀比對 YMES schema，僅新增缺少的覆寫保護量測表 `tblspcattbasislog`；migration 0092 的完整備份、checksum 與最小 SELECT 權限已記錄於 `docs/DATABASE_CONNECTION.md`。
+- [x] 完成登入保護 Preview／Check／逐列 Import／Template API；每列獨立交易重驗引用，Factor 白名單、群組守門及稽核由伺服器處理，沒有動態 DDL。API-only 部署 `.NET 9` image `sha256:cdf93472be184b0c78e1891c85904453696b833dc780a6d837b0694de44e79bc`；readiness 200、只更新 `ymes-api`，保留 QC214 rollback image。
+- [x] 正式 app-browser Demo 確認 QC215 頁、合成 Excel Preview／Check 錯誤與全選／取消全選。無效列未寫入；Save 確認視窗在提交前取消。正式資料沒有安全 fixture，未造正式 QC Item。
+- [ ] 原生 `AttributesQCItem_Template.xls/.xlsx` 尚未由公司端提供；正式 `/template` 明確回 503，不以自製範本替代。待原始範本移轉後驗證下載，再取得安全有效 fixture 補驗正向 Save／覆寫。詳細要求列在 `todolist_officepc.md` 的 QC215 handoff。
+- [x] 更新 QC215 模組 MD、功能索引、DB 記錄及公司交接；同步 GitHub 時一併整合當時最新 main 的 RT413／RT414／RT415／OE 變更，正常快轉、不 force，之後檢查下一個家用端項目並接續。
 
 ## 前一公司端 handoff：QC211 二次檢驗抽樣計畫（2026-11-17）
 

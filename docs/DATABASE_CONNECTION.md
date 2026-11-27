@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：QC215 計數品管項目匯入 API（2026-11-27）
+
+- 家用端以 PPK／SSH 唯讀比對正式 YMES schema，確認 QC215 共用計數 QC Item 主／子表已存在；作為匯入覆寫保護的共用 `tblspcattbasislog` 原本缺少。依已保存 Oracle source DDL 建立來源欄位、PK、default 與索引相符的空表；未重建其他共用表、未複製 MES 業務資料。`ymes_app` 僅新增此表 SELECT。
+- 套用 migration `0092_qc215_attribute_measurement_log.sql`（SHA-256 `4D02E3A5BDB015EE474FB06F8B07C5684A7222E0A5595EB405744ED3A6167AFD`）；rollback SHA-256 `D11EBF38AD969C49F0FA87B81ED7DFA5D070782D3EA9470FEF432EE6AE212142`。套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-qc215-0092-20261127.dump`，802,795 bytes，SHA-256 `d123d68703a3d55367e6373777f1646118b22a320380e8a808b6f57e61957487`；`pg_restore --list` 驗證 2,225 entries。部署時遠端磁碟剩餘約 542 MiB（100%）；未清除其他 image/cache 或更新非 API 容器。
+- .NET 9 Release API image `sha256:cdf93472be184b0c78e1891c85904453696b833dc780a6d837b0694de44e79bc` 已部署為 `ymes-api:current`。回復標籤 `ymes-api:before-qc215-attribute-import-20261127-a1` 指向前版 QC214 image `sha256:51a385a8280025bee77dc3171e900da7efecca8867c23d7b7ec4dd9959b71fa5`。API readiness=200、容器 running；只更新 `ymes-api`。
+- 正式 app-browser 已登入 QC215 頁；合成 Excel Preview／Check、單列勾選、全選／取消全選已核對。無效列回欄位檢核錯誤；Save 確認視窗在送出前取消，未寫入測試業務列。官方 `AttributesQCItem_Template.xls/.xlsx` 尚未從 MES 範本儲存區移轉，`GET /template` 回 503。安全有效 fixture 尚未提供，故正向 Import／覆寫仍待補驗。
+
 ## 最新：QC214 計量品管項目匯入 API（2026-11-27）
 
 - PPK／SSH 唯讀比對正式 YMES PostgreSQL catalog，確認 QC214 所需主檔、子表、Plan、Factor、OP、WIP、Material、Product、Group、Spec、Chart、量測與群組引用表均已存在；本功能沒有專屬業務表，不需要 CREATE TABLE。原先 `ymes_app` 僅缺計量主檔 INSERT／DELETE 與兩個引用查詢 SELECT；主檔 `UPDATE(qcitemno)` 欄級權限和 PMI Group SELECT 原已存在。

@@ -161,7 +161,7 @@
 - QC304「物料規格設定」：[功能規格](modules/QC/物料規格設定.md)。已直接讀 `frmQCMaterialSpec`、wsQC 與 clsQCBasis，完成 Material search、SPEC detail editor、批次套用/貼上/驗證的 Vue DEV 頁；沿用 QC302 的 Chart Basis/Detail/DetailLog 表與既有 MTL/QC Item/Group references，無 QC304 專屬新表或 CREATE SQL。家用端待比對 live schema 並實作批次 API。
 - QC305「產品規格設定」：[功能規格](modules/QC/產品規格設定.md)。公司端依 `frmQCProductSpec` 與 `clsQCBasis` 完成產品類別/編號查詢、ProductData、SPEC 編輯與多產品套用 Vue DEV 頁；規格記錄 Product 因子、GroupNo、QC_Count、SPCID 映射及舊 Core 的 ProductNo-only 行為。沿用 QC302 圖表表與既有產品/QC Item 表，無 QC305 專屬新表或 CREATE SQL；家用端待核對 live schema 並實作批次 API。
 - QC302「匯入管制圖內容」：[功能規格](modules/QC/匯入管制圖內容.md)。已直接閱讀 WinForms Form、wsQC、clsQCBasis，透過 PowerShell 5.1 唯讀取得四張 SPC QC Chart Oracle DDL，並完成 Vue DEV 頁與 PostgreSQL CREATE-only 參考；家用端待比對 live schema、建立缺漏 migration/API。
-- QC215「計數品管項目匯入」：[功能規格](modules/QC/計數品管項目匯入.md)。已直接對照 WinForms Form、wsQC、clsQCBasis，完成 QC215 Vue DEV 頁與逐列匯入規則文件。沿用 QC201/QC205/QC213 的主子表與依賴表，不需要新表或 CREATE SQL；家用端待核對 YMES schema 並實作 API。
+- QC215「計數品管項目匯入」：[功能規格](modules/QC/計數品管項目匯入.md)。Vue DEV 頁、登入保護 Preview／Check／逐列 Import API、依來源 DDL 補缺的 Attribute 量測記錄表 migration 0092 與 API-only 正式部署均已完成。正式範本 binary 尚待公司端移交，`GET /template` 安全回 503；正式資料沒有安全 fixture 時不造測試列。
 - QC214「計量品管項目匯入」：[功能規格](modules/QC/計量品管項目匯入.md)。已對照 WinForms Form、wsQC、clsQCBasis，完成 Vue DEV 頁、規格文件、登入保護的逐列 Preview/Check/Import API 與最小權限 migration，並部署正式 YMES；沿用 QC201/QC205/QC210 的主子表與依賴表，無 QC214 專屬新表。官方範本移轉、正式頁空狀態文字修正及正向匯入驗收仍待完成。
 
 ## 2026-11-17 新增完成規格
