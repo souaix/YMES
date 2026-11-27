@@ -6,6 +6,12 @@
 
 - [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。公司端先做可核對來源的 WIP WinForms／DEV／規格；家用端先做待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。WPI05 缺來源期間，記錄缺項並按既定清冊繼續可做工作；發現其他可做的 WIP 即插隊。RT501 與 RT410 正式頁已接家用端唯讀 API／lookups，runtime 驗收待資料與操作時機；RT410 legacy 主／子設備時間邊界差異已核源並記錄。RT416／RT417／RT502／RT503／RT504／RT608 均已完成。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
 
+## 公司端目前交接：RPT RT607 預計完工查詢（2026-11-27）
+
+- [x] 已核對 inline frmPlanFinishTime_byLot／Designer、wsWIP.LoadPlanFinishTime_byLot、clsLot.LoadPlanFinishTime_byLot／LoadRunCardData；完成 /YMES/RPT/PlanFinishTimeByLot DEV 假資料 Lot 查詢、Lot header、九欄 Run Card 與累計估時。[RT607 規格與家用端 API handoff](modules/RPT/預計完工查詢_RT607.md)
+- [x] Run Card／LotProcess／Lot／PRS／Module／ProductProcess／OP／Runtime／Area 的 Oracle MESTEST source DDL refs 均已在 repo；未新查 Oracle。Legacy runtime setup lookup 沒帶 DDL 中必填的 AreaNo；缺工時設定列仍顯示但時間空白且不推進累計，後續估算可能低估。家用端待核 live schema 並決定正式行為。
+- [ ] 公司端未連 YMES PostgreSQL、未實作／驗收正式 API/schema、未 build／test／browser；無缺少的本功能 DDL。
+
 ## 公司端目前交接：RPT RT606 生產批資源檢視（2026-11-27）
 
 - [x] 已核對 `frmResourceQuery`、`wsWIP.LoadSumOfResource_Valid`／`LoadSumOfResource_Valid_ByOP`、`clsLot.SHR_CalculateResource_Valid`／`SHR_CalculateResource_Valid_OP`；完成 `/YMES/RPT/LotResourceQuery` DEV Lot／Lot＋OP 雙模式、Resource／Material 雙表與 RESClass 合計。[RT606 規格與家用端 API handoff](modules/RPT/生產批資源檢視_RT606.md)
