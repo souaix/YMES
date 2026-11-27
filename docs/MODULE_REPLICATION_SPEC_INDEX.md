@@ -2,9 +2,11 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
-- RT412「設備 MTTR 統計表」：[功能規格與家用端 API handoff](modules/RPT/設備MTTR統計表_RT412.md)。核對 `frmEQP_MTTRSummary`／Designer、`wsRPT.LoadEQPMTTRSummary` 與 `clsReport.LoadEQPMTTRSummary`／`ShowEQPMTTRSummary`；完成 `/YMES/RPT/EqpMttrSummary` DEV 日期／多選篩選、Chamber 顯示、MTTR／MTBF／Availability 報表。記錄來源 SQL 區間截短、故障狀態控制、父設備篩選未通過 Service 及隱藏的月結 Save。所需 MESTEST DDL refs 已在 repo；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。下一項為 RT413「設備 MTTR 統計表_以月份匯總」。
+- RT413「設備 MTTR 統計表_以月份匯總」：[功能規格與家用端 API handoff](modules/RPT/設備MTTR統計表_以月份匯總_RT413.md)。核對主／Chamber `frmEQP_MTTRSummary_byMonth`、`wsRPT.LoadEQPMTTRSummary_ByMonth`、`clsReport.LoadEQPMTTRSummary_byMonth` 與趨勢圖 Form；完成 `/YMES/RPT/EqpMttrSummaryByMonth` DEV 月報、Chamber 篩選與 MTTR／MTBF／Availability 三折線圖。Core 逐月呼叫 RT412 統計並產生每台設備三列與動態 `yyyy/MM` 欄位。所需 MESTEST DDL refs 沿用 RT412；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。下一個優先項為 OE 工單管理來源完整度覆核；RT414 順延。
 
-- RT411「每日設備稼動長條圖」：[功能規格與家用端 API handoff](modules/RPT/每日設備稼動長條圖_RT411.md)。核對主／子設備 Form、RPT `LoadEQPRealTimeReport`／`LoadEQPRealTimeReport_Chamber` Service 與 `clsReport` Core；完成 `/YMES/RPT/EqpDailyUtilizationChart` DEV Gantt、多選條件、Utilization Rate、狀態 tooltip／選取明細、圖表控制與 Chamber 子設備查詢。狀態 DDL refs 已在 repo；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。RT412 已完成，下一項為 RT413。
+- RT412「設備 MTTR 統計表」：[功能規格與家用端 API handoff](modules/RPT/設備MTTR統計表_RT412.md)。核對 `frmEQP_MTTRSummary`／Designer、`wsRPT.LoadEQPMTTRSummary` 與 `clsReport.LoadEQPMTTRSummary`／`ShowEQPMTTRSummary`；完成 `/YMES/RPT/EqpMttrSummary` DEV 日期／多選篩選、Chamber 顯示、MTTR／MTBF／Availability 報表。記錄來源 SQL 區間截短、故障狀態控制、父設備篩選未通過 Service 及隱藏的月結 Save。所需 MESTEST DDL refs 已在 repo；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。RT413 已接續完成。
+
+- RT411「每日設備稼動長條圖」：[功能規格與家用端 API handoff](modules/RPT/每日設備稼動長條圖_RT411.md)。核對主／子設備 Form、RPT `LoadEQPRealTimeReport`／`LoadEQPRealTimeReport_Chamber` Service 與 `clsReport` Core；完成 `/YMES/RPT/EqpDailyUtilizationChart` DEV Gantt、多選條件、Utilization Rate、狀態 tooltip／選取明細、圖表控制與 Chamber 子設備查詢。狀態 DDL refs 已在 repo；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。RT412、RT413 已完成；依使用者優先順序先覆核 OE 工單管理，RT414 順延。
 
 - RT410「設備稼動查詢」：[功能規格與家用端 API handoff](modules/RPT/設備稼動查詢_RT410.md)。核對 `frmEQPDailyReport`、`wsRPT.LoadEQPDailyReport`／`LoadData_SonEQPData`、`clsReport` Core；公司端 DEV 日期範圍、Area／多設備 lookup、狀態百分比／Moves、圓餅明細與 ChamberManage 子設備展開已交接。家用端已套用 0079／0080、建立唯讀 schema/API 並部署 `GET /api/reports/equipment-daily-utilization`；正式 Demo app-browser 驗證成功與防呆。Legacy 主／子設備時間邊界差異仍待公司端核源碼，正式設備／狀態／WIP rows 目前為空，正向業務資料待同步。RT410 API 已完成；公司端 UI 接線待辦仍開啟。
 

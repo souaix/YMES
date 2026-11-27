@@ -53,16 +53,16 @@
 - [ ] 請唯讀核對原生 MES `TBLEQPSTATECONTROL` 的 `ControlType='EQP Break Down'`、`ControlNo='BreakDown'` 唯一設定，回覆準確 `EquipmentState`／`StateName`；確認設備狀態歷程同步到復刻庫的來源／程序，提供一筆已可查的設備狀態歷程驗證條件。只回報指定設定及驗證必要資訊，不匯出其他設定或設備紀錄。
 - [x] RT412 完成後依清冊接續 RT413「設備 MTTR 統計表_以月份匯總」。
 
-## 公司端預備交付：RPT RT413 設備 MTTR 統計表_以月份匯總
+## 公司端最新交付：RPT RT413 設備 MTTR 統計表_以月份匯總（2026-11-27）
 
-- [ ] 依實際 RT413 Form／Designer、RPT Service／Core 核對月結年月／起訖日期、BreakDown ControlType、Chamber、來源公式與隱藏儲存流程。
-- [ ] 新增 `docs/modules/RPT/設備MTTR統計表_以月份匯總_RT413.md`，記錄真實 FunctionNo／FunctionKey／路由、欄位／事件、來源 SQL 邊界、月結更新契約及資料表 DDL references；無來源證據的項目註明未確認，不推測。
-- [ ] 完成 DEV 假資料畫面與操作 handoff；公司端不連 YMES PostgreSQL、不建立正式 API/schema，交付後由家用端接手。
+- [x] 核對主／Chamber Form／Designer、RPT Service／Core 與趨勢圖；完成 DEV 月報、三項指標折線圖及 [RT413 規格 handoff](docs/modules/RPT/設備MTTR統計表_以月份匯總_RT413.md)。
+- [x] RT413 正式月度 API／schema 由家用端依 handoff 接續；公司端未連 PostgreSQL、未做 API/schema、未 build／test／browser。
+- [ ] **下一個公司端優先工作：OE「工單管理」來源完整度覆核**（使用者指定優先）。OE101–OE209、OEB01、OEP01 已有規格／DEV 頁；逐項比對 WinForms Form／Designer、Service／Core、Vue route／互動和 home handoff，只修實際缺口，不重做已完整功能。RT414 順延。
 
 ## 前項公司端交付：RPT RT411 每日設備稼動長條圖（2026-11-26）
 
 - [x] 核對主／子設備 Form、RPT Service／Core；完成 `/YMES/RPT/EqpDailyUtilizationChart` DEV Gantt 狀態時間軸、Area／Type／Equipment 多選、稼動率、區段明細及 ChamberManage 子設備查詢。[RT411 規格與家用端 API handoff](docs/modules/RPT/每日設備稼動長條圖_RT411.md)
-- [x] 記錄狀態區間 overlap／clip 條件及 `UtilizationType=0` 稼動率口徑；所需 DDL refs 已在 repo。未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT412 已完成，下一項依清冊為 RT413。
+- [x] 記錄狀態區間 overlap／clip 條件及 `UtilizationType=0` 稼動率口徑；所需 DDL refs 已在 repo。未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT412、RT413 已完成；公司端優先覆核 OE 工單管理，RT414 順延。
 
 ## 前項公司端交付：RPT RT410 設備稼動查詢（2026-11-26）
 

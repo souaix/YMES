@@ -335,6 +335,7 @@ import ConfirmLot from './components/ConfirmLot.vue'
 import EqpDailyReport from './components/EqpDailyReport.vue'
 import EqpDailyUtilizationChart from './components/EqpDailyUtilizationChart.vue'
 import EqpMttrSummary from './components/EqpMttrSummary.vue'
+import EqpMttrSummaryByMonth from './components/EqpMttrSummaryByMonth.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -884,6 +885,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:RPT:EQP DAILY REPORT', label: '設備稼動查詢', shortLabel: '設備稼動', functionNo: 'EQP DAILY REPORT', moduleNo: 'RPT' },
         { id: 'function:RPT:EQP DAILY UTILIZATION CHART', label: '每日設備稼動長條圖', shortLabel: '稼動長條圖', functionNo: 'EQP DAILY UTILIZATION CHART', moduleNo: 'RPT' },
         { id: 'function:RPT:EQP MTTR SUMMARY', label: '設備 MTTR 統計表', shortLabel: '設備 MTTR', functionNo: 'EQP MTTR SUMMARY', moduleNo: 'RPT' },
+        { id: 'function:RPT:EQP MTTR SUMMARY BYMONTH', label: '設備 MTTR 統計表_以月份匯總', shortLabel: 'MTTR 月報', functionNo: 'EQP MTTR SUMMARY BYMONTH', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1273,6 +1275,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:EQP DAILY REPORT': appBasePath + '/RPT/EqpDailyReport',
   'function:RPT:EQP DAILY UTILIZATION CHART': appBasePath + '/RPT/EqpDailyUtilizationChart',
   'function:RPT:EQP MTTR SUMMARY': appBasePath + '/RPT/EqpMttrSummary',
+  'function:RPT:EQP MTTR SUMMARY BYMONTH': appBasePath + '/RPT/EqpMttrSummaryByMonth',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1756,6 +1759,7 @@ const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function
 const isRt410EqpDailyReportPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY REPORT')
 const isRt411EqpDailyUtilizationChartPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY UTILIZATION CHART')
 const isRt412EqpMttrSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY')
+const isRt413EqpMttrSummaryByMonthPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY BYMONTH')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -4048,6 +4052,12 @@ async function signOut(): Promise<void> {
         />
         <EqpMttrSummary
           v-else-if="isRt412EqpMttrSummaryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <EqpMttrSummaryByMonth
+          v-else-if="isRt413EqpMttrSummaryByMonthPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
