@@ -82,6 +82,9 @@ function load(): void {
 function persist(): boolean {
   if (!dev.value) return false
  try { window.localStorage.setItem(storageKey, JSON.stringify(saved.value)); return true } catch { error.value = 'DEV SWR 資料無法儲存。'; return false } }
+function cloneSaved(): Saved {
+  return { items: saved.value.items.map(item => ({ ...item, lotNos: [...item.lotNos] })), serialByDay: { ...saved.value.serialByDay } }
+}
 function query(): void {
   error.value = ''
   if (!dev.value) { error.value = unavailableMessage; return }
@@ -149,7 +152,7 @@ function confirmForm(): void {
   if (error.value || !modal.value) return
   load()
   const item: Swr = { ...draft, status: 0, startTime: startChecked.value ? draft.startTime : '', endTime: endChecked.value ? draft.endTime : '', lotNos: [...draft.lotNos] }
-  const previous = structuredClone(saved.value)
+  const previous = cloneSaved()
   if (modal.value === 'edit') {
     const index = saved.value.items.findIndex(value => value.swrNo === item.swrNo && value.status === 0)
     if (index < 0) { error.value = '資料已變更，請重新查詢。'; return }
@@ -174,7 +177,7 @@ function confirmAction(): void {
   if (action.value === 'void' && !abortReason.value.trim()) { error.value = '請填 DEV 作廢原因（模擬 InputAbortLog=1）。'; return }
   const targets = selectedItems()
   const actionLabel = action.value === 'approve' ? '核准' : '作廢'
-  const previous = structuredClone(saved.value)
+  const previous = cloneSaved()
   let count = 0
   for (const item of targets) {
     if (action.value === 'approve') {

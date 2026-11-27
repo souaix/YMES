@@ -12,6 +12,14 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## HOME最新 WP109 DEV 表單修正與 app-browser 驗收（2026-11-28）
+
+- [x] 修正 `WipSwrBasisDevPreview.vue`：新增／修改／核准／作廢備份改為明確複製 Vue reactive 資料，避免 `structuredClone` Proxy 例外讓確認流程無聲停止。只改 DEV localStorage 假資料流程，正式 API／資料庫未變。
+- [x] 本機 fake-auth／fake-provider API 與 Vite 獨立 origin 完成 app-browser 驗收：三層 WIP 入口、預設查詢、CustomerNo filter／lookup、必填與 Lot 客戶歸屬防呆、新增／修改／複製／核准／作廢原因／ACTIVE→UNUSED→刪除／UNFROZEN 刪除均通過。兩筆驗收資料已清除，正式 PostgreSQL／Oracle／正式站沒有寫入。
+- [ ] 完整 Web build 未完成：`npm run build` 的 `vue-tsc` 在 2GB／3GB Node heap OOM；獨立 Vite production build 在 1GB heap OOM。當時可用實體記憶體約 1,084MB；待記憶體空間足夠時重跑完整建置。DEV server 的 HMR 編譯與 app-browser 操作已通過。
+- [ ] WP109 API186／writer UI 正式部署仍待辦；遠端根 filesystem 100%，約 403MB 可用。本輪未清除影像、未改其他容器、未部署；後續先檢視可安全回收空間，再完整 build 並逐頁驗收。
+- [ ] SWR 正式 API／writer 按鈕仍未部署或啟用；上線前依 module 文件重新核 migration／版本和空間，正式 Demo 驗收不得對正式空資料建立或修改業務列。
+
 ## 公司端 RT611 取消報工單_E10ICD handoff（2026-11-27）
 
 - [x] 以 PPK／SSH 唯讀核對正式 PostgreSQL：RT611 五張目標表在所有 schema 均不存在，沒有可核欄位／鍵／索引或同步資料；未猜表或建表。詳 [RT611 規格](docs/modules/RPT/取消報工單_E10ICD_RT611.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
