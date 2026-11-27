@@ -1,5 +1,11 @@
 # MES WinForms 復刻規格索引
 
+家用端最新 PostgreSQL catalog 核對（2026-11-27）：RT609、RT610、RT611 涉及的九個不同 ERP／AutoRun 目標表在所有 schema 均不存在；缺原生 source DDL，未猜建表或實作 API。詳三個模組規格及 `docs/DATABASE_CONNECTION.md`。
+
+RT601／RT602 正式 PostgreSQL schema 核對：依 0095 建立缺少的 `tblwipcont_material`、`tblwipcont_materiallot` 空表；`ymes_app` 僅 SELECT。缺 WP201 Material index 欄位 DDL及 `clsLot.LoadCont_Material_JoinLog` 原始查詢片段，正式來源亦無資料，故尚未實作正式查詢 API。詳各模組規格、公司端待辦及 `docs/DATABASE_CONNECTION.md`。
+
+RT605／RT606 live catalog 核對確認 Split／Merge 主表與 WIP summary 表皆不存在；依可信 WP403 DDL 建立共用 `tblwipcont_resource` 空表與來源 PK／四個 index（migration 0096，app 僅 SELECT）。WP209／WP213 BIN 子表不能代替缺表。RT608 Share 表也缺少 DDL，且正式 catalog 不存在。詳模組規格與資料庫連線紀錄。
+
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
 使用者最新優先序（2026-11-27）：WIP「在製品管理」先於其他尚未開始的模組。公司端優先復刻可核對來源的 WIP 功能；家用端優先完成待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。清冊與 Vue route 差異覆核範圍內，WPI05 是唯一待原始來源的 WIP 選單功能；取得 Form／Service／Core 後優先復刻。缺來源時記錄缺項並繼續其他可執行工作，之後若有可做的 WIP 項目先插隊。RT416／RT417／RT502／RT503／RT504／RT608 已完成。

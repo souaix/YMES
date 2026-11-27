@@ -1,5 +1,11 @@
 # 公司端待辦
 
+## 2026-11-27 RT601／RT602 家用端 API handoff
+
+- [ ] 請補交 `clsLot.LoadCont_Material_JoinLog` 的原始方法／SQL 片段及所呼叫 helper，特別是 Lot／Material／Product 三種查詢的完整 JOIN 條件與 JOIN 類型、物料／產品／OP lookup 缺列時的行為、RT602 EventTime 欄位來源、ProductNo 模式的實際來源欄位，以及 MaterialLot join 重複時的原生列身份。家用端目前只有摘要規格，正式 PostgreSQL 的來源表皆為空，無法作正向比對。
+- [ ] 請唯讀交付 WP201 `TBLWIPCONT_MATERIAL` 的兩個非唯一 index 完整 DDL／欄位順序；現有 source DDL 只有 index count，沒有 index definition。不要連家用端 PostgreSQL 或修改正式 Oracle。
+- [ ] 若可提供，附上不含機敏值的原生查詢結果欄位順序／空資料行為；ProductNo 等號／`%` 的正式篩選口徑需以 Legacy Core 為準。完成後放入對應 `database/reference`／模組 Markdown，讓家用端接續唯讀 API。
+
 ## 2026-11-27 RT607 預計完工查詢
 
 - [x] 直接核對 inline Form／Designer frmPlanFinishTime_byLot、wsWIP.LoadPlanFinishTime_byLot、clsLot.LoadPlanFinishTime_byLot 與 LoadRunCardData；完成 /YMES/RPT/PlanFinishTimeByLot DEV Lot 查詢、Lot header、九欄 Run Card、工時比例與累計估算、未知 Lot 錯誤及排序。詳 [RT607 規格與家用端 API handoff](docs/modules/RPT/預計完工查詢_RT607.md)。
@@ -43,27 +49,33 @@
 - [x] 核對 `frmCont_Material_byMaterial`（Designer 內嵌）、`wsWIP.LoadCont_Material_JoinLog` 與 `clsLot.LoadCont_Material_JoinLog`；DEV 完成 Material／Product radio、獨立 DeductTime 日期界線、lookup、萬用字元查詢與 11 欄 Grid。詳 [RT602 規格與家用端 API handoff](docs/modules/RPT/物料用於生產批查詢_RT602.md)。
 - [x] 記錄來源偏差：Product No 模式把 ProductNo 送為 MaterialNo、Core 仍等號比對 `TBLWIPCONT_MATERIAL.MaterialNo`；UI `%` 提示也未由 Core 實作。DEV 以畫面預期 ProductNo 欄位篩選並標示來源差異，家用端 API 不複製舊映射。
 - [x] 原生表與 lookup DDL refs 已在 repo（WP201／WP112／MTL／PRD／OP）；未新查 Oracle／猜 CREATE。公司端未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live schema／同步，實作登入保護、參數化、bounded paging 唯讀 API；確認 ProductNo 預期來源欄位、萬用字元口徑與正式正向資料。
+- [x] 家用端已以 PPK／SSH 核對 live schema，並以 migration 0095 建立兩張來源空表及授予唯讀；未讀業務資料。正式表目前 0 列。
+- [ ] API 仍待公司端交付原始 `clsLot.LoadCont_Material_JoinLog`／helper、ProductNo 欄位映射、時間條件來源及 WP201 Material 索引欄位定義；收到後才實作參數化、登入保護、bounded paging API 並用正式來源核對。
 
 ## 2026-11-27 RT605 工單耗用資源檢視
 
 - [x] 核對 `frmResourceQuery_byMO`、`wsWIP.LoadSumOfResource_Valid_ByMO`、`clsLot.SHR_CalculateResource_Valid_MO`／遞迴資源計算；完成 `/YMES/RPT/MoResourceQuery` DEV Customer／Product／RO／MO 條件、lookup、四類資源分組 Grid。詳 [RT605 規格與家用端 API handoff](docs/modules/RPT/工單耗用資源檢視_RT605.md)。
 - [x] 記錄主 Core 以 `Status<>99` 選批、等號 AND 篩選並展開 Split／Merge；物料列 `InputQty` 由 DataTable 預設為 0。已存在 WP101／OE／WP201／WP112／WP403／Customer／Product／MTL DDL refs；WP209／WP213 僅是 BIN 表，不能代替主表。
 - [x] 缺 `TBLWIPSPLITCONTENT`、`TBLWIPMERGECONTENT`、`TBLWIPSUM_RESOURCE`、`TBLWIPSUM_MATERIAL`、`TBLWIPSUM_MATERIALSTATE` 原生 DDL／metadata；受保護 Oracle profile attachment 不存在，未查 Oracle、未猜 CREATE。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端核 live schema／同步及資源遞迴；取得缺少來源 DDL 後再實作登入授權、參數化、至少一條條件、bounded paging／計算上限的唯讀 API。
+- [x] 家用端於 2026-11-27 以 PPK／SSH 確認上述五張表在正式 PostgreSQL 所有 schema 均不存在；未讀業務列、未建表。請依下一項交付可信 MESTEST source DDL／metadata。
+- [x] 家用端另依 repo WP403 source DDL 以 migration 0096 建立缺少的共用 `TBLWIPCONT_RESOURCE` 空表、PK／四個 index，`ymes_app` 僅 SELECT；正式表 0 列。
+- [ ] API 仍受五張缺表及正式同步列阻擋；取得可信 DDL／資料同步與遞迴來源後，再實作登入授權、參數化、至少一條條件、bounded paging／計算上限的唯讀 API。
 
 ## 2026-11-27 RT606 生產批資源檢視
 
 - [x] 核對 `frmResourceQuery`／Designer、`wsWIP.LoadSumOfResource_Valid`／`LoadSumOfResource_Valid_ByOP`、`clsLot.SHR_CalculateResource_Valid`／`SHR_CalculateResource_Valid_OP`；完成 `/YMES/RPT/LotResourceQuery` DEV Lot／Lot＋OP 兩模式、Resource／Material 雙 Grid、資源類別合計與排序。詳 [RT606 規格與家用端 API handoff](docs/modules/RPT/生產批資源檢視_RT606.md)。
 - [x] DDL refs 沿用 WP101／WP201／WP112／WP403／OPBasis。Core 直接使用之 `TBLWIPSPLITCONTENT`、`TBLWIPMERGECONTENT`、`TBLWIPSUM_MATERIALSTATE` 原生 DDL／metadata 缺少；WP209／WP213 只有 BIN 子表。桌機沒有受保護 Oracle profile，未新查 Oracle／猜 CREATE。
-- [ ] 家用端核 live schema、歷程資料與 closed-lot Resource 來源後，再做登入授權、參數化、必填 LotNo、bounded paging／計算上限 API；公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [x] 家用端於 2026-11-27 以 PPK／SSH 確認上述三張表在正式 PostgreSQL 所有 schema 均不存在；未讀業務列、未建表。請依下一項交付可信 MESTEST source DDL／metadata。
+- [x] 家用端已依 repo WP403 source DDL 以 migration 0096 建立共用 `TBLWIPCONT_RESOURCE` 空表、PK／四個 index，`ymes_app` 僅 SELECT；正式表 0 列。
+- [ ] closed-lot Resource／拆併批歷程所需的來源與同步列仍缺；取得可信來源後再實作登入授權、參數化、必填 LotNo、bounded paging／計算上限 API。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 
 ## 2026-11-27 RT601 生產批使用物料查詢
 
 - [x] 直接核對 `frmCont_Material_byLot`（Designer 內嵌）、`wsWIP.LoadCont_Material_JoinLog` 與 `clsLot.LoadCont_Material_JoinLog`；Form 只輸入 Lot No，ReportMode=True，Core 匯出 16 欄並經報表連線查詢。LotNo 空白會進未限制 Lot 的大查詢；Core 條件字串串接；MaterialLot join 未含 LotSerial，可能展開重複列。
 - [x] 完成 `/YMES/RPT/ContMaterialByLot` DEV 假資料頁、16 欄唯讀 Grid、Lot No Query／大寫轉換／排序／Close。留空 LotNo 時由 UI 阻止，Form 原生 Lot picker 隱藏；DEV 僅固定假資料記憶體查詢。詳 [RT601 規格與家用端 API handoff](docs/modules/RPT/生產批使用物料查詢_RT601.md)。
 - [x] 直接表與 lookup DDL refs 已在 repo（WP201／WP112／MTL master／PRD product／OP）；沒有缺少的直接表結構，未新查 Oracle、未猜 CREATE-only。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端先核對上述 refs 與 YMES live schema／索引／資料同步；實作要求 LotNo 非空的登入保護唯讀 API、參數化精確查詢、穩定排序與 bounded paging，調查 MaterialLot 關聯鍵及重複列語意。
+- [x] 家用端已以 PPK／SSH 核對 YMES live schema，並以 migration 0095 建立兩張來源空表及授予唯讀；未讀業務資料。正式表目前 0 列。
+- [ ] API 仍待公司端交付 `clsLot.LoadCont_Material_JoinLog` 原始 SQL／helper、完整 join 及 MaterialLot 重複列的原生 row identity；另請交付 WP201 Material 索引欄位定義。收到後再完成參數化、登入保護、精確 Lot 查詢、穩定排序與 bounded paging API。
 
 ## 2026-11-27 RT504 生產批執行法則查詢
 
@@ -92,12 +104,14 @@
 - [x] 完成 `/YMES/RPT/EqpOeeSummary` DEV 假資料：日期驗證、Area／EquipmentType／EquipmentNo 多選、條件查詢及 13 欄 OEE grid；不在查詢頁重算指標。詳 [RT416 規格與家用端 handoff](docs/modules/RPT/整體設備效率OEE_RT416.md)。
 - [ ] `TBLRPTEQPOEESUMMARY`、`TBLRPTEQPOEELot` 原生 Oracle DDL／metadata 未在 repo；桌機找不到受保護 Oracle profile/attachment，未查 Oracle、未猜 CREATE-only。profile 可用後只讀查結構，不查業務資料。
 - [ ] 家用端先確認 summary rows 的正式同步／產生來源，再按規格設計登入保護唯讀 API；公司端未連 PostgreSQL、未做 API/schema、未 build／test／browser。
+- [x] 家用端於 2026-11-27 以 PPK／SSH 確認 `tblrpteqpoeesummary`、`tblrpteqpoeelot` 在正式 PostgreSQL 所有 schema 均不存在；未讀業務列、未建表。請依上方待辦交付可信 DDL／metadata 和 AutoRun 部署／資料同步來源。
 
 ## 2026-11-27 RT608 生產批資源檢視(分攤)
 
 - [x] 核對 CSiMES／THEIL／DEV_SILVA 相同的 `frmRPTLotResource_Share`、`wsRPT.LoadCont_Resource_Share`、`clsReport.LoadCont_Resource_Share`；確認只讀 `TBLWIPCONT_RESOURCE_SHARE` 並省略 CLOB 欄位。
 - [x] 完成 `/YMES/RPT/LotResourceShare` DEV 假資料查詢、YearMonth／OP／MO／Lot／ResClass／ResItem／ProductionTime／SummaryTime 條件及 12 欄 Grid。詳 [RT608 規格與家用端 handoff](docs/modules/RPT/生產批資源檢視分攤_RT608.md)。
 - [ ] `TBLWIPCONT_RESOURCE_SHARE` 原生 Oracle DDL／metadata 不在 repo；桌機無受保護 Oracle profile，未連 Oracle、未猜 CREATE-only。profile 可用後只讀查結構。
+- [x] 家用端已以 PPK／SSH 確認 `tblwipcont_resource_share` 在正式 PostgreSQL 所有 schema 均不存在；`tblwipcont_resource` 是不同來源表，不能代替。未讀業務列／未猜建表。
 - [ ] 家用端先核實 live PostgreSQL schema／同步來源，再實作登入及 RT608 ACL 保護的參數化分頁唯讀 API；公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 
 ## 2026-11-27 RT417 生產批下線後歷程總表
@@ -106,6 +120,7 @@
 - [x] 完成 `/YMES/RPT/LotReleaseLog` DEV 假資料查詢、日期／Lot／MO／Product／OP／User／UserActiveID 條件、Show ERF／Wait 分支、歷程表及 Lot Component／BIN 明細示意。詳 [RT417 規格與家用端 handoff](docs/modules/RPT/生產批下線後歷程總表_RT417.md)。
 - [ ] `TBLWIPRELEASELOG` 及 Component／BIN、Split／Merge 相關表的 Oracle DDL／metadata 不在 repo；桌機無受保護 Oracle profile，未連 Oracle、未猜 CREATE-only。profile 可用後只讀查結構。
 - [ ] 家用端先核對 live PostgreSQL 的主表／明細表與現有同步來源，再實作登入及 RT417 ACL 保護的參數化、分頁唯讀 API；legacy ShowType 分支及非 Oracle EquipmentNo 篩選差異見規格。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [x] 家用端於 2026-11-27 以 PPK／SSH 唯讀確認 ReleaseLog、Component、BIN、SplitContent、MergeContent 五張表在正式 PostgreSQL 所有 schema 均不存在；未讀業務列／未猜建表。請依上方待辦交付可信 Oracle DDL／metadata。
 
 ## 2026-11-27 OE 工單管理優先覆核
 

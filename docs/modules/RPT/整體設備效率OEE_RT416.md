@@ -35,4 +35,5 @@
 - `TBLRPTEQPOEESUMMARY` 是報表 Core 直接讀取且 MESAutoRun 寫入的主表；repo 沒有可用的 Oracle source DDL／metadata 或對應 CREATE-only SQL。Agent 另維護 `TBLRPTEQPOEELot`，RT416 查詢頁不使用。桌機找不到受保護 Oracle attachment/profile，因此沒有連線或猜欄位。
 - 公司端待安全 profile 可用後，唯讀取得兩表（至少主表）的 `DBMS_METADATA.GET_DDL`、owner/synonym、完整欄位型別/precision/scale/null/default、PK／FK／unique／indexes／trigger；只取結構，不讀取或匯出 OEE 業務資料列。查到主表定義後再交 PostgreSQL CREATE-only。
 - 家用端先確認 OEE summary 在 YMES 的同步／產生來源與更新頻率，再提供登入授權的分頁 `GET /api/reports/equipment-oee-summary`，查詢條件為 startDate、endDate、areaNos、equipmentTypes、equipmentNos，回傳上述 13 欄。勿假設 YMES 有 OEE summary rows；不要在家用端重跑 MESAutoRun 刪除／重建作業。
+- 家用端於 2026-11-27 以 PPK／SSH 唯讀確認 `tblrpteqpoeesummary`、`tblrpteqpoeelot` 在正式 PostgreSQL 所有 schema 均不存在；未讀 OEE 業務列、未建立 guessed schema。資料庫連線紀錄詳見 `docs/DATABASE_CONNECTION.md`。
 - 後續 schema 與 API handoff 依上列原生欄位核實後補齊；沒有 OEE summary DDL 前不建立 guessed schema／CREATE-only SQL。

@@ -19,6 +19,7 @@
 
 - 尚缺可信 MESTEST source DDL／metadata：TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_DETAIL_E10ICD、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob、TBLMESAutoRunQueue。桌機受保護 Oracle attachment 不存在，未連 Oracle、未猜 CREATE-only SQL。
 - 可沿用 repo refs：TBLWIPCONT_EQUIPMENT（WP305）、TBLWIPLOTLOG_REPORT（WP201 dependency source DDL）。不代表上述缺表已同步到 YMES PostgreSQL。
+- 2026-11-27 家用端以 PPK／SSH 唯讀查正式 `ymes` PostgreSQL catalog：上述五張目標表在所有 schema 均不存在，無欄位／鍵／索引或資料可供比較；未執行 migration，也未讀寫業務資料。連線紀錄記於 [DATABASE_CONNECTION.md](../../DATABASE_CONNECTION.md)。
 - 家用端先核對 live schema、同步來源、ERPNo／WorkReportID 關聯與 E10ICD 正向資料。唯讀 API 需登入及 RT611 ACL、參數化、至少 MO 或 DataStartTime 條件、日期跨度／筆數上限與穩定排序；Detail 依已授權 WorkReportID 驗證父子關係，不接受 SQL／AdditionalXml。
 - 寫入需設計逐 ERPNo 冪等、跨 E10ICD／MES 部分成功補償與對帳、多 ERPNo LotLog 清除規則；重拋須確認 E10ICD AutoRun Job，避免 job 不存在仍標示 ERPFlag=2。公司端不實作正式 API／schema。
 

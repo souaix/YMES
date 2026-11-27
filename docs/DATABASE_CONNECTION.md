@@ -1,5 +1,11 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：RPT RT609–RT611 ERP 報工撤銷 live catalog 核對（2026-11-27）
+
+- 家用端以 PPK／SSH 對正式 PostgreSQL 的 catalog 唯讀查詢三個 EAI／ERP 取消報工模組依賴：`tblerpworkrpt_summary`、`tblerpworkrpt_eqpsummary`、`tblerpworkrpt_detail`、`tblwipcont_resource_share`、`tblerpworkrpt_detail_eai`、`tblerpworkrpt_detail_e10icd`、`tblwipcont_employee_multiuser`、`tblmesautorunjob`、`tblmesautorunqueue`。
+- 三個模組涉及的九個不同目標表在所有 schema 均不存在；無欄位、PK／unique、索引或業務列可比較，`ymes_app` 權限也無從核對。未執行 migration、未新增 CREATE SQL、未讀寫業務資料。
+- 直接 ERP report／AutoRun source DDL 與 metadata 尚缺，故不猜表或實作依賴這些表的 API。公司端待以原生 MESTEST 來源唯讀提供可信 DDL／字典 metadata；詳 [RT609](modules/RPT/取消報工單_TipTop_RT609.md)、[RT610](modules/RPT/取消報工單_T100_RT610.md)、[RT611](modules/RPT/取消報工單_E10ICD_RT611.md)。
+
 ## 最新：RPT RT607 預計完工查詢依賴表（2026-11-27）
 
 - 以家用端 PPK／SSH 唯讀核對正式 YMES PostgreSQL；`YMES` schema 缺少 `tblwiplotprocess`、`tblprsnoderelation`、`tblprdopdescription`、`tblprdruntimesetup`、`tblprdproductprocess`、`tblprdoparea`、`tblwiplotoparea`。其欄位及 PK 依 repo 已有 MESTEST source DDL／CREATE-only references，不新增來源以外的 FK／索引。
@@ -1439,3 +1445,34 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - QC213 API 對外為 `/YMES/API/api/qc/attribute-item-groups` 及共用 Attribute/Operation lookups；要求登入，未依使用者決定接 FunctionKey/RBAC。Release API image `sha256:13cf84efdbee479a0b381acd6d5cdf01d4cceca10b39b786c6fa853429f20f16`；API readiness 200、未登入 QC213 endpoint 401。回復 image `ymes-api:before-qc213-a2-20261127` 保留，hash `sha256:0cfdb6f17a6377033b1b77e6d59a187568a486d1c629ce19e3fa57c85a1a21fe`。僅更新 API container，Web 與其他專案服務未重建。
 - app-browser Demo 驗證正式頁、清單、GroupNo 查詢、四種狀態篩選與空白新增欄位檢核；正式表無資料，未建立假資料，因此新增/編輯/核准/刪除的有資料往返留待安全測試資料具備後再驗。
 - 遠端根檔案系統此次部署後約剩 595 MB、使用率 99%；未 prune/刪除任何映像。部署下一個 API 前先盤點可用空間，保留 current/rollback images 與資料庫備份。
+
+### 更新 2026-11-27：RT601／RT602 共用物料耗用表 schema
+
+- 以 PPK／SSH 唯讀核對正式 PostgreSQL 14.24 的 `"YMES"` schema。`tblwipcont_material`、`tblwipcont_materiallot` 原先不存在；`tblwiplotlog_report`、`tblmtlmaterialbasis`、`tblprdproductbasis`、`tblopbasis` 已存在且當時均為 0 列。
+- migration `0095_rt601_rt602_material_consumption.sql` 套用前完整備份 `/opt/ymes/backups/ymes-before-0095-rt601-rt602-20261127.dump`（820 KiB，SHA-256 `301fe76af10b1f5948d1a4ea21f8b686924bf5c4b51a934d59b90db0519d7236`）；`pg_restore --list` 成功。Migration SHA-256 `8FB27304B1A480548337FFA4294591593F76CEC20634834467FC76E1873E3261`；rollback SHA-256 `B61BBA3FFCE64A0D483811A251C50D88E7AB407EC7D5DC021EB83E446EFEE3F5`。
+- 建立兩張空表，欄位分別為 10 欄及 18 欄，沒有 PK／FK／unique。MaterialLot 僅建立原生來源已交付的兩個非唯一 index：`(loggroupserial, materialno)`、`(lotserial)`。WP201 Material 原生資料只記錄有兩個非唯一 index，缺其 DDL 欄位定義；未推測建立。
+- 遠端回讀確認欄位型別、長度、NULL／default、MaterialLot 索引及 row counts（兩表皆 0）。`ymes_app` 兩表 SELECT=true、INSERT／UPDATE／DELETE=false；未匯入或修改業務資料。
+- 尚未實作／部署 RT601／RT602 API 或 Web。家用電腦無法讀到 `D:\iMES\...\clsLot.cs` 原始 Core SQL，exact join、ProductNo／EventTime 篩選及 fan-out identity 尚待公司端 handoff，詳 [公司端待辦](../todolist_officepc.md) 與兩份 RPT 規格。伺服器根檔案系統本次檢查約剩 405 MB、使用率 100%；部署下一個服務映像前須先重新盤點空間。
+
+### 更新 2026-11-27：RT605／RT606 Split／Merge 與 Summary schema 核對
+
+- 以 PPK／SSH 唯讀查正式 PostgreSQL catalog；`tblwipsplitcontent`、`tblwipmergecontent`、`tblwipsum_resource`、`tblwipsum_material`、`tblwipsum_materialstate` 在所有 schema 均不存在。RT606 使用的三張表為上述子集。
+- repo 可找到的 WP209／WP213 refs 是 `TBLWIPSPLITCONTENT_BIN`／`TBLWIPMERGECONTENT_BIN`，不是 Core 直接依賴的主表；其餘三張 WIP summary 表也無可信來源 DDL／metadata。未讀業務列、未建立表或 migration、未調整權限。
+- RT605／RT606 正式 API 尚待公司端補交可信主表 DDL／metadata，以及可核對的 Split／Merge recursion、closed-lot summary 合併規則。詳 [公司端待辦](../todolist_officepc.md) 與模組規格。
+
+### 更新 2026-11-27：RT605／RT606 共用 Resource source table
+
+- live catalog 確認 `"YMES".tblwipcont_resource` 原先缺少；此表有可信 WP403 Oracle DDL／PG CREATE reference，欄位 15 欄、主鍵 `(loggroupserial,resitem,eventtime,userno)`、四個非唯一 index 定義齊備。
+- migration `0096_rt605_resource_consumption.sql` 套用前備份 `/opt/ymes/backups/ymes-before-0096-rt605-20261127.dump`（824 KiB，SHA-256 `a3803e2438495f1930a01e748550070264097251d7559726d03eeacd2f26e2f5`），`pg_restore --list` 成功。Migration SHA-256 `2D86D95DAF0571242D8C8E10C30BCE15EF8E1E2C043C3293CEFC68FEE7A5D5E9`；rollback SHA-256 `929E51F829806F906D36697F8F74F26CE94756E5D561ED6D0FD5E3FFF403F25F`。
+- 遠端回讀確認欄位、nullable、PK、四個索引與權限；`ymes_app` SELECT=true，INSERT／UPDATE／DELETE=false。新表為 0 列，`SET ROLE ymes_app` 後可成功 SELECT 0 列。未匯入業務資料。
+- 同次只讀 catalog 發現 RT608 的 `tblwipcont_resource_share` 在所有 schema 均不存在；它與 `tblwipcont_resource` 是不同來源表。RT608 Share DDL／metadata 待公司端交付，未猜建。
+
+### 更新 2026-11-27：RT417 Release Log schema 核對
+
+- PPK／SSH 只讀查詢正式 YMES PostgreSQL catalog，確認 `tblwipreleaselog`、`tblwipreleaselogcomponent`、`tblwipreleaselogbin`、`tblwipsplitcontent`、`tblwipmergecontent` 在所有 schema 均不存在。
+- repo 沒有以上 ReleaseLog 主／明細表可信原生 Oracle DDL／metadata；Split／Merge 主表也仍缺來源 DDL。未讀正式業務列、未建立表或 migration、未調整權限。詳 [RT417 規格](modules/RPT/生產批下線後歷程總表_RT417.md) 與 [公司端待辦](../todolist_officepc.md)。
+
+### 更新 2026-11-27：RT416 OEE source schema 核對
+
+- PPK／SSH 只讀查正式 PostgreSQL catalog，確認 `tblrpteqpoeesummary` 與 `tblrpteqpoeelot` 在所有 schema 均不存在；未讀 OEE 業務資料列。
+- repo 沒有兩表可信 Oracle DDL／metadata 或 PostgreSQL CREATE-only；亦未確認 MESAutoRun 是否在 YMES 執行及其同步頻率。未建表／migration；需公司端提供 schema 與 production summary 同步來源後再設計唯讀 API。詳 [RT416 規格](modules/RPT/整體設備效率OEE_RT416.md) 與 [公司端待辦](../todolist_officepc.md)。

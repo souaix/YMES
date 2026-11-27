@@ -20,6 +20,7 @@
 
 - MESTEST source DDL／metadata 缺少：TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_EQPSUMMARY、TBLERPWORKRPT_DETAIL、TBLWIPCONT_RESOURCE_SHARE、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob、TBLMESAutoRunQueue。桌機已確認使用者的受保護 Oracle attachment 不存在，未連 Oracle／查 metadata，也未猜 CREATE-only SQL。
 - 可沿用的 repo references：TBLWIPCONT_RESOURCE（database/reference/mestest_wip_wp403_source_ddl.sql）、TBLWIPCONT_EQUIPMENT（mestest_wip_wp305_source_ddl.sql）。只涵蓋 Core 更新的部分表，不足以建立整個 RT609 schema。
+- 2026-11-27 家用端以 PPK／SSH 唯讀查正式 `ymes` PostgreSQL catalog：上述七張目標表在所有 schema 均不存在，無欄位／鍵／索引或資料可供比較；未執行 migration，也未讀寫業務資料。連線紀錄記於 [DATABASE_CONNECTION.md](../../DATABASE_CONNECTION.md)。
 - 家用端先核 YMES live schema、同步來源、欄位／鍵／索引及正式資料。若有唯讀資料，建議查詢 API 至少要求 MO 或 DataStartTime 範圍，參數化、設定日期跨度／筆數上限與穩定排序，回傳 Summary rows；設備與明細再以 WorkReportID、EquipmentNo 取得並授權檢查父子關係。不可接受前端 SQL／AdditionalXml。
 - 取消與重拋不是單純 CRUD。正式整合需設計可追蹤的 ERP/MES 狀態協調、每設備單號冪等撤銷、失敗補償與人工對帳；未有可靠 ERP connector／冪等及 reconciliation 前，不要把舊 WinForms 外部 ERP 呼叫或 Core SQL 直接公開為寫入 API。公司端只交 DEV 邏輯與 handoff，不連 PostgreSQL、不實作正式 API／schema。
 

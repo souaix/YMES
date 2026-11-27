@@ -14,43 +14,47 @@
 
 ## 公司端 RT611 取消報工單_E10ICD handoff（2026-11-27）
 
-- [ ] 核對 YMES PostgreSQL live schema、同步來源及正向資料：TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_DETAIL_E10ICD、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／TBLMESAutoRunQueue；可沿用 Equipment（WP305）與 TBLWIPLOTLOG_REPORT（WP201）refs。詳 [RT611 規格](docs/modules/RPT/取消報工單_E10ICD_RT611.md)。
+- [x] 以 PPK／SSH 唯讀核對正式 PostgreSQL：RT611 五張目標表在所有 schema 均不存在，沒有可核欄位／鍵／索引或同步資料；未猜表或建表。詳 [RT611 規格](docs/modules/RPT/取消報工單_E10ICD_RT611.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [ ] 若 live schema 支持，設計登入／RT611 ACL 保護、參數化、有條件限制、日期跨度／筆數上限、穩定排序的唯讀 Summary API；Detail 以 WorkReportID 檢查父子關係，不接受 SQL／AdditionalXml。
 - [ ] 寫入設計須處理逐 ERPNo 冪等、E10ICD ERP 失敗仍進 MES Undo 的部分成功補償、Core 只清一個分組 ERPNo 的回復規則，以及 E10ICD AutoRun Job 不存在時仍標 ERPFlag=2 的 legacy 差異。
 
 ## 公司端 RT610 取消報工單_T100 handoff（2026-11-27）
 
-- [ ] 核對 YMES PostgreSQL live schema、同步來源及正向資料：TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_DETAIL_EAI、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／TBLMESAutoRunQueue；可沿用 Equipment（WP305）與 TBLWIPLOTLOG_REPORT（WP201）refs。詳 [RT610 規格](docs/modules/RPT/取消報工單_T100_RT610.md)。
+- [x] 以 PPK／SSH 唯讀核對正式 PostgreSQL：RT610 五張目標表在所有 schema 均不存在，沒有可核欄位／鍵／索引或同步資料；未猜表或建表。詳 [RT610 規格](docs/modules/RPT/取消報工單_T100_RT610.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [ ] 若可支持，提供登入／RT610 ACL 保護、參數化、有條件限制、日期跨度及筆數上限、穩定排序的唯讀 Summary API；Detail 以 WorkReportID 檢查父子授權關係。不可接受前端 SQL／AdditionalXml。
 - [ ] 正式取消需設計 T100 ERPNo 冪等與部分成功補償。Legacy Form 即使 T100 取消失敗仍做 MES Undo；Core 只讀第一個分組 ERPNo 並清該號 LotLog，需確認多 ERPNo 的完整回復語意。重拋需確認 EAI AutoRun Job／Queue；legacy 找不到 Job 仍標 Summary ERPFlag=2，不能照搬此狀態行為。
 
 ## 公司端 RT609 取消報工單_TipTop handoff（2026-11-27）
 
-- [ ] 核對 TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_EQPSUMMARY、TBLERPWORKRPT_DETAIL、TBLWIPCONT_RESOURCE_SHARE、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／Queue 的 YMES PostgreSQL live schema／同步及欄位鍵索引。公司端缺少可信 Oracle source DDL，桌機受保護 attachment 不存在；可沿用的 Resource／Equipment refs 見 [RT609 規格](docs/modules/RPT/取消報工單_TipTop_RT609.md)。
+- [x] 以 PPK／SSH 唯讀核對正式 PostgreSQL：RT609 七張目標表在所有 schema 均不存在，沒有可核欄位／鍵／索引或同步資料；未猜表或建表。詳 [RT609 規格](docs/modules/RPT/取消報工單_TipTop_RT609.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [ ] 若可支持，先提供登入保護、參數化、至少 MO 或 DataStartTime 範圍、穩定排序與 bounded paging 的唯讀 Summary API；Equipment／Detail 子查詢必須按 WorkReportID／EquipmentNo 授權檢查父子關係。不得接受前端 SQL／AdditionalXml。
 - [ ] 寫入功能須另行設計每 ERPNo 冪等撤銷、MES 資源旗標回復、ERP 失敗補償與對帳流程；若 TipTop 回錯，不能照舊 Form 繼續把 MES Flag 設為 -1。重拋需確認 AutoRun Job／Queue 欄位、時間參數語意與 no-job 狀態，避免 legacy Core 在未入佇列時仍標示 Flag=2。
 
 ## 公司端 RT601 生產批使用物料查詢 handoff（2026-11-27）
 
-- [ ] 先比對 `TBLWIPCONT_MATERIAL`、`TBLWIPCONT_MATERIALLOT`、`TBLWIPLOTLOG_REPORT` 與物料／產品／OP lookup 的 YMES live schema、migration 及同步。可信 refs 沿用 WP201／WP112／MTL master／PRD product／OP；詳 [RT601 規格](docs/modules/RPT/生產批使用物料查詢_RT601.md)。
+- [x] 以 PPK／SSH 核對 YMES live schema：`tblwipcont_material`、`tblwipcont_materiallot` 原先不存在；LotLog、物料／產品／OP lookup 已有但皆 0 列。套用 0095 建立兩張空表並授予 `ymes_app` SELECT，詳 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [ ] API 尚待公司端交付 `clsLot.LoadCont_Material_JoinLog` 原始 SQL／完整 join 和 WP201 `TBLWIPCONT_MATERIAL` 兩個非唯一索引的欄位定義；正式來源表無資料，沒有正向列可供比對。未收到前不猜查詢 join／row identity、不灌正式假資料。
 - [ ] 若 live schema 可支持，實作登入保護唯讀 `GET /api/reports/lot-materials?lotNo=...&page=1&pageSize=100`。LotNo 必填、精確比對、拒絕空白／萬用字元；參數化並設每頁上限／穩定排序。Core 目前以 `(LogGroupSerial, MaterialNo)` 連 MaterialLot，未使用 LotSerial，該來源表無 PK／unique，需先確認 join fan-out 與 API row identity；不要在 UI 任意去重。
 - [ ] 目前沒有可核實的正式 RT601 正向資料／API 驗收證據；公司端只完成 DEV 假資料與規格，不接 PostgreSQL。
 
 ## 公司端 RT602 物料用於生產批查詢 handoff（2026-11-27）
 
-- [ ] 先核對 RT602 直接來源與 YMES live schema／migration／同步；DDL refs 沿用 WP201／WP112／MTL master／PRD product／OP。詳 [RT602 規格](docs/modules/RPT/物料用於生產批查詢_RT602.md)。
+- [x] 以 PPK／SSH 核對 YMES live schema：直接耗用／批次來源兩表原先不存在，Report Log 及 lookup 已有但皆 0 列。套用 0095 建立兩張空表並授予 `ymes_app` SELECT，詳 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [ ] API 尚待公司端交付 `clsLot.LoadCont_Material_JoinLog` 原始 SQL／Product mode 的欄位對應與時間條件來源，以及 WP201 Material index 欄位定義；正式來源表無資料，沒有正向列可供比對。
 - [ ] 設計登入保護唯讀 `GET /api/reports/material-usage`，mode／keyword 必填，MaterialNo 與 ProductNo 分別正確過濾其來源欄位；可選 DeductTime From／To 獨立以 EventTime 含界值；參數化、穩定排序、bounded paging。legacy ProductNo 將值傳入 MaterialNo 的映射不應複製。確認 `%` 萬用字元的正式口徑和正向資料後再驗收。
 - [ ] 公司端完成 DEV 假資料與來源規格，未做正式 API／schema、未連 PostgreSQL、未 build／test／browser。
 
 ## 公司端 RT605 工單耗用資源檢視 handoff（2026-11-27）
 
-- [ ] 先核對 RT605 Oracle refs 與 YMES live schema／資料同步。Core 直接依賴 `TBLWIPSPLITCONTENT`、`TBLWIPMERGECONTENT`、`TBLWIPSUM_RESOURCE`、`TBLWIPSUM_MATERIAL`、`TBLWIPSUM_MATERIALSTATE`；公司 repo 缺少其原生 DDL／metadata。WP209／WP213 只含 BIN 子表，不能當主表 CREATE。詳 [RT605 規格](docs/modules/RPT/工單耗用資源檢視_RT605.md)。
+- [x] PPK／SSH 只讀 catalog 確認 `tblwipsplitcontent`、`tblwipmergecontent`、`tblwipsum_resource`、`tblwipsum_material`、`tblwipsum_materialstate` 在所有 schema 均不存在；repo 僅有 BIN 子表 DDL，未讀業務列、未猜表或建表。詳 [RT605 規格](docs/modules/RPT/工單耗用資源檢視_RT605.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 共用 `TBLWIPCONT_RESOURCE` 原先也缺少；依 WP403 source DDL 以 migration 0096 建立空表、PK 與四個來源索引，`ymes_app` 僅 SELECT。正式表目前 0 列。
 - [ ] 以登入與 RT605 權限保護唯讀 API；Customer/Product/RO/MO 至少一條有效條件、參數化等號 AND、穩定排序、bounded paging，另加最大 Lot／資源列數及遞迴計算範圍。確認分併批與已結批 summary 合併口徑後再驗收。
 - [ ] 公司端已完成 DEV 假資料與來源 handoff，未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 
 ## 公司端 RT606 生產批資源檢視 handoff（2026-11-27）
 
-- [ ] 核對 RT606 DDL refs 及 YMES live schema／資料同步；Core 直接使用 `TBLWIPSPLITCONTENT`、`TBLWIPMERGECONTENT`、`TBLWIPSUM_MATERIALSTATE` 缺少 Oracle source DDL／metadata。WP209／WP213 只有 BIN 子表，不能代替。詳 [RT606 規格](docs/modules/RPT/生產批資源檢視_RT606.md)。
+- [x] PPK／SSH 只讀 catalog 確認 `tblwipsplitcontent`、`tblwipmergecontent`、`tblwipsum_materialstate` 在所有 schema 均不存在；repo 僅有 BIN 子表 DDL，未讀業務列、未猜表或建表。詳 [RT606 規格](docs/modules/RPT/生產批資源檢視_RT606.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 共用 `TBLWIPCONT_RESOURCE` 已依可信 WP403 source DDL 由 migration 0096 建立空表、PK 與四個來源索引，`ymes_app` 僅 SELECT；正式表目前 0 列。
 - [ ] 設計登入與 RT606 權限保護唯讀 API，LotNo 必填且精確比對；參數化、穩定排序、bounded paging，回傳 Resource／Material rows、Lot／Lot＋OP 模式與 RESClass 合計。核對 split／merge 歷程、已結批 Resource 持久化來源與查詢上限後再驗收。
 - [ ] 公司端已完成 DEV 假資料與來源 handoff，未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 
@@ -81,19 +85,19 @@
 ## 公司端 RT608 生產批資源分攤 handoff（2026-11-27）
 
 - [ ] 公司端已完成 `/YMES/RPT/LotResourceShare` DEV 假資料及 Form／Service／Core 規格。Core 查 `TBLWIPCONT_RESOURCE_SHARE`，選取 LotNo、MONo、OPNo、ResClass、ResItem、ResValue、StdValue、InputQty、OutputQty、UserNo、EventTime、CreateDate、ItemNo 等欄位，刻意不取 CLOB；時間篩選可單獨指定起或迄。
-- [ ] 先唯讀核對 YMES PostgreSQL live catalog／索引及正式資料同步來源。公司端 repo 沒有可信 Oracle DDL／metadata，桌機無受保護 Oracle profile；未猜 schema／CREATE-only。
+- [x] 以 PPK／SSH 唯讀核對 YMES PostgreSQL：`tblwipcont_resource_share` 在所有 schema 均不存在；未讀業務列。`tblwipcont_resource` 是不同資料來源表，不可替代 Share；Share 原生 DDL／metadata 仍需公司端交付。詳 [RT608 規格](docs/modules/RPT/生產批資源檢視分攤_RT608.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [ ] 若表及資料同步已存在，提供登入／RT608 ACL 保護的參數化分頁唯讀 `GET /api/reports/lot-resource-share`，日期範圍與回傳筆數需設上限。詳 [RT608 規格](docs/modules/RPT/生產批資源檢視分攤_RT608.md)。
 
 ## 公司端 RT417 生產批下線後歷程總表 handoff（2026-11-27）
 
 - [ ] 公司端已完成 `/YMES/RPT/LotReleaseLog` DEV 假資料與來源規格。Form 使用 `wsRPT.LoadReleaseLog_Report` 查 `TBLWIPRELEASELOG` 加 OP／Product／Lot／Node lookup；選列明細使用 `wsWIP.LoadReleaseLog` 讀 `TBLWIPRELEASELOGCOMPONENT`／`TBLWIPRELEASELOGBIN`，並呼叫 Split／Merge Content 查詢。公司端未取得可信 DDL，未猜 schema。
-- [ ] 先唯讀核對 YMES PostgreSQL 是否有主表、Component／BIN、Split／Merge tables 及資料同步來源；不要依 Form 查詢結果或合成 DEV fixture 建表／灌列。原生 Oracle DDL refs 不在 repo，桌機受保護 Oracle profile 缺失，待公司端可安全查 metadata 後再補 CREATE-only。
+- [x] PPK／SSH 只讀 catalog 確認 `tblwipreleaselog`、`tblwipreleaselogcomponent`、`tblwipreleaselogbin`、`tblwipsplitcontent`、`tblwipmergecontent` 在所有 schema 均不存在；未讀業務列、未建表。原生 DDL／metadata 仍待公司端交付，詳 [RT417 規格](docs/modules/RPT/生產批下線後歷程總表_RT417.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [ ] 若 live schema/source 可支持，提供登入／RT417 ACL 保護的唯讀分頁 `GET /api/reports/lot-release-log`；支援 ProcessDate、LotNo、MONo、ProductNo、OPNo、UserNo、UserActiveID 與 ERF／Wait 條件，參數化查詢並設日期跨度、條件數及 pageSize 上限。`ShowType` legacy 程式與註解語意不一致、非 Oracle EquipmentNo 條件未實作，詳 [RT417 規格](docs/modules/RPT/生產批下線後歷程總表_RT417.md)。
 - [ ] 選列 Component／BIN 細節 API 只回傳授權批次的唯讀資料；Split／Merge 是否另提供 UI/API 前，先核對其來源互動（舊 Form 的結果 Grid 綁定被註解）。
 
 ## 公司端 RT416 OEE handoff（2026-11-27）
 
-- [ ] 公司端已完成 `/YMES/RPT/EqpOeeSummary` DEV 假資料及 RT416 Form／Designer／Service／Core／MESAutoRun 規格。RT416 Core 讀 `TBLRPTEQPOEESUMMARY`，AutoRun 會重算該表並維護 `TBLRPTEQPOEELot`；先核實家用端是否有主表同步 rows 及其更新頻率，不要把 AutoRun 刪除／重建流程直接搬到正式 YMES API。
+- [x] PPK／SSH 只讀 catalog 確認 `tblrpteqpoeesummary` 與 `tblrpteqpoeelot` 在正式 PostgreSQL 所有 schema 均不存在；未讀業務列、未猜建表。summary 原生 DDL／同步產生來源仍待公司端提供。
 - [ ] 待公司端以受保護 Oracle profile 唯讀交付 `TBLRPTEQPOEESUMMARY`（及確認 scope 後的 `TBLRPTEQPOEELot`）DDL／metadata。桌機目前找不到 Oracle attachment/profile，repo 無可信 source DDL；收到結構前不新增 CREATE-only schema。
 - [ ] 主表資料來源確認後，設計登入／RT416 ACL 保護的唯讀 `GET /api/reports/equipment-oee-summary`，支援 startDate/endDate、areaNos、equipmentTypes、equipmentNos，回 13 個 grid 欄位；需 parameterized SQL、日期跨度及設備數上限。指標由既有 OEE summary 供應，不在 API 臨時計算。詳 [RT416 規格](docs/modules/RPT/整體設備效率OEE_RT416.md)。
 
