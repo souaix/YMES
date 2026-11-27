@@ -17,6 +17,12 @@
 - [ ] 設計登入保護唯讀 `GET /api/reports/material-usage`，mode／keyword 必填，MaterialNo 與 ProductNo 分別正確過濾其來源欄位；可選 DeductTime From／To 獨立以 EventTime 含界值；參數化、穩定排序、bounded paging。legacy ProductNo 將值傳入 MaterialNo 的映射不應複製。確認 `%` 萬用字元的正式口徑和正向資料後再驗收。
 - [ ] 公司端完成 DEV 假資料與來源規格，未做正式 API／schema、未連 PostgreSQL、未 build／test／browser。
 
+## 公司端 RT605 工單耗用資源檢視 handoff（2026-11-27）
+
+- [ ] 先核對 RT605 Oracle refs 與 YMES live schema／資料同步。Core 直接依賴 `TBLWIPSPLITCONTENT`、`TBLWIPMERGECONTENT`、`TBLWIPSUM_RESOURCE`、`TBLWIPSUM_MATERIAL`、`TBLWIPSUM_MATERIALSTATE`；公司 repo 缺少其原生 DDL／metadata。WP209／WP213 只含 BIN 子表，不能當主表 CREATE。詳 [RT605 規格](docs/modules/RPT/工單耗用資源檢視_RT605.md)。
+- [ ] 以登入與 RT605 權限保護唯讀 API；Customer/Product/RO/MO 至少一條有效條件、參數化等號 AND、穩定排序、bounded paging，另加最大 Lot／資源列數及遞迴計算範圍。確認分併批與已結批 summary 合併口徑後再驗收。
+- [ ] 公司端已完成 DEV 假資料與來源 handoff，未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+
 ## 公司端最新 WIP 交接（2026-11-27）
 
 - [ ] WIPINV_CS「入庫作業」公司端已完成 `/YMES/WIP/InvInbound` DEV 假資料與規格。WinForms client 呼叫 `api/WipInventory/GetLotList`、`GetGoodDetail`、`GetBadDetail`、`Inbound`；目前可讀樹只有 Form／Designer／WEBAPI client，缺 endpoint server、Service/Core、SQL 與 SAP 交易實作。先取得可信 server contract，核對授權、SAP runtime config、交易、重試／冪等、逾時及部分成功對帳，再設計 YMES API；不得直接把舊 endpoint 或 SAP 設定暴露到瀏覽器。

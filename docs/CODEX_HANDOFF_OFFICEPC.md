@@ -6,7 +6,13 @@
 
 - [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。公司端先做可核對來源的 WIP WinForms／DEV／規格；家用端先做待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。WPI05 缺來源期間，記錄缺項並按既定清冊繼續可做工作；發現其他可做的 WIP 即插隊。RT501 與 RT410 正式頁已接家用端唯讀 API／lookups，runtime 驗收待資料與操作時機；RT410 legacy 主／子設備時間邊界差異已核源並記錄。RT416／RT417／RT502／RT503／RT504／RT608 均已完成。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
 
-## 公司端目前交接：RPT RT602 物料用於生產批查詢（2026-11-27）
+## 公司端目前交接：RPT RT605 工單耗用資源檢視（2026-11-27）
+
+- [x] 已核對 `frmResourceQuery_byMO`、`wsWIP.LoadSumOfResource_Valid_ByMO`、`clsLot.SHR_CalculateResource_Valid_MO`；完成 `/YMES/RPT/MoResourceQuery` DEV Customer／Product／RO／MO 條件與 9 欄分組 Grid。[RT605 規格與家用端 API handoff](modules/RPT/工單耗用資源檢視_RT605.md)
+- [x] 部分 DDL refs 沿用 WP101／OE／WP201／WP112／WP403／Customer／Product／MTL。`TBLWIPSPLITCONTENT`、`TBLWIPMERGECONTENT`、`TBLWIPSUM_RESOURCE`、`TBLWIPSUM_MATERIAL`、`TBLWIPSUM_MATERIALSTATE` DDL 缺少，未猜 CREATE；未新查 Oracle、未連 PostgreSQL、未做 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／同步及資源遞迴口徑，取得缺少的可信 DDL 後再接正式查詢 API。
+
+## 前項公司端交付：RPT RT602 物料用於生產批查詢（2026-11-27）
 
 - [x] 已核對 `frmCont_Material_byMaterial`、`wsWIP.LoadCont_Material_JoinLog`、`clsLot.LoadCont_Material_JoinLog`；完成 `/YMES/RPT/MaterialUsageByMaterial` DEV Material／Product、lookup、獨立時間範圍與 11 欄 Grid。[RT602 規格與家用端 API handoff](modules/RPT/物料用於生產批查詢_RT602.md)
 - [x] 記錄 ProductNo legacy 映射與 `%` 提示／Core 等號差異；所需 DDL refs 沿用 WP201／WP112／MTL／PRD／OP。未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。

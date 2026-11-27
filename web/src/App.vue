@@ -338,6 +338,7 @@ import ContMaterialByLot from './components/ContMaterialByLot.vue'
 import ContMaterialUsageByMaterial from './components/ContMaterialUsageByMaterial.vue'
 import ContMaterialByComponent from './components/ContMaterialByComponent.vue'
 import ContMaterialByMaterial from './components/ContMaterialByMaterial.vue'
+import MoResourceQuery from './components/MoResourceQuery.vue'
 import ConfirmLot from './components/ConfirmLot.vue'
 import HoldLot from './components/HoldLot.vue'
 import WaitLot from './components/WaitLot.vue'
@@ -1293,6 +1294,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:MATERIAL QUERY BY MATERIAL': appBasePath + '/RPT/MaterialUsageByMaterial',
   'function:RPT:COMP MATERIAL BY COMPONENT': appBasePath + '/RPT/ContMaterialByComponent',
   'function:RPT:COMP MATERIAL BY MATERIAL': appBasePath + '/RPT/ContMaterialByMaterial',
+  'function:RPT:MO RESOURCE QUERY': appBasePath + '/RPT/MoResourceQuery',
   'function:RPT:CONFIRM LOT': appBasePath + '/RPT/ConfirmLot',
   'function:RPT:HOLD LOT': appBasePath + '/RPT/HoldLot',
   'function:RPT:WAIT LOT': appBasePath + '/RPT/WaitLot',
@@ -1787,6 +1789,7 @@ const isRt601ContMaterialByLotPage = computed(() => activeMasterKey.value === 'f
 const isRt602MaterialUsageByMaterialPage = computed(() => activeMasterKey.value === 'function:RPT:MATERIAL QUERY BY MATERIAL')
 const isRt603ContMaterialByComponentPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY COMPONENT')
 const isRt604ContMaterialByMaterialPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY MATERIAL')
+const isRt605MoResourceQueryPage = computed(() => activeMasterKey.value === 'function:RPT:MO RESOURCE QUERY')
 const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function:RPT:CONFIRM LOT')
 const isRt502HoldLotPage = computed(() => activeMasterKey.value === 'function:RPT:HOLD LOT')
 const isRt503WaitLotPage = computed(() => activeMasterKey.value === 'function:RPT:WAIT LOT')
@@ -4081,6 +4084,12 @@ async function signOut(): Promise<void> {
         />
         <ContMaterialByMaterial
           v-else-if="isRt604ContMaterialByMaterialPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <MoResourceQuery
+          v-else-if="isRt605MoResourceQueryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

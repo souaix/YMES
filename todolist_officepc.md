@@ -15,6 +15,13 @@
 - [x] 原生表與 lookup DDL refs 已在 repo（WP201／WP112／MTL／PRD／OP）；未新查 Oracle／猜 CREATE。公司端未連 PostgreSQL、未實作正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema／同步，實作登入保護、參數化、bounded paging 唯讀 API；確認 ProductNo 預期來源欄位、萬用字元口徑與正式正向資料。
 
+## 2026-11-27 RT605 工單耗用資源檢視
+
+- [x] 核對 `frmResourceQuery_byMO`、`wsWIP.LoadSumOfResource_Valid_ByMO`、`clsLot.SHR_CalculateResource_Valid_MO`／遞迴資源計算；完成 `/YMES/RPT/MoResourceQuery` DEV Customer／Product／RO／MO 條件、lookup、四類資源分組 Grid。詳 [RT605 規格與家用端 API handoff](docs/modules/RPT/工單耗用資源檢視_RT605.md)。
+- [x] 記錄主 Core 以 `Status<>99` 選批、等號 AND 篩選並展開 Split／Merge；物料列 `InputQty` 由 DataTable 預設為 0。已存在 WP101／OE／WP201／WP112／WP403／Customer／Product／MTL DDL refs；WP209／WP213 僅是 BIN 表，不能代替主表。
+- [x] 缺 `TBLWIPSPLITCONTENT`、`TBLWIPMERGECONTENT`、`TBLWIPSUM_RESOURCE`、`TBLWIPSUM_MATERIAL`、`TBLWIPSUM_MATERIALSTATE` 原生 DDL／metadata；受保護 Oracle profile attachment 不存在，未查 Oracle、未猜 CREATE。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端核 live schema／同步及資源遞迴；取得缺少來源 DDL 後再實作登入授權、參數化、至少一條條件、bounded paging／計算上限的唯讀 API。
+
 ## 2026-11-27 RT601 生產批使用物料查詢
 
 - [x] 直接核對 `frmCont_Material_byLot`（Designer 內嵌）、`wsWIP.LoadCont_Material_JoinLog` 與 `clsLot.LoadCont_Material_JoinLog`；Form 只輸入 Lot No，ReportMode=True，Core 匯出 16 欄並經報表連線查詢。LotNo 空白會進未限制 Lot 的大查詢；Core 條件字串串接；MaterialLot join 未含 LotSerial，可能展開重複列。
