@@ -23,6 +23,12 @@
 - [ ] 以登入與 RT605 權限保護唯讀 API；Customer/Product/RO/MO 至少一條有效條件、參數化等號 AND、穩定排序、bounded paging，另加最大 Lot／資源列數及遞迴計算範圍。確認分併批與已結批 summary 合併口徑後再驗收。
 - [ ] 公司端已完成 DEV 假資料與來源 handoff，未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 
+## 公司端 RT606 生產批資源檢視 handoff（2026-11-27）
+
+- [ ] 核對 RT606 DDL refs 及 YMES live schema／資料同步；Core 直接使用 `TBLWIPSPLITCONTENT`、`TBLWIPMERGECONTENT`、`TBLWIPSUM_MATERIALSTATE` 缺少 Oracle source DDL／metadata。WP209／WP213 只有 BIN 子表，不能代替。詳 [RT606 規格](docs/modules/RPT/生產批資源檢視_RT606.md)。
+- [ ] 設計登入與 RT606 權限保護唯讀 API，LotNo 必填且精確比對；參數化、穩定排序、bounded paging，回傳 Resource／Material rows、Lot／Lot＋OP 模式與 RESClass 合計。核對 split／merge 歷程、已結批 Resource 持久化來源與查詢上限後再驗收。
+- [ ] 公司端已完成 DEV 假資料與來源 handoff，未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+
 ## 公司端最新 WIP 交接（2026-11-27）
 
 - [ ] WIPINV_CS「入庫作業」公司端已完成 `/YMES/WIP/InvInbound` DEV 假資料與規格。WinForms client 呼叫 `api/WipInventory/GetLotList`、`GetGoodDetail`、`GetBadDetail`、`Inbound`；目前可讀樹只有 Form／Designer／WEBAPI client，缺 endpoint server、Service/Core、SQL 與 SAP 交易實作。先取得可信 server contract，核對授權、SAP runtime config、交易、重試／冪等、逾時及部分成功對帳，再設計 YMES API；不得直接把舊 endpoint 或 SAP 設定暴露到瀏覽器。

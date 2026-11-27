@@ -339,6 +339,7 @@ import ContMaterialUsageByMaterial from './components/ContMaterialUsageByMateria
 import ContMaterialByComponent from './components/ContMaterialByComponent.vue'
 import ContMaterialByMaterial from './components/ContMaterialByMaterial.vue'
 import MoResourceQuery from './components/MoResourceQuery.vue'
+import LotResourceQuery from './components/LotResourceQuery.vue'
 import ConfirmLot from './components/ConfirmLot.vue'
 import HoldLot from './components/HoldLot.vue'
 import WaitLot from './components/WaitLot.vue'
@@ -1295,6 +1296,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:COMP MATERIAL BY COMPONENT': appBasePath + '/RPT/ContMaterialByComponent',
   'function:RPT:COMP MATERIAL BY MATERIAL': appBasePath + '/RPT/ContMaterialByMaterial',
   'function:RPT:MO RESOURCE QUERY': appBasePath + '/RPT/MoResourceQuery',
+  'function:RPT:RESOURCE QUERY': appBasePath + '/RPT/LotResourceQuery',
   'function:RPT:CONFIRM LOT': appBasePath + '/RPT/ConfirmLot',
   'function:RPT:HOLD LOT': appBasePath + '/RPT/HoldLot',
   'function:RPT:WAIT LOT': appBasePath + '/RPT/WaitLot',
@@ -1790,6 +1792,7 @@ const isRt602MaterialUsageByMaterialPage = computed(() => activeMasterKey.value 
 const isRt603ContMaterialByComponentPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY COMPONENT')
 const isRt604ContMaterialByMaterialPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY MATERIAL')
 const isRt605MoResourceQueryPage = computed(() => activeMasterKey.value === 'function:RPT:MO RESOURCE QUERY')
+const isRt606LotResourceQueryPage = computed(() => activeMasterKey.value === 'function:RPT:RESOURCE QUERY')
 const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function:RPT:CONFIRM LOT')
 const isRt502HoldLotPage = computed(() => activeMasterKey.value === 'function:RPT:HOLD LOT')
 const isRt503WaitLotPage = computed(() => activeMasterKey.value === 'function:RPT:WAIT LOT')
@@ -4090,6 +4093,12 @@ async function signOut(): Promise<void> {
         />
         <MoResourceQuery
           v-else-if="isRt605MoResourceQueryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <LotResourceQuery
+          v-else-if="isRt606LotResourceQueryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
