@@ -12,6 +12,12 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## 公司端 RT609 取消報工單_TipTop handoff（2026-11-27）
+
+- [ ] 核對 TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_EQPSUMMARY、TBLERPWORKRPT_DETAIL、TBLWIPCONT_RESOURCE_SHARE、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／Queue 的 YMES PostgreSQL live schema／同步及欄位鍵索引。公司端缺少可信 Oracle source DDL，桌機受保護 attachment 不存在；可沿用的 Resource／Equipment refs 見 [RT609 規格](docs/modules/RPT/取消報工單_TipTop_RT609.md)。
+- [ ] 若可支持，先提供登入保護、參數化、至少 MO 或 DataStartTime 範圍、穩定排序與 bounded paging 的唯讀 Summary API；Equipment／Detail 子查詢必須按 WorkReportID／EquipmentNo 授權檢查父子關係。不得接受前端 SQL／AdditionalXml。
+- [ ] 寫入功能須另行設計每 ERPNo 冪等撤銷、MES 資源旗標回復、ERP 失敗補償與對帳流程；若 TipTop 回錯，不能照舊 Form 繼續把 MES Flag 設為 -1。重拋需確認 AutoRun Job／Queue 欄位、時間參數語意與 no-job 狀態，避免 legacy Core 在未入佇列時仍標示 Flag=2。
+
 ## 公司端 RT601 生產批使用物料查詢 handoff（2026-11-27）
 
 - [ ] 先比對 `TBLWIPCONT_MATERIAL`、`TBLWIPCONT_MATERIALLOT`、`TBLWIPLOTLOG_REPORT` 與物料／產品／OP lookup 的 YMES live schema、migration 及同步。可信 refs 沿用 WP201／WP112／MTL master／PRD product／OP；詳 [RT601 規格](docs/modules/RPT/生產批使用物料查詢_RT601.md)。

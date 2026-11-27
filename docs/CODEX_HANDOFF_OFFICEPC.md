@@ -12,6 +12,12 @@
 - [x] Run Card／LotProcess／Lot／PRS／Module／ProductProcess／OP／Runtime／Area 的 Oracle MESTEST source DDL refs 均已在 repo；未新查 Oracle。Legacy runtime setup lookup 沒帶 DDL 中必填的 AreaNo；缺工時設定列仍顯示但時間空白且不推進累計，後續估算可能低估。家用端待核 live schema 並決定正式行為。
 - [ ] 公司端未連 YMES PostgreSQL、未實作／驗收正式 API/schema、未 build／test／browser；無缺少的本功能 DDL。
 
+## 公司端目前交接：RPT RT609 取消報工單_TipTop（2026-11-27）
+
+- [x] 已核對 frmERPWorkReport_Cancel／Designer、wsRPT Summary／Equipment／Detail 及 Undo／ReRun Service、clsReport Core；完成 /YMES/RPT/ErpWorkReportCancel DEV 三層查詢與安全的本機假 ERP／MES 狀態模擬。[RT609 規格與家用端 handoff](modules/RPT/取消報工單_TipTop_RT609.md)
+- [x] RT609 ERP Summary／Equipment／Detail、ResourceShare、Employee MultiUser、AutoRun Job／Queue 的可信 MESTEST source DDL／metadata 缺少；桌機受保護 Oracle attachment 不存在，未查 Oracle、未猜 CREATE-only。Resource／Equipment 參照沿 WP403／WP305。
+- [ ] WIP 在製品管理仍是全案優先；WPI05 缺原始 Form／Service／Core，繼續等待來源。公司端不連 PostgreSQL、不做正式 API／schema；家用端依 RT609 handoff 核 live schema 後再評估唯讀 API與 ERP/MES writes，未執行 build／test／browser。
+
 ## 公司端目前交接：RPT RT606 生產批資源檢視（2026-11-27）
 
 - [x] 已核對 `frmResourceQuery`、`wsWIP.LoadSumOfResource_Valid`／`LoadSumOfResource_Valid_ByOP`、`clsLot.SHR_CalculateResource_Valid`／`SHR_CalculateResource_Valid_OP`；完成 `/YMES/RPT/LotResourceQuery` DEV Lot／Lot＋OP 雙模式、Resource／Material 雙表與 RESClass 合計。[RT606 規格與家用端 API handoff](modules/RPT/生產批資源檢視_RT606.md)
