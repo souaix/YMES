@@ -6,6 +6,12 @@
 - [ ] UI client 沒有直接指出 Oracle table，現階段不建立 guessed schema／CREATE-only SQL。若 server/Core 確認 MES 表名，請公司端再唯讀交付 MESTEST DDL／metadata。
 - [ ] WP803 公司端正式 UI 已接家用端 8D Close API，DEV 驗收仍待執行；正式 Approve 保持停用，詳 [公司端待辦](todolist_officepc.md) 與 [WP803 規格](docs/modules/WIP/8D矯正單結案作業.md)。
 
+## 公司端 RT502 異常生產批查詢 handoff（2026-11-27）
+
+- [ ] 公司端已完成 `/YMES/RPT/HoldLot` DEV 假資料及 Form／Service／Core 規格。Legacy 固定查 `TBLWIPLOTSTATE.Status=3`、ReportMode=True，不固定 `TBLWIPLOTBASIS.LotState`；支援 RO／MO／Product+Version／Customer／Lot／OP／OrgLot／PS 條件。
+- [ ] 先核對 YMES PostgreSQL live schema、資料同步與 lookup 來源。`TBLWIPLOTBASIS`／`TBLWIPLOTSTATE` DDL refs 沿用 WP101；Product、Customer、Process refs 在 repo；`TBLOPBASIS` 沒有可信 Oracle source DDL，勿使用含推測欄位的 `mestest_first_phase_create_tables.sql` 建表。詳 [RT502 規格](docs/modules/RPT/異常生產批查詢_RT502.md)。
+- [ ] 若 live schema 可支持，實作登入及 RPT FunctionNo `HOLD LOT` 授權保護的唯讀 `GET /api/reports/hold-lots`。固定 Status=3、不加 RT501 的 LotState=1／AdditionalXml 庫存條件；保留 LIKE、ProductVersion／LotNo 列表與精確條件語意，採參數化、穩定排序、分頁及筆數上限。不要接受前端 SQL／AdditionalXml，也不要照搬空條件全量查詢。
+
 ## 公司端 RT608 生產批資源分攤 handoff（2026-11-27）
 
 - [ ] 公司端已完成 `/YMES/RPT/LotResourceShare` DEV 假資料及 Form／Service／Core 規格。Core 查 `TBLWIPCONT_RESOURCE_SHARE`，選取 LotNo、MONo、OPNo、ResClass、ResItem、ResValue、StdValue、InputQty、OutputQty、UserNo、EventTime、CreateDate、ItemNo 等欄位，刻意不取 CLOB；時間篩選可單獨指定起或迄。

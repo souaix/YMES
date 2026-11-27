@@ -6,7 +6,14 @@
 - [ ] WP803 的 DEV 假資料驗收仍待執行；這不影響家用端尚未完成的其他 API/schema handoff。
 - [x] WIPINV_CS「入庫作業」已核對 THEIL Form／Designer／WinForms API client，完成 DEV 假資料畫面與逐筆入庫互動、規格及家用端 handoff；未找到 server Service/Core，未猜資料表 DDL。
 - [x] 依使用者最新指示，WIP 在製品管理優先於其他尚未開始的模組。清冊與 Vue route 差異覆核後，除 WPI05 外，其餘 WIP 選單功能已有對應；WP804 已完成。
-- [ ] WIP 在製品管理維持全案最高優先序。公司端尚未交付的 WIP 選單項是 WPI05「配件領用單維護作業」；CSiMES、THEIL、DEV_SILVA 來源樹均缺指定 Form／Service／Core，不能臆造，來源到位後先完成。RT416／RT417／RT608 是 RPT 功能且已完成；WPI05 缺來源期間，依主清冊接續其他可取得原始碼的功能，之後若有可做的 WIP 項目則插隊優先。
+- [ ] WIP 在製品管理維持全案最高優先序。公司端尚未交付的 WIP 選單項是 WPI05「配件領用單維護作業」；CSiMES、THEIL、DEV_SILVA 來源樹均缺指定 Form／Service／Core，不能臆造，來源到位後先完成。RT416／RT417／RT502／RT608 是 RPT 功能且已完成；WPI05 缺來源期間，依主清冊接續其他可取得原始碼的功能，之後若有可做的 WIP 項目則插隊優先。
+
+## 2026-11-27 RT502 異常生產批查詢
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 完全一致的 `frmLotState_Hold`（Form／Designer 同檔）、`wsWIP.LoadLotBasisJoinState` 與 `clsLot.LoadLotBasisJoinState`。RT502 固定查 `A.Status=3`、`ReportMode=True`，不限定 `LotState`；沒有最少條件檢查。
+- [x] 完成 `/YMES/RPT/HoldLot` DEV 假資料：RO／MO／Product／Customer／Lot／OP／OrgLot／PS 八種勾選條件、Customer／Product／PS／OP lookup、自動勾選、狀態固定 Hold、LIKE／LotNo 多值模擬、排序與九欄 Grid。詳 [RT502 規格與家用端 handoff](docs/modules/RPT/異常生產批查詢_RT502.md)。
+- [ ] `TBLOPBASIS` Oracle source DDL／metadata 未找到；`mestest_first_phase_create_tables.sql` 是推測欄位，不能作為 source DDL。桌機受保護 Oracle profile 不存在，未查 Oracle、未猜 CREATE-only。主表 DDL references 沿用 WP101。
+- [ ] 家用端先核對 live PostgreSQL schema／資料同步及 OP lookup 來源，再評估登入／RPT `HOLD LOT` 授權保護、參數化、穩定排序、分頁限量的唯讀 `GET /api/reports/hold-lots`；服務端固定 Status=3，不能套入 RT501 LotState 條件。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 
 ## 2026-11-27 RT416 整體設備效率 (OEE)
 

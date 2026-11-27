@@ -337,6 +337,7 @@ import TimeStepBasisBoard from './components/TimeStepBasisBoard.vue'
 import ContMaterialByComponent from './components/ContMaterialByComponent.vue'
 import ContMaterialByMaterial from './components/ContMaterialByMaterial.vue'
 import ConfirmLot from './components/ConfirmLot.vue'
+import HoldLot from './components/HoldLot.vue'
 import EqpDailyReport from './components/EqpDailyReport.vue'
 import EqpDailyUtilizationChart from './components/EqpDailyUtilizationChart.vue'
 import EqpMttrSummary from './components/EqpMttrSummary.vue'
@@ -885,6 +886,7 @@ const fallbackMenuTree: MenuNode[] = [
     }, {
       id: 'menu:RPT:LOT', label: '生產批', shortLabel: '生產批', children: [
         { id: 'function:RPT:CONFIRM LOT', label: '生產批狀態查詢', shortLabel: '生產批查詢', functionNo: 'CONFIRM LOT', moduleNo: 'RPT' },
+        { id: 'function:RPT:HOLD LOT', label: '異常生產批查詢', shortLabel: '異常批查詢', functionNo: 'HOLD LOT', moduleNo: 'RPT' },
       ],
     }, {
       id: 'menu:RPT:INPROCESS', label: '在製品', shortLabel: '在製品', children: [
@@ -1284,6 +1286,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:COMP MATERIAL BY COMPONENT': appBasePath + '/RPT/ContMaterialByComponent',
   'function:RPT:COMP MATERIAL BY MATERIAL': appBasePath + '/RPT/ContMaterialByMaterial',
   'function:RPT:CONFIRM LOT': appBasePath + '/RPT/ConfirmLot',
+  'function:RPT:HOLD LOT': appBasePath + '/RPT/HoldLot',
   'function:RPT:EQP DAILY REPORT': appBasePath + '/RPT/EqpDailyReport',
   'function:RPT:EQP DAILY UTILIZATION CHART': appBasePath + '/RPT/EqpDailyUtilizationChart',
   'function:RPT:EQP MTTR SUMMARY': appBasePath + '/RPT/EqpMttrSummary',
@@ -1773,6 +1776,7 @@ const isRt204TimeStepBasisPage = computed(() => activeMasterKey.value === 'funct
 const isRt603ContMaterialByComponentPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY COMPONENT')
 const isRt604ContMaterialByMaterialPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY MATERIAL')
 const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function:RPT:CONFIRM LOT')
+const isRt502HoldLotPage = computed(() => activeMasterKey.value === 'function:RPT:HOLD LOT')
 const isRt410EqpDailyReportPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY REPORT')
 const isRt411EqpDailyUtilizationChartPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY UTILIZATION CHART')
 const isRt412EqpMttrSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY')
@@ -4057,6 +4061,12 @@ async function signOut(): Promise<void> {
         />
         <ConfirmLot
           v-else-if="isRt501ConfirmLotPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <HoldLot
+          v-else-if="isRt502HoldLotPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
