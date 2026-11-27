@@ -6,17 +6,22 @@
 
 - [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。公司端先做可核對來源的 WIP WinForms／DEV／規格；家用端先做待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。WPI05 缺來源期間，記錄缺項並按既定清冊繼續可做工作；發現其他可做的 WIP 即插隊。RT501 與 RT410 正式頁已接家用端唯讀 API／lookups，runtime 驗收待資料與操作時機；RT410 legacy 主／子設備時間邊界差異已核源並記錄。RT416／RT417／RT502／RT503／RT504／RT608 均已完成。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
 
-## 公司端目前交接：RPT RT504 生產批執行法則查詢（2026-11-27）
+## 公司端目前交接：RPT RT601 生產批使用物料查詢（2026-11-27）
+
+- [x] 已核對 `frmCont_Material_byLot`、`wsWIP.LoadCont_Material_JoinLog`、`clsLot.LoadCont_Material_JoinLog`；完成 `/YMES/RPT/ContMaterialByLot` DEV 16 欄唯讀查詢。[RT601 規格與家用端 API handoff](modules/RPT/生產批使用物料查詢_RT601.md)
+- [ ] 家用端先核 YMES live schema／同步，再實作必填 LotNo、登入保護、參數化、bounded paging 的唯讀 API；需釐清 MaterialLot join fan-out。公司端未連 PostgreSQL、未 build／test／browser。
+
+## 前項公司端交付：RPT RT504 生產批執行法則查詢（2026-11-27）
 
 - [x] 已核對三份相同 `frmRT_RuleLogQuery`（Form／Designer 同檔）、`wsWIP.LoadWIPRuleCheckLog`／`clsLot.LoadWIPRuleCheckLog`，以及 Rule No lookup 的 `wsPRD.LoadPRDOPRule`／`clsProduct.LoadPRDOPRule`；完成 `/YMES/RPT/RuleLogQuery` DEV 查詢頁。[RT504 規格與家用端 handoff](modules/RPT/生產批執行法則查詢_RT504.md)
 - [ ] `TBLWIPRULECHECKLOG` Oracle source DDL／metadata 未在 repo；桌機無受保護 Oracle profile，未查 Oracle／猜 CREATE-only。`TBLPRDOPRULE` lookup source DDL 已在 `database/reference/mestest_prd_parameter_setup_source_ddl.sql`；家用端先核 live schema 與資料同步。
 
-## 公司端目前交接：RPT RT503 等待生產批查詢（2026-11-27）
+## 前項公司端交付：RPT RT503 等待生產批查詢（2026-11-27）
 
 - [x] 已核對三份相同 `frmLotState_Wait`（Form／Designer 同檔）、`wsWIP.LoadLotBasisJoinState` 與 `clsLot.LoadLotBasisJoinState`；完成 `/YMES/RPT/WaitLot` DEV 八條件查詢與四種可見 lookup。[RT503 規格及家用端 handoff](modules/RPT/等待生產批查詢_RT503.md)
 - [ ] 家用端先核 YMES live schema、資料同步及 OP lookup 欄位，再評估登入授權保護與參數化、穩定排序、分頁限量的唯讀 API；固定 `Status=2`、不加 LotState 條件。`TBLOPBASIS` 原生 DDL／metadata 未在 repo；桌機無受保護 Oracle profile，未查 Oracle／猜 CREATE-only。
 
-## 公司端目前交接：RPT RT502 異常生產批查詢（2026-11-27）
+## 前項公司端交付：RPT RT502 異常生產批查詢（2026-11-27）
 
 - [x] 已核對三份一致的 `frmLotState_Hold`、`wsWIP.LoadLotBasisJoinState` 與 `clsLot.LoadLotBasisJoinState`；完成 `/YMES/RPT/HoldLot` DEV 八條件查詢及四種可見 lookup。[RT502 規格與家用端 handoff](modules/RPT/異常生產批查詢_RT502.md)
 - [ ] `TBLOPBASIS` 原生 DDL／metadata 未在 repo；桌機無受保護 Oracle profile，未查 Oracle／猜 CREATE-only。家用端先核 live schema／lookup，再處理登入授權與分頁唯讀 API。

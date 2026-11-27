@@ -5,6 +5,12 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## 公司端 RT601 生產批使用物料查詢 handoff（2026-11-27）
+
+- [ ] 先比對 `TBLWIPCONT_MATERIAL`、`TBLWIPCONT_MATERIALLOT`、`TBLWIPLOTLOG_REPORT` 與物料／產品／OP lookup 的 YMES live schema、migration 及同步。可信 refs 沿用 WP201／WP112／MTL master／PRD product／OP；詳 [RT601 規格](docs/modules/RPT/生產批使用物料查詢_RT601.md)。
+- [ ] 若 live schema 可支持，實作登入保護唯讀 `GET /api/reports/lot-materials?lotNo=...&page=1&pageSize=100`。LotNo 必填、精確比對、拒絕空白／萬用字元；參數化並設每頁上限／穩定排序。Core 目前以 `(LogGroupSerial, MaterialNo)` 連 MaterialLot，未使用 LotSerial，該來源表無 PK／unique，需先確認 join fan-out 與 API row identity；不要在 UI 任意去重。
+- [ ] 目前沒有可核實的正式 RT601 正向資料／API 驗收證據；公司端只完成 DEV 假資料與規格，不接 PostgreSQL。
+
 ## 公司端最新 WIP 交接（2026-11-27）
 
 - [ ] WIPINV_CS「入庫作業」公司端已完成 `/YMES/WIP/InvInbound` DEV 假資料與規格。WinForms client 呼叫 `api/WipInventory/GetLotList`、`GetGoodDetail`、`GetBadDetail`、`Inbound`；目前可讀樹只有 Form／Designer／WEBAPI client，缺 endpoint server、Service/Core、SQL 與 SAP 交易實作。先取得可信 server contract，核對授權、SAP runtime config、交易、重試／冪等、逾時及部分成功對帳，再設計 YMES API；不得直接把舊 endpoint 或 SAP 設定暴露到瀏覽器。

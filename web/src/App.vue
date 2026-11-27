@@ -334,6 +334,7 @@ import OpStateBoard from './components/OpStateBoard.vue'
 import OpStateProductTypeBoard from './components/OpStateProductTypeBoard.vue'
 import OpStateProductNoBoard from './components/OpStateProductNoBoard.vue'
 import TimeStepBasisBoard from './components/TimeStepBasisBoard.vue'
+import ContMaterialByLot from './components/ContMaterialByLot.vue'
 import ContMaterialByComponent from './components/ContMaterialByComponent.vue'
 import ContMaterialByMaterial from './components/ContMaterialByMaterial.vue'
 import ConfirmLot from './components/ConfirmLot.vue'
@@ -1287,6 +1288,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:BILLBOARD OPSTATE_PRDTYPE': appBasePath + '/RPT/OpStateProductTypeBoard',
   'function:RPT:BILLBOARD OPSTATE_PRODUCTNO': appBasePath + '/RPT/OpStateProductNoBoard',
   'function:RPT:BILLBOARD TIME_STEP BASIS': appBasePath + '/RPT/TimeStepBasis',
+  'function:RPT:MATERIAL QUERY BY LOT': appBasePath + '/RPT/ContMaterialByLot',
   'function:RPT:COMP MATERIAL BY COMPONENT': appBasePath + '/RPT/ContMaterialByComponent',
   'function:RPT:COMP MATERIAL BY MATERIAL': appBasePath + '/RPT/ContMaterialByMaterial',
   'function:RPT:CONFIRM LOT': appBasePath + '/RPT/ConfirmLot',
@@ -1779,6 +1781,7 @@ const isRt201OpStateBoardPage = computed(() => activeMasterKey.value === 'functi
 const isRt202OpStateProductTypePage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE_PRDTYPE')
 const isRt203OpStateProductNoPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD OPSTATE_PRODUCTNO')
 const isRt204TimeStepBasisPage = computed(() => activeMasterKey.value === 'function:RPT:BILLBOARD TIME_STEP BASIS')
+const isRt601ContMaterialByLotPage = computed(() => activeMasterKey.value === 'function:RPT:MATERIAL QUERY BY LOT')
 const isRt603ContMaterialByComponentPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY COMPONENT')
 const isRt604ContMaterialByMaterialPage = computed(() => activeMasterKey.value === 'function:RPT:COMP MATERIAL BY MATERIAL')
 const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function:RPT:CONFIRM LOT')
@@ -4051,6 +4054,12 @@ async function signOut(): Promise<void> {
         />
         <TimeStepBasisBoard
           v-else-if="isRt204TimeStepBasisPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ContMaterialByLot
+          v-else-if="isRt601ContMaterialByLotPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
