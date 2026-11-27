@@ -118,10 +118,20 @@
 - [x] 完成登入保護的清單／明細／D1 團隊 lookup／結案編輯 API。編輯要求 expected snapshot、IssueState=0、主單未結案、Serializable/CAS，並驗證部門與人員編號/姓名都屬該 QRS 的 D1 團隊。
 - [x] .NET 9 Release build 成功，API-only 部署 `ymes-api:wp803-close-20261127-a2`（`sha256:d6d40bab48737f28d76c40a634ef61ec836caddf6d0a24d803134c014e73b4fc`）；ready 200、匿名 401。app-browser Demo 驗證空清單及不存在資料明細/團隊查找 404；正式表無資料，未能驗證有效資料的結案編輯操作。
 - [ ] 批次核准 endpoint 先安全回 503、不改資料；等公司端交付 `8D CLOSE` Issue Job Map、簽核 callback、通知與 ReleaseLog/Basis D9 正確寫入來源，再完成原子簽核 API。
-- [ ] 公司端接 `/YMES/WIP/8DClose` 正式 UI 到以上 API、保留 DEV 假資料模式；不得在未核實簽核來源前啟用正式 Approve。詳 [公司端待辦](todolist_officepc.md)。
+- [x] 公司端 `/YMES/WIP/8DClose` 正式模式程式已接以上 API，DEV 假資料模式保留；本機 app-browser 已驗收 DEV 查詢、D1 lookup、編輯、防呆、DEV 直接／送簽流程及 WP802 唯讀返回。2026-11-28 Web image 已包含此頁；正式站 WP803 專頁操作尚未另行 app-browser 驗收，正式表也沒有可用資料列。不得在未核實簽核來源前啟用正式 Approve。詳 [公司端待辦](todolist_officepc.md)。
 - [ ] 正式同步有效 8D 主單／Release／D1 TeamMember 後，用既有 QRSNo 在 app-browser 補驗清單、明細、部門/人員、結案欄位更新及 stale snapshot 409；目前正式四表皆空，不在正式庫造測試列。
 
 詳見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+
+## 家用端 WIP WP804 8D 查詢唯讀 API（2026-11-28）
+
+- [x] 新增登入保護 `GET /api/wip/8d-query`，參數化讀取既有 `tblwip8dbasis_factory`；提供 QRSClass、QRSNo／QRSSummary、FactoryNo、ProjectDepartment、ProjectManager、CreateDate／PlanCloseDate／CloseDate、CloseState、ERFNo 條件及固定排序／分頁。至少需一個有效條件，日期範圍最多 366 天，pageSize 最多 100；使用 RepeatableRead 唯讀交易，未新增 schema／migration。
+- [x] `/YMES/WIP/8DQuery` 正式模式已接清單 API；DEV localStorage 假資料功能保留。家用端本機 app-browser 已驗空條件、WIPERF 篩選、Closed 狀態、QRSNo 篩選、日期驗證、WP802 DEV 唯讀開啟及返回。
+- [x] 正式站已部署並由 Demo 驗證：API ready 200、WP804／WP802 匿名請求 401；UI 空條件與不完整日期範圍有防呆；明確不存在 QRSNo 查詢回 0 筆；Close 返回主選單。正式表沒有資料列，未建立／修改測試資料。
+- [x] WP802 唯讀明細 API 已完成並接入 WP804 選列入口；沒有主單時 API 回 404，附件只回 metadata、不回 BLOB。正式表目前沒有主單，因此尚無法正向開啟真實十頁明細。
+- [ ] 正式同步有效 8D 主單後，補驗選列、8DQuery 開啟十頁唯讀明細及返回；不在正式庫建立測試列。
+
+詳見 [WP804 模組規格](docs/modules/WIP/8D矯正單查詢.md) 與 [WP802 規格](docs/modules/WIP/8D矯正單維護作業.md)。
 
 ## 家用端 SD104 區域基本資料 API（2026-11-27）
 
@@ -4556,8 +4566,10 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## WIP WP802 8D 矯正單維護作業家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP802 規格](docs/modules/WIP/8D矯正單維護作業.md)。公司 `/YMES/WIP/8DMaintain` 的主查詢、D1–D9、附件及 WP508 直達使用 `ymes-dev-mock:wip-8d-maintain:state:v1` 與 WP801 假主單 key；正式環境不得讀 localStorage 假資料或回傳假成功。
-- [ ] 核 YMES PostgreSQL live schema/history、權限，再對照 `database/reference/mestest_wip_wp802_source_ddl.sql`、`_source_indexes.sql`、`_metadata.txt`、`mestest_wip_wp802_create.sql`。12 張新 8D 子表全部 MESTEST 唯讀查得，無 trigger；只有 TeamMember **unique index、沒有 PK constraint**，PK 名稱不可照名字臆判。ReleaseLog 原 PK 僅 QRSNO。確有缺表/欄/index/default 才 forward migration，CREATE-only 不會修改已存在表。主單沿 WP508。
+- [x] Pull 最新 `main` 並閱讀 [WP802 規格](docs/modules/WIP/8D矯正單維護作業.md)。公司 `/YMES/WIP/8DMaintain` 的主查詢、D1–D9、附件及 WP508 直達仍使用 DEV localStorage；正式環境不讀假資料、不回傳假成功。
+- [x] 以 PPK／SSH 核對正式 PostgreSQL schema/history、權限及 source DDL。WP802 缺少的九張空子表已由 migration 0093 建立；原 12 表來源確認無 trigger、TeamMember 僅 unique index、ReleaseLog PK 僅 QRSNO。
+- [x] 已建立 WP802 登入保護、唯讀、RepeatableRead 明細 API 及十頁唯讀 UI；Attachment 只回 metadata，ymes_app 沒有 BLOB 欄位 SELECT。API/UI 不提供修改動作。
+- [ ] 正式同步有效 8D 主單後，正向驗收十頁資料、分頁上限與唯讀附件 metadata；正式目前無 8D 主單，未建立測試資料。
 - [ ] 提供登入/`WP802` Function ACL 的 38 欄主查詢：五個可勾文字欄、四個 QRSClass、兩組日期，固定 IssueState=2/CloseDate null，分頁/上限；明細直接入口另以 QRSNo 重查主單，只有不存在/IssueState=-1 拒絕，不套主窗 Active 篩選。依實際群組/資料範圍驗 read/write ACL。
 - [ ] D1–D7 分別提供 TeamMember、Question、Action/ActionDetail/Verify、RootCause/FishBone、Disposition、QA、Prevention/Track 的真 API；表單欄長、非空與複合鍵照 Oracle，序號於主單鎖下配置。D1 團隊存在與登入 actor 是否團隊成員需 server 重查；D5 連 D4、D6 連 D5，Action 父刪連動 Detail，其他引用刪除需明確守門。每筆寫入同一交易推進 CurStage、LastUpdateDate，防止舊 Core 多次獨立命令部分成功；所有 SQL 參數化、稽核 actor，必要時 DataStamp CAS。
 - [ ] Basis Confirm 只改專案部門/經理/預計結案日。D8 必須 D1 有筆、D3 有筆且每筆已 Verify；D2 原檢核已註解。`SysInfo.8DReportAutoClose` 由 server 讀取：Y 時總結+ReleaseLog+CloseType=1+CloseDate+D9 原子提交；N 時建 Release IssueState=0、保持 D8，交 WP803 簽核結案。需處理重送冪等、併發及 ReleaseLog 的單鍵限制，不以 DEV checkbox 當真設定。
@@ -4569,13 +4581,15 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] 核 YMES PostgreSQL live schema/history。`TBLWIP8D_RELEASE`、`RELEASELOG`、`TEAMMEMBER` 用 `mestest_wip_wp802_*`，Basis 用 `mestest_wip_wp508_*`。`TBLUSRDEPARTMENTBASIS` 新增 MESTEST 唯讀來源 `database/reference/mestest_wip_wp803_department_source_ddl.sql`、`_metadata.txt` 與 PG CREATE-only `mestest_wip_wp803_department_create.sql`。原 first_phase 表已含 14 欄/DepartmentNo PK，但少 **IssueState、ControlDtConect、DtConectQty、DataStamp 的 DEFAULT 0**；只對 live 缺項做 forward migration。ReleaseLog 主鍵只有 QRSNo，TeamMember 只有 unique index、無 PK constraint。
 - [ ] 實作登入/`WP803` ACL 的分頁查詢：Release inner join Basis、四狀態、QRSNo 包含搜尋、FactoryNo/ProjectDepartment 精確、Release CreateDate/ReleaseDate 起迄；畫面「CloseDate」實際用 ReleaseDate。GET 詳細與本 QRS D1 TeamMember + `TBLUSRDEPARTMENTBASIS` 部門名 lookup。編輯 PUT 限 Release.IssueState=0 且主單未結案，驗必填、欄長、同部門成員、授權與並發，只更新 Release；不接受 client 提供的狀態/Creator。
 - [ ] `8D CLOSE` Issue Job Map 在 server 決定。無 Job/Detail：Release=2、ReleaseLog(ReleaseType=2)、Basis CloseType=2/CloseDate/部門/人員/說明、CurStage=D9 **同一交易**；有 Job/Detail：先 Pending=1，**最終核准後**才原子結案，退回回 0。來源在 Pending 時立即結案、ApproveSQL/RejectSQL 誤更新 Basis.IssueState、WinForms 多選用 ActiveRow 寫 log 且 Core 多命令非原子，均不得直接照搬。處理重送/ReleaseLog 單鍵衝突、簽核與通知冪等、主單 DataStamp CAS、批量結果與稽核。實際結案時刻由 server 產生，勿混同編輯窗 ReleaseDate。
-- [ ] 8DQuery 應由 API 按 QRSNo 重查 WP802 十頁資料並唯讀；權限不可因前端 `readOnly` prop 而放行寫入。驗收 D8→申請→直接核准、工作流 Pending/通過/退回、重送、多選錯列、已結案重複核准及同時編輯。公司端未連 PG、未執行 build/test/browser。
+- [x] 8DQuery 已改由登入保護的 API 依 QRSNo 重查 WP802 十頁資料並唯讀；權限在 server 驗證，不依賴前端 `readOnly` prop。正式端匿名 401、不存在 QRSNo 404；真實主單不存在時不造資料。
+- [ ] 正式同步有效 8D 主單後，補驗 8DQuery 真實十頁資料；D8→申請→簽核／退回、重送、多選及併發仍依 WP802/WP803 寫入 API 待辦處理。
 
 ## WIP WP804 8D 矯正單查詢家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP804 規格](docs/modules/WIP/8D矯正單查詢.md)。公司 `/YMES/WIP/8DQuery` 為 WP801 本機 8D 假資料與 WP802 唯讀十頁，正式模式要接真 API；現有 WP508 `8D` 建立/維護入口不改成 WP804，來源另有 ERF/SPC 查詢可傳 ERFNo。
-- [ ] 主表僅 `TBLWIP8DBASIS_FACTORY`，Oracle source/metadata/PG CREATE-only 沿 `database/reference/mestest_wip_wp508_*`，先核 YMES PostgreSQL live schema/history，無新 WP804 table。提供登入/`WP804` ACL 的分頁 GET：QRSClass 任意 1/2/3/4 集合、QRSNo/QRSSummary 包含、FactoryNo/ProjectDepartment/ProjectManager 精確、Basis CreateDate/PlanCloseDate/CloseDate 區間、CloseState closed/open/all、可選 ERFNo；不固定 IssueState，只讀所有狀態。要求至少一個有效條件與 pageSize 上限，不接受僅「Closed+NotClose」當篩選。來源 QRSType 顯示 0 但未送出查詢；WIPERF/Other 單勾來源漏送條件，正式 API 應照意圖正確過濾。
-- [ ] 8DQuery 詳細頁重查 QRSNo 與 WP802 十頁子表/附件，強制 server 端讀取權限，與 WP802 寫入 ACL 分離；驗收封存/已結案/未簽核/作廢查詢、QRSClass 每一單獨勾選、日期尾日、ERFNo 外部入口、無條件拒絕及大結果分頁。公司端未連 PG、未 build/test/browser。
+- [x] Pull 最新 `main` 並閱讀 [WP804 規格](docs/modules/WIP/8D矯正單查詢.md)。正式查詢保留 WP508 的原始入口，WP804 只承接查詢及唯讀明細。
+- [x] 既有 Basis 主表沿用 WP508 DDL，確認沒有新 WP804 table；登入保護的分頁 API 已完成及部署，涵蓋分類、文字、日期、結案狀態、ERFNo 條件，固定 QRSNo 排序並限制分頁。
+- [x] WP804 接 WP802 唯讀明細 API；正式站已驗空條件、QRSNo 零結果、日期防呆、匿名拒絕、明細 404 與 Close 返回。
+- [ ] 取得正式 8D 來源列後，再驗每一類別／日期尾日／ERFNo 外部入口及真實十頁明細；不在正式庫造資料。
 
 ## WIP WP510 等待單資料家用端 handoff（2026-11-20）
 

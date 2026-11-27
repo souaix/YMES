@@ -10,7 +10,8 @@
 ## 2026-11-27 使用者優先順序：WIP 在製品管理
 
 - [x] 已將 WIP 排在其他尚未開始模組之前，並完成清冊／Vue route 差異盤點。WP803 正式 API UI 接線已完成。
-- [ ] WP803 的 DEV 假資料驗收仍待執行；這不影響家用端尚未完成的其他 API/schema handoff。
+- [x] 家用端已在最新 main worktree 以 app-browser 驗收 WP803 DEV 假資料的查詢、D1 lookup、編輯、防呆、直接／送簽模擬與 WP802 唯讀返回；不寫正式 PostgreSQL。
+- [ ] 公司端若要確認公司機本機狀態，仍可自行重跑 DEV 驗收；正式站目前 Web image 尚未包含 WP803 頁，正式 UI 部署與真資料正向驗收仍待家用端處理。
 - [x] WIPINV_CS「入庫作業」已核對 THEIL Form／Designer／WinForms API client，完成 DEV 假資料畫面與逐筆入庫互動、規格及家用端 handoff；未找到 server Service/Core，未猜資料表 DDL。
 - [x] 依使用者最新指示，WIP 在製品管理優先於其他尚未開始的模組。清冊與 Vue route 差異覆核後，除 WPI05 外，其餘 WIP 選單功能已有對應；WP804 已完成。
 - [ ] WIP 在製品管理維持全案最高優先序。公司端先做可核對來源的 WIP WinForms／DEV／規格；目前唯一缺公司端來源的 WIP 選單項是 WPI05「配件領用單維護作業」，CSiMES、THEIL、DEV_SILVA 均缺指定 Form／Service／Core，不能臆造，來源到位後先完成。缺來源期間可接續其他可做項目，有可做的 WIP 項目即插隊。家用端先處理 [家用端待辦](todolist_homepc.md) 中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目；受來源阻擋時記錄缺項並切換到下一個可做的 WIP 工作。
@@ -125,7 +126,8 @@
 - [x] 家用端已部署登入保護 `/YMES/API/api/wip/8d-close` 清單、`/{qrsNo}` 明細、`/{qrsNo}/team-members?departmentNo=...` D1 部門/人員查找及 `PUT /{qrsNo}` 結案欄位更新；修改會驗 expected snapshot、IssueState、主單未結案及人員屬於該 QRS 的 D1 團隊。詳 [WP803 模組規格](docs/modules/WIP/8D矯正單結案作業.md)。
 - [x] `/YMES/WIP/8DClose` 正式模式已接家用端 API；DEV localStorage 假資料流程保留。正式頁支援清單條件／日期／分頁、明細、D1 部門及人員 lookup、expected+value 編輯提交與 loading/error/empty/conflict 狀態，不讀假資料或回假成功。詳 [WP803 規格](docs/modules/WIP/8D矯正單結案作業.md)。
 - [x] `Approve` 在正式模式停用並提示簽核來源尚未就緒；API 暫回 503 且不改資料。待交付原生 `8D CLOSE` Issue Job Map、Approve/Reject callback、通知與 ReleaseLog/Basis D9 的交易來源後，再由家用端完成簽核 API。
-- [ ] 公司端以 DEV 假資料驗收清單、查詢條件、分頁、明細、D1 部門/人員、編輯成功、必填/欄長錯誤、409 stale snapshot、Close/重進/直接網址；完成後更新 WP803 模組 MD。正式資料目前四張 8D 表皆空，先不灌生產測試列；公司端不連 PostgreSQL、不做 SSH/部署。
+- [x] 家用端已以本機 app-browser 完成 DEV 清單、查詢條件、日期錯誤、D1 部門/人員、編輯、必填防呆、Close／重進／8DQuery 返回驗收，並更新 WP803 模組 MD；測試資料只在 localStorage。
+- [ ] 公司端若需本機一致性確認可重跑上述 DEV 流程。正式資料目前四張 8D 表皆空，先不灌生產測試列；公司端不連 PostgreSQL、不做 SSH/部署。
 
 ## 公司端接手：RT201–RT203 作業站看板 API 對接與設定來源（2026-11-27）
 

@@ -9,7 +9,7 @@ interface ApiRow {
   belongEquipmentNo: string | null; isChamber: boolean; moves: number; lotQtyEqp: number
   hasStateData: boolean; lossPercentage: number; statePercentages: StatePercent[]; children: ApiRow[]
 }
-interface EquipmentRow extends ApiRow { areaName: string; states: Record<string, number> }
+interface EquipmentRow extends ApiRow { areaName: string; states: Record<string, number>; children: EquipmentRow[] }
 interface AreaOption { areaNo: string; areaName: string }
 interface EquipmentOption { equipmentNo: string; equipmentType: string; equipmentName: string }
 interface ApiResponse { startTime: string; endTime: string; chamberManage: boolean; states: ApiState[]; items: ApiRow[] }

@@ -1,5 +1,13 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP802／WP804 8D 唯讀查詢與明細（2026-11-28）
+
+- 家用端以 PPK／SSH 唯讀核對正式 PostgreSQL；依 `database/reference/mestest_wip_wp802_create.sql` 套用 `0093_wip_wp802_readonly_detail_schema.sql`，建立正式 schema 缺少的九張空白 8D 子表（Action、ActionDetail、AttachFile、Disposition、Prevention、PreventionTrack、QA、Question、RootCause）。執行前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-wp802-0093-20261128.dump`，808,491 bytes，SHA-256 `00dc57a20d9fc0091b3e52f87dc1f9efc532ce322318780d1c02c54b984b2707`；`pg_restore --list` 通過。Migration SHA-256 `3CE5AA6C255E690256F8E036D458CE76EC7B39A9C186E5D37B45EDBC02ACE909`。只建結構，未匯入業務資料。
+- `ymes_app` 對八張非附件子表僅有 SELECT；附件表只可讀 `qrsno, stageno, attachfilename, creator, createdate`，`attachbody` 不可讀。未授予 INSERT／UPDATE／DELETE。正式 8D Basis 與子表目前無可用主單，未建立測試列。
+- 新增登入保護、參數化、RepeatableRead 唯讀 `GET /api/wip/8d-query` 與 `GET /api/wip/8d/{qrsNo}/detail`。WP804 支援 39 欄、分類／文字／日期／結案狀態／ERFNo 篩選、至少一個有效條件、366 天日期上限、固定 QRSNo 排序及最多 100 筆分頁；WP802 明細回傳 Basis、D1–D7、Release／ReleaseLog 與附件 metadata，每段最多 500 列，不回傳附件 BLOB。正式 `8DQuery` 在選取結果後才可呼叫唯讀明細，不提供寫入 API。
+- .NET 9 Release API 已部署為 `ymes-api:wp804wp802-20261128-a1`，image `sha256:ef6c55545894a2ae7d9c96adf5e16e3ba61f5bca39246da2bdcba35975b1cc51`；前版保留在 `ymes-api:before-wp804wp802-20261128-a1`。Web 已部署為 `ymes-web:wp804wp802-20261128-a1`，image `sha256:a71cb3e9d8144ce3779c49bf2a5da0ee253a6b47f68dd6fdd409c41c1d1880cf`；前版 image 與停止的舊容器保留。只更新 `ymes-api` 與 `ymes-web`，`ymes-master-web`、`yakuyama-web` 未更動。正式 `/YMES/`、環境設定及 API readiness 均回 200，兩容器 healthy。
+- 正式 app-browser Demo 驗證 8D Query 頁可操作、無條件查詢提示、不完整 Create Date 區間提示、明確不存在 QRSNo 回 0 筆；Close 返回主選單。已登入的 WP804 API 查詢回 `totalCount=0`；匿名 WP804／WP802 API 回 401；不存在主單的 WP802 明細回 404。沒有真實 8D 列可供選取，因此尚未正向驗收真實十頁明細。
+
 ## 最新：QC215 計數品管項目匯入 API（2026-11-27）
 
 - 家用端以 PPK／SSH 唯讀比對正式 YMES schema，確認 QC215 共用計數 QC Item 主／子表已存在；作為匯入覆寫保護的共用 `tblspcattbasislog` 原本缺少。依已保存 Oracle source DDL 建立來源欄位、PK、default 與索引相符的空表；未重建其他共用表、未複製 MES 業務資料。`ymes_app` 僅新增此表 SELECT。

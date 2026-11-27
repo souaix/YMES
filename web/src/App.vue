@@ -170,6 +170,7 @@ import WipWaitBasis from './components/WipWaitBasis.vue'
 import WipWaitDisposition from './components/WipWaitDisposition.vue'
 import Wip8DBasisFactory from './components/Wip8DBasisFactory.vue'
 import Wip8DMaintain from './components/Wip8DMaintain.vue'
+import Wip8DReadOnlyDetail from './components/Wip8DReadOnlyDetail.vue'
 import Wip8DClose from './components/Wip8DClose.vue'
 import Wip8DQuery from './components/Wip8DQuery.vue'
 import WipAreaShow from './components/AreaShowMaster.vue'
@@ -2347,7 +2348,6 @@ function open8dMaintainFromErf(qrsNo: string): void {
   syncRouteState()
 }
 function open8dQueryFromClose(qrsNo: string): void {
-  if (!isDevelopmentPreview.value) return
   pending8dMaintainNo.value = qrsNo
   pending8dMaintainReadOnly.value = true
   pending8dQueryReturnPath.value = appBasePath + '/WIP/8DClose'
@@ -2355,7 +2355,6 @@ function open8dQueryFromClose(qrsNo: string): void {
   syncRouteState()
 }
 function open8dQueryFromQuery(qrsNo: string): void {
-  if (!isDevelopmentPreview.value) return
   pending8dMaintainNo.value = qrsNo
   pending8dMaintainReadOnly.value = true
   pending8dQueryReturnPath.value = appBasePath + '/WIP/8DQuery'
@@ -2363,7 +2362,7 @@ function open8dQueryFromQuery(qrsNo: string): void {
   syncRouteState()
 }
 function close8dMaintain(): void {
-  if (!isDevelopmentPreview.value || !pending8dMaintainReadOnly.value) { navigateHome(); return }
+  if (!pending8dMaintainReadOnly.value) { navigateHome(); return }
   const returnPath = pending8dQueryReturnPath.value || appBasePath + '/WIP/8DClose'
   pending8dMaintainNo.value = ''
   pending8dMaintainReadOnly.value = false
@@ -4486,9 +4485,10 @@ async function signOut(): Promise<void> {
         <WipWaitBasis v-else-if="isWipWaitBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <WipWaitDisposition v-else-if="isWipWaitDispositionPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @close="navigateHome" />
         <Wip8DBasisFactory v-else-if="isWip8DBasisFactoryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :linked-erf="pending8dErf" @open-erf-info="openErfInfoFrom8d" @close="navigateHome" />
+        <Wip8DReadOnlyDetail v-else-if="isWip8DMaintainPage && pending8dMaintainReadOnly && !isDevelopmentPreview" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :initial-qrs-no="pending8dMaintainNo" @close="close8dMaintain" />
         <Wip8DMaintain v-else-if="isWip8DMaintainPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" :initial-qrs-no="pending8dMaintainNo" :read-only="pending8dMaintainReadOnly" @open-erf-info="openErfInfoFrom8d" @close="close8dMaintain" />
         <Wip8DClose v-else-if="isWip8DClosePage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromClose" @close="navigateHome" />
-        <Wip8DQuery v-else-if="isWip8DQueryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromQuery" @close="navigateHome" />
+        <Wip8DQuery v-else-if="isWip8DQueryPage" class="framework-content office-wip-module" :api-base-url="selectedEnvironmentConfig.apiBaseUrl" :development-preview="isDevelopmentPreview" :current-user-no="currentUser?.userNo || ''" @open8d-query="open8dQueryFromQuery" @close="navigateHome" />
         <WipEquipmentLotState v-else-if="isWipEquipmentLotStatePage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentMaterialLoading v-else-if="isWipEquipmentMaterialLoadingPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipEquipmentConsumeStatus v-else-if="isWipEquipmentConsumeStatusPage" class="framework-content" :current-user-no="currentUser?.userNo || ''" :development-preview="isDevelopmentPreview" @close="navigateHome" />
