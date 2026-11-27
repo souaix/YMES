@@ -1,5 +1,15 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：HOME WIP WP303／WP304 schema 與唯讀 API（2026-11-28）
+
+- 家用端使用 PPK／SSH 核對正式 YMES PostgreSQL catalog；`tblwipeqpconsumestatus`、`tblwipeqpconsumelog`、`tbleqpconsumebasis` 原先都不存在。依可信 MESTEST source 建立空表：0101 對齊 Status 9 欄／EquipmentNo+ConsumeNo PK、Log 7 欄／EquipmentNo+ConsumeNo+ConsumeSeq PK；0102 對齊 Consume Basis 8 欄／EquipmentType+ConsumeNo PK。欄位、型別、長度、NULL 及 PK 已從 live catalog 回讀；三張新表各 0 列，沒有複製 MES 業務列。
+- 0101 SHA-256 `105DDAD6083C0CEF2B1DC541CA63B48EDA3931B0866C2163AE18427923FCA04B`，rollback `682AC0D27034B4A1A77257509EC7C063C7DD025DEDE59AE80E0C3C418BC4C106`。執行前 custom-format 備份 `/opt/ymes/backups/ymes-before-wp303-0101-20261128.dump`，867,821 bytes、SHA-256 `a25ebbc4ac621f68298741b365154ef6e9715cd55c872575cd608dd5a1d21c05`，`pg_restore --list` 2,392 entries。
+- 0102 SHA-256 `FCF8C613930FA3683CABE6CEDBBE64AB4FC9AE2085285052D11A3B0D2C707BF2`，rollback `255D529580143D63A347D180F15432B0C6DC4AC23CF082BA842DC7983F2C167E`。執行前備份 `/opt/ymes/backups/ymes-before-wp304-0102-20261128.dump`，873,311 bytes、SHA-256 `fab2daf8aa4421672ae4bcc0f792dc08c04a213f7f79f8ab297871d9b5d722d1`，2,407 entries。
+- 0103 SHA-256 `169006B0735B46754F720134894D93DE691806E425E95A94AD65AD63270713BF`，rollback `09050556D25D6078EF5D91A896EC224C0F4CF68032BC0F974989E4D3BC54D742`。在既有設備主檔新增 YMES-only partial index `ix_wp304_equipment_lookup`，支援 IssueState=2／非 Chamber 設備排序；執行前備份 `/opt/ymes/backups/ymes-before-wp304-0103-20261128.dump`，875,695 bytes、SHA-256 `4fac6faf99222076f1a0775599637bde1c4d2aa65c77885748628f966886dd0f`，2,414 entries。上述備份均 root:root、mode 600。所有新增 query index 均非 Oracle source index。
+- 權限：`ymes_app` 對 Log、Consume Basis、既有 Equipment Basis 僅 SELECT；Status 無 SELECT／INSERT／UPDATE／DELETE。Log 與 Basis 不授 DML。設備資料列未透過此輪查詢讀取。
+- 以 `ymes_app` 在 RepeatableRead／READ ONLY 交易執行 `EXPLAIN`；設備 lookup 可走 `ix_wp304_equipment_lookup`，耗品 lookup 可走 `ix_wp304_consume_basis_lookup`，設備精確條件可走 Log equipment index，日期範圍可走 Log createdate index。僅看計畫，未執行 ANALYZE 或讀取既有業務資料。
+- .NET 9 的登入保護唯讀 API 有歷程 GET 與 equipment／consumables lookup GET；本機 app-browser 用 DEV localStorage fixture 驗 UI 查詢／選擇流程。API 尚未部署，Production UI 保持 disabled，正式 log／basis 表無資料，不用正式假列驗證。詳 [WP304 模組紀錄](modules/WIP/設備耗品歷程.md)、[WP303 模組紀錄](modules/WIP/設備耗品現況.md)。
+
 ## 最新：WIP WP106 上工現況唯讀 API 與 schema（2026-11-27）
 
 - 家用端以 PPK／SSH 先唯讀確認正式 PostgreSQL 的 `tblwipoperatorstate`、`tblwipoperatorlog`、`tblwiplotloginstate` 在所有 schema 均不存在；未讀取任何操作員或上工資料。依 MESTEST source DDL（WP104／WP305 reference）建立三張空表，欄位數 7／15／16，PK 與 `i_tblwiplotloginstate_01(loggroupserial)` 對齊來源；migration `0097_wip_wp106_operator_online.sql` SHA-256 `DF1F18CADFFA82E1092084AB2EB7E1A027E02B14874F22CD2EEF645C52D83F8B`，rollback SHA-256 `FAD5F8F198F52A7C4DE73C2A92F5CE8C3F234DBDFAC8AF648E184DC9782D4BAE`。

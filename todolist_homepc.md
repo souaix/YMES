@@ -12,6 +12,16 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## HOME WIP WP304 設備耗品歷程 API／schema（2026-11-28）
+
+- [x] 以 PPK／SSH 比對 live catalog 與可信 MES source，建立缺少的 WP303 Status／Log 及耗品基準空表。0101 前備份 `/opt/ymes/backups/ymes-before-wp303-0101-20261128.dump`，867,821 bytes、SHA-256 `a25ebbc4ac621f68298741b365154ef6e9715cd55c872575cd608dd5a1d21c05`、2,392 entries；0102 前備份 `/opt/ymes/backups/ymes-before-wp304-0102-20261128.dump`，873,311 bytes、SHA-256 `fab2daf8aa4421672ae4bcc0f792dc08c04a213f7f79f8ab297871d9b5d722d1`、2,407 entries。
+- [x] 0103 新增設備查找 YMES-only 部分索引；前備份 `/opt/ymes/backups/ymes-before-wp304-0103-20261128.dump`，875,695 bytes、SHA-256 `4fac6faf99222076f1a0775599637bde1c4d2aa65c77885748628f966886dd0f`、2,414 entries。0101–0103 migration／rollback SHA-256 與 live 回讀紀錄見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 三張新表皆 0 列；欄位與 PK 對齊 MES source。`ymes_app` 僅 SELECT Log、Consumable Basis、既有 Equipment Basis；Status 不授權，Log／Basis 不授 DML。以 READ ONLY `EXPLAIN` 確認 equipment、consumable、精確設備與日期查詢索引可用，未讀現有設備業務列。
+- [x] 完成登入保護唯讀 API：`GET /api/wip/equipment-consume-status-logs`、`/lookups/equipment`、`/lookups/consumables`。條件防護、台北日期含界、RepeatableRead／READ ONLY、固定排序、每頁上限與 header 規格記於 [WP304 模組 MD](docs/modules/WIP/設備耗品歷程.md)。
+- [x] `.NET 9` API build 0 error（NU1900 為 NuGet 弱點資料源無法連線）。本機 DEV app-browser 驗設備／耗品查找、精確條件、日期範圍、無條件／反向日期提示、空結果及 Close；使用 localStorage 假資料，未呼叫新 API／正式資料庫。
+- [ ] API 與 Web 尚未部署；Production 頁仍 disabled。正式 API 尚無細粒度 FunctionKey claim，僅一般登入保護；部署前重查磁碟容量，不能清除其他專案或回滾檔案騰空間。正式 log／consume-basis 同步表目前空白，故不得以正式假列做正向驗收。
+- [ ] 公司端依 [WP304 handoff](todolist_officepc.md) 接上三支 GET、分頁 headers、載入／空結果／400／401／503 顯示與 DEV mock。WP303 現況 CRUD／Reset 交易 API 尚未完成，狀態表保持無權限。
+
 ## HOME WIP WP307 區域作業人員唯讀 API 與 schema（2026-11-27）
 
 - [x] 以 PPK／SSH 只讀核對 live catalog：`TBLWIPAREAOPERATORSTATE`、`TBLWIPAREAOPERATORLOG`、`TBLSMDAREASHIFT`、`TBLSMDAREAOPERATOR` 原先在所有 schema 均缺少；`TBLUSRSHIFTBASIS` 存在但 `ymes_app` 沒有 SELECT。已用可信 MESTEST references 建立 0098 空來源表並只授 SELECT；0098 前備份 `/opt/ymes/backups/ymes-before-wp307-0098-20261127.dump`，853,659 bytes、SHA-256 `53ed499165c0f555b1b73b53fa914c5f80e5fc088975c351c047eab2eb7eaba7`，`pg_restore --list` 2,354 entries。四新表目前均 0 列；`ymes_app` 沒有 INSERT／UPDATE／DELETE。
@@ -4364,24 +4374,24 @@ API 工作：
 
 ## WIP WP303 設備耗品現況家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 main，閱讀 `docs/modules/WIP/設備耗品現況.md`、本段 `docs/DATABASE_CONNECTION.md` 與 `database/reference/mestest_wip_wp303_*`。
-- [ ] 兩張 Oracle 專用表已交付 PostgreSQL CREATE-only：`ymes.tblwipeqpconsumestatus`、`ymes.tblwipeqpconsumelog`。先查 PostgreSQL live schema／migration history；只為缺表建立 forward migration，不可把 CREATE-only 直接套用到既有環境。`ymes.tbleqpconsumebasis` 與設備主檔沿用既有 reference。
+- [x] 已同步 main 並讀完 WP303 模組文件、資料庫連線紀錄及可信 source DDL／CREATE-only references（2026-11-28）。
+- [x] live schema 已核對，依來源執行 0101 建立 Status／Log 空表、0102 建立 Consume Basis 空表；詳見本清單前面的 HOME WP304 進度。沒有覆蓋既有物件或匯入業務資料。
 - [ ] 實作登入保護、權限範圍明確、分頁排序的設備耗品現況列表；Equipment lookup 限 IssueState=2，ConsumeNo lookup 依 EquipmentType 查 ConsumeBasis。
 - [ ] 實作新增／編輯／刪除：Status PK 為 EquipmentNo+ConsumeNo；新增 Creator/CreateDate；編輯依 WinForms 只改 ConsumeSeq/CurQty/CurPeriod；刪除支援多選。來源多選刪除逐列執行，須明確選擇相容逐列部分成功或採原子 bulk-delete。
 - [ ] 實作 Reset POST command：以資料庫最新 Status/Basis 重算，於同一交易 INSERT 舊 ConsumeSeq 至 Log（Creator、CreateDate、AccQty、AccPeriod），再 CAS 更新 Status 的新 ConsumeSeq、CurQty=0、CurPeriod=0、Revisor、ReviseDate。任何步驟失敗都回滾；禁止以 GET 執行重置。
 - [ ] ConsumeSeq 重複檢查在來源以 ConsumeNo 為範圍查 Log，跨設備共用序號時也拒絕；此規則未由 PK 保證，需解決併發重複（資料庫鎖／交易級一致性檢查），但不可擅自新增 Oracle 不存在的唯一約束。編輯不更新 Revisor/ReviseDate 是 Core 來源行為。
 - [ ] 保留並評估來源的重置邊界瑕疵：Period=-1 代表不限；RemainPeriod 不足顯示時用 ToleranceQty（疑似應為 TolerancePeriod）；達用量／週期上限時 Reset 視窗會把 AccQty／AccPeriod 輸入清為 0。若修正，記為產品規則變更並取得辦公室確認。
-- [ ] CREATE-only 與 WinForms 假資料不構成正式 schema/API。完成 migration（若缺）、API／DTO、授權、錯誤碼、交易回歸與部署紀錄後更新此交接；WP304 設備耗品歷程交接列於下一節。
+- [ ] WP303 正式 API／DTO、Status CRUD 與 ConsumReset 同交易／CAS 尚未完成；依 [WP303 模組紀錄](docs/modules/WIP/設備耗品現況.md) 繼續。Status 無 app role 權限，正式按鈕保持 disabled。
 
 ## WIP WP304 設備耗品歷程家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 main，閱讀 `docs/modules/WIP/設備耗品歷程.md`、WP303 `docs/modules/WIP/設備耗品現況.md`，以及 `docs/DATABASE_CONNECTION.md` WP303/WP304 段落。
-- [ ] WP304 沒有新增 Oracle table／CREATE-only。只讀 WP303 已交付的 `ymes.tblwipeqpconsumelog`；先核對 PostgreSQL live schema／migration history，不要新增重複 migration。來源 DDL、metadata、CREATE-only 在 `database/reference/mestest_wip_wp303_*`。
-- [ ] 建立登入保護的唯讀 GET 查詢，支援 EquipmentNo、ConsumeNo、StartTime、EndTime；StartTime 使用 `CreateDate >=`，EndTime 使用 `CreateDate <=`，均含界值。WinForms 頁沒有 ConsumeSeq 欄位，即使底層 Service 支援，也不擴大此頁 UI。
-- [ ] 來源頁不帶條件也會查完整 log。正式 API 必須以使用者權限限制可見資料、參數化查詢、穩定排序與伺服器端分頁／最大筆數；不可讓 UI 一次下載全表。可要求日期區間或提供安全的預設範圍，但需將其記錄為相對 WinForms 的明確效能／安全調整。
-- [ ] Equipment lookup 限 IssueState=2；ConsumeNo lookup 讀全部 Equipment Type Consume Basis，不隨設備類別縮小。DTO 至少提供 EquipmentNo、ConsumeNo、ConsumeSeq、AccQty、AccPeriod、Creator、CreateDate。
-- [ ] WP304 Vue DEV 會在開頁時讀取 WP303 共用假 log localStorage；正式端改為 GET API，勿把 localStorage 假資料當成伺服器資料或授權依據。
-- [ ] 完成 API、查詢權限、分頁、空條件保護及部署紀錄後更新 TODO；接續公司端 WP305 設備線上點檢。
+- [x] 已同步 main 並讀完 WP304／WP303 規格、資料庫連線紀錄及 source DDL（2026-11-28）。
+- [x] 核對 live schema 後用 0101／0102／0103 建缺少的 YMES 結構與查詢索引；依 source DDL，沒有新增 Oracle source table。細節見 `docs/DATABASE_CONNECTION.md`。
+- [x] 完成登入保護 `GET /api/wip/equipment-consume-status-logs`；設備／耗品等值條件、台北時間含界日期、穩定排序及有上限分頁均參數化；此頁不提供 ConsumeSeq 條件。
+- [x] 為避免無界讀取，API 需要 EquipmentNo／ConsumeNo 其中一個或完整日期區間，最多回傳 100 筆／頁；將條件要求記錄為相對 WinForms 的明確安全／效能調整。
+- [x] 完成 Equipment IssueState=2／非 Chamber 與全 Equipment Type Consume Basis lookup；支援 keyword 與有上限分頁；Log DTO 含 EquipmentNo、ConsumeNo、ConsumeSeq、AccQty、AccPeriod、Creator、CreateDate。
+- [x] DEV 仍使用 WP303 共用假 log localStorage；Production 不讀 fixture。家用端 app-browser 僅以本機 DEV fixture 驗收，未連正式資料或寫入正式資料。
+- [ ] WP304 API 尚未部署；公司端先依 [WP304 handoff](todolist_officepc.md) 接 Production API 與分頁／錯誤狀態。待正式服務部署與同步資料可用後再驗收正式端點；WP303 writer 另行完成。
 
 ## WIP WP305 設備線上點檢家用端 handoff（2026-11-20）
 

@@ -51,6 +51,7 @@ function localDateTimeValue(date: Date): string {
 const allLogs = ref<ConsumeLog[]>(readLogs())
 const results = ref<ConsumeLog[]>([])
 const hasQueried = ref(false)
+const queryError = ref('')
 const pickerMode = ref<PickerMode>(null)
 const pickerText = ref('')
 const query = reactive({
@@ -105,6 +106,19 @@ function runQuery(): void {
   const consumeNo = query.consumeChecked ? query.consumeNo.trim() : ''
   const from = query.fromChecked && query.from ? new Date(query.from).getTime() : null
   const to = query.toChecked && query.to ? new Date(query.to).getTime() : null
+  queryError.value = ''
+  if (!equipmentNo && !consumeNo && (from === null || to === null)) {
+    results.value = []
+    hasQueried.value = false
+    queryError.value = '請指定 Equipment No、Consume No，或同時指定 From Date 與 End Date。'
+    return
+  }
+  if (from !== null && to !== null && from > to) {
+    results.value = []
+    hasQueried.value = false
+    queryError.value = 'From Date 不可晚於 End Date。'
+    return
+  }
   results.value = allLogs.value.filter(item => {
     if (equipmentNo && item.equipmentNo.toUpperCase() !== equipmentNo) return false
     if (consumeNo && item.consumeNo !== consumeNo) return false
@@ -138,6 +152,7 @@ function runQuery(): void {
         <button class="query-button primary-button" type="button" :disabled="!dev" @click="runQuery">Query</button>
       </div>
     </fieldset>
+    <p v-if="queryError" class="query-error" role="alert">{{ queryError }}</p>
 
     <section class="grid-panel" aria-label="耗品更換紀錄清單">
       <div class="table-wrap"><table class="log-grid">
@@ -178,6 +193,7 @@ function runQuery(): void {
 <style scoped>
 .consume-log-page { height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px; color: #292929; background: #fff; overflow: auto; }
 .query-box { flex: 0 0 auto; min-height: 81px; margin: 0; border: 1px solid #aaa; padding: 5px 10px 7px; }
+.query-error { flex: 0 0 auto; margin: 0; color: #a33; font-size: 13px; }
 .query-box legend { padding: 0 5px; color: #444; font-weight: 600; }
 .filter-row { display: flex; align-items: center; gap: 6px; min-height: 30px; }
 .check-filter { min-width: 116px; display: flex; align-items: center; gap: 5px; white-space: nowrap; }

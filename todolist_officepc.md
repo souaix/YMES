@@ -1,5 +1,18 @@
 # 公司端待辦
 
+## HOME WP304 設備耗品歷程唯讀 API handoff（2026-11-28）
+
+- [x] 家用端依可信 MESTEST source 建立 0101 空的 `tblwipeqpconsumestatus`／`tblwipeqpconsumelog`、0102 空的 `tbleqpconsumebasis`，並於 0103 建 YMES-only 設備查找索引。三張新表都是 0 列；`ymes_app` 僅有 Log／Basis SELECT，Status 無權限；沒有匯入業務資料。
+- [x] 家用端提供登入保護唯讀 API：`GET /api/wip/equipment-consume-status-logs`、`/lookups/equipment`、`/lookups/consumables`。歷程至少要 EquipmentNo、ConsumeNo 其一或完整 StartTime+EndTime；Start／End 含界、固定排序，預設每頁 50、上限 100。回 JSON array 與 `X-Page`／`X-Page-Size`／`X-Has-More`。Lookup 分頁每頁最多 100。詳細欄位、錯誤與日期規格見 [WP304 模組 MD](docs/modules/WIP/設備耗品歷程.md)。
+- [ ] Pull 最新 `main`，將 `/YMES/WIP/EquipmentConsumeStatusLog` Production mode 接上歷程與兩支 lookup API；保留 DEV localStorage mock，不可把 localStorage／fixture fallback 到正式模式。設備 lookup 限 IssueState=2 且排除 Chamber；耗品 lookup 列出所有 Equipment Type，不隨已選設備縮小。
+- [ ] 支援 page/pageSize 與 response headers 翻頁；呈現載入中、空結果、條件驗證、401／503 與 Close。Query 的安全條件需與 API 一致；API 尚未部署前不得拿 DEV 假列假裝正式結果。
+- [ ] 家用端尚未部署 API／Web；正式 log／consumable basis 無資料。完成 UI 後先交回公司端 DEV 操作驗收；等家用端通知部署與正式來源同步後，再做正式站 app-browser 正向查詢。不要在正式表新增測試列。
+
+## HOME WP303 設備耗品現況 API handoff（2026-11-28）
+
+- [x] 家用端已完成 0101 Status／Log 及 0102 Consume Basis source-aligned 空表；三表均 0 列。Status 沒有授予 `ymes_app` 權限，Log／Basis 只有 SELECT。參見 [WP303 模組 MD](docs/modules/WIP/設備耗品現況.md)。
+- [ ] WP303 現況清單、Equipment／Consume Basis lookup、Add／Edit／Delete 及 ConsumReset 正式 API 尚未完成；先依 WP303 模組規格確認 transaction／CAS，再實作。正式畫面異動按鈕維持 disabled，勿用正式測試資料驗證。
+
 ## HOME WP306 設備點檢歷程唯讀 API handoff（2026-11-27）
 
 - [x] 家用端已套用 migration 0100，建立 WP305/MESTEST source 的空表 `TBLWIPEQPQCLISTLOG`／`TBLWIPEQPQCLISTDETAIL`；`ymes_app` 只有 SELECT，兩表 0 列。兩個 YMES-only 查詢索引不是 Oracle source index。無需公司端建立 DDL／連 PostgreSQL。
