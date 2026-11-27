@@ -6,6 +6,12 @@
 - [ ] UI client 沒有直接指出 Oracle table，現階段不建立 guessed schema／CREATE-only SQL。若 server/Core 確認 MES 表名，請公司端再唯讀交付 MESTEST DDL／metadata。
 - [ ] WP803 公司端正式 UI 已接家用端 8D Close API，DEV 驗收仍待執行；正式 Approve 保持停用，詳 [公司端待辦](todolist_officepc.md) 與 [WP803 規格](docs/modules/WIP/8D矯正單結案作業.md)。
 
+## 公司端 RT608 生產批資源分攤 handoff（2026-11-27）
+
+- [ ] 公司端已完成 `/YMES/RPT/LotResourceShare` DEV 假資料及 Form／Service／Core 規格。Core 查 `TBLWIPCONT_RESOURCE_SHARE`，選取 LotNo、MONo、OPNo、ResClass、ResItem、ResValue、StdValue、InputQty、OutputQty、UserNo、EventTime、CreateDate、ItemNo 等欄位，刻意不取 CLOB；時間篩選可單獨指定起或迄。
+- [ ] 先唯讀核對 YMES PostgreSQL live catalog／索引及正式資料同步來源。公司端 repo 沒有可信 Oracle DDL／metadata，桌機無受保護 Oracle profile；未猜 schema／CREATE-only。
+- [ ] 若表及資料同步已存在，提供登入／RT608 ACL 保護的參數化分頁唯讀 `GET /api/reports/lot-resource-share`，日期範圍與回傳筆數需設上限。詳 [RT608 規格](docs/modules/RPT/生產批資源檢視分攤_RT608.md)。
+
 ## 公司端 RT417 生產批下線後歷程總表 handoff（2026-11-27）
 
 - [ ] 公司端已完成 `/YMES/RPT/LotReleaseLog` DEV 假資料與來源規格。Form 使用 `wsRPT.LoadReleaseLog_Report` 查 `TBLWIPRELEASELOG` 加 OP／Product／Lot／Node lookup；選列明細使用 `wsWIP.LoadReleaseLog` 讀 `TBLWIPRELEASELOGCOMPONENT`／`TBLWIPRELEASELOGBIN`，並呼叫 Split／Merge Content 查詢。公司端未取得可信 DDL，未猜 schema。

@@ -139,6 +139,7 @@ import EmsEquipmentStateStatistics from './components/EmsEquipmentStateStatistic
 import RptErfPareto from './components/RptErfPareto.vue'
 import RptEqpOeeSummary from './components/RptEqpOeeSummary.vue'
 import RptLotReleaseLog from './components/RptLotReleaseLog.vue'
+import RptLotResourceShare from './components/RptLotResourceShare.vue'
 import EmsEquipmentReasonBasis from './components/EmsEquipmentReasonBasis.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
@@ -895,6 +896,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:RPT:ERFPARETO', label: '異常單柏拉圖分析', shortLabel: '異常柏拉圖', functionNo: 'ERFPARETO', moduleNo: 'RPT' },
         { id: 'function:RPT:EQP OEE SUMMARY', label: '整體設備效率 (OEE)', shortLabel: '設備 OEE', functionNo: 'EQP OEE SUMMARY', moduleNo: 'RPT' },
         { id: 'function:RPT:LOT RELEASE LOG', label: '生產批下線後歷程總表', shortLabel: '生產批歷程', functionNo: 'LOT RELEASE LOG', moduleNo: 'RPT' },
+        { id: 'function:RPT:LOT RESOURCE SHARE', label: '生產批資源檢視(分攤)', shortLabel: '資源分攤', functionNo: 'LOT RESOURCE SHARE', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1290,6 +1292,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:ERFPARETO': appBasePath + '/RPT/ErfPareto',
   'function:RPT:EQP OEE SUMMARY': appBasePath + '/RPT/EqpOeeSummary',
   'function:RPT:LOT RELEASE LOG': appBasePath + '/RPT/LotReleaseLog',
+  'function:RPT:LOT RESOURCE SHARE': appBasePath + '/RPT/LotResourceShare',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1778,6 +1781,7 @@ const isRt414EqpStateStatisticsPage = computed(() => activeMasterKey.value === '
 const isRt415ErfParetoPage = computed(() => activeMasterKey.value === 'function:RPT:ERFPARETO')
 const isRt416EqpOeeSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:EQP OEE SUMMARY')
 const isRt417LotReleaseLogPage = computed(() => activeMasterKey.value === 'function:RPT:LOT RELEASE LOG')
+const isRt608LotResourceSharePage = computed(() => activeMasterKey.value === 'function:RPT:LOT RESOURCE SHARE')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -4464,6 +4468,7 @@ async function signOut(): Promise<void> {
         <RptErfPareto v-else-if="isRt415ErfParetoPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <RptEqpOeeSummary v-else-if="isRt416EqpOeeSummaryPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <RptLotReleaseLog v-else-if="isRt417LotReleaseLogPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <RptLotResourceShare v-else-if="isRt608LotResourceSharePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentReasonBasis v-else-if="isEmsEquipmentReasonBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

@@ -6,7 +6,7 @@
 - [ ] WP803 的 DEV 假資料驗收仍待執行；這不影響家用端尚未完成的其他 API/schema handoff。
 - [x] WIPINV_CS「入庫作業」已核對 THEIL Form／Designer／WinForms API client，完成 DEV 假資料畫面與逐筆入庫互動、規格及家用端 handoff；未找到 server Service/Core，未猜資料表 DDL。
 - [x] 依使用者最新指示，WIP 在製品管理優先於其他尚未開始的模組。清冊與 Vue route 差異覆核後，除 WPI05 外，其餘 WIP 選單功能已有對應；WP804 已完成。
-- [ ] WIP 第一個待續項為 WPI05「配件領用單維護作業」。目前原始 Form／Service／Core 缺失，不能臆造；來源到位後先完成 WPI05。RT416 已完成；來源等待期間接續 RPT「在製品」下的 RT417 生產批歷程報表。
+- [ ] WIP 第一個待續項為 WPI05「配件領用單維護作業」。目前原始 Form／Service／Core 缺失，不能臆造；來源到位後先完成 WPI05。RT416／RT417 已完成；WPI05 等來源期間，接續清冊中的 RT608 資源分攤查詢。
 
 ## 2026-11-27 RT416 整體設備效率 (OEE)
 
@@ -14,6 +14,13 @@
 - [x] 完成 `/YMES/RPT/EqpOeeSummary` DEV 假資料：日期驗證、Area／EquipmentType／EquipmentNo 多選、條件查詢及 13 欄 OEE grid；不在查詢頁重算指標。詳 [RT416 規格與家用端 handoff](docs/modules/RPT/整體設備效率OEE_RT416.md)。
 - [ ] `TBLRPTEQPOEESUMMARY`、`TBLRPTEQPOEELot` 原生 Oracle DDL／metadata 未在 repo；桌機找不到受保護 Oracle profile/attachment，未查 Oracle、未猜 CREATE-only。profile 可用後只讀查結構，不查業務資料。
 - [ ] 家用端先確認 summary rows 的正式同步／產生來源，再按規格設計登入保護唯讀 API；公司端未連 PostgreSQL、未做 API/schema、未 build／test／browser。
+
+## 2026-11-27 RT608 生產批資源檢視(分攤)
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 相同的 `frmRPTLotResource_Share`、`wsRPT.LoadCont_Resource_Share`、`clsReport.LoadCont_Resource_Share`；確認只讀 `TBLWIPCONT_RESOURCE_SHARE` 並省略 CLOB 欄位。
+- [x] 完成 `/YMES/RPT/LotResourceShare` DEV 假資料查詢、YearMonth／OP／MO／Lot／ResClass／ResItem／ProductionTime／SummaryTime 條件及 12 欄 Grid。詳 [RT608 規格與家用端 handoff](docs/modules/RPT/生產批資源檢視分攤_RT608.md)。
+- [ ] `TBLWIPCONT_RESOURCE_SHARE` 原生 Oracle DDL／metadata 不在 repo；桌機無受保護 Oracle profile，未連 Oracle、未猜 CREATE-only。profile 可用後只讀查結構。
+- [ ] 家用端先核實 live PostgreSQL schema／同步來源，再實作登入及 RT608 ACL 保護的參數化分頁唯讀 API；公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 
 ## 2026-11-27 RT417 生產批下線後歷程總表
 
