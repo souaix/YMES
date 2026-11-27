@@ -98,9 +98,9 @@
 ## 公司端接手：RPT RT501 正式介面連接（2026-11-27）
 
 - [x] 家用端已部署登入保護 `GET /YMES/API/api/reports/confirm-lots`；條件為 `roNo`、`moNo`、`productNo`、`productVersion`、`customerNo`、`lotNo`、`opNo`、`orgLotNo`、`psNo`、`page`、`pageSize`。空條件回 400、`pageSize` 最大 100、分頁回 `hasMore`；固定 LotState 1 與狀態／庫存限制。詳 [RT501 模組 MD](docs/modules/RPT/生產批狀態查詢_RT501.md)。
-- [ ] 將 `ConfirmLot.vue` 正式模式接上此 API；保留 DEV 假資料模式，補正式載入、錯誤、空結果與 `hasMore` 分頁操作，並遵守至少一項查詢條件。
-- [ ] 將 Customer／Product／PS／OP lookup 接至既有授權 API：`GET /api/ent/customer-basis?keyword=...`、`GET /api/products?keyword=...&issueState=...`、`GET /api/production-segments?psNo=...`、`GET /api/operations?keyword=...&issueState=...`。核對回傳欄位並維持原本選取條件與自動勾選邏輯。
-- [ ] 正式 UI 完成後更新 RT501 模組 MD，build 並用 app-browser 逐項驗證登入、查詢、各 lookup、分頁、防呆、選取列、LotProperty／CompProperty 與返回主頁；公司端不連 PostgreSQL、不部署正式站。
+- [x] `ConfirmLot.vue` 正式模式已接 `/api/reports/confirm-lots`，傳入環境 API base，保留原 DEV 合成資料頁；正式查詢支援錯誤／空結果、至少一項條件及 `hasMore` 分頁，不補入假資料。
+- [x] Customer／Product／PS／OP lookup 已接既有授權 API：`GET /api/ent/customer-basis?keyword=...`、`GET /api/products?keyword=...&issueState=2`、`GET /api/production-segments?psNo=...`、`GET /api/operations?keyword=...&issueState=2`。已依回傳 DTO 映射欄位、自動勾選；搜尋至少 3 字元、拒絕 lookup 萬用字元，最多顯示 200 筆。
+- [ ] Runtime 驗收尚待執行：入口、登入、查詢、lookup、分頁、防呆、選列與 Close；LotProperty／CompProperty 正式 API 不在 RT501 回傳契約內，正式視窗只說明尚未接入的資料範圍。公司端不連 PostgreSQL、不部署正式站。
 
 ## 公司端最新交付：RPT RT412 設備 MTTR 統計表（2026-11-26）
 

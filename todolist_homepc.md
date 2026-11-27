@@ -160,7 +160,7 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 - [x] 依來源 PostgreSQL CREATE-only／Oracle DDL 與正式 catalog 核對；備份後套用 0078，只建立缺少的三張空狀態來源表、來源索引及 BaseLotNo 查詢索引，`ymes_app` 僅 SELECT。備份、SQL SHA 與 catalog 結果見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [x] 完成登入保護、參數化唯讀 `GET /api/reports/confirm-lots`，固定 LotState 1 與 Status 0–5／11／12 數量條件；多值、pattern、分頁上限、空條件防呆及穩定排序已實作，正式 SQL `EXPLAIN` 通過。
 - [x] .NET 9 Release 發布成功；正式 API image `ymes-api:rt501-20261127-a2` 已部署，readiness 200、未登入 401，舊 API image 保留 rollback 標籤。正式 app-browser 驗證成功／防呆回應；本機 DEV app-browser 完成 RT501 查詢、lookup、篩選、列選取、屬性視窗及 Close 操作。詳 [RT501 模組紀錄](docs/modules/RPT/生產批狀態查詢_RT501.md)。
-- [ ] 正式 `ConfirmLot.vue` 仍是未開放 placeholder；已把正式 UI 連 API、lookup 與分頁交給公司端，見 `todolist_officepc.md`。有實際生產批資料後再做正向正式資料列驗證，不在正式庫灌測試資料。
+- [x] 公司端已把正式 RT501 UI 接上登入保護報表及 Customer／Product／PS／OP lookup API，DEV 合成資料模式保留；分頁、條件及錯誤／空結果處理已寫入 `ConfirmLotLive.vue`。Runtime 驗收仍待公司端；正式庫目前無可用正向生產批列，不灌測試資料。
 - [x] RT501 已以 fast-forward 推送 GitHub `main`，commit `ed645c9`；推送後 re-fetch 確認 `origin/main=ed645c95`，再依最新待辦接續 RT410。
 
 ## 家用端 RT412 設備 MTTR 統計表（2026-11-27）

@@ -4070,6 +4070,7 @@ async function signOut(): Promise<void> {
         <ConfirmLot
           v-else-if="isRt501ConfirmLotPage"
           class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
