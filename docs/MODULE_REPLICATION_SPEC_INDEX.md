@@ -2,7 +2,7 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
-使用者最新優先序（2026-11-27）：WIP「在製品管理」先於其他尚未開始的模組。清冊與 Vue route 差異覆核範圍內，WPI05 是唯一待原始來源的 WIP 選單功能；取得 Form／Service／Core 後優先復刻。RT416／RT417／RT502 已完成；RT608 已完成；如 WPI05 仍無來源，按清冊繼續其他可取得來源功能，遇到可做的 WIP 項目先插隊。
+使用者最新優先序（2026-11-27）：WIP「在製品管理」先於其他尚未開始的模組。清冊與 Vue route 差異覆核範圍內，WPI05 是唯一待原始來源的 WIP 選單功能；取得 Form／Service／Core 後優先復刻。RT416／RT417／RT502／RT503／RT608 已完成；如 WPI05 仍無來源，按清冊繼續其他可取得來源功能，遇到可做的 WIP 項目先插隊。
 
 - WIP `WIPINV_CS`「入庫作業」：[功能規格與家用端 API handoff](modules/WIP/WIPINV_CS入庫作業.md)。核對 THEIL `frmWP_INV_THEIL_BU1`／Designer／`WEBAPI.vb`；完成 `/YMES/WIP/InvInbound` DEV 假資料搜尋、Normal／Lite-On payload、GOOD／BAD 示意明細、逐筆入庫與部分成功情境。可讀 source 沒有 server Service/Core、ERP 交易或直接 Oracle 表名；未猜 DDL、未連 Oracle／YMES PostgreSQL、未做正式 API/schema、未 build／test／browser。家用端先補 endpoint server contract，再確定安全正式介接。
 
@@ -20,6 +20,7 @@
 
 - RT501「生產批狀態查詢」：[功能規格與家用端 API handoff](modules/RPT/生產批狀態查詢_RT501.md)。核對 `frmLotState`、WIP `LoadLotBasisJoinState` Service／Core；完成 `/YMES/RPT/ConfirmLot` DEV 八條件查詢、lookup、Confirm Lot／Status／庫存條件、Lot／OP 排序及屬性明細假視窗。記錄狀態 6 註解與 AdditionalXml 條件不一致；所需 DDL refs 已在 repo，未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。
 - RT502「異常生產批查詢」：[功能規格與家用端 API handoff](modules/RPT/異常生產批查詢_RT502.md)。核對三份一致的 `frmLotState_Hold`、`wsWIP.LoadLotBasisJoinState` Service／Core；完成 `/YMES/RPT/HoldLot` DEV 八條件查詢、四種可見 lookup、固定 Status=3 與九欄 Grid。核心 ReportMode 使用 report connection，沒有 LotState 限定；`TBLOPBASIS` source DDL 未找到，profile 不可用，未猜 CREATE／查 Oracle；未連 PostgreSQL／做正式 API/schema／build/test/browser。
+- RT503「等待生產批查詢」：[功能規格與家用端 API handoff](modules/RPT/等待生產批查詢_RT503.md)。核對三份一致的 `frmLotState_Wait` 與共用 WIP Service／Core；完成 `/YMES/RPT/WaitLot` DEV 八條件查詢、四種可見 lookup、固定 Status=2 與九欄 Grid；Lot lookup 按鈕隱藏。`TBLOPBASIS` source DDL 未找到，profile 不可用，未猜 CREATE／查 Oracle；未連 PostgreSQL／做正式 API/schema／build/test/browser。
 
 - RT604「物料用於元件查詢」：[功能規格與家用端 API/schema handoff](modules/RPT/物料用於元件查詢_RT604.md)。核對 `frmCont_CompMaterial_byMaterial`、物料／產品選取 Service 及 `LoadCont_MaterialLotComp_JoinLog` WIP Service/Core；完成 DEV 兩模式查詢、選取窗、MaterialLot No、Core 層級篩選與 Form 排序。WP101／QC409 的 `tblWIPLotBasis`／`tblWIPLotLog` DDL refs 已有；正式庫僅缺少的 `tblwiplotlog` 已依 0081 建空表且 app 僅 SELECT。`tblWIPCont_MaterialLotComp` 原生 DDL／metadata 仍由公司端補交，RT604 API 待該結構可核對後實作。
 

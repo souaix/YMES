@@ -6,6 +6,12 @@
 - [ ] UI client 沒有直接指出 Oracle table，現階段不建立 guessed schema／CREATE-only SQL。若 server/Core 確認 MES 表名，請公司端再唯讀交付 MESTEST DDL／metadata。
 - [ ] WP803 公司端正式 UI 已接家用端 8D Close API，DEV 驗收仍待執行；正式 Approve 保持停用，詳 [公司端待辦](todolist_officepc.md) 與 [WP803 規格](docs/modules/WIP/8D矯正單結案作業.md)。
 
+## 公司端 RT503 等待生產批查詢 handoff（2026-11-27）
+
+- [ ] 公司端已完成 `/YMES/RPT/WaitLot` DEV 假資料及 Form／Service／Core 規格。Legacy 固定查 `TBLWIPLOTSTATE.Status=2`（Wait）、ReportMode=True，不固定 `TBLWIPLOTBASIS.LotState`；八個條件為 RO／MO／Product+Version／Customer／Lot／OP／OrgLot／PS。
+- [ ] 先核對 YMES PostgreSQL live schema、資料同步與 lookup 來源。LotBasis／LotState、Product、Customer、Process DDL refs 沿用 RT502；`TBLOPBASIS` 沒有可信 Oracle source DDL，不因 DEV 假資料建 OP schema。詳 [RT503 規格](docs/modules/RPT/等待生產批查詢_RT503.md)。
+- [ ] 若 live schema 可支持，實作登入及 RPT FunctionNo `WAIT LOT` 授權保護的唯讀 `GET /api/reports/wait-lots`。固定 Status=2、不加 LotState 條件；LIKE／ProductVersion／LotNo 多值語意採參數化、穩定排序、分頁與筆數上限。不要接受前端 SQL／AdditionalXml 或照搬空條件全量查詢。
+
 ## 公司端 RT502 異常生產批查詢 handoff（2026-11-27）
 
 - [ ] 公司端已完成 `/YMES/RPT/HoldLot` DEV 假資料及 Form／Service／Core 規格。Legacy 固定查 `TBLWIPLOTSTATE.Status=3`、ReportMode=True，不固定 `TBLWIPLOTBASIS.LotState`；支援 RO／MO／Product+Version／Customer／Lot／OP／OrgLot／PS 條件。
