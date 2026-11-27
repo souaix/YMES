@@ -1,5 +1,12 @@
 # 公司端待辦
 
+## 2026-11-28 RT413 設備 MTTR 月報 UI 接線
+
+- [ ] Pull 最新 `main` 後，在正式模式的 `/YMES/RPT/EqpMttrSummaryByMonth` 接 `GET /api/reports/equipment-mttr-summary/monthly`；DEV 假資料預覽保留，正式模式不得 fallback 到合成資料。
+- [ ] `startMonth`／`endMonth` 使用 `yyyy-MM`；主設備送 `scope=main` 與 Area／Equipment Type／Equipment No 篩選，Chamber 送 `scope=chamber`、父設備／Chamber 設備條件。顯示 API 的 `months[]` 中 MTTR／MTBF／Availability 三列；Availability ratio 乘 100 顯示百分比，空值顯示空白／破折號並讓趨勢圖斷線。
+- [ ] 顯示載入、空結果、400 範圍驗證、413 設備上限及 503 唯一故障狀態未設定錯誤；勿向正式 API 送 `AdditionalXml`。
+- [ ] 等家用端完成 API 部署後，用 app-browser Demo 驗收主設備／Chamber 範圍切換、月份與篩選條件、防呆、Grid、Trend Chart 和 Close；目前正式故障狀態／歷程資料不足，不能建立或修改正式資料。
+
 ## 2026-11-27 RT601／RT602 家用端 API handoff
 
 - [ ] 請補交 `clsLot.LoadCont_Material_JoinLog` 的原始方法／SQL 片段及所呼叫 helper，特別是 Lot／Material／Product 三種查詢的完整 JOIN 條件與 JOIN 類型、物料／產品／OP lookup 缺列時的行為、RT602 EventTime 欄位來源、ProductNo 模式的實際來源欄位，以及 MaterialLot join 重複時的原生列身份。家用端目前只有摘要規格，正式 PostgreSQL 的來源表皆為空，無法作正向比對。

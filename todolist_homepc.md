@@ -20,6 +20,14 @@
 - [ ] WP109 API186／writer UI 正式部署仍待辦；遠端根 filesystem 100%，約 403MB 可用。2026-11-28 SSH 唯讀盤點未找到可明確回收且不影響其他專案／回滾的空間：YMES `releases` 約 782MB、`backups` 約 195MB、`checkpoints` 約 180MB 均保留；全機另有其他專案目錄及約 1.9GB system journal；Docker build cache 約 5.8GB、工具未提供 buildx 分類，無法安全歸屬 YMES。未刪除映像、快取或檔案，未改其他容器、未部署；待有安全可用磁碟空間後完成 build／逐頁驗收。
 - [ ] SWR 正式 API／writer 按鈕仍未部署或啟用；上線前依 module 文件重新核 migration／版本和空間，正式 Demo 驗收不得對正式空資料建立或修改業務列。
 
+## HOME RT413 設備 MTTR 月報唯讀 API（2026-11-28）
+
+- [x] 依既有 RT412 已核實的設備主檔、區域關聯及狀態來源實作登入保護月報 API；無新 migration／DDL，主設備及 Chamber 分範圍，月份限制 60 個月並限制條件數／設備數，按台北月界與 RT412 同公式分組。完整 request／response 與失敗行為記於 [RT413 模組規格](docs/modules/RPT/設備MTTR統計表_以月份匯總_RT413.md)。
+- [x] `.NET 9` API build 成功，0 error；NuGet 弱點服務因 `api.nuget.org` 無法連線產生 NU1900 warning。
+- [x] 正式復刻 DB 以 `ymes_app` 在 `READ ONLY` 交易中對候選設備與月分組 SQL 執行 `EXPLAIN` 通過；只核對欄位／權限／計畫，沒有 `ANALYZE`、業務列讀取或資料寫入。本機 app-browser 以 DEV 合成資料驗證主設備／Chamber、Area 與父設備篩選、月份錯誤提示、Grid、Trend Chart；正式 API 尚未部署，這不是正式 API 正向數據驗收。
+- [ ] 隔離資料庫的正向 API 值驗證仍待建立安全、可丟棄的 PostgreSQL fixture；正式 `YMES` 缺唯一故障狀態設定及同步歷程，不灌正式資料。
+- [ ] 公司端在 DEV 保留假資料預覽、正式模式接此 API，完成主設備／Chamber 查詢及 normalized response 表格與趨勢映射；部署後補正式端點驗證。遠端根 filesystem 仍 100%，沒有刪除其他專案或回滾檔案來騰空間。
+
 ## 公司端 RT611 取消報工單_E10ICD handoff（2026-11-27）
 
 - [x] 以 PPK／SSH 唯讀核對正式 PostgreSQL：RT611 五張目標表在所有 schema 均不存在，沒有可核欄位／鍵／索引或同步資料；未猜表或建表。詳 [RT611 規格](docs/modules/RPT/取消報工單_E10ICD_RT611.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。

@@ -17,6 +17,27 @@ public sealed record EquipmentMttrSummaryResponse(
     bool IncludeChambers,
     IReadOnlyList<EquipmentMttrSummaryRow> Items);
 
+public sealed record EquipmentMttrMonthlyValue(
+    string YearMonth,
+    long BreakdownTimes,
+    decimal? MttrHours,
+    decimal? MtbfHours,
+    decimal? AvailabilityRatio);
+
+public sealed record EquipmentMttrMonthlyItem(
+    string EquipmentNo,
+    string EquipmentType,
+    string? AreaNo,
+    string? MainEquipmentNo,
+    bool IsChamber,
+    IReadOnlyList<EquipmentMttrMonthlyValue> Months);
+
+public sealed record EquipmentMttrMonthlyResponse(
+    string StartMonth,
+    string EndMonth,
+    string Scope,
+    IReadOnlyList<EquipmentMttrMonthlyItem> Items);
+
 public sealed class EquipmentMttrSummaryRuleException(int statusCode, string message)
     : Exception(message)
 {

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Globalization;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -7,6 +8,7 @@ namespace YMes.Api.Reports;
 public sealed class EquipmentMttrSummaryRepository(NpgsqlDataSource dataSource)
 {
     private const int MaxRangeDays = 366;
+    private const int MaxRangeMonths = 60;
     private const int MaxListValues = 100;
     private const int MaxEquipmentRows = 2_000;
     private const string BreakdownControlType = "EQP Break Down";
@@ -77,6 +79,85 @@ public sealed class EquipmentMttrSummaryRepository(NpgsqlDataSource dataSource)
         FROM clipped
         GROUP BY equipmentno
         ORDER BY equipmentno COLLATE "C";
+        """;
+
+    private const string MonthlyCandidateSql = """
+        SELECT e.equipmentno, e.equipmenttype,
+               NULLIF(e.belongequipmentno, '') AS belongequipmentno,
+               COALESCE(e.chamberflag, 0)::int = 1 AS is_chamber,
+               area.containareano, area.baseareano
+        FROM "YMES".tbleqpequipmentbasis e
+        LEFT JOIN LATERAL (
+            SELECT r.containareano, r.baseareano
+            FROM "YMES".tblsmdarearelation r
+            WHERE r.objecttype = 2
+              AND r.objectno = CASE WHEN COALESCE(e.chamberflag, 0) = 1
+                                    THEN e.belongequipmentno ELSE e.equipmentno END
+            ORDER BY r.containareano COLLATE "C", r.baseareano COLLATE "C"
+            LIMIT 1
+        ) area ON TRUE
+        WHERE e.issuestate = 2
+          AND COALESCE(e.chamberflag, 0) = @isChamber::int
+          AND (cardinality(@areaNos) = 0 OR area.containareano = ANY(@areaNos)
+               OR area.baseareano = ANY(@areaNos))
+          AND (cardinality(@equipmentTypes) = 0 OR upper(e.equipmenttype) = ANY(@equipmentTypes))
+          AND (cardinality(@equipmentNos) = 0 OR upper(e.equipmentno) = ANY(@equipmentNos))
+          AND (cardinality(@mainEquipmentNos) = 0
+               OR upper(COALESCE(e.belongequipmentno, '')) = ANY(@mainEquipmentNos))
+        ORDER BY e.equipmentno COLLATE "C"
+        LIMIT @take;
+        """;
+
+    private const string MonthlySummarySql = """
+        WITH bounds AS (
+            SELECT @rangeStart::timestamp without time zone AS range_start,
+                   @rangeEnd::timestamp without time zone AS range_end,
+                   timezone('Asia/Taipei', now()) AS now_local
+        ), months AS (
+            SELECT series.month_start
+            FROM bounds b
+            CROSS JOIN LATERAL generate_series(
+                b.range_start, b.range_end - interval '1 month', interval '1 month'
+            ) AS series(month_start)
+        ), event_source AS (
+            SELECT l.equipmentno, l.equipmentstate::int AS equipmentstate,
+                   l.starttime, l.endtime
+            FROM "YMES".tblemsequipmentstatelog l
+            CROSS JOIN bounds b
+            WHERE l.equipmentno = ANY(@equipmentNos)
+              AND l.starttime < b.range_end
+              AND l.endtime > b.range_start
+            UNION ALL
+            SELECT s.equipmentno, s.equipmentstate::int AS equipmentstate,
+                   s.starttime, b.now_local AS endtime
+            FROM "YMES".tblemsequipmentstate s
+            CROSS JOIN bounds b
+            WHERE s.equipmentno = ANY(@equipmentNos)
+              AND s.starttime < b.now_local
+              AND s.starttime < b.range_end
+        ), clipped AS (
+            SELECT e.equipmentno, e.equipmentstate, m.month_start,
+                   GREATEST(e.starttime, m.month_start) AS clipped_start,
+                   LEAST(e.endtime, m.month_start + interval '1 month', b.now_local) AS clipped_end
+            FROM event_source e
+            CROSS JOIN months m
+            CROSS JOIN bounds b
+            WHERE e.starttime < m.month_start + interval '1 month'
+              AND e.endtime > m.month_start
+              AND e.starttime < b.now_local
+              AND LEAST(e.endtime, m.month_start + interval '1 month', b.now_local)
+                    > GREATEST(e.starttime, m.month_start)
+        )
+        SELECT equipmentno, to_char(month_start, 'YYYY-MM') AS year_month,
+               COUNT(*) FILTER (WHERE equipmentstate = @breakdownState)::bigint AS breakdown_times,
+               COALESCE(SUM(EXTRACT(EPOCH FROM (clipped_end - clipped_start)) / 3600.0)
+                   FILTER (WHERE equipmentstate = @breakdownState), 0)::numeric AS breakdown_hours,
+               COALESCE(SUM(EXTRACT(EPOCH FROM (clipped_end - clipped_start)) / 3600.0)
+                   FILTER (WHERE equipmentstate <> @breakdownState), 0)::numeric AS non_breakdown_hours,
+               COALESCE(SUM(EXTRACT(EPOCH FROM (clipped_end - clipped_start)) / 3600.0), 0)::numeric AS total_hours
+        FROM clipped
+        GROUP BY equipmentno, month_start
+        ORDER BY equipmentno COLLATE "C", month_start;
         """;
 
     public async Task<EquipmentMttrSummaryResponse> GetAsync(
@@ -151,6 +232,109 @@ public sealed class EquipmentMttrSummaryRepository(NpgsqlDataSource dataSource)
         return new(startDate, endDate, includeChambers, rows);
     }
 
+    public async Task<EquipmentMttrMonthlyResponse> GetMonthlyAsync(
+        string? rawStartMonth,
+        string? rawEndMonth,
+        string? rawScope,
+        string? rawAreaNos,
+        string? rawEquipmentTypes,
+        string? rawEquipmentNos,
+        string? rawMainEquipmentNos,
+        CancellationToken cancellationToken)
+    {
+        var startMonth = ParseMonth(rawStartMonth, "StartMonth");
+        var endMonth = ParseMonth(rawEndMonth, "EndMonth");
+        if (startMonth > endMonth)
+            throw Rule(400, "StartMonth 不可晚於 EndMonth。");
+
+        var taipeiNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TaipeiTimeZone);
+        var currentMonth = new DateOnly(taipeiNow.Year, taipeiNow.Month, 1);
+        if (endMonth > currentMonth)
+            throw Rule(400, "EndMonth 不可晚於本月。");
+
+        var monthCount = (endMonth.Year - startMonth.Year) * 12 + endMonth.Month - startMonth.Month + 1;
+        if (monthCount > MaxRangeMonths)
+            throw Rule(400, $"查詢區間不可超過 {MaxRangeMonths} 個月。");
+
+        var isChamber = rawScope?.Trim().ToLowerInvariant() switch
+        {
+            null or "" or "main" => false,
+            "chamber" => true,
+            _ => throw Rule(400, "Scope 僅接受 main 或 chamber。")
+        };
+        var areaNos = ParseList(rawAreaNos, "AreaNo");
+        var equipmentTypes = ParseList(rawEquipmentTypes, "EquipmentType");
+        var equipmentNos = ParseList(rawEquipmentNos, "EquipmentNo");
+        var mainEquipmentNos = ParseList(rawMainEquipmentNos, "MainEquipmentNo");
+        if (!isChamber && mainEquipmentNos.Length > 0)
+            throw Rule(400, "MainEquipmentNo 僅適用於 chamber 範圍。");
+
+        var rangeStart = startMonth.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
+        var rangeEnd = endMonth.AddMonths(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
+
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken);
+        await using (var readOnly = new NpgsqlCommand("SET TRANSACTION READ ONLY;", connection, transaction))
+            await readOnly.ExecuteNonQueryAsync(cancellationToken);
+
+        var breakdownState = await ReadBreakdownStateAsync(connection, transaction, cancellationToken);
+        var candidates = await ReadMonthlyCandidatesAsync(connection, transaction, areaNos,
+            equipmentTypes, equipmentNos, mainEquipmentNos, isChamber, cancellationToken);
+        if (candidates.Count > MaxEquipmentRows)
+            throw Rule(413, $"符合條件的設備超過 {MaxEquipmentRows} 台，請縮小區域、類型或設備條件。");
+
+        if (candidates.Count == 0)
+        {
+            await transaction.CommitAsync(cancellationToken);
+            return new(startMonth.ToString("yyyy-MM", CultureInfo.InvariantCulture),
+                endMonth.ToString("yyyy-MM", CultureInfo.InvariantCulture), isChamber ? "chamber" : "main", []);
+        }
+
+        var summaries = await ReadMonthlySummariesAsync(connection, transaction,
+            candidates.Select(x => x.EquipmentNo).ToArray(), rangeStart, rangeEnd,
+            breakdownState, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        var months = new List<DateOnly>(monthCount);
+        for (var month = startMonth; month <= endMonth; month = month.AddMonths(1))
+            months.Add(month);
+
+        var items = new List<EquipmentMttrMonthlyItem>(candidates.Count);
+        foreach (var candidate in candidates)
+        {
+            var hasAnySummary = false;
+            var values = new List<EquipmentMttrMonthlyValue>(months.Count);
+            foreach (var month in months)
+            {
+                var yearMonth = month.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+                if (!summaries.TryGetValue((candidate.EquipmentNo, yearMonth), out var summary))
+                {
+                    values.Add(new(yearMonth, 0, null, null, null));
+                    continue;
+                }
+
+                hasAnySummary = true;
+                var mttr = summary.BreakdownTimes > 0
+                    ? summary.BreakdownHours / summary.BreakdownTimes
+                    : 0m;
+                var mtbf = summary.BreakdownTimes > 0
+                    ? summary.NonBreakdownHours / summary.BreakdownTimes
+                    : summary.NonBreakdownHours;
+                var availability = summary.TotalHours > 0
+                    ? summary.NonBreakdownHours / summary.TotalHours
+                    : 0m;
+                values.Add(new(yearMonth, summary.BreakdownTimes, mttr, mtbf, availability));
+            }
+
+            if (hasAnySummary)
+                items.Add(new(candidate.EquipmentNo, candidate.EquipmentType, candidate.AreaNo,
+                    candidate.BelongEquipmentNo, candidate.IsChamber, values));
+        }
+
+        return new(startMonth.ToString("yyyy-MM", CultureInfo.InvariantCulture),
+            endMonth.ToString("yyyy-MM", CultureInfo.InvariantCulture), isChamber ? "chamber" : "main", items);
+    }
+
     private static async Task<int> ReadBreakdownStateAsync(
         NpgsqlConnection connection,
         NpgsqlTransaction transaction,
@@ -197,6 +381,35 @@ public sealed class EquipmentMttrSummaryRepository(NpgsqlDataSource dataSource)
         return result;
     }
 
+    private static async Task<List<EquipmentCandidate>> ReadMonthlyCandidatesAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        string[] areaNos,
+        string[] equipmentTypes,
+        string[] equipmentNos,
+        string[] mainEquipmentNos,
+        bool isChamber,
+        CancellationToken cancellationToken)
+    {
+        await using var command = new NpgsqlCommand(MonthlyCandidateSql, connection, transaction);
+        AddTextArray(command, "areaNos", areaNos);
+        AddTextArray(command, "equipmentTypes", equipmentTypes);
+        AddTextArray(command, "equipmentNos", equipmentNos);
+        AddTextArray(command, "mainEquipmentNos", mainEquipmentNos);
+        command.Parameters.Add("isChamber", NpgsqlDbType.Integer).Value = isChamber ? 1 : 0;
+        command.Parameters.Add("take", NpgsqlDbType.Integer).Value = MaxEquipmentRows + 1;
+
+        var result = new List<EquipmentCandidate>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new EquipmentCandidate(
+                reader.GetString(0), reader.GetString(1), NullableString(reader, 2), reader.GetBoolean(3),
+                NullableString(reader, 4)));
+        }
+        return result;
+    }
+
     private static async Task<Dictionary<string, EquipmentSummary>> ReadSummariesAsync(
         NpgsqlConnection connection,
         NpgsqlTransaction transaction,
@@ -220,6 +433,40 @@ public sealed class EquipmentMttrSummaryRepository(NpgsqlDataSource dataSource)
                 reader.GetInt64(1), reader.GetDecimal(2), reader.GetDecimal(3), reader.GetDecimal(4)));
         }
         return result;
+    }
+
+    private static async Task<Dictionary<(string EquipmentNo, string YearMonth), EquipmentSummary>> ReadMonthlySummariesAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        string[] equipmentNos,
+        DateTime rangeStart,
+        DateTime rangeEnd,
+        int breakdownState,
+        CancellationToken cancellationToken)
+    {
+        await using var command = new NpgsqlCommand(MonthlySummarySql, connection, transaction);
+        AddTextArray(command, "equipmentNos", equipmentNos);
+        command.Parameters.Add("rangeStart", NpgsqlDbType.Timestamp).Value = rangeStart;
+        command.Parameters.Add("rangeEnd", NpgsqlDbType.Timestamp).Value = rangeEnd;
+        command.Parameters.Add("breakdownState", NpgsqlDbType.Integer).Value = breakdownState;
+
+        var result = new Dictionary<(string EquipmentNo, string YearMonth), EquipmentSummary>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add((reader.GetString(0), reader.GetString(1)), new EquipmentSummary(
+                reader.GetInt64(2), reader.GetDecimal(3), reader.GetDecimal(4), reader.GetDecimal(5)));
+        }
+        return result;
+    }
+
+    private static DateOnly ParseMonth(string? value, string label)
+    {
+        if (string.IsNullOrWhiteSpace(value)
+            || !DateOnly.TryParseExact(value.Trim() + "-01", "yyyy-MM-dd",
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+            throw Rule(400, $"{label} 必須使用 yyyy-MM 格式。");
+        return parsed;
     }
 
     private static string[] ParseList(string? raw, string label)

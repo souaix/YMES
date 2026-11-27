@@ -31,3 +31,12 @@
 - 家用端比對以上 Oracle 參照與 YMES live schema／索引。建議唯讀 API：`GET /api/reports/equipment-mttr-summary/monthly?startMonth=YYYY-MM&endMonth=YYYY-MM&areaNos=...&equipmentTypes=...&equipmentNos=...&mainEquipmentNos=...&scope=main|chamber`。使用授權範圍、固定狀態碼來源及參數化清單，限制跨度與設備筆數；不要把前端 AdditionalXml 傳入 SQL。回傳 normalized `equipment[]`，每設備含 Area、Type、Main／Chamber 編號及 `months[]`（`yearMonth`、`mttrHours`、`mtbfHours`、`availabilityRatio`），前端再組成表格與趨勢圖。
 - 延用 RT412 註記：Core 以未限定 ControlType 的 `ControlNo='BreakDown'` 找故障狀態；家用端應核實 ControlType／唯一性。RT413 為唯讀報表，本頁沒有月結儲存功能。
 - 公司端未連 YMES PostgreSQL，未建 CREATE／migration，未做正式 API/schema，未執行 build、test 或 browser。
+
+## 家用端月報 API
+
+- API：登入保護唯讀 `GET /api/reports/equipment-mttr-summary/monthly`；必填 `startMonth`／`endMonth`（嚴格 `yyyy-MM`），`scope=main|chamber`；可選逗號清單 `areaNos`、`equipmentTypes`、`equipmentNos`，Chamber 範圍另可用 `mainEquipmentNos`。查詢只接受已核准設備，所有值以參數化等值條件處理，不接收 `AdditionalXml`／SQL。
+- 限制：EndMonth 不得晚於台北當月，範圍最多 60 個月；每種清單最多 100 個值、單值最多 50 字元、符合設備最多 2,000 台。Main 範圍排除 Chamber；Chamber 範圍只取 Chamber，並可按父設備篩選。跨範圍使用者權限依 RT412 現行登入保護範圍。
+- 回傳正規化 `items[]`，每設備含 `equipmentNo`、`equipmentType`、`areaNo`、`mainEquipmentNo`、`isChamber` 與 `months[]`；每月含 `yearMonth`、`breakdownTimes`、`mttrHours`、`mtbfHours`、`availabilityRatio`。該設備完全沒有來源狀態的月份回傳空值指標；整段區間都沒有可計算狀態的設備不列入結果。Availability 為 0–1 比例，UI 顯示百分比。
+- API 對月初到下月月初採左閉右開區間，現月截止至台北目前時間；在單一 `RepeatableRead`、唯讀交易中按月分組，MTTR／MTBF／Availability 公式與 RT412 一致。故障狀態仍須存在唯一 `EQP Break Down / BreakDown` 設定，否則安全回 503。
+- 2026-11-28 以正式復刻 DB 的 `ymes_app` 權限，在 `READ ONLY` 交易中對候選設備與月分組 SQL 執行 `EXPLAIN`，兩段皆成功且命中設備、區域關聯與設備狀態索引；未執行 `ANALYZE`、未讀取業務列、未寫入資料。
+- 正式庫的故障狀態設定及有效狀態歷程尚未提供，沒有正式正向結果；本次只新增 API 程式，沒有 migration、正式資料寫入或部署。家用端需待完整 Web build 與正式主機可用磁碟空間後部署；公司端依 [待辦](../../../todolist_officepc.md) 接正式頁，DEV 假資料預覽維持原狀。
