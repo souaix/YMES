@@ -12,7 +12,12 @@
 ## 公司端最新交付：RPT RT414 設備狀態期間統計（2026-11-27）
 
 - [x] RT414 清冊項 `frmEQPStateStatistics`／`RT_EQPStateStatistics.dll` 與 EMS ES409 共用 WinForms、Service／Core；新增獨立 RPT menu key、route `/YMES/RPT/EquipmentStateStatistics`，重用已完成 ES409 DEV 畫面。詳 [RT414 規格](modules/RPT/設備狀態期間統計_RT414.md) 及 [ES409 共用來源規格](modules/EMS/設備狀態期間統計查詢.md)。
-- [x] Oracle DDL refs 沿用 ES409；未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。家用端可依兩個 FunctionKey／權限需求評估共用唯讀 API。下一項依清冊為 RT415。
+- [x] Oracle DDL refs 沿用 ES409；未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。家用端可依兩個 FunctionKey／權限需求評估共用唯讀 API。RT415 已接續完成，下一項依清冊為 RT416。
+
+## 公司端最新交付：RPT RT415 異常單柏拉圖分析（2026-11-27）
+
+- [x] 核對查詢 Form／Designer、結果圖與魚骨 Form、`wsRPT.LoadERFParetoHoldReason` Service、`clsReport.LoadERFParetoHoldReason` Core；完成 `/YMES/RPT/ErfPareto` DEV 篩選、多選條件、Hold Qty Pareto／累積率、Top-N、原因明細與五要因魚骨摘要。[RT415 規格與 API handoff](modules/RPT/異常單柏拉圖分析_RT415.md)
+- [x] 來源表 Oracle DDL／PG CREATE-only refs 沿用 QC409、WP501、WP503、WP305、WP101 與 QC HoldItem references；未新查 Oracle、未讀業務資料、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。下一項依清冊為 RT416。
 
 ## 前項公司端交付：RPT RT412 設備 MTTR 統計表（2026-11-26）
 

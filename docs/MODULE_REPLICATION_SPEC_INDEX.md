@@ -2,8 +2,8 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
-- RT413「設備 MTTR 統計表_以月份匯總」：[功能規格與家用端 API handoff](modules/RPT/設備MTTR統計表_以月份匯總_RT413.md)。核對主／Chamber `frmEQP_MTTRSummary_byMonth`、`wsRPT.LoadEQPMTTRSummary_ByMonth`、`clsReport.LoadEQPMTTRSummary_byMonth` 與趨勢圖 Form；完成 `/YMES/RPT/EqpMttrSummaryByMonth` DEV 月報、Chamber 篩選與 MTTR／MTBF／Availability 三折線圖。Core 逐月呼叫 RT412 統計並產生每台設備三列與動態 `yyyy/MM` 欄位。所需 MESTEST DDL refs 沿用 RT412；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。OE 工單管理 13 項來源覆核完成，未發現公司端 Form／規格／路由缺項；下一項回到 RT414。
-- RT414「設備狀態期間統計」：[功能規格與家用端 API handoff](modules/RPT/設備狀態期間統計_RT414.md)。核對清冊及 ES409 共用 Form／Designer、RPT Service／Core；新增獨立 RT414 選單與 `/YMES/RPT/EquipmentStateStatistics` 路徑，DEV 重用 ES409 查詢畫面及假資料。Oracle DDL refs 沿用 ES409，未新查 Oracle；正式 API/schema 由家用端接續。下一項為 RT415。
+- RT414「設備狀態期間統計」：[功能規格與家用端 API handoff](modules/RPT/設備狀態期間統計_RT414.md)。核對清冊及 ES409 共用 Form／Designer、RPT Service／Core；新增獨立 RT414 選單與 `/YMES/RPT/EquipmentStateStatistics` 路徑，DEV 重用 ES409 查詢畫面及假資料。Oracle DDL refs 沿用 ES409，未新查 Oracle；正式 API/schema 由家用端接續。RT415 已完成，下一項為 RT416。
+- RT415「異常單柏拉圖分析」：[功能規格與家用端 API handoff](modules/RPT/異常單柏拉圖分析_RT415.md)。核對查詢／結果／魚骨 Form、RPT Service／Core；完成 `/YMES/RPT/ErfPareto` DEV 假資料查詢、五種多選條件、Hold Qty Pareto 與累積線、Top-N、明細和魚骨要因摘要。沿用 QC409／WP501／WP503／WP305／WP101／QC HoldItem DDL及 CREATE-only refs；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。下一項為 RT416。
 
 - RT412「設備 MTTR 統計表」：[功能規格與家用端 API handoff](modules/RPT/設備MTTR統計表_RT412.md)。核對 `frmEQP_MTTRSummary`／Designer、`wsRPT.LoadEQPMTTRSummary` 與 `clsReport.LoadEQPMTTRSummary`／`ShowEQPMTTRSummary`；完成 `/YMES/RPT/EqpMttrSummary` DEV 日期／多選篩選、Chamber 顯示、MTTR／MTBF／Availability 報表。記錄來源 SQL 區間截短、故障狀態控制、父設備篩選未通過 Service 及隱藏的月結 Save。所需 MESTEST DDL refs 已在 repo；未新查 Oracle／連 PostgreSQL／做正式 API/schema／build/test/browser。RT413 已接續完成。
 

@@ -3,7 +3,7 @@
 ## 公司端交接優先順序（2026-11-27）
 
 - [x] RT413「設備 MTTR 統計表_以月份匯總」已完成公司端 DEV／規格交接，家用端 API/schema 工作由本清單另行追蹤。
-- [x] 公司桌機已優先覆核 OE 工單管理 13 項：原始 Form、獨立規格與 Vue route／page mode 均有對應，未發現公司端缺頁；跨畫面入口與流程見 [OE 工單管理總覽](docs/modules/OE/工單管理模組總覽.md)。RT414 也已新增獨立 RPT 入口並重用 ES409 DEV 畫面，詳 [RT414 規格](docs/modules/RPT/設備狀態期間統計_RT414.md)。正式 API／schema 仍由家用端接續；公司端下一項為 RT415。
+- [x] 公司桌機已優先覆核 OE 工單管理 13 項：原始 Form、獨立規格與 Vue route／page mode 均有對應，未發現公司端缺頁；跨畫面入口與流程見 [OE 工單管理總覽](docs/modules/OE/工單管理模組總覽.md)。RT414 已新增獨立 RPT 入口並重用 ES409 DEV 畫面；RT415 完成 DEV 假資料 Pareto／魚骨分析及 API handoff。詳 [RT414](docs/modules/RPT/設備狀態期間統計_RT414.md)、[RT415](docs/modules/RPT/異常單柏拉圖分析_RT415.md)。正式 API／schema 仍由家用端接續；公司端下一項為 RT416。
 
 ## 家用端 PM301–PM303 工單流程 schema 查核（2026-11-27）
 
