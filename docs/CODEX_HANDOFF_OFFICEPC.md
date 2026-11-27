@@ -4,9 +4,9 @@
 
 ## 全案優先順序更新（2026-11-27）
 
-- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。RT416／RT417 已完成；來源等待期間目前接續 RT608。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
+- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。RT416／RT417／RT608 均已完成；若 WPI05 仍無來源，按清冊繼續其他可取得來源功能，遇到可做的 WIP 項目先插隊。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
 
-## 公司端目前交接：RPT RT608 生產批資源檢視(分攤)（2026-11-27）
+## 公司端已完成交接：RPT RT608 生產批資源檢視(分攤)（2026-11-27）
 
 - [x] 已核對 `frmRPTLotResource_Share`（CSiMES／THEIL／DEV_SILVA 相同）、`wsRPT.LoadCont_Resource_Share` 與 `clsReport.LoadCont_Resource_Share`；完成 `/YMES/RPT/LotResourceShare` DEV 假資料及八類查詢條件。[RT608 規格與家用端 handoff](modules/RPT/生產批資源檢視分攤_RT608.md)
 - [ ] `TBLWIPCONT_RESOURCE_SHARE` Oracle DDL／metadata 不在 repo，桌機受保護 Oracle profile 不存在；未查 Oracle／猜 CREATE-only。家用端先核對 YMES PostgreSQL schema／同步來源，再接正式登入授權唯讀 API。
