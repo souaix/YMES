@@ -1241,6 +1241,14 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - `TBLSMDAREARELATION` 已有共用的 Oracle source／PostgreSQL CREATE reference `mestest_equipment_group_smd_*`，WP307 不重複產生 table CREATE。新查兩張 WIP 表：OperatorState 以 UserNo 為 PK，OperatorLog 沒有 PK／index/FK/trigger；PostgreSQL CREATE-only 只新增兩張表，不杜撰 Log key。完整 source DDL、索引、metadata、CREATE-only 位於 `database/reference/mestest_wip_wp307_*`。
 - Oracle profile 僅在公司本機讀取，IP、帳號、密碼、SID 及連線字串未輸出或提交。CREATE-only 不是 migration；家用端先核對 YMES live schema/migration history，只為確實缺少的資料表建立 migration。
 
+### 更新 2026-11-27：家用端 WP307 唯讀 schema／API
+
+- 0098 forward migration SHA-256 `D6E8AC2BEDF8AA6D1D13C5D08A326A50A19376F5252C17C762DCD79C28B3EECC` 建立四張缺少的 MESTEST source 空表：`TBLSMDAREASHIFT`、`TBLSMDAREAOPERATOR`、`TBLWIPAREAOPERATORSTATE`、`TBLWIPAREAOPERATORLOG`，並授 `ymes_app` SELECT；另補 `TBLUSRSHIFTBASIS` SELECT。套用前備份 `/opt/ymes/backups/ymes-before-wp307-0098-20261127.dump`，853,659 bytes、SHA-256 `53ed499165c0f555b1b73b53fa914c5f80e5fc088975c351c047eab2eb7eaba7`，`pg_restore --list` 有 2,354 entries。
+- 0099 forward migration SHA-256 `EB187C5783F36095AD1F0BE58DFD5313A02FB3D8FC840EC4E978D64EA2BF9B2F` 加兩個 YMES 專用非唯一 query index，不新增 source PK／unique。套用前備份 `/opt/ymes/backups/ymes-before-wp307-0099-20261127.dump`，860,609 bytes、SHA-256 `89fb3d04677b24c8c6b0225fe69ff90a137997acbe1f1c9f334a5a991b76691a`，`pg_restore --list` 有 2,374 entries。
+- Live catalog 回讀：四張新表分別為 AreaShift 11 欄／來源複合 PK、AreaOperator 9 欄／來源複合 PK、OperatorState 6 欄／UserNo PK、OperatorLog 9 欄／無 PK；新表資料列皆為 0，`ymes_app` 僅 SELECT，無 INSERT／UPDATE／DELETE。未建立人員或登入假資料。
+- API source 提供登入保護唯讀 eligible、filter-options、current、history；查詢使用參數化 SQL、RepeatableRead／READ ONLY，current/history 有穩定排序與最多 100 筆分頁。Current 日期仍用來源嚴格界值；History 起含迄不含是暫定 API contract，待公司端核對原始 Core 比較式。`EXPLAIN` 僅在 READ ONLY session 執行，沒有 `ANALYZE` 或讀取業務資料列。
+- 0098／0099 的 rollback SQL 僅供版本化變更紀錄，尚未執行。正式 Web/API 未部署；遠端 root filesystem 滿載且可用空間不足，不清除其他專案、映像、快取或備份。Login／Logout POST、WP307／IMESTECH server-side function gate 與 DML grants 均未建立。
+
 ### 更新 2026-11-20：WIP WP103 列印流程卡
 
 - WP103 查詢及報表讀取既有 WIP Lot Basis/State、Process Node/Relation、OP、Product、Customer、RunCard Log、`TBLPRDRUNCARDMAP`、User Defined Report 與 System Parameter。功能沒有新增專用 Oracle table；本輪沿用已存在的 schema/reference，不重複查 DDL，也未產生重複 CREATE-only。

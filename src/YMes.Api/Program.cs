@@ -67,6 +67,7 @@ if (!localDemoAuth)
     builder.Services.AddSingleton<YMes.Api.Wip.Wp802ReadOnlyDetailRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp804QueryRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp106OperatorOnlineRepository>();
+    builder.Services.AddSingleton<YMes.Api.Wip.Wp307AreaOperatorRepository>();
     builder.Services.AddSingleton(new YMes.Api.Wip.Wp109WritePolicy("Asia/Taipei"));
     builder.Services.AddSingleton<YMes.Api.Wip.Wp109WriteRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp109DeviceLookup>();

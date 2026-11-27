@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## HOME WP307 區域作業人員唯讀 API handoff（2026-11-27）
+
+- [x] 家用端已在 migration 0098 建立 `TBLSMDAREASHIFT`、`TBLSMDAREAOPERATOR`、`TBLWIPAREAOPERATORSTATE`、`TBLWIPAREAOPERATORLOG` 四張來源空表；`TBLUSRSHIFTBASIS` 補 SELECT。0099 新增兩個明確標為 YMES-only 的非唯一查詢索引，不增來源 PK／unique。四表皆 0 列、`ymes_app` 無 DML 權限。詳 [WP307 模組紀錄](docs/modules/WIP/設備狀態監控_區域.md) 與 `docs/DATABASE_CONNECTION.md`。
+- [x] 家用端 API 已提供登入保護唯讀 `eligible`、`filter-options`、`current`、`history`。Current/History 回傳原始陣列，分頁透過 `page`／`pageSize`（預設 1／100、上限 100）及 `X-Page`／`X-Page-Size`／`X-Has-More` response headers。查詢範圍固定 route Area/Department，勿從 browser 提供任意 area ownership。
+- [ ] Pull 最新 `main` 後，把現有 `AreaShowMaster.vue` 正式模式接到上述四個唯讀 API；保持 DEV localStorage preview。處理 filter options 的 `shifts[{value,label,shiftNo,shiftName,fromTime,toTime}]`／`users[{userNo,userName}]`，Current/History JSON 陣列與錯誤狀態。
+- [ ] 為 Current/History 加上一頁／下一頁並帶 `page`、`pageSize`，依 `X-Has-More` 停用下一頁；保留 query 條件、空結果與 loading/error 顯示。History API 的 YMES 日期區間為起始含界、結束不含界；若來源 Core 可核對出不同比較子句，先提交原始片段並與家用端對齊。
+- [ ] 家用端目前沒有 WP307 Function ACL／IMESTECH enterprise server claim，也未開 Login/Logout POST；不要啟用正式區域操作或把 DEV 狀態寫到 API。待家用端交付 command／gate 後再接新增操作。
+- [ ] 正式 API 尚未部署；等家用端通知版本及容量可部署後，再以 app-browser Demo 驗收 lookup、current/history 分頁、跨日資格、錯誤與 Close。正式表 0 列，不要造人員／登入測試資料。
+
 ## 2026-11-28 RT413 設備 MTTR 月報 UI 接線
 
 - [ ] Pull 最新 `main` 後，在正式模式的 `/YMES/RPT/EqpMttrSummaryByMonth` 接 `GET /api/reports/equipment-mttr-summary/monthly`；DEV 假資料預覽保留，正式模式不得 fallback 到合成資料。

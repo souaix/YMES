@@ -12,6 +12,18 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## HOME WIP WP307 區域作業人員唯讀 API 與 schema（2026-11-27）
+
+- [x] 以 PPK／SSH 只讀核對 live catalog：`TBLWIPAREAOPERATORSTATE`、`TBLWIPAREAOPERATORLOG`、`TBLSMDAREASHIFT`、`TBLSMDAREAOPERATOR` 原先在所有 schema 均缺少；`TBLUSRSHIFTBASIS` 存在但 `ymes_app` 沒有 SELECT。已用可信 MESTEST references 建立 0098 空來源表並只授 SELECT；0098 前備份 `/opt/ymes/backups/ymes-before-wp307-0098-20261127.dump`，853,659 bytes、SHA-256 `53ed499165c0f555b1b73b53fa914c5f80e5fc088975c351c047eab2eb7eaba7`，`pg_restore --list` 2,354 entries。四新表目前均 0 列；`ymes_app` 沒有 INSERT／UPDATE／DELETE。
+- [x] 0098 套用後 `tblwipareaoperatorstate` 六欄／UserNo PK、`tblwipareaoperatorlog` 九欄／無 PK 或索引、AreaShift 十一欄／來源複合 PK、AreaOperator 九欄／來源複合 PK 均核對。`TBLUSRSHIFTBASIS` 僅補 SELECT。
+- [x] 0099 新增兩個 YMES 專用非唯一讀取索引，分別支援 Current area/login-time 與 History area/logout-time 查詢；明確不宣稱是 Oracle source index、不新增唯一鍵。0099 前備份 `/opt/ymes/backups/ymes-before-wp307-0099-20261127.dump`，860,609 bytes、SHA-256 `89fb3d04677b24c8c6b0225fe69ff90a137997acbe1f1c9f334a5a991b76691a`，`pg_restore --list` 2,374 entries。
+- [x] 完成登入保護、參數化唯讀 `GET /api/wip/areas/{areaNo}/operators/eligible`、`filter-options`、`current`、`history`。使用 RepeatableRead／READ ONLY；跨午夜班別以台北時間比對；current 延續來源嚴格 `>`／`<`，history API 使用起始含界、結束不含界；current/history 最多每頁 100 筆，回傳原始陣列並帶 `X-Page`、`X-Page-Size`、`X-Has-More`。完整 contract 見 [WP307 模組紀錄](docs/modules/WIP/設備狀態監控_區域.md)。
+- [x] `.NET 9` API build 0 error；唯一 warning 為 NuGet vulnerability feed 離線 `NU1900`。以 `ymes_app` READ ONLY 執行必要 SQL `PREPARE`／`EXPLAIN`；兩張新增 WIP 表仍 0 列，未執行 `ANALYZE`、未讀既有業務資料、未新增或修改人員紀錄。
+- [x] app-browser 開啟正式 `/YMES/` 並確認主選單及 KD 標誌正常載入、WIP menu 預設收合；WP307 Production route/API 尚未部署，因此本次沒有宣稱其正式頁面或人員操作已驗收。
+- [ ] Production Web/API 尚未部署；家用主機根磁碟仍 100%，約 409 MiB 可用，不清除其他專案／回滾檔案。正式 WP307 畫面維持 disabled guard。
+- [ ] Auth 沒有可供此功能使用的 IMESTECH enterprise claim／WP307 Function ACL，新增的查詢 API 僅有登入保護；POST Login/Logout 尚未實作或授予 DML 權限。先完成可信功能／企業別 gate 與寫入交易驗證，再開放或部署 WP307 操作。
+- [ ] 公司端 pull 後按 [公司端 WP307 handoff](todolist_officepc.md) 接唯讀頁面、分頁 header 與錯誤回應；正式同步有效 Area／Shift／User 資料後再用 app-browser 驗證正向查詢。不要在正式復刻庫建立人員或登入測試列。
+
 ## HOME最新 WP109 DEV 表單修正與 app-browser 驗收（2026-11-28）
 
 - [x] 修正 `WipSwrBasisDevPreview.vue`：新增／修改／核准／作廢備份改為明確複製 Vue reactive 資料，避免 `structuredClone` Proxy 例外讓確認流程無聲停止。只改 DEV localStorage 假資料流程，正式 API／資料庫未變。
@@ -4380,16 +4392,9 @@ API 工作：
 - [ ] 建登入保護的唯讀查詢 API，支援 WinForms 篩選欄位與穩定分頁排序；同一 QCSerialNo 回傳點檢 Header 與所有 Detail，避免把不同檢驗序號的 detail 混在一起。
 - [ ] 限制可查詢設備範圍及最大日期/頁數；權限依使用者與 WIP 功能設定。WP306 是唯讀歷程，不透過此 API 修改 Log/Detail。
 
-## WIP WP307 設備狀態監控_區域家用端 handoff（2026-11-20）
+## WIP WP307 設備狀態監控_區域家用端 handoff（2026-11-20，進度於 2026-11-27 更新）
 
-- [ ] Pull 最新 `main`，閱讀 [WP307 規格](docs/modules/WIP/設備狀態監控_區域.md)、SMD SD108/SD104 規格及 `docs/DATABASE_CONNECTION.md` WP307 段落。
-- [ ] Oracle source DDL、index DDL、metadata 與 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp307_source_ddl.sql`、`mestest_wip_wp307_source_indexes.sql`、`mestest_wip_wp307_metadata.txt`、`mestest_wip_wp307_create.sql`。`TBLSMDAREARELATION` 已在 `mestest_equipment_group_smd_*`，不要重複 migration；先核對 YMES live schema／migration history，僅建立缺少的兩張 WIP 表。
-- [ ] `TBLWIPAREAOPERATORSTATE` 的 PK 是 UserNo，表示跨全區域每位使用者最多一筆 Current 狀態；以此唯一性防止同一使用者同時登入多區。`TBLWIPAREAOPERATORLOG` 在 Oracle 無 PK/index，不能為方便而加入虛構的 source unique key/index。
-- [ ] 實作登入保護、WIP307/IMESTECH 功能授權與參數化 API：eligible 檢查目前班別、AreaOperator、UserShift 時段及既有登入，回傳全部目前合格 ShiftNo 並保持來源順序；伺服器要處理跨午夜班別，並自行產生 LoginTime。
-- [ ] 實作 GET `/api/wip/areas/{areaNo}/operators/filter-options?departmentNo=`，回傳該部門 IssueState=2 班別（ShiftNo、ShiftName、FromTime、ToTime）與使用者（UserNo、UserName），供 State/History 的 ShiftNo/UserNo `...` 查找；使用者清單不可縮限為 AreaOperator 排班名單。
-- [ ] Login POST 在交易內重新驗證當下排班後插入 Current。Logout POST 鎖定 UserNo Current row、核對 area，從 AreaShift 取得 ExceptionTime，原子刪除 Current 並新增 History，LogoutTime 由伺服器產生；使用者不得傳入任意 ExceptionTime。
-- [ ] 提供 State/History 篩選 GET，欄位、可選核取條件與日期分頁見規格。WinForms Core 的 State 日期界值為嚴格 `>`/`<`；若改成含界值，需明確記錄相對來源行為的 API 決策。結果採穩定排序、權限範圍及安全分頁。
-- [ ] DEV localStorage `ymes-dev-mock:wip-area-operator-state:v1`、`ymes-dev-mock:wip-area-operator-log:v1` 只用於公司端畫面互動，正式 API 不得讀取或信任瀏覽器假資料。Migration/API transaction、權限與部署紀錄完成後，更新 office/home TODO。
+本節初始工作已由本檔前面的「HOME WIP WP307 區域作業人員唯讀 API 與 schema」更新：source references、live catalog 比對、0098/0099 migration、空表與唯讀權限、四支登入保護 GET API、唯讀 SQL plan 都完成。尚待 Function ACL／IMESTECH enterprise gate、Login／Logout POST、有效正式資料正向驗證、容量充足後部署；公司端 UI 接線詳 `todolist_officepc.md` 開頭的 WP307 handoff。不可把此舊手把當成未開始或端到端完成。
 
 ## WIP WP203 過帳設備設定家用端 handoff（2026-11-20）
 
