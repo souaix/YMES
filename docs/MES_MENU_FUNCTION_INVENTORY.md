@@ -15,7 +15,7 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 ## Vue 復刻追蹤
 
-優先順序更新（2026-11-27）：依使用者指示先覆核 OE「工單管理」。清冊 OE101–OE209、OEB01、OEP01 共 13 項皆有原始 Form、模組規格與 Vue route／page mode；共用 Service／Core 對應來源，未發現公司端缺頁。正式 API／schema 由家用端接續。OE 優先覆核完成，接下來回到 RT414。
+優先順序更新（2026-11-27）：依使用者指示先覆核 OE「工單管理」。清冊 OE101–OE209、OEB01、OEP01 共 13 項皆有原始 Form、模組規格與 Vue route／page mode；共用 Service／Core 對應來源，未發現公司端缺頁，總覽見 `docs/modules/OE/工單管理模組總覽.md`。其後 RT414 已保留獨立 RPT 選單鍵及路徑，重用 ES409 畫面；下一項為 RT415。
 
 最新補記（2026-11-26）：RPT RT204「產出看板時段主檔」已核對主／定義 Form／Designer、RPT TimeStep CRUD／Approve Service 與 clsReport Core；完成 `/YMES/RPT/TimeStepBasis` DEV 四狀態主檔及 Add／Edit／Copy、Apply／Confirm、Approve、刪除／停用模擬。記錄 Core 部分重疊條件可能漏檢、Approve 不重驗；Repo 無可信 tblRPTTimeStepBasis DDL，桌機受保護 Oracle profile 不存在，未查 Oracle／猜 CREATE。未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。詳 [RT204 規格與家用端 API/schema handoff](modules/RPT/產出看板時段主檔_RT204.md)。下一項依清冊為 RT603。
 

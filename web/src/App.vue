@@ -886,6 +886,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:RPT:EQP DAILY UTILIZATION CHART', label: '每日設備稼動長條圖', shortLabel: '稼動長條圖', functionNo: 'EQP DAILY UTILIZATION CHART', moduleNo: 'RPT' },
         { id: 'function:RPT:EQP MTTR SUMMARY', label: '設備 MTTR 統計表', shortLabel: '設備 MTTR', functionNo: 'EQP MTTR SUMMARY', moduleNo: 'RPT' },
         { id: 'function:RPT:EQP MTTR SUMMARY BYMONTH', label: '設備 MTTR 統計表_以月份匯總', shortLabel: 'MTTR 月報', functionNo: 'EQP MTTR SUMMARY BYMONTH', moduleNo: 'RPT' },
+        { id: 'function:RPT:EQP STATE STATISTICS', label: '設備狀態期間統計', shortLabel: '設備狀態統計', functionNo: 'EQP STATE STATISTICS', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1276,6 +1277,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:EQP DAILY UTILIZATION CHART': appBasePath + '/RPT/EqpDailyUtilizationChart',
   'function:RPT:EQP MTTR SUMMARY': appBasePath + '/RPT/EqpMttrSummary',
   'function:RPT:EQP MTTR SUMMARY BYMONTH': appBasePath + '/RPT/EqpMttrSummaryByMonth',
+  'function:RPT:EQP STATE STATISTICS': appBasePath + '/RPT/EquipmentStateStatistics',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1760,6 +1762,7 @@ const isRt410EqpDailyReportPage = computed(() => activeMasterKey.value === 'func
 const isRt411EqpDailyUtilizationChartPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY UTILIZATION CHART')
 const isRt412EqpMttrSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY')
 const isRt413EqpMttrSummaryByMonthPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY BYMONTH')
+const isRt414EqpStateStatisticsPage = computed(() => activeMasterKey.value === 'function:RPT:EQP STATE STATISTICS')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -4440,7 +4443,7 @@ async function signOut(): Promise<void> {
         <EmsEquipmentStateLogByState v-else-if="isEmsEquipmentStateLogByStatePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateLog v-else-if="isEmsEquipmentStateLogPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateControlSetting v-else-if="isEmsEquipmentStateControlSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <EmsEquipmentStateStatistics v-else-if="isEmsEquipmentStateStatisticsPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsEquipmentStateStatistics v-else-if="isEmsEquipmentStateStatisticsPage || isRt414EqpStateStatisticsPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentReasonBasis v-else-if="isEmsEquipmentReasonBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

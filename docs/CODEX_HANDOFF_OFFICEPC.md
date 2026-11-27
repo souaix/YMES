@@ -9,6 +9,11 @@
 - [ ] 家用端核 live schema／索引與月份跨度，設計受授權、參數化、有跨度／設備筆數上限的月度唯讀 API。
 - [x] OE 工單管理優先覆核與跨畫面總覽完成：OE101–OE209、OEB01、OEP01 共 13 項皆有原始 Form、獨立規格、Vue route／page mode；共用 Service／Core 引用對得上可讀來源，未發現公司端缺頁。見 [OE 工單管理總覽](modules/OE/工單管理模組總覽.md)。正式 API／schema 仍由家用端負責。接續依清冊回到 RT414。
 
+## 公司端最新交付：RPT RT414 設備狀態期間統計（2026-11-27）
+
+- [x] RT414 清冊項 `frmEQPStateStatistics`／`RT_EQPStateStatistics.dll` 與 EMS ES409 共用 WinForms、Service／Core；新增獨立 RPT menu key、route `/YMES/RPT/EquipmentStateStatistics`，重用已完成 ES409 DEV 畫面。詳 [RT414 規格](modules/RPT/設備狀態期間統計_RT414.md) 及 [ES409 共用來源規格](modules/EMS/設備狀態期間統計查詢.md)。
+- [x] Oracle DDL refs 沿用 ES409；未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。家用端可依兩個 FunctionKey／權限需求評估共用唯讀 API。下一項依清冊為 RT415。
+
 ## 前項公司端交付：RPT RT412 設備 MTTR 統計表（2026-11-26）
 
 - [x] 核對 `frmEQP_MTTRSummary`／Designer、`wsRPT.LoadEQPMTTRSummary` Service、`clsReport.LoadEQPMTTRSummary`／`ShowEQPMTTRSummary` Core；完成 `/YMES/RPT/EqpMttrSummary` Vue DEV 日期／多選條件、Chamber 顯示、故障次數／MTTR／MTBF／Availability 表格及公式說明。[RT412 規格](modules/RPT/設備MTTR統計表_RT412.md)
