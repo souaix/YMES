@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：RPT RT607 預計完工查詢依賴表（2026-11-27）
+
+- 以家用端 PPK／SSH 唯讀核對正式 YMES PostgreSQL；`YMES` schema 缺少 `tblwiplotprocess`、`tblprsnoderelation`、`tblprdopdescription`、`tblprdruntimesetup`、`tblprdproductprocess`、`tblprdoparea`、`tblwiplotoparea`。其欄位及 PK 依 repo 已有 MESTEST source DDL／CREATE-only references，不新增來源以外的 FK／索引。
+- migration `0094_rt607_route_dependencies.sql` SHA-256 `EFFBB5BE20934C373C7920CA53110DA77D30659153C8A39663E9F4F0CBBD0F90`，已在正式 `ymes` 以單一交易套用並回讀成功；rollback 位於同目錄，會拒絕在任一表已有資料時刪表。套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-0094-rt607-20261127.dump`，808 KB，SHA-256 `4f5a571a56fcec0820ea612e02e742e52fda01142779624d7f0073d145731af1`，`pg_restore --list` 通過，權限為 root:root 600。
+- 回讀新表欄位數依序為 13／7／9／20／16／5／5；原生主鍵均符合 source，只有 TBLPRDRUNTIMESETUP 按來源沒有 PK／index。`ymes_app` 對七表均 SELECT=true，INSERT／UPDATE／DELETE=false。新表均無業務列；原有六張 Lot／PRS／OP／Module／Product 來源表也各 0 列，因此正式 RT607 沒有可查詢／正向驗證的生產批。
+- 目前僅完成 RT607 schema 基礎。`LoadRunCardData` 的 PASS graph／分岔／OP group mapping 尚未在 handoff 提供足夠來源；公司端待補實際 helper 程式規則。未新增 API、未部署容器、未改寫業務資料；正式 RT607 頁面與服務維持原狀。詳 [RT607 模組紀錄](modules/RPT/預計完工查詢_RT607.md)。
+
 ## 最新：WIP WP803 正式 Web 與 8DQuery 入口（2026-11-28）
 
 - WP803 Web 靜態頁已部署；正式容器目前使用 image `ymes-web:current`，image ID `sha256:40fdfefad6d13b74601e67e03727b29d39e350bdd1300daf7cb6ab852b7c4438`。本版標籤 `ymes-web:wp803-8dquery-20261128-a2`；回復標籤 `ymes-web:before-wp803-8dquery-20261128-a2` 指向前版 WP803 Web image `sha256:a9c6d20fa7931384190fffdececddb62663e2fefe2e8b24edfeffa548378b60e`。候選封裝 SHA-256 `9ED33B86EC06184CC169E0C919ECA991FA69623ED242D103A77AA4A8A679490D`；遠端 nginx 設定與 WP802 元件檔檢查通過。

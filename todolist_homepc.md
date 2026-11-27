@@ -2,10 +2,10 @@
 
 ## 公司端 RT607 預計完工查詢 handoff（2026-11-27）
 
-- [ ] 核對 WIP Lot／LotProcess／PRS Process+Node／OP Basis／PRD Module／ProductProcess／OP Description／RuntimeSetup／OPArea／WIP LotOPArea 的 YMES PostgreSQL live schema、migration 與正式資料同步；可信 Oracle source DDL refs 已在 repo。詳 [RT607 規格](docs/modules/RPT/預計完工查詢_RT607.md)。
-- [ ] 若資料可支持，實作登入及 RT607 FunctionKey ACL 保護的唯讀 GET /api/reports/plan-finish-time?lotNo=...；LotNo 必填、參數化，依 Run Card ItemNo 穩定排序並回傳 Lot header 與預估 rows。不可接受前端 SQL／AdditionalXml。
-- [ ] 決定 runtime setup 應否依必填 AreaNo 查找：legacy Core 查詢只用 ProductNo／Version／OPNo 並讀第一列，而 Oracle source DDL 顯示 AreaNo 必填且 runtime table 沒有已報告 PK／unique/index。另決定缺 setup 列時是否保留空白並不推進累計（legacy 可能低估）或改以明確 incomplete 訊息處理。
-- [ ] 估算只累加 queue+run minutes，起點為請求時間且全列固定以 CurQty 換算；未建模班別、假日、機台產能、等待排程。正式 API 須在資料／產品需求層說清楚這個預估邊界。
+- [x] 核對正式 PostgreSQL 並套用 `0094_rt607_route_dependencies.sql`，建立缺少的七張 MESTEST 來源空表；執行前備份、欄位／PK／索引／讀寫權限回讀與雜湊記錄見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。未匯入業務資料。
+- [ ] 目前 14 張路由／估時計算依賴表在正式復刻庫皆為 0 列，無正向 Lot 可查；不灌假資料。另需公司端提供 `clsLot.LoadRunCardData` 與實際 route helper 的節點展開、OP group、Process／Module 排序與分岔規則。只靠 DDL 不足以還原 Run Card，收到來源和同步資料前不猜寫正式 API。
+- [ ] 收到可信 route source 與同步列後，實作登入／RT607 FunctionKey ACL 保護的唯讀 GET `/api/reports/plan-finish-time?lotNo=...`；LotNo 必填、參數化、穩定排序，逐列呈現缺少或多筆 AreaNo runtime setup 的估算狀態。不可接受前端 SQL／AdditionalXml。
+- [ ] 預估需說明只累加 Queue+Run 分鐘、起點為請求時間且每站固定以 CurQty 換算；不含班別、假日、設備容量與等待排程。
 
 ## 使用者優先順序：先處理 WIP 在製品管理（2026-11-27）
 

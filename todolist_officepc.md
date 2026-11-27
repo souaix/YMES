@@ -5,7 +5,8 @@
 - [x] 直接核對 inline Form／Designer frmPlanFinishTime_byLot、wsWIP.LoadPlanFinishTime_byLot、clsLot.LoadPlanFinishTime_byLot 與 LoadRunCardData；完成 /YMES/RPT/PlanFinishTimeByLot DEV Lot 查詢、Lot header、九欄 Run Card、工時比例與累計估算、未知 Lot 錯誤及排序。詳 [RT607 規格與家用端 API handoff](docs/modules/RPT/預計完工查詢_RT607.md)。
 - [x] WIP Lot／LotProcess、PRS Node／Process、OP Basis、PRD Module／ProductProcess／OP Description／RunTimeSetup／OPArea、WIP LotOPArea 的可信 MESTEST source DDL 均已在 repo references；本次未新查 Oracle，未新增 CREATE-only SQL。
 - [x] 記錄 Core runtime setup lookup 未帶 AreaNo（source DDL 中為必填欄位），且找不到工時設定會保留空值、跳過累計時間，後續 ETA 可能低估；家用端需用正式資料決定處理語意。
-- [ ] 家用端先核對 YMES PostgreSQL live schema／資料同步，確認 AreaNo 精確 lookup 及 missing-setup 累加策略，再實作登入／RT607 ACL 保護、LotNo 必填、參數化、依 Run Card ItemNo 穩定排序的唯讀 GET /api/reports/plan-finish-time。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 請補充 `clsLot.LoadRunCardData` 及其實際呼叫的 route helper 來源位置與關鍵程式規則：PASS 節點展開、分岔如何處理、Node／OP group 對應、Process／Module 順序與 OPReference 的取得方式。只提供已在規格中的概述仍不足以安全重建正式 Run Card；家用端不可猜。
+- [x] 家用端已建立七張缺少的正式 PostgreSQL 空表並授予唯讀；正式 14 張依賴表皆無同步資料。家用端依來源與資料就緒後續作 RT607 API；公司端未連 PostgreSQL、未做正式 API/schema。
 
 ## 2026-11-27 使用者優先順序：WIP 在製品管理
 
