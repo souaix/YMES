@@ -135,6 +135,7 @@ import EmsReturnEquipmentAccessory from './components/EmsReturnEquipmentAccessor
 import EmsApplyEquipmentAccessory from './components/EmsApplyEquipmentAccessory.vue'
 import EmsEquipmentStateControlSetting from './components/EmsEquipmentStateControlSetting.vue'
 import EmsEquipmentStateStatistics from './components/EmsEquipmentStateStatistics.vue'
+import RptErfPareto from './components/RptErfPareto.vue'
 import EmsEquipmentReasonBasis from './components/EmsEquipmentReasonBasis.vue'
 import WipLotOperatorClockIn from './components/WipLotOperatorClockIn.vue'
 import WipLotOperatorClockOut from './components/WipLotOperatorClockOut.vue'
@@ -335,6 +336,7 @@ import ConfirmLot from './components/ConfirmLot.vue'
 import EqpDailyReport from './components/EqpDailyReport.vue'
 import EqpDailyUtilizationChart from './components/EqpDailyUtilizationChart.vue'
 import EqpMttrSummary from './components/EqpMttrSummary.vue'
+import EqpMttrSummaryByMonth from './components/EqpMttrSummaryByMonth.vue'
 import PmPlanCalendar from './components/PmPlanCalendar.vue'
 import PmFixedQuantitySetUp from './components/PmFixedQuantitySetUp.vue'
 import PmFixedTimesSetUp from './components/PmFixedTimesSetUp.vue'
@@ -884,6 +886,9 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:RPT:EQP DAILY REPORT', label: '設備稼動查詢', shortLabel: '設備稼動', functionNo: 'EQP DAILY REPORT', moduleNo: 'RPT' },
         { id: 'function:RPT:EQP DAILY UTILIZATION CHART', label: '每日設備稼動長條圖', shortLabel: '稼動長條圖', functionNo: 'EQP DAILY UTILIZATION CHART', moduleNo: 'RPT' },
         { id: 'function:RPT:EQP MTTR SUMMARY', label: '設備 MTTR 統計表', shortLabel: '設備 MTTR', functionNo: 'EQP MTTR SUMMARY', moduleNo: 'RPT' },
+        { id: 'function:RPT:EQP MTTR SUMMARY BYMONTH', label: '設備 MTTR 統計表_以月份匯總', shortLabel: 'MTTR 月報', functionNo: 'EQP MTTR SUMMARY BYMONTH', moduleNo: 'RPT' },
+        { id: 'function:RPT:EQP STATE STATISTICS', label: '設備狀態期間統計', shortLabel: '設備狀態統計', functionNo: 'EQP STATE STATISTICS', moduleNo: 'RPT' },
+        { id: 'function:RPT:ERFPARETO', label: '異常單柏拉圖分析', shortLabel: '異常柏拉圖', functionNo: 'ERFPARETO', moduleNo: 'RPT' },
       ],
     }],
   },
@@ -1273,6 +1278,9 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:EQP DAILY REPORT': appBasePath + '/RPT/EqpDailyReport',
   'function:RPT:EQP DAILY UTILIZATION CHART': appBasePath + '/RPT/EqpDailyUtilizationChart',
   'function:RPT:EQP MTTR SUMMARY': appBasePath + '/RPT/EqpMttrSummary',
+  'function:RPT:EQP MTTR SUMMARY BYMONTH': appBasePath + '/RPT/EqpMttrSummaryByMonth',
+  'function:RPT:EQP STATE STATISTICS': appBasePath + '/RPT/EquipmentStateStatistics',
+  'function:RPT:ERFPARETO': appBasePath + '/RPT/ErfPareto',
   'function:PM:PM PLAN CHANGE': appBasePath + '/PM/MaintenancePlanAdjust',
   'function:PM:EQP FIXED QUANTITY SETUP': appBasePath + '/PM/FixedQuantitySetup',
   'function:PM:EQP FIXED TIME SETUP': appBasePath + '/PM/FixedTimesSetup',
@@ -1756,6 +1764,9 @@ const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function
 const isRt410EqpDailyReportPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY REPORT')
 const isRt411EqpDailyUtilizationChartPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY UTILIZATION CHART')
 const isRt412EqpMttrSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY')
+const isRt413EqpMttrSummaryByMonthPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY BYMONTH')
+const isRt414EqpStateStatisticsPage = computed(() => activeMasterKey.value === 'function:RPT:EQP STATE STATISTICS')
+const isRt415ErfParetoPage = computed(() => activeMasterKey.value === 'function:RPT:ERFPARETO')
 const isPmMaintenancePlanAdjustPage = computed(() => activeMasterKey.value === 'function:PM:PM PLAN CHANGE')
 const isPmFixedQuantitySetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED QUANTITY SETUP')
 const isPmFixedTimesSetUpPage = computed(() => activeMasterKey.value === 'function:PM:EQP FIXED TIME SETUP')
@@ -4052,6 +4063,12 @@ async function signOut(): Promise<void> {
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />
+        <EqpMttrSummaryByMonth
+          v-else-if="isRt413EqpMttrSummaryByMonthPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
         <PmMaintenancePlanAdjust
           v-else-if="isPmMaintenancePlanAdjustPage"
           class="framework-content"
@@ -4430,7 +4447,8 @@ async function signOut(): Promise<void> {
         <EmsEquipmentStateLogByState v-else-if="isEmsEquipmentStateLogByStatePage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateLog v-else-if="isEmsEquipmentStateLogPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentStateControlSetting v-else-if="isEmsEquipmentStateControlSettingPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
-        <EmsEquipmentStateStatistics v-else-if="isEmsEquipmentStateStatisticsPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <EmsEquipmentStateStatistics v-else-if="isEmsEquipmentStateStatisticsPage || isRt414EqpStateStatisticsPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
+        <RptErfPareto v-else-if="isRt415ErfParetoPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <EmsEquipmentReasonBasis v-else-if="isEmsEquipmentReasonBasisPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockIn v-else-if="isWipLotOperatorClockInPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />
         <WipLotOperatorClockOut v-else-if="isWipLotOperatorClockOutPage" class="framework-content office-wip-module" :development-preview="isDevelopmentPreview" @close="navigateHome" />

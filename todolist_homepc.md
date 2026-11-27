@@ -1,5 +1,10 @@
 # 家裡電腦接手清單
 
+## 公司端交接優先順序（2026-11-27）
+
+- [x] RT413「設備 MTTR 統計表_以月份匯總」已完成公司端 DEV／規格交接，家用端 API/schema 工作由本清單另行追蹤。
+- [x] 公司桌機已優先覆核 OE 工單管理 13 項：原始 Form、獨立規格與 Vue route／page mode 均有對應，未發現公司端缺頁；跨畫面入口與流程見 [OE 工單管理總覽](docs/modules/OE/工單管理模組總覽.md)。RT414 已新增獨立 RPT 入口並重用 ES409 DEV 畫面；RT415 完成 DEV 假資料 Pareto／魚骨分析及 API handoff。詳 [RT414](docs/modules/RPT/設備狀態期間統計_RT414.md)、[RT415](docs/modules/RPT/異常單柏拉圖分析_RT415.md)。正式 API／schema 仍由家用端接續；公司端下一項為 RT416。
+
 ## 家用端 PM301–PM303 工單流程 schema 查核（2026-11-27）
 
 - [x] 以 PPK／SSH 唯讀檢查正式 `ymes` database catalog；`tblpmeqpmaintenanceplan`、`tblpmeqpmaintenanceplanlog`、`tblpmeqptypesopbasis`、`tblpmequipmentstate`、`tblpmwobasis`、`tblpmwobasis_his`、`tblpmwodetail`、`tblpmwodetail_his` 均不存在。未讀或修改 MES 業務資料列。
@@ -118,7 +123,7 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 - [x] 以獨立 API image `ymes-api:rt412-20261127-a1` 部署並保留舊 `ymes-api` rollback container；readiness 200、候選未登入 401、正式登入查詢在缺少唯一故障設定時回預期 503，日期倒置與 367 日範圍均回 400。其他 Web／master Web／Nginx／專案容器未更動。
 - [ ] `tbleqpstatecontrol` 尚無唯一故障控制值，狀態歷程亦未提供；請公司端唯讀提供原生 MES `ControlType='EQP Break Down'`、`ControlNo='BreakDown'` 的準確 `EquipmentState`／`StateName`，並確認可用狀態歷程已進入復刻庫後再驗證正式正向 MTTR 結果。不在正式資料庫灌假資料。
 - [x] RT412 程式與維護文件以 fast-forward 推送 GitHub `main`，重新 fetch 確認 `origin/main=3102ea7`；依最新清單接續家用可做的 RT501。
-- [ ] RT413 是公司端下一項，但目前 repo 尚無 RT413 handoff MD；已列入公司待辦，取得來源規格前不猜查詢或月結行為。
+- [ ] RT413 公司端規格與 DEV 頁已完成交接；OE 工單管理來源覆核已完成，公司端下一項為 RT414。
 
 ## 家用端最新整合與驗收（2026-11-26）
 
