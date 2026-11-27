@@ -11,7 +11,7 @@
 
 - [x] 已將 WIP 排在其他尚未開始模組之前，並完成清冊／Vue route 差異盤點。WP803 正式 API UI 接線已完成。
 - [x] 家用端已在最新 main worktree 以 app-browser 驗收 WP803 DEV 假資料的查詢、D1 lookup、編輯、防呆、直接／送簽模擬與 WP802 唯讀返回；不寫正式 PostgreSQL。
-- [ ] 公司端若要確認公司機本機狀態，仍可自行重跑 DEV 驗收；正式站目前 Web image 尚未包含 WP803 頁，正式 UI 部署與真資料正向驗收仍待家用端處理。
+- [x] 家用端已於 2026-11-28 部署 WP803 正式 Web 並以 Demo/app-browser 驗收主選單路徑、空條件／不存在 QRSNo 查詢、日期防呆與返回主選單。正式 8D 表無可用列，故選列後 WP802 明細與編輯無法正向驗收；Approve 仍停用並等待 Issue Job／callback 來源。公司端只需在本機需要時重跑 DEV 驗收，不連 PostgreSQL、不做 SSH／部署。
 - [x] WIPINV_CS「入庫作業」已核對 THEIL Form／Designer／WinForms API client，完成 DEV 假資料畫面與逐筆入庫互動、規格及家用端 handoff；未找到 server Service/Core，未猜資料表 DDL。
 - [x] 依使用者最新指示，WIP 在製品管理優先於其他尚未開始的模組。清冊與 Vue route 差異覆核後，除 WPI05 外，其餘 WIP 選單功能已有對應；WP804 已完成。
 - [ ] WIP 在製品管理維持全案最高優先序。公司端先做可核對來源的 WIP WinForms／DEV／規格；目前唯一缺公司端來源的 WIP 選單項是 WPI05「配件領用單維護作業」，CSiMES、THEIL、DEV_SILVA 均缺指定 Form／Service／Core，不能臆造，來源到位後先完成。缺來源期間可接續其他可做項目，有可做的 WIP 項目即插隊。家用端先處理 [家用端待辦](todolist_homepc.md) 中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目；受來源阻擋時記錄缺項並切換到下一個可做的 WIP 工作。

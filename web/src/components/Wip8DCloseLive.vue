@@ -35,7 +35,7 @@ interface PageResult { totalCount: number; page: number; pageSize: number; pageC
 class ApiRequestError extends Error { constructor(message: string, readonly status: number) { super(message) } }
 
 const props = defineProps<{ apiBaseUrl: string; currentUserNo?: string }>()
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: []; open8dQuery: [qrsNo: string] }>()
 const filters = reactive({ qrsNo: '', factoryNo: '', projectDepartment: '', createFrom: '', createTo: '', closeFrom: '', closeTo: '' })
 const checks = reactive({ qrsNo: false, factoryNo: false, projectDepartment: false, createDate: false, closeDate: false })
 const issueState = ref(0)
@@ -143,6 +143,11 @@ function toggleSelected(row: ReleaseRow): void {
   detail.value = null
   selectedNos.value = selectedNos.value.includes(row.qrsNo) ? selectedNos.value.filter(no => no !== row.qrsNo) : [...selectedNos.value, row.qrsNo]
 }
+function open8dQuery(): void {
+  const row = active.value
+  if (!row) { error.value = '請先選取一筆結案申請。'; return }
+  emit('open8dQuery', row.qrsNo)
+}
 function datePart(value: string | null | undefined): string { return value ? value.slice(0, 10) : '' }
 function displayDate(value: string | null | undefined): string { return value ? value.replace('T', ' ').slice(0, 19) : '' }
 
@@ -249,7 +254,7 @@ async function saveEditor(): Promise<void> {
       <tr v-for="row in rows" :key="row.qrsNo" :class="{ selected: activeNo === row.qrsNo }" @click="choose(row)" @dblclick="choose(row); openEditor()"><td><input type="checkbox" :checked="selectedNos.includes(row.qrsNo)" @click.stop="toggleSelected(row)"></td><td>{{ row.qrsNo }}</td><td>{{ row.releaseMemo || '' }}</td><td>{{ row.releaseDepartment || '' }}</td><td>{{ row.releaser || '' }}</td><td>{{ row.releaserName || '' }}</td><td>{{ displayDate(row.releaseDate) }}</td><td>{{ row.description || '' }}</td><td>{{ row.creator || '' }}</td><td>{{ displayDate(row.createDate) }}</td></tr>
       <tr v-if="!rows.length"><td colspan="10" class="empty">{{ queried ? (error ? '查詢失敗，請參閱上方訊息。' : '沒有符合資料；若尚未建立結案申請，請先於 WP802 完成 D8 Summary。') : '請按 Query 查詢正式資料。' }}</td></tr>
     </tbody></table></div><footer class="grid-footer"><span>UserNo: {{ currentUserNo || '—' }} · {{ totalCount.toLocaleString() }} 筆</span><nav aria-label="結案申請分頁"><button type="button" class="mes-button" :disabled="loading || currentPage <= 1" @click="query(currentPage - 1)">上一頁</button><span>第 {{ currentPage }} / {{ Math.max(pageCount, 1) }} 頁</span><button type="button" class="mes-button" :disabled="loading || !hasMore" @click="query(currentPage + 1)">下一頁</button></nav></footer></fieldset>
-    <aside class="actions"><button type="button" class="mes-button" :disabled="!active || active.issueState !== 0 || loading || saving || detailLoading" @click="openEditor">{{ detailLoading ? '讀取中…' : '8DClose' }}</button><button type="button" class="mes-button" disabled title="正式簽核 API 尚未就緒。">Approve</button><button type="button" class="mes-button" disabled title="WP804 正式唯讀查詢尚未接通。">8DQuery (Q)</button></aside>
+    <aside class="actions"><button type="button" class="mes-button" :disabled="!active || active.issueState !== 0 || loading || saving || detailLoading" @click="openEditor">{{ detailLoading ? '讀取中…' : '8DClose' }}</button><button type="button" class="mes-button" disabled title="正式簽核 API 尚未就緒。">Approve</button><button type="button" class="mes-button" :disabled="!active || loading || saving || detailLoading" title="開啟此 QRSNo 的 WP802 唯讀 8D 明細。" @click="open8dQuery">8DQuery (Q)</button></aside>
 
     <div v-if="editorOpen && detail" class="overlay" @click.self="editorOpen = false"><div class="modal" role="dialog" aria-modal="true" aria-label="8D Close Define"><header>8D Close Define · {{ detail.release.qrsNo }}</header><div class="basis-grid">
       <label>QRSType<input value="8DFACTORY" readonly></label><label>QRSNo<input :value="detail.release.qrsNo" readonly></label>

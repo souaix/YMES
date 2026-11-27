@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP803 正式 Web 與 8DQuery 入口（2026-11-28）
+
+- WP803 Web 靜態頁已部署；正式容器目前使用 image `ymes-web:current`，image ID `sha256:40fdfefad6d13b74601e67e03727b29d39e350bdd1300daf7cb6ab852b7c4438`。本版標籤 `ymes-web:wp803-8dquery-20261128-a2`；回復標籤 `ymes-web:before-wp803-8dquery-20261128-a2` 指向前版 WP803 Web image `sha256:a9c6d20fa7931384190fffdececddb62663e2fefe2e8b24edfeffa548378b60e`。候選封裝 SHA-256 `9ED33B86EC06184CC169E0C919ECA991FA69623ED242D103A77AA4A8A679490D`；遠端 nginx 設定與 WP802 元件檔檢查通過。
+- 本版啟用既有 WP803 `8DQuery (Q)` 入口：選取結案申請後，帶該 QRSNo 開啟 WP802 十頁唯讀明細；沒有選取列時按鈕停用。`Approve` 仍停用，API 不變。只重建 `ymes-web`，`ymes-api` 維持 `sha256:ef6c55545894a2ae7d9c96adf5e16e3ba61f5bca39246da2bdcba35975b1cc51` 且 healthy；`ymes-master-web` 與其他服務未動。
+- 正式 `/YMES/WIP/8DClose` HTTP 200、Web healthy。app-browser Demo 驗收主選單路徑「在製品管理 → 8D 管理 → 8D 矯正單結案作業」、空條件查詢回 0 筆、無效 QRSNo 回 0 筆、Create Date 起日晚於迄日顯示前端防呆、Close 返回主選單。正式四張 8D 表沒有可用主單，未寫測試資料，因此無法驗證選列後的唯讀明細正向流程或結案修改；不在正式庫造列。Approve 的 Issue Job／簽核 callback 來源仍待公司端提供。
+- 本機相關 Vue 元件 targeted vue-tsc 檢查與 Vite production build 通過；Vite 轉換 1,292 個模組。正式 Web 為預先建置的 nginx runtime image；遠端只更新 `ymes-web`，正式 API 與資料庫均未變更。
+
 ## 最新：WIP WP802／WP804 8D 唯讀查詢與明細（2026-11-28）
 
 - 家用端以 PPK／SSH 唯讀核對正式 PostgreSQL；依 `database/reference/mestest_wip_wp802_create.sql` 套用 `0093_wip_wp802_readonly_detail_schema.sql`，建立正式 schema 缺少的九張空白 8D 子表（Action、ActionDetail、AttachFile、Disposition、Prevention、PreventionTrack、QA、Question、RootCause）。執行前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-wp802-0093-20261128.dump`，808,491 bytes，SHA-256 `00dc57a20d9fc0091b3e52f87dc1f9efc532ce322318780d1c02c54b984b2707`；`pg_restore --list` 通過。Migration SHA-256 `3CE5AA6C255E690256F8E036D458CE76EC7B39A9C186E5D37B45EDBC02ACE909`。只建結構，未匯入業務資料。
