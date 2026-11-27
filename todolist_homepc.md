@@ -24,6 +24,15 @@
 - [ ] Auth 沒有可供此功能使用的 IMESTECH enterprise claim／WP307 Function ACL，新增的查詢 API 僅有登入保護；POST Login/Logout 尚未實作或授予 DML 權限。先完成可信功能／企業別 gate 與寫入交易驗證，再開放或部署 WP307 操作。
 - [ ] 公司端 pull 後按 [公司端 WP307 handoff](todolist_officepc.md) 接唯讀頁面、分頁 header 與錯誤回應；正式同步有效 Area／Shift／User 資料後再用 app-browser 驗證正向查詢。不要在正式復刻庫建立人員或登入測試列。
 
+## HOME WIP WP306 設備點檢歷程唯讀 API 與 schema（2026-11-27）
+
+- [x] PPK／SSH 唯讀核對 `TBLWIPEQPQCLISTLOG`、`TBLWIPEQPQCLISTDETAIL` 在所有 schema 都缺少；依可信 WP305/MESTEST source 建立 0100 兩張空表，保留來源欄位與 PK，另加兩個 YMES-only 非唯一查詢索引。套用前備份 `/opt/ymes/backups/ymes-before-wp306-0100-20261127.dump`，862,048 bytes、SHA-256 `f52979693f10b87b02e6ea5b88ab5ddf935b6286dafcc885fd7f45386f4c0b6c`，`pg_restore --list` 2,378 entries。
+- [x] live catalog 回讀 19 欄 Header／QCListSerial PK、20 欄 Detail／QCListSerial+QCItem PK；兩表 0 列，`ymes_app` 僅 SELECT，沒有 INSERT／UPDATE／DELETE。以 READ ONLY `EXPLAIN` 確認 EquipmentNo／日期支援索引及 Detail 複合 PK 路徑。
+- [x] 完成登入保護唯讀 `GET /api/wip/equipment-qc-list-logs` 與 `GET /api/wip/equipment-qc-list-logs/{qcListSerial}/details`；以參數化查詢、RepeatableRead／READ ONLY、固定台北時間含界日期、條件防護、最多每頁 100、Header Serial 升冪排序及分頁 headers。規格與 migration／權限細節見 [WP306 模組紀錄](docs/modules/WIP/設備點檢歷程.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] `.NET 9` API build 0 error；NU1900 來自 NuGet vulnerability feed 無法連線。2026-11-28 本機隔離 DEV app-browser 驗設備選擇、EquipmentNo／日期篩選、反向日期防呆、NG Header 明細與 Close；使用 WP305 共用 localStorage 範例，未呼叫 WP306 API 或改正式資料。
+- [ ] Production Web/API 尚未部署，遠端根 filesystem 滿載；正式站 WP306 頁面及 API 尚未驗收。FunctionKey／廠區細粒度授權尚無可信 claim。部署後再補正式端點查詢／空結果／錯誤／分頁驗收；不建立正式假 Header／Detail。
+- [ ] 公司端依 [WP306 UI handoff](todolist_officepc.md) 接 Header／Detail 唯讀 API、分頁與錯誤狀態，保留 DEV mock；WP305 正式寫入尚未就緒，Production Edit 維持停用。
+
 ## HOME最新 WP109 DEV 表單修正與 app-browser 驗收（2026-11-28）
 
 - [x] 修正 `WipSwrBasisDevPreview.vue`：新增／修改／核准／作廢備份改為明確複製 Vue reactive 資料，避免 `structuredClone` Proxy 例外讓確認流程無聲停止。只改 DEV localStorage 假資料流程，正式 API／資料庫未變。
@@ -4385,12 +4394,9 @@ API 工作：
 - [ ] 若 QCResult=NG 且 QCList UnValidAction 有設定，Core 會改設備狀態並寫 EquipmentStateLog。若設備原為 WIP CheckInConfirm，還會呼叫 SHR_COEquipment 結算設備上的批次、更新設備歷程、刪除 Temp Equipment、關閉 Cont Equipment、更新多人上工 LotLoginState 簽退。正式 API 必須接 WP201/WP204 共用下機交易或等價一致 transaction；不可只建立 QC Log 後遺漏設備/WIP/人員副作用，也不可允許半套提交。
 - [ ] WP305 DEV localStorage `ymes.dev.wp305-equipment-online-qc.v1` 只供假畫面及 WP306 DEV 假歷程使用；不得當作正式 API 資料、授權或 task 狀態依據。完成權限、transaction、錯誤碼與 API/migration/deploy records 後更新交接。
 
-## WIP WP306 設備點檢歷程家用端 handoff（2026-11-20）
+## WIP WP306 設備點檢歷程家用端 handoff（2026-11-20，進度於 2026-11-27 更新）
 
-- [ ] Pull 最新 `main`，閱讀 `docs/modules/WIP/設備點檢歷程.md`、WP305 規格與 `docs/DATABASE_CONNECTION.md` 的 WP305 共用表 DDL 段落。
-- [ ] WP306 沿用 WP305 已建的 `TBLWIPEQPQCLISTLOG`／`TBLWIPEQPQCLISTDETAIL`；先查 YMES PostgreSQL live schema／migration，不要重複建表。沒有新增 Oracle DDL／CREATE-only。
-- [ ] 建登入保護的唯讀查詢 API，支援 WinForms 篩選欄位與穩定分頁排序；同一 QCSerialNo 回傳點檢 Header 與所有 Detail，避免把不同檢驗序號的 detail 混在一起。
-- [ ] 限制可查詢設備範圍及最大日期/頁數；權限依使用者與 WIP 功能設定。WP306 是唯讀歷程，不透過此 API 修改 Log/Detail。
+本項 live schema、0100 空來源表 migration、兩支登入保護唯讀 API、條件限制、分頁與 EXPLAIN 已完成，權威進度見本檔前面的 HOME WIP WP306 區段。正式部署／app-browser 資料端驗收、細粒度 FunctionKey／廠區授權仍待辦；UI 接線交由公司端 handoff。不可重複建立 WP306 表或以正式假資料做驗收。
 
 ## WIP WP307 設備狀態監控_區域家用端 handoff（2026-11-20，進度於 2026-11-27 更新）
 

@@ -1249,6 +1249,14 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - API source 提供登入保護唯讀 eligible、filter-options、current、history；查詢使用參數化 SQL、RepeatableRead／READ ONLY，current/history 有穩定排序與最多 100 筆分頁。Current 日期仍用來源嚴格界值；History 起含迄不含是暫定 API contract，待公司端核對原始 Core 比較式。`EXPLAIN` 僅在 READ ONLY session 執行，沒有 `ANALYZE` 或讀取業務資料列。
 - 0098／0099 的 rollback SQL 僅供版本化變更紀錄，尚未執行。正式 Web/API 未部署；遠端 root filesystem 滿載且可用空間不足，不清除其他專案、映像、快取或備份。Login／Logout POST、WP307／IMESTECH server-side function gate 與 DML grants 均未建立。
 
+### 更新 2026-11-27：家用端 WP306 設備點檢歷程 schema／API
+
+- 2026-11-27 透過 PPK／SSH 以 PostgreSQL catalog 唯讀確認 `TBLWIPEQPQCLISTLOG`、`TBLWIPEQPQCLISTDETAIL` 在所有 schema 均缺少；正式 `YMES.TBLEQPEQUIPMENTBASIS` 存在且 `ymes_app` 有 SELECT。未查任何 MES 點檢業務列。
+- 套用 migration 0100 前備份 `/opt/ymes/backups/ymes-before-wp306-0100-20261127.dump`，862,048 bytes、SHA-256 `f52979693f10b87b02e6ea5b88ab5ddf935b6286dafcc885fd7f45386f4c0b6c`，`pg_restore --list` 有 2,378 entries。
+- `database/migrations/0100_wip_wp306_inspection_history.sql` 依 WP305 核實的 MESTEST references 建立 Header 19 欄／`QCListSerial` PK、Detail 20 欄／`(QCListSerial, QCItem)` PK；兩表 `ymes_app` 僅 SELECT，沒有 INSERT／UPDATE／DELETE，表列均 0。來源只有 PK；另建兩個 YMES-only 非唯一查詢索引支援 EquipmentNo／CreateDate 篩選，沒有新增 source key。rollback SQL 遇到任一表非空即拒絕刪除。
+- 以 `ymes_app` 的 `EXPLAIN` 確認 EquipmentNo 查詢走 `ix_wp306_qc_log_equipment_serial`、日期範圍查詢走 `ix_wp306_qc_log_created_serial`、Detail 走來源複合 PK；沒有 `ANALYZE` 或業務列查詢。正式 API 未部署，故尚無正式站端對點檢列的正向瀏覽器驗收。
+- API 查詢條件為精確 EquipmentNo 或完整 StartDate／EndDate 組合，日期端點含界並轉台北時間；每頁最多 100、Header 按 QCListSerial 穩定排序，Detail 一次回傳選取 Header 的完整 Detail。FunctionKey／廠區授權未完成，登入保護不等於細粒度授權；WP305 編輯寫入流程尚未就緒，無 DML grant。
+
 ### 更新 2026-11-20：WIP WP103 列印流程卡
 
 - WP103 查詢及報表讀取既有 WIP Lot Basis/State、Process Node/Relation、OP、Product、Customer、RunCard Log、`TBLPRDRUNCARDMAP`、User Defined Report 與 System Parameter。功能沒有新增專用 Oracle table；本輪沿用已存在的 schema/reference，不重複查 DDL，也未產生重複 CREATE-only。

@@ -1,5 +1,14 @@
 # 公司端待辦
 
+## HOME WP306 設備點檢歷程唯讀 API handoff（2026-11-27）
+
+- [x] 家用端已套用 migration 0100，建立 WP305/MESTEST source 的空表 `TBLWIPEQPQCLISTLOG`／`TBLWIPEQPQCLISTDETAIL`；`ymes_app` 只有 SELECT，兩表 0 列。兩個 YMES-only 查詢索引不是 Oracle source index。無需公司端建立 DDL／連 PostgreSQL。
+- [x] 家用端 API：登入保護 `GET /api/wip/equipment-qc-list-logs` 支援精確 `equipmentNo` 或完整 `startDate`+`endDate`；日期 Start／End 含界。每頁預設／上限 100，Header 依 `QCListSerial` 升冪，回傳 JSON array 及 `X-Page`／`X-Page-Size`／`X-Has-More`。Detail 為 `GET /api/wip/equipment-qc-list-logs/{qcListSerial}/details`，先確認 Header 再回該單全部 Detail，依 `QCOrder`／`QCItem` 排序。欄位與錯誤 contract 見 [WP306 模組規格](docs/modules/WIP/設備點檢歷程.md)。
+- [ ] Pull 最新 `main`，把 `/YMES/WIP/EquipmentQcListLog` Production mode 接 Header／Detail API；保留 DEV mock，正式模式不得 fallback 到範例或 localStorage 資料。支援 EquipmentNo 與 Start／End 各自勾選，但無 EquipmentNo 時 API 要求兩個日期都提供；保留日期含界行為。
+- [ ] 接上一頁／下一頁與 `X-Has-More`，保留查詢條件；Header 欄位照 WinForms 顯示，選 Header 後載入該 Serial 的完整 Detail，D01–D10 依最大 InputDataCount 顯示。處理空結果、載入、400／404／503 和 Close。
+- [ ] WP305 正式寫入 API 尚未就緒；Production `Edit` 保持停用，不呼叫 DEV provider 或 WP305 假資料。等家用端部署與有效點檢資料同步後，用 app-browser 驗收篩選、翻頁、單頭／明細、錯誤、空結果與 Close；禁止建立正式假點檢列。
+- [ ] FunctionKey／廠區細粒度權限尚未有可信 server claim；目前家用 API 只有一般登入保護。不要把登入保護描述為已完成細粒度授權。
+
 ## HOME WP307 區域作業人員唯讀 API handoff（2026-11-27）
 
 - [x] 家用端已在 migration 0098 建立 `TBLSMDAREASHIFT`、`TBLSMDAREAOPERATOR`、`TBLWIPAREAOPERATORSTATE`、`TBLWIPAREAOPERATORLOG` 四張來源空表；`TBLUSRSHIFTBASIS` 補 SELECT。0099 新增兩個明確標為 YMES-only 的非唯一查詢索引，不增來源 PK／unique。四表皆 0 列、`ymes_app` 無 DML 權限。詳 [WP307 模組紀錄](docs/modules/WIP/設備狀態監控_區域.md) 與 `docs/DATABASE_CONNECTION.md`。
