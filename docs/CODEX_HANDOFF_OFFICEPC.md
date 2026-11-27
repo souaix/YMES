@@ -4,7 +4,12 @@
 
 ## 全案優先順序更新（2026-11-27）
 
-- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。RT416／RT417／RT502／RT503／RT608 均已完成；若 WPI05 仍無來源，按清冊繼續其他可取得來源功能，遇到可做的 WIP 項目先插隊。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
+- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。RT416／RT417／RT502／RT503／RT504／RT608 均已完成；若 WPI05 仍無來源，按清冊繼續其他可取得來源功能，遇到可做的 WIP 項目先插隊。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
+
+## 公司端目前交接：RPT RT504 生產批執行法則查詢（2026-11-27）
+
+- [x] 已核對三份相同 `frmRT_RuleLogQuery`（Form／Designer 同檔）、`wsWIP.LoadWIPRuleCheckLog`／`clsLot.LoadWIPRuleCheckLog`，以及 Rule No lookup 的 `wsPRD.LoadPRDOPRule`／`clsProduct.LoadPRDOPRule`；完成 `/YMES/RPT/RuleLogQuery` DEV 查詢頁。[RT504 規格與家用端 handoff](modules/RPT/生產批執行法則查詢_RT504.md)
+- [ ] `TBLWIPRULECHECKLOG` Oracle source DDL／metadata 未在 repo；桌機無受保護 Oracle profile，未查 Oracle／猜 CREATE-only。`TBLPRDOPRULE` lookup source DDL 已在 `database/reference/mestest_prd_parameter_setup_source_ddl.sql`；家用端先核 live schema 與資料同步。
 
 ## 公司端目前交接：RPT RT503 等待生產批查詢（2026-11-27）
 

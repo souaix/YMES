@@ -6,6 +6,12 @@
 - [ ] UI client 沒有直接指出 Oracle table，現階段不建立 guessed schema／CREATE-only SQL。若 server/Core 確認 MES 表名，請公司端再唯讀交付 MESTEST DDL／metadata。
 - [ ] WP803 公司端正式 UI 已接家用端 8D Close API，DEV 驗收仍待執行；正式 Approve 保持停用，詳 [公司端待辦](todolist_officepc.md) 與 [WP803 規格](docs/modules/WIP/8D矯正單結案作業.md)。
 
+## 公司端 RT504 生產批執行法則查詢 handoff（2026-11-27）
+
+- [ ] 公司端已完成 `/YMES/RPT/RuleLogQuery` DEV 假資料及 Form／Service／Core 規格。Legacy 讀 `TBLWIPRULECHECKLOG`，條件為 LotNo／ComponentNo 前綴、RuleNo 等值、RuleAction 包含、可選 EventTime 起迄；至少需一項條件。
+- [ ] 先核 YMES PostgreSQL live catalog、`TBLWIPRULECHECKLOG` 同步來源與欄位型別。該表在 repo 缺少可信 Oracle source DDL；不要用 `XX_TBLPRDOPRULELOG_THEIL` 取代。Rule No lookup 的 `TBLPRDOPRULE` source DDL 在 `database/reference/mestest_prd_parameter_setup_source_ddl.sql`。詳 [RT504 規格](docs/modules/RPT/生產批執行法則查詢_RT504.md)。
+- [ ] 若 live schema 可支持，實作登入及 RPT FunctionNo `RULE LOG QUERY` 授權保護的唯讀 `GET /api/reports/wip-rule-check-logs`，採參數化、穩定排序、分頁和筆數上限；至少要求一項查詢條件，拒絕前端 SQL／AdditionalXml。
+
 ## 公司端 RT503 等待生產批查詢 handoff（2026-11-27）
 
 - [ ] 公司端已完成 `/YMES/RPT/WaitLot` DEV 假資料及 Form／Service／Core 規格。Legacy 固定查 `TBLWIPLOTSTATE.Status=2`（Wait）、ReportMode=True，不固定 `TBLWIPLOTBASIS.LotState`；八個條件為 RO／MO／Product+Version／Customer／Lot／OP／OrgLot／PS。

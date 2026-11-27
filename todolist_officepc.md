@@ -6,7 +6,14 @@
 - [ ] WP803 的 DEV 假資料驗收仍待執行；這不影響家用端尚未完成的其他 API/schema handoff。
 - [x] WIPINV_CS「入庫作業」已核對 THEIL Form／Designer／WinForms API client，完成 DEV 假資料畫面與逐筆入庫互動、規格及家用端 handoff；未找到 server Service/Core，未猜資料表 DDL。
 - [x] 依使用者最新指示，WIP 在製品管理優先於其他尚未開始的模組。清冊與 Vue route 差異覆核後，除 WPI05 外，其餘 WIP 選單功能已有對應；WP804 已完成。
-- [ ] WIP 在製品管理維持全案最高優先序。公司端尚未交付的 WIP 選單項是 WPI05「配件領用單維護作業」；CSiMES、THEIL、DEV_SILVA 來源樹均缺指定 Form／Service／Core，不能臆造，來源到位後先完成。RT416／RT417／RT502／RT503／RT608 是 RPT 功能且已完成；WPI05 缺來源期間，依主清冊接續其他可取得原始碼的功能，之後若有可做的 WIP 項目則插隊優先。
+- [ ] WIP 在製品管理維持全案最高優先序。公司端尚未交付的 WIP 選單項是 WPI05「配件領用單維護作業」；CSiMES、THEIL、DEV_SILVA 來源樹均缺指定 Form／Service／Core，不能臆造，來源到位後先完成。RT416／RT417／RT502／RT503／RT504／RT608 是 RPT 功能且已完成；WPI05 缺來源期間，依主清冊接續其他可取得原始碼的功能，之後若有可做的 WIP 項目則插隊優先。
+
+## 2026-11-27 RT504 生產批執行法則查詢
+
+- [x] 核對 CSiMES／THEIL／DEV_SILVA 三份相同 `frmRT_RuleLogQuery`（Form／Designer 同檔）；查詢使用 `wsWIP.LoadWIPRuleCheckLog`／`clsLot.LoadWIPRuleCheckLog`，Rule No lookup 使用 `wsPRD.LoadPRDOPRule`／`clsProduct.LoadPRDOPRule`。
+- [x] 完成 `/YMES/RPT/RuleLogQuery` DEV 假資料：Lot No、Component No、Rule No、Rule Action、可選 Event Time 區間、至少一條條件驗證、Rule No lookup、八欄唯讀 Grid 與來源排序。
+- [ ] `TBLWIPRULECHECKLOG` Oracle source DDL／metadata 未在 repo；桌機無受保護 Oracle profile，未查 Oracle／猜 CREATE-only。`TBLPRDOPRULE` lookup source DDL 沿用 `database/reference/mestest_prd_parameter_setup_source_ddl.sql`。
+- [ ] 家用端先核 live PostgreSQL schema／資料同步；若可支持，實作登入及 RPT `RULE LOG QUERY` 授權保護的唯讀 `GET /api/reports/wip-rule-check-logs`，條件需參數化、穩定排序、分頁及筆數上限。至少要求一項條件，包含／前綴搜尋依 Form/Core 語意；不要接受前端 SQL／AdditionalXml。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 
 ## 2026-11-27 RT503 等待生產批查詢
 

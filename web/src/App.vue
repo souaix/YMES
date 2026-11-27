@@ -339,6 +339,7 @@ import ContMaterialByMaterial from './components/ContMaterialByMaterial.vue'
 import ConfirmLot from './components/ConfirmLot.vue'
 import HoldLot from './components/HoldLot.vue'
 import WaitLot from './components/WaitLot.vue'
+import RuleLogQuery from './components/RuleLogQuery.vue'
 import EqpDailyReport from './components/EqpDailyReport.vue'
 import EqpDailyUtilizationChart from './components/EqpDailyUtilizationChart.vue'
 import EqpMttrSummary from './components/EqpMttrSummary.vue'
@@ -889,6 +890,7 @@ const fallbackMenuTree: MenuNode[] = [
         { id: 'function:RPT:CONFIRM LOT', label: '生產批狀態查詢', shortLabel: '生產批查詢', functionNo: 'CONFIRM LOT', moduleNo: 'RPT' },
         { id: 'function:RPT:HOLD LOT', label: '異常生產批查詢', shortLabel: '異常批查詢', functionNo: 'HOLD LOT', moduleNo: 'RPT' },
         { id: 'function:RPT:WAIT LOT', label: '等待生產批查詢', shortLabel: '等待批查詢', functionNo: 'WAIT LOT', moduleNo: 'RPT' },
+        { id: 'function:RPT:RULE LOG QUERY', label: '生產批執行法則查詢', shortLabel: '法則執行查詢', functionNo: 'RULE LOG QUERY', moduleNo: 'RPT' },
       ],
     }, {
       id: 'menu:RPT:INPROCESS', label: '在製品', shortLabel: '在製品', children: [
@@ -1290,6 +1292,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:CONFIRM LOT': appBasePath + '/RPT/ConfirmLot',
   'function:RPT:HOLD LOT': appBasePath + '/RPT/HoldLot',
   'function:RPT:WAIT LOT': appBasePath + '/RPT/WaitLot',
+  'function:RPT:RULE LOG QUERY': appBasePath + '/RPT/RuleLogQuery',
   'function:RPT:EQP DAILY REPORT': appBasePath + '/RPT/EqpDailyReport',
   'function:RPT:EQP DAILY UTILIZATION CHART': appBasePath + '/RPT/EqpDailyUtilizationChart',
   'function:RPT:EQP MTTR SUMMARY': appBasePath + '/RPT/EqpMttrSummary',
@@ -1781,6 +1784,7 @@ const isRt604ContMaterialByMaterialPage = computed(() => activeMasterKey.value =
 const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function:RPT:CONFIRM LOT')
 const isRt502HoldLotPage = computed(() => activeMasterKey.value === 'function:RPT:HOLD LOT')
 const isRt503WaitLotPage = computed(() => activeMasterKey.value === 'function:RPT:WAIT LOT')
+const isRt504RuleLogQueryPage = computed(() => activeMasterKey.value === 'function:RPT:RULE LOG QUERY')
 const isRt410EqpDailyReportPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY REPORT')
 const isRt411EqpDailyUtilizationChartPage = computed(() => activeMasterKey.value === 'function:RPT:EQP DAILY UTILIZATION CHART')
 const isRt412EqpMttrSummaryPage = computed(() => activeMasterKey.value === 'function:RPT:EQP MTTR SUMMARY')
@@ -4077,6 +4081,12 @@ async function signOut(): Promise<void> {
         />
         <WaitLot
           v-else-if="isRt503WaitLotPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <RuleLogQuery
+          v-else-if="isRt504RuleLogQueryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
