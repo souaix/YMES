@@ -9,7 +9,7 @@ const Preview = import.meta.env.DEV ? defineAsyncComponent(() => import('./ErpWo
 
 <template>
   <component :is="Preview" v-if="dev && Preview" @close="emit('close')" />
-  <section class="pending" aria-label="取消報工單 TipTop">
+  <section v-else class="pending" aria-label="取消報工單 TipTop">
     <p role="status">正式查詢及 ERP 撤銷整合由家用端依 RT609 handoff 接續。</p>
     <button type="button" @click="emit('close')">Close (X)</button>
   </section>

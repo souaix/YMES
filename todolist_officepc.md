@@ -15,6 +15,13 @@
 - [x] 依使用者最新指示，WIP 在製品管理優先於其他尚未開始的模組。清冊與 Vue route 差異覆核後，除 WPI05 外，其餘 WIP 選單功能已有對應；WP804 已完成。
 - [ ] WIP 在製品管理維持全案最高優先序。公司端先做可核對來源的 WIP WinForms／DEV／規格；目前唯一缺公司端來源的 WIP 選單項是 WPI05「配件領用單維護作業」，CSiMES、THEIL、DEV_SILVA 均缺指定 Form／Service／Core，不能臆造，來源到位後先完成。缺來源期間可接續其他可做項目，有可做的 WIP 項目即插隊。家用端先處理 [家用端待辦](todolist_homepc.md) 中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目；受來源阻擋時記錄缺項並切換到下一個可做的 WIP 工作。
 
+## 2026-11-27 RT610 取消報工單_T100
+
+- [x] 核對 T100 專用 Form／Designer、wsRPT.LoadERPWorkRPT_Summary_T100／LoadERPWorkRPT_Detail_EAIJoinERPDocumentLog／Undo／ReRun、wsERP_T100.ERPWorkReport_Cancel_T100 與 clsReport Core；完成 /YMES/RPT/ErpWorkReportCancelT100 DEV Summary／EAI Detail、條件驗證與本機 T100／MES 狀態模擬。詳 [RT610 規格與家用端 API handoff](docs/modules/RPT/取消報工單_T100_RT610.md)。
+- [x] 來源行為：取消僅 ERPFlag=1，對 Detail 每列呼叫 ERP；ERP 失敗仍跑 MES Undo。Core 只清第一個分組 ERPNo 的 LotLog，ReRun 無 EAI AutoRun Job 仍把 Summary ERPFlag 設為 2，DataEndTime 未使用。DEV 不呼叫 T100、API 或資料庫。
+- [x] 缺 TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_DETAIL_EAI、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／Queue MESTEST source DDL／metadata；桌機受保護 Oracle attachment 不存在，未查 Oracle／猜 CREATE。沿用 WP305 Equipment、WP201 LotLog reference。
+- [ ] 家用端先核 YMES PostgreSQL live schema／同步與授權，再設計有查詢條件限制、參數化、穩定排序與 bounded paging 的 Summary／Detail 唯讀 API。寫入流程先處理逐 ERPNo 冪等、部分失敗補償、多 ERPNo LotLog 清除與 no-job 狀態；公司端不做正式 API/schema。
+
 ## 2026-11-27 RT609 取消報工單_TipTop
 
 - [x] 直接核對 inline Form／Designer frmERPWorkReport_Cancel、wsRPT 的 Summary／Equipment Summary／Detail、ExeUndoERPWorkReport／ExeReRunERPWorkReport Service 及 clsReport Core；完成 /YMES/RPT/ErpWorkReportCancel DEV 三層查詢、條件驗證、選列及本機 ERP 撤銷／重拋狀態模擬。詳 [RT609 規格與家用端 API handoff](docs/modules/RPT/取消報工單_TipTop_RT609.md)。

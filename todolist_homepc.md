@@ -12,6 +12,12 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## 公司端 RT610 取消報工單_T100 handoff（2026-11-27）
+
+- [ ] 核對 YMES PostgreSQL live schema、同步來源及正向資料：TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_DETAIL_EAI、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／TBLMESAutoRunQueue；可沿用 Equipment（WP305）與 TBLWIPLOTLOG_REPORT（WP201）refs。詳 [RT610 規格](docs/modules/RPT/取消報工單_T100_RT610.md)。
+- [ ] 若可支持，提供登入／RT610 ACL 保護、參數化、有條件限制、日期跨度及筆數上限、穩定排序的唯讀 Summary API；Detail 以 WorkReportID 檢查父子授權關係。不可接受前端 SQL／AdditionalXml。
+- [ ] 正式取消需設計 T100 ERPNo 冪等與部分成功補償。Legacy Form 即使 T100 取消失敗仍做 MES Undo；Core 只讀第一個分組 ERPNo 並清該號 LotLog，需確認多 ERPNo 的完整回復語意。重拋需確認 EAI AutoRun Job／Queue；legacy 找不到 Job 仍標 Summary ERPFlag=2，不能照搬此狀態行為。
+
 ## 公司端 RT609 取消報工單_TipTop handoff（2026-11-27）
 
 - [ ] 核對 TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_EQPSUMMARY、TBLERPWORKRPT_DETAIL、TBLWIPCONT_RESOURCE_SHARE、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／Queue 的 YMES PostgreSQL live schema／同步及欄位鍵索引。公司端缺少可信 Oracle source DDL，桌機受保護 attachment 不存在；可沿用的 Resource／Equipment refs 見 [RT609 規格](docs/modules/RPT/取消報工單_TipTop_RT609.md)。
