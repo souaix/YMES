@@ -4,7 +4,7 @@
 
 ## 全案優先順序更新（2026-11-27）
 
-- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。公司端先做可核對來源的 WIP WinForms／DEV／規格；家用端先做待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。WPI05 缺來源期間，記錄缺項並按既定清冊繼續可做工作；發現其他可做的 WIP 即插隊。RT501 正式頁已接上家用端唯讀 API 與 lookup，尚待 Runtime 驗收；RT416／RT417／RT502／RT503／RT504／RT608 均已完成。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
+- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。公司端先做可核對來源的 WIP WinForms／DEV／規格；家用端先做待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。WPI05 缺來源期間，記錄缺項並按既定清冊繼續可做工作；發現其他可做的 WIP 即插隊。RT501 與 RT410 正式頁已接家用端唯讀 API／lookups，runtime 驗收待資料與操作時機；RT410 legacy 主／子設備時間邊界差異已核源並記錄。RT416／RT417／RT502／RT503／RT504／RT608 均已完成。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
 
 ## 公司端目前交接：RPT RT504 生產批執行法則查詢（2026-11-27）
 
@@ -62,9 +62,9 @@
 
 ## 前項公司端交付：RPT RT410 設備稼動查詢（2026-11-26）
 
-- [x] 核對 `frmEQPDailyReport`、RPT `LoadEQPDailyReport`／`LoadData_SonEQPData` Service／`clsReport` Core；完成 `/YMES/RPT/EqpDailyReport` Vue DEV 日期範圍、Area／多設備 lookup、狀態百分比與 Moves、狀態圓餅明細、ChamberManage 子設備展開。[RT410 規格](modules/RPT/設備稼動查詢_RT410.md)
-- [x] 主設備狀態 SQL 的 EndTime 條件與子設備 overlap 條件不同，已記錄為待家用端核對項。Oracle DDL refs 已在 repo；本桌機沒有可用受保護 profile，未新查 Oracle。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端核對 DDL refs 與 live schema／索引，釐清主／子設備時間口徑後，實作受授權、參數化、限定期間與回傳筆數的唯讀 API。RT412、RT413 已完成；OE 工單管理 13 項來源覆核完成，下一項為 RT414。
+- [x] 核對 `frmEQPDailyReport`、RPT `LoadEQPDailyReport`／`LoadData_SonEQPData` Service／`clsReport` Core；完成 `/YMES/RPT/EqpDailyReport` DEV 假資料頁，並接上正式設備稼動 API／Area／Equipment／State lookup，保留狀態百分比、Moves、圓餅明細、ChamberManage 子設備展開。已記錄 legacy 主設備與 Chamber 狀態時間條件差異；runtime 操作與正向業務資料待驗收。[RT410 規格](modules/RPT/設備稼動查詢_RT410.md)
+- [x] 已核實主設備狀態 SQL 的 EndTime 條件與 Chamber overlap 條件不同；正式 API 目前兩者都採半開區間重疊，口徑差異已記入 RT410 模組規格，是否維持或修正待家用端評估。Oracle DDL refs 已在 repo；本桌機沒有可用受保護 profile，未新查 Oracle。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] 正式設備／狀態／WIP source rows 尚無正向樣本；待同步到位後驗收登入、lookup、報表列與狀態明細，並確認時間邊界預期。正式唯讀 API 已部署、公司端正式 UI 已接上；RT412、RT413 已完成，後續排程依本檔 WIP 優先順序及公司端待辦處理。
 
 ## 前項公司端交付：RPT RT501 生產批狀態查詢（2026-11-26）
 

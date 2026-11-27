@@ -4095,6 +4095,7 @@ async function signOut(): Promise<void> {
         <EqpDailyReport
           v-else-if="isRt410EqpDailyReportPage"
           class="framework-content"
+          :api-base-url="selectedEnvironmentConfig.apiBaseUrl"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"
         />

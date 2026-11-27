@@ -85,9 +85,9 @@
 ## 公司端接手：RPT RT410 設備稼動查詢正式 UI（2026-11-27）
 
 - [x] 家用端已部署登入保護 `GET /YMES/API/api/reports/equipment-daily-utilization`。必填 `startTime`／`endTime`（台灣本地、不含時區），可帶 `areaNos`、`equipmentNos`（逗號分隔）及 `chamberManage=true|false`；上限 31 天、100 個條件、2,000 設備。Response 含狀態目錄、父設備、巢狀 Chamber、state percentages、Moves／`LotQtyEqp`、Loss／NoData。詳 [RT410 模組 MD](docs/modules/RPT/設備稼動查詢_RT410.md)。
-- [ ] 正式 `EqpDailyReport` 畫面接上端點；保留 DEV 假資料模式，串 area／equipment／state lookups，補正式 loading／error／empty／too-many 結果顯示、日期及 ChamberManage query；維持 Status columns／圓餅／Moves 與子設備巢狀互動。
-- [ ] 讀 RT410 原始 `clsReport.LoadEQPDailyReport` 與 `LoadData_SonEQPData` 確認主設備 `EndTime` 範圍與子設備 overlap 條件不同是否為舊缺陷；若需更正，更新模組 MD、API handoff 與 UI 驗收口徑。不要猜，也不要在正式庫造設備／狀態／WIP 測試列。
-- [ ] 正式資料目前沒有 active main equipment，新增 WIP source tables 也沒有同步列；確認公司端／資料同步流程後，提供家用端做正向報表資料驗收。
+- [x] 正式 `EqpDailyReport` 已接登入保護端點及 area／equipment／state lookups；保留 DEV 假資料模式。正式模式含日期及 ChamberManage query、loading／error／empty／API 超量錯誤、動態狀態欄、圓餅／Moves／LotQty_EQP 與 Chamber 子設備展開。公司端未 build／test／browser。
+- [x] 已讀原始 Core `LoadEQPDailyReport` 與 `LoadData_SonEQPData`：主設備歷程用 `EndTime <= queryEnd AND EndTime > queryStart`，Chamber 用 `StartTime <= queryEnd AND EndTime > queryStart`。正式 API 主／子目前均採 `starttime < queryEnd AND endtime > queryStart` 半開區間；結果口徑不同，疑為 legacy 邊界規則／缺陷，未能僅憑來源判定意圖。已記入 [RT410 規格](docs/modules/RPT/設備稼動查詢_RT410.md)，公司端不改正式 API。
+- [ ] 正式資料目前沒有 active main equipment，新增 WIP source tables 也沒有同步列；待資料同步後驗收登入、lookup、查詢及正向列，並與家用端確認 legacy 時間邊界口徑。不可在正式庫造設備／狀態／WIP 測試列。
 
 ## 公司端資料交付：RPT RT603／RT604 缺少共用表 DDL（2026-11-27）
 

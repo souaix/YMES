@@ -143,9 +143,10 @@ API 程式、部署及 browser 驗證詳見 [RT201 模組紀錄](docs/modules/RP
 ## 家用端 RT410 設備稼動查詢 API（2026-11-27）
 
 - [x] PPK/SSH 比對正式 schema 與來源 WP201／WP305 PostgreSQL CREATE-only refs；建立 0079 兩張空來源表、索引，授 `ymes_app` Area Relation／新表 SELECT；另套 0080 設備／LogGroupSerial 支援索引。兩次完整備份、SQL SHA、catalog／權限見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。未匯入或修改 MES 業務列。
-- [x] 完成登入保護唯讀 `GET /api/reports/equipment-daily-utilization`；參數化日期、Area、Equipment、Chamber 條件；31 天／100 項條件／2,000 設備上限與穩定排序，回傳 state percentages、Moves、Loss、巢狀 Chamber；主／子設備來源時間邊界依 handoff 保留差異並記錄待公司核實處。
+- [x] 完成登入保護唯讀 `GET /api/reports/equipment-daily-utilization`；參數化日期、Area、Equipment、Chamber 條件；31 天／100 項條件／2,000 設備上限與穩定排序，回傳 state percentages、Moves、Loss、巢狀 Chamber。公司端已核對 WinForms/Core：legacy 主設備以 `EndTime <= queryEnd AND EndTime > queryStart` 篩選、Chamber 以 `StartTime <= queryEnd AND EndTime > queryStart` 篩選；API 目前兩者皆以半開區間重疊判斷，語意差異記入模組規格，是否刻意修正待家用端評估。
 - [x] 複查修正 Moves SQL 多餘 SELECT；.NET 9 Release build 成功，正式 PostgreSQL 以 `ymes_app` 唯讀 `EXPLAIN` 驗證 Moves／狀態查詢欄位與計畫。部署 image a2；readiness 200、匿名 401、Demo app-browser 無命中 Chamber 查詢 200、超 31 天 400。a1 保留回復標籤，僅替換 YMES API。詳 [RT410 模組紀錄](docs/modules/RPT/設備稼動查詢_RT410.md)。
-- [ ] 正式設備主檔目前沒有 active main equipment，兩張新 WIP 表沒有同步業務列；等資料來源同步後做設備／狀態／Moves 正向驗證，不在正式庫灌測試列。Legacy 主設備時間條件仍請公司端核對原始 Core。
+- [x] 公司端已接通正式 RT410 Vue 畫面及 Area／Equipment／State lookup API，保留 DEV 假資料；完整接線與待驗收項見 [公司端待辦](todolist_officepc.md)。
+- [ ] 正式設備主檔目前沒有 active main equipment，兩張新 WIP 表沒有同步業務列；等資料來源同步後做設備／狀態／Moves 正向驗證，不在正式庫灌測試列。正向資料驗證前先決定 API 與 legacy Core 時間邊界差異的預期口徑。
 - [x] RT410 API 以一般 fast-forward 推至 GitHub `main`，commit `efe5829`；同步紀錄 commit `1399151`，推送後 fetch 確認 `origin/main=1399151`，當時無公司端更新，接續核查 RT604／RT603 家用端 DDL 與 API 待辦。
 
 ## 家用端 RT603／RT604 共用 WIP 表（2026-11-27）
