@@ -2,7 +2,7 @@
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
-使用者最新優先序（2026-11-27）：WIP「在製品管理」先於其他尚未開始的模組。清冊與 Vue route 差異覆核範圍內，WPI05 是唯一待原始來源的 WIP 選單功能；取得 Form／Service／Core 後優先復刻。RT416／RT417／RT502／RT503／RT504／RT608 已完成；如 WPI05 仍無來源，按清冊繼續其他可取得來源功能，遇到可做的 WIP 項目先插隊。
+使用者最新優先序（2026-11-27）：WIP「在製品管理」先於其他尚未開始的模組。公司端優先復刻可核對來源的 WIP 功能；家用端優先完成待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。清冊與 Vue route 差異覆核範圍內，WPI05 是唯一待原始來源的 WIP 選單功能；取得 Form／Service／Core 後優先復刻。缺來源時記錄缺項並繼續其他可執行工作，之後若有可做的 WIP 項目先插隊。RT416／RT417／RT502／RT503／RT504／RT608 已完成。
 
 - WIP `WIPINV_CS`「入庫作業」：[功能規格與家用端 API handoff](modules/WIP/WIPINV_CS入庫作業.md)。核對 THEIL `frmWP_INV_THEIL_BU1`／Designer／`WEBAPI.vb`；完成 `/YMES/WIP/InvInbound` DEV 假資料搜尋、Normal／Lite-On payload、GOOD／BAD 示意明細、逐筆入庫與部分成功情境。可讀 source 沒有 server Service/Core、ERP 交易或直接 Oracle 表名；未猜 DDL、未連 Oracle／YMES PostgreSQL、未做正式 API/schema、未 build／test／browser。家用端先補 endpoint server contract，再確定安全正式介接。
 
