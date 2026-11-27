@@ -23,6 +23,11 @@
 - [x] 依使用者最新指示，WIP 在製品管理優先於其他尚未開始的模組。清冊與 Vue route 差異覆核後，除 WPI05 外，其餘 WIP 選單功能已有對應；WP804 已完成。
 - [ ] WIP 在製品管理維持全案最高優先序。公司端先做可核對來源的 WIP WinForms／DEV／規格；目前唯一缺公司端來源的 WIP 選單項是 WPI05「配件領用單維護作業」，CSiMES、THEIL、DEV_SILVA 均缺指定 Form／Service／Core，不能臆造，來源到位後先完成。缺來源期間可接續其他可做項目，有可做的 WIP 項目即插隊。家用端先處理 [家用端待辦](todolist_homepc.md) 中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目；受來源阻擋時記錄缺項並切換到下一個可做的 WIP 工作。
 
+## 2026-11-27 WP106 使用者登入（上工）資訊來源補件
+
+- [ ] 請提供 `wsWIP_OperatorState.cs::ExecuteClockOut`、`clsOperatorState.ExecuteClockOut` 與 `funSHR_CO_EMP_ClockOut` 的原始程式／SQL 片段：SID 產生方式，`WorkTime`／`RealWorkTime`／`StdWorkTime`／`ExceptionTime`／`Qty`／`EventTime` 計算與寫入，逐筆 transaction／例外處理與回傳值，以及多人加工時 `TBLWIPLOTLOGINSTATE` 的更新條件和反向紀錄副作用。
+- [ ] 請提供 `wsOP.LoadOPBasis`、`wsSMD.LoadAreaBasis`、`wsEQP.LoadEquipmentBasis` 的來源程式／SQL 片段，包含實際回傳欄位、有效狀態篩選、權限條件與多選語意。供家用端核實後實作唯讀 lookup 及逐筆 SignOut；不需公司端連 YMES PostgreSQL、執行 DDL／DML 或部署。
+
 ## 2026-11-27 RT611 取消報工單_E10ICD
 
 - [x] 核對 E10ICD 專用 Form／Designer、wsRPT Summary／Detail／Undo／ReRun、wsERP_E10ICD.ERPWorkReport_Cancel_E10ICD 與 clsReport Core；完成 /YMES/RPT/ErpWorkReportCancelE10ICD DEV Summary／Detail。詳 [RT611 規格與家用端 API handoff](docs/modules/RPT/取消報工單_E10ICD_RT611.md)。

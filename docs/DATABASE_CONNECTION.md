@@ -1,5 +1,14 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP106 上工現況唯讀 API 與 schema（2026-11-27）
+
+- 家用端以 PPK／SSH 先唯讀確認正式 PostgreSQL 的 `tblwipoperatorstate`、`tblwipoperatorlog`、`tblwiplotloginstate` 在所有 schema 均不存在；未讀取任何操作員或上工資料。依 MESTEST source DDL（WP104／WP305 reference）建立三張空表，欄位數 7／15／16，PK 與 `i_tblwiplotloginstate_01(loggroupserial)` 對齊來源；migration `0097_wip_wp106_operator_online.sql` SHA-256 `DF1F18CADFFA82E1092084AB2EB7E1A027E02B14874F22CD2EEF645C52D83F8B`，rollback SHA-256 `FAD5F8F198F52A7C4DE73C2A92F5CE8C3F234DBDFAC8AF648E184DC9782D4BAE`。
+- 套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-0097-wp106-20261127.dump`，828 KB，SHA-256 `ad1d5acdf118631db1045f7a415e508f31ddbc05d2390c36b5b49ab8d6db01fa`；`pg_restore --list` 通過。套用後 catalog 確認三表合計 0 rows；`ymes_app` 僅 SELECT，INSERT／UPDATE／DELETE 均 false。未匯入或修改業務列。
+- 新增登入保護、RepeatableRead／read-only、參數化且有界的 `GET /YMES/API/api/wip/operator-online`：OP／Area／Equipment／外部 Lot 篩選合併為 `LoginPlaceNo` 精確聯集，回傳穩定排序頁面，預設 50、上限 100 列；無條件查詢仍有上限。工作樹中的正式 UI 已接唯讀查詢及前後頁，未接正式 lookup／SignOut。
+- API .NET 9 Release 與 Web production build 成功；API 預設 Release 輸出被既有本機程序鎖定，改用隔離輸出目錄建置。唯一警告為離線時無法取得 NuGet vulnerability feed，不影響編譯。家用端本機 app-browser 以正式環境、遠端 PostgreSQL tunnel 驗收：無條件查詢與不存在 OP 條件均回 0 筆；51 字元 LoginPlaceNo 收 400 防呆；無資料時上一頁／下一頁停用，正式 SignOut 與 lookup 停用，Close 返回主選單。未寫入正式業務資料。
+- 正式 API／Web 尚未部署：2026-11-27 再查根目錄僅 403 MB 可用、使用率 100%；API 與 Web 容器仍 healthy。沒有刪除或 prune 其他專案映像；容量恢復後再部署並以正式站 app-browser 驗收。
+- `ExecuteClockOut`／`funSHR_CO_EMP_ClockOut` 的 SID、工時、多人加工及 LotLoginState 副作用尚待公司端來源核實，因此未開放寫入。
+
 ## 最新：RPT RT609–RT611 ERP 報工撤銷 live catalog 核對（2026-11-27）
 
 - 家用端以 PPK／SSH 對正式 PostgreSQL 的 catalog 唯讀查詢三個 EAI／ERP 取消報工模組依賴：`tblerpworkrpt_summary`、`tblerpworkrpt_eqpsummary`、`tblerpworkrpt_detail`、`tblwipcont_resource_share`、`tblerpworkrpt_detail_eai`、`tblerpworkrpt_detail_e10icd`、`tblwipcont_employee_multiuser`、`tblmesautorunjob`、`tblmesautorunqueue`。

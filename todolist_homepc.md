@@ -4621,12 +4621,14 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] ERF Abort：OCAP 禁止；ERFType6 用 Batch，否則單筆加 LotStamp，確認後 server 更新 ERF/Lot 關聯並處理 Complete Lot 的 BRTransferLot；不得只改 Status=12。ERF Create 固定 ERFType5，由 server 走 `WP_BRERFCreate` 規則、流水號、Hold/附件/日誌，不能由 browser 複製一列。ERF Info 重用 WP508 正式五頁查詢及附件安全下載。
 - [ ] 七種 Split/Merge 子窗依 GoodBinState、Component、Carrier 分支逐一核 WinForms/Service/Core：分量、料件、Bin、Carrier 容量、Lot/ERF 關聯、序號與庫存均需 transaction；QtyAdjust 的 Bin/Comp/standard 三分支與 `Exe_ERF_QtyAdjustLog` 也要保留。公司 DEV 僅批號與數量簡化示意；完成 API 後與 WP508 Info 的 read model 一起驗收正常/Batch/OCAP/Partial、無權限、重送、舊版本和部分成功。家用端負責 PG migration、API、部署及 build/test/browser。
 
-## WIP WP106 使用者登入（上工）資訊家用端 handoff（2026-11-20）
+## WIP WP106 使用者登入（上工）資訊家用端進度（2026-11-27）
 
-- [ ] Pull 最新 `main`，閱讀 [WP106 規格](docs/modules/WIP/使用者登入資訊.md)。公司 `/YMES/WIP/OperatorOnline` 只用 WP104/WP105 共用 DEV localStorage `ymes-dev-mock:wip-operator-clock-in:state:v1`/`...:log:v1`；正式環境不可從這些 key 讀在線員工或把假 SignOut 當交易成功。
-- [ ] 核 YMES PostgreSQL live schema/history。WP106 沒有新直接表，`TBLWIPOPERATORSTATE`/`TBLWIPOPERATORLOG` Oracle DDL/metadata/PG CREATE-only 沿 `database/reference/mestest_wip_wp104_*`，`TBLWIPLOTLOGINSTATE` 沿 WP305，UserBasis/OP/Area/Equipment 沿既有 refs。只補真缺項，無需新增 WP106 CREATE SQL。
-- [ ] 提供登入/`WP106` Function ACL 的在線人員分頁/有上限 GET。OP/Area/Equipment/Lot 多值條件是 **LoginPlaceNo 的聯集**，以值陣列參數化，不接受 Form 原始 `AdditionalXml` SQL 字串。無條件查詢須有授權範圍與 pageSize 上限；回七欄、WorkDate/OPNo/版本鍵。OP/Area/Equipment lookup 依權限、現行狀態限量查。
-- [ ] SignOut command 檢查員工與地點可見/可操作權限，用 server LogoutDate、UserNo+MultiOperatorMode+LoginPlaceNo 重新查/鎖 State；單筆交易插 OperatorLog、刪 State、更新相關 LotLoginState，保留多人加工 side effect。需冪等、併發保護，逐筆結果表明成功/失敗/未處理；來源 Form 逐筆呼叫可能部分成功。`EnableSignOut=False` 僅是 UI 唯讀提示，不能當 API 權限。家用端接正式 Vue、PG migration/部署並驗收。
+- [x] 家用端核對正式 PostgreSQL catalog，確認 WP104／WP106 OperatorState、OperatorLog 與 WP305 LotLoginState 均缺表；依已核實的 Oracle source DDL 建立 migration 0097 三張空表及 rollback。套用前備份、source DDL、欄位／PK／index、權限與 hash 見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)；未讀寫操作員或業務資料列。
+- [x] 新增登入保護、repeatable-read/read-only、參數化、有界分頁的 `GET /YMES/API/api/wip/operator-online`。OP／Area／Equipment／外部 Lot 條件取 LoginPlaceNo 聯集，預設 50、上限 100，穩定排序；正式 UI 已接查詢、手動條件與前後頁，不使用 DEV localStorage。修正 Boolean prop 缺省值，讓獨立頁顯示 Query、同時正式下工仍停用。
+- [x] .NET 9 API Release 隔離輸出建置成功；Web production build 成功。API 預設輸出被既有本機程序鎖住，隔離建置解決；NuGet vulnerability feed 因網路不可達僅產生警告，編譯無錯誤。
+- [x] 本機 app-browser 選正式環境、透過 SSH tunnel 連正式復刻 PostgreSQL 驗收：空條件與不存在 OP 條件皆查得 0 筆；51 字元條件回 400 防呆；無資料時前後頁停用，正式 lookup／SignOut 停用，Close 返回主選單。匿名 WP106 API 回 401。未寫入正式業務資料；正式表目前 0 列，無法以正式資料驗證有資料列與下一頁。
+- [ ] 正式 API／Web 尚未部署：最新唯讀檢查根目錄僅 403 MB 可用且使用率 100%，服務仍 healthy。不要刪除或 prune 其他專案容器／映像；待主機空間恢復後再部署，並於正式站用 app-browser Demo 驗證相同操作。
+- [ ] 公司端交付 `ExecuteClockOut`／`funSHR_CO_EMP_ClockOut` 的 SID、WorkTime／RealWorkTime／StdWorkTime／ExceptionTime／Qty／EventTime 計算及寫入、逐筆交易／失敗回傳、多人加工與 LotLoginState 更新條件；並交 `LoadOPBasis`／`LoadAreaBasis`／`LoadEquipmentBasis` 的回傳欄位、有效狀態與多選規則。此項已列公司端待辦；來源未核實前不開放正式 lookup／SignOut 或寫入權限。
 
 
 本版限定GUI的獨立證據peer `c21d7e7e220a09f64d320cc9eff0309e9be8df0a21088cceece0eecbbcc08d52` 無阻擋；Root接受回條 `69b38e831ac1a469bea728665bee2e97c05414a48b13527ab0fcc4f587cfc172`，保留90raw／83通過／7原false及復驗，非全系統驗收。程式提交 X `aa3be9528880d03f74370b22ac979dff4227570d` 已通過461來源綁定 `032ea499e39664af8558b6d148ed25fe74face9b462a9f7af7e8a77f5d88b555`，正常推送功能分支並直接讀回同ref（`30e5dd7e1b5832e3f3c4fbb08cb5956bcab15a26730af6fc164cc35890dca2cb`）。接續本份純文件status提交與main正常快轉；原checkpoint33保持至新metadata真結案，不預填已完成。
