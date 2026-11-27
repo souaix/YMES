@@ -4,7 +4,14 @@
 
 ## 全案優先順序更新（2026-11-27）
 
-- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。等待來源期間，延續手上的 RT416 與其他可取得來源的工作。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
+- [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。RT416 已完成；來源等待期間目前接續 RPT「在製品」下的 RT417。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
+
+## 公司端目前交接：RPT RT417 生產批下線後歷程總表（2026-11-27）
+
+- [x] 已核對 `frmRPTLotReleaseLog`（CSiMES／THEIL／DEV_SILVA 相同）、`wsRPT.LoadReleaseLog_Report`／`clsReport.LoadReleaseLog_Report`，以及 `wsWIP.LoadReleaseLog` Component／BIN 明細與 Split／Merge 查詢。
+- [x] 完成 `/YMES/RPT/LotReleaseLog` Vue DEV 假資料、日期及批號／工單／產品／OP／User／UserActiveID 條件、Show ERF／Wait 分支和選列 Lot 明細。[RT417 規格與家用端 handoff](modules/RPT/生產批下線後歷程總表_RT417.md)
+- [ ] `TBLWIPRELEASELOG` 及 Component／BIN、Split／Merge 表的 Oracle DDL／metadata 不在 repo；桌機找不到受保護 Oracle profile，未查 Oracle／猜 CREATE-only。收到安全 profile 後再唯讀查結構。
+- [ ] 家用端先核對 live PostgreSQL schema 與正式同步來源，再決定登入保護、RT417 ACL、參數化／分頁 API；公司端不連 PostgreSQL、不做正式 API/schema、不部署。
 
 ## 公司端最新交付：RPT RT413 設備 MTTR 統計表_以月份匯總（2026-11-27）
 
@@ -16,12 +23,12 @@
 ## 公司端最新交付：RPT RT414 設備狀態期間統計（2026-11-27）
 
 - [x] RT414 清冊項 `frmEQPStateStatistics`／`RT_EQPStateStatistics.dll` 與 EMS ES409 共用 WinForms、Service／Core；新增獨立 RPT menu key、route `/YMES/RPT/EquipmentStateStatistics`，重用已完成 ES409 DEV 畫面。詳 [RT414 規格](modules/RPT/設備狀態期間統計_RT414.md) 及 [ES409 共用來源規格](modules/EMS/設備狀態期間統計查詢.md)。
-- [x] Oracle DDL refs 沿用 ES409；未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。家用端可依兩個 FunctionKey／權限需求評估共用唯讀 API。RT415 已接續完成，下一項依清冊為 RT416。
+- [x] Oracle DDL refs 沿用 ES409；未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。家用端可依兩個 FunctionKey／權限需求評估共用唯讀 API。RT415、RT416 已接續完成；目前排程依文件開頭 WIP 優先序。
 
 ## 公司端最新交付：RPT RT415 異常單柏拉圖分析（2026-11-27）
 
 - [x] 核對查詢 Form／Designer、結果圖與魚骨 Form、`wsRPT.LoadERFParetoHoldReason` Service、`clsReport.LoadERFParetoHoldReason` Core；完成 `/YMES/RPT/ErfPareto` DEV 篩選、多選條件、Hold Qty Pareto／累積率、Top-N、原因明細與五要因魚骨摘要。[RT415 規格與 API handoff](modules/RPT/異常單柏拉圖分析_RT415.md)
-- [x] 來源表 Oracle DDL／PG CREATE-only refs 沿用 QC409、WP501、WP503、WP305、WP101 與 QC HoldItem references；未新查 Oracle、未讀業務資料、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。下一項依清冊為 RT416。
+- [x] 來源表 Oracle DDL／PG CREATE-only refs 沿用 QC409、WP501、WP503、WP305、WP101 與 QC HoldItem references；未新查 Oracle、未讀業務資料、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT416 已完成，現接續 RT417。
 
 ## 前項公司端交付：RPT RT412 設備 MTTR 統計表（2026-11-26）
 

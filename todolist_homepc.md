@@ -6,6 +6,13 @@
 - [ ] UI client 沒有直接指出 Oracle table，現階段不建立 guessed schema／CREATE-only SQL。若 server/Core 確認 MES 表名，請公司端再唯讀交付 MESTEST DDL／metadata。
 - [ ] WP803 公司端正式 UI 已接家用端 8D Close API，DEV 驗收仍待執行；正式 Approve 保持停用，詳 [公司端待辦](todolist_officepc.md) 與 [WP803 規格](docs/modules/WIP/8D矯正單結案作業.md)。
 
+## 公司端 RT417 生產批下線後歷程總表 handoff（2026-11-27）
+
+- [ ] 公司端已完成 `/YMES/RPT/LotReleaseLog` DEV 假資料與來源規格。Form 使用 `wsRPT.LoadReleaseLog_Report` 查 `TBLWIPRELEASELOG` 加 OP／Product／Lot／Node lookup；選列明細使用 `wsWIP.LoadReleaseLog` 讀 `TBLWIPRELEASELOGCOMPONENT`／`TBLWIPRELEASELOGBIN`，並呼叫 Split／Merge Content 查詢。公司端未取得可信 DDL，未猜 schema。
+- [ ] 先唯讀核對 YMES PostgreSQL 是否有主表、Component／BIN、Split／Merge tables 及資料同步來源；不要依 Form 查詢結果或合成 DEV fixture 建表／灌列。原生 Oracle DDL refs 不在 repo，桌機受保護 Oracle profile 缺失，待公司端可安全查 metadata 後再補 CREATE-only。
+- [ ] 若 live schema/source 可支持，提供登入／RT417 ACL 保護的唯讀分頁 `GET /api/reports/lot-release-log`；支援 ProcessDate、LotNo、MONo、ProductNo、OPNo、UserNo、UserActiveID 與 ERF／Wait 條件，參數化查詢並設日期跨度、條件數及 pageSize 上限。`ShowType` legacy 程式與註解語意不一致、非 Oracle EquipmentNo 條件未實作，詳 [RT417 規格](docs/modules/RPT/生產批下線後歷程總表_RT417.md)。
+- [ ] 選列 Component／BIN 細節 API 只回傳授權批次的唯讀資料；Split／Merge 是否另提供 UI/API 前，先核對其來源互動（舊 Form 的結果 Grid 綁定被註解）。
+
 ## 公司端 RT416 OEE handoff（2026-11-27）
 
 - [ ] 公司端已完成 `/YMES/RPT/EqpOeeSummary` DEV 假資料及 RT416 Form／Designer／Service／Core／MESAutoRun 規格。RT416 Core 讀 `TBLRPTEQPOEESUMMARY`，AutoRun 會重算該表並維護 `TBLRPTEQPOEELot`；先核實家用端是否有主表同步 rows 及其更新頻率，不要把 AutoRun 刪除／重建流程直接搬到正式 YMES API。
