@@ -57,12 +57,12 @@
 
 - [x] 核對主／Chamber Form／Designer、RPT Service／Core 與趨勢圖；完成 DEV 月報、三項指標折線圖及 [RT413 規格 handoff](docs/modules/RPT/設備MTTR統計表_以月份匯總_RT413.md)。
 - [x] RT413 正式月度 API／schema 由家用端依 handoff 接續；公司端未連 PostgreSQL、未做 API/schema、未 build／test／browser。
-- [ ] **下一個公司端優先工作：OE「工單管理」來源完整度覆核**（使用者指定優先）。OE101–OE209、OEB01、OEP01 已有規格／DEV 頁；逐項比對 WinForms Form／Designer、Service／Core、Vue route／互動和 home handoff，只修實際缺口，不重做已完整功能。RT414 順延。
+- [x] OE 工單管理優先覆核完成：OE101–OE209、OEB01、OEP01 共 13 項皆有原始 Form、獨立規格、Vue route／page mode；Service／Core 引用對應到來源，未發現公司端缺頁。正式 API／schema 由家用端負責；下一項回到 RT414。
 
 ## 前項公司端交付：RPT RT411 每日設備稼動長條圖（2026-11-26）
 
 - [x] 核對主／子設備 Form、RPT Service／Core；完成 `/YMES/RPT/EqpDailyUtilizationChart` DEV Gantt 狀態時間軸、Area／Type／Equipment 多選、稼動率、區段明細及 ChamberManage 子設備查詢。[RT411 規格與家用端 API handoff](docs/modules/RPT/每日設備稼動長條圖_RT411.md)
-- [x] 記錄狀態區間 overlap／clip 條件及 `UtilizationType=0` 稼動率口徑；所需 DDL refs 已在 repo。未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT412、RT413 已完成；公司端優先覆核 OE 工單管理，RT414 順延。
+- [x] 記錄狀態區間 overlap／clip 條件及 `UtilizationType=0` 稼動率口徑；所需 DDL refs 已在 repo。未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT412、RT413、OE 工單管理來源覆核均已完成，下一項為 RT414。
 
 ## 前項公司端交付：RPT RT410 設備稼動查詢（2026-11-26）
 

@@ -7,7 +7,7 @@
 - [x] 核對主／Chamber `frmEQP_MTTRSummary_byMonth`／Designer、`wsRPT.LoadEQPMTTRSummary_ByMonth`、`clsReport.LoadEQPMTTRSummary_byMonth` 與趨勢圖 Form；完成 `/YMES/RPT/EqpMttrSummaryByMonth` DEV 月報表、Chamber 子報表、多條件查詢及 MTTR／MTBF／Availability 趨勢圖。[RT413 規格](modules/RPT/設備MTTR統計表_以月份匯總_RT413.md)
 - [x] 記錄 Core 逐月重算 RT412 單月統計、每台設備輸出三個指標列、動態 `yyyy/MM` 欄位；來源無月份上限。DDL refs 沿用 RT412；未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] 家用端核 live schema／索引與月份跨度，設計受授權、參數化、有跨度／設備筆數上限的月度唯讀 API。
-- [ ] 下一個公司端優先工作依使用者指示改為 OE「工單管理」來源完整度覆核。OE101–OE209、OEB01、OEP01 已有 DEV／規格；逐項對照可讀 WinForms Form／Designer、Service／Core、Vue route／互動與 handoff，修補實際缺口，不重做已完整項目。RT414 順延。
+- [x] OE 工單管理優先覆核完成：OE101–OE209、OEB01、OEP01 共 13 項皆有原始 Form、獨立規格、Vue route／page mode；共用 Service／Core 引用對得上可讀來源，未發現公司端缺頁。正式 API／schema 仍由家用端負責。下一項回到 RT414。
 
 ## 前項公司端交付：RPT RT412 設備 MTTR 統計表（2026-11-26）
 
@@ -17,13 +17,13 @@
 ## 前項公司端交付：RPT RT411 每日設備稼動長條圖（2026-11-26）
 
 - [x] 核對 `frmEQPDailyUtilizationChart`／Designer、Chamber 子 Form、`wsRPT.LoadEQPRealTimeReport`／`LoadEQPRealTimeReport_Chamber` Service、`clsReport` Core；完成 `/YMES/RPT/EqpDailyUtilizationChart` Vue DEV Gantt、多條件 lookup、Utilization Rate、區段提示／明細、圖表控制與 ChamberManage 子設備切換。[RT411 規格](modules/RPT/每日設備稼動長條圖_RT411.md)
-- [x] 狀態區間以 overlap 條件截到查詢區間；Rate 以 `UtilizationType=0` 狀態分鐘計算。Core SQL 字串串接、無分頁；Form 限查詢 24 小時。MESTEST DDL refs 已在 repo，本桌機未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT412、RT413 已完成；先依使用者優先順序覆核 OE 工單管理，RT414 順延。
+- [x] 狀態區間以 overlap 條件截到查詢區間；Rate 以 `UtilizationType=0` 狀態分鐘計算。Core SQL 字串串接、無分頁；Form 限查詢 24 小時。MESTEST DDL refs 已在 repo，本桌機未新查 Oracle、未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT412、RT413 已完成；OE 工單管理 13 項來源覆核完成，下一項為 RT414。
 
 ## 前項公司端交付：RPT RT410 設備稼動查詢（2026-11-26）
 
 - [x] 核對 `frmEQPDailyReport`、RPT `LoadEQPDailyReport`／`LoadData_SonEQPData` Service／`clsReport` Core；完成 `/YMES/RPT/EqpDailyReport` Vue DEV 日期範圍、Area／多設備 lookup、狀態百分比與 Moves、狀態圓餅明細、ChamberManage 子設備展開。[RT410 規格](modules/RPT/設備稼動查詢_RT410.md)
 - [x] 主設備狀態 SQL 的 EndTime 條件與子設備 overlap 條件不同，已記錄為待家用端核對項。Oracle DDL refs 已在 repo；本桌機沒有可用受保護 profile，未新查 Oracle。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
-- [ ] 家用端核對 DDL refs 與 live schema／索引，釐清主／子設備時間口徑後，實作受授權、參數化、限定期間與回傳筆數的唯讀 API。RT412、RT413 已完成；公司端先覆核 OE 工單管理，RT414 順延。
+- [ ] 家用端核對 DDL refs 與 live schema／索引，釐清主／子設備時間口徑後，實作受授權、參數化、限定期間與回傳筆數的唯讀 API。RT412、RT413 已完成；OE 工單管理 13 項來源覆核完成，下一項為 RT414。
 
 ## 前項公司端交付：RPT RT501 生產批狀態查詢（2026-11-26）
 
@@ -35,13 +35,13 @@
 
 - [x] 核對 `frmCont_CompMaterial_byMaterial`、物料／產品選取 Service、WIP `LoadCont_MaterialLotComp_JoinLog` Service/Core；完成 `/YMES/RPT/ContMaterialByMaterial` Vue DEV 雙模式查詢、選取窗及 MaterialLot No 篩選。[RT604 規格與 API/schema handoff](modules/RPT/物料用於元件查詢_RT604.md)
 - [x] Material No／Product No 對應 MaterialLevel 0／1；Product No 仍填進舊 Core 的 MaterialNo 參數。RT603／RT604 共用三張 WIP 表；repo 無可信 DDL、桌機 Oracle profile 不存在，未查 Oracle／猜 CREATE。
-- [ ] 家用端核對三張 WIP 表 DDL／metadata 與 live schema／索引，實作受授權、參數化、非空編號、層級驗證及有上限的唯讀 API。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT501、RT410–RT413 已完成；公司端先覆核 OE 工單管理，RT414 順延。
+- [ ] 家用端核對三張 WIP 表 DDL／metadata 與 live schema／索引，實作受授權、參數化、非空編號、層級驗證及有上限的唯讀 API。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT501、RT410–RT413 已完成；OE 工單管理 13 項來源覆核完成，下一項為 RT414。
 
 ## 前項公司端交付：RPT RT603 元件使用物料查詢（2026-11-26）
 
 - [x] 核對 `frmCont_CompMaterial_byComp`、`wsWIP.LoadCont_MaterialLotComp_JoinLog`、`tcWIP_IC.clsLot.LoadCont_MaterialLotComp_JoinLog`；完成 `/YMES/RPT/ContMaterialByComponent` Vue DEV 假資料畫面與查詢互動。[RT603 規格與 API/schema handoff](modules/RPT/元件使用物料查詢_RT603.md)
 - [x] Core 以 Report Mode 查 `tblWIPLotBasis`、`tblWIPLotLog`、`tblWIPCont_MaterialLotComp`；ComponentNo 空白時不追加篩選。Repo 無三表可信 DDL／metadata，桌機 Oracle profile 不存在，未查 Oracle／猜 CREATE。
-- [ ] 家用端核三表 MESTEST DDL／metadata 與 YMES live schema／索引；提供受授權、參數化、要求非空 ComponentNo、有筆數上限且穩定排序的唯讀報表 API。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT501、RT410–RT413 已完成；公司端先覆核 OE 工單管理，RT414 順延。
+- [ ] 家用端核三表 MESTEST DDL／metadata 與 YMES live schema／索引；提供受授權、參數化、要求非空 ComponentNo、有筆數上限且穩定排序的唯讀報表 API。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。RT501、RT410–RT413 已完成；OE 工單管理 13 項來源覆核完成，下一項為 RT414。
 
 ## 公司端最新交付：RPT RT204 產出看板時段主檔（2026-11-26）
 
