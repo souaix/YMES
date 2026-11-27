@@ -12,6 +12,13 @@
 - [x] Run Card／LotProcess／Lot／PRS／Module／ProductProcess／OP／Runtime／Area 的 Oracle MESTEST source DDL refs 均已在 repo；未新查 Oracle。Legacy runtime setup lookup 沒帶 DDL 中必填的 AreaNo；缺工時設定列仍顯示但時間空白且不推進累計，後續估算可能低估。家用端待核 live schema 並決定正式行為。
 - [ ] 公司端未連 YMES PostgreSQL、未實作／驗收正式 API/schema、未 build／test／browser；無缺少的本功能 DDL。
 
+## 公司端目前交接：RPT RT611 取消報工單_E10ICD（2026-11-27）
+
+- [x] 已核對 E10ICD 專用 frmERPWorkReport_Cancel_E10ICD／Designer、wsRPT Summary／Detail／Undo／ReRun、wsERP_E10ICD EAI Service 與 clsReport Core；完成 /YMES/RPT/ErpWorkReportCancelE10ICD DEV。[RT611 規格與家用端 handoff](modules/RPT/取消報工單_E10ICD_RT611.md)
+- [x] E10ICD Form/Core 與 RT610 流程近似，但使用 TBLERPWORKRPT_DETAIL_E10ICD、funCreateWOWorkReportData_E10ICD 與獨立 ERP service。Core GROUP BY 後只讀一筆 ERPNo；ERP 失敗仍 MES Undo；缺 job 仍設 Summary ERPFlag=2。
+- [x] 缺 TBLERPWORKRPT_SUMMARY／DETAIL_E10ICD、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／Queue source DDL／metadata；桌機受保護 Oracle attachment 不存在，未查 Oracle／猜 CREATE-only。沿用 WP305 Equipment、WP201 LotLog refs。
+- [ ] WIP 在製品管理仍是全案優先；WPI05 缺原始 Form／Service／Core。公司端不連 PostgreSQL、不做正式 API／schema；家用端依 RT611 handoff 核 live schema 並處理 E10ICD／MES 補償、多 ERPNo 及 no-job 語意；未執行 build／test／browser。
+
 ## 公司端目前交接：RPT RT610 取消報工單_T100（2026-11-27）
 
 - [x] 已核對 T100 專用 frmERPWorkReport_Cancel_T100／Designer、wsRPT Summary／Detail／Undo／ReRun、wsERP_T100.ERPWorkReport_Cancel_T100 EAI Service 及 clsReport Core；完成 /YMES/RPT/ErpWorkReportCancelT100 DEV Summary＋Detail 與本機狀態模擬。[RT610 規格與家用端 handoff](modules/RPT/取消報工單_T100_RT610.md)

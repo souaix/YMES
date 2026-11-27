@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
+const props = withDefaults(defineProps<{ system?: 'T100' | 'E10ICD' }>(), { system: 'T100' })
+const system = props.system
+const functionKey = system === 'T100' ? 'RT610' : 'RT611'
+const reportPrefix = 'WR-' + system + '-'
+const moPrefix = 'MO-' + system + '-'
+const erpNoPrefix = system + '-WR-'
+const autoRunJobName = system === 'T100' ? 'funCreateWOWorkReportData_EAI' : 'funCreateWOWorkReportData_E10ICD'
+
 type SummaryRow = {
   workReportId: string
   dataStartTime: Date
@@ -33,16 +41,16 @@ const useDateRange = ref(false)
 const startTime = ref(toDateTimeLocal(startDefault))
 const endTime = ref(toDateTimeLocal(endDefault))
 const summaries = ref<SummaryRow[]>([
-  { workReportId: 'WR-T100-001', dataStartTime: hoursAgo(20), dataEndTime: hoursAgo(19.7), erpFlag: 1, autoRunJobExists: true },
-  { workReportId: 'WR-T100-002', dataStartTime: hoursAgo(56), dataEndTime: hoursAgo(55.7), erpFlag: -1, autoRunJobExists: false },
-  { workReportId: 'WR-T100-003', dataStartTime: hoursAgo(5), dataEndTime: hoursAgo(4.7), erpFlag: 2, autoRunJobExists: true },
+  { workReportId: reportPrefix + '001', dataStartTime: hoursAgo(20), dataEndTime: hoursAgo(19.7), erpFlag: 1, autoRunJobExists: true },
+  { workReportId: reportPrefix + '002', dataStartTime: hoursAgo(56), dataEndTime: hoursAgo(55.7), erpFlag: -1, autoRunJobExists: false },
+  { workReportId: reportPrefix + '003', dataStartTime: hoursAgo(5), dataEndTime: hoursAgo(4.7), erpFlag: 2, autoRunJobExists: true },
 ])
 const details: DetailRow[] = [
-  { workReportId: 'WR-T100-001', itemNo: 1, equipmentNo: 'EQP-LAM-02', moNo: 'MO-T100-001', eqpResValue: 0.6, empResValue: 1, erpNo: 'T100-WR-88021', cancelFails: false },
-  { workReportId: 'WR-T100-001', itemNo: 2, equipmentNo: 'EQP-TEST-06', moNo: 'MO-T100-001', eqpResValue: 0.3, empResValue: 0.5, erpNo: 'T100-WR-88022', cancelFails: true },
-  { workReportId: 'WR-T100-001', itemNo: 3, equipmentNo: 'EQP-LAM-02', moNo: 'MO-T100-002', eqpResValue: 0.2, empResValue: 0.25, erpNo: 'T100-WR-88022', cancelFails: true },
-  { workReportId: 'WR-T100-002', itemNo: 1, equipmentNo: 'EQP-OVEN-01', moNo: 'MO-T100-003', eqpResValue: 1.2, empResValue: 1.5, erpNo: 'T100-WR-87914', cancelFails: false },
-  { workReportId: 'WR-T100-003', itemNo: 1, equipmentNo: 'EQP-LAM-05', moNo: 'MO-T100-001', eqpResValue: 0.8, empResValue: 1, erpNo: 'T100-WR-88042', cancelFails: false },
+  { workReportId: reportPrefix + '001', itemNo: 1, equipmentNo: 'EQP-LAM-02', moNo: moPrefix + '001', eqpResValue: 0.6, empResValue: 1, erpNo: erpNoPrefix + '88021', cancelFails: false },
+  { workReportId: reportPrefix + '001', itemNo: 2, equipmentNo: 'EQP-TEST-06', moNo: moPrefix + '001', eqpResValue: 0.3, empResValue: 0.5, erpNo: erpNoPrefix + '88022', cancelFails: true },
+  { workReportId: reportPrefix + '001', itemNo: 3, equipmentNo: 'EQP-LAM-02', moNo: moPrefix + '002', eqpResValue: 0.2, empResValue: 0.25, erpNo: erpNoPrefix + '88022', cancelFails: true },
+  { workReportId: reportPrefix + '002', itemNo: 1, equipmentNo: 'EQP-OVEN-01', moNo: moPrefix + '003', eqpResValue: 1.2, empResValue: 1.5, erpNo: erpNoPrefix + '87914', cancelFails: false },
+  { workReportId: reportPrefix + '003', itemNo: 1, equipmentNo: 'EQP-LAM-05', moNo: moPrefix + '001', eqpResValue: 0.8, empResValue: 1, erpNo: erpNoPrefix + '88042', cancelFails: false },
 ]
 
 const selectedWorkReportId = ref('')
@@ -134,8 +142,8 @@ function cancelWorkReport(): void {
   target.erpFlag = -1
   error.value = ''
   actionMessage.value = failedRows.length
-    ? 'DEV 模擬對目前明細逐筆呼叫 T100 取消；' + [...new Set(failedRows.map(row => row.erpNo))].join('、') + ' 失敗仍繼續 MES undo。Core 以假資料演示清除第一個分組 ERPNo：' + firstErpNo + '；來源 GROUP BY 沒有排序，實際所選單號不保證，請核對 ERP／MES 差異。'
-    : 'DEV 模擬 T100 取消與 MES 更新完成；Core 以假資料演示清除第一個分組 ERPNo：' + firstErpNo + '（來源 GROUP BY 沒有排序）。未呼叫任何 ERP、API 或資料庫。'
+    ? 'DEV 模擬對目前明細逐筆呼叫 ' + system + ' 取消；' + [...new Set(failedRows.map(row => row.erpNo))].join('、') + ' 失敗仍繼續 MES undo。Core 以假資料演示清除第一個分組 ERPNo：' + firstErpNo + '；來源 GROUP BY 沒有排序，實際所選單號不保證，請核對 ERP／MES 差異。'
+    : 'DEV 模擬 ' + system + ' 取消與 MES 更新完成；Core 以假資料演示清除第一個分組 ERPNo：' + firstErpNo + '（來源 GROUP BY 沒有排序）。未呼叫任何 ERP、API 或資料庫。'
 }
 
 function rerunWorkReport(): void {
@@ -145,21 +153,21 @@ function rerunWorkReport(): void {
   target.erpFlag = 2
   error.value = ''
   actionMessage.value = target.autoRunJobExists
-    ? 'DEV 模擬建立一筆 funCreateWOWorkReportData_EAI Standby 佇列，Summary ERPFlag 設為 2。'
+    ? 'DEV 模擬建立一筆 ' + autoRunJobName + ' Standby 佇列，Summary ERPFlag 設為 2。'
     : 'DEV 模擬找不到 AutoRun Job；legacy Core 仍把 Summary ERPFlag 設為 2，但不新增佇列。'
 }
 </script>
 
 <template>
-  <main class="t100-page" aria-label="取消報工單 T100 DEV 預覽">
+  <main class="t100-page" :aria-label="'取消報工單 ' + system + ' DEV 預覽'">
     <header class="page-heading">
-      <div><span class="eyebrow">RPT / RT610</span><h1>取消報工單_T100</h1><p>依 MO 或報工彙整時間查詢；選列檢視 EAI 明細。</p></div>
+      <div><span class="eyebrow">RPT / {{ functionKey }}</span><h1>取消報工單_{{ system }}</h1><p>依 MO 或報工彙整時間查詢；選列檢視 EAI 明細。</p></div>
       <span class="dev-badge">DEV 假資料</span>
     </header>
 
     <form class="query-panel" @submit.prevent="query">
       <label class="check-label"><input v-model="useMoNo" type="checkbox" @change="toggleMoNo"> MO No</label>
-      <input class="mo-input" :value="moNo" maxlength="50" autocomplete="off" placeholder="MO-T100-001" @input="onMoInput" @blur="moNo = moNo.trim().toUpperCase()">
+      <input class="mo-input" :value="moNo" maxlength="50" autocomplete="off" :placeholder="moPrefix + '001'" @input="onMoInput" @blur="moNo = moNo.trim().toUpperCase()">
       <label class="check-label"><input v-model="useDateRange" type="checkbox"> DataStartTime</label>
       <label class="date-label">From <input v-model="startTime" type="datetime-local"></label>
       <label class="date-label">To <input v-model="endTime" type="datetime-local"></label>
@@ -169,7 +177,7 @@ function rerunWorkReport(): void {
 
     <div class="results">
       <div class="grid-stack">
-        <section class="grid-panel summary-panel" aria-label="ERPWorkRPT Summary T100">
+        <section class="grid-panel summary-panel" aria-label="ERPWorkRPT Summary EAI">
           <header><strong>ERPWorkRPT Summary</strong><span>{{ visibleSummaries.length }} rows</span></header>
           <div class="table-scroll"><table><thead><tr><th>ItemNo</th><th>DataStartTime</th><th>DataEndTime</th><th>ERPFlag</th></tr></thead>
             <tbody v-if="visibleSummaries.length"><tr v-for="(row, index) in visibleSummaries" :key="row.workReportId" :class="{ selected: selectedWorkReportId === row.workReportId }" @click="selectSummary(row)">
@@ -188,7 +196,7 @@ function rerunWorkReport(): void {
           </table></div>
         </section>
       </div>
-      <aside class="actions" aria-label="T100 報工單操作">
+      <aside class="actions" :aria-label="system + ' 報工單操作'">
         <button type="button" @click="cancelWorkReport">Cancel WorkRPT</button>
         <button type="button" @click="rerunWorkReport">ReSum ReTurn</button>
         <span class="action-spacer"></span>
@@ -196,7 +204,7 @@ function rerunWorkReport(): void {
       </aside>
     </div>
     <p v-if="actionMessage" class="action-message" role="status">{{ actionMessage }}</p>
-    <footer class="page-footer">固定虛構資料；操作只改本機記憶體。此預覽不會呼叫 T100 ERP、MES API、Oracle 或 PostgreSQL。</footer>
+    <footer class="page-footer">固定虛構資料；操作只改本機記憶體。此預覽不會呼叫 {{ system }} ERP、MES API、Oracle 或 PostgreSQL。</footer>
   </main>
 </template>
 

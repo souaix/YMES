@@ -12,6 +12,12 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## 公司端 RT611 取消報工單_E10ICD handoff（2026-11-27）
+
+- [ ] 核對 YMES PostgreSQL live schema、同步來源及正向資料：TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_DETAIL_E10ICD、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／TBLMESAutoRunQueue；可沿用 Equipment（WP305）與 TBLWIPLOTLOG_REPORT（WP201）refs。詳 [RT611 規格](docs/modules/RPT/取消報工單_E10ICD_RT611.md)。
+- [ ] 若 live schema 支持，設計登入／RT611 ACL 保護、參數化、有條件限制、日期跨度／筆數上限、穩定排序的唯讀 Summary API；Detail 以 WorkReportID 檢查父子關係，不接受 SQL／AdditionalXml。
+- [ ] 寫入設計須處理逐 ERPNo 冪等、E10ICD ERP 失敗仍進 MES Undo 的部分成功補償、Core 只清一個分組 ERPNo 的回復規則，以及 E10ICD AutoRun Job 不存在時仍標 ERPFlag=2 的 legacy 差異。
+
 ## 公司端 RT610 取消報工單_T100 handoff（2026-11-27）
 
 - [ ] 核對 YMES PostgreSQL live schema、同步來源及正向資料：TBLERPWORKRPT_SUMMARY、TBLERPWORKRPT_DETAIL_EAI、TBLWIPCONT_EMPLOYEE_MULTIUSER、TBLMESAutoRunJob／TBLMESAutoRunQueue；可沿用 Equipment（WP305）與 TBLWIPLOTLOG_REPORT（WP201）refs。詳 [RT610 規格](docs/modules/RPT/取消報工單_T100_RT610.md)。
