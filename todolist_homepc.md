@@ -1,5 +1,9 @@
 # 家裡電腦接手清單
 
+## HOME GitHub sync（2026-11-28）
+
+- [ ] GitHub main latest is `32ea6e5d15650a490c89844f039dcf1c26965a4e`. The GitHub connector rejected branch creation with HTTP 403 `Resource not accessible by integration`; the local `.git` metadata is read-only. No GitHub ref or file changed. After write access is available, sync the validated home changes from the then-current main with a normal merge; never force-update main or replace Office changes.
+
 ## 公司端 RT607 預計完工查詢 handoff（2026-11-27）
 
 - [x] 核對正式 PostgreSQL 並套用 `0094_rt607_route_dependencies.sql`，建立缺少的七張 MESTEST 來源空表；執行前備份、欄位／PK／索引／讀寫權限回讀與雜湊記錄見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。未匯入業務資料。
@@ -70,9 +74,9 @@
 
 ## 公司端 RT612 膠類歷程資料查詢 handoff（2026-11-28）
 
-- [ ] 核對 YMES PostgreSQL live schema、同步來源與正向資料，特別是 TBLINVWIPINVENTORY_RAWLOG；MESTEST source DDL／metadata 尚缺。庫房／材料 lookup refs 只能供 lookup 參考，不代替 RawLog DDL。詳 [RT612 規格](docs/modules/RPT/膠類歷程資料查詢_RT612.md)。
-- [ ] 設計登入／RT612 ACL 保護的唯讀 parent＋history API。需參數化、至少一項有效查詢條件、日期跨度／筆數上限、穩定 parent 排序及 EventTime 降冪 child 排序；MaterialLotNo 為前綴查詢。不要提供 arbitrary SQL／AdditionalXml。
-- [ ] 核實 GumTypeStatus labels、GumMaterialType 系統參數與正式資料同步；決定日期 From／To 的公開語意。Legacy Form 只送日期、Core 用 inclusive BETWEEN 到 EndDate 00:00，正式 API 不要無意截掉結束日大部分資料。
+- [x] 已接回 GitHub `main` `32ea6e5` 的公司端 handoff：DEV parent／TIME child 查詢完成；正式 PostgreSQL 表／DDL 尚未到位。詳 [RT612 規格](docs/modules/RPT/膠類歷程資料查詢_RT612.md)。
+- [ ] 公司端尚缺 `TBLINVWIPINVENTORY_RAWLOG` 的 MESTEST source DDL／metadata；RawLog live schema、同步資料、複合鍵、日期型別與狀態代碼需以可信來源確認，不能從 SELECT／JOIN 推測 CREATE SQL。
+- [ ] 正式 RT612 查詢要登入保護，至少一項有效條件、參數化、日期跨度與筆數限制、穩定 parent 排序及 EventTime 降冪 child 排序；核實 GumTypeStatus、GumMaterialType 與日期 To 語意後再接 API。
 
 ## 公司端 RT611 取消報工單_E10ICD handoff（2026-11-27）
 
@@ -4609,12 +4613,15 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] 先決定 Release 的業務範圍：建議以主表六鍵 `(LotNo,ModuleNo,ModuleVersion,OPNo,HoldTime,FutureHoldSerial)` 精確刪單筆及對應原因；若相容來源三鍵 `(LotNo,OPNo,HoldTime)` 批量刪，須明示影響筆數並鎖定/重查**每筆** LockFlag，任何鎖定均拒絕。來源只檢選取列 LockFlag 而 Core 刪同鍵全部，可能誤刪其他鎖定列；不能照搬。
 - [ ] 在交易內刪主/原因、處理並發版本/冪等與審計事件，server 取得 actor/時間；已進入 ERF 處置的設定及 FutureHoldLog 必須遵守完整生命週期，不能把此刪除當成即時解除 ERF。不可相信 browser 的 LockFlag 或拼 SQL；API 完成後接正式 Vue/部署驗收。公司端未連 PG、未執行 build/test/browser。
 
-## WIP WP507 預先等待解除家用端 handoff（2026-11-20）
+## WIP WP507 預先等待解除家用端 handoff（更新 2026-11-28）
 
-- [ ] Pull 最新 `main`，讀 [WP507 規格](docs/modules/WIP/預先等待解除.md)。公司 `/YMES/WIP/FutureWaitRelease` 與 WP505 共用 `ymes-dev-mock:wip-future-wait-set:state:v1`，只有 DEV 假資料；正式環境不得讀此 key 或回報假 Release 成功。
-- [ ] 核 YMES PostgreSQL live schema/history、資料與權限。`TBLWIPFUTUREWAIT` 七欄、PK `(LOTNO,OPNO,WAITTIME)` 的 Oracle source 在 `mestest_wip_wp201_dependency_source_ddl.sql`、PG CREATE-only 在 `mestest_wip_wp201_create.sql`；無新直接表。只對實際缺項 forward migration，不重建既有表。
-- [ ] 提供登入/`WP507` Function ACL 的 LotNo、OPNo、WaitTime 可選查詢和 OP lookup，顯示六欄；原 Form 可無條件查全表，正式 API 要分頁／結果上限、可見範圍和參數化 SQL。
-- [ ] Release POST 必須完整提供 LotNo/OPNo/WaitTime，WaitTime 僅 0/1；server 鎖定並重查該 PK、版本與權限，以參數化 SQL 交易刪單筆並記 actor/事件，提供不存在／衝突／冪等回應。舊 Core 允許缺鍵造成廣域刪除，絕不可照搬。Release 只刪未來設定，不解除已生效 WaitBasis/Lot Wait；須與 WP505 Set、`ChkFutureWait`、WP502 真等待交易分清生命週期。API 完成後接正式 Vue/部署驗收；公司端未連 PG、未執行 build/test/browser。
+- [x] 已對照 GitHub `main` `32ea6e5` 與 [WP507 規格](docs/modules/WIP/預先等待解除.md)。公司 `/YMES/WIP/FutureWaitRelease` 與 WP505 共用 DEV localStorage；正式環境不得讀假資料或回報假 Release 成功。
+- [x] 以 PPK／SSH 核 YMES PostgreSQL 14 catalog 與權限，未讀業務資料列。FutureWait 七欄、PK `(LOTNO,OPNO,WAITTIME)` 已存在；依實際權限缺項建立並套用 0126，只有 `ymes_app` SELECT。備份／hash／readback 見 [WP507 規格](docs/modules/WIP/預先等待解除.md)及 [DB 連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 已完成登入保護、參數化、READ ONLY Repeatable Read 的 LotNo／OPNo／WaitTime 查詢及 OP lookup；每頁預設 50／上限 100，正式頁可查／翻頁，沒有假資料，Release 停用。Release POST／完整生命週期仍未交付。
+- [ ] 核對原生 OP lookup 的 IssueState 條件；目前 API lookup 未篩 IssueState，待公司交 Service 原生查詢片段後比對。
+- [ ] Release POST 必須完整提供 LotNo/OPNo/WaitTime，WaitTime 僅 0/1；server 鎖定並重查該 PK、版本與權限，以參數化 SQL 交易刪單筆並記 actor/事件，提供不存在／衝突／冪等回應。舊 Core 允許缺鍵造成廣域刪除，絕不可照搬。Release 只刪未來設定，不解除已生效 WaitBasis/Lot Wait；須與 WP505 Set、`ChkFutureWait`、WP502 真等待交易分清生命週期。正式 Release 按鈕維持 disabled。
+- [x] 已部署 API/Web `wp507-future-wait-20261128-a1`；readiness 200、匿名 API 401、容器 healthy。app-browser Demo session 驗證空條件提示、Lot／OP sentinel、Wait Time Start／End、OP lookup、空結果、零筆時分頁停用、Release disabled、Close／重進；沒有建立或刪除正式業務列。部署與回復 image ID 見 `DEPLOYMENT_PROFILES.md`。
+- [ ] GitHub 同步：重新核對 main `32ea6e5`；將已驗證 WP507 程式、migration、部署與模組文件正常合併到最新 main，保留公司端並發變更，禁止 force push。connector 現在回報 souaix/YMES 有 push 權限；同步結果以實際建立分支／提交／ref 讀回為準。
 
 ## WIP WP508 異常單資料家用端 handoff（更新 2026-11-24）
 
@@ -4665,14 +4672,17 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## WIP WP510 等待單資料家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP510 規格](docs/modules/WIP/等待單資料.md)。公司 Vue `/YMES/WIP/WaitBasis` 僅 DEV 唯讀假資料，會合併 WP502 本機 Wait；正式環境要用真 API，不讀 localStorage。
-- [ ] 核 YMES PostgreSQL live schema/migration history、資料與權限。主表 `TBLWIPWAITBASIS` 沿 WP201 source/CREATE；Wait Info 左連 `TBLPRSNODEBASIS` 沿 PRS104。新增 `TBLWIPWAITLOTDISPOSITION` 的 Oracle source/index DDL、13 欄 metadata 與 PG CREATE-only 在 `database/reference/mestest_wip_wp510_disposition_*`。源表無 PK/FK/unique/trigger，只有 WAITNO 非唯一 index；不能臆造主鍵。只對確定缺項做 forward migration，不直接執行 CREATE-only。
-- [ ] 提供登入/`WP510` ACL 的分頁 waits GET：四文字條件各以勾選且非空才生效，CreateDate/ReleaseDate 可選起訖、至少一有效條件、後端固定 WaitSource=0；LotNo 包含，其餘精確；回傳 WinForms 15 欄及 Status 0/1/2/3/11/12/21/31 顯示。日期與時區/含端點契約、NULL ReleaseDate、分頁上限、參數化 SQL 需明確處理。OP/Customer lookup 要限權/限量。
-- [ ] 提供 waits/{waitNo}/dispositions 唯讀 GET：按 WaitNo 讀 `TBLWIPWAITLOTDISPOSITION` 左連 `TBLPRSNODEBASIS`，回傳 LotDispType/Description/Creator/CreateDate/OPNo/ProcessNo/ProcessVersion，CreateDate DESC。核查 WaitNo 可見範圍；源明細無唯一鍵，不可假定單一 WaitNo 僅一列。正式 API 接線、部署與驗收由家用端負責；公司端未執行 build/test/browser。
+- [x] 讀取最新 GitHub `main` 與 [WP510 規格](docs/modules/WIP/等待單資料.md)，保留同一最新 main 上公司端 RT612 交接；WP510 的 DEV mock 只留 DEV 使用。
+- [x] 以 SSH 核對 YMES PostgreSQL schema/history 與權限；沿 WP201／PRS104 重用 `TBLWIPWAITBASIS`、`TBLPRSNODEBASIS`，套用 0122 建立來源相符的空 `TBLWIPWAITLOTDISPOSITION` 及 WAITNO 非唯一 index，0123 僅授予兩張 Wait 表 SELECT。未臆造主鍵、未匯入業務資料；備份、hash 與 catalog readback 見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 完成登入保護、參數化、RepeatableRead／READ ONLY 的 waits、OP／Customer lookup、dispositions GET；固定 WaitSource=0、至少一個有效條件、LotNo contains／其餘精確、台灣本地時間含端點、限制分頁與查詢時間。注意：目前只有登入驗證，沒有 WP510 專屬 Function／role ACL。
+- [x] 正式 Vue 改接真 API，不讀 localStorage。`.NET 9` Release 與 Web production build 成功，API a1／Web a2 已部署；readiness、匿名 401、靜態資產及正式 app-browser sentinel／日期／lookup／空條件／Close 驗證通過。兩表均空，無法正向驗證有資料列或 Wait Info 明細；來源明細沒有唯一鍵，完全相同列的分頁穩定識別仍有結構限制。
+- [ ] 收到正式同步 Wait／Disposition 資料後，再驗有資料列、Status 顯示、分頁及 Wait Info 明細；不在正式庫造資料。
 
 ## WIP WP511 等待處置家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP511 規格](docs/modules/WIP/等待處置.md)。公司 `/YMES/WIP/WaitDisposition` 僅 Vue DEV 假資料，分併批子窗只是單批數量／批號簡化示意，正式不可把 localStorage 處置視為交易成功。先核 YMES PostgreSQL live schema/history；新表 `XX_TBLWAITPRIV` Oracle source/index DDL、14 欄 metadata 與 PG CREATE-only 在 `database/reference/mestest_wip_wp511_priv_*`，僅缺表/欄/default/PK 才 forward migration。WaitBasis 沿 WP201、WaitLotDisposition 沿 WP510、USRUserGroup 沿設備工程群組、LotOPECNRecord 沿 WP207；不要重建已有表。
+- [x] 對照目前 GitHub main（32ea6e5）與 WP511 規格，以桌面 PPK／SSH 唯讀核對 PostgreSQL 14.24 live catalog。XX_TBLWAITPRIV、TBLUSRUSERGROUP 原先在所有非系統 schema 均缺少；WaitBasis／WaitLotDisposition／Lot／OP／Process 主要來源表已存在。依 Oracle source、metadata 與 PG CREATE-only 建立並套用 0124；兩表各 0 列，欄位／PK／註解已回讀，沒有 FK／trigger，ymes_app 對新表沒有 SELECT/DML。dry-run、備份、hash 與 readback 詳見 WP511 模組文件和 DB 連線紀錄。migration history table 未找到，不以檔案存在推斷已套用。
+- [ ] 公司端同步有效 TBLUSRUSERGROUP／XX_TBLWAITPRIV 權限資料的授權來源；目前正式兩表均空、ymes_app 無權讀取，WP511 必須保持 fail closed。沒有可核對的有效群組權限時不可開放任何 release command。
+- [ ] WP511 本輪 app-browser／GitHub 同步仍待辦；正式 WaitDisposition 查詢與操作 API 尚未開放，故未以空白 guard 頁面冒充查詢驗收。2026-11-28 已用正式 Demo app-browser 完成 WP106 回歸（見使用者登入資訊模組文件）。依最新 main 正常整合本機已驗證變更後，再讀取家用待辦；不可覆蓋公司端 RT612 提交。
 - [ ] 提供登入/`WP511` ACL 的固定 Status=0、WaitSource=0 分頁查詢與六欄／獨立 CreateDate 起訖篩選；依 source Join WaitBasis/LotState/LotBasis/OPBasis/ProcessBasis，回傳 17 欄 Grid、Wait Description、LotStamp、Partial/ECN/Module/Stocker 守門資料。全表查詢需要安全上限。Customer/OP/Product/MO、目標 PRS Node/Process/Module/Inventory lookup 需依登入權限與選中 Lot 範圍限制，僅回傳可選項。
 - [ ] 解除 command 每筆重新從 server 驗 `TBLUSRUSERGROUP` → `XX_TBLWAITPRIV` 的選項權限（Jump Process 01/02 要分開）、Function ACL、Wait Status/Source、LotStamp、PartialMode、ECN、ProcessNo/PSNo、Module/Stocker、目標 route/NodeId、Inventory。不可相信 Vue option/文字/NodeId；不可讓隱藏的 Change ENGNo 或無權限選項從 API 直呼。正式使用參數化 SQL、明確版本衝突與 idempotency key。
 - [ ] 移植 `THEIL.wsWIP_Wait.Exe_Wait_LotRelease`／`clsLot_Wait.UpdWait_LotRelease` 的 0/1/2/3/4/6/7/8 分支：WaitLotDisposition insert、WaitBasis Status=21/ReleaseQty/ReleaseDate/Releaser、Lot/Reverse/Log/Inventory/route 一致交易。非 Partial Go 後續 Transfer Lot 或 Product Change；Partial 用 NetFlow 分支，可能產 ReworkLotNo。批次需定逐筆結果或整批原子契約；來源逐筆呼叫可部分成功，不能回單一「全部成功」。驗收權限、多批不同模式/流程、舊 LotStamp、重送、路由/庫存衝突、GO 後續副作用及 rollback。
@@ -4680,8 +4690,9 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## WIP WP509 未解除異常單家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP509 規格](docs/modules/WIP/未解除異常單.md)。公司 `/YMES/WIP/ErfUnreleased` 只有 Vue DEV 假資料，`ymes-dev-mock:wip-erf-unreleased:state:v1` 的動作不能當真交易；WP508 Info 亦尚未同步 WP509 本地假處置。
-- [ ] 核 YMES PostgreSQL live schema/history。新增 `XX_TBLQCHOLDPRIV` 的 MESTEST 原表/索引 DDL、18 欄 metadata、PG CREATE-only 位於 `database/reference/mestest_wip_wp509_priv_*`；15 旗標 `DEFAULT 0`、GROUPNO PK/unique、無 trigger。僅在 live 真缺表/欄/default/PK 時寫 forward migration。ERFBasis/BatchLot/Lot、OCAP 與附件沿 QC409/WP501/WP508 references，ERF LotDisposition 沿 WP508 Info，UserGroup 沿既有設備工程群組 reference，先核對再補，不重建。
+- [x] 比對 GitHub main `32ea6e5`，閱讀 [WP509 規格](docs/modules/WIP/未解除異常單.md) 並完成 live catalog audit。WP509 所需 ERF／Hold／Disposition／OCAP／附件、Lot／OP／Product／Customer 及 UserGroup 表都已存在；只有 `XX_TBLQCHOLDPRIV` 缺少。以 source-backed migration `0125_wip_wp509_hold_privilege.sql` 建立空表，dry-run、備份與 live 欄位／PK／索引／權限回讀詳 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 正式 Demo app-browser 核對 `/YMES/WIP/ErfUnreleased` 仍是受保護 guard：查詢／lookup／ERF Disp／Abort／Create／Info 全停用，服務尚未提供；Close 返回主選單。沒有讀寫正式業務列。
+- [ ] `TBLUSRUSERGROUP` 與 `XX_TBLQCHOLDPRIV` 都尚未提供 app SELECT；XX 權限表沒有資料。公司端需確認有效群組／權限同步來源及群組代理語意，之後才授予最小 SELECT 並啟動 context/API；沒有可信授權資料前維持 fail closed，不開放處置或 release command。
 - [ ] 實作登入/`WP509` Function ACL 的有上限分頁查詢：固定 `ERFSource=0`、`Status IN (0,1,2,3,11)`，六個可勾條件；LotNo contains，Customer/OP/MClass/CurGroup/ERF exact。Lot/OP/Customer 命中任一 `TBLWIPERFBATCHLOT` 成員也返回主 ERF。Join LotState Status 3/31、LotBasis、OP/Product/Customer，回 23 欄及版本/群組/OCAP/路由守門資料；使用參數化 SQL，不接受 client 指定任意 status/source 或拼 SQL。
 - [ ] 處置 context API 每次按 server actor 查 `TBLUSRUSERGROUP` → `XX_TBLQCHOLDPRIV`，多群組任一旗標 1 才開選項；Jump Process 分 `_01`/`_02`。同時核 `LotDispTypeLimit`、狀態 0–3/11、PartialMode、OCAP、Stocker、GoodBin/Component、Module/主流程/版本、`CreateERF`，安全地提供 OP/Process/Module/Inventory/Group lookup。原 Abort/ReCreate 只認 CurGroupNo 精確單值，Disp 支援逗號；正式 policy 要決定多群組一致行為並做權限驗收。所有 command 都重驗，不信 UI disabled 或 client 提供的 NodeId。
 - [ ] ERF Disposition command 支援 Next Group、Notice Customer、Final Disposition，驗必填 DispDescription/群組/聯絡人、Hold Reason Disp、附件/OCAP state/節點與最後節點。用 `THEIL.wsWIP_ERF.Exe_ERF_Disposition`、`clsLot_ERF` 源碼核寫入，ERF/OCAP/通知以同一 DB transaction 或可靠 outbox 處理；回傳新的狀態/群組/版本及操作紀錄。Waive 原畫面隱藏，勿開放 API 直呼。
@@ -4695,8 +4706,14 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [x] 新增登入保護、repeatable-read/read-only、參數化、有界分頁的 `GET /YMES/API/api/wip/operator-online`。OP／Area／Equipment／外部 Lot 條件取 LoginPlaceNo 聯集，預設 50、上限 100，穩定排序；正式 UI 已接查詢、手動條件與前後頁，不使用 DEV localStorage。修正 Boolean prop 缺省值，讓獨立頁顯示 Query、同時正式下工仍停用。
 - [x] .NET 9 API Release 隔離輸出建置成功；Web production build 成功。API 預設輸出被既有本機程序鎖住，隔離建置解決；NuGet vulnerability feed 因網路不可達僅產生警告，編譯無錯誤。
 - [x] 本機 app-browser 選正式環境、透過 SSH tunnel 連正式復刻 PostgreSQL 驗收：空條件與不存在 OP 條件皆查得 0 筆；51 字元條件回 400 防呆；無資料時前後頁停用，正式 lookup／SignOut 停用，Close 返回主選單。匿名 WP106 API 回 401。未寫入正式業務資料；正式表目前 0 列，無法以正式資料驗證有資料列與下一頁。
-- [ ] 正式 API／Web 尚未部署：最新唯讀檢查根目錄僅 403 MB 可用且使用率 100%，服務仍 healthy。不要刪除或 prune 其他專案容器／映像；待主機空間恢復後再部署，並於正式站用 app-browser Demo 驗證相同操作。
+- [x]（已過期，2026-11-28 更新）正式 API／Web 已部署且由正式 app-browser 回歸驗證；主機空間也已恢復。請以下方現況為準，不要再依此舊項重做部署。
 - [ ] 公司端交付 `ExecuteClockOut`／`funSHR_CO_EMP_ClockOut` 的 SID、WorkTime／RealWorkTime／StdWorkTime／ExceptionTime／Qty／EventTime 計算及寫入、逐筆交易／失敗回傳、多人加工與 LotLoginState 更新條件；並交 `LoadOPBasis`／`LoadAreaBasis`／`LoadEquipmentBasis` 的回傳欄位、有效狀態與多選規則。此項已列公司端待辦；來源未核實前不開放正式 lookup／SignOut 或寫入權限。
+- [x] 2026-11-28 重新核正式 WP106：現行 WP510 API a1／Web a2 已包含 WP106；readiness=200、匿名 endpoint=401。正式 app-browser 查空條件／不存在 OP 均為 0 筆，超長條件回 400，lookup／SignOut 與空資料分頁停用，Close 返回主選單；無資料列可做正向選取或下一頁，未寫入正式業務資料。舊「尚未部署」待辦已結清。
+
+## HOME RT612 膠類歷程 live schema audit（2026-11-28）
+
+- [x] 以 PPK／SSH 只讀核對正式 YMES catalog：`TBLINVWIPINVENTORY_RAWLOG` 不存在於 YMES，沒有欄位／鍵／索引可讀回；既有 `TBLINVWIPINVENTORY_RAW`、`TBLINVWIPINVENTORY_SEMI`、`TBLINVINVENTORYBASIS`、`TBLMTLMATERIALBASIS`、`TBLSYSPARAMETER` 存在。未查任何業務資料列、未新增 migration，也未授權資料表。
+- [ ] 公司端尚缺 RawLog 的 MESTEST source DDL／metadata；取得可信欄位、複合鍵、日期型別與狀態代碼後，才補 CREATE-only、核對來源同步並設計 RT612 登入保護唯讀 API。不可從 Core SELECT／JOIN 字串反推正式 DDL。
 
 
 本版限定GUI的獨立證據peer `c21d7e7e220a09f64d320cc9eff0309e9be8df0a21088cceece0eecbbcc08d52` 無阻擋；Root接受回條 `69b38e831ac1a469bea728665bee2e97c05414a48b13527ab0fcc4f587cfc172`，保留90raw／83通過／7原false及復驗，非全系統驗收。程式提交 X `aa3be9528880d03f74370b22ac979dff4227570d` 已通過461來源綁定 `032ea499e39664af8558b6d148ed25fe74face9b462a9f7af7e8a77f5d88b555`，正常推送功能分支並直接讀回同ref（`30e5dd7e1b5832e3f3c4fbb08cb5956bcab15a26730af6fc164cc35890dca2cb`）。接續本份純文件status提交與main正常快轉；原checkpoint33保持至新metadata真結案，不預填已完成。
