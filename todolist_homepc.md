@@ -16,6 +16,14 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## HOME RT904 指標樹基本資料設定 handoff（2026-11-28）
+
+- [ ] 先比對正式 YMES PostgreSQL catalog／既有 migrations 中 `tblEKBBasis`、`tblEKBDetail`、`tblEKBKPIDetail`、`tblEKBLimiteDetail`、`tblEKBReportMarketIndex`；公司端未取得可信 Oracle source DDL／metadata，不能照 DEV 假資料或猜測欄位建表。缺表時先記錄 live 缺項及所需可信 DDL，再決定是否可做安全唯讀 API。
+- [ ] 若 live schema 已足夠，先為家用端 API 設計登入／授權保護、必要查詢條件／結果上限、參數化與穩定排序；確認是否有可沿用的 FunctionKey ACL。狀態轉換以 DataStamp CAS 檢查 0↔1 允許轉移。
+- [ ] Copy、Delete、樹圖 detail Save 必須以單一交易處理 basis、node、KPI、Report Market Index、tolerance 全部明細；拒絕重現舊 Form 多筆 Delete 部分成功及未確認的多表非原子 Save。Save 要更新 XML／DataStamp 並回傳明確衝突／驗證錯誤。
+- [ ] 先核實主檔 FreezeState default、Copy 是否保留 FreezeState、KPI TargetType／LimiteOperator 的真實 ValueList 與 Report／Chart／ReportMarket lookup 來源。ActualValueScript 的 sandbox、授權與輸出規則未核實前不得讓 API 執行任意 SQL；DEV 目前只顯示與做本地預覽。
+- [ ] 公司端規格與 DEV 見 [RT904 模組文件](docs/modules/RPT/指標樹基本資料設定_RT904.md)；公司端未連 PostgreSQL，正式 API／schema 尚未由公司端實作。
+
 ## HOME WIP WP303 設備耗品現況 writer API（2026-11-28）
 
 - [x] 完成登入保護的清單／設備與耗品 lookup、新增、CAS 編輯、原子多選刪除及 ConsumReset API；Reset 以單一交易、列鎖和 expected-value CAS 更新 Status／Log，並以 advisory lock 保護 ConsumeNo 範圍的歷程序號唯一檢查。DTO、路由及來源差異見 [WP303 模組文件](docs/modules/WIP/設備耗品現況.md)。

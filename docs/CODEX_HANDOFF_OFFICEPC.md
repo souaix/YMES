@@ -1,10 +1,17 @@
 # Codex handoff：公司端接續資料
 
-更新：2026-11-27。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
+更新：2026-11-28。用途：在公司端桌電／筆電 Codex 開啟 YMES repository 後直接接續，不必重做已完成調查。
 
-## 全案優先順序更新（2026-11-27）
+## 全案優先順序更新（2026-11-28）
 
 - [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。公司端先做可核對來源的 WIP WinForms／DEV／規格；家用端先做待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。WPI05 缺來源期間，記錄缺項並按既定清冊繼續可做工作；發現其他可做的 WIP 即插隊。RT501 與 RT410 正式頁已接家用端唯讀 API／lookups，runtime 驗收待資料與操作時機；RT410 legacy 主／子設備時間邊界差異已核源並記錄。RT416／RT417／RT502／RT503／RT504／RT608 均已完成。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
+
+## 公司端目前交接：RPT RT904 指標樹基本資料設定（2026-11-28）
+
+- [x] 核對 `frmKPITreeBasis`／inline Designer、Basis Def、Draw、KPI／Description Def、Report lookup、`wsRPT` Service、`clsRPTBasis` 與 `clsBasis_UPD`；完成 `/YMES/RPT/KpiTreeBasis` DEV 主檔查詢／CRUD／Freeze／Copy、樹節點／KPI／容忍值／說明控制項互動。[RT904 規格與家用端 handoff](modules/RPT/指標樹基本資料設定_RT904.md)
+- [x] 五張 EKB 直接表 `tblEKBBasis`、`tblEKBDetail`、`tblEKBKPIDetail`、`tblEKBLimiteDetail`、`tblEKBReportMarketIndex` 的可信 Oracle DDL／metadata 未在 repo；桌機受保護 Oracle profile 不存在，未猜欄位／CREATE。記錄 `GetXML_CLOB` 未由 Service 傳 Core、false 分支欄位錯置、Delete 逐筆部分成功及 Save 多表交易範圍未確認。
+- [ ] 家用端先核 live schema／migration；取得可信 DDL 後才確認 keys／型別／default／indexes 並實作安全 API。不得直接把 DEV 假資料或本文建議當 schema。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
+- [ ] WIP 仍維持全案優先；WPI05 Form／Service／Core 尚缺且沒有其他待補 WIP 選單功能可核對時，依清冊繼續下一個可用來源功能；新出現 WIP 來源即插隊。
 
 ## 公司端目前交接：RPT RT607 預計完工查詢（2026-11-27）
 

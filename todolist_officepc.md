@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## 2026-11-28 RT904 指標樹基本資料設定公司端交接
+
+- [x] 依 `frmKPITreeBasis`／Designer、Basis Def／Draw、KPI／Description Def、Report lookup、`wsRPT`、`clsRPTBasis`、`clsBasis_UPD` 完成 `/YMES/RPT/KpiTreeBasis` DEV 假資料與互動；主檔查詢、Add／Edit／Copy／Delete、Freeze／Unfreeze、樹節點與 KPI／容忍值／說明控制項皆只在本頁記憶體模擬。
+- [x] 更新 [RT904 規格與家用端 handoff](docs/modules/RPT/指標樹基本資料設定_RT904.md)、[規格索引](docs/MODULE_REPLICATION_SPEC_INDEX.md) 與 [桌電交接](docs/CODEX_HANDOFF_OFFICEPC.md)。直接使用的五張 EKB 表 source DDL／metadata 未在 repo；桌機 protected Oracle profile 不存在，未連 Oracle／猜 CREATE-only。
+- [x] 記錄來源風險：`GetXML_CLOB` 參數未由 Service 傳到 Core、false branch select 欄位不符、逐筆 Delete 可能部分成功、多表 detail Save 的交易範圍未確認。DEV Add 的 FreezeState=1 僅方便操作，不代表正式 DB default；Copy 會保留來源狀態。
+- [ ] 家用端先核 live schema／migration 及正式 DDL，再依 RT904 模組文件決定 keys／欄位／交易並實作參數化、DataStamp CAS、原子 Save／Copy／Delete API。未確認 ActualValueScript 執行環境與授權前不得提供任意 SQL 執行 API。
+- [ ] 公司端未連 YMES PostgreSQL、未實作正式 API／schema、未 build／test／browser；WIP 仍優先，WPI05 是目前缺 Form／Service／Core 的唯一 WIP 選單功能。無可核對的 WIP 來源期間，接續下一個可用功能。
+
 ## HOME WP304 設備耗品歷程唯讀 API handoff（2026-11-28）
 
 - [x] 家用端依可信 MESTEST source 建立 0101／0102 空表及 0103 YMES-only 設備查找索引；三表均 0 列，沒有匯入業務資料。0104 已正式授予 Status CRUD 及 Log SELECT／INSERT；Log UPDATE／DELETE 與 Basis DML 未授予。
