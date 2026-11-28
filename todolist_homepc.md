@@ -4786,3 +4786,12 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] 單獨裁決 Combine Service 先拆目標再併入造成的跨寫入部分提交，以及舊 Core 未重查 stale state、Form Lot transfer 非同步吞錯、Pack Close 與 CloseFlag 責任落差；正式 API 需可恢復且錯誤可追蹤。
 - [ ] Lot BR／Transfer 與 CodeSoft／BarTender 列印透過 outbox／授權 job；不從 browser 任選 server path/printer，不把 DB 成功當作 Lot transfer 或列印成功。
 - [x] 公司桌機沒有連 PostgreSQL、未實作正式 API/schema、未 SSH／部署。後續已完成 IV502，目前下一項依選單清冊為 IV503「成品入庫單記錄」。
+
+
+## HOME 2026-11-29 RT413 正式部署與 EKB live 稽核
+
+- [x] RT413 API-only image 已更新正式 ymes-api，部署 image 為 sha256:0e1094c566837147d55335fe0aeffdca2123ef772ece0d757f86b4bf79f92f32；保留 ymes-api:rollback-before-rt413-20261128-a1。正式 Docker health healthy，/YMES/API/health/ready 回 ready。
+- [x] app-browser 驗證 RT413：錯誤月份格式回 400；有效月份查詢安全回 503，原因是正式復刻庫尚無唯一 EQP Break Down / BreakDown 狀態設定。沒有新增或修改正式業務資料。正式 UI 仍顯示尚未開放，交公司端接 Production API，保留 DEV 預覽。詳細紀錄見 RT413 模組 MD 與公司端待辦。
+- [x] SSH 唯讀 PostgreSQL catalog 稽核所有 schema：RT904 的 tblEKBBasis、tblEKBDetail、tblEKBKPIDetail、tblEKBLimiteDetail、tblEKBReportMarketIndex，以及 RT905 的 tblEKBKPILog 均不存在（每張 0）。只讀 catalog metadata，未讀業務列，未建表、未變更權限或資料。
+- [ ] RT904／RT905 維持待辦，直到公司端交付可信 Oracle source DDL／metadata；不要以 DEV fixture 推測 schema。收到後再建立復刻空表及最小權限。詳見各自模組文件。
+- [ ] RT413 有效資料正向 API 驗證待在可丟棄的隔離 PostgreSQL fixture 完成；正式資料不可造列。正式故障狀態唯一性及歷程同步仍需公司端提供可信來源。
