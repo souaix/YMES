@@ -4454,13 +4454,14 @@ API 工作：
 
 ## WIP WP207 分批處理家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP207 規格](docs/modules/WIP/分批處理.md) 與 `docs/DATABASE_CONNECTION.md` WP207 段落。公司端 UI 在 `web/src/components/WipLotSplit.vue`，僅 DEV 假資料，不代表正式過帳。
-- [ ] WP207 六張缺失 reference 的 Oracle source DDL、index DDL、metadata 與 PostgreSQL CREATE-only 分別在 `database/reference/mestest_wip_wp207_source_ddl.sql`、`mestest_wip_wp207_source_indexes.sql`、`mestest_wip_wp207_metadata.txt`、`mestest_wip_wp207_create.sql`。先核對 YMES live PostgreSQL schema/migration history，只為實際缺少的表新增 forward migration；Lot/Process/Product/Temp/Inventory/Matrix 共用結構沿用 WP101／WP201 與主檔 references，不重複建表。
-- [ ] 六張表為 `TBLEMSDISPATCHSTATE`、`TBLWIPAUTOMERGE`、`TBLWIPCONT_EMPLOYEE`、`TBLWIPLOTOPECNRECORD`、`TBLWIPOSBASIS`、`TBLWIPOSDETAIL`。Employee 表沒有來源 PK/unique index，僅三個 non-unique index；不可加虛構的來源唯一鍵。其他表 PK 以 metadata 為準。
+- [x] Pull 最新 `main`，閱讀 [WP207 規格](docs/modules/WIP/分批處理.md)、公司端 `web/src/components/WipLotSplit.vue` 與 `docs/DATABASE_CONNECTION.md` WP207 段落；DEV localStorage 不視為正式過帳。
+- [x] 讀取六張表的 Oracle source DDL、index DDL、metadata 與 PostgreSQL CREATE-only：`database/reference/mestest_wip_wp207_source_ddl.sql`、`mestest_wip_wp207_source_indexes.sql`、`mestest_wip_wp207_metadata.txt`、`mestest_wip_wp207_create.sql`。Lot/Process/Product/Temp/Inventory/Matrix 共用結構沿用 WP101／WP201 與主檔 references，沒有重複建表。
+- [x] 以正式 PostgreSQL live catalog 確認六張 WP207 表原先在所有 schema 都不存在；完成 0109 forward migration、備份及 post-catalog 核對。欄位數 3／3／12／9／23／14、PK/index 與 source 對齊，Employee 表維持無 PK／unique；六表目前全空、無 FK／trigger，`ymes_app` 沒有六表 DML 權限。核對與備份資訊見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [ ] 實作登入保護的指定 Lot 查詢，要求原 WinForms Status `0|1|4|5`、HaveComponent=0、LotState=1、非 Partial/Stocker、無 GoodBinState、未包裝及使用者可見範圍；查產品／流程節點／單位換算／是否可顯示 Electricbox 的 API。路由和產品候選應由 server 依批次、權限與系統參數提供，不能沿用 Vue 固定選項。
 - [ ] 實作分批 POST command，使用 LotNo、LotStamp、IncludeMother、各列 LotQty／SysQty／SAP_PRDQTY／SAP_PCSQTY／Action／NodeID／Product／Version／UnitNo。Server 在交易內重驗正數、四組合計、ReturnType、包裝／GoodBin／委外守門、LotStamp、產品與流程有效性；按來源 `GetSplitLotNo_Multiple` 語意原子保留子批號，拒絕舊預覽號與重複提交。BR／WIP Inventory 宿主模式須由可信內部上下文區分，不接受瀏覽器任意指定。
 - [ ] 以 `BR_Manual_LotSplit` 的 Lot/Temp、報工、屬性、流程、庫存、歷程、委外、派工等多表變更為規格，追查 Core helper 的額外共享表。標準拆批成功後 Form 另呼叫 THEIL `UPD_SplitLot` 寫 `TBLWIPLOTBASIS.SAP_PRDQTY/SAP_PCSQTY`、`TBLWIPLOTPROPERTY.WIP_BIGQTY`、`XX_TBLLOTMARITX_THEIL_BU1`；正式端要同一原子交易，或明確可恢復且冪等的二階段流程。失敗回應需區分標準拆批未提交與客製更新失敗，避免重複拆批。
-- [ ] 客製 Core 的 `UPDATE ... SAP_PCSQTY = <value>WHERE ...` 字串缺空白，依原始碼字面可能 SQL 無效；請以參數化 SQL 修正，確認 BaseLotNo/OrgLotNo 映射與 Matrix 複製。不複製字串拼接或瀏覽器 localStorage `ymes-dev-mock:wip-lot-split:*`。完成 migration/API/授權/交易驗證與部署紀錄後更新 TODO。
+- [ ] 客製 Core 的 `UPDATE ... SAP_PCSQTY = <value>WHERE ...` 字串缺空白，依原始碼字面可能 SQL 無效；請以參數化 SQL 修正，確認 BaseLotNo/OrgLotNo 映射與 Matrix 複製。不複製字串拼接或瀏覽器 localStorage `ymes-dev-mock:wip-lot-split:*`。
+- [ ] 待來源 Core/helper 讀寫 trace 與 API／交易安全完成後，再依 endpoint 加最小權限 migration、部署及 app-browser 驗證；不可把 0109 空表結構當作 WP207 正式功能已完成。
 
 ## WIP WP208 分批處理_元件家用端 handoff（2026-11-20）
 

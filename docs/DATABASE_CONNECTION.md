@@ -1,5 +1,11 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP207 六張 Oracle source 表（0109，2026-11-28）
+
+- 家用端先以 PPK／SSH 唯讀檢查所有 schema，確認 `tblemsdispatchstate`、`tblwipautomerge`、`tblwipcont_employee`、`tblwiplotopecnrecord`、`tblwiposbasis`、`tblwiposdetail` 均不存在；只依 MESTEST source DDL／metadata 建立六張 YMES 空表，migration `0109_wip_wp207_split_source.sql` SHA-256 `8529437E2C27F00C69BA0280286C94B6BF01F7CAA7E7438CCD930406A4015097`，rollback SHA-256 `9A3C658A6C5CAC5F1377F5F08F206218478C8BA0234CBA91605518D9CEEB4735`。套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-wp207-0109-20261128.dump`，894,281 bytes，SHA-256 `83076aaaec704e53d88bd4cc069d135cb1b99f172c7b40a2cabf48e185ef33e1`，`pg_restore --list` 2,470 entries；備份 owner `postgres:postgres`、mode 600。
+- 正式 migration 在單一 guard／advisory-lock transaction 提交。獨立 catalog 回讀欄位數為 3／3／12／9／23／14，PK 與 MESTEST 一致；`TBLWIPCONT_EMPLOYEE` 無 PK／unique，三個來源 index 均 non-unique。六表均無業務列、FK、trigger；`ymes_app` 尚無六表 SELECT／INSERT／UPDATE／DELETE，亦無 YMES schema CREATE。未複製 Oracle 業務資料，未重建既有共用表，未部署拆批 API。
+- 0109 rollback 會檢查六表都存在且全空才 DROP，沒有 CASCADE。WP207 API 的最小權限應在各 endpoint／寫入交易完成後另行設計與 migration；此紀錄不代表正式拆批功能已可用。實作脈絡見 [WP207 分批處理模組紀錄](modules/WIP/分批處理.md)。
+
 ## 最新：HOME WIP WP303／WP304 schema 與 API（2026-11-28）
 
 - 家用端使用 PPK／SSH 核對正式 YMES PostgreSQL catalog；`tblwipeqpconsumestatus`、`tblwipeqpconsumelog`、`tbleqpconsumebasis` 原先都不存在。依可信 MESTEST source 建立空表：0101 對齊 Status 9 欄／EquipmentNo+ConsumeNo PK、Log 7 欄／EquipmentNo+ConsumeNo+ConsumeSeq PK；0102 對齊 Consume Basis 8 欄／EquipmentType+ConsumeNo PK。欄位、型別、長度、NULL 及 PK 已從 live catalog 回讀；三張新表各 0 列，沒有複製 MES 業務列。
