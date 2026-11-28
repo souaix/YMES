@@ -1587,3 +1587,10 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - Migration 0118_wip_wp501_erf_staging.sql 只建立缺少的兩張空表，不執行整份 CREATE-only、不複製業務資料。CreateData 為 15 欄／RepairNo PK；Backup 為 15 欄／無 PK，保留來源 LotNo 非唯一 index。新表 owner postgres，ymes_app 與 PUBLIC 沒有 SELECT／INSERT／UPDATE／DELETE。
 - 套用前完整備份 /opt/ymes/backups/ymes-before-wp501-0118-20261128.dump：937,259 bytes、SHA-256 874ec6c0a89a6f5cd85e5aebd1938aa6eac62164d3fae3b6b72e47d9f66e8530、mode 600，pg_restore --list 成功。Forward／rollback migration SHA-256：72D4053F280E1FFD21DE135778707C85ED4BF41AF342265906652A30B23C3C9B／AAC2BEE42F491875088A4B6204F02C7033301C7F224FBD6792DF9B34F89DAABA。套用後 catalog 回讀新表各 15 欄、主鍵／index 正確、各 0 列，未修改任何既有 ERF／Lot 資料。
 - YMES.tblsysparameter 有 app SELECT，但找不到名稱含 ERFMultipleHold 的 ParamType／ParamNo 設定列。查詢狀態模式需等公司端交付準確 key／fallback；writer 另需核實 wsSYS.GetERFNo、udWIP.clsWIP.UpdERF_Create 與 iMESWIPReleaseLogHandler.dll 的正式契約。未授予寫入權限，也未開放正式 POST；交接詳 todolist_officepc.md。
+
+### 更新 2026-11-28：WIP WP502 WaitBasis schema
+
+- PPK／SSH 唯讀核對 PostgreSQL 14.24 `ymes`：`YMES.tblwipwaitbasis` 原先在全部使用者 schema 均不存在。依 Oracle source `database/reference/mestest_wip_wp201_additional_source_ddl.sql` 與 CREATE-only `database/reference/mestest_wip_wp201_create.sql` 新增 forward migration `database/migrations/0119_wip_wp502_wait_basis.sql`，只建空表，不匯入／查詢 MES 業務列。
+- 套用前 custom-format 備份 `/opt/ymes/backups/ymes-before-wp502-0119-20261128.dump`：940,811 bytes，SHA-256 `6bd87fffc64f90bb7d9d0bd0f267a1e245a71474d2938089986d5b288ce7846c`，mode 600，`pg_restore --list` 成功。Forward／rollback migration SHA-256 `9AB1F1B8448CF11F1C2FE2CB865E3406180EEE5CC46740E55D67084D0E2F0657`／`0EA8DB2FE46FD355B4B13B7B6AE0070E8562E747B01C35368DB015F3FCB33C7C`。
+- catalog 回讀確認 30 欄及 source 型別、長度、numeric 精度／scale、NULL/default，`WaitNo` PK 正確，0 rows，owner postgres。`ymes_app` 對新表 SELECT／INSERT／UPDATE／DELETE 全 false；沒有授權 writer 或 SELECT，也沒有修改既有資料。app-browser 已確認三層選單入口、正式頁安全停用和 Close 回首頁。
+- Rollback `0119_wip_wp502_wait_basis.rollback.sql` 僅允許預期的空表／30 欄／WaitNo PK，無 CASCADE。遠端 migration 暫存檔已移除，完整備份保留。正式候選查詢與 Set API 仍待公司端來源契約，詳 `todolist_officepc.md`／`docs/modules/WIP/立即等待設定.md`。

@@ -3592,3 +3592,13 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [x] 本桌機受保護 Oracle profile 不存在；未連 YMES PostgreSQL、未執行 Oracle DDL/DML、未實作正式 API/schema、未執行 build/test/browser。
 - [ ] 家用端先核 live `tblinvstockerbasis`／`tblinvstockerdetail` schema；正式 API 需 DataStamp CAS，並交易保護主檔及明細整組替換／刪除。簽核須確認舊 Service 目前直接 Active 的規則是否仍適用。
 - [x] IV201「原物料倉庫房資料」與後續 IV202「開立進料單」、IV207「進料單記錄」、IV203「開立領料單」、IV208「領料單記錄」、IV205「開立預訂單」、IV210「預訂單記錄」、IV206「開立退料單」、IV211「退料單記錄」、IV302「開立退料單(WIP)」、IV303「退料單記錄(WIP)」、IV304「退料單確認(WIP)」均已交付；目前下一個清冊項目為 IV310「包裝拆並箱作業」。
+
+## WIP WP502 立即等待設定：家用端待確認原生來源契約（2026-11-28）
+
+家用端已按 repo 的可信 Oracle DDL／PostgreSQL CREATE-only 建立缺少的空 `YMES.tblwipwaitbasis`（migration 0119），沒有讀取／修改 Oracle 或 YMES 業務資料。正式 API 尚未實作。請公司端只讀原生 Oracle/Core/Service 來源並提交以下資訊，不連家用端 PostgreSQL、不執行正式 DDL/DML：
+
+- [ ] 提供 `funInitWaitNo()` 完整實作與呼叫參數，追出序號設定表／欄位、產號 SQL、transaction/鎖、並發唯一性、重試與 rollback 行為；不能只提供範例號碼。
+- [ ] 提供 `wsWIP.LoadLotBasisJoinState` 完整 SQL/呼叫鏈與回傳欄位映射，特別指出 `PartialMode`、`PartialType`、Status、LotStamp、CurQty、LotState 與 LinkName 的來源、過濾順序及 Running partial 的真實規則。
+- [ ] 提供 `wsWIP.CheckLotPackage` 完整實作與下游呼叫，列出 package/container 關聯的原生表、鍵、有效狀態和逐 Lot 檢核方式；一併指出目前版本把逗號 LotNo 當單一值的具體程式碼位置。
+- [ ] 提供 `SetLotStateToWait` 實際部署呼叫的 `ReleaseLog` helper／`iMESWIPReleaseLogHandler.dll` 版本、入口簽章、SQL/資料表/外部副作用，以及 `udWIP.clsWIP` adapter 實作與加入 SQL 的時機。列出全成功/失敗是否能在同一資料庫 transaction rollback。
+- [ ] 若有資料庫 trigger、package、序號器或 helper 仍未被上述程式碼涵蓋，請補上唯讀取得的 metadata/DDL 或完整呼叫來源；不得提供推測表名代替來源證據。

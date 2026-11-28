@@ -4563,10 +4563,11 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## WIP WP502 立即等待設定家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP502 規格](docs/modules/WIP/立即等待設定.md)。公司 `/YMES/WIP/ImmediateWaitSet` 只用 DEV 假資料，正式環境不得讀 `ymes-dev-mock:wip-immediate-wait:state:v1`、以本機 `DEV-WAIT-*` 作 WaitNo 或回報假成功。
-- [ ] 核 YMES PostgreSQL live schema/migration history、資料與權限，重用 WP101/WP201 已查的 LotBasis/State/Log/Temp_LotState/WaitBasis/ComponentState 與 USRUserBasis；WaitBasis source DDL 在 `mestest_wip_wp201_additional_source_ddl.sql`，CREATE-only 在 `mestest_wip_wp201_create.sql`。本功能無新直接表，不重建既有表。追包裝、Reverse/ReleaseLog、Adapter 等間接表，確實缺少才做 forward migration。
-- [ ] 做授權的七欄候選查詢與六類 lookup：至少一個 filter、Status 0/1/4、CurQty>0、LotState<>0；排除 PartialMode=1 且 PartialType 0/1 且 Status>1，以及 Complete+LinkName WAIT/HOLD。回傳 LotNo+OPNo、LotStamp、顯示欄與選取所需資料，限制結果量/分頁。
-- [ ] 批次 Set API 對**每筆**選取 Lot 重查包裝、Status、PartialType、LinkName、LotStamp、CurQty、權限和歸屬；原 Form 把多筆 LotNo 用逗號連接，但 Service 只接單一字面值，不能沿用。server 產各筆 WaitNo、共用第一筆 BatchWaitNo、WaitType=2/WaitSource=0/LotIsValid=1；Description 可空。維護 WaitBasis、LotState/Log、Temp_LotState、Reverse/ReleaseLog 及部署插件。先明定全批原子或相容逐批部分成功的契約、冪等/衝突/逐筆結果，不能把前幾筆成功後一筆失敗顯示成全成功。公司端未連 PG、未執行 build/test/browser；API 完成後才做正式 Vue 整合與驗收。
+- [x] 已同步並核對最新 `main`，閱讀 [WP502 規格](docs/modules/WIP/立即等待設定.md)。公司 `/YMES/WIP/ImmediateWaitSet` 只用 DEV 假資料；正式環境不得讀 `ymes-dev-mock:wip-immediate-wait:state:v1`、以本機 `DEV-WAIT-*` 作 WaitNo 或回報假成功。
+- [x] 以 PPK/SSH 核 live schema、歷史相依、資料列數與最小權限；可信 WaitBasis source DDL／CREATE-only 原已存在，但 live YMES 缺表。套用 0119 後回讀 30 欄、WaitNo PK、0 列，`ymes_app` CRUD 全 false；未讀取或寫入 MES 業務列。備份與校驗值記錄於 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [ ] 做授權的七欄唯讀候選查詢與六類 lookup：至少一個 filter、Status 0/1/4、CurQty>0、LotState<>0；排除 PartialMode=1 且 PartialType 0/1 且 Status>1，以及 Complete+LinkName WAIT/HOLD。回傳 LotNo+OPNo、LotStamp、顯示欄與選取所需資料，限制結果量/分頁。開始實作前需公司端確認 `LoadLotBasisJoinState` 的 Partial 欄位 SQL/映射；需先逐表列出精確 join，再授予必要 SELECT。現有 `Temp_LotState`、`ComponentState` app SELECT 為 false，未擴權。
+- [ ] 批次 Set API 對**每筆**選取 Lot 重查包裝、Status、PartialType、LinkName、LotStamp、CurQty、權限和歸屬；原 Form 把多筆 LotNo 用逗號連接，但 Service 只接單一字面值，不能沿用。server 產各筆 WaitNo、共用第一筆 BatchWaitNo、WaitType=2/WaitSource=0/LotIsValid=1；Description 可空。維護 WaitBasis、LotState/Log、Temp_LotState、Reverse/ReleaseLog 及部署插件。全批原子或相容逐批部分成功的契約、冪等/衝突/逐筆結果需明確；不得假稱前幾筆成功後全批回滾。尚待公司端交付流水號、Partial、包裝 helper 與 ReleaseLog/adapter 的確切來源契約（見 [公司端待辦](todolist_officepc.md)），再做正式交易 API。
+- [x] `TBLWIPWAITBASIS` 已以 migration 0119 依可信來源建立空表；未授予 app 權限。正式頁面 app-browser 驗證：三層選單可進入、查詢/lookup/Set 維持停用與服務尚未提供訊息、Close 返回首頁；沒有建立正式 Lot 或執行 Wait。
 
 ## WIP WP503 批次立即異常設定家用端 handoff（2026-11-20）
 
