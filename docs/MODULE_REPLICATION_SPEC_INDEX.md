@@ -8,6 +8,8 @@ RT605／RT606 live catalog 核對確認 Split／Merge 主表與 WIP summary 表�
 
 本索引追蹤從舊 MES WinForms 與 Oracle schema 還原出的畫面、操作規則、資料表及 YMES API 規格。每個功能以獨立 Markdown 規格記錄；未從程式碼或資料庫確認的內容標示「待查」，不以畫面推測成正式規則。
 
+- RT801「生產批作業站製程特性值調整記錄」：[功能規格與家用端 API handoff](modules/RPT/生產批作業站製程特性值調整記錄_RT801.md)。核對 `frmCont_Attrib_AdjustLogQuery`、`wsWIP.LoadLotLog_ReportJoinLotBasis`／`LoadCont_Attrib_AdjustLog` 及 `clsWIP` Core；完成 `/YMES/RPT/ContAttribAdjustLogQuery` DEV 假 LotNo 查詢、Status=1 報工歷程、選列 Detail 與批／元件特性分頁。異動歷程 MESTEST metadata／CREATE-only 沿用 WP912 refs；未連資料庫、未實作正式 API/schema、未 build／test／browser。記錄 LogGroupSerial optional 導致 API 可全表讀取、舊 SQL 字串串接、明細 Service finally 遮蔽錯誤及 Oracle 空字串／PostgreSQL NULL 差異。
+
 使用者最新優先序（2026-11-27）：WIP「在製品管理」先於其他尚未開始的模組。公司端優先復刻可核對來源的 WIP 功能；家用端優先完成待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。清冊與 Vue route 差異覆核範圍內，WPI05 是唯一待原始來源的 WIP 選單功能；取得 Form／Service／Core 後優先復刻。缺來源時記錄缺項並繼續其他可執行工作，之後若有可做的 WIP 項目先插隊。RT416／RT417／RT502／RT503／RT504／RT608 已完成。
 
 - WP106「使用者登入（上工）資訊」：[模組規格](modules/WIP/使用者登入資訊.md)。migration 0097 已按 WP104／WP305 source DDL 在正式 YMES schema 建立三張空表，`ymes_app` 僅 SELECT；登入保護的有界唯讀 API 與正式 UI 查詢／分頁已接通。SignOut 寫入與正式 lookup 等待公司端交付原始交易／篩選規則；部署及 app-browser 驗收狀態見 [資料庫連線紀錄](DATABASE_CONNECTION.md)，家用端追蹤見 [待辦](../todolist_homepc.md)。

@@ -2,7 +2,16 @@
 
 ## HOME GitHub sync（2026-11-28）
 
-- [ ] GitHub main latest is `32ea6e5d15650a490c89844f039dcf1c26965a4e`. The GitHub connector rejected branch creation with HTTP 403 `Resource not accessible by integration`; the local `.git` metadata is read-only. No GitHub ref or file changed. After write access is available, sync the validated home changes from the then-current main with a normal merge; never force-update main or replace Office changes.
+- [x] 歷史同步檢查點 `32ea6e5` 已被後續 main 更新取代。本次開始工作前，本機 `main` 與本機 `origin/main` tracking ref 對齊於 `a1e3839`，工作樹乾淨。
+- [ ] 本次無法即時驗證 GitHub：`git fetch` 被 `.git/FETCH_HEAD` 寫入權限拒絕，`git ls-remote` 也遇到目前環境的網路 proxy connection refused。RT801 需在 Git metadata／網路可用時正常 commit/push；禁止 force push，若遠端有新提交先整合並保留兩端變更。
+
+## HOME RT801 生產批作業站製程特性值調整記錄 API handoff（2026-11-28）
+
+- [ ] Pull 最新 `main`，核正式 `tblwipcont_attribadjustlog`／`tblwiplotlog_report`／`tblwiplotbasis`／`tblopbasis`／`tblsyselementbasis` schema、資料同步來源及 `ymes_app` SELECT 權限。異動表可信 MESTEST metadata 與 CREATE-only 已沿用 WP912 reference；不要照 DEV fixture 建資料。
+- [ ] 實作登入與 RPT FunctionKey RT801 授權的唯讀 API：LotNo 必填、精確查詢 `Status=1` 報工歷程、`StartTime` 遞增穩定排序、paging／row cap。明細以 `LogGroupSerial` 查歷程，但必須確認該序號屬於目前 LotNo 下可見的報工列；回傳異動列需穩定排序及筆數上限。
+- [ ] 所有 SQL 參數化，不接受 browser `AdditionalXml`；將 `ComponentNo=''` 正規化為 NULL，以分開批特性與元件特性並保持 Oracle 空字串語意。回報 400／401／403／503 等錯誤，不把 Service 漏 LogGroupSerial 時會全表讀取的行為搬入 API。
+- [ ] 完成正式 API／最小權限／migration（若 live 確認缺表）後，再交公司端把 `/YMES/RPT/ContAttribAdjustLogQuery` 接 Production API。公司端 DEV fixture 與正式模式不得互相 fallback。
+- [ ] 來源、欄位與舊程式錯誤見 [RT801 模組規格](docs/modules/RPT/生產批作業站製程特性值調整記錄_RT801.md)。
 
 ## 公司端 RT607 預計完工查詢 handoff（2026-11-27）
 

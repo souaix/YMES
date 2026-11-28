@@ -15,6 +15,8 @@ WinForms 的 MDI_Panel.funGenerateMainMenu 以 ModuleNo + Module 作為第一層
 
 ## Vue 復刻追蹤
 
+最新補記（2026-11-28）：RT801「生產批作業站製程特性值調整記錄」已核對 `frmCont_Attrib_AdjustLogQuery`／Designer、`wsWIP.LoadLotLog_ReportJoinLotBasis`／`LoadCont_Attrib_AdjustLog`、`clsWIP` Core；完成 `/YMES/RPT/ContAttribAdjustLogQuery` DEV 假 LotNo 查詢、Status=1 報工歷程、StartTime 排序、選列 Detail 與 Lot／Component 特性分頁。異動歷程 DDL／metadata 沿用 WP912 的 MESTEST references；未連資料庫、未新查 Oracle、未猜 CREATE、未做 API/schema／build／test／browser。記錄 Core 無 LogGroupSerial 時會全表讀取、SQL 字串串接、明細 Service finally 遮蔽錯誤及 Oracle 空字串語意。
+
 優先順序更新（2026-11-27）：OE「工單管理」的 13 個公司端 Vue DEV 畫面、來源覆核與規格已完成；正式 API／schema 依原 handoff 由家用端處理。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。WP803 正式 API UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；清冊與 Vue route 差異覆核範圍內，WPI05 是唯一待來源的 WIP 選單功能，取得其 Form／Service／Core 後先接續。RT501、RT410 正式 UI 已接 API／lookup，Runtime 驗收待資料與操作時機；RT416／RT417／RT502／RT503／RT504 已完成，RT608 亦已完成。WPI05 缺來源期間，按清冊繼續其他可取得來源功能，遇到可做的 WIP 項目先插隊。RT416 OEE summary Oracle DDL 待桌機受保護 profile 可用後唯讀交付；公司端不連 PostgreSQL、不做正式 API/schema。OE 跨畫面總覽見 `docs/modules/OE/工單管理模組總覽.md`。
 
 最新補記（2026-11-27）：RT601「生產批使用物料查詢」已核對 inline `frmCont_Material_byLot`／`wsWIP.LoadCont_Material_JoinLog`／`clsLot.LoadCont_Material_JoinLog`，完成 `/YMES/RPT/ContMaterialByLot` DEV Lot No 查詢與 16 欄 Grid。記錄空 LotNo 會觸發 Core 未限制資料分支、MaterialLot join 鍵缺 LotSerial；WP201／WP112／MTL／PRD／OP DDL refs 沿用。未連 PostgreSQL、未新查 Oracle／新增 DDL、未做 API/schema、未 build／test／browser。詳 [RT601 規格與家用端 handoff](modules/RPT/生產批使用物料查詢_RT601.md)。

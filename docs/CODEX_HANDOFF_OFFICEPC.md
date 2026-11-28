@@ -6,6 +6,14 @@
 
 - [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。公司端先做可核對來源的 WIP WinForms／DEV／規格；家用端先做待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。WPI05 缺來源期間，記錄缺項並按既定清冊繼續可做工作；發現其他可做的 WIP 即插隊。RT501 與 RT410 正式頁已接家用端唯讀 API／lookups，runtime 驗收待資料與操作時機；RT410 legacy 主／子設備時間邊界差異已核源並記錄。RT416／RT417／RT502／RT503／RT504／RT608 均已完成。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
 
+## 公司端目前交接：RPT RT801 生產批作業站製程特性值調整記錄（2026-11-28）
+
+- [x] 核對 `frmCont_Attrib_AdjustLogQuery`／Designer、`wsWIP.LoadLotLog_ReportJoinLotBasis`／`LoadCont_Attrib_AdjustLog`、`clsWIP` Core；完成 `/YMES/RPT/ContAttribAdjustLogQuery` DEV 假資料、LotNo 必填查詢、Status=1 報工歷程、選取報工列、Detail 與 Lot／Component 特性明細分頁。[RT801 規格與家用端 handoff](modules/RPT/生產批作業站製程特性值調整記錄_RT801.md)
+- [x] 舊 Form 對報工列按 StartTime 升冪排序；Detail 以 LogGroupSerial 查詢，ElementBasis 補 AttribName，Description 改名 AdjustReason。批與元件明細分別按 AttribNo／ComponentNo、ReviseDate 排序。
+- [x] 異動歷程 MESTEST metadata／CREATE-only 已由 WP912 放入 repo，沿用其 references；未新連 Oracle 或猜 DDL。DEV 沒呼叫 Service／資料庫，未連 PostgreSQL、未實作正式 API／schema、未 build／test／browser。
+- [ ] 家用端先核 live schema／權限，再做 RT801 登入授權、有界 paging 的唯讀報工與異動查詢；以目前 lot 驗證 LogGroupSerial，避免 Service 可選地漏條件而讀全表。PostgreSQL 處理 `ComponentNo=''` 與 NULL 時須符合 Oracle 語意。
+- [ ] WIP 仍是全案最高優先；WPI05 原始 Form／Service／Core 未找到，沒有其他可核對 WIP 功能時按清冊接續其他模組，有新 WIP 來源即插隊。
+
 ## 公司端目前交接：RPT RT906 指標樹歷史資料查詢（2026-11-28）
 
 - [x] 核對 `frmKPITreeLog`／Designer、`wsRPT.LoadEKBKPILog`、`clsRPTBasis.ShowEKBKPILog` 與 TargetType ValueList 呼叫；完成 `/YMES/RPT/KpiTreeLog` DEV 假資料精確樹名／日期查詢與 12 欄歷程 Grid。[RT906 規格與家用端 handoff](modules/RPT/指標樹歷史資料查詢_RT906.md)

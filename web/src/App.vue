@@ -349,6 +349,7 @@ import GumLogQuery from './components/GumLogQuery.vue'
 import KpiTreeBasis from './components/KpiTreeBasis.vue'
 import KpiTreeQuery from './components/KpiTreeQuery.vue'
 import KpiTreeLog from './components/KpiTreeLog.vue'
+import ContAttribAdjustLogQuery from './components/ContAttribAdjustLogQuery.vue'
 import ConfirmLot from './components/ConfirmLot.vue'
 import HoldLot from './components/HoldLot.vue'
 import WaitLot from './components/WaitLot.vue'
@@ -1314,6 +1315,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:KPI TREE BASIS': appBasePath + '/RPT/KpiTreeBasis',
   'function:RPT:KPI TREE QUERY': appBasePath + '/RPT/KpiTreeQuery',
   'function:RPT:KPI TREE LOG': appBasePath + '/RPT/KpiTreeLog',
+  'function:RPT:LOT OP CONT ATTRIB ADJUSTLOG': appBasePath + '/RPT/ContAttribAdjustLogQuery',
   'function:RPT:CONFIRM LOT': appBasePath + '/RPT/ConfirmLot',
   'function:RPT:HOLD LOT': appBasePath + '/RPT/HoldLot',
   'function:RPT:WAIT LOT': appBasePath + '/RPT/WaitLot',
@@ -1818,6 +1820,7 @@ const isRt612GumLogQueryPage = computed(() => activeMasterKey.value === 'functio
 const isRt904KpiTreeBasisPage = computed(() => activeMasterKey.value === 'function:RPT:KPI TREE BASIS')
 const isRt905KpiTreeQueryPage = computed(() => activeMasterKey.value === 'function:RPT:KPI TREE QUERY')
 const isRt906KpiTreeLogPage = computed(() => activeMasterKey.value === 'function:RPT:KPI TREE LOG')
+const isRt801ContAttribAdjustLogPage = computed(() => activeMasterKey.value === 'function:RPT:LOT OP CONT ATTRIB ADJUSTLOG')
 const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function:RPT:CONFIRM LOT')
 const isRt502HoldLotPage = computed(() => activeMasterKey.value === 'function:RPT:HOLD LOT')
 const isRt503WaitLotPage = computed(() => activeMasterKey.value === 'function:RPT:WAIT LOT')
@@ -4152,6 +4155,12 @@ async function signOut(): Promise<void> {
         />
         <GumLogQuery
           v-else-if="isRt612GumLogQueryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <ContAttribAdjustLogQuery
+          v-else-if="isRt801ContAttribAdjustLogPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

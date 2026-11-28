@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## 2026-11-28 RT801 生產批作業站製程特性值調整記錄公司端交接
+
+- [x] 依 `frmCont_Attrib_AdjustLogQuery`／Designer、`wsWIP.LoadLotLog_ReportJoinLotBasis`／`LoadCont_Attrib_AdjustLog`、`clsWIP` 對應 Core 完成 `/YMES/RPT/ContAttribAdjustLogQuery` DEV 假資料查詢、報工列選取、Detail 與 Lot／Component 分頁。
+- [x] 更新 [RT801 規格與家用端 handoff](docs/modules/RPT/生產批作業站製程特性值調整記錄_RT801.md)、[索引](docs/MODULE_REPLICATION_SPEC_INDEX.md)、[選單追蹤](docs/MES_MENU_FUNCTION_INVENTORY.md) 與[桌電交接](docs/CODEX_HANDOFF_OFFICEPC.md)。異動歷程表 metadata／CREATE-only 已沿用 WP912 的 MESTEST reference；本次未連 Oracle、未重複產 DDL。
+- [x] 記錄 LotNo 必填且等號查詢，報工歷程固定 `Status=1`／`StartTime` 升冪；明細以 LogGroupSerial 查詢、按 ComponentNo 分組並各自排序。DEV 僅操作 fixture，未呼叫 Service／資料庫／正式 API。
+- [ ] 家用端先核 live schema／`ymes_app` SELECT 權限，再依可信來源交付登入與 RT801 授權的有界唯讀 API；明細必須確認 LogGroupSerial 隸屬所查 Lot，並處理 Oracle 空字串轉 NULL 語意。
+- [ ] 公司端未連 PostgreSQL、未實作正式 API／schema、未執行 build／test／browser。WIP 仍最高優先；WPI05 來源缺失且沒有其他可核對 WIP 功能時，繼續清冊下一項。
+
 ## 2026-11-28 RT906 指標樹歷史資料查詢公司端交接
 
 - [x] 依 `frmKPITreeLog`／Designer、`wsRPT.LoadEKBKPILog`、`clsRPTBasis.ShowEKBKPILog` 及 TargetType ValueList 完成 `/YMES/RPT/KpiTreeLog` DEV 假資料查詢和 12 欄 Grid；精確樹名稱／時間條件與空結果、防呆可模擬。
