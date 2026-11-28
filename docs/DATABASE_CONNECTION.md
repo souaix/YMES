@@ -1580,3 +1580,10 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 - API a3 已取代 a2，正式 image ID `sha256:e3d978837553ad3ddb6342fd79e19507a6e2d703ebb8d1545e92a60a1ae8a289`；回復 tag `ymes-api:before-wp914-hotlot-priority-20261128-a3` 保留 a2 `sha256:14af6d35ab6a01e47607c3074ed88b1a7c3eef28a816b870a03fc6e30f4f241c`。發行包／DLL SHA-256 分別為 `79AC5421B80E7340153B2FA5355E731F01D631D2D3CB5642C5943E94783FFD09`／`417E8462F6A0F11D97EEB56B7333D3BA1D983CA15A43BE82732D87BD06AA0C24`。
 - 修正 LotNo／BaseLotNo／OPNo key 大小寫保留、重複鍵只按 `(LotNo, OPNo, Status)` 判斷，以及拒絕 NUL 字元；沒有資料庫 schema／權限變更。readiness 200、API 容器 healthy；app-browser 確認正式頁仍有 disabled guard，登入後 sentinel 查詢 `[]`、RO lookup `[]`、缺少條件 400。a2 已驗證其餘 lookup、三層入口及 Close；沒有建立正式 Lot 或成功 Set。
+
+### 更新 2026-11-28：WIP WP501 ERF staging schema
+
+- 以 PPK／SSH 核對 YMES PostgreSQL 14.24。WP501 六張直接 ERF 表中，Basis、HoldReason、HoldReasonDisp、AttachFile 已存在且欄位結構與可信 source reference 對齊；ymes_app 僅有 SELECT，沒有 DML。CreateData 與 Backup CreateData 在所有使用者 schema 均不存在。
+- Migration 0118_wip_wp501_erf_staging.sql 只建立缺少的兩張空表，不執行整份 CREATE-only、不複製業務資料。CreateData 為 15 欄／RepairNo PK；Backup 為 15 欄／無 PK，保留來源 LotNo 非唯一 index。新表 owner postgres，ymes_app 與 PUBLIC 沒有 SELECT／INSERT／UPDATE／DELETE。
+- 套用前完整備份 /opt/ymes/backups/ymes-before-wp501-0118-20261128.dump：937,259 bytes、SHA-256 874ec6c0a89a6f5cd85e5aebd1938aa6eac62164d3fae3b6b72e47d9f66e8530、mode 600，pg_restore --list 成功。Forward／rollback migration SHA-256：72D4053F280E1FFD21DE135778707C85ED4BF41AF342265906652A30B23C3C9B／AAC2BEE42F491875088A4B6204F02C7033301C7F224FBD6792DF9B34F89DAABA。套用後 catalog 回讀新表各 15 欄、主鍵／index 正確、各 0 列，未修改任何既有 ERF／Lot 資料。
+- YMES.tblsysparameter 有 app SELECT，但找不到名稱含 ERFMultipleHold 的 ParamType／ParamNo 設定列。查詢狀態模式需等公司端交付準確 key／fallback；writer 另需核實 wsSYS.GetERFNo、udWIP.clsWIP.UpdERF_Create 與 iMESWIPReleaseLogHandler.dll 的正式契約。未授予寫入權限，也未開放正式 POST；交接詳 todolist_officepc.md。
