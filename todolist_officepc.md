@@ -11,7 +11,10 @@
 ## HOME WP303 設備耗品現況 API handoff（2026-11-28）
 
 - [x] 家用端已完成 0101 Status／Log 及 0102 Consume Basis source-aligned 空表；三表均 0 列。Status 沒有授予 `ymes_app` 權限，Log／Basis 只有 SELECT。參見 [WP303 模組 MD](docs/modules/WIP/設備耗品現況.md)。
-- [ ] WP303 現況清單、Equipment／Consume Basis lookup、Add／Edit／Delete 及 ConsumReset 正式 API 尚未完成；先依 WP303 模組規格確認 transaction／CAS，再實作。正式畫面異動按鈕維持 disabled，勿用正式測試資料驗證。
+- [x] 家用端已寫登入保護列表／lookup／Add／Edit／atomic bulk-delete／Reset API；`.NET 9` build 與隔離 PostgreSQL + app-browser HTTP 流程驗收通過（含並發、CAS、回滾及序號衝突）。正式 API 尚未部署，Status 亦未授權，正式異動按鈕維持 disabled。
+- [ ] 公司端以 API route `/api/wip/equipment-consume-status` 接正式 UI；清單帶 `X-Page`／`X-Page-Size`／`X-Has-More`／`X-Total-Count`，lookup 是 `/lookups/equipment`、`/lookups/consumables?equipmentNo=...`；POST 新增、PUT `/item` 編輯、POST `/delete` 原子多選刪除、POST `/reset` 重置。編輯／刪除／重置皆需帶原始序號與數量做 CAS；Reset 不得送 AccQty／AccPeriod，API 從資料庫現況重算。詳細 DTO、狀態碼與交易行為見 WP303 模組 MD。
+- [ ] 公司端保留 DEV localStorage fixture 與既有操作流程；Production 在 API／權限部署並完成正式 app-browser 驗收前，保持 disabled guard，不要改成假資料或只用瀏覽器驗證交易成功。
+- [ ] 尚無 FunctionKey claim，Production API 目前只有登入保護；Status app role 正式權限仍為零。0104 最小權限 migration（Status CRUD、Log 僅 INSERT）已在 disposable PostgreSQL QA DB 驗證交易／回滾／併發，測試 DB 已刪除；正式尚未 apply。公司端先接妥 Production UI 與 DTO/error contract，保留 DEV fixture 與正式 disabled guard；待家用端通知權限 migration／API 已部署後，再跑正式站 app-browser 驗收。
 
 ## HOME WP306 設備點檢歷程唯讀 API handoff（2026-11-27）
 

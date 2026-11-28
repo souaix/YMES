@@ -12,6 +12,13 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## HOME WIP WP303 設備耗品現況 writer API（2026-11-28）
+
+- [x] 完成登入保護的清單／設備與耗品 lookup、新增、CAS 編輯、原子多選刪除及 ConsumReset API；Reset 以單一交易、列鎖和 expected-value CAS 更新 Status／Log，並以 advisory lock 保護 ConsumeNo 範圍的歷程序號唯一檢查。DTO、路由及來源差異見 [WP303 模組文件](docs/modules/WIP/設備耗品現況.md)。
+- [x] `.NET 9` API build 通過；在隔離 PostgreSQL QA database 套用 0101／0102／0104，以合成 fixture 經 app-browser 呼叫實際 API，完成新增競態、驗證、CAS、Reset／Log、交易 rollback、序號重複、上限歸零、分頁與 atomic delete 驗收；12 組驗收全通過。隔離 DB／role 已刪除，未觸及正式 `ymes`。
+- [ ] 0104 migration 尚未套用正式庫，`ymes_app` 的 Status 權限維持零；正式 API 尚未部署，Production UI 保持 disabled。主機曾因 `/var/log/journal` 佔 1.8 GiB 而 100% 滿載；只輪替／縮減舊 archived journal 釋放 1.1 GiB，現約 1.6 GiB 可用，未刪其他專案／rollback images。部署前仍須重查空間。
+- [ ] 公司端依 [WP303 handoff](todolist_officepc.md) 將 Production UI 接上 writer API，同時保留 DEV mock。合併前核對 DTO／衝突回應；部署、正式權限核對及正式站 app-browser 驗收仍未完成。
+
 ## HOME WIP WP304 設備耗品歷程 API／schema（2026-11-28）
 
 - [x] 以 PPK／SSH 比對 live catalog 與可信 MES source，建立缺少的 WP303 Status／Log 及耗品基準空表。0101 前備份 `/opt/ymes/backups/ymes-before-wp303-0101-20261128.dump`，867,821 bytes、SHA-256 `a25ebbc4ac621f68298741b365154ef6e9715cd55c872575cd608dd5a1d21c05`、2,392 entries；0102 前備份 `/opt/ymes/backups/ymes-before-wp304-0102-20261128.dump`，873,311 bytes、SHA-256 `fab2daf8aa4421672ae4bcc0f792dc08c04a213f7f79f8ab297871d9b5d722d1`、2,407 entries。
@@ -4376,12 +4383,12 @@ API 工作：
 
 - [x] 已同步 main 並讀完 WP303 模組文件、資料庫連線紀錄及可信 source DDL／CREATE-only references（2026-11-28）。
 - [x] live schema 已核對，依來源執行 0101 建立 Status／Log 空表、0102 建立 Consume Basis 空表；詳見本清單前面的 HOME WP304 進度。沒有覆蓋既有物件或匯入業務資料。
-- [ ] 實作登入保護、權限範圍明確、分頁排序的設備耗品現況列表；Equipment lookup 限 IssueState=2，ConsumeNo lookup 依 EquipmentType 查 ConsumeBasis。
-- [ ] 實作新增／編輯／刪除：Status PK 為 EquipmentNo+ConsumeNo；新增 Creator/CreateDate；編輯依 WinForms 只改 ConsumeSeq/CurQty/CurPeriod；刪除支援多選。來源多選刪除逐列執行，須明確選擇相容逐列部分成功或採原子 bulk-delete。
-- [ ] 實作 Reset POST command：以資料庫最新 Status/Basis 重算，於同一交易 INSERT 舊 ConsumeSeq 至 Log（Creator、CreateDate、AccQty、AccPeriod），再 CAS 更新 Status 的新 ConsumeSeq、CurQty=0、CurPeriod=0、Revisor、ReviseDate。任何步驟失敗都回滾；禁止以 GET 執行重置。
-- [ ] ConsumeSeq 重複檢查在來源以 ConsumeNo 為範圍查 Log，跨設備共用序號時也拒絕；此規則未由 PK 保證，需解決併發重複（資料庫鎖／交易級一致性檢查），但不可擅自新增 Oracle 不存在的唯一約束。編輯不更新 Revisor/ReviseDate 是 Core 來源行為。
+- [x] 完成登入保護列表、IssueState=2 設備與設備類別耗品查找，新增、編輯、原子多選刪除及 ConsumReset API；整體 contract 和來源差異記於 [WP303 模組 MD](docs/modules/WIP/設備耗品現況.md)。
+- [x] Reset 使用單一交易、列鎖與 expected-value CAS；採 ConsumeNo 範圍 advisory lock 防止兩設備同時重用歷程序號，不新增 Oracle 未定義的唯一約束。編輯依來源不更新 Revisor／ReviseDate；多選刪除選定 atomic 全成或全回滾策略。
+- [x] Status `ymes_app` 正式權限仍為零；0104 最小權限 migration 已在隔離 PostgreSQL 套用並完成 CRUD／rollback／併發／CAS 驗收，測試 DB 與 role 已移除。正式庫尚未 apply；不得在正式表建測試列。
+- [ ] `.NET 9` build 與隔離 API/app-browser 流程驗收通過；正式 API 尚未部署、公司端尚未接線，WP303 正式 UI 保持 disabled。遠端主機根磁碟曾 100% 使用，部署前重查容量；正式端部署後再用 app-browser 驗證。
 - [ ] 保留並評估來源的重置邊界瑕疵：Period=-1 代表不限；RemainPeriod 不足顯示時用 ToleranceQty（疑似應為 TolerancePeriod）；達用量／週期上限時 Reset 視窗會把 AccQty／AccPeriod 輸入清為 0。若修正，記為產品規則變更並取得辦公室確認。
-- [ ] WP303 正式 API／DTO、Status CRUD 與 ConsumReset 同交易／CAS 尚未完成；依 [WP303 模組紀錄](docs/modules/WIP/設備耗品現況.md) 繼續。Status 無 app role 權限，正式按鈕保持 disabled。
+- [ ] API 目前只有一般登入保護，正式部署前仍需和公司端確認 UI request DTO 對齊；FunctionKey claim 不可臆造。Status 未授權前正式按鈕保持 disabled。
 
 ## WIP WP304 設備耗品歷程家用端 handoff（2026-11-20）
 

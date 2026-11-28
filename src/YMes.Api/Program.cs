@@ -25,7 +25,6 @@ if (localDemoAuth &&
 {
     throw new InvalidOperationException("YMES_LOCAL_DEMO_AUTH can only be enabled in a non-production Development environment.");
 }
-
 var connectionString = builder.Configuration.GetConnectionString("YMes") ??
                        builder.Configuration["YMES_DATABASE_URL"];
 if (!localDemoAuth && string.IsNullOrWhiteSpace(connectionString))
@@ -33,7 +32,6 @@ if (!localDemoAuth && string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException(
         "Set ConnectionStrings__YMes or YMES_DATABASE_URL through the deployment secret store.");
 }
-
 var dataProtectionPath = builder.Configuration["YMES_DATA_PROTECTION_PATH"];
 if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(dataProtectionPath))
 {
@@ -71,6 +69,7 @@ if (!localDemoAuth)
     builder.Services.AddSingleton<YMes.Api.Wip.Wp306EquipmentQcListRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp304EquipmentConsumeLogRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp304EquipmentConsumeLookupRepository>();
+    builder.Services.AddSingleton<YMes.Api.Wip.Wp303EquipmentConsumeStatusRepository>();
     builder.Services.AddSingleton(new YMes.Api.Wip.Wp109WritePolicy("Asia/Taipei"));
     builder.Services.AddSingleton<YMes.Api.Wip.Wp109WriteRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp109DeviceLookup>();
