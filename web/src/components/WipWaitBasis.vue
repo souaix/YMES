@@ -2,22 +2,22 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 type WaitRow = {
-  waitNo: string; lotNo: string; productNo: string; lotSerial: string; status: number
-  opNo: string; customerNo: string; waitDescription: string; ruleNo: string
+  waitNo: string; lotNo: string; productNo: string | null; lotSerial: string; status: number
+  opNo: string; customerNo: string | null; waitDescription: string | null; ruleNo: string | null
   createQty: number; creator: string; createDate: string; releaseQty: number | null
   releaser: string; releaseDate: string | null; waitSource: number
 }
 type Disposition = {
-  waitNo: string; lotDispType: number; description: string; creator: string
-  createDate: string; opNo: string; processNo: string; processVersion: string
+  waitNo: string; lotDispType: number; description: string | null; creator: string
+  createDate: string; opNo: string | null; processNo: string | null; processVersion: string | null
 }
 type LookupKey = 'customerNo' | 'opNo'
+type LookupPage = { page: number; pageSize: number; hasMore: boolean; items: string[] }
 
-const props = defineProps<{ developmentPreview?: boolean; currentUserNo?: string }>()
+const props = defineProps<{ apiBaseUrl: string; developmentPreview?: boolean; currentUserNo?: string }>()
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
-const unavailableMessage = '等待單查詢服務尚未提供，暫無法查詢或檢視明細。'
-const previewMessage = '勾選並填入至少一項條件後，按 Query 查詢等待單。'
+const queryMessage = '至少輸入一項條件後按 Query；正式查詢只讀取 WaitSource=0。'
 const wp502StorageKey = 'ymes-dev-mock:wip-immediate-wait:state:v1'
 const wp511StorageKey = 'ymes-dev-mock:wip-wait-disposition:state:v1'
 const statuses: Record<number, string> = {
@@ -37,21 +37,58 @@ const dates = reactive({ createFrom: '', createTo: '', releaseFrom: '', releaseT
 const allRows = ref<WaitRow[]>([])
 const rows = ref<WaitRow[]>([])
 const dispositions = ref<Disposition[]>([])
+const page = ref(1)
+const hasMore = ref(false)
+const loading = ref(false)
+const lookupValues = ref<string[]>([])
+const lookupKeyword = ref('')
+const lookupBusy = ref(false)
+const lookupError = ref('')
+const infoPage = ref(1)
+const infoHasMore = ref(false)
+const infoBusy = ref(false)
+const infoError = ref('')
 const selectedWaitNo = ref('')
 const infoWaitNo = ref('')
 const lookup = ref<LookupKey | null>(null)
 const searched = ref(false)
 const error = ref('')
-const message = ref('勾選並填入至少一項條件後，按 Query 查詢等待單。')
+const message = ref(queryMessage)
 const selected = computed(() => rows.value.find(item => item.waitNo === selectedWaitNo.value) || null)
-const info = computed(() => allRows.value.find(item => item.waitNo === infoWaitNo.value) || null)
+const info = computed(() => rows.value.find(item => item.waitNo === infoWaitNo.value) || null)
 const infoRows = computed(() => dispositions.value.filter(item => item.waitNo === infoWaitNo.value)
   .sort((a, b) => b.createDate.localeCompare(a.createDate)))
-const lookupOptions = computed(() => dev.value && lookup.value ? [...new Set(allRows.value.map(item => item[lookup.value!]))].filter(Boolean).sort() : [])
+const lookupOptions = computed(() => dev.value && lookup.value
+  ? [...new Set(allRows.value.map(item => item[lookup.value!]))].filter((value): value is string => Boolean(value)).sort()
+  : lookupValues.value)
+
+function apiUrl(path: string, query?: URLSearchParams): URL {
+  const base = props.apiBaseUrl.trim().replace(/\/+$/, '')
+  if (!base) throw new Error('目前環境尚未設定 API 位址。')
+  const url = new URL(path.replace(/^\/+/, ''), new URL(`${base}/`, location.origin))
+  query?.forEach((value, key) => url.searchParams.set(key, value))
+  return url
+}
+
+async function requestJson<T>(url: URL): Promise<{ value: T; response: Response }> {
+  const response = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' }, cache: 'no-store' })
+  if (response.status === 401) { window.location.assign(import.meta.env.BASE_URL); throw new Error('登入狀態已逾期，請重新登入。') }
+  const body = await response.json().catch(() => null) as { title?: string; detail?: string; message?: string } | null
+  if (!response.ok) throw new Error(body?.detail || body?.message || body?.title || `API 回應錯誤 (${response.status})。`)
+  return { value: body as T, response }
+}
+
+function setPage(response: Response, fallback: number): { page: number; hasMore: boolean } {
+  return {
+    page: Number(response.headers.get('X-Page')) || fallback,
+    hasMore: response.headers.get('X-Has-More')?.toLowerCase() === 'true',
+  }
+}
 
 function clearFormal(): void {
   allRows.value = []; rows.value = []; dispositions.value = []; selectedWaitNo.value = ''; infoWaitNo.value = ''; lookup.value = null
-  searched.value = false; error.value = ''; message.value = unavailableMessage
+  page.value = 1; hasMore.value = false; loading.value = false; lookupValues.value = []; lookupKeyword.value = ''; lookupError.value = ''; infoPage.value = 1; infoHasMore.value = false; infoBusy.value = false; infoError.value = ''
+  searched.value = false; error.value = ''; message.value = queryMessage
   Object.assign(fields, { lotNo: '', customerNo: '', opNo: '', waitNo: '' })
   Object.assign(flags, { lotNo: false, customerNo: false, opNo: false, waitNo: false, createDate: false, releaseDate: false })
   Object.assign(dates, { createFrom: '', createTo: '', releaseFrom: '', releaseTo: '' })
@@ -73,8 +110,6 @@ function sampleRows(): WaitRow[] {
   ]
 }
 function load(): void {
-  if (!dev.value) { clearFormal(); return }
-
   if (!dev.value) return
   const result = sampleRows()
   const detail: Disposition[] = [
@@ -105,18 +140,49 @@ function load(): void {
   dispositions.value = detail
 }
 function chooseLookup(value: string): void {
-  if (!dev.value) { clearFormal(); return }
- if (lookup.value) { fields[lookup.value] = value; flags[lookup.value] = true }; lookup.value = null }
-function query(): void {
-  if (!dev.value) { clearFormal(); return }
+  if (lookup.value) { fields[lookup.value] = value; flags[lookup.value] = true }
+  lookup.value = null; lookupValues.value = []; lookupKeyword.value = ''; lookupError.value = ''
+}
 
+async function openLookup(field: LookupKey): Promise<void> {
+  lookup.value = lookup.value === field ? null : field
+  lookupKeyword.value = ''
+  lookupValues.value = []
+  lookupError.value = ''
+  if (!dev.value && lookup.value) await loadLookup()
+}
+
+async function loadLookup(): Promise<void> {
+  if (dev.value || !lookup.value) return
+  const keyword = lookupKeyword.value.trim().toUpperCase()
+  if (!keyword) { lookupValues.value = []; lookupError.value = '請輸入至少一個字元再查找。'; return }
+  lookupBusy.value = true; lookupError.value = ''
+  try {
+    const query = new URLSearchParams({ keyword, page: '1', pageSize: '100' })
+    const { value } = await requestJson<LookupPage>(apiUrl(`api/wip/wait-basis/lookups/${lookup.value}`, query))
+    lookupValues.value = Array.isArray(value.items) ? value.items : []
+    if (!lookupValues.value.length) lookupError.value = '查無符合的 WIP 等待單查找值。'
+  } catch (cause) {
+    lookupValues.value = []
+    lookupError.value = cause instanceof Error ? cause.message : '查找失敗。'
+  } finally { lookupBusy.value = false }
+}
+
+async function query(targetPage = 1): Promise<void> {
   error.value = ''; lookup.value = null
-  if (!dev.value) { error.value = '此頁目前只提供 DEV 假資料。'; return }
   for (const key of Object.keys(fields) as (keyof typeof fields)[]) fields[key] = fields[key].trim().toUpperCase()
   const textActive = (Object.keys(fields) as (keyof typeof fields)[]).some(key => flags[key] && !!fields[key])
-  if (!textActive && !flags.createDate && !flags.releaseDate) { error.value = '請至少勾選並輸入一項有效查詢條件。'; return }
-  if (flags.createDate && (!dates.createFrom || !dates.createTo || dates.createFrom > dates.createTo)) { error.value = '建立日期區間無效。'; return }
-  if (flags.releaseDate && (!dates.releaseFrom || !dates.releaseTo || dates.releaseFrom > dates.releaseTo)) { error.value = '解除日期區間無效。'; return }
+  const invalid = (text: string): void => {
+    error.value = text
+    if (!dev.value) {
+      rows.value = []; selectedWaitNo.value = ''; dispositions.value = []; infoWaitNo.value = ''
+      page.value = 1; hasMore.value = false; searched.value = true; message.value = '查詢未完成。'
+    }
+  }
+  if (!textActive && !flags.createDate && !flags.releaseDate) { invalid('請至少勾選並輸入一項有效查詢條件。'); return }
+  if (flags.createDate && (!dates.createFrom || !dates.createTo || dates.createFrom > dates.createTo)) { invalid('建立日期區間無效。'); return }
+  if (flags.releaseDate && (!dates.releaseFrom || !dates.releaseTo || dates.releaseFrom > dates.releaseTo)) { invalid('解除日期區間無效。'); return }
+  if (!dev.value) { await queryFormal(targetPage); return }
   rows.value = allRows.value.filter(item => item.waitSource === 0 &&
     (!flags.lotNo || !fields.lotNo || item.lotNo.includes(fields.lotNo)) &&
     (!flags.customerNo || !fields.customerNo || item.customerNo === fields.customerNo) &&
@@ -128,9 +194,53 @@ function query(): void {
   searched.value = true; selectedWaitNo.value = rows.value[0]?.waitNo || ''
   message.value = `查得 ${rows.value.length} 筆等待單。`
 }
-function openInfo(): void {
-  if (!dev.value) { clearFormal(); return }
- if (selected.value) infoWaitNo.value = selected.value.waitNo }
+
+async function queryFormal(targetPage: number): Promise<void> {
+  loading.value = true; error.value = ''; dispositions.value = []; infoWaitNo.value = ''
+  try {
+    const query = new URLSearchParams({ page: String(targetPage), pageSize: '50' })
+    if (flags.lotNo && fields.lotNo) query.set('lotNo', fields.lotNo)
+    if (flags.waitNo && fields.waitNo) query.set('waitNo', fields.waitNo)
+    if (flags.opNo && fields.opNo) query.set('opNo', fields.opNo)
+    if (flags.customerNo && fields.customerNo) query.set('customerNo', fields.customerNo)
+    if (flags.createDate) { query.set('createFrom', dates.createFrom); query.set('createTo', dates.createTo) }
+    if (flags.releaseDate) { query.set('releaseFrom', dates.releaseFrom); query.set('releaseTo', dates.releaseTo) }
+    const { value, response } = await requestJson<WaitRow[]>(apiUrl('api/wip/wait-basis/waits', query))
+    rows.value = Array.isArray(value) ? value : []
+    const resultPage = setPage(response, targetPage)
+    page.value = resultPage.page; hasMore.value = resultPage.hasMore
+    searched.value = true; selectedWaitNo.value = rows.value[0]?.waitNo || ''
+    message.value = `第 ${page.value} 頁，${rows.value.length} 筆${hasMore.value ? '，還有下一頁。' : '。'}`
+  } catch (cause) {
+    rows.value = []; selectedWaitNo.value = ''; hasMore.value = false; searched.value = true
+    error.value = cause instanceof Error ? cause.message : '等待單查詢失敗。'
+    message.value = '查詢未完成。'
+  } finally { loading.value = false }
+}
+
+async function openInfo(): Promise<void> {
+  if (!selected.value) return
+  infoWaitNo.value = selected.value.waitNo; infoPage.value = 1; infoHasMore.value = false; infoError.value = ''; dispositions.value = []
+  if (!dev.value) await loadInfo(1)
+}
+
+async function loadInfo(targetPage: number): Promise<void> {
+  if (dev.value || !infoWaitNo.value) return
+  infoBusy.value = true; infoError.value = ''
+  try {
+    const query = new URLSearchParams({ page: String(targetPage), pageSize: '100' })
+    const waitNo = encodeURIComponent(infoWaitNo.value)
+    const { value, response } = await requestJson<Disposition[]>(apiUrl(`api/wip/wait-basis/waits/${waitNo}/dispositions`, query))
+    dispositions.value = Array.isArray(value) ? value : []
+    const resultPage = setPage(response, targetPage)
+    infoPage.value = resultPage.page; infoHasMore.value = resultPage.hasMore
+  } catch (cause) {
+    dispositions.value = []; infoHasMore.value = false
+    infoError.value = cause instanceof Error ? cause.message : 'Wait Info 查詢失敗。'
+  } finally { infoBusy.value = false }
+}
+
+function closeInfo(): void { infoWaitNo.value = ''; dispositions.value = []; infoError.value = '' }
 function displayDate(value: string | null): string { return value ? value.replace('T', ' ').slice(0, 19) : '' }
 for (const key of ['lotNo', 'customerNo', 'opNo', 'waitNo'] as const) {
   watch(() => flags[key], checked => { if (!checked) fields[key] = '' })
@@ -142,38 +252,43 @@ function loadPreview(): void {
   load()
 }
 onMounted(() => { if (dev.value) loadPreview(); else clearFormal() })
-watch(dev, enabled => { if (enabled) { message.value = previewMessage; loadPreview() } else clearFormal() })
+watch(dev, enabled => { if (enabled) { message.value = queryMessage; loadPreview() } else clearFormal() })
 </script>
 
 <template>
   <section class="wait-page">
     <h1>等待單資料 <small>WAIT BASIS · WP510</small></h1>
     <p v-if="dev" class="dev-note">DEV 假資料；包含 WP502 已建立的本機等待單。</p>
-    <p v-if="!dev" class="dev-note" role="status">{{ unavailableMessage }}</p>
+    <p v-if="!dev" class="dev-note" role="status">正式模式使用登入保護的 WaitSource=0 唯讀 API；不讀 DEV 假資料。</p>
     <p v-if="error" role="alert" class="error">{{ error }}</p>
     <fieldset class="query"><legend>Query</legend>
       <div class="query-grid">
-        <label class="query-field"><span><input v-model="flags.lotNo" type="checkbox" :disabled="!dev"> Lot No</span><input v-model="fields.lotNo" class="yellow" :disabled="!dev || !flags.lotNo" @keydown.enter.prevent="dev && (query())"></label>
-        <label class="query-field"><span><input v-model="flags.waitNo" type="checkbox" :disabled="!dev"> Wait No</span><input v-model="fields.waitNo" class="yellow" :disabled="!dev || !flags.waitNo" @keydown.enter.prevent="dev && (query())"></label>
-        <label class="query-field"><span><input v-model="flags.opNo" type="checkbox" :disabled="!dev"> OP No</span><input v-model="fields.opNo" class="yellow" :disabled="!dev || !flags.opNo" @keydown.enter.prevent="dev && (query())"><button type="button" :disabled="!dev" @click="dev && (lookup = lookup === 'opNo' ? null : 'opNo')">...</button></label>
-        <label class="query-field"><span><input v-model="flags.customerNo" type="checkbox" :disabled="!dev"> Customer No</span><input v-model="fields.customerNo" class="yellow" :disabled="!dev || !flags.customerNo" @keydown.enter.prevent="dev && (query())"><button type="button" :disabled="!dev" @click="dev && (lookup = lookup === 'customerNo' ? null : 'customerNo')">...</button></label>
-        <label class="query-field date"><span><input v-model="flags.createDate" type="checkbox" :disabled="!dev"> Create Date</span><input v-model="dates.createFrom" type="datetime-local" step="1" :disabled="!dev || !flags.createDate"> To <input v-model="dates.createTo" type="datetime-local" step="1" :disabled="!dev || !flags.createDate"></label>
-        <label class="query-field date"><span><input v-model="flags.releaseDate" type="checkbox" :disabled="!dev"> Release Date</span><input v-model="dates.releaseFrom" type="datetime-local" step="1" :disabled="!dev || !flags.releaseDate"> To <input v-model="dates.releaseTo" type="datetime-local" step="1" :disabled="!dev || !flags.releaseDate"></label>
-        <button type="button" class="button query-button" :disabled="!dev" @click="dev && (query())">Query (Q)</button>
+        <label class="query-field"><span><input v-model="flags.lotNo" type="checkbox" :disabled="loading"> Lot No</span><input v-model="fields.lotNo" class="yellow" :disabled="loading || !flags.lotNo" @keydown.enter.prevent="query(1)"></label>
+        <label class="query-field"><span><input v-model="flags.waitNo" type="checkbox" :disabled="loading"> Wait No</span><input v-model="fields.waitNo" class="yellow" :disabled="loading || !flags.waitNo" @keydown.enter.prevent="query(1)"></label>
+        <label class="query-field"><span><input v-model="flags.opNo" type="checkbox" :disabled="loading"> OP No</span><input v-model="fields.opNo" class="yellow" :disabled="loading || !flags.opNo" @keydown.enter.prevent="query(1)"><button type="button" :disabled="loading" @click="openLookup('opNo')">...</button></label>
+        <label class="query-field"><span><input v-model="flags.customerNo" type="checkbox" :disabled="loading"> Customer No</span><input v-model="fields.customerNo" class="yellow" :disabled="loading || !flags.customerNo" @keydown.enter.prevent="query(1)"><button type="button" :disabled="loading" @click="openLookup('customerNo')">...</button></label>
+        <label class="query-field date"><span><input v-model="flags.createDate" type="checkbox" :disabled="loading"> Create Date</span><input v-model="dates.createFrom" type="datetime-local" step="1" :disabled="loading || !flags.createDate"> To <input v-model="dates.createTo" type="datetime-local" step="1" :disabled="loading || !flags.createDate"></label>
+        <label class="query-field date"><span><input v-model="flags.releaseDate" type="checkbox" :disabled="loading"> Release Date</span><input v-model="dates.releaseFrom" type="datetime-local" step="1" :disabled="loading || !flags.releaseDate"> To <input v-model="dates.releaseTo" type="datetime-local" step="1" :disabled="loading || !flags.releaseDate"></label>
+        <button type="button" class="button query-button" :disabled="loading" @click="query(1)">{{ loading ? '查詢中…' : 'Query (Q)' }}</button>
       </div>
-      <div v-if="lookup" class="lookup"><strong>{{ lookup }} 查找</strong><button v-for="option in lookupOptions" :key="option" type="button" @click="dev && (chooseLookup(option))" :disabled="!dev">{{ option }}</button></div>
+      <div v-if="lookup" class="lookup"><strong>{{ lookup }} 查找</strong>
+        <template v-if="!dev"><input v-model="lookupKeyword" maxlength="100" placeholder="輸入至少一個字元" @keydown.enter.prevent="loadLookup"><button type="button" :disabled="lookupBusy" @click="loadLookup">{{ lookupBusy ? '查找中…' : '查找' }}</button></template>
+        <span v-if="lookupError" role="status">{{ lookupError }}</span>
+        <button v-for="option in lookupOptions" :key="option" type="button" @click="chooseLookup(option)" :disabled="lookupBusy">{{ option }}</button>
+      </div>
     </fieldset>
     <fieldset class="result"><legend>Result</legend>
       <div class="result-body"><div class="grid-wrap"><table><thead><tr><th>Wait No</th><th>Lot No</th><th>Product No</th><th>Lot Serial</th><th>Status</th><th>OPNo</th><th>CustomerNo</th><th>Wait Description</th><th>RuleNo</th><th>CreateQty</th><th>Creator</th><th>Create Date</th><th>Release Qty</th><th>Release UserNo</th><th>Release Date</th></tr></thead><tbody>
-        <tr v-for="row in rows" :key="row.waitNo" :class="{ selected: selectedWaitNo === row.waitNo }" @click="dev && (selectedWaitNo = row.waitNo)" @dblclick="openInfo"><td>{{ row.waitNo }}</td><td>{{ row.lotNo }}</td><td>{{ row.productNo }}</td><td>{{ row.lotSerial }}</td><td>{{ statuses[row.status] || '' }}</td><td>{{ row.opNo }}</td><td>{{ row.customerNo }}</td><td>{{ row.waitDescription }}</td><td>{{ row.ruleNo }}</td><td class="num">{{ row.createQty }}</td><td>{{ row.creator }}</td><td>{{ displayDate(row.createDate) }}</td><td class="num">{{ row.releaseQty ?? '' }}</td><td>{{ row.releaser }}</td><td>{{ displayDate(row.releaseDate) }}</td></tr>
+        <tr v-for="row in rows" :key="row.waitNo" :class="{ selected: selectedWaitNo === row.waitNo }" @click="selectedWaitNo = row.waitNo" @dblclick="openInfo"><td>{{ row.waitNo }}</td><td>{{ row.lotNo }}</td><td>{{ row.productNo || '' }}</td><td>{{ row.lotSerial }}</td><td>{{ statuses[row.status] || '' }}</td><td>{{ row.opNo }}</td><td>{{ row.customerNo || '' }}</td><td>{{ row.waitDescription || '' }}</td><td>{{ row.ruleNo || '' }}</td><td class="num">{{ row.createQty }}</td><td>{{ row.creator }}</td><td>{{ displayDate(row.createDate) }}</td><td class="num">{{ row.releaseQty ?? '' }}</td><td>{{ row.releaser || '' }}</td><td>{{ displayDate(row.releaseDate) }}</td></tr>
         <tr v-if="!rows.length"><td class="empty" colspan="15">{{ searched ? '沒有符合條件的等待單。' : '請先查詢。' }}</td></tr>
-      </tbody></table></div><div class="actions"><button type="button" class="button" :disabled="!dev || (!selected)" @click="dev && (openInfo())">Wait Info</button><button type="button" class="button" @click="emit('close')">Close (X)</button></div></div>
-      <div class="status"><span>UserNo: {{ currentUserNo || (dev ? 'DEV' : '') }}</span><span>{{ message }}</span><span>{{ rows.length }} 筆</span></div>
+      </tbody></table></div><div class="actions"><button type="button" class="button" :disabled="loading || !selected" @click="openInfo">Wait Info</button><button type="button" class="button" @click="emit('close')">Close (X)</button></div></div>
+      <div class="status"><span>UserNo: {{ currentUserNo || (dev ? 'DEV' : '') }}</span><span>{{ error || message }}</span><span>{{ rows.length }} 筆</span><span class="pager"><button type="button" class="button" :disabled="loading || page <= 1" @click="query(page - 1)">上一頁</button><span>第 {{ page }} 頁</span><button type="button" class="button" :disabled="loading || !hasMore" @click="query(page + 1)">下一頁</button></span></div>
     </fieldset>
-    <div v-if="dev && (info)" class="overlay"><div class="dialog" role="dialog" aria-modal="true" aria-label="Wait Information"><h2>Wait Information</h2>
+    <div v-if="info" class="overlay"><div class="dialog" role="dialog" aria-modal="true" aria-label="Wait Information"><h2>Wait Information</h2>
       <fieldset><legend>Wait Basis</legend><label>Lot No<input :value="info.lotNo" readonly :disabled="!dev"></label><label>Wait No<input :value="info.waitNo" readonly :disabled="!dev"></label></fieldset>
-      <div class="grid-wrap info-grid"><table><thead><tr><th>LotDispType</th><th>Description</th><th>Creator</th><th>CreateDate</th><th>OPNo</th><th>ProcessNo</th><th>ProcessVersion</th></tr></thead><tbody><tr v-for="row in infoRows" :key="row.waitNo + row.createDate + row.lotDispType"><td>{{ dispositionTypes[row.lotDispType] || row.lotDispType }}</td><td>{{ row.description }}</td><td>{{ row.creator }}</td><td>{{ displayDate(row.createDate) }}</td><td>{{ row.opNo }}</td><td>{{ row.processNo }}</td><td>{{ row.processVersion }}</td></tr><tr v-if="!infoRows.length"><td class="empty" colspan="7">沒有等待處置明細。</td></tr></tbody></table></div>
-      <div class="dialog-buttons"><button type="button" class="button" @click="dev && (infoWaitNo = '')" :disabled="!dev">Close</button></div>
+      <p v-if="infoError" role="alert" class="error">{{ infoError }}</p><p v-else-if="infoBusy" role="status">載入處置明細中…</p>
+      <div class="grid-wrap info-grid"><table><thead><tr><th>LotDispType</th><th>Description</th><th>Creator</th><th>CreateDate</th><th>OPNo</th><th>ProcessNo</th><th>ProcessVersion</th></tr></thead><tbody><tr v-for="(row,index) in infoRows" :key="`${row.waitNo}-${row.createDate}-${index}`"><td>{{ dispositionTypes[row.lotDispType] || row.lotDispType }}</td><td>{{ row.description || '' }}</td><td>{{ row.creator }}</td><td>{{ displayDate(row.createDate) }}</td><td>{{ row.opNo || '' }}</td><td>{{ row.processNo || '' }}</td><td>{{ row.processVersion || '' }}</td></tr><tr v-if="!infoBusy && !infoRows.length"><td class="empty" colspan="7">{{ infoError ? '無法載入處置明細。' : '沒有等待處置明細。' }}</td></tr></tbody></table></div>
+      <div class="dialog-buttons"><span v-if="!dev" class="pager"><button type="button" class="button" :disabled="infoBusy || infoPage <= 1" @click="loadInfo(infoPage - 1)">上一頁</button><span>第 {{ infoPage }} 頁</span><button type="button" class="button" :disabled="infoBusy || !infoHasMore" @click="loadInfo(infoPage + 1)">下一頁</button></span><button type="button" class="button" @click="closeInfo">Close</button></div>
     </div></div>
   </section>
 </template>
