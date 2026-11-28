@@ -48,3 +48,5 @@
 - app-browser 對月報端點以有效月份查詢時回 HTTP 503，明確指出尚未設定唯一設備故障狀態 EQP Break Down / BreakDown；以錯誤月份查詢回 HTTP 400（要求 yyyy-MM）。沒有新增或修改正式業務資料。
 - 正式 UI 路徑 /YMES/RPT/EqpMttrSummaryByMonth 目前顯示「正式環境尚未開放此功能」。此發行版只交付 API；公司端需在保留 DEV 預覽的前提下接上 Production API，見 todolist_officepc.md。
 - 有效查詢尚不能回傳報表，直到正式復刻庫同步／設定可信且唯一的故障狀態資料；不以測試列或猜測狀態碼繞過此條件。
+
+- 歷史狀態更正：前文的「尚未部署」記錄是 2026-11-28 部署前狀態；API-only 版本已於當日部署，目前狀態以本節 image、healthy 與 ready 的正式驗證為準。資料表與業務資料沒有變更。
