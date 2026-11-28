@@ -2,8 +2,7 @@
 
 ## HOME GitHub sync（2026-11-28）
 
-- [x] 歷史同步檢查點 `32ea6e5` 已被後續 main 更新取代。本次開始工作前，本機 `main` 與本機 `origin/main` tracking ref 對齊於 `a1e3839`，工作樹乾淨。
-- [ ] 本次無法即時驗證 GitHub：`git fetch` 被 `.git/FETCH_HEAD` 寫入權限拒絕，`git ls-remote` 也遇到目前環境的網路 proxy connection refused。RT801 需在 Git metadata／網路可用時正常 commit/push；禁止 force push，若遠端有新提交先整合並保留兩端變更。
+- [x] 本次先 `git fetch origin` 確認工作前本機 `main`／`origin/main` 都在 `a1e3839` 且工作樹乾淨；RT801 提交 `b1cf656` 已普通 push 至 GitHub，`main` 從 `a1e3839` 前進至 `b1cf656`。未 force push。
 
 ## HOME RT801 生產批作業站製程特性值調整記錄 API handoff（2026-11-28）
 
