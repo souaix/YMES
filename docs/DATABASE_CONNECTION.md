@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP207／WP208 共用來源表（0110，2026-11-28）
+
+- 家用端用 PPK／SSH 唯讀盤點 WP208 handoff 列出的 26 張直接依賴表：9 張在所有 schema 都缺少，且有已交付的 MESTEST DDL／CREATE-only reference；其餘 17 張沿用 YMES 現有來源表。依可信 references 建立空表 migration `0110_wip_wp207_wp208_shared_sources.sql`，SHA-256 `142421E1906A073691C6543F306AF3FBF39B6A4FF566BA2112E7AAFFB0717F43`；rollback SHA-256 `CFD094BAE65E53A2437DD87365A563B80AB34303FDEB291703787E99C941287B`。套用前備份 `/opt/ymes/backups/ymes-before-wp207-wp208-0110-20261128.dump`，904,287 bytes，SHA-256 `a6d408c98c9522ba28c91a59d71abfcf7c18533d431e7d6958024826c02cd3ab`，`pg_restore --list` 2,496 entries；owner `postgres:postgres`、mode 600。
+- 新表欄位數：`TBLPRDOPATTRIB` 14、`TBLWIPCOMPONENTPROPERTY` 5、`TBLWIPCOMPONENTSTATE` 34、`TBLWIPCONT_ATTRIB` 6、`TBLWIPCONT_COMPONENTATTRIB` 6、`TBLWIPLOTPROPERTY` 4、`TBLWIPTEMP_ATTRIB` 14、`TBLWIPTEMP_COMPONENTATTRIB` 12、`TBLWIPTEMP_LOTSTATE` 17。來源 PK 對齊；ComponentState 保留來源兩個非唯一索引。來源未定義 PK／index 的 CONT／TEMP tables 維持無鍵無索引，不造唯一鍵。
+- 0110 已在單一 guard／advisory-lock transaction 提交；獨立 catalog 回讀九表均空、無 FK／trigger。`ymes_app` 對九表均無 SELECT／INSERT／UPDATE／DELETE；沒有 YMES schema CREATE。未讀或匯入 Oracle／MES 業務列，也未部署 WP207／WP208 API。
+- WP208 handoff 的依賴表段落標稱 27 張、實際枚舉 26 張；`TBLWIPCONT_COMPONENT` 有既有 CREATE-only reference，但未被枚舉為 Core 直接依賴。家用端未建立它；待公司端從原始 Core 確認是否為漏列的第 27 張，再核 live schema。WP207／WP208 handoff 分別見 [WP207](modules/WIP/分批處理.md)、[WP208](modules/WIP/分批處理_元件.md)。
+
 ## 最新：WIP WP207 六張 Oracle source 表（0109，2026-11-28）
 
 - 家用端先以 PPK／SSH 唯讀檢查所有 schema，確認 `tblemsdispatchstate`、`tblwipautomerge`、`tblwipcont_employee`、`tblwiplotopecnrecord`、`tblwiposbasis`、`tblwiposdetail` 均不存在；只依 MESTEST source DDL／metadata 建立六張 YMES 空表，migration `0109_wip_wp207_split_source.sql` SHA-256 `8529437E2C27F00C69BA0280286C94B6BF01F7CAA7E7438CCD930406A4015097`，rollback SHA-256 `9A3C658A6C5CAC5F1377F5F08F206218478C8BA0234CBA91605518D9CEEB4735`。套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-wp207-0109-20261128.dump`，894,281 bytes，SHA-256 `83076aaaec704e53d88bd4cc069d135cb1b99f172c7b40a2cabf48e185ef33e1`，`pg_restore --list` 2,470 entries；備份 owner `postgres:postgres`、mode 600。

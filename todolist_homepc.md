@@ -4457,6 +4457,7 @@ API 工作：
 - [x] Pull 最新 `main`，閱讀 [WP207 規格](docs/modules/WIP/分批處理.md)、公司端 `web/src/components/WipLotSplit.vue` 與 `docs/DATABASE_CONNECTION.md` WP207 段落；DEV localStorage 不視為正式過帳。
 - [x] 讀取六張表的 Oracle source DDL、index DDL、metadata 與 PostgreSQL CREATE-only：`database/reference/mestest_wip_wp207_source_ddl.sql`、`mestest_wip_wp207_source_indexes.sql`、`mestest_wip_wp207_metadata.txt`、`mestest_wip_wp207_create.sql`。Lot/Process/Product/Temp/Inventory/Matrix 共用結構沿用 WP101／WP201 與主檔 references，沒有重複建表。
 - [x] 以正式 PostgreSQL live catalog 確認六張 WP207 表原先在所有 schema 都不存在；完成 0109 forward migration、備份及 post-catalog 核對。欄位數 3／3／12／9／23／14、PK/index 與 source 對齊，Employee 表維持無 PK／unique；六表目前全空、無 FK／trigger，`ymes_app` 沒有六表 DML 權限。核對與備份資訊見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 追加對照 WP207/WP208 Core references 和正式 catalog，發現九張共享來源表也確實缺少；已用 0110 建立空表並回讀結構、空表及 ACL。備份與 migration checksum 見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)；未授予新表 app 權限。
 - [ ] 實作登入保護的指定 Lot 查詢，要求原 WinForms Status `0|1|4|5`、HaveComponent=0、LotState=1、非 Partial/Stocker、無 GoodBinState、未包裝及使用者可見範圍；查產品／流程節點／單位換算／是否可顯示 Electricbox 的 API。路由和產品候選應由 server 依批次、權限與系統參數提供，不能沿用 Vue 固定選項。
 - [ ] 實作分批 POST command，使用 LotNo、LotStamp、IncludeMother、各列 LotQty／SysQty／SAP_PRDQTY／SAP_PCSQTY／Action／NodeID／Product／Version／UnitNo。Server 在交易內重驗正數、四組合計、ReturnType、包裝／GoodBin／委外守門、LotStamp、產品與流程有效性；按來源 `GetSplitLotNo_Multiple` 語意原子保留子批號，拒絕舊預覽號與重複提交。BR／WIP Inventory 宿主模式須由可信內部上下文區分，不接受瀏覽器任意指定。
 - [ ] 以 `BR_Manual_LotSplit` 的 Lot/Temp、報工、屬性、流程、庫存、歷程、委外、派工等多表變更為規格，追查 Core helper 的額外共享表。標準拆批成功後 Form 另呼叫 THEIL `UPD_SplitLot` 寫 `TBLWIPLOTBASIS.SAP_PRDQTY/SAP_PCSQTY`、`TBLWIPLOTPROPERTY.WIP_BIGQTY`、`XX_TBLLOTMARITX_THEIL_BU1`；正式端要同一原子交易，或明確可恢復且冪等的二階段流程。失敗回應需區分標準拆批未提交與客製更新失敗，避免重複拆批。
@@ -4465,9 +4466,10 @@ API 工作：
 
 ## WIP WP208 分批處理_元件家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP208 規格](docs/modules/WIP/分批處理_元件.md)、[WP207 共用拆批規格](docs/modules/WIP/分批處理.md) 與 `docs/DATABASE_CONNECTION.md` WP208 段落。公司端 UI 是 `web/src/components/WipLotSplitComponent.vue`，只有 DEV 假資料。
-- [ ] WP208 的 `TBLSYSPARAMETER` 原先缺 SQL reference；公司端已從 MESTEST 唯讀取得 `database/reference/mestest_wip_wp208_source_ddl.sql`、`mestest_wip_wp208_source_indexes.sql`、`mestest_wip_wp208_metadata.txt`，並提供 `mestest_wip_wp208_create.sql`。Oracle 原表 25 欄，PK `PARAMETERNO`，無 FK／trigger／其他 index。先核對 YMES live schema/migration history；這是共用參數表，已有就不重建，只為真正缺口做 forward migration，不用 CREATE-only 重播。
-- [ ] 其餘 26 張直接依賴表沿用已交付 reference：`TBLINVWIPINVENTORY_COMPONENT` 用 WP603；`TBLWIPCOMPONENTSTATE` 用 WP101；ComponentProperty／Cont／Temp ComponentAttrib／Temp Equipment 用 WP201；`TBLWIPCONT_EQUIPMENT` 用 WP305；派工／AutoMerge／Cont Employee／Lot OP ECN／OS 六表用 WP207；其他 Lot／Product／Process／System 用既有主檔與 WP201。不要重複建表或自創無來源 PK。
+- [x] Pull 最新 `main`，閱讀 [WP208 規格](docs/modules/WIP/分批處理_元件.md)、[WP207 共用拆批規格](docs/modules/WIP/分批處理.md) 與資料庫交接。公司端 `web/src/components/WipLotSplitComponent.vue` 僅 DEV 假資料。
+- [x] 檢查公司端提供的 `TBLSYSPARAMETER` MESTEST DDL、metadata 與 CREATE-only。正式 YMES 已有 25 欄、`PARAMETERNO` PK、來源 default 對齊；`ymes_app` 僅 SELECT，不重建共用參數表。
+- [x] 以正式 PostgreSQL catalog 核對 WP208 handoff 列出的 26 張直接依賴表；9 張原先在所有 schema 均缺少，完成 0110 空表 migration 與備份／live 回讀。未讀／匯入業務資料，九表無 FK／trigger，未授予 `ymes_app` 新表權限。詳細結果見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [ ] 原文稱 27 張、但列表只有 26 個名稱；`TBLWIPCONT_COMPONENT` 在正式 YMES 缺少且有來源 reference，請公司端核對它是否為 Core 漏列的直接依賴，未確認前家用端不建表。
 - [ ] 建登入保護的指定 Lot 與 Component 查詢，限制 Status、HaveComponent、LotState、非 Partial／Stocker、載具／庫存範圍與使用者權限；產品和路由 lookup 依真實 `AllowLotProductChange`、ECN／流程設定回傳。WIP Inventory／BR 宿主模式只由可信 server 上下文設定。
 - [ ] 實作拆批 POST command：在交易內重讀／鎖定 LotStamp、ComponentState、Inventory 和序號，驗證每列數量、元件完整／唯一分配、未被其他子批／庫房占用、Action／ReturnType／NodeID、產品／路由；產生並保留批號，執行 `BR_Manual_LotSplit_Component` 對應的 Lot、Component、Temp、報工、庫存、派工及歷程副作用。不要信任 DEV 預覽號、localStorage 或瀏覽器提交的 SplitType=1。
 - [ ] 逐層追查 Core helper 對其他表的讀寫，並處理 BR 模式成功後 TransferLot、SEMI_Wafer `S_BatchID`／`LC_CI` 的後續轉站。若不能與拆批同一交易，提供可觀察且冪等的第二階段，避免已拆成功後重按 Confirm。WP208 不呼叫 WP207 的 THEIL `UPD_SplitLot`，不可把兩者誤併成同一輸入／SAP 規格。
