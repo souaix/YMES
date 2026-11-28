@@ -1,5 +1,12 @@
 # 部署設定檔
 
+## 家用端 WP303／WP304 API-only release a1（2026-11-28）
+
+- 來源 commit `147f83a2177319d1adc69835850d50e777ce90f8`；release 封裝 SHA-256 `98EC090D5CA961319B8C44E47CC857AE3A734175E3285F2FF45C0B7C24A84C50`，`YMes.Api.dll` SHA-256 `ACEE4F2B3B44C06B93B7E4591387437F78F3F0F31A273B6075594B996F601A7C`。
+- 正式 `ymes-api:current` image `sha256:60212b445a6d0043d20b9a51a65d3990290067a413322f7676ad769b4abb9305`；回復 tag `ymes-api:before-wp303-wp304-api-20261128-a1` 指向 `sha256:ef6c55545894a2ae7d9c96adf5e16e3ba61f5bca39246da2bdcba35975b1cc51`。此次僅替換 `ymes-api`，未重建 Web、master Web 或其他專案容器。
+- Readiness 200、匿名 API 401、正式容器 healthy。app-browser 驗證 WP303 status／equipment lookup、WP304 日期查詢、WP306 日期查詢均回 `[]`；WP307 合成不存在 AreaNo 的 filter-options 回 404。沒有正式測試資料，因此未宣稱有資料 CRUD／點檢／人員操作已驗收。WP303／WP304／WP306／WP307 Production UI 由公司端待辦接線。
+- 部署前正式 DB 備份、0104 migration checksum、最小 ACL、root 磁碟 journal 空間處理與完整影像雜湊見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+
 ## 家用端 WP803 結案 API a2 發布（2026-11-27；API-only）
 
 - 來源基底 `b64c95f`，加入 WP803 結案 Controller／Repository、0088 schema migrations 及 D1 成員驗證；本機 `.NET 9` Release build 成功。NuGet 弱點資料來源連線警告 `NU1900` 不影響編譯。

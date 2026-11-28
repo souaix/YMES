@@ -16,8 +16,10 @@
 
 - [x] 完成登入保護的清單／設備與耗品 lookup、新增、CAS 編輯、原子多選刪除及 ConsumReset API；Reset 以單一交易、列鎖和 expected-value CAS 更新 Status／Log，並以 advisory lock 保護 ConsumeNo 範圍的歷程序號唯一檢查。DTO、路由及來源差異見 [WP303 模組文件](docs/modules/WIP/設備耗品現況.md)。
 - [x] `.NET 9` API build 通過；在隔離 PostgreSQL QA database 套用 0101／0102／0104，以合成 fixture 經 app-browser 呼叫實際 API，完成新增競態、驗證、CAS、Reset／Log、交易 rollback、序號重複、上限歸零、分頁與 atomic delete 驗收；12 組驗收全通過。隔離 DB／role 已刪除，未觸及正式 `ymes`。
-- [ ] 0104 migration 尚未套用正式庫，`ymes_app` 的 Status 權限維持零；正式 API 尚未部署，Production UI 保持 disabled。主機曾因 `/var/log/journal` 佔 1.8 GiB 而 100% 滿載；只輪替／縮減舊 archived journal 釋放 1.1 GiB，現約 1.6 GiB 可用，未刪其他專案／rollback images。部署前仍須重查空間。
-- [ ] 公司端依 [WP303 handoff](todolist_officepc.md) 將 Production UI 接上 writer API，同時保留 DEV mock。合併前核對 DTO／衝突回應；部署、正式權限核對及正式站 app-browser 驗收仍未完成。
+- [x] 0104 已在正式庫套用；套用前備份 checksum、migration hash 及 ACL 回讀詳見 `docs/DATABASE_CONNECTION.md`。正式表維持 0 列。
+- [x] API-only release `wp303-wp304-api-20261128-a1` 已部署，只更新 `ymes-api`；readiness=200、未登入 401、Demo session app-browser 現況與設備 lookup 均回空陣列。其他 Web／master Web／yakuyama 容器未動；正式 writer 操作不造測試列。
+- [x] 主機根磁碟曾 100%：僅輪替／縮減舊 archived journal 釋放 1.1 GiB，並設 journald `SystemMaxUse=1G`／`SystemKeepFree=2G`；部署後約 1.6 GiB 可用，沒有刪其他專案 images／容器或 rollback releases。
+- [ ] 公司端依 [WP303 handoff](todolist_officepc.md) 將 Production UI 接上 writer API，同時保留 DEV mock；核對 DTO／409 衝突／載入與錯誤顯示。Production 頁仍 disabled，設備 lookup 無 IssueState=2 候選，正式 CRUD 尚不能以實際 UI／設備資料正向驗收。
 
 ## HOME WIP WP304 設備耗品歷程 API／schema（2026-11-28）
 
@@ -26,8 +28,8 @@
 - [x] 三張新表皆 0 列；欄位與 PK 對齊 MES source。`ymes_app` 僅 SELECT Log、Consumable Basis、既有 Equipment Basis；Status 不授權，Log／Basis 不授 DML。以 READ ONLY `EXPLAIN` 確認 equipment、consumable、精確設備與日期查詢索引可用，未讀現有設備業務列。
 - [x] 完成登入保護唯讀 API：`GET /api/wip/equipment-consume-status-logs`、`/lookups/equipment`、`/lookups/consumables`。條件防護、台北日期含界、RepeatableRead／READ ONLY、固定排序、每頁上限與 header 規格記於 [WP304 模組 MD](docs/modules/WIP/設備耗品歷程.md)。
 - [x] `.NET 9` API build 0 error（NU1900 為 NuGet 弱點資料源無法連線）。本機 DEV app-browser 驗設備／耗品查找、精確條件、日期範圍、無條件／反向日期提示、空結果及 Close；使用 localStorage 假資料，未呼叫新 API／正式資料庫。
-- [ ] API 與 Web 尚未部署；Production 頁仍 disabled。正式 API 尚無細粒度 FunctionKey claim，僅一般登入保護；部署前重查磁碟容量，不能清除其他專案或回滾檔案騰空間。正式 log／consume-basis 同步表目前空白，故不得以正式假列做正向驗收。
-- [ ] 公司端依 [WP304 handoff](todolist_officepc.md) 接上三支 GET、分頁 headers、載入／空結果／400／401／503 顯示與 DEV mock。WP303 現況 CRUD／Reset 交易 API 尚未完成，狀態表保持無權限。
+- [x] WP304 API 已隨 `wp303-wp304-api-20261128-a1` 部署於 `ymes-api`；readiness 200。正式頁仍 disabled、Log／Consume Basis 空白，沒有製作正式假列。
+- [ ] 公司端依 [WP304 handoff](todolist_officepc.md) 接三支 GET、分頁 headers 與載入／空結果／400／401／503 狀態，保留 DEV mock。等待正式同步資料再做真實設備／歷程正向查詢；不以假列驗證正式服務。
 
 ## HOME WIP WP307 區域作業人員唯讀 API 與 schema（2026-11-27）
 
@@ -36,8 +38,8 @@
 - [x] 0099 新增兩個 YMES 專用非唯一讀取索引，分別支援 Current area/login-time 與 History area/logout-time 查詢；明確不宣稱是 Oracle source index、不新增唯一鍵。0099 前備份 `/opt/ymes/backups/ymes-before-wp307-0099-20261127.dump`，860,609 bytes、SHA-256 `89fb3d04677b24c8c6b0225fe69ff90a137997acbe1f1c9f334a5a991b76691a`，`pg_restore --list` 2,374 entries。
 - [x] 完成登入保護、參數化唯讀 `GET /api/wip/areas/{areaNo}/operators/eligible`、`filter-options`、`current`、`history`。使用 RepeatableRead／READ ONLY；跨午夜班別以台北時間比對；current 延續來源嚴格 `>`／`<`，history API 使用起始含界、結束不含界；current/history 最多每頁 100 筆，回傳原始陣列並帶 `X-Page`、`X-Page-Size`、`X-Has-More`。完整 contract 見 [WP307 模組紀錄](docs/modules/WIP/設備狀態監控_區域.md)。
 - [x] `.NET 9` API build 0 error；唯一 warning 為 NuGet vulnerability feed 離線 `NU1900`。以 `ymes_app` READ ONLY 執行必要 SQL `PREPARE`／`EXPLAIN`；兩張新增 WIP 表仍 0 列，未執行 `ANALYZE`、未讀既有業務資料、未新增或修改人員紀錄。
-- [x] app-browser 開啟正式 `/YMES/` 並確認主選單及 KD 標誌正常載入、WIP menu 預設收合；WP307 Production route/API 尚未部署，因此本次沒有宣稱其正式頁面或人員操作已驗收。
-- [ ] Production Web/API 尚未部署；家用主機根磁碟仍 100%，約 409 MiB 可用，不清除其他專案／回滾檔案。正式 WP307 畫面維持 disabled guard。
+- [x] WP307 的 filter-options API 已隨 API-only image 部署；Demo session 對合成不存在 AreaNo 的唯讀查詢回 404「找不到已核准的區域」，證明 route 可達且未讀取人員資料。正式 UI 尚待公司端接線。
+- [x] 遠端根磁碟空間已處理：只縮減 archived journal，並設定 journald 上限；沒有刪除其他專案容器、images 或回滾檔案。正式 WP307 畫面仍維持 disabled guard。
 - [ ] Auth 沒有可供此功能使用的 IMESTECH enterprise claim／WP307 Function ACL，新增的查詢 API 僅有登入保護；POST Login/Logout 尚未實作或授予 DML 權限。先完成可信功能／企業別 gate 與寫入交易驗證，再開放或部署 WP307 操作。
 - [ ] 公司端 pull 後按 [公司端 WP307 handoff](todolist_officepc.md) 接唯讀頁面、分頁 header 與錯誤回應；正式同步有效 Area／Shift／User 資料後再用 app-browser 驗證正向查詢。不要在正式復刻庫建立人員或登入測試列。
 
@@ -47,8 +49,8 @@
 - [x] live catalog 回讀 19 欄 Header／QCListSerial PK、20 欄 Detail／QCListSerial+QCItem PK；兩表 0 列，`ymes_app` 僅 SELECT，沒有 INSERT／UPDATE／DELETE。以 READ ONLY `EXPLAIN` 確認 EquipmentNo／日期支援索引及 Detail 複合 PK 路徑。
 - [x] 完成登入保護唯讀 `GET /api/wip/equipment-qc-list-logs` 與 `GET /api/wip/equipment-qc-list-logs/{qcListSerial}/details`；以參數化查詢、RepeatableRead／READ ONLY、固定台北時間含界日期、條件防護、最多每頁 100、Header Serial 升冪排序及分頁 headers。規格與 migration／權限細節見 [WP306 模組紀錄](docs/modules/WIP/設備點檢歷程.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [x] `.NET 9` API build 0 error；NU1900 來自 NuGet vulnerability feed 無法連線。2026-11-28 本機隔離 DEV app-browser 驗設備選擇、EquipmentNo／日期篩選、反向日期防呆、NG Header 明細與 Close；使用 WP305 共用 localStorage 範例，未呼叫 WP306 API 或改正式資料。
-- [ ] Production Web/API 尚未部署，遠端根 filesystem 滿載；正式站 WP306 頁面及 API 尚未驗收。FunctionKey／廠區細粒度授權尚無可信 claim。部署後再補正式端點查詢／空結果／錯誤／分頁驗收；不建立正式假 Header／Detail。
-- [ ] 公司端依 [WP306 UI handoff](todolist_officepc.md) 接 Header／Detail 唯讀 API、分頁與錯誤狀態，保留 DEV mock；WP305 正式寫入尚未就緒，Production Edit 維持停用。
+- [x] WP306 API 已隨 `wp303-wp304-api-20261128-a1` image 部署；Demo session 以完整日期區間查詢正式 API 回 `[]`。正式 Header／Detail 表沒有點檢資料，因此沒有建立假資料做正向操作驗收。
+- [ ] 公司端依 [WP306 UI handoff](todolist_officepc.md) 接 Header／Detail API、分頁與錯誤狀態，保留 DEV mock；WP305 正式寫入尚未就緒，Production Edit 維持停用。
 
 ## HOME最新 WP109 DEV 表單修正與 app-browser 驗收（2026-11-28）
 
@@ -4385,10 +4387,10 @@ API 工作：
 - [x] live schema 已核對，依來源執行 0101 建立 Status／Log 空表、0102 建立 Consume Basis 空表；詳見本清單前面的 HOME WP304 進度。沒有覆蓋既有物件或匯入業務資料。
 - [x] 完成登入保護列表、IssueState=2 設備與設備類別耗品查找，新增、編輯、原子多選刪除及 ConsumReset API；整體 contract 和來源差異記於 [WP303 模組 MD](docs/modules/WIP/設備耗品現況.md)。
 - [x] Reset 使用單一交易、列鎖與 expected-value CAS；採 ConsumeNo 範圍 advisory lock 防止兩設備同時重用歷程序號，不新增 Oracle 未定義的唯一約束。編輯依來源不更新 Revisor／ReviseDate；多選刪除選定 atomic 全成或全回滾策略。
-- [x] Status `ymes_app` 正式權限仍為零；0104 最小權限 migration 已在隔離 PostgreSQL 套用並完成 CRUD／rollback／併發／CAS 驗收，測試 DB 與 role 已移除。正式庫尚未 apply；不得在正式表建測試列。
-- [ ] `.NET 9` build 與隔離 API/app-browser 流程驗收通過；正式 API 尚未部署、公司端尚未接線，WP303 正式 UI 保持 disabled。遠端主機根磁碟曾 100% 使用，部署前重查容量；正式端部署後再用 app-browser 驗證。
+- [x] 0104 最小權限 migration 已套用正式庫：Status CRUD、Log SELECT／INSERT；Log UPDATE／DELETE 與 Basis DML 未授予。套用前備份與 ACL 回讀詳見 `docs/DATABASE_CONNECTION.md`。
+- [x] `.NET 9` build 與隔離 API/app-browser 流程驗收通過；正式 API 已部署，Demo session 正式現況清單與設備 lookup 均回 `[]`，未建立正式測試列。
 - [ ] 保留並評估來源的重置邊界瑕疵：Period=-1 代表不限；RemainPeriod 不足顯示時用 ToleranceQty（疑似應為 TolerancePeriod）；達用量／週期上限時 Reset 視窗會把 AccQty／AccPeriod 輸入清為 0。若修正，記為產品規則變更並取得辦公室確認。
-- [ ] API 目前只有一般登入保護，正式部署前仍需和公司端確認 UI request DTO 對齊；FunctionKey claim 不可臆造。Status 未授權前正式按鈕保持 disabled。
+- [ ] Production API 目前只有一般登入保護，沒有可信 FunctionKey／企業 claim；公司端接 UI 時需對齊 request DTO，正式頁維持 disabled guard，直到公司端完成接線並核對錯誤狀態。
 
 ## WIP WP304 設備耗品歷程家用端 handoff（2026-11-20）
 
@@ -4398,7 +4400,8 @@ API 工作：
 - [x] 為避免無界讀取，API 需要 EquipmentNo／ConsumeNo 其中一個或完整日期區間，最多回傳 100 筆／頁；將條件要求記錄為相對 WinForms 的明確安全／效能調整。
 - [x] 完成 Equipment IssueState=2／非 Chamber 與全 Equipment Type Consume Basis lookup；支援 keyword 與有上限分頁；Log DTO 含 EquipmentNo、ConsumeNo、ConsumeSeq、AccQty、AccPeriod、Creator、CreateDate。
 - [x] DEV 仍使用 WP303 共用假 log localStorage；Production 不讀 fixture。家用端 app-browser 僅以本機 DEV fixture 驗收，未連正式資料或寫入正式資料。
-- [ ] WP304 API 尚未部署；公司端先依 [WP304 handoff](todolist_officepc.md) 接 Production API 與分頁／錯誤狀態。待正式服務部署與同步資料可用後再驗收正式端點；WP303 writer 另行完成。
+- [x] WP304 API 已部署；正式 app-browser 以完整台北日期區間查詢回 `[]`，Log／Consume Basis 沒有正式資料，未建立測試列。
+- [ ] 公司端依 [WP304 handoff](todolist_officepc.md) 接 Production API 與分頁／錯誤狀態；待正式同步資料可用後再做正向查詢。
 
 ## WIP WP305 設備線上點檢家用端 handoff（2026-11-20）
 
