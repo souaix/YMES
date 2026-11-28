@@ -13,6 +13,14 @@
 - [ ] 家用端先核 live schema／migration；取得可信 DDL 後才確認 keys／型別／default／indexes 並實作安全 API。不得直接把 DEV 假資料或本文建議當 schema。公司端未連 PostgreSQL、未做正式 API/schema、未 build／test／browser。
 - [ ] WIP 仍維持全案優先；WPI05 Form／Service／Core 尚缺且沒有其他待補 WIP 選單功能可核對時，依清冊繼續下一個可用來源功能；新出現 WIP 來源即插隊。
 
+## 公司端目前交接：RPT RT905 指標樹查詢（2026-11-28）
+
+- [x] 核對 `frmKPITreeQuery`／inline Designer、`frmShowTreeQuery`、`wsRPT` detail／tolerance／log Service、`clsRPTBasis` 及 `wsReportEngine.LoadScriptConditionData` 呼叫；完成 `/YMES/RPT/KpiTreeQuery` DEV 凍結樹清單、唯讀樹圖、假實績／容忍值顯示、KPI 詳情、CSV 匯出與本機假 log。[RT905 規格與家用端 handoff](modules/RPT/指標樹查詢_RT905.md)
+- [x] 記錄舊程式只在 client side 篩 `FreezeState=0`；Core detail 查詢接受 KPIType 但未用，Tolerance Service 未解析 KPINo；EKB log 日期比較是 Start／End 嚴格排除，無排序／分頁／必要條件限制。`tblEKBBasis`、`tblEKBDetail`、`tblEKBKPIDetail`、`tblEKBLimiteDetail`、`tblEKBKPILog` 可信 Oracle DDL／metadata 未在 repo，桌機 protected profile 不存在。
+- [x] DEV 使用固定假實績，未執行 ActualValueScript、未呼叫 Report Engine／RT_Script／`wsRPT.AddEKBKPILog`，未連 Oracle／PostgreSQL；CSV 取代原 XLSX 是明確預覽簡化。公司端未做正式 API/schema、未 build／test／browser。
+- [ ] 家用端先核 live schema／權限及可信 DDL，再規劃 server-side FreezeState=0 篩選、受限 KPI detail／tolerance 查詢、有界分頁及安全的實績執行／log writer。不可接受 browser 傳來的任意 SQL 或身份／時間欄位。
+- [ ] WIP 仍優先；WPI05 原始來源缺失期間，若無新可核對 WIP 項目，接續下一個可用清冊來源功能。
+
 ## 公司端目前交接：RPT RT607 預計完工查詢（2026-11-27）
 
 - [x] 已核對 inline frmPlanFinishTime_byLot／Designer、wsWIP.LoadPlanFinishTime_byLot、clsLot.LoadPlanFinishTime_byLot／LoadRunCardData；完成 /YMES/RPT/PlanFinishTimeByLot DEV 假資料 Lot 查詢、Lot header、九欄 Run Card 與累計估時。[RT607 規格與家用端 API handoff](modules/RPT/預計完工查詢_RT607.md)

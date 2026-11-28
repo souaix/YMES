@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## 2026-11-28 RT905 指標樹查詢公司端交接
+
+- [x] 依 `frmKPITreeQuery`／inline Designer、`frmShowTreeQuery`、`wsRPT` query／tolerance／log、`clsRPTBasis` 和 Report Engine 呼叫完成 `/YMES/RPT/KpiTreeQuery` DEV 假資料查詢、FreezeState=0 清單、唯讀樹圖、容忍值著色、KPI detail、CSV 匯出及本頁 log 模擬。
+- [x] 更新 [RT905 規格與家用端 handoff](docs/modules/RPT/指標樹查詢_RT905.md)、[索引](docs/MODULE_REPLICATION_SPEC_INDEX.md) 與 [桌電交接](docs/CODEX_HANDOFF_OFFICEPC.md)。ActualValueScript 未執行，DEV log 未呼叫 `wsRPT.AddEKBKPILog`；CSV 是 XLSX 的預覽簡化。五張直接表的 Oracle source DDL／metadata 未在 repo，桌機 protected Oracle profile 不存在。
+- [x] 記錄 Core detail 查詢 KPIType 參數未套用、Tolerance Service 未解析 KPINo；FreezeState 在舊 Form client-side 篩選；KPI log 查詢日期使用 `>`／`<` 且無排序／分頁／必要查詢條件限制。
+- [ ] 家用端先核 live schema／權限；依可信 DDL 實作限 FreezeState=0 的必要條件查詢、穩定排序／paging，以及不可由 browser 任選任意 SQL 的 Report Engine／log API。RT905 未新增任何 schema／正式 API。
+- [ ] WIP 維持優先；WPI05 是目前缺少原始 Form／Service／Core 的唯一 WIP 選單項，若期間仍沒有可核對 WIP 來源，接續下一個可做選單功能。
+
 ## 2026-11-28 RT904 指標樹基本資料設定公司端交接
 
 - [x] 依 `frmKPITreeBasis`／Designer、Basis Def／Draw、KPI／Description Def、Report lookup、`wsRPT`、`clsRPTBasis`、`clsBasis_UPD` 完成 `/YMES/RPT/KpiTreeBasis` DEV 假資料與互動；主檔查詢、Add／Edit／Copy／Delete、Freeze／Unfreeze、樹節點與 KPI／容忍值／說明控制項皆只在本頁記憶體模擬。

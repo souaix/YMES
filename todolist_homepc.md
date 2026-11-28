@@ -16,6 +16,14 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## HOME RT905 指標樹查詢 handoff（2026-11-28）
+
+- [ ] 先核正式 catalog／migration 與最小權限：basis、EKB detail、KPI detail、容忍值、`tblEKBKPILog`。公司端未取得可信 Oracle DDL／metadata；缺表時不得照 DEV fixtures 建表或猜 columns／keys。
+- [ ] 清單 API 由 server 限制 `FreezeState=0`，KPITreeNo／Name 參數化模糊查詢；至少一個條件或嚴格 row cap，穩定排序與 paging。樹圖 detail 只接受指定 KPITreeNo，分別載入 node XML、KPI detail、容忍值。
+- [ ] 實績計算只可從已核實的 server-side Report Engine／受限公式服務取得單筆 numeric result；不要接受 browser 傳入 ActualValueScript、SQL、datasource 或 connection。核清 KPIType／Description node join 與 Script 失敗／無資料語意。
+- [ ] Log query 至少要求樹名或完整有效日期區間，分頁、固定排序、限制日期跨度與結果數；如需和 legacy 一致，Start／End 都是嚴格不含界。log writer 使用 server identity／DB 時間，單一交易寫入整次 KPI 結果，回報逐筆狀態；先核對 `ymes_app` 權限，不照抄無界 `AddEKBKPILog` writer。
+- [ ] 家用端 API／schema 未由公司端完成；詳細源碼行為、日期條件與未知事項見 [RT905 規格](docs/modules/RPT/指標樹查詢_RT905.md)。
+
 ## HOME RT904 指標樹基本資料設定 handoff（2026-11-28）
 
 - [ ] 先比對正式 YMES PostgreSQL catalog／既有 migrations 中 `tblEKBBasis`、`tblEKBDetail`、`tblEKBKPIDetail`、`tblEKBLimiteDetail`、`tblEKBReportMarketIndex`；公司端未取得可信 Oracle source DDL／metadata，不能照 DEV 假資料或猜測欄位建表。缺表時先記錄 live 缺項及所需可信 DDL，再決定是否可做安全唯讀 API。
