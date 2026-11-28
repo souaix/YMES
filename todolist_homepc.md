@@ -4537,8 +4537,8 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## WIP WP215 元件分片處理家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP215 規格](docs/modules/WIP/元件分片處理.md) 與 `docs/DATABASE_CONNECTION.md` WP215 段落。Vue `web/src/components/WipComponentSplit.vue` 僅供 DEV 假資料；正式環境不得讀 `ymes-dev-mock:wip-component-split:state:v1` 或以 A–Z fixture 編號正式過帳。
-- [ ] 核 YMES PostgreSQL live schema／migration history。公司端 Oracle MESTEST 唯讀取得 `TBLWIPCOMPONENTBASIS` 32 欄、PK ComponentNo 與 `TBLWIPREVERSEHISTORY` 11 欄、PK LotNo+ReverseId 及 LotSerial 非唯一 index；source DDL、index DDL、metadata、PG CREATE-only 在 `database/reference/mestest_wip_wp215_*`。若 live 表不存在才建 forward migration；ComponentBasis 在 Core 為存在才繼承的選用分支。另 12 張直接表已有 refs，helper 的間接表與客製欄位另查。
+- [x] Pull 最新 `main`，閱讀 [WP215 規格](docs/modules/WIP/元件分片處理.md) 與 `docs/DATABASE_CONNECTION.md` WP215 段落。Vue `web/src/components/WipComponentSplit.vue` 僅供 DEV 假資料；正式環境不得讀 `ymes-dev-mock:wip-component-split:state:v1` 或以 A–Z fixture 編號正式過帳。
+- [x] 核 YMES PostgreSQL live schema／migration history：14 張直接表中 12 張原已存在，`TBLWIPREVERSEHISTORY` 為 11 欄並有 `(LOTNO, REVERSEID)` 主鍵及 `LOTSERIAL` 非唯一索引；僅 `TBLWIPCOMPONENTBASIS`、`TBLWIPCONT_COMPONENT` 缺少。已用 0114 按 MESTEST／WP201 CREATE-only 建兩張空表；ComponentBasis 32 欄／PK ComponentNo，Cont_Component 27 欄。Forward、rollback 都以交易回滾方式 dry-run；正式表目前 0 列，未授予 `ymes_app` 權限。原生記載 Cont_Component 有 3 個非唯一索引，但未交索引欄位／DDL，尚未猜建，已列公司待辦。
 - [ ] 提供登入保護的可執行 Lot／ComponentState、GoodQty／ScrapQty、LotStamp、CarrierState／Detail 與編號預覽查詢。原 Form Lot 候選 Status=0/1/4/5、HaveComponent=1、LotState=1；有載具拒絕。`CarrierNo` 雖在 Form DataTable/Service，Grid 隱藏且 Core 新元件上載具 SQL 已註解，正式先維持無載具分片。
 - [ ] 交易式 POST 鎖定 Lot／來源元件／編號命名空間，重讀 LotStamp、元件歸屬、GoodQty／ScrapQty、載具現況；server 產生或原子保留 2–26 個唯一新元件號，逐列驗證非負／非全零、精度／長度，兩種數量合計各自完全等於來源。原 `EXE_SplitComponent` Core 沒有重新算數量守恆，Service 也只有三個欄位同時缺時才報缺欄；不可只靠 Form。分片成功後來源消失，新元件及 Lot CurQty／LotStamp 更新，重試須冪等。
 - [ ] 同交易繼承 ComponentState／Property／選用 Basis、站中 Temp/Cont ComponentAttrib 與 Cont Component、SEMI_WAFER／LED_PKG TestSummary、LotState／Temp_LotState、Carrier DetailLog（若部署允許）及 ReverseHistory CommitState；失敗整體回滾。正式 API、PostgreSQL migration、部署及驗收由家用端執行；公司端未連 PG、未建正式 API/migration、未執行 build/test/browser。

@@ -1558,3 +1558,10 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 - PPK／SSH 只讀查正式 PostgreSQL catalog，確認 `tblrpteqpoeesummary` 與 `tblrpteqpoeelot` 在所有 schema 均不存在；未讀 OEE 業務資料列。
 - repo 沒有兩表可信 Oracle DDL／metadata 或 PostgreSQL CREATE-only；亦未確認 MESAutoRun 是否在 YMES 執行及其同步頻率。未建表／migration；需公司端提供 schema 與 production summary 同步來源後再設計唯讀 API。詳 [RT416 規格](modules/RPT/整體設備效率OEE_RT416.md) 與 [公司端待辦](../todolist_officepc.md)。
+
+### 更新 2026-11-28：WIP WP215 Component Source schema
+
+- 家用端以 PPK／SSH 唯讀核對正式 PostgreSQL 14.24 的 `"YMES"` schema。WP215 14 張直接相依表中 12 張已存在；`tblwipcomponentbasis` 與 `tblwipcont_component` 在 YMES 及其他使用者 schema 均不存在。沒有讀 MES 業務列。
+- Migration `0114_wip_wp215_component_sources.sql` 建立兩張空表：ComponentBasis 32 欄、PK `(componentno)`；Cont_Component 27 欄，無 PK。來源為 `database/reference/mestest_wip_wp215_create.sql` 與 `database/reference/mestest_wip_wp201_create.sql`。套用前備份 `/opt/ymes/backups/ymes-before-wp215-0114-20261128.dump`（925,950 bytes，SHA-256 `3eff16d838e8981473994e0650790f5e4c75c6ffd9c17e4f04f04a25f2bf585b`；`pg_restore --list` 成功、mode 600）。Migration／rollback SHA-256：`68c1cc15280d6d95471d51ab5da5eff517707b691825b377c03f37a8115ddb3f`／`176f6f5a4b60a9f1e69b07cad2d19eff9bb8b8a16e8cafb1a72abc20002fa887`。
+- Forward 與 rollback 都以正式庫交易回滾方式 dry-run；migration 後 catalog 確認 59 欄型別、長度、NULL/default 及主鍵符合 CREATE-only，兩表各 0 列，`ymes_app` 對兩表 CRUD 權限皆 false、schema CREATE=false。Rollback 有空表守門且不使用 CASCADE。
+- `TBLWIPCONT_COMPONENT` reference 註記有三個非唯一索引，但缺索引名稱／欄位與 DDL，因此未猜建；已交公司端補取索引 DDL。WP215 正式 API／app 權限仍待公司端交付 Core/helper 完整 call graph、SQL、間接表與交易副作用，再設計安全交易 API。詳 [WP215 規格](modules/WIP/元件分片處理.md) 與 [公司電腦待辦](../todolist_officepc.md)。
