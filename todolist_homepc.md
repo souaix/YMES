@@ -4481,14 +4481,17 @@ API 工作：
 - [x] `TBLWIPSPLITCONTENT_BIN`：22 欄、PK `TOLOTSERIAL`，20 個 numeric Bin／Pass／Fail 欄來源 default 0、`FROMLOTSERIAL` default `N/A`，無 FK／trigger／非 PK index。來源 reference 在 `database/reference/mestest_wip_wp209_*`。
 - [x] `TBLWIPCARRIERSTATE` 與 `TBLWIPCARRIERSTATEDETAIL`：依已交付 source references 建立缺表；State PK `CarrierNo`；Detail 無 PK／unique，保留來源 ComponentNo 非唯一 index。
 - [ ] `TBLWIPSORTERBINDATA` 在公司 MESTEST `ALL_TABLES`／`ALL_SYNONYMS`／`ALL_OBJECTS` 查無，repo 亦無 DDL／CREATE-only。Core 的 LED_PKG 使用它；取得可信 schema／環境或 vendor DDL 後才能建表。LED 分支維持明確未交付，不臆造結構。
+- [x] app-browser Demo 登入唯讀確認正式 `/YMES/WIP/LotSplitBin` 顯示功能未開放 guard，查詢與交易按鈕均停用；未送出資料或修改正式列。
 - [ ] 建登入保護的指定 Lot、GoodBinState、SysBin、Product／Routing 查詢。重現 WinForms Status `0|1|4`、LotState=1、HaveLevel=1、非 Partial／Stocker 與有 GoodBinState 守門。Bin 目錄依 `BinOrder, BinNo` 動態返回，不能固定 DEV 三 Bin。路由、產品及 `IC_FT_PKG`／`AllowLotProductChange` 由可信 server 讀取。
 - [ ] 拆批 POST 在交易內鎖定並重讀 LotStamp、GoodBinState、庫存、序號及每個 Bin 餘量。驗證每子批 Qty 等於 Bin 分配、全子批等於 CurQty、每 Bin 不超量且總分配與來源相等、非負及精度、Action／ReturnType／NodeID、產品／流程權限。序號以 server 原子保留，拒絕舊預覽號／重複提交；BR／Inventory／Electricbox 模式只接受可信 server 上下文。
 - [ ] 移植 `BR_Manual_LotSplit_Bin` 的 Lot、GoodBin、Temp、庫存、報工、派工、載具／靜電箱與歷程副作用，逐層追查 Core helper 的額外共用表。BR 宿主成功後的 TransferLot、`BindByMLotNo` 複製載具明細須有同交易或可恢復且冪等的階段結果。正式 PostgreSQL/API/部署與驗收仍由家用端負責；公司端未連 PostgreSQL、未建立 migration/API、未執行 build/test/browser。
 
 ## WIP WP210 分批處理_載具家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP210 規格](docs/modules/WIP/分批處理_載具.md)。公司端 Vue `web/src/components/WipLotSplitCarrier.vue` 只有 DEV 假資料；正式 Web 不得讀 `ymes-dev-mock:wip-lot-split-carrier:state:v1` 或將 Slot 畫面假結果當正式過帳。
-- [ ] 核對 YMES PostgreSQL live schema／migration history。兩條 Core 直接引用的 17 張表已在 `database/reference/` 有來源 CREATE TABLE，Carrier Basis／Type 亦有既存共用 refs；按 live 差異補必要 forward migration，不重建已有表。逐層追查 `SHR_Split_GetReference`、`UpdLotAttrib`、Reverse／LotLog 等 helper 的其他間接表。
+- [x] Pull 最新 `main`，閱讀 [WP210 規格](docs/modules/WIP/分批處理_載具.md)。公司端 Vue `web/src/components/WipLotSplitCarrier.vue` 只有 DEV 假資料；正式 Web 不得讀 `ymes-dev-mock:wip-lot-split-carrier:state:v1` 或將 Slot 畫面假結果當正式過帳。
+- [x] 以 PPK／SSH 唯讀盤點 YMES PostgreSQL 的 17 張直接依賴表；16 張已存在，僅 `TBLWIPCARRIERSTATEDETAILLOG` 缺少且有可信 WP302/MESTEST source DDL。完成 0113 空表 migration，forward／rollback 均先以正式 PostgreSQL 交易 rollback dry-run，建立套用前完整備份並回讀 live catalog／ACL。資料、checksum、備份與欄位結果見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)；新表無任何 app 權限，未查／搬業務列。
+- [x] `TBLWIPCARRIERSTATEDETAILLOG` 18 欄依來源建立：9 欄 NOT NULL、9 欄 nullable；來源未定義鍵、index、default 或 trigger，維持空表。
+- [x] app-browser Demo 登入唯讀確認正式 `/YMES/WIP/LotSplitCarrier` 載入 guard，Query／Split／routing／product／Confirm 停用；沒有正式資料操作。
 - [ ] 建登入保護的指定 CarrierNo 查詢：先讀 CarrierState／Detail，必須有**唯一** Lot；LotState=1、HaveLevel=0、非 Partial，拒絕 Wait／Hold／Complete，Status=5 時 Confirm 查委外未回件。由 server 決定 HaveComponent，並提供空載具候選與 CarrierLayer×CarrierCapacity 的位置／類別，不能信任瀏覽器回傳的來源 Lot、原 CarrierNo、Status 或 HaveComponent。
 - [ ] 無元件拆批支援 Count／Qty、母批 Yes／No、每列 Qty／Carrier／Action／Route／ReturnType。POST 交易內重新鎖定 LotStamp、來源與目標載具、批號序號；驗證 Qty 正數及總量、不同且可用 Carrier、母批只能 Go、Go／Jump OP ReturnType=0、跳站 NodeID 存在。預覽子批號不得由瀏覽器保留或當可信識別。
 - [ ] 有元件拆批固定兩批，讀真實 ComponentState、CarrierStateDetail、載具容量與原位置；由 server 核對每顆元件完整、唯一、屬於原批，兩邊均非空，Slot 目標位置未占用、各 Carrier 容量與位置唯一。原元件／新元件、Lot、CarrierState／Detail／DetailLog、Temp／Cont、報工／逆轉／歷程須一致寫入；防重與失敗回復需覆蓋並行載具占用。

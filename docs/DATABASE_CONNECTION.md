@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP210 Carrier Detail Log source schema（0113，2026-11-28）
+
+- 以 PPK／SSH 唯讀盤點 WP210 17 張 Core 直接依賴表；正式 YMES 原有 16 張，`TBLWIPCARRIERSTATEDETAILLOG` 在所有 schema 都缺少。依 `database/reference/mestest_wip_wp302_source_ddl.sql`、`mestest_wip_wp302_create.sql` 與 metadata 建立空表，沒有查詢或匯入 MES 業務列。
+- Migration `database/migrations/0113_wip_wp210_carrier_detail_log.sql` SHA-256 `2AB8CD2DC883484D07959A787E3FC7A927CD4DCD7678F357FD0287240E1927EC`；rollback SHA-256 `668CD240759BDFBE7251217FFA3398B509DA453B4E62A0D4BDA1DA3F89BFF5A6`。執行前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-wp210-0113-20261128.dump`，924,211 bytes、SHA-256 `6e15f1559810d5433c68bc982121a1cc10056385efe8a9fc702bae2a709ad600`、`pg_restore --list` 2,541 entries、owner `root:root`／mode 600。
+- 0113 forward dry-run 在正式 PostgreSQL 交易中建立後立即 rollback；rollback dry-run 暫時 DROP 後也立即 rollback，獨立回讀確認表仍存在且為空。再於套用前比對遠端 SQL checksum、建立完整備份，最後在 advisory-lock transaction 正式套用。catalog 回讀 18 欄／9 個來源 NOT NULL 欄、無 defaults、PK／unique／FK、索引或 trigger；`ymes_app` 對新表無 SELECT／INSERT／UPDATE／DELETE，YMES schema CREATE 仍為 false。
+- 17 張 direct dependency 中其餘 16 張表沿用原有 YMES schema。`ymes_app` 對部分既有表尚無讀寫權限，尚未為 WP210 endpoint 增權；WP210 API／正式交易仍未實作或部署。Helper 間接表及 BR TransferLot 的交易一致性需在寫 API 前持續核實。
+
 ## 最新：WIP WP209 Bin／Carrier source schema（0111–0112，2026-11-28）
 
 - 唯讀盤點 WP209 的 25 張 Core 直接依賴表後，確認 `TBLWIPSPLITCONTENT_BIN`、`TBLWIPCARRIERSTATE`、`TBLWIPCARRIERSTATEDETAIL` 在所有 schema 都不存在；另外 21 張已有 YMES source table。依 MESTEST references 建立空表 migration 0111／0112，沒有執行 Oracle DDL/DML、讀取業務列或匯入資料。
