@@ -3602,3 +3602,13 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [ ] 提供 `wsWIP.CheckLotPackage` 完整實作與下游呼叫，列出 package/container 關聯的原生表、鍵、有效狀態和逐 Lot 檢核方式；一併指出目前版本把逗號 LotNo 當單一值的具體程式碼位置。
 - [ ] 提供 `SetLotStateToWait` 實際部署呼叫的 `ReleaseLog` helper／`iMESWIPReleaseLogHandler.dll` 版本、入口簽章、SQL/資料表/外部副作用，以及 `udWIP.clsWIP` adapter 實作與加入 SQL 的時機。列出全成功/失敗是否能在同一資料庫 transaction rollback。
 - [ ] 若有資料庫 trigger、package、序號器或 helper 仍未被上述程式碼涵蓋，請補上唯讀取得的 metadata/DDL 或完整呼叫來源；不得提供推測表名代替來源證據。
+
+## WIP WP503 批次立即異常設定：家用端待確認原生來源契約（2026-11-28）
+
+家用端已核實 TBLWIPERFBATCHLOT live schema 與可信 source/CREATE-only 一致，無需建表；正式 API 仍未實作。請公司端唯讀追原生設定與 Service/Core 呼叫，不連家用端 PostgreSQL、不執行 Oracle DDL/DML：
+
+- [ ] 提供 ERFBatchHoldGenType 在系統參數的實際 ParamType／ParamNo／值來源、允許值 0/1、預設/fallback 與缺值行為；確認值 0/1 對應批 ERF 行為。
+- [ ] 提供 ERFMultipleHold 的精確設定鍵、允許值與 fallback。家用 live TBLSYSPARAMETER 沒有相符列，候選查詢不可自行猜多狀態規則。
+- [ ] 提供 ERFEQPReleaseAlwaysFalse 的真實設定來源、資料型態／允許值、預設與缺值行為；並列出 Release EQP 開放的狀態與設備占用條件原生呼叫。
+- [ ] 提供 LoadLotBasisJoinState PartialMode/PartialType/Status/LotStamp/CurQty 映射，以及 TBLWIPTEMP_EQUIPMENT、TBLWIPLOTLOG_REPORT、TBLWIPCONT_EQUIPMENT 的完整設備目前/歷史 SQL、時間端點條件及 OR 合併鍵。交付完整 Service/Core 來源或可重現的唯讀查詢，不只提供 UI 欄位名稱。
+- [ ] 提供 Exe_ERF_Create_Batch → UpdERF_Create_Batch 完整 writer 呼叫鏈；指出批次 mode 0/1、ERFBatchLot 寫入時機、ERFNo 產生來源、transaction 與逐批失敗 rollback 語意。連同部署中的 ReleaseLog handler／adapter 版本、入口、資料表與外部副作用，說明附件/PDF/通知是否在 DB transaction 外及如何補償。

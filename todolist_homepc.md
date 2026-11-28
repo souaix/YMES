@@ -4571,11 +4571,12 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## WIP WP503 批次立即異常設定家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP503 規格](docs/modules/WIP/批次立即異常設定.md)。公司 `/YMES/WIP/BatchImmediateHold` 只有 DEV 假資料，正式環境不可讀 `ymes-dev-mock:wip-batch-immediate-hold:state:v1`、使用 `DEV-BERF-*` 或回報假交易成功。
-- [ ] 核對 YMES PostgreSQL live schema/migration history、資料與權限；`TBLWIPERFBATCHLOT` Oracle source 已在 `mestest_qc409_wip_disposition_dependencies_source_ddl.sql`，CREATE-only 參考在 `mestest_wip_wp503_create.sql`，六欄、PK `(ERFNO,LOTNO,OPNO)`。僅實際缺項做 forward migration，不重建 WP101/WP201/WP305/WP501/QC 既有 Lot/ERF/設備查詢表。同 Core 的 FutureHoldLog/Reason 僅 `ERFType=3`，**不是 WP503 直接 migration**。
-- [ ] 建授權且分頁的十欄＋CheckInTime 候選查詢、七類 lookup、元件／主次分類／HoldItem／EquipmentState 資料。至少一個 filter；依 `ERFMultipleHold` 選 Status `0/1/4` 或 `0/1/3/4`、LotState=1、CurQty>0，排除非 Queue 的 Partial。設備查詢須重建目前 TempEquipment 與 CheckInTime 期間 LotLog_Report/ContEquipment 的 OR 語義，不接受 browser SQL Additional。
-- [ ] Batch Hold POST 從 server 讀 `ERFBatchHoldGenType`：`0` 一單多批、`ERFType=6` 並逐批寫 BatchLot；`1` 每批一 ERF、Core 語意 `ERFType=2`，不寫 BatchLot，且 Component 原因依該批元件過濾。選批須同 PartialMode，首批依 LotNo 排序作參考；重查每批 LotNo/OPNo/LotStamp/CurQty/狀態、原因、元件、權限、ERFNo、上機與設備釋放條件。OCAPNo 有值拒絕；附件、PDF、通知、Reverse/ReleaseLog 與部署 adapter 的真副作用要納入失敗設計。
-- [ ] 模式 0 整張 ERF 原子提交；模式 1 明定全批原子或相容原 Form 逐批部分成功的契約、冪等鍵、逐筆結果及重試。不得把部分成功當全成功。UserNo、時間、ERFNo、Mode 及狀態由 server 決定，SQL 參數化；正式 API 完成後才接正式 Vue／部署與驗收。公司端未連 PG、未執行 build/test/browser。
+- [x] 已同步並閱讀 [WP503 規格](docs/modules/WIP/批次立即異常設定.md)。公司 /YMES/WIP/BatchImmediateHold 只有 DEV 假資料，正式環境不可讀 ymes-dev-mock:wip-batch-immediate-hold:state:v1、使用 DEV-BERF-* 或回報假交易成功。
+- [x] PPK/SSH 核對直接關聯 TBLWIPERFBATCHLOT：live YMES 表已有 6 欄、PK (ERFNO,LOTNO,OPNO)，與 Oracle source、PG CREATE-only 及既存 migration 0070 一致；ymes_app 只有 SELECT，INSERT/UPDATE/DELETE=false，schema CREATE=false。此表不需重建或新增 migration；沒有讀取業務列。
+- [ ] 建授權且分頁的十欄＋CheckInTime 候選查詢、七類 lookup、元件／主次分類／HoldItem／EquipmentState 資料。至少一個 filter；依 ERFMultipleHold 選 Status 0/1/4 或 0/1/3/4、LotState=1、CurQty>0，排除非 Queue 的 Partial。設備查詢須重建目前 TempEquipment 與 CheckInTime 期間 LotLog_Report/ContEquipment 的 OR 語義，不接受 browser SQL Additional。live TBLSYSPARAMETER 未找到 ERFMultipleHold 相符列，且公司尚未交付精確參數鍵／fallback；查詢實作依賴見 [公司端待辦](todolist_officepc.md)。
+- [ ] Batch Hold POST 從 server 讀 ERFBatchHoldGenType：0 一單多批、ERFType=6 並逐批寫 BatchLot；1 每批一 ERF、Core 語意 ERFType=2，不寫 BatchLot，且 Component 原因依該批元件過濾。選批須同 PartialMode，首批依 LotNo 排序作參考；重查每批 LotNo/OPNo/LotStamp/CurQty/狀態、原因、元件、權限、ERFNo、上機與設備釋放條件。OCAPNo 有值拒絕；附件、PDF、通知、Reverse/ReleaseLog 與部署 adapter 的真副作用要納入失敗設計。
+- [ ] 模式 0 整張 ERF 原子提交；模式 1 明定全批原子或相容原 Form 逐批部分成功的契約、冪等鍵、逐筆結果及重試。不得把部分成功當全成功。UserNo、時間、ERFNo、Mode 及狀態由 server 決定，SQL 參數化；正式 API 完成後才接正式 Vue／部署與驗收。公司端尚未提供系統參數精確來源、ERF 序號及 ReleaseLog/adapter 部署契約。
+- [x] app-browser 由三層選單開啟正式 /YMES/WIP/BatchImmediateHold，確認頁面提示服務尚未提供、查詢/lookup/全選/Hold Set 均 disabled，Close 返回首頁；沒有建立 ERF 或 Lot。
 
 ## WIP WP504 預先異常設定家用端 handoff（2026-11-20）
 

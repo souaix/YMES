@@ -1594,3 +1594,9 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - 套用前 custom-format 備份 `/opt/ymes/backups/ymes-before-wp502-0119-20261128.dump`：940,811 bytes，SHA-256 `6bd87fffc64f90bb7d9d0bd0f267a1e245a71474d2938089986d5b288ce7846c`，mode 600，`pg_restore --list` 成功。Forward／rollback migration SHA-256 `9AB1F1B8448CF11F1C2FE2CB865E3406180EEE5CC46740E55D67084D0E2F0657`／`0EA8DB2FE46FD355B4B13B7B6AE0070E8562E747B01C35368DB015F3FCB33C7C`。
 - catalog 回讀確認 30 欄及 source 型別、長度、numeric 精度／scale、NULL/default，`WaitNo` PK 正確，0 rows，owner postgres。`ymes_app` 對新表 SELECT／INSERT／UPDATE／DELETE 全 false；沒有授權 writer 或 SELECT，也沒有修改既有資料。app-browser 已確認三層選單入口、正式頁安全停用和 Close 回首頁。
 - Rollback `0119_wip_wp502_wait_basis.rollback.sql` 僅允許預期的空表／30 欄／WaitNo PK，無 CASCADE。遠端 migration 暫存檔已移除，完整備份保留。正式候選查詢與 Set API 仍待公司端來源契約，詳 `todolist_officepc.md`／`docs/modules/WIP/立即等待設定.md`。
+
+### 更新 2026-11-28：WIP WP503 BatchLot schema audit
+
+- PPK／SSH 唯讀核對 PostgreSQL 14.24 YMES.tblwiperfbatchlot 已由既有 migration 0070 建立；六欄、NULL/default、PK (erfno,lotno,opno) 符合可信 Oracle source mestest_qc409_wip_disposition_dependencies_source_ddl.sql 及 CREATE-only mestest_wip_wp503_create.sql。未執行 CREATE-only 或新 migration，未讀取業務列。
+- 表 owner postgres；ymes_app SELECT=true、INSERT/UPDATE/DELETE=false，schema CREATE=false。沒有授予寫入權。
+- ERFMultipleHold 在既有 YMES system parameter audit 未找到相符設定；ERFBatchHoldGenType、ERFEQPReleaseAlwaysFalse 的實際 key/default、設備歷史 SQL 與 ReleaseLog/adapter 部署契約交公司端補齊。詳 todolist_officepc.md 與 WP503 模組文件。
