@@ -4580,11 +4580,12 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## WIP WP504 預先異常設定家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，讀 [WP504 規格](docs/modules/WIP/預先異常設定.md)。公司 `/YMES/WIP/FutureHoldSet` 只有 DEV 假資料，正式環境不可讀 `ymes-dev-mock:wip-future-hold-set:state:v1` 或回報本機假 Set 成功。
-- [ ] 先核 YMES PostgreSQL live schema、migration history、資料和權限。`TBLWIPFUTUREHOLD` Oracle source/CREATE 已有 WP201 refs；新增 `TBLWIPFUTUREHOLDREASON`（Set 直接表）及 `TBLWIPFUTUREHOLDLOG`（後續 ERFType3 才寫）Oracle DDL/metadata/index 在 `mestest_wip_wp504_*`，PG CREATE-only 在 `mestest_wip_wp504_create.sql`。Reason 複合七鍵；Log 無 PK、只有 LotNo 非唯一索引，不能擅自加 unique。確實缺少才 forward migration，不重建 WP201 主表。
-- [ ] 建登入/Function ACL 的六欄候選查詢、五種 lookup、PS→有效 OP、QC M/S Class/Hold Description/HoldItem/FirstGroup 的正式讀取 API，限制結果量；Status `0|1|4`、ShowPartialLot=false、至少一個 filter。Selected Lot 是已勾列過濾，Lot/HoldItem 掃描在當前查詢或分類結果勾選。SClass 是 UI 必填與候選依據，原 Service 只收 MClass，不把 SClass 誤當主表欄。
-- [ ] Set POST 對每**一筆**所選 Lot 重查包裝、狀態、Partial、版本與權限；原 Form 把多筆 LotNo 逗號串送給單值 `CheckLotPackage`，有漏檢風險。確認選 PS/OP、MClass/SClass/HoldItem 合法、HoldTime 只能 0/1、說明非空。FirstGroup 缺對應 OP 而無 `*` 時提供可取消確認，不能把它當硬拒或忽略警示。
-- [ ] 按 Lot×OP 與 `(LotNo,OPNo,HoldTime,ModuleNo,ModuleVersion)` 在同一交易替換 FutureHold/Reason；此入口 ModuleNo/Version=`N/A`，`FutureHoldSerial` default=`N/A`，原刪除鍵**不含 Serial**，須確認不同 Serial 舊資料的覆蓋政策。Set 不立刻改 Lot/開 ERF；後續 Start/End 命中、ERFType3、FutureHoldLog、Reverse/ReleaseLog 與 WP506 Release 要設計一致。交易使用參數化 SQL、冪等鍵、server Creator/時間與並發衝突處理；API 完成後才接正式 Vue／部署/驗收。公司端未連 PG、未執行 build/test/browser。
+- [x] 已同步最新 `main`，讀 [WP504 規格](docs/modules/WIP/預先異常設定.md)。公司 `/YMES/WIP/FutureHoldSet` 只有 DEV 假資料，正式環境不可讀 `ymes-dev-mock:wip-future-hold-set:state:v1` 或回報本機假 Set 成功。
+- [x] 以 PPK/SSH 核 YMES live schema/history；主表 `TBLWIPFUTUREHOLD`、Set 直接寫的 `TBLWIPFUTUREHOLDREASON`、下游 ERFType3 使用的 `TBLWIPFUTUREHOLDLOG` 都在所有使用者 schema 缺少。依 WP201/WP504 Oracle source 與 CREATE-only 建立 migration 0120，主表 13 欄、Reason 8 欄/七鍵 PK、Log 10 欄/僅 LotNo 非唯一 index；三表空白，ymes_app CRUD 全 false，未讀取業務列或授予權限。備份與校驗值記錄於 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [ ] 建登入/Function ACL 的六欄候選查詢、五種 lookup、PS→有效 OP、QC M/S Class/Hold Description/HoldItem/FirstGroup 的正式讀取 API，限制結果量；Status `0|1|4`、ShowPartialLot=false、至少一個 filter。Selected Lot 是已勾列過濾，Lot/HoldItem 掃描在當前查詢或分類結果勾選。SClass 是 UI 必填與候選依據，原 Service 只收 MClass，不把 SClass 誤當主表欄。先精確列出查詢所需表／欄及最小 SELECT 後再授權；目前三張新表全無 app 權限。
+- [ ] Set POST 對每**一筆**所選 Lot 重查包裝、狀態、Partial、版本與權限；原 Form 把多筆 LotNo 逗號串送給單值 `CheckLotPackage`，有漏檢風險。確認選 PS/OP、MClass/SClass/HoldItem 合法、HoldTime 只能 0/1、說明非空。FirstGroup 缺對應 OP 而無 `*` 時提供可取消確認，不能把它當硬拒或忽略警示。使用參數化 SQL，先逐批確認包裝 helper 的實際依賴。
+- [ ] 按 Lot×OP 與 `(LotNo,OPNo,HoldTime,ModuleNo,ModuleVersion)` 在同一交易替換 FutureHold/Reason；此入口 ModuleNo/Version=`N/A`，`FutureHoldSerial` default=`N/A`，原刪除鍵**不含 Serial**，會清除同鍵下不同 Serial 的舊資料。Set 不立刻改 Lot/開 ERF；後續 Start/End 命中、ERFType3、FutureHoldLog、Reverse/ReleaseLog 與 WP506 Release 要設計一致。交易使用參數化 SQL、冪等鍵、server Creator/時間與並發衝突處理；API 完成後才接正式 Vue／部署/驗收。
+- [x] app-browser 從三層選單開啟正式 `/YMES/WIP/FutureHoldSet`，確認服務尚未提供、查詢/lookup/掃描/Confirm 停用、空 Grid 提示先查詢；Close 返回 `/YMES/`。沒有建立 Lot 或提交 Future Hold。
 
 ## WIP WP505 預先等待設定家用端 handoff（2026-11-20）
 

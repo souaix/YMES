@@ -1600,3 +1600,10 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - PPK／SSH 唯讀核對 PostgreSQL 14.24 YMES.tblwiperfbatchlot 已由既有 migration 0070 建立；六欄、NULL/default、PK (erfno,lotno,opno) 符合可信 Oracle source mestest_qc409_wip_disposition_dependencies_source_ddl.sql 及 CREATE-only mestest_wip_wp503_create.sql。未執行 CREATE-only 或新 migration，未讀取業務列。
 - 表 owner postgres；ymes_app SELECT=true、INSERT/UPDATE/DELETE=false，schema CREATE=false。沒有授予寫入權。
 - ERFMultipleHold 在既有 YMES system parameter audit 未找到相符設定；ERFBatchHoldGenType、ERFEQPReleaseAlwaysFalse 的實際 key/default、設備歷史 SQL 與 ReleaseLog/adapter 部署契約交公司端補齊。詳 todolist_officepc.md 與 WP503 模組文件。
+
+### 更新 2026-11-28：WIP WP504 Future Hold schema
+
+- PPK／SSH 唯讀核對 PostgreSQL 14.24 資料庫 ymes：所有 user schema 都缺少 TBLWIPFUTUREHOLD、TBLWIPFUTUREHOLDREASON、TBLWIPFUTUREHOLDLOG。依 WP201/WP504 Oracle source DDL、metadata/index 與 PostgreSQL CREATE-only references，forward migration 0120 建立三張空 YMES 表；沒有讀取或修改 MES 業務列。
+- FutureHold 13 欄、PK (lotno,moduleno,moduleversion,opno,holdtime,futureholdserial)；FutureHoldReason 8 欄、PK (holditemno,holdtime,lotno,moduleno,moduleversion,opno,futureholdserial)；FutureHoldLog 10 欄、無 PK/unique，只有 LotNo 非唯一 index。catalog 回讀型別、長度、精度/scale、NULL/default、鍵與 index 符合 CREATE-only。三表各 0 rows，owner postgres；ymes_app CRUD 全 false，未授權 table access。
+- 套用前 custom-format 備份 /opt/ymes/backups/ymes-before-wp504-0120-20261128.dump：943,577 bytes，SHA-256 6e5fcfae9441f4902488cda7352c54e9a7862af0f74c436bd8c6d2b67376c0b5，mode 600，pg_restore --list 成功。Forward/rollback SHA-256 3BA23D2371177EAFBCAA7599DA12287807A7D7716DBD633C985B053E79402BCB／54E8B692C5A0A45F5175333F724035F7F68C1B17CC9C3ED2FC1F6908D09B56D7。Rollback 有空表/欄位數/主鍵/非唯一索引守門，無 CASCADE；遠端暫存 migration 已移除，備份保留。
+- 正式 app-browser 確認 FutureHoldSet 的服務停用保護和 Close；正式 API/最小 app SELECT 與交易尚未交付。家用 TODO 見 WIP WP504，包裝 helper 原始呼叫契約已列在 office TODO 的 WP502 共用來源項目。
