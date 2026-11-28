@@ -1,5 +1,12 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP209 Bin／Carrier source schema（0111–0112，2026-11-28）
+
+- 唯讀盤點 WP209 的 25 張 Core 直接依賴表後，確認 `TBLWIPSPLITCONTENT_BIN`、`TBLWIPCARRIERSTATE`、`TBLWIPCARRIERSTATEDETAIL` 在所有 schema 都不存在；另外 21 張已有 YMES source table。依 MESTEST references 建立空表 migration 0111／0112，沒有執行 Oracle DDL/DML、讀取業務列或匯入資料。
+- 0111 `database/migrations/0111_wip_wp209_splitcontent_bin.sql` SHA-256 `29439AAD64251995563AB28D54087D77B62808221F1CA877E69C2017D73E8A23`，rollback `C4D2A776370C6E8ACA8F73464D387BB6048B8BD3D731BFB19086501F891B3B2D`。套用前備份 `/opt/ymes/backups/ymes-before-wp209-0111-20261128.dump`，918,809 bytes、SHA-256 `f1de152c3dbb21006affaf76b96bd55aa3ae46528734909da4c4c28ce6a6e20c`、`pg_restore --list` 2,529 entries、owner `postgres:postgres`／mode 600。新表 22 欄、PK `tolotserial`；20 個 numeric bin/pass/fail 欄為來源 `DEFAULT 0 NOT NULL`，`fromlotserial` 為 `DEFAULT 'N/A' NOT NULL`；無 FK／trigger／非 PK index。
+- 0112 `database/migrations/0112_wip_wp209_carrier_sources.sql` SHA-256 `E47ACB5CF987C8A5D22DD3B705C9563079A559859395C3B6661BBAFFB68F2A30`，rollback `2FE13A86EC9D773D1A818FE58CD7BFD530CF6B76B5B326FF5DA03AA5A0BEFF96`。套用前備份 `/opt/ymes/backups/ymes-before-wp209-0112-20261128.dump`，921,192 bytes、SHA-256 `cac34a9ada2afef01e6a64f961a80ed7a5d526769d03afce7be13c5fd6802e00`、2,533 entries、owner `postgres:postgres`／mode 600。CarrierState 6 欄、PK `carrierno`；CarrierStateDetail 11 欄、無 PK／unique、保留來源 `componentno` 非唯一 index；兩表均無 FK／trigger。
+- 0111／0112 獨立 catalog 回讀三表全空；`ymes_app` 對三表無 SELECT／INSERT／UPDATE／DELETE，也無 YMES schema CREATE。25 張 direct table 中目前唯一未建的是 `TBLWIPSORTERBINDATA`：公司 MESTEST 目錄查無可見物件，repo 也無 source DDL／CREATE-only；LED_PKG 分支保持不交付，不能猜表結構。WP209 正式 API 尚未實作／部署；其它既有 table 的 endpoint 最小權限也尚未新增。
+
 ## 最新：WIP WP207／WP208 共用來源表（0110，2026-11-28）
 
 - 家用端用 PPK／SSH 唯讀盤點 WP208 handoff 列出的 26 張直接依賴表：9 張在所有 schema 都缺少，且有已交付的 MESTEST DDL／CREATE-only reference；其餘 17 張沿用 YMES 現有來源表。依可信 references 建立空表 migration `0110_wip_wp207_wp208_shared_sources.sql`，SHA-256 `142421E1906A073691C6543F306AF3FBF39B6A4FF566BA2112E7AAFFB0717F43`；rollback SHA-256 `CFD094BAE65E53A2437DD87365A563B80AB34303FDEB291703787E99C941287B`。套用前備份 `/opt/ymes/backups/ymes-before-wp207-wp208-0110-20261128.dump`，904,287 bytes，SHA-256 `a6d408c98c9522ba28c91a59d71abfcf7c18533d431e7d6958024826c02cd3ab`，`pg_restore --list` 2,496 entries；owner `postgres:postgres`、mode 600。

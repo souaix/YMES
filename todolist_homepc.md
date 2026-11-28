@@ -4476,9 +4476,11 @@ API 工作：
 
 ## WIP WP209 分批處理_等級家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，閱讀 [WP209 規格](docs/modules/WIP/分批處理_等級.md) 與 `docs/DATABASE_CONNECTION.md` WP209 段落。公司端 Vue `web/src/components/WipLotSplitBin.vue` 只供 DEV 假資料；正式版需保留原 WinForms 的母批／子批／Bin 三區、Count／Qty、Include Mother、路由／產品與靜電箱行為，不能讀 localStorage 當 MES 資料。
-- [ ] `TBLWIPSPLITCONTENT_BIN` 已由公司端 Oracle MESTEST 唯讀取得 source DDL、index DDL、metadata，檔案為 `database/reference/mestest_wip_wp209_source_ddl.sql`、`mestest_wip_wp209_source_indexes.sql`、`mestest_wip_wp209_metadata.txt`；PG CREATE-only 為 `mestest_wip_wp209_create.sql`。來源 22 欄、單欄 PK `TOLOTSERIAL`，無 FK／trigger／其他 index。先核對 YMES PostgreSQL live schema／migration history，僅在確實缺表時新增 forward migration；其他 23 張已知直接依賴表沿用既有 refs，不重建。
-- [ ] `TBLWIPSORTERBINDATA` 目前在公司 MESTEST `ALL_TABLES`／`ALL_SYNONYMS`／`ALL_OBJECTS` 查無。Core 的 LED_PKG 分支使用此表；取得正確 Oracle schema／環境或 vendor DDL 後才補 source／PG CREATE，不能由 Core 使用欄位臆造 migration。正式 LED 分支在 DDL 與副作用確認前保持未交付，並明確回應不可用。
+- [x] Pull 最新 `main`，閱讀 [WP209 規格](docs/modules/WIP/分批處理_等級.md) 與資料庫交接。公司端 Vue `web/src/components/WipLotSplitBin.vue` 只供 DEV 假資料，不能把 localStorage 當正式資料。
+- [x] 依 MESTEST references 唯讀核對 25 張 direct dependencies 與正式 PostgreSQL catalog；三張有來源但原先缺少的表已完成 0111／0112 migration，另 21 張已存在。新表結構、備份及 grant 回讀見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)；未讀業務列、未授予新表 app 權限。
+- [x] `TBLWIPSPLITCONTENT_BIN`：22 欄、PK `TOLOTSERIAL`，20 個 numeric Bin／Pass／Fail 欄來源 default 0、`FROMLOTSERIAL` default `N/A`，無 FK／trigger／非 PK index。來源 reference 在 `database/reference/mestest_wip_wp209_*`。
+- [x] `TBLWIPCARRIERSTATE` 與 `TBLWIPCARRIERSTATEDETAIL`：依已交付 source references 建立缺表；State PK `CarrierNo`；Detail 無 PK／unique，保留來源 ComponentNo 非唯一 index。
+- [ ] `TBLWIPSORTERBINDATA` 在公司 MESTEST `ALL_TABLES`／`ALL_SYNONYMS`／`ALL_OBJECTS` 查無，repo 亦無 DDL／CREATE-only。Core 的 LED_PKG 使用它；取得可信 schema／環境或 vendor DDL 後才能建表。LED 分支維持明確未交付，不臆造結構。
 - [ ] 建登入保護的指定 Lot、GoodBinState、SysBin、Product／Routing 查詢。重現 WinForms Status `0|1|4`、LotState=1、HaveLevel=1、非 Partial／Stocker 與有 GoodBinState 守門。Bin 目錄依 `BinOrder, BinNo` 動態返回，不能固定 DEV 三 Bin。路由、產品及 `IC_FT_PKG`／`AllowLotProductChange` 由可信 server 讀取。
 - [ ] 拆批 POST 在交易內鎖定並重讀 LotStamp、GoodBinState、庫存、序號及每個 Bin 餘量。驗證每子批 Qty 等於 Bin 分配、全子批等於 CurQty、每 Bin 不超量且總分配與來源相等、非負及精度、Action／ReturnType／NodeID、產品／流程權限。序號以 server 原子保留，拒絕舊預覽號／重複提交；BR／Inventory／Electricbox 模式只接受可信 server 上下文。
 - [ ] 移植 `BR_Manual_LotSplit_Bin` 的 Lot、GoodBin、Temp、庫存、報工、派工、載具／靜電箱與歷程副作用，逐層追查 Core helper 的額外共用表。BR 宿主成功後的 TransferLot、`BindByMLotNo` 複製載具明細須有同交易或可恢復且冪等的階段結果。正式 PostgreSQL/API/部署與驗收仍由家用端負責；公司端未連 PostgreSQL、未建立 migration/API、未執行 build/test/browser。
