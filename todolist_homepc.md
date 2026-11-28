@@ -4589,10 +4589,11 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 
 ## WIP WP505 預先等待設定家用端 handoff（2026-11-20）
 
-- [ ] Pull 最新 `main`，讀 [WP505 規格](docs/modules/WIP/預先等待設定.md)。公司 `/YMES/WIP/FutureWaitSet` 只用 DEV 假資料，正式環境不可讀 `ymes-dev-mock:wip-future-wait-set:state:v1` 或回報假 Set 成功。
-- [ ] 核 YMES PostgreSQL live schema/history、資料與權限。`TBLWIPFUTUREWAIT` 七欄、PK `(LOTNO,OPNO,WAITTIME)`，Oracle source `mestest_wip_wp201_dependency_source_ddl.sql`、PG CREATE-only `mestest_wip_wp201_create.sql` 已存在；無新直接表，缺項才 forward migration，別重建 WP201 既有結構。
+- [x] 已同步最新 `main`，讀 [WP505 規格](docs/modules/WIP/預先等待設定.md)。公司 `/YMES/WIP/FutureWaitSet` 只用 DEV 假資料，正式環境不可讀 `ymes-dev-mock:wip-future-wait-set:state:v1` 或回報假 Set 成功。
+- [x] PPK/SSH 核對所有 user schema 均缺少 `TBLWIPFUTUREWAIT`。依七欄 Oracle source 與 PG CREATE-only 套用 migration 0121；live 回讀欄位型別、長度、nullable、PK `(LOTNO,OPNO,WAITTIME)` 正確，0 rows，ymes_app CRUD 全 false、schema CREATE=false。未讀取業務列；備份與校驗值記錄於 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
 - [ ] 建有登入/Function ACL 的六欄候選查詢、五類 lookup、PS→有效 OP；至少一個 filter、Status `0|1|4`、ShowPartialLot=false、結果分頁/上限。Selected Lot 是檢視過濾，掃描只勾當前查詢列。
 - [ ] Set POST 逐批重查包裝、Status、Partial、版本、Lot/OP 和權限；原 Form 的多筆 LotNo 逗號串被 `CheckLotPackage` 當單值，不能沿用。WaitTime 只允許 Start=0/End=1，OP 至少一個，Description **可空**且最多 3000 字元。以參數化 SQL 交易按 Lot×OP×WaitTime 刪舊再插新 FutureWait，server 決定 Creator/日期、明確處理併發/冪等；Set 不直接改 LotState/WaitBasis。後續 `ChkFutureWait` 命中、WP502 等待交易及 WP507 Release 需生命週期一致。完成 API 才接正式 Vue/部署驗收；公司端未連 PG、未執行 build/test/browser。
+- [x] app-browser 從三層選單開啟正式 `/YMES/WIP/FutureWaitSet`，確認正式環境尚未開放、查詢/lookup/掃描/Confirm 均停用且沒有假資料，Close 返回 `/YMES/`；沒有建立 Lot 或設定 FutureWait。
 
 ## WIP WP506 預先異常解除家用端 handoff（2026-11-20）
 

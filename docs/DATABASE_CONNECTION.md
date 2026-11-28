@@ -1607,3 +1607,10 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - FutureHold 13 欄、PK (lotno,moduleno,moduleversion,opno,holdtime,futureholdserial)；FutureHoldReason 8 欄、PK (holditemno,holdtime,lotno,moduleno,moduleversion,opno,futureholdserial)；FutureHoldLog 10 欄、無 PK/unique，只有 LotNo 非唯一 index。catalog 回讀型別、長度、精度/scale、NULL/default、鍵與 index 符合 CREATE-only。三表各 0 rows，owner postgres；ymes_app CRUD 全 false，未授權 table access。
 - 套用前 custom-format 備份 /opt/ymes/backups/ymes-before-wp504-0120-20261128.dump：943,577 bytes，SHA-256 6e5fcfae9441f4902488cda7352c54e9a7862af0f74c436bd8c6d2b67376c0b5，mode 600，pg_restore --list 成功。Forward/rollback SHA-256 3BA23D2371177EAFBCAA7599DA12287807A7D7716DBD633C985B053E79402BCB／54E8B692C5A0A45F5175333F724035F7F68C1B17CC9C3ED2FC1F6908D09B56D7。Rollback 有空表/欄位數/主鍵/非唯一索引守門，無 CASCADE；遠端暫存 migration 已移除，備份保留。
 - 正式 app-browser 確認 FutureHoldSet 的服務停用保護和 Close；正式 API/最小 app SELECT 與交易尚未交付。家用 TODO 見 WIP WP504，包裝 helper 原始呼叫契約已列在 office TODO 的 WP502 共用來源項目。
+
+### 更新 2026-11-28：WIP WP505 FutureWait schema
+
+- PPK／SSH 唯讀核對 PostgreSQL 14.24 ymes：所有 user schema 均沒有 tblwipfuturewait。依 mestest_wip_wp201_dependency_source_ddl.sql 與 mestest_wip_wp201_create.sql 的七欄來源/reference，migration 0121 只在 YMES 建立空表，沒有查詢或修改 MES 業務列。
+- catalog 回讀七欄、型別/長度/numeric precision/scale/NULL、PK (lotno,opno,waittime) 均符合來源；Description 可空，Creator/CreateDate/LotSerial 可空。表 owner postgres、0 rows；ymes_app SELECT/INSERT/UPDATE/DELETE 全 false，schema CREATE=false。
+- 套用前 custom-format 備份 /opt/ymes/backups/ymes-before-wp505-0121-20261128.dump：948,825 bytes、SHA-256 8abee3c20c9b277daed3e19d14d04c6257d7b62d672132e074eaabc9aa302b95、mode 600，pg_restore --list 成功。Forward/rollback SHA-256 96979C3C73F5B027BF85D2327A5B71B899B676C79B1D716452E983AE2FD8C982／541AF9334318EF3D3CF175B1D489A515E7708130D4E17358BFF325BCA04AF650。Rollback 僅允許符合來源的空表，無 CASCADE；遠端 migration 暫存檔已移除。
+- app-browser 已核正式 FutureWaitSet 的保護狀態及 Close。正式 app SELECT、候選查詢、lookup 和 Set API 尚未交付；詳 WP505 模組文件與 todolist_homepc.md。
