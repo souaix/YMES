@@ -40,3 +40,13 @@
 - API 對月初到下月月初採左閉右開區間，現月截止至台北目前時間；在單一 `RepeatableRead`、唯讀交易中按月分組，MTTR／MTBF／Availability 公式與 RT412 一致。故障狀態仍須存在唯一 `EQP Break Down / BreakDown` 設定，否則安全回 503。
 - 2026-11-28 以正式復刻 DB 的 `ymes_app` 權限，在 `READ ONLY` 交易中對候選設備與月分組 SQL 執行 `EXPLAIN`，兩段皆成功且命中設備、區域關聯與設備狀態索引；未執行 `ANALYZE`、未讀取業務列、未寫入資料。
 - 正式庫的故障狀態設定及有效狀態歷程尚未提供，沒有正式正向結果；本次只新增 API 程式，沒有 migration、正式資料寫入或部署。家用端需待完整 Web build 與正式主機可用磁碟空間後部署；公司端依 [待辦](../../../todolist_officepc.md) 接正式頁，DEV 假資料預覽維持原狀。
+
+## 2026-11-29 正式 API-only 部署與瀏覽器驗證
+
+- 2026-11-28 建置的 API-only 發行版 rt413-api-only 已更新正式 ymes-api 容器；部署 image ID 為 sha256:0e1094c566837147d55335fe0aeffdca2123ef772ece0d757f86b4bf79f92f32。保留部署前映像 ymes-api:rollback-before-rt413-20261128-a1，未動 Web／master Web 容器、共用 Docker cache 或其他專案。
+- 2026-11-29 回讀正式容器健康狀態為 healthy，app-browser 開啟 /YMES/API/health/ready 回傳 ready。
+- app-browser 對月報端點以有效月份查詢時回 HTTP 503，明確指出尚未設定唯一設備故障狀態 EQP Break Down / BreakDown；以錯誤月份查詢回 HTTP 400（要求 yyyy-MM）。沒有新增或修改正式業務資料。
+- 正式 UI 路徑 /YMES/RPT/EqpMttrSummaryByMonth 目前顯示「正式環境尚未開放此功能」。此發行版只交付 API；公司端需在保留 DEV 預覽的前提下接上 Production API，見 todolist_officepc.md。
+- 有效查詢尚不能回傳報表，直到正式復刻庫同步／設定可信且唯一的故障狀態資料；不以測試列或猜測狀態碼繞過此條件。
+
+- 歷史狀態更正：前文的「尚未部署」記錄是 2026-11-28 部署前狀態；API-only 版本已於當日部署，目前狀態以本節 image、healthy 與 ready 的正式驗證為準。資料表與業務資料沒有變更。

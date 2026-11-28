@@ -3651,3 +3651,17 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 - [ ] 提供 ERFEQPReleaseAlwaysFalse 的真實設定來源、資料型態／允許值、預設與缺值行為；並列出 Release EQP 開放的狀態與設備占用條件原生呼叫。
 - [ ] 提供 LoadLotBasisJoinState PartialMode/PartialType/Status/LotStamp/CurQty 映射，以及 TBLWIPTEMP_EQUIPMENT、TBLWIPLOTLOG_REPORT、TBLWIPCONT_EQUIPMENT 的完整設備目前/歷史 SQL、時間端點條件及 OR 合併鍵。交付完整 Service/Core 來源或可重現的唯讀查詢，不只提供 UI 欄位名稱。
 - [ ] 提供 Exe_ERF_Create_Batch → UpdERF_Create_Batch 完整 writer 呼叫鏈；指出批次 mode 0/1、ERFBatchLot 寫入時機、ERFNo 產生來源、transaction 與逐批失敗 rollback 語意。連同部署中的 ReleaseLog handler／adapter 版本、入口、資料表與外部副作用，說明附件/PDF/通知是否在 DB transaction 外及如何補償。
+
+
+## 2026-11-29 家用端 RT413 部署與 EKB 稽核交接
+
+### RT413 設備 MTTR 月報
+
+- 家用端 API-only 版本已部署至正式 ymes-api；readiness 回 ready、Docker health 為 healthy，部署前映像保留供回復。詳見 RT413 模組文件。
+- 正式頁 /YMES/RPT/EqpMttrSummaryByMonth 仍顯示尚未開放；公司端接上 GET /YMES/API/api/reports/equipment-mttr-summary/monthly，保留 DEV 假資料預覽，正式模式不可 fallback 到 fixtures。
+- 有效月份查詢回 503，因正式復刻資料庫缺唯一 EQP Break Down / BreakDown 狀態設定；錯誤月份回 400。請先以可信 Oracle source 確認狀態設定與同步方式，並提供可正向查詢的同步條件；不要在正式復刻庫造測試資料或猜代碼。
+
+### RT904／RT905 指標樹資料表
+
+- 家用端已唯讀檢查 PostgreSQL 全部 schema：RT904 五張表與 RT905 的 tblEKBKPILog 均不存在；catalog 稽核結果記於兩份模組文件。未查業務列、未建表或改權限。
+- 公司端仍需依各模組交接提供可信 Oracle source DDL／metadata；取得後家用端再按來源建立復刻空表，不以 DEV fixture 推測欄位。
