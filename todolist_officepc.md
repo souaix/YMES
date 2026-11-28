@@ -72,6 +72,12 @@
 - [ ] 請提供 `wsWIP_OperatorState.cs::ExecuteClockOut`、`clsOperatorState.ExecuteClockOut` 與 `funSHR_CO_EMP_ClockOut` 的原始程式／SQL 片段：SID 產生方式，`WorkTime`／`RealWorkTime`／`StdWorkTime`／`ExceptionTime`／`Qty`／`EventTime` 計算與寫入，逐筆 transaction／例外處理與回傳值，以及多人加工時 `TBLWIPLOTLOGINSTATE` 的更新條件和反向紀錄副作用。
 - [ ] 請提供 `wsOP.LoadOPBasis`、`wsSMD.LoadAreaBasis`、`wsEQP.LoadEquipmentBasis` 的來源程式／SQL 片段，包含實際回傳欄位、有效狀態篩選、權限條件與多選語意。供家用端核實後實作唯讀 lookup 及逐筆 SignOut；不需公司端連 YMES PostgreSQL、執行 DDL／DML 或部署。
 
+## 2026-11-28 RT612 膠類歷程資料查詢
+
+- [x] 核對 frmGumLogQuery／Designer、wsSMD.LoadInventoryBasis／wsSYS.LoadParameter／wsINV.LoadWIPInventory_RawLog 與 clsInventory.LoadWIPInventory_RawLog；完成 /YMES/RPT/GumLogQuery DEV 庫房／材料假 lookup、查詢條件、分組 parent＋TIME child 展開。詳 [RT612 規格與家用端 API handoff](docs/modules/RPT/膠類歷程資料查詢_RT612.md)。
+- [x] 來源差異與風險已記錄：Query 可不設條件、Core SQL 串接且無排序／分頁；From／End 只傳日期，結束值為午夜。RawLog MESTEST source DDL／metadata 未在 repo，桌機 Oracle attachment 不存在；未查 Oracle／猜 CREATE。回溫／回冰 private helpers 沒有 UI event 呼叫，不屬於本查詢操作。
+- [ ] 家用端核 YMES live schema／同步與正向資料；讀 API 加 RT612 ACL、至少一項查詢條件、參數化、日期跨度與 row/page 上限、parent 穩定排序及 child EventTime 降冪排序。公司端不連 PostgreSQL、不做正式 API/schema、未 build／test／browser。
+
 ## 2026-11-27 RT611 取消報工單_E10ICD
 
 - [x] 核對 E10ICD 專用 Form／Designer、wsRPT Summary／Detail／Undo／ReRun、wsERP_E10ICD.ERPWorkReport_Cancel_E10ICD 與 clsReport Core；完成 /YMES/RPT/ErpWorkReportCancelE10ICD DEV Summary／Detail。詳 [RT611 規格與家用端 API handoff](docs/modules/RPT/取消報工單_E10ICD_RT611.md)。

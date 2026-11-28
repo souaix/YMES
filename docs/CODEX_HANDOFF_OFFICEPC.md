@@ -12,6 +12,13 @@
 - [x] Run Card／LotProcess／Lot／PRS／Module／ProductProcess／OP／Runtime／Area 的 Oracle MESTEST source DDL refs 均已在 repo；未新查 Oracle。Legacy runtime setup lookup 沒帶 DDL 中必填的 AreaNo；缺工時設定列仍顯示但時間空白且不推進累計，後續估算可能低估。家用端待核 live schema 並決定正式行為。
 - [ ] 公司端未連 YMES PostgreSQL、未實作／驗收正式 API/schema、未 build／test／browser；無缺少的本功能 DDL。
 
+## 公司端目前交接：RPT RT612 膠類歷程資料查詢（2026-11-28）
+
+- [x] 核對 frmGumLogQuery／Designer、wsSMD.LoadInventoryBasis、wsSYS.LoadParameter、wsINV.LoadWIPInventory_RawLog、clsInventory.LoadWIPInventory_RawLog；完成 /YMES/RPT/GumLogQuery DEV 假資料父列／TIME child 查詢。[RT612 規格與家用端 API handoff](modules/RPT/膠類歷程資料查詢_RT612.md)
+- [x] 記錄 Query 可空條件造成全表查詢；Core SQL 字串串接、無排序／分頁；From／End 僅日期值且 EndDate inclusive 到午夜。TBLINVWIPINVENTORY_RAWLOG MESTEST DDL／metadata 缺少；桌機受保護 Oracle attachment 不存在，未查 Oracle／猜 CREATE-only。
+- [x] DEV 完成庫房與受 GumMaterialType 假設定限制的 MaterialNo lookup、status／批號前綴／EventTime 條件、展開明細及 Close。Form 的回溫／回冰 helper 沒有 UI event 呼叫，DEV 不暴露寫入；未連 PostgreSQL／未做正式 API／schema／build／test／browser。
+- [ ] WIP 在製品管理仍是全案優先；WPI05 缺原始 Form／Service／Core。家用端先核 RT612 live schema／同步及條件／paging 安全；公司端不連 PostgreSQL、不做正式 API/schema。
+
 ## 公司端目前交接：RPT RT611 取消報工單_E10ICD（2026-11-27）
 
 - [x] 已核對 E10ICD 專用 frmERPWorkReport_Cancel_E10ICD／Designer、wsRPT Summary／Detail／Undo／ReRun、wsERP_E10ICD EAI Service 與 clsReport Core；完成 /YMES/RPT/ErpWorkReportCancelE10ICD DEV。[RT611 規格與家用端 handoff](modules/RPT/取消報工單_E10ICD_RT611.md)

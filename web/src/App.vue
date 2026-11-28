@@ -345,6 +345,7 @@ import PlanFinishTimeByLot from './components/PlanFinishTimeByLot.vue'
 import ErpWorkReportCancel from './components/ErpWorkReportCancel.vue'
 import ErpWorkReportCancelT100 from './components/ErpWorkReportCancelT100.vue'
 import ErpWorkReportCancelE10ICD from './components/ErpWorkReportCancelE10ICD.vue'
+import GumLogQuery from './components/GumLogQuery.vue'
 import ConfirmLot from './components/ConfirmLot.vue'
 import HoldLot from './components/HoldLot.vue'
 import WaitLot from './components/WaitLot.vue'
@@ -1306,6 +1307,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:ERPWORKREPORT CANCEL': appBasePath + '/RPT/ErpWorkReportCancel',
   'function:RPT:ERPWORKREPORT CANCEL_T100': appBasePath + '/RPT/ErpWorkReportCancelT100',
   'function:RPT:ERPWORKREPORT CANCEL_E10ICD': appBasePath + '/RPT/ErpWorkReportCancelE10ICD',
+  'function:RPT:GUM LOG QUERY': appBasePath + '/RPT/GumLogQuery',
   'function:RPT:CONFIRM LOT': appBasePath + '/RPT/ConfirmLot',
   'function:RPT:HOLD LOT': appBasePath + '/RPT/HoldLot',
   'function:RPT:WAIT LOT': appBasePath + '/RPT/WaitLot',
@@ -1806,6 +1808,7 @@ const isRt607PlanFinishTimeByLotPage = computed(() => activeMasterKey.value === 
 const isRt609ErpWorkReportCancelPage = computed(() => activeMasterKey.value === 'function:RPT:ERPWORKREPORT CANCEL')
 const isRt610ErpWorkReportCancelT100Page = computed(() => activeMasterKey.value === 'function:RPT:ERPWORKREPORT CANCEL_T100')
 const isRt611ErpWorkReportCancelE10ICDPage = computed(() => activeMasterKey.value === 'function:RPT:ERPWORKREPORT CANCEL_E10ICD')
+const isRt612GumLogQueryPage = computed(() => activeMasterKey.value === 'function:RPT:GUM LOG QUERY')
 const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function:RPT:CONFIRM LOT')
 const isRt502HoldLotPage = computed(() => activeMasterKey.value === 'function:RPT:HOLD LOT')
 const isRt503WaitLotPage = computed(() => activeMasterKey.value === 'function:RPT:WAIT LOT')
@@ -4134,6 +4137,12 @@ async function signOut(): Promise<void> {
         />
         <ErpWorkReportCancelE10ICD
           v-else-if="isRt611ErpWorkReportCancelE10ICDPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <GumLogQuery
+          v-else-if="isRt612GumLogQueryPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

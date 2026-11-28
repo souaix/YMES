@@ -68,6 +68,12 @@
 - [ ] 隔離資料庫的正向 API 值驗證仍待建立安全、可丟棄的 PostgreSQL fixture；正式 `YMES` 缺唯一故障狀態設定及同步歷程，不灌正式資料。
 - [ ] 公司端在 DEV 保留假資料預覽、正式模式接此 API，完成主設備／Chamber 查詢及 normalized response 表格與趨勢映射；部署後補正式端點驗證。遠端根 filesystem 仍 100%，沒有刪除其他專案或回滾檔案來騰空間。
 
+## 公司端 RT612 膠類歷程資料查詢 handoff（2026-11-28）
+
+- [ ] 核對 YMES PostgreSQL live schema、同步來源與正向資料，特別是 TBLINVWIPINVENTORY_RAWLOG；MESTEST source DDL／metadata 尚缺。庫房／材料 lookup refs 只能供 lookup 參考，不代替 RawLog DDL。詳 [RT612 規格](docs/modules/RPT/膠類歷程資料查詢_RT612.md)。
+- [ ] 設計登入／RT612 ACL 保護的唯讀 parent＋history API。需參數化、至少一項有效查詢條件、日期跨度／筆數上限、穩定 parent 排序及 EventTime 降冪 child 排序；MaterialLotNo 為前綴查詢。不要提供 arbitrary SQL／AdditionalXml。
+- [ ] 核實 GumTypeStatus labels、GumMaterialType 系統參數與正式資料同步；決定日期 From／To 的公開語意。Legacy Form 只送日期、Core 用 inclusive BETWEEN 到 EndDate 00:00，正式 API 不要無意截掉結束日大部分資料。
+
 ## 公司端 RT611 取消報工單_E10ICD handoff（2026-11-27）
 
 - [x] 以 PPK／SSH 唯讀核對正式 PostgreSQL：RT611 五張目標表在所有 schema 均不存在，沒有可核欄位／鍵／索引或同步資料；未猜表或建表。詳 [RT611 規格](docs/modules/RPT/取消報工單_E10ICD_RT611.md) 與 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
