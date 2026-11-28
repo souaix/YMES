@@ -1,5 +1,13 @@
 # 公司端待辦
 
+## 2026-11-28 RT906 指標樹歷史資料查詢公司端交接
+
+- [x] 依 `frmKPITreeLog`／Designer、`wsRPT.LoadEKBKPILog`、`clsRPTBasis.ShowEKBKPILog` 及 TargetType ValueList 完成 `/YMES/RPT/KpiTreeLog` DEV 假資料查詢和 12 欄 Grid；精確樹名稱／時間條件與空結果、防呆可模擬。
+- [x] 更新 [RT906 規格與家用端 handoff](docs/modules/RPT/指標樹歷史資料查詢_RT906.md)、[規格索引](docs/MODULE_REPLICATION_SPEC_INDEX.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。`tblEKBKPILog` Oracle source DDL／metadata 未找到；桌機受保護 profile 不存在，未查 Oracle／猜 CREATE。
+- [x] 記錄 Core 等號樹名及嚴格 `CreateDate > Start`／`< End`；無條件可全表查詢、無分頁／排序／上限。DEV 僅用 fixture，未連資料庫或呼叫 Service。
+- [ ] 家用端先核 live schema／權限，再做登入／FunctionKey 保護、必要條件、日期跨度／row cap、參數化、穩定排序與分頁的唯讀 API。公司端未實作正式 API／schema、未 build／test／browser。
+- [ ] WIP 維持全案優先；WPI05 仍缺來源期間，若無其他可核對 WIP 項目則繼續下一個可做選單功能。
+
 ## 2026-11-28 RT905 指標樹查詢公司端交接
 
 - [x] 依 `frmKPITreeQuery`／inline Designer、`frmShowTreeQuery`、`wsRPT` query／tolerance／log、`clsRPTBasis` 和 Report Engine 呼叫完成 `/YMES/RPT/KpiTreeQuery` DEV 假資料查詢、FreezeState=0 清單、唯讀樹圖、容忍值著色、KPI detail、CSV 匯出及本頁 log 模擬。

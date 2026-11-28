@@ -16,6 +16,13 @@
 - 家用端接續時，先從本清單及其他 WIP handoff 挑選可執行的 WIP schema／API／migration／UI 整合／驗收工作，排在非 WIP 模組之前。某項若受缺少可信來源或外部條件阻擋，記明缺項後先找下一個可執行的 WIP 項；沒有可執行的 WIP 項時才回到一般清冊。
 - 公司端對應規則：可核對來源的 WIP WinForms／DEV／規格優先；WPI05「配件領用單維護作業」目前缺 Form／Service／Core，來源到位後優先處理，不臆造畫面或 schema。詳 [公司端待辦](todolist_officepc.md) 與 [公司端交接](docs/CODEX_HANDOFF_OFFICEPC.md)。
 
+## HOME RT906 指標樹歷史資料查詢 handoff（2026-11-28）
+
+- [ ] Pull 最新 `main` 後先核正式 catalog／migrations／`ymes_app` 權限與資料同步來源；公司端未取得 `tblEKBKPILog` Oracle source DDL／metadata，缺可信結構時不得從 DEV 假資料建表。
+- [ ] 實作登入／RT906 FunctionKey 授權的唯讀 API：樹名精確條件或 Start／End 完整日期範圍，必填至少一類；參數化查詢、最大日期跨度、固定排序（含 CreateDate tie-break）、paging 與 total/page metadata。正式結果不可回傳全表。
+- [ ] 若需和 legacy 一致，樹名採等號，日期 `CreateDate > Start`／`< End` 嚴格排除兩端；不同範圍語意須明示並同步 UI。確認 `ActualValueScript` 欄是否應回傳給有權限使用者，API 永不執行此欄位。
+- [ ] 未經 `TBLEKBKPIDETAIL.TARGETTYPE` ValueList 或正式 API lookup 核對，不可把 DEV 的 Number／Percentage labels 當正式 ValueList。模組 source 與缺項見 [RT906 規格](docs/modules/RPT/指標樹歷史資料查詢_RT906.md)。
+
 ## HOME RT905 指標樹查詢 handoff（2026-11-28）
 
 - [ ] 先核正式 catalog／migration 與最小權限：basis、EKB detail、KPI detail、容忍值、`tblEKBKPILog`。公司端未取得可信 Oracle DDL／metadata；缺表時不得照 DEV fixtures 建表或猜 columns／keys。

@@ -348,6 +348,7 @@ import ErpWorkReportCancelE10ICD from './components/ErpWorkReportCancelE10ICD.vu
 import GumLogQuery from './components/GumLogQuery.vue'
 import KpiTreeBasis from './components/KpiTreeBasis.vue'
 import KpiTreeQuery from './components/KpiTreeQuery.vue'
+import KpiTreeLog from './components/KpiTreeLog.vue'
 import ConfirmLot from './components/ConfirmLot.vue'
 import HoldLot from './components/HoldLot.vue'
 import WaitLot from './components/WaitLot.vue'
@@ -1312,6 +1313,7 @@ const menuRoutes: Record<string, string> = {
   'function:RPT:GUM LOG QUERY': appBasePath + '/RPT/GumLogQuery',
   'function:RPT:KPI TREE BASIS': appBasePath + '/RPT/KpiTreeBasis',
   'function:RPT:KPI TREE QUERY': appBasePath + '/RPT/KpiTreeQuery',
+  'function:RPT:KPI TREE LOG': appBasePath + '/RPT/KpiTreeLog',
   'function:RPT:CONFIRM LOT': appBasePath + '/RPT/ConfirmLot',
   'function:RPT:HOLD LOT': appBasePath + '/RPT/HoldLot',
   'function:RPT:WAIT LOT': appBasePath + '/RPT/WaitLot',
@@ -1815,6 +1817,7 @@ const isRt611ErpWorkReportCancelE10ICDPage = computed(() => activeMasterKey.valu
 const isRt612GumLogQueryPage = computed(() => activeMasterKey.value === 'function:RPT:GUM LOG QUERY')
 const isRt904KpiTreeBasisPage = computed(() => activeMasterKey.value === 'function:RPT:KPI TREE BASIS')
 const isRt905KpiTreeQueryPage = computed(() => activeMasterKey.value === 'function:RPT:KPI TREE QUERY')
+const isRt906KpiTreeLogPage = computed(() => activeMasterKey.value === 'function:RPT:KPI TREE LOG')
 const isRt501ConfirmLotPage = computed(() => activeMasterKey.value === 'function:RPT:CONFIRM LOT')
 const isRt502HoldLotPage = computed(() => activeMasterKey.value === 'function:RPT:HOLD LOT')
 const isRt503WaitLotPage = computed(() => activeMasterKey.value === 'function:RPT:WAIT LOT')
@@ -4161,6 +4164,12 @@ async function signOut(): Promise<void> {
         />
         <KpiTreeQuery
           v-else-if="isRt905KpiTreeQueryPage"
+          class="framework-content"
+          :development-preview="isDevelopmentPreview"
+          @close="navigateHome"
+        />
+        <KpiTreeLog
+          v-else-if="isRt906KpiTreeLogPage"
           class="framework-content"
           :development-preview="isDevelopmentPreview"
           @close="navigateHome"

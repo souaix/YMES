@@ -6,6 +6,14 @@
 
 - [x] OE 工單管理的公司端 Vue DEV／來源規格共 13 項已完成；正式 API／schema 由家用端依原 handoff 接手。使用者最新指示：WIP「在製品管理」優先於其他尚未開始的模組。公司端先做可核對來源的 WIP WinForms／DEV／規格；家用端先做待辦中可執行的 WIP schema／API／migration／整合／驗收工作，再處理非 WIP 項目。WP803 正式 UI 接線、WIPINV_CS DEV／規格 handoff 已完成，WP804 已完成；WPI05 是目前唯一待來源的 WIP 選單功能，原始 Form／Service／Core 到位後應優先接續。WPI05 缺來源期間，記錄缺項並按既定清冊繼續可做工作；發現其他可做的 WIP 即插隊。RT501 與 RT410 正式頁已接家用端唯讀 API／lookups，runtime 驗收待資料與操作時機；RT410 legacy 主／子設備時間邊界差異已核源並記錄。RT416／RT417／RT502／RT503／RT504／RT608 均已完成。OEE summary Oracle DDL 因桌機受保護 profile 不存在尚未取得；公司端不連 PostgreSQL、不實作正式 API/schema。
 
+## 公司端目前交接：RPT RT906 指標樹歷史資料查詢（2026-11-28）
+
+- [x] 核對 `frmKPITreeLog`／Designer、`wsRPT.LoadEKBKPILog`、`clsRPTBasis.ShowEKBKPILog` 與 TargetType ValueList 呼叫；完成 `/YMES/RPT/KpiTreeLog` DEV 假資料精確樹名／日期查詢與 12 欄歷程 Grid。[RT906 規格與家用端 handoff](modules/RPT/指標樹歷史資料查詢_RT906.md)
+- [x] 記錄 Form 要求樹名或日期至少一項、Start < End；Core 使用樹名等號與 `CreateDate > Start`／`< End`，無分頁／排序／上限，API 缺條件時可全表查詢。`tblEKBKPILog` source DDL／metadata 不在 repo；桌機 protected Oracle profile 不存在，未查 Oracle／猜 CREATE。
+- [x] DEV 不呼叫 `wsRPT.LoadEKBKPILog`／Oracle／PostgreSQL；Script 欄固定假資料僅顯示、不執行。公司端未實作正式 API／schema、未 build／test／browser。
+- [ ] 家用端先核 live `tblEKBKPILog` schema／權限與資料同步，再做 FunctionKey 授權、必要條件、日期跨度與筆數上限、參數化、CreateDate 次排序及 paging 的唯讀 API。
+- [ ] WIP 仍優先；WPI05 原始來源缺失且沒有新可核對 WIP 項目時，繼續下一個可做清冊功能。
+
 ## 公司端目前交接：RPT RT904 指標樹基本資料設定（2026-11-28）
 
 - [x] 核對 `frmKPITreeBasis`／inline Designer、Basis Def、Draw、KPI／Description Def、Report lookup、`wsRPT` Service、`clsRPTBasis` 與 `clsBasis_UPD`；完成 `/YMES/RPT/KpiTreeBasis` DEV 主檔查詢／CRUD／Freeze／Copy、樹節點／KPI／容忍值／說明控制項互動。[RT904 規格與家用端 handoff](modules/RPT/指標樹基本資料設定_RT904.md)
