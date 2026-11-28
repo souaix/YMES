@@ -66,6 +66,7 @@ if (!localDemoAuth)
     builder.Services.AddSingleton<YMes.Api.Wip.Wp804QueryRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp106OperatorOnlineRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp307AreaOperatorRepository>();
+    builder.Services.AddSingleton<YMes.Api.Wip.Wp305EquipmentOnlineQcRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp306EquipmentQcListRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp304EquipmentConsumeLogRepository>();
     builder.Services.AddSingleton<YMes.Api.Wip.Wp304EquipmentConsumeLookupRepository>();

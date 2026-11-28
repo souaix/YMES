@@ -1,5 +1,12 @@
 # 部署設定檔
 
+## 家用端 WP305 設備線上點檢 API a2（2026-11-27；2026-11-28 核對）
+
+- `.NET 9` API Release build 成功；遠端來源 `/opt/ymes/releases/wp305-api-20261127-a2/`。發佈 tar SHA-256 `D0783E1F6B837F3A09F05FD13E58DF36D9439977B7D6F18A0C23E844F75DF2A2`；`YMes.Api.dll` SHA-256 `BF09EC41E0B35BF22E58908E71FA6E3C995979869C77D754D03540986C0528AE`。
+- 正式 image `ymes-api:wp305-online-qc-20261127-a2`／`ymes-api:current` ID `sha256:0be7a2d2fc54b22eee470143f575e9b82629b8df261df4af56476fa7cefca6dd`；回復 tag `ymes-api:before-wp305-online-qc-20261127-a2` 保留 a1，ID `sha256:a3b73066160c5cf0bfb73c6e9a2fb68d52a906a689dfec3a4aca182b292e6ef7`。只替換 `ymes-api`；`ymes-web` ID `sha256:40fdfefad6d13b74601e67e03727b29d39e350bdd1300daf7cb6ab852b7c4438`、`ymes-master-web` ID `sha256:84356fe73f73db0ab47d95dc6fdd1229ddee0cccdd43e2880b2ed1452bfac7b8` 保持不變。
+- Readiness 200、匿名 lookup 401、API 容器 running；app-browser Demo session 驗證 equipment types／equipment 回空陣列、Wait／Recheck 不存在設備 404、invalid mode／page／pageSize 400、Check-in 缺少 Lot／LogGroup context 400、正式點檢頁唯讀且 Close 返回主選單。正式沒有有效設備／任務資料，未建立正式假資料或送出新增 POST；正向新增仍待安全測試資料／來源到齊。
+- 0107 database index migration 於 2026-11-28 套用前備份 `/opt/ymes/backups/ymes-before-wp305-0107-20261128.dump`（884,831 bytes、SHA-256 `4c1c36c9a870d5d130a5d0f728a16cc2a6ab5cc3e1a4388e38b3585ad9c9aaee`；`pg_restore --list` 2,441 entries）。根分割區約剩 1.5 GiB（98% 使用）；未 prune 映像或清理其他專案。詳見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+
 ## 家用端 WP303／WP304 API-only release a1（2026-11-28）
 
 - 來源 commit `147f83a2177319d1adc69835850d50e777ce90f8`；release 封裝 SHA-256 `98EC090D5CA961319B8C44E47CC857AE3A734175E3285F2FF45C0B7C24A84C50`，`YMes.Api.dll` SHA-256 `ACEE4F2B3B44C06B93B7E4591387437F78F3F0F31A273B6075594B996F601A7C`。

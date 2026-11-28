@@ -4403,16 +4403,17 @@ API 工作：
 - [x] WP304 API 已部署；正式 app-browser 以完整台北日期區間查詢回 `[]`，Log／Consume Basis 沒有正式資料，未建立測試列。
 - [ ] 公司端依 [WP304 handoff](todolist_officepc.md) 接 Production API 與分頁／錯誤狀態；待正式同步資料可用後再做正向查詢。
 
-## WIP WP305 設備線上點檢家用端 handoff（2026-11-20）
+## WIP WP305 設備線上點檢家用端（2026-11-27）
 
-- [ ] Pull 最新 `main`，閱讀 `docs/modules/WIP/設備線上點檢.md`、`docs/DATABASE_CONNECTION.md` WP305 段落，以及 `database/reference/mestest_wip_wp305_metadata.txt`。
-- [ ] WP305 Oracle source DDL、index DDL、metadata 與 PostgreSQL CREATE-only 在 `database/reference/mestest_wip_wp305_source_ddl.sql`、`mestest_wip_wp305_source_indexes.sql`、`mestest_wip_wp305_metadata.txt`、`mestest_wip_wp305_create.sql`。CREATE-only 包含點檢 Log/Detail/Task 及設備狀態 Log、`TBLWIPCONT_EQUIPMENT`、`TBLWIPLOTLOGINSTATE` 三張失敗處置副作用表。先比對 YMES live schema／migration history，缺少才新增 migration；equipment-state basis、QCList Basis/Detail/Setup、Equipment、`TBLWIPTEMP_EQUIPMENT` 沿用既有 reference。
-- [ ] `TBLWIPCONT_EQUIPMENT` 在 Oracle 沒有 PK/unique index；不可在 YMES 猜測主鍵或宣告不實唯一性。三張功能 Log/Detail/Task 的 PK 依 Oracle source metadata；非唯一索引照 DDL reference 核實後再建。
-- [ ] 建登入保護的 Equipment/EquipmentType、QC List Basis/Detail、Wait QC/Re QC candidate API。Wait QC 必須遵守 QCTaskClass=1、Status=0、設備設定及報工模式 BelongDate/最近 PlanQCTime；ReQC 僅 Status=2。多候選不得無排序自動取第一筆。
-- [ ] 新增點檢使用 `POST`，修改既有 Log 使用 `PUT`；禁止 GET 寫入。Server 從 QCList Detail 重新計算 QCType 0 exact / 1 inclusive range（`*` 無界）/ 2 OK-NG / 3 text 的 item 結果與整體 QCResult，不接受瀏覽器提交的 QCResult 作權威值。保留 InputDataCount 及 D01-D10。
-- [ ] Header + Detail + 若有 QCTask 的 Status=1、QCSerialNo/任務欄位回填須同一 transaction；以唯一 Serial、task row lock/CAS、idempotency 防重複提交與補驗競態。獨立模式部分存檔可留 QCResult=-1；Check-in 呼叫必須拒絕未完成項。
-- [ ] 若 QCResult=NG 且 QCList UnValidAction 有設定，Core 會改設備狀態並寫 EquipmentStateLog。若設備原為 WIP CheckInConfirm，還會呼叫 SHR_COEquipment 結算設備上的批次、更新設備歷程、刪除 Temp Equipment、關閉 Cont Equipment、更新多人上工 LotLoginState 簽退。正式 API 必須接 WP201/WP204 共用下機交易或等價一致 transaction；不可只建立 QC Log 後遺漏設備/WIP/人員副作用，也不可允許半套提交。
-- [ ] WP305 DEV localStorage `ymes.dev.wp305-equipment-online-qc.v1` 只供假畫面及 WP306 DEV 假歷程使用；不得當作正式 API 資料、授權或 task 狀態依據。完成權限、transaction、錯誤碼與 API/migration/deploy records 後更新交接。
+- [x] Pull 最新 `main`，核對 WP305 規格、資料庫紀錄、Oracle source DDL／metadata 與家用、公司待辦；本次基準 `7147112`。在隔離分支 `codex/homepc-wip-20261127` 接續，沒有改寫公司端歷史。
+- [x] 透過 PPK／SSH 唯讀核對正式 YMES schema；備份後套用 migration 0105，建立來源空表 `TBLWIPEQPQCTASK`、`TBLEQPQCLISTSETUP`、`TBLWIPTEMP_EQUIPMENT`。核對欄位與 PK，三表均空；`ymes_app` 只有 SELECT，無 INSERT／UPDATE／DELETE。
+- [x] 完成登入保護 `.NET 9` API：設備類別／設備 lookup、候檢與補驗、QC List、獨立新增點檢 POST。結果由伺服器重新計算；Header／Detail／Task 與冪等鍵採單一交易、行鎖及狀態 CAS；API Repository 已註冊。具體契約見 [WP305 模組規格](docs/modules/WIP/設備線上點檢.md)。
+- [x] 將寫入權限收斂為 Log／Detail INSERT、Task `status` 與 `qcserialno` 欄位 UPDATE、冪等表 SELECT／INSERT；0106 已套用並唯讀回核 grants；無 UPDATE／DELETE 權限。
+- [x] Check-in POST 與 NG+UnValidAction 在任何寫入前明確拒絕；亦拒絕仍連結目前在製設備批次的任務。未完整取得 `clsLot.SHR_COEquipment` source／交易邊界，不猜測設備狀態、下機及人員簽退交易。
+- [x] 0107 套用前完整備份並驗證後，建立 YMES-only 候檢／補驗部分索引；`TBLWIPEQPQCTASK` 當時估計 0 rows、16 KiB，catalog 回讀索引定義正確。
+- [x] API a2 已發佈正式站並以 app-browser 驗證登入狀態、lookups、候檢／補驗錯誤邊界、無效模式／分頁、Check-in 缺少必要上下文及點檢頁 Close；正式資料不足以完成正向獨立點檢新增，未建立正式假資料列。
+- [ ] 公司端補足 `clsLot.SHR_COEquipment` 完整 source 與設備狀態變更呼叫鏈／交易範圍後，再評估 Check-in、NG 下機及多人簽退；公司 Vue 頁接 Production API，詳 `todolist_officepc.md` WP305 handoff。
+- [ ] 完成本次 GitHub 同步後檢查公司端新提交與下一筆家用待辦；遇新家用事項接續處理。
 
 ## WIP WP306 設備點檢歷程家用端 handoff（2026-11-20，進度於 2026-11-27 更新）
 

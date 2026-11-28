@@ -3481,6 +3481,12 @@ QC201 主表／四張直接子表、QC202 `TBLSPCATTLIMIT`、QC103/QC107/QC108 �
 
 ## WP305 設備線上點檢已完成公司端 DEV（FunctionKey WP305，2026-11-20）
 
+### 家用端 WP305 API 接手項目（2026-11-27）
+
+- [ ] 提供原生 MES 的 `clsLot.SHR_COEquipment` 完整方法、所有直接呼叫的設備狀態更新 method/source，以及交易呼叫邊界；說明點檢 NG + `UnValidAction` 且設備是 CheckInConfirm 時，Lot 結算、Temp/Cont Equipment、多人 `TBLWIPLOTLOGINSTATE` 簽退的確切順序與 rollback 行為。家用端在來源到齊前會拒絕 Check-in POST 與該類 NG 寫入。
+- [ ] 家用端 WP305 API 已部署至 `/YMES/API/`：Vue Production 頁接登入保護 API：EquipmentType/Equipment lookup、Wait/Re QC 候選、QC List、獨立點檢 POST；保留部分存檔確認、錯誤狀態和重新載入任務。不得以 DEV localStorage 假紀錄當正式結果。
+- [ ] 接線後用 app-browser 驗收一般獨立點檢全流程；Check-in POST 應顯示 API 明確拒絕，直到家用端完成原生一致交易。不得以正式資料庫假列驗證寫入。
+
 - [x] 依 `frmEQPCheckQCList`、`wsEQP/wsWIP`、`clsWIP`、`clsLot` 核對設備/點檢表載入、QCType 判定、部分存檔、候檢/補驗、Task status 及 NG 設備狀態/下機副作用。
 - [x] Vue DEV 路徑 `/YMES/WIP/EquipmentOnlineQC`，掛入 WIP → 設備與載具 → 設備線上點檢；涵蓋設備 lookup、Wait QC、Re QC、四種 QCType、D01-D10、Confirm/Close 與稽核欄位。假資料存 `ymes.dev.wp305-equipment-online-qc.v1`。
 - [x] PowerShell 5.1 + 受保護 Oracle profile 直連 MESTEST，查出 Log、Detail、Task 及三張狀態/下機副作用表的 DBMS_METADATA DDL、欄位/約束/索引/trigger metadata；新增 source/index DDL、metadata 與 PostgreSQL CREATE-only。

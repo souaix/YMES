@@ -1270,6 +1270,18 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 以 `ymes_app` 的 `EXPLAIN` 確認 EquipmentNo 查詢走 `ix_wp306_qc_log_equipment_serial`、日期範圍查詢走 `ix_wp306_qc_log_created_serial`、Detail 走來源複合 PK；沒有 `ANALYZE` 或業務列查詢。正式 API 未部署，故尚無正式站端對點檢列的正向瀏覽器驗收。
 - API 查詢條件為精確 EquipmentNo 或完整 StartDate／EndDate 組合，日期端點含界並轉台北時間；每頁最多 100、Header 按 QCListSerial 穩定排序，Detail 一次回傳選取 Header 的完整 Detail。FunctionKey／廠區授權未完成，登入保護不等於細粒度授權；WP305 編輯寫入流程尚未就緒，無 DML grant。
 
+### 更新 2026-11-27：WIP WP305 設備線上點檢依賴表與 API
+
+- 透過 PPK／SSH 以 PostgreSQL catalog 核對 YMES live schema；`TBLWIPEQPQCTASK`、`TBLEQPQCLISTSETUP`、`TBLWIPTEMP_EQUIPMENT` 缺少，其餘 WP305/QC/Equipment source tables 已存在。沒有查 MES 業務資料列。
+- 套用 migration 0105 前完整備份 `/opt/ymes/backups/ymes-before-wp305-0105-20261128.dump`，876,734 bytes、SHA-256 `2b3b3930d359bb56069c72e3e54878d6f82f451a6db7b2923f4554c1f8b34343`；`pg_restore --list` 驗證 2,417 entries。主機 root filesystem 當時約 1.6 GiB 可用空間。
+- `0105_wip_wp305_online_qc_dependencies.sql` SHA-256 `F61129ECC94D68CC306D1B388F4DA860F230A055D51151FA2807805DEA0ED217`，依 MESTEST source DDL 建立三張空表與來源 PK；migration 已提交。catalog 核對欄位／PK 正確，三表均 0 rows；`ymes_app` 對三表及 QCL Basis/Detail 僅有 SELECT，沒有 INSERT／UPDATE／DELETE。沒有建立 WP305 下機副作用表或其 DML 權限。
+- 對 Log Header／Detail／Task 以 catalog 核對生產欄位及型別，與 WP305 Oracle reference 相符。套用前 `ymes_app` 對 WP305 Log/Detail/Task/Setup/Temp Equipment 為 SELECT-only，沒有既有 DML grants。
+- `0106_wip_wp305_online_qc_write.sql` SHA-256 `37219E6C4D13F94807A302233E423BECE3202F91418E58729A2C7FA6DA7DB054`；套用前完整備份 `/opt/ymes/backups/ymes-before-wp305-0106-20261127.dump`，882,788 bytes、SHA-256 `9b80e3d05f372a13f37dd187c95fe1341f25251629eb5daab41699702ee420d8`，`pg_restore --list` 成功。0106 已套用；catalog 回讀確認 Log／Detail 僅 INSERT、Task 僅 `status`／`qcserialno` 欄位 UPDATE，冪等表僅 SELECT／INSERT，沒有 UPDATE／DELETE；冪等 ledger 為空。
+- 0107 套用前完整備份 `/opt/ymes/backups/ymes-before-wp305-0107-20261128.dump`，884,831 bytes、SHA-256 `4c1c36c9a870d5d130a5d0f728a16cc2a6ab5cc3e1a4388e38b3585ad9c9aaee`，`pg_restore --list` 驗證 2,441 entries。`0107_wip_wp305_candidate_indexes.sql` SHA-256 `0DA7B6A43021F636EA1D8AF43E986F25901D139ECC10F2CBEE7B2C62FA8105C5`；已套用並從 catalog 回讀 wait/recheck 兩個部分索引定義。`TBLWIPEQPQCTASK` 套用前估計 0 rows、總大小 16 KiB；沒有讀取或修改業務列。Rollback 僅刪除此兩個 YMES-only index。
+- `.NET 9` API 的 Release build 成功（0 warning／0 error），已部署 `a2` 至 `/YMES/API/`。正式 image `ymes-api:current` 為 `sha256:0be7a2d2fc54b22eee470143f575e9b82629b8df261df4af56476fa7cefca6dd`；回復 tag `ymes-api:before-wp305-online-qc-20261127-a2` 保留 `sha256:a3b73066160c5cf0bfb73c6e9a2fb68d52a906a689dfec3a4aca182b292e6ef7`。Readiness 200、匿名 lookup 401。只更新 `ymes-api`；`ymes-web` 與 `ymes-master-web` image IDs 未變。部署後根分割區剩約 1.5 GiB、使用率 98%，沒有清除其他映像或容器。
+- app-browser 以既有 Demo 登入驗證 equipment type／equipment 回 `[]`；候檢與補驗用不存在設備回 404，無效 mode、頁碼及 page size 回 400；缺少 Check-in Lot／LogGroup context 回 400。正式點檢頁呈唯讀預覽，Close 可返回主選單。由於正式來源表沒有可用設備／點檢任務，沒有建立正式假資料，也未用空白 payload 嘗試任何正式 POST。原生 `clsLot.SHR_COEquipment`／設備狀態與人員簽退交易仍待公司端 source，故 Check-in POST 與 NG+有效 `UnValidAction` 仍於寫入前拒絕。
+- 完整 `clsLot.SHR_COEquipment` 原生來源、Equipment state change call chain 及 transaction boundary 仍由公司端補給；在取得前不實作 Check-in、NG 設備下機／狀態／人員簽退交易。
+
 ### 更新 2026-11-20：WIP WP103 列印流程卡
 
 - WP103 查詢及報表讀取既有 WIP Lot Basis/State、Process Node/Relation、OP、Product、Customer、RunCard Log、`TBLPRDRUNCARDMAP`、User Defined Report 與 System Parameter。功能沒有新增專用 Oracle table；本輪沿用已存在的 schema/reference，不重複查 DDL，也未產生重複 CREATE-only。
