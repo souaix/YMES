@@ -1,5 +1,16 @@
 # 部署設定檔
 
+## 家用端 WP914 生產批緊急狀態／優先權 API a3（2026-11-28；API-only）
+
+- .NET 9 Release build／publish 成功。發行封裝 SHA-256 `79AC5421B80E7340153B2FA5355E731F01D631D2D3CB5642C5943E94783FFD09`；`YMes.Api.dll` SHA-256 `417E8462F6A0F11D97EEB56B7333D3BA1D983CA15A43BE82732D87BD06AA0C24`。root-only source path `/opt/ymes/releases/wp914-hotlot-priority-api-20261128-a3/`。
+- Image `ymes-api:wp914-hotlot-priority-20261128-a3`／`ymes-api:current` ID `sha256:e3d978837553ad3ddb6342fd79e19507a6e2d703ebb8d1545e92a60a1ae8a289`。Rollback `ymes-api:before-wp914-hotlot-priority-20261128-a3` 指向 a2 `sha256:14af6d35ab6a01e47607c3074ed88b1a7c3eef28a816b870a03fc6e30f4f241c`。僅替換 `ymes-api`，Web／master Web 未重建，資料庫 schema／migration 未變。
+- a3 修正 LotNo／BaseLotNo／OPNo key 的大小寫保留、只拒絕重複 `(LotNo, OPNo, Status)` 組合，並拒絕 NUL 字元。Candidate readiness=200、匿名 WP914 endpoint=401 後切換；正式容器 healthy／readiness=200／匿名 endpoint=401。app-browser Demo session 驗證正式頁 guard、Lot sentinel 查詢 `[]`、RO lookup sentinel `[]`、缺少查詢條件 400。四種 lookup、三層選單入口與 Close 已於 a2 驗證；本次沒有正式 Lot 或冪等交易資料，因此未做成功 Set／正式業務寫入。
+
+### WP914 前版 API a2（已由 a3 取代）
+
+- 封裝 SHA-256 `566648362532D19F2DD300FD429925AE981D87EBFF902EAC6FBE5A8E874696FB`；`YMes.Api.dll` SHA-256 `A6ED176E15D19635C3992C8D6E9BA45498002FAB3C0B75D2C892E2B3CDDE4766`。Image ID `sha256:14af6d35ab6a01e47607c3074ed88b1a7c3eef28a816b870a03fc6e30f4f241c`；由 a3 rollback tag保留。
+- Migration 0115 建立空冪等表及最小兩欄 UPDATE；0116 security-definer lock helper 首次 sentinel 執行發現 PL/pgSQL record 欄位衝突，0117 已修正並在 API 部署前以 ymes_app sentinel 重驗成功。正式 DB 備份／checksum／rollback 順序見 `docs/DATABASE_CONNECTION.md`。
+
 ## 家用端 WP206 計數不良原因收集 API a2（2026-11-28）
 
 - .NET 9 Release build／publish 成功。正式 API image `ymes-api:wp206-ipqc-20261128-a2`／`ymes-api:current` ID `sha256:36d14ea0ef2d1a23e351ff6f260e543be640cc6ae5fc7117f8e1aed7b366a0e0`；發佈封裝 SHA-256 `9E729BF7BC88C0CD532A52282FB30455787D4F9B2DAF2FA51DC89AA37295E8E3`、`YMes.Api.dll` SHA-256 `381360FD3B5633F3F88CAECD33CAAC8BD833AB2306902F006839774A0968F681`。來源位於 root-only release path `/opt/ymes/releases/wp206-api-20261128-a2/`。

@@ -4543,12 +4543,14 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - [ ] 交易式 POST 鎖定 Lot／來源元件／編號命名空間，重讀 LotStamp、元件歸屬、GoodQty／ScrapQty、載具現況；server 產生或原子保留 2–26 個唯一新元件號，逐列驗證非負／非全零、精度／長度，兩種數量合計各自完全等於來源。原 `EXE_SplitComponent` Core 沒有重新算數量守恆，Service 也只有三個欄位同時缺時才報缺欄；不可只靠 Form。分片成功後來源消失，新元件及 Lot CurQty／LotStamp 更新，重試須冪等。
 - [ ] 同交易繼承 ComponentState／Property／選用 Basis、站中 Temp/Cont ComponentAttrib 與 Cont Component、SEMI_WAFER／LED_PKG TestSummary、LotState／Temp_LotState、Carrier DetailLog（若部署允許）及 ReverseHistory CommitState；失敗整體回滾。正式 API、PostgreSQL migration、部署及驗收由家用端執行；公司端未連 PG、未建正式 API/migration、未執行 build/test/browser。
 
-## WIP WP914 生產批緊急狀態／優先權調整家用端 handoff（2026-11-20）
+## WIP WP914 生產批緊急狀態／優先權調整家用端 handoff（更新 2026-11-28）
 
-- [ ] Pull 最新 `main`，閱讀 [WP914 規格](docs/modules/WIP/生產批緊急狀態與優先權調整.md)。公司頁 `web/src/components/WipHotLotPriority.vue` 只有 DEV 假資料，正式 API 不得讀 `ymes-dev-mock:wip-hotlot-priority:state:v1`。原 FunctionNo 的 `PRIPORITY` 拼字保留用於 menu mapping。
-- [ ] 核 YMES PostgreSQL live schema／migration history。Core 直接更新 `TBLWIPLOTBASIS`，WP101 已有 Oracle source DDL／PostgreSQL CREATE-only；查詢 LotState 和 RO／Area／OP／Product lookup 表也有既有 source refs。沒有本功能新表，不重建現存表；若 helper 另有間接表再核對。
-- [ ] 做登入授權的六欄候選 Lot 查詢與四類 lookup。固定 Status=0–5、LotState=1，至少一篩選條件；回傳 BaseLotNo、HotLot、Priority、LotNo、Status、18 欄顯示資料及可供衝突檢查的版本。排序 HotLot 降、Priority 升、LotNo 升；限制查詢量／分頁。掃描選取只對目前可見結果生效。
-- [ ] 做原子批次 Set API：必須至少一個有效選取、HotLot 0／1、Priority 整數 0–99；server 重讀／鎖定每個 BaseLotNo 及對應 Lot 歸屬、狀態、版本／權限，對同一 BaseLotNo 去重，參數化更新 `TBLWIPLOTBASIS.HotLot/Priority`，明確回報每個基礎批及影響 Lot、審計／衝突／重試結果。原 Form 逐列呼叫 `EditLotBasis_Confirm`，中途失敗可能部分完成；不要讓 browser 或 localStorage 決定已過帳狀態。正式部署與驗收由家用端負責。
+- [x] 從最新 `main` 接手並核對 WP914 規格、正式 `"YMES"` schema、來源欄位與 app 權限；本功能不建立 MES source table。
+- [x] 登入保護的六欄 Lot 查詢與 RO／Product／Area／OP 四種查找 API 已完成，限制分頁與查詢量，固定 `Status=0–5`、`LotState=1`，支援 `LotStamp` 版本與原規格排序；DEV 假資料不進正式 API。
+- [x] 原子 Set API 已完成：重驗／鎖定所選 Lot、狀態、BaseLotNo 與 LotStamp，BaseLotNo 去重，參數化更新只限 `TBLWIPLOTBASIS.HotLot/Priority`，支援 UUID `Idempotency-Key`、衝突回應與伺服器端 actor／結果紀錄。
+- [x] Migrations `0115` 冪等紀錄／兩欄權限、`0116` 窄權限列鎖 helper、`0117` PL/pgSQL 欄位限定修正均已套用；正式資料仍無 WP914 request／Lot 寫入。`ymes_app` 無 source table 整表 UPDATE，也無 schema CREATE 權限。
+- [x] .NET 9 Release API a3 已部署；修正 Lot key 大小寫保留、重複鍵組合判斷及 NUL 檢查。readiness 200、匿名 API 401，正式 Web／master Web 與資料庫 schema 未變。app-browser Demo session 確認正式頁安全 guard、Lot 查詢 sentinel 與 RO lookup sentinel 回 `[]`、缺少條件回 400；a2 已完成四種 lookup、三層選單與 Close 驗收。
+- [ ] Set 尚無正式 Lot 可做正向交易驗收；不要建立正式測試批。公司端待接線／驗收事項記於 `todolist_officepc.md` 的 WP914 區段。
 
 ## WIP WP501 立即異常設定家用端 handoff（2026-11-20）
 
