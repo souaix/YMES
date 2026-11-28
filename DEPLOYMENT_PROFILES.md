@@ -1,5 +1,20 @@
 # 部署設定檔
 
+## 家用端 WP507 預先等待唯讀查詢（2026-11-28；API/Web）
+
+- `.NET 9` API Release build／publish 與 Vue type-check／production build 成功。API 發行封裝 `/opt/ymes/releases/wp507-future-wait-20261128-a1/api.tar.gz` SHA-256 `CE6BC972461AE420EA9E7FFD5A882B04B0D3916839136F32D4FF8FDEF99CBE1B`；Web 封裝 `/opt/ymes/releases/wp507-future-wait-20261128-a1/web.tar.gz` SHA-256 `A2E19A1BF54C7B44E4D49D50B4955D163FA4DC3E938E52119918415CA3F6ED7E`。封裝不含 `.env`／DB 機密。
+- API `ymes-api:current`／`ymes-api:wp507-future-wait-20261128-a1` image ID `sha256:9535786826d531a562d1ec01c2e906f48490cc62fa3e2abe1e6ba0dde4c3232f`；rollback `ymes-api:before-wp507-future-wait-20261128-a1` 保留 WP510 image `sha256:2fddd982909de247ea2203a2bcf7a081d1e5785020a778e3e91a1eb3763e4a65`。Web `ymes-web:current`／`ymes-web:wp507-future-wait-20261128-a1` image ID `sha256:be1e4469078dddf23ffde2616320c53cec6099799cdf4c5e97d356f22182301e`；rollback `ymes-web:before-wp507-future-wait-20261128-a1` 保留 WP510 image `sha256:74aa89c1d172f6716e2b5f2571cc299c2f8bca0d0495889173709736c2e1fb47`。
+- 正式 API `/YMES/API/health/ready`、Web `/YMES/`、`environments.json` 回 200，匿名 WP507 API 回 401；API 與 Web 容器 healthy。app-browser Demo session 驗證空查詢、Lot/OP sentinel、Wait Time Start/End、OP lookup、零筆時分頁按鈕停用、Release disabled、Close 及重進。沒有正式業務列被新增／刪除。`ymes-master-web` 與 `yakuyama-web` 容器未重建或停止。
+- 根分割區部署後仍約 1.2 GiB 可用（98% 使用）；未 prune 或清除其他專案資料。DB migration 0126 與套用前備份詳見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)；功能契約與待辦見 [WP507 規格](docs/modules/WIP/預先等待解除.md)。
+
+## 家用端 WP510 等待單資料 API/Web（2026-11-28）
+
+- `.NET 9` API Release build 與 Vue production build 成功；API 出版 context SHA-256 `45831B7BC20B96AD1EC0A9F717DDE234FC4D39889DA4D93E959FEA94A2483383`。NuGet vulnerability metadata feed 無法連線時出現 `NU1900` warning，沒有編譯錯誤。
+- API `ymes-api:current`／`wp510-wait-read-20261128-a1` image ID `sha256:2fddd982909de247ea2203a2bcf7a081d1e5785020a778e3e91a1eb3763e4a65`，來源 `/opt/ymes/releases/wp510-wait-read-20261128-a1/`；rollback `ymes-api:before-wp510-wait-read-20261128-a1` 保留前版 `sha256:e3d978837553ad3ddb6342fd79e19507a6e2d703ebb8d1545e92a60a1ae8a289`。
+- Web a2 `ymes-web:current`／`wp510-wait-read-20261128-a2` image ID `sha256:74aa89c1d172f6716e2b5f2571cc299c2f8bca0d0495889173709736c2e1fb47`；rollback `ymes-web:before-wp510-wait-read-20261128-a2` 保留 a1 `sha256:8fc788684dd11e3433bef500bba7994b38313d66ef8e29143d2f66cc71391e4d`。a2 補回 OP No 查詢欄位；更早的 a1 回復 tag仍保留。
+- API readiness=200、容器 healthy、匿名 WP510 endpoint=401；正式 `/YMES/` 及 `environments.json` 為 200，API base 為 `/YMES/API`。公開 JS `index-DdaDurbn.js`（5,113,480 bytes，SHA-256 `DF3832CA80913683A4D797F9001CBA4388C6369DBF3323B06A3C93E180C58019`）與 CSS `index-DOlIF8kx.css`（1,381,481 bytes，SHA-256 `158554EB83B1C0471A223E67A152799B7A6FE5E094EFBB7E2D701943E973952C`）MIME／大小／雜湊一致；非 root 使用者可讀。
+- Web 發行封裝位於 `/opt/ymes/releases/wp510-wait-read-20261128-a2/`，SHA-256 `6D97473FC37A5A172782C5D547F5750F97170184EE6989C9735D6553652C51C4`。僅更新 YMES API／Web 容器，未動 `ymes-master-web` 或其他專案；部署時根目錄約剩 1.3 GiB、使用率約 98%，未 prune 映像或清理其他容器。正式功能／DB 回讀見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+
 ## 家用端 WP914 生產批緊急狀態／優先權 API a3（2026-11-28；API-only）
 
 - .NET 9 Release build／publish 成功。發行封裝 SHA-256 `79AC5421B80E7340153B2FA5355E731F01D631D2D3CB5642C5943E94783FFD09`；`YMes.Api.dll` SHA-256 `417E8462F6A0F11D97EEB56B7333D3BA1D983CA15A43BE82732D87BD06AA0C24`。root-only source path `/opt/ymes/releases/wp914-hotlot-priority-api-20261128-a3/`。

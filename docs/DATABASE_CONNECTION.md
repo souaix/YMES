@@ -1,5 +1,28 @@
 # YMES / MES 資料庫連線與憑證處理
 
+## 最新：WIP WP507 預先等待唯讀查詢（0126，2026-11-28）
+
+- 以桌面 PPK／SSH 對 PostgreSQL 14.24 的 `YMES.tblwipfuturewait` catalog 核對；表已存在，7 欄、PK `(lotno,opno,waittime)`。只查 catalog／權限，未讀業務列。
+- Migration `database/migrations/0126_wip_wp507_future_wait_read_access.sql` dry-run 後套用；只授予 `ymes_app` SELECT，回讀為 SELECT=true、INSERT／UPDATE／DELETE=false。rollback 僅撤權、不刪表或資料。套用前備份 `/opt/ymes/backups/ymes-before-wp507-0126-20261128.dump`：957,771 bytes，SHA-256 `92182ceef50a16bab1093b441da1696d03b6b12d2a76d24d7e0010e0e36eb5b0`，`pg_restore --list` 2,607 entries，root:root／0600。Migration SHA `7291CC88488BF9B0281B1D1DBB13EE16980D335C11DF05052E8CEE2A48E86035`；rollback SHA `ABCEDDC604E183A10A2B5E821444B1E76B9C3E4D586759DFE10785B506E46E10`。
+- 建置 WP507 GET 查詢與 OP lookup，正式 Vue 查詢／分頁接線。API `.NET 9` Release build 成功，NU1900 僅為 NuGet 弱點 metadata 無法連線；Vue type-check 與 Vite production build 成功，Vite 顯示大型 bundle 警告。已部署 API/Web `wp507-future-wait-20261128-a1`；容器 healthy、readiness 200、匿名 API 401；只更新 YMES API/Web，其他專案容器保持運行。app-browser 驗空查詢提示、Lot／OP sentinel、Start／End 條件與 OP lookup，無結果顯示正確，Close／重進正常。沒有正式列可驗證分頁正向結果；Release POST 仍未開放。
+- 完整規格與尚待事項見 [WP507 預先等待解除](modules/WIP/預先等待解除.md)及 [家用待辦](../todolist_homepc.md)。
+
+## 最新：WIP WP509 未解除異常單權限來源表（0125，2026-11-28）
+
+- 以 PPK／SSH 在 PostgreSQL 14.24 對 YMES catalog 執行唯讀檢查：WP509 所需 ERF Basis／BatchLot／LotDisposition／HoldReason／Disposition／OCAP Disposition／附件、Lot／OP／Product／Customer 與 TBLUSRUSERGROUP relation 均已在 `YMES`；唯缺 `XX_TBLQCHOLDPRIV`，其他非系統 schema 也沒有同名表。未讀取既有業務資料列。
+- 依公司已提供的 MESTEST DDL／metadata／CREATE-only 建立 migration `0125_wip_wp509_hold_privilege.sql`，SHA-256 `E0340DD46BF409418ADB9F34FBB1E4C4BA945BB823E6A62C1FC5542F9F6F247C`；rollback SHA-256 `B851063A49C48DA3E35788A6DC1C49504800F194FC29A47C35107CF7D8AB6F31`。執行前交易回滾 dry-run 通過，再做正式備份。
+- 備份 `/opt/ymes/backups/ymes-before-wp509-0125-20261128.dump`，955,633 bytes，SHA-256 `4697b5fa7bb301f7a2807656fd4e67f93598465340531e8eb0ef1a49c8ae8259`，`pg_restore --list` 2,603 entries，owner root:root／mode 600。套用後 live readback 為 18 欄、全部 NOT NULL、15 個權限旗標 DEFAULT 0、PK `(GROUPNO)`／只有 PK index、無 trigger；新表 0 列。
+- `ymes_app` 對新表 SELECT／INSERT／UPDATE／DELETE 全為 false；`TBLUSRUSERGROUP` 也未授予 app 權限。沒有搬入群組或權限資料、沒有開放 WP509 API／command；在可信授權列與群組語意到位前維持 fail closed。migration 與 WP509 模組規格見 [未解除異常單](modules/WIP/未解除異常單.md)。
+
+## 最新：WIP WP511 等待處置授權來源表（0124，2026-11-28）
+
+- 家用端以桌面 PPK／SSH 唯讀核對 PostgreSQL 14.24 的 YMES schema；XX_TBLWAITPRIV 與 TBLUSRUSERGROUP 在所有非系統 schema 均不存在。TBLWIPWAITBASIS、TBLWIPWAITLOTDISPOSITION、Lot／OP／Process 主要來源表已存在。catalog 未找到可辨識的 migration history 表，因此不以 repository 檔案存在推斷 migration 狀態。
+- 依 MESTEST 原始 DDL、metadata 與 PostgreSQL CREATE-only reference 建立 0124_wip_wp511_wait_privilege_tables.sql，SHA-256 AC63C5952DDFC8F28E8D950F134340FB4FF199928444FFFAC564FE5F9699F8C3；rollback SHA-256 D488A06E9CDF97B2182D32D240CF1A0F390D6C097D716B4DDCAC95065AA4DB6E。0124 建立 6 欄 TBLUSRUSERGROUP／PK (USERNO,GROUPNO,GROUPTYPE,AGENTOF) 與 14 欄 XX_TBLWAITPRIV／PK GROUPNO；只保留來源主鍵，沒有新增外鍵、trigger 或業務資料，並明確撤銷 PUBLIC／ymes_app 權限。
+- forward migration 在正式連線以交易 rollback dry-run 通過，之後才備份並正式套用。套用前完整 custom-format 備份 /opt/ymes/backups/ymes-before-wp511-0124-20261128.dump：952,407 bytes、SHA-256 141cf11ebff0ff525188f723a2bd7eed4d65e7699799f4a5da463ea675f7af95、pg_restore --list 2,595 entries、owner root:root／mode 600。
+- live catalog readback 確認兩張表來源註解／欄位／PK 正確、各 0 列；ymes_app 對兩表 SELECT／INSERT／UPDATE／DELETE 全為 false。資料庫只有 schema 已建立，尚未授予 API 權限、建立群組／處置權限資料或部署 WP511 API。
+- WP511 原始 Service/Core 邏輯與七個子窗交易仍待家用端核實；目前沒有 WP511 網頁操作可驗。app-browser／GitHub 同步本輪未完成，追蹤於 todolist_homepc.md。
+
+
 ## 最新：WIP WP210 Carrier Detail Log source schema（0113，2026-11-28）
 
 - 以 PPK／SSH 唯讀盤點 WP210 17 張 Core 直接依賴表；正式 YMES 原有 16 張，`TBLWIPCARRIERSTATEDETAILLOG` 在所有 schema 都缺少。依 `database/reference/mestest_wip_wp302_source_ddl.sql`、`mestest_wip_wp302_create.sql` 與 metadata 建立空表，沒有查詢或匯入 MES 業務列。
@@ -46,7 +69,7 @@
 - 套用前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-0097-wp106-20261127.dump`，828 KB，SHA-256 `ad1d5acdf118631db1045f7a415e508f31ddbc05d2390c36b5b49ab8d6db01fa`；`pg_restore --list` 通過。套用後 catalog 確認三表合計 0 rows；`ymes_app` 僅 SELECT，INSERT／UPDATE／DELETE 均 false。未匯入或修改業務列。
 - 新增登入保護、RepeatableRead／read-only、參數化且有界的 `GET /YMES/API/api/wip/operator-online`：OP／Area／Equipment／外部 Lot 篩選合併為 `LoginPlaceNo` 精確聯集，回傳穩定排序頁面，預設 50、上限 100 列；無條件查詢仍有上限。工作樹中的正式 UI 已接唯讀查詢及前後頁，未接正式 lookup／SignOut。
 - API .NET 9 Release 與 Web production build 成功；API 預設 Release 輸出被既有本機程序鎖定，改用隔離輸出目錄建置。唯一警告為離線時無法取得 NuGet vulnerability feed，不影響編譯。家用端本機 app-browser 以正式環境、遠端 PostgreSQL tunnel 驗收：無條件查詢與不存在 OP 條件均回 0 筆；51 字元 LoginPlaceNo 收 400 防呆；無資料時上一頁／下一頁停用，正式 SignOut 與 lookup 停用，Close 返回主選單。未寫入正式業務資料。
-- 正式 API／Web 尚未部署：2026-11-27 再查根目錄僅 403 MB 可用、使用率 100%；API 與 Web 容器仍 healthy。沒有刪除或 prune 其他專案映像；容量恢復後再部署並以正式站 app-browser 驗收。
+- 2026-11-28 正式端回歸：WP106 已由現行 `wp510-wait-read-20261128-a1` API image／`wp510-wait-read-20261128-a2` Web image 提供；readiness 200、匿名 endpoint 401。Demo session 開啟正式頁後空條件與不存在 OP 均回 0 筆，51 字元條件回 400；空資料時分頁／lookup／SignOut 停用，Close 返回主選單。未寫入正式業務資料；2026-11-27「尚未部署」狀態已過期。
 - `ExecuteClockOut`／`funSHR_CO_EMP_ClockOut` 的 SID、工時、多人加工及 LotLoginState 副作用尚待公司端來源核實，因此未開放寫入。
 
 ## 最新：RPT RT609–RT611 ERP 報工撤銷 live catalog 核對（2026-11-27）
@@ -1614,3 +1637,12 @@ QA完成後已fetch公司端`095b3d267bc102687c32b25c9a3f593cf1ebfda9`，九個�
 - catalog 回讀七欄、型別/長度/numeric precision/scale/NULL、PK (lotno,opno,waittime) 均符合來源；Description 可空，Creator/CreateDate/LotSerial 可空。表 owner postgres、0 rows；ymes_app SELECT/INSERT/UPDATE/DELETE 全 false，schema CREATE=false。
 - 套用前 custom-format 備份 /opt/ymes/backups/ymes-before-wp505-0121-20261128.dump：948,825 bytes、SHA-256 8abee3c20c9b277daed3e19d14d04c6257d7b62d672132e074eaabc9aa302b95、mode 600，pg_restore --list 成功。Forward/rollback SHA-256 96979C3C73F5B027BF85D2327A5B71B899B676C79B1D716452E983AE2FD8C982／541AF9334318EF3D3CF175B1D489A515E7708130D4E17358BFF325BCA04AF650。Rollback 僅允許符合來源的空表，無 CASCADE；遠端 migration 暫存檔已移除。
 - app-browser 已核正式 FutureWaitSet 的保護狀態及 Close。正式 app SELECT、候選查詢、lookup 和 Set API 尚未交付；詳 WP505 模組文件與 todolist_homepc.md。
+
+### 更新 2026-11-28：WIP WP510 等待單資料正式 schema／唯讀 API
+
+- PPK／SSH 核對正式 PostgreSQL 14.24 `ymes` 的 YMES schema 與 migration history。`tblwipwaitbasis` 沿 WP201 已存在，`tblprsnnodebasis` 沿 PRS104 已存在，兩者各 0 列；`tblwipwaitlotdisposition` 原先不存在。Oracle MESTEST source 為 13 欄、5 個 NOT NULL、無 PK/FK/unique/trigger，僅 WAITNO 非唯一 index。
+- Migration 0122 只建立 `YMES.tblwipwaitlotdisposition` 空表與 source index；0123 只授予 `ymes_app` 對 `tblwipwaitbasis` 和 `tblwipwaitlotdisposition` SELECT。Catalog 回讀欄位／型別／nullability／index／grants 正確：兩表各 0 列，app 無 INSERT／UPDATE／DELETE，schema CREATE=false；NodeBasis SELECT 為既有授權。沒有同步 MES 業務資料或建立假資料。
+- 0122 前完整 custom-format 備份 `/opt/ymes/backups/ymes-before-wp510-0122-20261127.dump`：950,231 bytes，SHA-256 `03499c7fda6b797408aeeedd6ed6014d76e948dc438ffd2d8d24bfa6309ba60d`，mode 600，`pg_restore --list` 成功。0123 前備份 `/opt/ymes/backups/ymes-before-wp510-read-0123-20261127.dump`：951,956 bytes，SHA-256 `288f6bfbfddf9b2541630d11874645eca545dd1086b67af11b29dadbf9181664`，mode 600，`pg_restore --list` 成功。Forward／rollback SHA-256：0122 `0D2E88E7B3894073B632D26C5FCF3500CBF76EAFC485D430DE6BDFEA5C3F2D65`／`05D0F26740BE8E95E26F1731C403686F2F5D9DE5660FD6732550AFD1293D93FD`；0123 `2F72B185B5F3D7115CE1C4FE06BD4F9D237E12B5A903DF858395DA367FA5497F`／`32695EADCEC0D42C6CEA022138E066910AA0B7BB0712767A870633FF955AEAD0`。
+- 登入保護 endpoints：`GET /YMES/API/api/wip/wait-basis/waits`、`GET /YMES/API/api/wip/wait-basis/lookups/{opNo|customerNo}`、`GET /YMES/API/api/wip/wait-basis/waits/{waitNo}/dispositions`。SQL 參數化、RepeatableRead／READ ONLY、timeout 2s lock／10s statement；至少一個有效主查詢條件，WaitSource 固定 0；日期採台灣本地 wall-clock 含界；lookup 和主／明細回應有界分頁。系統沒有 WP510 Function claim，API 只有登入保護；不授予寫入。
+- Release image：API a1 `sha256:2fddd982909de247ea2203a2bcf7a081d1e5785020a778e3e91a1eb3763e4a65`，rollback 為 WP914 a3 `sha256:e3d978837553ad3ddb6342fd79e19507a6e2d703ebb8d1545e92a60a1ae8a289`；Web a2 `sha256:74aa89c1d172f6716e2b5f2571cc299c2f8bca0d0495889173709736c2e1fb47`，rollback a1 `sha256:8fc788684dd11e3433bef500bba7994b38313d66ef8e29143d2f66cc71391e4d`。API readiness 200／匿名 401、正式 Web 與靜態資產 HTTP 檢查均通過；正式 app-browser Demo session 驗空條件提示、文字／lookup／日期 sentinel 0 筆和 Close。無正式資料列，未驗正向結果或 Wait Info 明細，未建立正式資料。
+- 回復順序：先切回 Web/API 各自的 rollback image；DB 若需回復，先執行 0123 rollback 撤權，再在 0122 的空表守門通過時執行 0122 rollback。程式回復不會還原資料庫。完整操作與 UI 限制見 [WP510 模組文件](modules/WIP/等待單資料.md)。

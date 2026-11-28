@@ -2,14 +2,15 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 type Lot = { lotNo: string; opNo: string; curQty: number; status: 0 | 1 | 4; productNo: string; customerNo: string; areaNo: string; psNo: string; partialMode: boolean; packed: boolean; lotStamp: number }
-type Wait = { lotNo: string; opNo: string; waitTime: 0 | 1; description: string; creator: string; createdAt: string }
+type Wait = { lotNo: string; opNo: string; waitTime: 0 | 1; description: string | null; creator: string | null; createdAt: string | null }
 type MockState = { lots: Lot[]; waits: Wait[] }
 type TextFilterKey = 'lotNo' | 'opNo'
+type OpOption = { opNo: string; opName: string }
 
-const props = defineProps<{ developmentPreview?: boolean }>()
+const props = defineProps<{ apiBaseUrl: string; developmentPreview?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const dev = computed(() => import.meta.env.DEV && props.developmentPreview !== false)
-const unavailableText = '正式環境尚未開放此功能。'
+const formalQueryMessage = '請至少輸入 Lot No、OP No 或選擇 Wait Time 一項查詢條件。'
 const storageKey = 'ymes-dev-mock:wip-future-wait-set:state:v1'
 const state = ref<MockState>({ lots: [], waits: [] })
 const filters = reactive<Record<TextFilterKey, string>>({ lotNo: '', opNo: '' })
@@ -17,11 +18,13 @@ const checked = reactive<Record<TextFilterKey, boolean>>({ lotNo: false, opNo: f
 const waitTimeEnabled = ref(false); const waitTime = ref<0 | 1 | null>(null)
 const lookupOpen = ref(false)
 const opOptions = computed(() => dev.value ? [...new Set([...state.value.lots.map(item => item.opNo), ...state.value.waits.map(item => item.opNo)].filter(Boolean))].sort() : [])
+const lookupKeyword = ref(''); const lookupValues = ref<OpOption[]>([]); const lookupBusy = ref(false); const lookupError = ref(''); const lookupHasMore = ref(false)
 const rows = ref<Wait[]>([]); const selectedKey = ref(''); const searched = ref(false)
 const selected = computed(() => rows.value.find(item => rowKey(item) === selectedKey.value) || null)
 const initialMessage = '按 Query 查詢預先等待，選取一筆後按 Release。'
-const errorText = ref(''); const message = ref(dev.value ? initialMessage : unavailableText)
-function unavailable(): boolean { if (dev.value) return false; errorText.value = ''; message.value = unavailableText; return true }
+const errorText = ref(''); const message = ref(dev.value ? initialMessage : formalQueryMessage)
+const page = ref(1); const hasMore = ref(false); const loading = ref(false)
+function unavailable(): boolean { if (dev.value) return false; errorText.value = ''; message.value = formalQueryMessage; return true }
 
 function seed(): MockState {
   return {
@@ -45,18 +48,89 @@ function load(): void { if (unavailable()) return;
   state.value = seed()
 }
 function rowKey(item: Wait): string { return [item.lotNo, item.opNo, item.waitTime].join('|') }
-function setFilterEnabled(key: TextFilterKey): void { if (unavailable()) return; if (!checked[key]) filters[key] = '' }
-function setWaitTimeEnabled(): void { if (unavailable()) return; if (!waitTimeEnabled.value) waitTime.value = null }
-function chooseOp(opNo: string): void { if (unavailable()) return; filters.opNo = opNo; checked.opNo = true; lookupOpen.value = false }
-function query(): void { if (unavailable()) return;
+function displayDate(value: string | null): string { return value ? value.replace('T', ' ').slice(0, 19) : '' }
+function setFilterEnabled(key: TextFilterKey): void { if (!checked[key]) filters[key] = '' }
+function setWaitTimeEnabled(): void { if (!waitTimeEnabled.value) waitTime.value = null }
+function openOpLookup(): void {
+  lookupOpen.value = !lookupOpen.value
+  lookupKeyword.value = ''; lookupValues.value = []; lookupError.value = ''; lookupHasMore.value = false
+}
+function chooseOp(opNo: string): void { filters.opNo = opNo; checked.opNo = true; lookupOpen.value = false }
+async function searchOps(): Promise<void> {
+  if (dev.value) return
+  const keyword = lookupKeyword.value.trim().toUpperCase()
+  if (!keyword) { lookupValues.value = []; lookupHasMore.value = false; lookupError.value = '請輸入至少一個 OP No 字元。'; return }
+  lookupBusy.value = true; lookupError.value = ''
+  try {
+    const query = new URLSearchParams({ keyword, page: '1', pageSize: '100' })
+    const response = await fetch(apiUrl('api/wip/future-wait-release/lookups/op', query), {
+      credentials: 'include', headers: { Accept: 'application/json' }, cache: 'no-store',
+    })
+    if (response.status === 401) { window.location.assign(import.meta.env.BASE_URL); throw new Error('登入狀態已逾期，請重新登入。') }
+    const body = await response.json().catch(() => null) as OpOption[] | { title?: string; detail?: string; message?: string } | null
+    if (!response.ok) {
+      const problem = body as { title?: string; detail?: string; message?: string } | null
+      throw new Error(problem?.detail || problem?.message || problem?.title || `API 回應錯誤 (${response.status})。`)
+    }
+    lookupValues.value = Array.isArray(body) ? body : []
+    lookupHasMore.value = response.headers.get('X-Has-More')?.toLowerCase() === 'true'
+    if (!lookupValues.value.length) lookupError.value = '查無符合的作業站。'
+    else if (lookupHasMore.value) lookupError.value = '候選超過 100 筆，請輸入更完整的 OP No。'
+  } catch (cause) {
+    lookupValues.value = []; lookupHasMore.value = false
+    lookupError.value = cause instanceof Error ? cause.message : '作業站查找失敗。'
+  } finally { lookupBusy.value = false }
+}
+function query(): void {
   errorText.value = ''; lookupOpen.value = false
   filters.lotNo = filters.lotNo.trim().toUpperCase(); filters.opNo = filters.opNo.trim().toUpperCase()
+  if (!dev.value) { void queryFormal(1); return }
   rows.value = state.value.waits.filter(item =>
     (!checked.lotNo || !filters.lotNo || item.lotNo === filters.lotNo) &&
     (!checked.opNo || !filters.opNo || item.opNo === filters.opNo) &&
     (!waitTimeEnabled.value || waitTime.value === null || item.waitTime === waitTime.value))
     .sort((a, b) => a.lotNo.localeCompare(b.lotNo) || a.opNo.localeCompare(b.opNo) || a.waitTime - b.waitTime)
-  selectedKey.value = ''; searched.value = true; message.value = `查得 ${rows.value.length} 筆預先等待。`
+  selectedKey.value = ''; searched.value = true; page.value = 1; hasMore.value = false; message.value = `查得 ${rows.value.length} 筆預先等待。`
+}
+function apiUrl(path: string, query: URLSearchParams): URL {
+  const base = props.apiBaseUrl.trim().replace(/\/+$/, '')
+  if (!base) throw new Error('目前環境尚未設定 API 位址。')
+  const url = new URL(path.replace(/^\/+/, ''), new URL(`${base}/`, location.origin))
+  query.forEach((value, key) => url.searchParams.set(key, value))
+  return url
+}
+async function queryFormal(targetPage: number): Promise<void> {
+  const lotNo = checked.lotNo ? filters.lotNo.trim().toUpperCase() : ''
+  const opNo = checked.opNo ? filters.opNo.trim().toUpperCase() : ''
+  const selectedWaitTime = waitTimeEnabled.value ? waitTime.value : null
+  if (!lotNo && !opNo && selectedWaitTime === null) {
+    rows.value = []; selectedKey.value = ''; page.value = 1; hasMore.value = false; searched.value = true
+    errorText.value = formalQueryMessage; message.value = '查詢未完成。'; return
+  }
+  const query = new URLSearchParams({ page: String(targetPage), pageSize: '50' })
+  if (lotNo) query.set('lotNo', lotNo)
+  if (opNo) query.set('opNo', opNo)
+  if (selectedWaitTime !== null) query.set('waitTime', String(selectedWaitTime))
+  loading.value = true; errorText.value = ''; rows.value = []; selectedKey.value = ''; searched.value = true
+  try {
+    const response = await fetch(apiUrl('api/wip/future-wait-release', query), {
+      credentials: 'include', headers: { Accept: 'application/json' }, cache: 'no-store',
+    })
+    if (response.status === 401) { window.location.assign(import.meta.env.BASE_URL); throw new Error('登入狀態已逾期，請重新登入。') }
+    const body = await response.json().catch(() => null) as Wait[] | { title?: string; detail?: string; message?: string } | null
+    if (!response.ok) {
+      const problem = body as { title?: string; detail?: string; message?: string } | null
+      throw new Error(problem?.detail || problem?.message || problem?.title || `API 回應錯誤 (${response.status})。`)
+    }
+    rows.value = Array.isArray(body) ? body : []
+    page.value = Number(response.headers.get('X-Page')) || targetPage
+    hasMore.value = response.headers.get('X-Has-More')?.toLowerCase() === 'true'
+    message.value = `第 ${page.value} 頁，${rows.value.length} 筆${hasMore.value ? '，還有下一頁。' : '。'}`
+  } catch (cause) {
+    rows.value = []; page.value = 1; hasMore.value = false
+    errorText.value = cause instanceof Error ? cause.message : '預先等待查詢失敗。'
+    message.value = '查詢未完成。'
+  } finally { loading.value = false }
 }
 function release(): void { if (unavailable()) return;
   errorText.value = ''
@@ -73,8 +147,8 @@ function release(): void { if (unavailable()) return;
   try { window.localStorage.setItem(storageKey, JSON.stringify(current)) } catch { errorText.value = '瀏覽器無法儲存 DEV 狀態'; return }
   state.value = current; query(); message.value = `DEV 已模擬解除 ${picked.lotNo} / ${picked.opNo} 的 ${picked.waitTime === 0 ? 'Start' : 'End'} 預先等待，未更新 MES。`
 }
-onMounted(load)
-watch(dev, enabled => { if (enabled) { errorText.value = ''; message.value = initialMessage; load() } else { state.value = { lots: [], waits: [] }; rows.value = []; selectedKey.value = ''; lookupOpen.value = false; searched.value = false; for (const key of Object.keys(filters) as TextFilterKey[]) { filters[key] = ''; checked[key] = false }; waitTimeEnabled.value = false; waitTime.value = null; errorText.value = ''; message.value = unavailableText } })
+onMounted(() => { if (dev.value) load() })
+watch(dev, enabled => { if (enabled) { errorText.value = ''; message.value = initialMessage; load() } else { state.value = { lots: [], waits: [] }; rows.value = []; selectedKey.value = ''; lookupOpen.value = false; searched.value = false; page.value = 1; hasMore.value = false; for (const key of Object.keys(filters) as TextFilterKey[]) { filters[key] = ''; checked[key] = false }; waitTimeEnabled.value = false; waitTime.value = null; errorText.value = ''; message.value = formalQueryMessage } })
 </script>
 
 <template>
@@ -85,20 +159,23 @@ watch(dev, enabled => { if (enabled) { errorText.value = ''; message.value = ini
     <fieldset class="query-frame">
       <legend>Query</legend>
       <div class="query-fields">
-        <label class="lot-field"><input v-model="checked.lotNo" type="checkbox" :disabled="!dev" @change="setFilterEnabled('lotNo')"> Lot No <input v-model="filters.lotNo" class="mes-input yellow" :disabled="!dev" @keydown.enter.prevent="query"></label>
-        <label class="op-field"><input v-model="checked.opNo" type="checkbox" :disabled="!dev" @change="setFilterEnabled('opNo')"> OP No <input v-model="filters.opNo" class="mes-input yellow" :disabled="!dev" @keydown.enter.prevent="query"><button type="button" class="lookup-button" :disabled="!dev" @click="dev && (lookupOpen = !lookupOpen)">...</button></label>
-        <div class="time-field"><label><input v-model="waitTimeEnabled" type="checkbox" :disabled="!dev" @change="setWaitTimeEnabled"> Wait Time</label><span><label><input v-model="waitTime" type="radio" :value="0" :disabled="!dev" @change="dev && (waitTimeEnabled = true)"> Start</label><label><input v-model="waitTime" type="radio" :value="1" :disabled="!dev" @change="dev && (waitTimeEnabled = true)"> End</label></span></div>
-        <button type="button" class="mes-button query-button" :disabled="!dev" @click="query">Query</button>
+        <label class="lot-field"><input v-model="checked.lotNo" type="checkbox" :disabled="loading" @change="setFilterEnabled('lotNo')"> Lot No <input v-model="filters.lotNo" class="mes-input yellow" :disabled="loading" @keydown.enter.prevent="query"></label>
+        <label class="op-field"><input v-model="checked.opNo" type="checkbox" :disabled="loading" @change="setFilterEnabled('opNo')"> OP No <input v-model="filters.opNo" class="mes-input yellow" :disabled="loading" @keydown.enter.prevent="query"><button type="button" class="lookup-button" :disabled="loading" @click="openOpLookup">...</button></label>
+        <div class="time-field"><label><input v-model="waitTimeEnabled" type="checkbox" :disabled="loading" @change="setWaitTimeEnabled"> Wait Time</label><span><label><input v-model="waitTime" type="radio" :value="0" :disabled="loading" @change="waitTimeEnabled = true"> Start</label><label><input v-model="waitTime" type="radio" :value="1" :disabled="loading" @change="waitTimeEnabled = true"> End</label></span></div>
+        <button type="button" class="mes-button query-button" :disabled="loading" @click="query">{{ loading ? '查詢中…' : 'Query' }}</button>
       </div>
-      <div v-if="dev && lookupOpen" class="lookup-options"><button v-for="opNo in opOptions" :key="opNo" type="button" @click="chooseOp(opNo)">{{ opNo }}</button></div>
+      <div v-if="lookupOpen" class="lookup-options">
+        <template v-if="dev"><button v-for="opNo in opOptions" :key="opNo" type="button" @click="chooseOp(opNo)">{{ opNo }}</button><span v-if="!opOptions.length">沒有 DEV 作業站候選。</span></template>
+        <template v-else><div class="lookup-search"><input v-model="lookupKeyword" class="mes-input" maxlength="20" placeholder="輸入 OP No" @keydown.enter.prevent="searchOps"><button type="button" class="mes-button" :disabled="lookupBusy" @click="searchOps">{{ lookupBusy ? '查找中…' : '查找' }}</button></div><p v-if="lookupError" class="lookup-error" role="status">{{ lookupError }}</p><button v-for="option in lookupValues" :key="option.opNo" type="button" @click="chooseOp(option.opNo)">{{ option.opNo }} · {{ option.opName }}</button></template>
+      </div>
     </fieldset>
     <fieldset class="data-frame">
       <legend>Future Wait Data</legend>
       <div class="data-main">
-        <div class="grid-wrap"><table><thead><tr><th>Lot No.</th><th>OP No.</th><th>Wait Time</th><th>Description</th><th>Creator</th><th>Create Date</th></tr></thead><tbody><tr v-for="item in rows" :key="rowKey(item)" :class="{active: selectedKey === rowKey(item)}" tabindex="0" @click="dev && (selectedKey = rowKey(item))" @keydown.enter="dev && (selectedKey = rowKey(item))"><td>{{ item.lotNo }}</td><td>{{ item.opNo }}</td><td>{{ item.waitTime === 0 ? 'Start' : 'End' }}</td><td>{{ item.description }}</td><td>{{ item.creator }}</td><td>{{ item.createdAt.slice(0,16).replace('T',' ') }}</td></tr><tr v-if="!rows.length"><td colspan="6" class="empty">{{ !dev ? unavailableText : searched ? '沒有符合條件的預先等待。' : '請按 Query。' }}</td></tr></tbody></table></div>
+        <div class="grid-wrap"><table><thead><tr><th>Lot No.</th><th>OP No.</th><th>Wait Time</th><th>Description</th><th>Creator</th><th>Create Date</th></tr></thead><tbody><tr v-for="item in rows" :key="rowKey(item)" :class="{active: selectedKey === rowKey(item)}" tabindex="0" @click="dev && (selectedKey = rowKey(item))" @keydown.enter="dev && (selectedKey = rowKey(item))"><td>{{ item.lotNo }}</td><td>{{ item.opNo }}</td><td>{{ item.waitTime === 0 ? 'Start' : 'End' }}</td><td>{{ item.description || '' }}</td><td>{{ item.creator || '' }}</td><td>{{ displayDate(item.createdAt) }}</td></tr><tr v-if="!rows.length"><td colspan="6" class="empty">{{ loading ? '查詢中…' : searched ? '沒有符合條件的預先等待。' : '請輸入查詢條件後按 Query。' }}</td></tr></tbody></table></div>
         <div class="actions"><button type="button" class="mes-button primary" :disabled="!dev || !selected" @click="release">Release</button><button type="button" class="mes-button" @click="emit('close')">Close (X)</button></div>
       </div>
-      <p class="count">資料總筆數 {{ rows.length }}</p>
+      <div class="grid-footer"><p class="count">{{ dev ? `資料總筆數 ${rows.length}` : `第 ${page} 頁 · 本頁 ${rows.length} 筆` }}</p><div v-if="!dev && searched" class="page-actions"><button type="button" class="mes-button" :disabled="loading || page <= 1" @click="queryFormal(page - 1)">上一頁</button><button type="button" class="mes-button" :disabled="loading || !hasMore" @click="queryFormal(page + 1)">下一頁</button></div></div>
     </fieldset>
   </section>
 </template>
@@ -109,6 +186,6 @@ watch(dev, enabled => { if (enabled) { errorText.value = ''; message.value = ini
 fieldset{position:relative;min-width:0;margin:0;padding:7px 8px;border:1px solid #bbb;background:#fff}legend{padding:0 5px}
 .query-fields{display:grid;grid-template-columns:300px 310px minmax(10px,1fr) 86px;grid-template-areas:"lot op . ." "time . . query";align-items:center;gap:7px 12px}.query-fields>label{display:flex;align-items:center;gap:4px;white-space:nowrap}.lot-field{grid-area:lot}.op-field{grid-area:op}.time-field{grid-area:time;display:flex;align-items:center;gap:5px;white-space:nowrap}.time-field>span{display:flex;gap:9px;padding:4px 8px;border:1px solid #bbb}.query-button{grid-area:query}.query-fields .mes-input{width:125px;margin-left:auto}
 .mes-input{height:26px;min-width:0;padding:3px 5px;box-sizing:border-box;border:1px solid #888;font:inherit}.yellow{background:#fff0b3!important}.mes-button,.lookup-button{min-height:29px;padding:3px 10px;border:1px solid #bbb;border-radius:3px;background:linear-gradient(#fff,#f2f2f2);color:#333;font:inherit;cursor:pointer}.lookup-button{min-width:27px;padding:1px}.mes-button:disabled,.lookup-button:disabled{color:#999;cursor:default}.mes-button.primary{background:#f3a62a;border-color:#e99512;color:#fff}
-.lookup-options{position:absolute;z-index:5;top:100%;left:315px;display:flex;gap:5px;padding:7px;border:1px solid #aaa;background:#fffbe9;box-shadow:0 3px 9px #0002}.lookup-options button{padding:3px 7px;border:1px solid #bbb;background:#fff;cursor:pointer}.data-frame{flex:1;min-height:200px;display:flex;flex-direction:column}.data-main{display:flex;flex:1;min-height:0;gap:10px}.grid-wrap{flex:1;min-width:0;min-height:100px;overflow:auto;border:1px solid #aaa}.grid-wrap table{width:100%;min-width:650px;border-collapse:collapse;white-space:nowrap}.grid-wrap th{position:sticky;top:0;padding:5px 7px;border:1px solid #d4d4d4;background:#ead591;text-align:left;font-weight:500}.grid-wrap td{padding:4px 6px;border:1px solid #d4d4d4;background:#ffe89c}.grid-wrap tr.active td{background:#f4ca68}.grid-wrap tr{cursor:pointer}.empty{text-align:center!important;background:#fff!important;color:#777;height:33px}.actions{display:flex;flex-direction:column;justify-content:space-between;gap:8px}.actions .mes-button{width:86px}.count{margin:4px 0 0;color:#777}
+.lookup-options{position:absolute;z-index:5;top:100%;left:315px;display:flex;flex-wrap:wrap;align-items:center;gap:5px;max-width:min(640px,85vw);max-height:240px;overflow:auto;padding:7px;border:1px solid #aaa;background:#fffbe9;box-shadow:0 3px 9px #0002}.lookup-options button{padding:3px 7px;border:1px solid #bbb;background:#fff;cursor:pointer}.lookup-search{display:flex;gap:6px;flex-basis:100%}.lookup-search input{flex:1}.lookup-error{flex-basis:100%;margin:2px 0;color:#775b22}.data-frame{flex:1;min-height:200px;display:flex;flex-direction:column}.data-main{display:flex;flex:1;min-height:0;gap:10px}.grid-wrap{flex:1;min-width:0;min-height:100px;overflow:auto;border:1px solid #aaa}.grid-wrap table{width:100%;min-width:650px;border-collapse:collapse;white-space:nowrap}.grid-wrap th{position:sticky;top:0;padding:5px 7px;border:1px solid #d4d4d4;background:#ead591;text-align:left;font-weight:500}.grid-wrap td{padding:4px 6px;border:1px solid #d4d4d4;background:#ffe89c}.grid-wrap tr.active td{background:#f4ca68}.grid-wrap tr{cursor:pointer}.empty{text-align:center!important;background:#fff!important;color:#777;height:33px}.actions{display:flex;flex-direction:column;justify-content:space-between;gap:8px}.actions .mes-button{width:86px}.grid-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}.count{margin:4px 0 0;color:#777}.page-actions{display:flex;gap:6px}.page-actions .mes-button{min-height:25px;padding:2px 8px}
 @media(max-width:810px){.query-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"lot op" "time ." "query query"}.query-button{justify-self:end;width:86px}}
 </style>
