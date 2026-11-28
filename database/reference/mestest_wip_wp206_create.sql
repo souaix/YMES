@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "YMES".tblqcabnormalbasis (
     creator varchar(10),
     createdate timestamp without time zone,
     issuestate numeric(1,0) DEFAULT 0 CONSTRAINT n_tblqcabnormalbasis_05 NOT NULL,
-    priority numeric(2,0),
+    priority numeric(2,0) DEFAULT 0,
     CONSTRAINT pk_tblqcabnormalbasis PRIMARY KEY (abnormalno)
 );
 

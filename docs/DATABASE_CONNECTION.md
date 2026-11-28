@@ -1334,11 +1334,16 @@ MES Oracle MESTEST 是原生 MES 來源；YMES PostgreSQL 是家用端建置的�
 - 公司端只核對 WinForms `frmLotChoiceEqp`、`wsWIP.LoadAvailableEquipment_All/LoadTemp_Equipment/Exe_LotChoiceEQP`、`clsLot.ShowAvailableEquipment_All/Exe_LotChoiceEQP` 及 `clsOperatorState.SHR_CI_EMP`。未查業務資料列、未執行 Oracle DDL/DML、未連 YMES PostgreSQL。
 - 家用端先對照 PostgreSQL live schema／migration history，再把 LotStamp、設備可用性／容量與 Port 占用守門移入交易式 API。公司端 DEV localStorage 假指派不是正式資料；沒有更新或輸出連線秘密。
 
-### 更新 2026-11-20：WIP WP206 計數不良原因收集
+### 更新 2026-11-28：WIP WP206 計數不良原因收集
 
 - 使用 Windows PowerShell 5.1、`STD/MES_S_DLL/Oracle.ManagedDataAccess.dll` 與本機受保護 Oracle profile 直連 MESTEST，唯讀查 `TBLOPABNORMAL`、`TBLQCABNORMALBASIS`、`TBLQCABNORMALPOSITION`、`TBLWIPCONT_ABNORMAL` 的 DBMS_METADATA DDL 與 columns/constraints/indexes/triggers metadata；未讀 business rows、未執行 Oracle DDL/DML。
 - `TBLOPABNORMAL`、`TBLQCABNORMALBASIS`、`TBLQCABNORMALPOSITION` 各有來源 PK；`TBLWIPCONT_ABNORMAL` 沒有 PK/FK/Trigger，只含 `LOTSERIAL` 非唯一 index。Source DDL/index/metadata、CREATE-only 在 `database/reference/mestest_wip_wp206_*`。`TBLOPABNORMAL` CREATE-only 已在 Operation/System reference，不另重複產生。
-- Oracle IP、帳號、密碼、SID 與連線字串留在公司本機受保護設定；本輪沒有輸出或提交秘密，也未連 YMES PostgreSQL。
+- 家用端於 2026-11-28 唯讀檢查正式 PostgreSQL catalog：`tblopbasis`、`tblwiplotstate` 存在且 `ymes_app` 有 SELECT；`tblopabnormal`、`tblqcabnormalbasis`、`tblqcabnormalposition`、`tblwipcont_abnormal` 均不存在。`ymes_app` 沒有 YMES schema CREATE 權限。
+- Migration `0108_wip_wp206_ipqc.sql` 依 Oracle source DDL 建立四張缺表，另建 YMES 專用 `ym_wp206_request` 冪等紀錄表；不匯入 Oracle 業務資料。`TBLWIPCONT_ABNORMAL` 保持無 PK，僅有來源 `LOTSERIAL` 非唯一索引。`TBLQCABNORMALBASIS.PRIORITY` default 0 已補正 PostgreSQL CREATE-only。
+- Migration SHA-256 `D13E181B4F293076BF7309A2348B2C57DE0D2C4847486C9C0BD2D3622C4EE04A`。套用前 custom-format backup `/opt/ymes/backups/ymes-before-wp206-0108-20261128.dump`（886,440 bytes、SHA-256 `193b4d93079f0446fa7839d570e0bbb4b03414af084e5352803dfe6ae8f0d82b`；`pg_restore --list` 2,445 entries）；同一交易套用後 catalog 回讀四張來源表與 `ym_wp206_request` 均為空表。
+- `ymes_app` 對異常關聯／主檔／位置表只有 SELECT，對 `TBLWIPCONT_ABNORMAL` 只有 INSERT，對 YMES 冪等表只有 SELECT／INSERT；沒有變更既有 Lot／OP 權限。API a2 image `sha256:36d14ea0ef2d1a23e351ff6f260e543be640cc6ae5fc7117f8e1aed7b366a0e0` 已上正式站；回復 tag `ymes-api:before-wp206-ipqc-20261128-a2` 指向已知正常 WP305 image `sha256:0be7a2d2fc54b22eee470143f575e9b82629b8df261df4af56476fa7cefca6dd`。部署封裝與 assembly hash、容器範圍見 `DEPLOYMENT_PROFILES.md`。
+- Browser Demo 驗證 readiness 200、匿名 API 401、OP lookup 空陣列、非法分頁 400、不存在 OP 的 abnormal lookup 404；正式 `/YMES/WIP/IPQC` 可載入及 Close 返回主選單。曾由瀏覽器發現 a1 abnormal lookup 在 read-only 交易使用 `FOR SHARE` 而回 503，已在 a2 修正為不鎖定唯讀 lookup，POST 仍鎖定需要的列。正式資料表全空，未送出 POST 或製造測試業務資料，因此沒有完成有資料的新增正向驗收。
+- Oracle IP、帳號、密碼、SID 與連線字串留在公司本機受保護設定；沒有輸出或提交秘密。
 
 ### 更新 2026-11-20：WIP WP207 分批處理
 

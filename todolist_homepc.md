@@ -4443,14 +4443,14 @@ API 工作：
 - [ ] 多設備選擇時拒絕 LoadPort；單設備 EQPLoadPort>0 可指定但非必填。不能信任瀏覽器傳回的 AllowExecute、Capacity 或 Port 空位，正式端不得讀取 DEV localStorage `ymes-dev-mock:wip-lot-choice-equipment:assignments:v1`。
 - [ ] DEV-only FunctionNo `LOT CHOICE EQP`／FunctionKey `WP205` 的 localStorage 樣本不是正式授權資料。完成 live schema 比對、API、交易、WP205 功能授權與部署紀錄後更新 handoff。
 
-## WIP WP206 計數不良原因收集家用端 handoff（2026-11-20）
+## WIP WP206 計數不良原因收集家用端 handoff（2026-11-28 更新）
 
-- [ ] Pull 最新 `main`，閱讀 [WP206 規格](docs/modules/WIP/計數不良原因收集.md)、`docs/DATABASE_CONNECTION.md` WP206 段落及 DDL／metadata／CREATE-only references。
-- [ ] `TBLOPABNORMAL` 已在 `database/reference/mestest_operation_and_system_*`，不可重複 migration。新增表 reference 是 `TBLQCABNORMALBASIS`、`TBLQCABNORMALPOSITION`、`TBLWIPCONT_ABNORMAL`；先查 YMES live PostgreSQL schema 與 migration history，缺少才建 forward migration。
-- [ ] Oracle source DDL、index DDL、metadata、PG CREATE-only 在 `database/reference/mestest_wip_wp206_source_ddl.sql`、`mestest_wip_wp206_source_indexes.sql`、`mestest_wip_wp206_metadata.txt`、`mestest_wip_wp206_create.sql`。`TBLWIPCONT_ABNORMAL` 無 PK/FK/Trigger，只有 `LOTSERIAL` 非唯一 index；不得補造 PK／unique constraint。
-- [ ] 建登入保護的 OPClass=1／IssueState=2 作業站 lookup、OP 關聯異常 lookup、異常位置 lookup；非同步以一次有限查詢取得 LotNo，不延續 WinForms Enter 時無條件載入全 LotState 的程式。
-- [ ] 建登入保護的 IPQC POST command，伺服器驗證 Lot、OP、異常關聯及 Position 關聯，在單一交易新增選取資料。舊 Core 將 LotNo 寫到 LotSerial、AbnormalQty 留 DB default 0，且忽略 LinkName/Priority/UserNo/ShiftNo/EventTime；正式 API 若補填需標示為擴充。防止多次提交重複資料，但不新增 Oracle 沒有的 source key；使用 request idempotency 或明確冪等策略。
-- [ ] DEV localStorage `ymes-dev-mock:wip-ipqc:abnormal-records:v1` 只供公司端假互動，正式端不得讀取。API/schema/交易/授權/部署完成後更新交接。
+- [x] Pull 並閱讀公司端 WP206 references、module spec 及 MESTEST DDL/metadata；確認 `TBLWIPCONT_ABNORMAL` 無 PK/FK/Trigger，只有 LOTSERIAL 非唯一 index，不補造來源鍵。
+- [x] 以 PPK／SSH 唯讀核對 live catalog：三張 lookup/source table 與 `TBLOPABNORMAL` 均缺少，建立 migration 0108；既有 `TBLOPABNORMAL` CREATE-only 重用 Operation/System reference。另建 YMES 冪等 ledger；備份、migration hash、欄位／grant／空表結果見 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+- [x] 完成登入保護的有界 OP lookup、OP 關聯異常及 Position lookup，與單一交易 POST；後端驗證 OP、LotState、異常／位置關聯，使用 UUID Idempotency-Key，遵守來源欄位與 default。沒有新增系統角色表或擴張既有 Lot／OP 權限。
+- [x] .NET 9 Release build／publish，正式部署 API a2；第一次 app-browser 發現 a1 唯讀 lookup 使用列鎖回 503，修正後重新部署並確認 404 正常邊界。readiness 200、匿名 401、lookup 空陣列、非法分頁 400、正式頁載入及 Close 均已驗證，無正式測試資料列或 POST。image／回復標籤見 [部署紀錄](DEPLOYMENT_PROFILES.md)。
+- [ ] 公司端將 `web/src/components/WipIpqc.vue` Production mode 接至正式 API；DEV localStorage 僅保留 DEV，Production 不得 fallback 到 mock。端點與 payload 契約見 [WP206 模組紀錄](docs/modules/WIP/計數不良原因收集.md)。
+- [ ] 公司端依原生 WinForms／Service 確認正式 POST 前 Lot 的「可作業狀態」規則；目前 API 只驗證所選 LotNo + OPNo 有 LotState 列，沒有臆造 Status allowlist。確認後再以來源規則調整並驗收。
 
 ## WIP WP207 分批處理家用端 handoff（2026-11-20）
 

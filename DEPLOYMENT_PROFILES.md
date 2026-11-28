@@ -1,5 +1,11 @@
 # 部署設定檔
 
+## 家用端 WP206 計數不良原因收集 API a2（2026-11-28）
+
+- .NET 9 Release build／publish 成功。正式 API image `ymes-api:wp206-ipqc-20261128-a2`／`ymes-api:current` ID `sha256:36d14ea0ef2d1a23e351ff6f260e543be640cc6ae5fc7117f8e1aed7b366a0e0`；發佈封裝 SHA-256 `9E729BF7BC88C0CD532A52282FB30455787D4F9B2DAF2FA51DC89AA37295E8E3`、`YMes.Api.dll` SHA-256 `381360FD3B5633F3F88CAECD33CAAC8BD833AB2306902F006839774A0968F681`。來源位於 root-only release path `/opt/ymes/releases/wp206-api-20261128-a2/`。
+- 回復 tag `ymes-api:before-wp206-ipqc-20261128-a2` 指向上一個已知健康的 WP305 image `sha256:0be7a2d2fc54b22eee470143f575e9b82629b8df261df4af56476fa7cefca6dd`。a1 diagnostic image 保留為 `ymes-api:wp206-ipqc-20261128-a1`，不作回復用途。只更新 `ymes-api`；Web `sha256:40fdfefad6d13b74601e67e03727b29d39e350bdd1300daf7cb6ab852b7c4438` 與 master Web `sha256:84356fe73f73db0ab47d95dc6fdd1229ddee0cccdd43e2880b2ed1452bfac7b8` 未變。
+- App-browser Demo session：readiness 200、匿名 API 401、OP lookup 回 `[]`、非法分頁 400、不存在 OP abnormal lookup 404；正式 IPQC 頁可載入並 Close 返回主選單。a1 的 READ ONLY transaction `FOR SHARE` 造成 lookup 503，a2 移除唯讀 lookup 列鎖後重驗正常。五張新資料表目前全空，未送生產 POST 或建立正式假資料，無可用列完成正向新增驗收。詳 [資料庫連線紀錄](docs/DATABASE_CONNECTION.md)。
+
 ## 家用端 WP305 設備線上點檢 API a2（2026-11-27；2026-11-28 核對）
 
 - `.NET 9` API Release build 成功；遠端來源 `/opt/ymes/releases/wp305-api-20261127-a2/`。發佈 tar SHA-256 `D0783E1F6B837F3A09F05FD13E58DF36D9439977B7D6F18A0C23E844F75DF2A2`；`YMes.Api.dll` SHA-256 `BF09EC41E0B35BF22E58908E71FA6E3C995979869C77D754D03540986C0528AE`。
